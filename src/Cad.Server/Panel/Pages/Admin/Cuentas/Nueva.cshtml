@@ -1,0 +1,47 @@
+@page "/panel/admin/cuentas/nueva"
+@model Cad.Server.Panel.Pages.Admin.Cuentas.NuevaModel
+@{
+    ViewData["Title"] = "Nueva cuenta institucional";
+    ViewData["ClasePagina"] = "pagina--estrecha";
+    var f = Model.Formulario;
+    var errorRol = Model.ErrorDe("rol");
+}
+<p><a class="enlace-volver" href="/panel/admin/cuentas">← Cuentas institucionales</a></p>
+<div>
+    <p class="sobretitulo">Administrador</p>
+    <h1 class="titulo">Nueva cuenta institucional</h1>
+    <p class="texto-secundario">Cuenta de operador de central o de sereno. El correo será su identificador de acceso.</p>
+</div>
+
+<section class="superficie">
+    <form method="post" class="formulario formulario--columnas" data-formulario novalidate>
+        <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Nombres", "Formulario.Nombres", "Nombres", Valor: f.Nombres, Error: Model.ErrorDe("nombres"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Apellidos", "Formulario.Apellidos", "Apellidos", Valor: f.Apellidos, Error: Model.ErrorDe("apellidos"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Correo", "Formulario.Correo", "Correo electrónico", "email", f.Correo, Model.ErrorDe("correo"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Telefono", "Formulario.Telefono", "Teléfono móvil", "tel", f.Telefono, Model.ErrorDe("telefono"), "9 dígitos, empieza por 9.", "off", Requerido: false))" />
+
+        <div class="campo">
+            <label class="campo__etiqueta" for="Formulario_Rol">Rol</label>
+            <select class="campo__control campo__control--seleccion" id="Formulario_Rol" name="Formulario.Rol" required
+                    aria-invalid="@(errorRol is null ? null : "true")"
+                    aria-describedby="@(errorRol is null ? null : "Formulario_Rol-error")">
+                <option value="">Elige un rol</option>
+                <option value="Operador" selected="@(f.Rol == "Operador")">Operador</option>
+                <option value="Sereno" selected="@(f.Rol == "Sereno")">Sereno</option>
+            </select>
+            @if (errorRol is not null)
+            {
+                <p id="Formulario_Rol-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorRol</span></p>
+            }
+        </div>
+
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Contrasena", "Formulario.Contrasena", "Contraseña inicial", "password", null, Model.ErrorDe("contrasena"), "Entre 8 y 128 caracteres, con al menos una letra y un número.", "new-password"))" />
+
+        <div class="acciones formulario__completo">
+            <a class="boton boton--secundario" href="/panel/admin/cuentas">Cancelar</a>
+            <button type="submit" class="boton boton--principal" data-texto-carga="Creando…">Crear cuenta</button>
+        </div>
+    </form>
+</section>

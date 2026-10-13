@@ -19,7 +19,7 @@ public static class ModuloCuentas
                 // rechazaría caracteres válidos en un correo.
                 opciones.User.AllowedUserNameCharacters = string.Empty;
                 // Coherente con la validación de RegistrarCiudadano: el servidor siempre revalida.
-                opciones.Password.RequiredLength = RegistrarCiudadano.LongitudMinimaContrasena;
+                opciones.Password.RequiredLength = ReglasCuenta.LongitudMinimaContrasena;
                 opciones.Password.RequireDigit = true;
                 opciones.Password.RequireLowercase = false;
                 opciones.Password.RequireUppercase = false;
@@ -31,6 +31,9 @@ public static class ModuloCuentas
         services.AddScoped<RegistrarCiudadano>();
         services.AddScoped<IniciarSesion>();
         services.AddScoped<SembrarAdministrador>();
+        services.AddScoped<CrearCuentaInstitucional>();
+        services.AddScoped<ModificarCuentaInstitucional>();
+        services.AddScoped<ConsultarCuentasInstitucionales>();
         services.AddSingleton<EmisorTokens>();
         return services;
     }

@@ -127,6 +127,8 @@ a {
 .campo {
   display: grid;
   gap: var(--espacio-2);
+  /* En formularios de dos columnas, el error de un campo no debe estirar al vecino. */
+  align-content: start;
 }
 
 .campo__etiqueta {
@@ -290,4 +292,226 @@ a {
 
 .acceso__formulario {
   margin-top: var(--espacio-6);
+}
+
+/* ===== Panel con sesión ===== */
+
+a.boton {
+  text-decoration: none;
+}
+
+/* Encabezado: alto fijo, marca a la izquierda y sesión a la derecha */
+.encabezado {
+  color: #FFFFFF;
+  background: var(--color-marino);
+}
+
+.encabezado :focus-visible {
+  outline-color: var(--color-foco-sobre-marino);
+}
+
+.encabezado__contenido {
+  max-width: 80rem;
+  min-height: 3.5rem;
+  margin: 0 auto;
+  padding: var(--espacio-2) var(--espacio-6);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-4) var(--espacio-8);
+}
+
+.encabezado .marca__nombre {
+  font-size: var(--texto-md);
+  color: #FFFFFF;
+}
+
+.encabezado .marca__aviso {
+  color: var(--color-texto-sobre-marino);
+}
+
+.encabezado__navegacion {
+  display: flex;
+  gap: var(--espacio-4);
+  flex: 1;
+}
+
+.encabezado__navegacion a {
+  padding: var(--espacio-1) 0;
+  color: #FFFFFF;
+  font-weight: var(--peso-medio);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+.encabezado__navegacion a:hover,
+.encabezado__navegacion a[aria-current="page"] {
+  border-bottom-color: var(--color-foco-sobre-marino);
+}
+
+.encabezado__sesion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  margin: 0;
+  font-size: var(--texto-sm);
+}
+
+.etiqueta-rol {
+  padding: 0.125rem var(--espacio-2);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: #1E40AF;          /* 7.15:1 sobre #DBEAFE */
+  background: #DBEAFE;
+}
+
+.boton--sobre-marino {
+  min-height: 2.25rem;
+  padding: var(--espacio-1) var(--espacio-4);
+  color: #FFFFFF;
+  border-color: var(--color-texto-sobre-marino);
+  background: transparent;
+}
+
+.boton--sobre-marino:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Contenedor de página */
+.pagina {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: var(--espacio-8) var(--espacio-6) var(--espacio-12);
+  display: grid;
+  gap: var(--espacio-6);
+}
+
+.pagina--estrecha {
+  max-width: 48rem;
+}
+
+.pagina__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+}
+
+.enlace-volver {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+}
+
+/* Tabla de datos */
+.tabla-contenedor {
+  overflow-x: auto;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--texto-sm);
+}
+
+.tabla caption {
+  padding: var(--espacio-3) var(--espacio-4);
+  text-align: left;
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--espacio-3) var(--espacio-4);
+  text-align: left;
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.tabla thead th {
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+  background: var(--color-fondo);
+}
+
+/* Estado con icono y texto (nunca solo color) */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  font-weight: var(--peso-medio);
+}
+
+.estado .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.estado--activa {
+  color: var(--color-exito);
+}
+
+.estado--inactiva {
+  color: var(--color-texto-secundario);
+}
+
+/* Estado vacío */
+.estado-vacio {
+  padding: var(--espacio-12) var(--espacio-6);
+  display: grid;
+  justify-items: center;
+  gap: var(--espacio-3);
+  text-align: center;
+  color: var(--color-texto-secundario);
+}
+
+/* Campos: ayuda y error por campo */
+.campo__ayuda {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.campo__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-1);
+  font-size: var(--texto-sm);
+  color: var(--color-error);
+}
+
+.campo__error .icono {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+}
+
+.campo__control--seleccion {
+  appearance: auto;
+}
+
+@media (min-width: 48rem) {
+  .formulario--columnas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.formulario__completo {
+  grid-column: 1 / -1;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espacio-3);
+}
+
+/* Apilado vertical con separación uniforme */
+.pila {
+  display: grid;
+  gap: var(--espacio-4);
 }

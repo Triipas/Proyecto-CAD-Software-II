@@ -1,0 +1,35 @@
+@page "/panel/admin/cuentas/{id:guid}/editar"
+@model Cad.Server.Panel.Pages.Admin.Cuentas.EditarModel
+@{
+    ViewData["Title"] = "Modificar cuenta institucional";
+    ViewData["ClasePagina"] = "pagina--estrecha";
+    var f = Model.Formulario;
+}
+<p><a class="enlace-volver" href="/panel/admin/cuentas">← Cuentas institucionales</a></p>
+<div>
+    <p class="sobretitulo">Administrador</p>
+    <h1 class="titulo">Modificar cuenta institucional</h1>
+    <p class="texto-secundario">
+        @Model.Cuenta.Rol · @(Model.Cuenta.Activa ? "Activa" : "Desactivada").
+        El rol se fija al crear la cuenta; la desactivación corresponde a HU05.
+    </p>
+</div>
+
+<section class="superficie">
+    <form method="post" class="formulario formulario--columnas" data-formulario novalidate>
+        <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Nombres", "Formulario.Nombres", "Nombres", Valor: f.Nombres, Error: Model.ErrorDe("nombres"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Apellidos", "Formulario.Apellidos", "Apellidos", Valor: f.Apellidos, Error: Model.ErrorDe("apellidos"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Correo", "Formulario.Correo", "Correo electrónico", "email", f.Correo, Model.ErrorDe("correo"), "Es el identificador de acceso de la cuenta.", "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Telefono", "Formulario.Telefono", "Teléfono móvil", "tel", f.Telefono, Model.ErrorDe("telefono"), "9 dígitos, empieza por 9.", "off", Requerido: false))" />
+        <div class="formulario__completo">
+            <partial name="_Campo" model="@(new CampoFormulario("Formulario_NuevaContrasena", "Formulario.NuevaContrasena", "Nueva contraseña", "password", null, Model.ErrorDe("nuevaContrasena"), "Déjala vacía para mantener la actual. Entre 8 y 128 caracteres, con al menos una letra y un número.", "new-password", Requerido: false))" />
+        </div>
+
+        <div class="acciones formulario__completo">
+            <a class="boton boton--secundario" href="/panel/admin/cuentas">Cancelar</a>
+            <button type="submit" class="boton boton--principal" data-texto-carga="Guardando…">Guardar cambios</button>
+        </div>
+    </form>
+</section>

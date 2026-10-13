@@ -20,7 +20,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
 
     // Contenido = texto que solo debe ver quien tiene permiso (CA03: sin información restringida).
     // EstadoPropio: código con el que la operación responde cuando se ejecuta (la página de acceso denegado responde 403).
-    public sealed record Operacion(string Metodo, string Ruta, string Hu, Acceso Acceso, string? Rol = null, string? Contenido = null, int? EstadoPropio = null);
+    public sealed record Operacion(string Metodo, string Ruta, string Hu, Acceso Acceso, string? Rol = null, string? Contenido = null, int? EstadoPropio = null, string? Ejemplo = null);
 
     public static readonly Operacion[] Matriz =
     [
@@ -34,6 +34,11 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/panel/acceso-denegado", "HU03", Acceso.Publico, Contenido: "Tu rol no tiene permiso", EstadoPropio: 403),
         new("GET", "/panel/central", "HU11 (base)", Acceso.SoloRol, Roles.Operador, "Central de monitoreo"),
         new("GET", "/panel/admin", "HU04 (base)", Acceso.SoloRol, Roles.Administrador, "Interfaz del administrador"),
+        new("GET", "/panel/admin/cuentas", "HU04", Acceso.SoloRol, Roles.Administrador, "Cuentas institucionales"),
+        new("GET", "/panel/admin/cuentas/nueva", "HU04", Acceso.SoloRol, Roles.Administrador, "Nueva cuenta institucional"),
+        // Un identificador inexistente basta: el administrador llega a la página (404) y el resto es rechazado antes.
+        new("GET", "/panel/admin/cuentas/{id:guid}/editar", "HU04", Acceso.SoloRol, Roles.Administrador,
+            Ejemplo: "/panel/admin/cuentas/00000000-0000-0000-0000-000000000000/editar"),
     ];
 
     private static readonly string?[] Perfiles = [null, Roles.Ciudadano, Roles.Operador, Roles.Sereno, Roles.Administrador];
@@ -61,7 +66,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         };
 
         var cliente = await ClienteDeAsync(rol);
-        var respuesta = await cliente.SendAsync(new HttpRequestMessage(new HttpMethod(operacion.Metodo), operacion.Ruta)
+        var respuesta = await cliente.SendAsync(new HttpRequestMessage(new HttpMethod(operacion.Metodo), operacion.Ejemplo ?? operacion.Ruta)
         {
             Content = operacion.Metodo == "POST" ? JsonContent.Create(new { }) : null,
         });

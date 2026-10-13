@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 45 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 60 casos).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -31,6 +31,11 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/central` (página base de HU11) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
+| `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
+| `GET` y `POST /panel/admin/cuentas/nueva` (alta) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
+| `GET` y `POST /panel/admin/cuentas/{id}/editar` (modificación) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
+
+**HU03-CA03 «no se modifica ningún dato»:** verificado con las primeras operaciones de escritura restringidas (HU04). Un ciudadano, un sereno, un operador con sesión y token antifalsificación válidos, o una solicitud sin sesión, intentan crear y modificar cuentas por solicitud directa: todas se rechazan, el número de cuentas no cambia y la cuenta atacada conserva sus datos y su contraseña (`CuentasInstitucionalesTests.CA06_*`). Prueba de mutación: sin la política `Administrador` en el alta, el operador llega a crear una cuenta y la prueba falla.
 
 Las operaciones públicas lo son por definición (registro, inicio de sesión, salud). Que un rol pueda llamarlas no le da acceso a nada: el canal y la titularidad se validan dentro de cada caso de uso.
 
@@ -40,7 +45,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 
 | HU | Operación | Rol(es) según la HU | Estado de la verificación por rol |
 |---|---|---|---|
-| HU04 | Crear, consultar y modificar cuentas institucionales | Administrador | Pendiente (Sprint 1, S1-T10/T11). Solo la página base `/panel/admin` está verificada. |
+| HU04 | Crear, consultar y modificar cuentas institucionales | Administrador | **Verificada (12/10/2026):** listado, alta y modificación solo para Administrador; rechazo de solicitudes directas sin cambios en los datos. |
 | HU05 | Desactivar una cuenta institucional | Administrador | Pendiente (Sprint 4) |
 | HU06 | Preparar la geolocalización al abrir la aplicación | Ciudadano | Pendiente (Sprint 1; sin operación de servidor prevista) |
 | HU07 | Emitir un SOS con una única activación | Ciudadano | Pendiente (Sprint 1, S1-T13) |

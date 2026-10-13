@@ -24,7 +24,7 @@ public sealed class SembrarAdministrador(
             return;
         }
 
-        correo = RegistrarCiudadano.NormalizarCorreo(correo);
+        correo = ReglasCuenta.NormalizarCorreo(correo);
         if (await usuarios.FindByEmailAsync(correo) is not null)
             return;
 

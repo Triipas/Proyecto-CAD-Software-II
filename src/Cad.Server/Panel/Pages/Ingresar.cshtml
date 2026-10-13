@@ -13,7 +13,7 @@
         <p class="texto-secundario">Acceso para operadores de central y administradores.</p>
     </div>
 
-    <form method="post" class="formulario acceso__formulario" data-formulario-ingreso>
+    <form method="post" class="formulario acceso__formulario" data-formulario>
         @if (aviso is not null)
         {
             <div id="aviso-ingreso" class="aviso aviso--@aviso.Tipo" role="alert" tabindex="-1" data-enfocar>
@@ -52,5 +52,5 @@
 </p>
 
 @section Scripts {
-    <script src="~/js/ingresar.js" asp-append-version="true"></script>
+    <script src="~/js/formulario.js" asp-append-version="true"></script>
 }

@@ -1,10 +1,27 @@
 @page "/panel/acceso-denegado"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using System.Security.Claims
 @{
     ViewData["Title"] = "Acceso denegado";
+    ViewData["ClasePagina"] = "pagina--estrecha";
     Response.StatusCode = StatusCodes.Status403Forbidden;
+    var rol = User.FindFirstValue(Cad.Server.Compartido.Autenticacion.ReclamoRol);
+    var esRolDelPanel = rol is Cad.Server.Modulos.Cuentas.Dominio.Roles.Operador or Cad.Server.Modulos.Cuentas.Dominio.Roles.Administrador;
 }
-<div class="tarjeta">
-    <h1>Acceso denegado</h1>
-    <p>Tu rol no tiene permiso para esta sección.</p>
+<div class="aviso aviso--advertencia" role="alert">
+    <partial name="_Icono" model="@("advertencia")" />
+    <div>
+        <h1 class="aviso__titulo">Acceso denegado</h1>
+        <p class="aviso__texto">Tu rol no tiene permiso para esta sección.</p>
+    </div>
 </div>
+<p>
+    @if (esRolDelPanel)
+    {
+        <a class="enlace-volver" href="@Cad.Server.Panel.Pages.IngresarModel.InicioDe(rol!)">Volver a mi inicio</a>
+    }
+    else
+    {
+        <a class="enlace-volver" href="/panel/ingresar">Ir al ingreso del panel</a>
+    }
+</p>

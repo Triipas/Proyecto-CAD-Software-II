@@ -85,7 +85,7 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 
 ## Panel web
 
-`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
+`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
 
 ## Reglas del repositorio
 

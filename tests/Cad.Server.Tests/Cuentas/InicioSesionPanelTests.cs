@@ -149,7 +149,7 @@ public class InicioSesionPanelTests(FabricaCad fabrica)
     [Theory]
     [InlineData("/css/tokens.css", "text/css")]
     [InlineData("/css/panel.css", "text/css")]
-    [InlineData("/js/ingresar.js", "text/javascript")]
+    [InlineData("/js/formulario.js", "text/javascript")]
     [InlineData("/favicon.svg", "image/svg+xml")]
     public async Task Rediseno_RecursosDelPanel_SeSirvenSinSesion(string ruta, string tipo)
     {
@@ -166,7 +166,7 @@ public class InicioSesionPanelTests(FabricaCad fabrica)
 
         Assert.Contains("/css/tokens.css", html);
         Assert.Contains("/css/panel.css", html);
-        Assert.Contains("/js/ingresar.js", html);
+        Assert.Contains("/js/formulario.js", html);
         Assert.Contains("/favicon.svg", html);
         Assert.Contains("no es un canal oficial de emergencias", html);
     }
