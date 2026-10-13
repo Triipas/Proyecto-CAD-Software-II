@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +34,17 @@ public static partial class CuentasDePrueba
             Comprobar(await usuarios.AddToRoleAsync(usuario, rol));
             return new CuentaDePrueba(usuario.Id, correo, clave, rol);
         });
+    }
+
+    // Cliente de la app móvil (ciudadano o sereno) autenticado con su JWT (HU02).
+    public static async Task<HttpClient> CrearClienteAppAsync(this FabricaCad fabrica, CuentaDePrueba cuenta)
+    {
+        var respuesta = await fabrica.CreateClient().PostAsJsonAsync("/api/auth/token",
+            new Cad.Contratos.Cuentas.SolicitudInicioSesion(cuenta.Correo, cuenta.Clave));
+        var token = await respuesta.Content.ReadFromJsonAsync<Cad.Contratos.Cuentas.RespuestaToken>();
+        var cliente = fabrica.CreateClient();
+        cliente.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token!.Token);
+        return cliente;
     }
 
     // Cliente de navegador: HTTPS (la cookie del panel es Secure fuera de desarrollo) y sin seguir redirecciones.

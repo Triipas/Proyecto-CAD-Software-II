@@ -82,6 +82,7 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 | `POST /api/cuentas/registro` | Anónimo | HU01 | 201 cuenta creada · 400 datos faltantes o inválidos (con el motivo por campo) · 409 correo ya registrado |
 | `POST /api/auth/token` | Anónimo (ciudadano y sereno) | HU02 | 200 token JWT · 401 correo o contraseña incorrectos · 403 cuenta desactivada o rol que debe usar el panel |
 | `GET /api/cuentas/yo` | Cualquier cuenta autenticada (JWT o cookie del panel) | HU02 | 200 id, nombres, apellidos y rol · 401 sin sesión |
+| `POST /api/sos` | Ciudadano | HU07, HU08 | 201 SOS registrado (Pendiente, con o sin ubicación) · 200 mismo SOS ante un reintento con el mismo `idSolicitud` · 400 falta `idSolicitud` · 401/403 otros perfiles |
 
 ## Panel web
 

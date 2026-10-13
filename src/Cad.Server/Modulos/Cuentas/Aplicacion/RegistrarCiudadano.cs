@@ -63,7 +63,7 @@ public sealed class RegistrarCiudadano(
             await transaccion.CommitAsync(ct);
             return new ResultadoRegistro.Creado(usuario.Id);
         }
-        catch (DbUpdateException ex) when (ReglasCuenta.EsViolacionDeUnicidad(ex))
+        catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
         {
             return new ResultadoRegistro.Duplicado();
         }

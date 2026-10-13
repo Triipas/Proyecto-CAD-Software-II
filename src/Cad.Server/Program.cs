@@ -1,4 +1,5 @@
 using Cad.Server.Compartido;
+using Cad.Server.Modulos.Casos;
 using Cad.Server.Modulos.Cuentas;
 using Cad.Server.Modulos.Cuentas.Aplicacion;
 using Cad.Server.Persistencia;
@@ -28,6 +29,7 @@ builder.Services.AddRazorPages(opciones => opciones.RootDirectory = "/Panel/Page
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(opciones =>
     opciones.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
 builder.Services.AddModuloCuentas();
+builder.Services.AddModuloCasos();
 
 var app = builder.Build();
 
@@ -47,6 +49,7 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/salud").AllowAnonymous();
 app.MapModuloCuentas();
+app.MapModuloCasos();
 app.MapRazorPages();
 
 app.Run();

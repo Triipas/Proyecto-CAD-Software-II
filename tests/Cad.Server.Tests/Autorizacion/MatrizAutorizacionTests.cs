@@ -29,6 +29,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // Con cuerpo vacío el propio caso de uso responde 401 por credenciales (no es un rechazo de autorización).
         new("POST", "/api/auth/token", "HU02", Acceso.Publico, Contenido: "Correo o contraseña incorrectos.", EstadoPropio: 401),
         new("GET", "/api/cuentas/yo", "HU02", Acceso.CualquierSesion, Contenido: "\"rol\""),
+        // Con cuerpo vacío el ciudadano llega al caso de uso (400 por falta de IdSolicitud); el resto es rechazado antes.
+        new("POST", "/api/sos", "HU07", Acceso.SoloRol, Roles.Ciudadano),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),
         new("POST", "/panel/salir", "HU02", Acceso.Publico),
         new("GET", "/panel/acceso-denegado", "HU03", Acceso.Publico, Contenido: "Tu rol no tiene permiso", EstadoPropio: 403),

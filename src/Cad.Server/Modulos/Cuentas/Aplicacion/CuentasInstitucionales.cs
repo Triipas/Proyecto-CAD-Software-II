@@ -82,7 +82,7 @@ public sealed class CrearCuentaInstitucional(CadDbContext db, UserManager<Usuari
             await transaccion.CommitAsync(ct);
             return new ResultadoCuentaInstitucional.Correcto(usuario.Id);
         }
-        catch (DbUpdateException ex) when (ReglasCuenta.EsViolacionDeUnicidad(ex))
+        catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
         {
             return new ResultadoCuentaInstitucional.Duplicado();
         }
@@ -143,7 +143,7 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
             await transaccion.CommitAsync(ct);
             return new ResultadoCuentaInstitucional.Correcto(usuario.Id);
         }
-        catch (DbUpdateException ex) when (ReglasCuenta.EsViolacionDeUnicidad(ex))
+        catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
         {
             return new ResultadoCuentaInstitucional.Duplicado();
         }

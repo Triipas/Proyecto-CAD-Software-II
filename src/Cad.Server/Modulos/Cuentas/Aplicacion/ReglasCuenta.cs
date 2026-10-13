@@ -1,8 +1,6 @@
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace Cad.Server.Modulos.Cuentas.Aplicacion;
 
@@ -70,10 +68,6 @@ public static partial class ReglasCuenta
     // Errores de Identity que significan «ese correo ya pertenece a otra cuenta».
     public static bool EsDuplicado(IdentityResult resultado) =>
         resultado.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail");
-
-    // La garantía bajo concurrencia la da el índice único de la base de datos.
-    public static bool EsViolacionDeUnicidad(DbUpdateException ex) =>
-        ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
     // La validación propia ya cubre estas reglas; esto solo evita un 500 si Identity discrepa.
     public static Dictionary<string, string[]> ErroresDeIdentity(IdentityResult resultado, string campoContrasena) =>

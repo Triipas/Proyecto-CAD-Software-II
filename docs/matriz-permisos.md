@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 60 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 65 casos).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -26,6 +26,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/cuentas/registro` | HU01 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `POST /api/auth/token` (la app; el caso de uso solo emite token a ciudadano y sereno) | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /api/cuentas/yo` | HU02 | ✘ | ✔ | ✔ | ✔ | ✔ |
+| `POST /api/sos` | HU07, HU08 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `POST /panel/salir` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -48,8 +49,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU04 | Crear, consultar y modificar cuentas institucionales | Administrador | **Verificada (12/10/2026):** listado, alta y modificación solo para Administrador; rechazo de solicitudes directas sin cambios en los datos. |
 | HU05 | Desactivar una cuenta institucional | Administrador | Pendiente (Sprint 4) |
 | HU06 | Preparar la geolocalización al abrir la aplicación | Ciudadano | Pendiente (Sprint 1; sin operación de servidor prevista) |
-| HU07 | Emitir un SOS con una única activación | Ciudadano | Pendiente (Sprint 1, S1-T13) |
-| HU08 | Asociar la ubicación actual al SOS | Ciudadano | Pendiente (Sprint 1, S1-T15) |
+| HU07 | Emitir un SOS con una única activación | Ciudadano | **Verificada en el servidor (12/10/2026):** `POST /api/sos` solo para Ciudadano; solicitudes directas de los otros perfiles no crean casos (`SosTests.HU03_*`). La app (MAUI) está pendiente. |
+| HU08 | Asociar la ubicación actual al SOS | Ciudadano | Verificada en el servidor junto con HU07 (misma operación). Captura en la app pendiente. |
 | HU09 | Cancelar un SOS pendiente | Ciudadano | Pendiente (Sprint 5) |
 | HU10 | Registrar un reporte de incidencia | Ciudadano | Pendiente (Sprint 3) |
 | HU11 | Recibir los SOS en la sección de atención urgente | Operador | Pendiente (Sprint 1, S1-T17). Solo la página base `/panel/central` está verificada. |
