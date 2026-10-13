@@ -70,7 +70,11 @@ public class InicioSesionPanelTests(FabricaCad fabrica)
         var ingreso = await fabrica.CrearNavegador().IngresarAlPanelAsync(cuenta.Correo, cuenta.Clave);
 
         Assert.Equal(HttpStatusCode.OK, ingreso.StatusCode);
-        Assert.Contains("aplicación móvil", await ingreso.Content.ReadAsStringAsync());
+        var html = await ingreso.Content.ReadAsStringAsync();
+        // Mensaje completo: la página incluye además una nota general que menciona la aplicación móvil.
+        Assert.Contains("Esta cuenta debe ingresar desde la aplicación móvil.", html);
+        Assert.Contains("aviso--informacion", html);
+        Assert.DoesNotContain("aria-invalid", html);
         Assert.False(TieneCookieDeSesion(ingreso));
     }
 
@@ -107,6 +111,11 @@ public class InicioSesionPanelTests(FabricaCad fabrica)
         var html = await ingreso.Content.ReadAsStringAsync();
         Assert.Contains("Correo o contraseña incorrectos.", html);
         Assert.DoesNotContain("ClaveEquivocada1", html);
+        // El error no depende solo del color: aviso con tipo y campos marcados y enlazados al mensaje.
+        Assert.Contains("aviso--error", html);
+        Assert.Contains("role=\"alert\"", html);
+        Assert.Equal(2, CuentasDePrueba.Contar(html, "aria-invalid=\"true\""));
+        Assert.Equal(2, CuentasDePrueba.Contar(html, "aria-describedby=\"aviso-ingreso\""));
         Assert.False(TieneCookieDeSesion(ingreso));
         Assert.Equal(HttpStatusCode.Redirect, (await navegador.GetAsync("/panel/central")).StatusCode);
     }
@@ -130,8 +139,36 @@ public class InicioSesionPanelTests(FabricaCad fabrica)
 
         var ingreso = await fabrica.CrearNavegador().IngresarAlPanelAsync(cuenta.Correo, cuenta.Clave);
 
-        Assert.Contains("La cuenta está desactivada.", await ingreso.Content.ReadAsStringAsync());
+        var html = await ingreso.Content.ReadAsStringAsync();
+        Assert.Contains("La cuenta está desactivada.", html);
+        Assert.Contains("aviso--advertencia", html);
+        Assert.DoesNotContain("aria-invalid", html);
         Assert.False(TieneCookieDeSesion(ingreso));
+    }
+
+    [Theory]
+    [InlineData("/css/tokens.css", "text/css")]
+    [InlineData("/css/panel.css", "text/css")]
+    [InlineData("/js/ingresar.js", "text/javascript")]
+    [InlineData("/favicon.svg", "image/svg+xml")]
+    public async Task Rediseno_RecursosDelPanel_SeSirvenSinSesion(string ruta, string tipo)
+    {
+        var respuesta = await fabrica.CrearNavegador().GetAsync(ruta);
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.Equal(tipo, respuesta.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task Rediseno_PaginaDeIngreso_EnlazaEstilosScriptYFavicon()
+    {
+        var html = await fabrica.CrearNavegador().GetStringAsync("/panel/ingresar");
+
+        Assert.Contains("/css/tokens.css", html);
+        Assert.Contains("/css/panel.css", html);
+        Assert.Contains("/js/ingresar.js", html);
+        Assert.Contains("/favicon.svg", html);
+        Assert.Contains("no es un canal oficial de emergencias", html);
     }
 
     [Fact]

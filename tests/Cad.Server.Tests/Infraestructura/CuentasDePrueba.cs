@@ -62,6 +62,9 @@ public static partial class CuentasDePrueba
         return coincidencia.Groups[1].Value;
     }
 
+    public static int Contar(string texto, string fragmento) =>
+        (texto.Length - texto.Replace(fragmento, "").Length) / fragmento.Length;
+
     private static void Comprobar(IdentityResult resultado) =>
         Assert.True(resultado.Succeeded, string.Join(" ", resultado.Errors.Select(e => e.Code)));
 

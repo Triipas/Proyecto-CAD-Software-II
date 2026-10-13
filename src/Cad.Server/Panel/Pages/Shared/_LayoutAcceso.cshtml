@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Central CAD</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
+</head>
+@* Pantallas sin sesión: sin encabezado de sesión ni navegación. *@
+<body>
+    <main class="acceso">
+        <div class="acceso__contenido">
+            <div class="marca">
+                <span class="marca__escudo"><partial name="_Icono" model="@("escudo")" /></span>
+                <div>
+                    <p class="marca__nombre">Central CAD</p>
+                    <p class="marca__aviso">MVP académico · datos simulados · no es un canal oficial de emergencias</p>
+                </div>
+            </div>
+            @RenderBody()
+        </div>
+    </main>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

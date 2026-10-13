@@ -1,0 +1,72 @@
+/*
+  Tokens de diseño del panel de central.
+  Contraste WCAG 2.2 verificado el 12/10/2026 (texto ≥ 4.5:1; bordes de controles y foco ≥ 3:1).
+  La futura app MAUI debe reutilizar los mismos nombres en su ResourceDictionary.
+*/
+:root {
+  /* Marca y acción */
+  --color-marino: #102A43;          /* blanco encima: 14.64:1 */
+  --color-primario: #2563EB;        /* blanco encima: 5.17:1; como texto sobre blanco: 5.17:1 */
+  --color-primario-hover: #1D4ED8;  /* blanco encima: 6.70:1 */
+  --color-tenue: #EFF6FF;
+
+  /* Superficies y texto */
+  --color-fondo: #F4F7FB;
+  --color-superficie: #FFFFFF;
+  --color-texto: #172B4D;            /* 13.1–14.1:1 sobre fondo y superficie */
+  --color-texto-secundario: #4A5B73; /* 6.44:1 sobre fondo; 6.92:1 sobre superficie */
+  --color-texto-sobre-marino: #BCCCDC; /* 8.93:1 */
+
+  /* Bordes */
+  --color-borde: #DCE4EE;           /* decorativo: separa superficies */
+  --color-borde-control: #7B8BA1;   /* campos: 3.47:1 sobre superficie */
+
+  /* Foco */
+  --color-foco: #2563EB;            /* 5.17:1 sobre superficie */
+  --color-foco-sobre-marino: #93C5FD; /* 8.12:1 */
+
+  /* Estados: cada uno se acompaña siempre de icono y texto */
+  --color-error: #B42318;           /* 6.05:1 sobre su fondo */
+  --color-error-fondo: #FEF3F2;
+  --color-error-borde: #F4C7C3;
+  --color-advertencia: #93370D;     /* 7.21:1 */
+  --color-advertencia-fondo: #FFFAEB;
+  --color-advertencia-borde: #F5D9A8;
+  --color-informacion: #1E40AF;     /* 8.01:1 */
+  --color-informacion-fondo: #EFF6FF;
+  --color-informacion-borde: #BFD3F5;
+  --color-exito: #05603A;           /* 7.26:1 */
+  --color-exito-fondo: #ECFDF3;
+  --color-exito-borde: #ABEFC6;
+
+  /* Tipografía: fuentes del sistema, sin descargas */
+  --fuente: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --texto-xs: 0.8125rem;  /* 13 px: tamaño mínimo */
+  --texto-sm: 0.875rem;   /* 14 px */
+  --texto-md: 1rem;       /* 16 px */
+  --texto-lg: 1.125rem;   /* 18 px */
+  --texto-xl: 1.375rem;   /* 22 px */
+  --texto-2xl: 1.75rem;   /* 28 px */
+  --peso-normal: 400;
+  --peso-medio: 600;
+  --peso-fuerte: 700;
+  --interlineado: 1.5;
+  --interlineado-titulo: 1.25;
+
+  /* Espaciado (escala de 4 px) */
+  --espacio-1: 0.25rem;
+  --espacio-2: 0.5rem;
+  --espacio-3: 0.75rem;
+  --espacio-4: 1rem;
+  --espacio-6: 1.5rem;
+  --espacio-8: 2rem;
+  --espacio-12: 3rem;
+
+  /* Formas */
+  --radio-control: 6px;
+  --radio-superficie: 8px;
+  --grosor-borde: 1px;
+  --grosor-foco: 2px;
+  --separacion-foco: 2px;
+  --alto-control: 2.75rem; /* 44 px: objetivo táctil cómodo */
+}

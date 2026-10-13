@@ -38,6 +38,9 @@ if (app.Configuration.GetValue<bool>("BaseDatos:MigrarAlIniciar"))
     await alcance.ServiceProvider.GetRequiredService<SembrarAdministrador>().EjecutarAsync();
 }
 
+// Hojas de estilo, scripts e iconos del panel (wwwroot); no requieren sesión.
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
