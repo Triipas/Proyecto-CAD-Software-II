@@ -154,6 +154,33 @@ public class RegistroCiudadanoTests(FabricaCad fabrica)
         Assert.Equal(1, rolesAsignados);
     }
 
+    // La prueba HTTP anterior suele resolverse en la comprobación previa del caso de uso.
+    // Esta verifica la garantía de fondo: aunque dos solicitudes superen esa comprobación a la vez,
+    // la base de datos rechaza la segunda cuenta con el mismo correo (y RegistrarCiudadano lo traduce a 409).
+    [Fact]
+    public async Task CA05_IndiceUnico_BaseDeDatosRechazaSegundaCuentaConElMismoCorreo()
+    {
+        var correo = CorreoUnico();
+        Usuario NuevaCuenta() => new()
+        {
+            Id = Guid.CreateVersion7(),
+            UserName = correo,
+            NormalizedUserName = correo.ToUpperInvariant(),
+            Email = correo,
+            NormalizedEmail = correo.ToUpperInvariant(),
+            Nombres = "Rosa",
+            Apellidos = "Quispe",
+            SecurityStamp = Guid.NewGuid().ToString(),
+        };
+
+        await fabrica.ConBaseDatosAsync(async db => { db.Users.Add(NuevaCuenta()); return await db.SaveChangesAsync(); });
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() =>
+            fabrica.ConBaseDatosAsync(async db => { db.Users.Add(NuevaCuenta()); return await db.SaveChangesAsync(); }));
+
+        var postgres = Assert.IsType<Npgsql.PostgresException>(error.InnerException);
+        Assert.Equal(Npgsql.PostgresErrorCodes.UniqueViolation, postgres.SqlState);
+    }
+
     [Fact]
     public async Task CA06_Contrasena_SeGuardaConHashPbkdf2YNoApareceEnBaseDeDatosNiRegistros()
     {

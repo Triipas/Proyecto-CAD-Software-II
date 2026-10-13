@@ -13,8 +13,8 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S1-T02 | TEC01 | Datos de prueba por rol y canal cifrado | Pendiente | — |
 | S1-T03 | SPIKE01 | Captura y transmisión de ubicación en 4 condiciones | Pendiente | — |
 | S1-T04 | SPIKE01 | Nota técnica | Pendiente | — |
-| S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Implementada; pruebas pendientes de ejecución (requieren Docker) | `POST /api/cuentas/registro`; `RegistroCiudadanoTests` CA01–CA05 |
-| S1-T06 | HU01 | Hash de contraseña documentado | Implementada; pruebas pendientes de ejecución (requieren Docker) | [seguridad-contrasenas.md](seguridad-contrasenas.md); `RegistroCiudadanoTests` CA06 |
+| S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Implementada y verificada en local (falta el entorno publicado) | `POST /api/cuentas/registro`; `RegistroCiudadanoTests` CA01–CA05 en verde contra PostgreSQL 17 |
+| S1-T06 | HU01 | Hash de contraseña documentado | Implementada y verificada en local (falta revisar los registros del entorno publicado) | [seguridad-contrasenas.md](seguridad-contrasenas.md); `RegistroCiudadanoTests` CA06 en verde |
 | S1-T07 | HU02 | Inicio de sesión por rol | Pendiente | — |
 | S1-T08 | HU02 | Credenciales solo por canal cifrado | Pendiente | — |
 | S1-T09 | HU03 | Matriz de permisos y rechazo de solicitudes directas | Pendiente | — |
@@ -52,3 +52,9 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | Bloque | Fecha | Tareas | Resultado |
 |---|---|---|---|
 | 1 — Esqueleto local | 12/10/2026 | S1-T01 (parcial) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 2/2 superadas. `GET /salud` → 200 `Healthy`. |
+| 2 — Registro de ciudadano | 12/10/2026 | S1-T05, S1-T06 (HU01) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 22/22 superadas contra PostgreSQL 17 (Docker). Servidor real: 201 / 409 / 400 con motivos por campo. Sin contraseñas, correos ni teléfonos en los registros. |
+
+### Observaciones del bloque 2
+
+- La prueba HTTP de CA05 (10 registros simultáneos) se resolvió en la comprobación previa del caso de uso: no llegó a producir una violación de unicidad en la base de datos. Por eso se añadió `CA05_IndiceUnico_*`, que verifica directamente que PostgreSQL rechaza la segunda cuenta con el mismo correo. La traducción de esa violación a 409 en `RegistrarCiudadano` está revisada en el código, pero no se ha forzado con una carrera real.
+- HU01 no se acepta todavía: falta verificarla en el entorno publicado (RNF09 y S1-T21).
