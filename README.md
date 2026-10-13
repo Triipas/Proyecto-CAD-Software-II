@@ -88,6 +88,10 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 
 `http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). El operador ve en `/panel/central` la sección urgente de SOS en tiempo real (HU11), con aviso visual y sonoro (actívalo con «Activar avisos sonoros») y el mapa operativo base. Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
 
+## Despliegue
+
+Entorno de validación en Render + Neon (gratuito, [ADR-06](docs/decisiones/ADR-06-entorno-de-validacion.md)): `Dockerfile`, `render.yaml` y guía paso a paso en [docs/despliegue.md](docs/despliegue.md). La CI de GitHub Actions compila, prueba y construye la imagen en cada PR.
+
 ## Pruebas no funcionales
 
 Medición de RNF02 con `tests/Cad.PruebaCarga`: procedimiento y resultados en [docs/pruebas.md](docs/pruebas.md).

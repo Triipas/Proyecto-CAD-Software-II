@@ -25,6 +25,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
     public static readonly Operacion[] Matriz =
     [
         new("GET", "/salud", "TEC01", Acceso.Publico),
+        new("GET", "/salud/lista", "TEC01", Acceso.Publico),
         new("POST", "/api/cuentas/registro", "HU01", Acceso.Publico),
         // Con cuerpo vacío el propio caso de uso responde 401 por credenciales (no es un rechazo de autorización).
         new("POST", "/api/auth/token", "HU02", Acceso.Publico, Contenido: "Correo o contraseña incorrectos.", EstadoPropio: 401),

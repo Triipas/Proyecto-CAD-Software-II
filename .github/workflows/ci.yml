@@ -1,0 +1,51 @@
+# Integración continua (RNF14): compila, ejecuta todas las pruebas contra PostgreSQL real y
+# comprueba que la imagen Docker del entorno de validación se construye.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    name: Compilación y pruebas
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: cad
+          POSTGRES_DB: cad
+          # Contenedor efímero de CI, solo accesible desde el propio trabajo: sin contraseña en el repositorio.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cad -d cad"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+      CAD_PRUEBAS_CONEXION: "Host=localhost;Port=5432;Database=cad_pruebas;Username=cad"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet restore Cad.slnx
+      - run: dotnet build Cad.slnx --no-restore -c Release
+      - run: dotnet test Cad.slnx --no-build -c Release --logger "console;verbosity=normal"
+
+  imagen:
+    name: Imagen Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t cad-servidor:ci .

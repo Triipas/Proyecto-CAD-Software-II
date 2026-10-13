@@ -1,0 +1,13 @@
+# La imagen solo necesita src/ y global.json. Nunca secretos ni artefactos locales.
+**/bin/
+**/obj/
+.git/
+.github/
+.claude/
+.playwright-mcp/
+.env
+.env.*
+docs/
+tests/
+docker-compose.yml
+**/node_modules/
