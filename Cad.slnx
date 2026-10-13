@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Cad.Contratos/Cad.Contratos.csproj" />
     <Project Path="src/Cad.Server/Cad.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">

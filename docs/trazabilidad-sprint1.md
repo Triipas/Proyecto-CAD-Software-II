@@ -13,8 +13,8 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S1-T02 | TEC01 | Datos de prueba por rol y canal cifrado | Pendiente | — |
 | S1-T03 | SPIKE01 | Captura y transmisión de ubicación en 4 condiciones | Pendiente | — |
 | S1-T04 | SPIKE01 | Nota técnica | Pendiente | — |
-| S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Pendiente | — |
-| S1-T06 | HU01 | Hash de contraseña documentado | Pendiente | — |
+| S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Implementada; pruebas pendientes de ejecución (requieren Docker) | `POST /api/cuentas/registro`; `RegistroCiudadanoTests` CA01–CA05 |
+| S1-T06 | HU01 | Hash de contraseña documentado | Implementada; pruebas pendientes de ejecución (requieren Docker) | [seguridad-contrasenas.md](seguridad-contrasenas.md); `RegistroCiudadanoTests` CA06 |
 | S1-T07 | HU02 | Inicio de sesión por rol | Pendiente | — |
 | S1-T08 | HU02 | Credenciales solo por canal cifrado | Pendiente | — |
 | S1-T09 | HU03 | Matriz de permisos y rechazo de solicitudes directas | Pendiente | — |
@@ -41,7 +41,10 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | Base de datos local | PostgreSQL en Docker. |
 | DP02 — alta de administradores | Administrador inicial sembrado mediante variables de entorno, solo para validación. |
 | HU11-CA01 — mapa | Mapa base mínimo en el Sprint 1 (dependencia mínima de HU25, aprobada). |
-| DP01, DP04, DP11, DP14 | Delegadas en el desarrollo según el contexto del proyecto; la propuesta concreta se registra aquí cuando el equipo la valide. |
+| DP01 — datos del registro | **Validada.** Obligatorios: nombres, apellidos, correo electrónico (identificador de acceso, normalizado y único), teléfono móvil (9 dígitos, empieza por 9) y contraseña (8–128 caracteres, al menos una letra y un número). No se pide DNI. |
+| DP04 — «operador autorizado» | Propuesta (pendiente de validación): cualquier cuenta activa con rol Operador, mediante políticas con nombre propio para poder restringirla después. El administrador no recibe permisos de operador. |
+| DP11 — ubicación del SOS | Propuesta (pendiente de validación): solo cuenta como actual una posición obtenida después de la activación; espera máxima configurable (10 s); si se agota, «Ubicación no disponible»; precisión guardada sin umbral de rechazo. |
+| DP14 — SOS repetidos | Propuesta (pendiente de validación): cada activación crea un SOS nuevo, aunque exista otro pendiente; solo los reintentos con el mismo IdSolicitud se tratan como el mismo SOS. |
 | Hosting del entorno de validación | Pendiente. Cualquier opción con costo requiere autorización expresa. |
 
 ## Bloques ejecutados

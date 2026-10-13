@@ -1,10 +1,11 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests;
 
 // S1-T01 (TEC01): el servidor arranca y responde al sondeo de salud.
-public class SaludTests(WebApplicationFactory<Program> fabrica) : IClassFixture<WebApplicationFactory<Program>>
+[Collection(ColeccionServidor.Nombre)]
+public class SaludTests(FabricaCad fabrica)
 {
     [Fact]
     public async Task Salud_ServidorEnEjecucion_Responde200Healthy()

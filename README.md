@@ -11,17 +11,42 @@ Sprint 1 en curso. El avance por tarea está en [docs/trazabilidad-sprint1.md](d
 ## Requisitos
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0) (fijado en `global.json`; acepta cualquier 10.0.x igual o superior a 10.0.100).
+- Docker Desktop (con WSL 2) para PostgreSQL local.
 
-Requisitos previstos para bloques posteriores (todavía no necesarios): Docker Desktop (PostgreSQL local) y la carga de trabajo de .NET MAUI para Android.
+Requisito previsto para bloques posteriores: la carga de trabajo de .NET MAUI para Android.
 
 ## Estructura
 
 ```
 Cad.slnx                     solución
 src/Cad.Server/              Servidor CAD (ASP.NET Core 10): API, panel y tiempo real
-tests/Cad.Server.Tests/      pruebas (xUnit + WebApplicationFactory)
+  Modulos/Cuentas/           registro, inicio de sesión y cuentas (HU01–HU05)
+  Persistencia/              CadDbContext y migraciones de EF Core
+src/Cad.Contratos/           DTO compartidos entre servidor y app móvil
+tests/Cad.Server.Tests/      pruebas (xUnit + WebApplicationFactory + PostgreSQL real)
 docs/                        trazabilidad y documentación técnica
+docker-compose.yml           PostgreSQL 17 local
 ```
+
+## Base de datos local
+
+1. Copia `.env.example` a `.env` y define `POSTGRES_PASSWORD` con un valor propio. `.env` no se sube al repositorio.
+2. Levanta PostgreSQL (solo escucha en `127.0.0.1`):
+   ```bash
+   docker compose up -d
+   ```
+3. Guarda la cadena de conexión del servidor en user-secrets, que queda fuera del repositorio. Usa los mismos valores de tu `.env`:
+   ```bash
+   dotnet user-secrets set "ConnectionStrings:Cad" "Host=localhost;Port=5432;Database=cad;Username=cad;Password=TU_CONTRASEÑA" --project src/Cad.Server
+   ```
+
+El servidor aplica las migraciones al arrancar. Las pruebas usan otra base, `cad_pruebas`, que borran y recrean en cada ejecución, y leen las credenciales de `.env` (o de la variable `CAD_PRUEBAS_CONEXION`).
+
+Para crear una migración nueva:
+```bash
+dotnet ef migrations add NombreMigracion --project src/Cad.Server --output-dir Persistencia/Migraciones
+```
+`dotnet-ef` es una herramienta local: ejecuta antes `dotnet tool restore`.
 
 ## Comandos
 
@@ -32,6 +57,12 @@ dotnet run --project src/Cad.Server --launch-profile http
 ```
 
 Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Este sondeo indica solo que el proceso está activo; no consulta la base de datos.
+
+## API disponible
+
+| Método y ruta | Rol | HU | Respuestas |
+|---|---|---|---|
+| `POST /api/cuentas/registro` | Anónimo | HU01 | 201 cuenta creada · 400 datos faltantes o inválidos (con el motivo por campo) · 409 correo ya registrado |
 
 ## Reglas del repositorio
 
