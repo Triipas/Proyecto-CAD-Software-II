@@ -9,14 +9,14 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 
 | ID | HU/PBI | Tarea | Estado | Evidencia |
 |---|---|---|---|---|
-| S1-T01 | TEC01 | Procedimiento de despliegue repetible | En curso | Bloque 1: solución local con `/salud` y pruebas. Falta el despliegue publicado (hosting pendiente). |
-| S1-T02 | TEC01 | Datos de prueba por rol y canal cifrado | Pendiente | — |
+| S1-T01 | TEC01 | Procedimiento de despliegue repetible | Preparado y verificado con el contenedor en local; **despliegue en Render pendiente del equipo** | `Dockerfile` (sin root), `render.yaml` (plan gratuito, ADR-06), [despliegue.md](despliegue.md). CI en GitHub Actions. Contenedor ejecutado en Docker contra PostgreSQL. |
+| S1-T02 | TEC01 | Datos de prueba por rol y canal cifrado | Preparado; pendiente de ejecutar en el entorno publicado | HTTPS forzado tras el proxy, HSTS y cookie Secure (`DespliegueTests`); procedimiento de datos por rol en [despliegue.md](despliegue.md), sección 3. |
 | S1-T03 | SPIKE01 | Captura y transmisión de ubicación en 4 condiciones | Pendiente | — |
 | S1-T04 | SPIKE01 | Nota técnica | Pendiente | — |
 | S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Implementada y verificada en local (falta el entorno publicado) | `POST /api/cuentas/registro`; `RegistroCiudadanoTests` CA01–CA05 en verde contra PostgreSQL 17 |
 | S1-T06 | HU01 | Hash de contraseña documentado | Implementada y verificada en local (falta revisar los registros del entorno publicado) | [seguridad-contrasenas.md](seguridad-contrasenas.md); `RegistroCiudadanoTests` CA06 en verde |
 | S1-T07 | HU02 | Inicio de sesión por rol | Implementada y verificada en local | App: `POST /api/auth/token` (JWT). Panel: `/panel/ingresar` (cookie). `InicioSesionAppTests` e `InicioSesionPanelTests`: CA01–CA04 en verde. CA05 (canal cifrado) corresponde a S1-T08. |
-| S1-T08 | HU02 | Credenciales solo por canal cifrado | Pendiente | — |
+| S1-T08 | HU02 | Credenciales solo por canal cifrado | Preparado; pendiente de comprobar en el entorno publicado | Redirección HTTP→HTTPS salvo `/salud`; comprobación de HU02-CA05 descrita en [despliegue.md](despliegue.md). |
 | S1-T09 | HU03 | Matriz de permisos y rechazo de solicitudes directas | Implementada y verificada en local | Políticas con nombre y denegación por defecto; [matriz-permisos.md](matriz-permisos.md); `MatrizAutorizacionTests` (45 casos ruta × perfil + control de rutas no declaradas). |
 | S1-T10 | HU04 | Gestión de cuentas institucionales | Implementada y verificada en local | `/panel/admin/cuentas` (listado, alta, modificación); `CuentasInstitucionalesTests` CA01–CA05. |
 | S1-T11 | HU04 | Sin contraseñas en claro; solo administrador | Implementada y verificada en local | `CuentasInstitucionalesTests` CA06 (solicitudes directas de los otros perfiles, sin cambios en los datos) y CA07 (hash V3 al crear y al cambiar la contraseña; nada en registros). |
@@ -59,6 +59,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | 6 — Emisión de SOS (servidor) | 12/10/2026 | S1-T13, S1-T14, S1-T15 (servidor) (HU07, HU08); DP11, DP14 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 161/161 superadas. Prueba de mutación: sin normalizar la hora a UTC, PostgreSQL rechaza la ubicación. |
 | 7 — Recepción en la central | 13/10/2026 | S1-T17 (HU11) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 176/176 superadas. Chrome (Playwright, 1366×768): SOS visible sin recargar, aviso visual y sonoro, marcador solo con ubicación, desconexión visible y SOS recuperado al reconectar, sin errores de consola. |
 | 8 — Medición de RNF02 | 13/10/2026 | S1-T18 (HU11-CA05); E7 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 188/188 superadas. Ensayo local con panel real en Chrome y 20 sesiones: 100/100 SOS presentados en ≤ 3 s (p50 45 ms, p95 178 ms, máx. 409 ms). **No válido para aceptar RNF02** (exige el entorno publicado). |
+| 9 — Preparación del despliegue | 13/10/2026 | S1-T01, S1-T02, S1-T08 (TEC01); RNF09 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 201/201 superadas. Imagen Docker construida y **contenedor ejecutado** como en Render: `/salud` y `/salud/lista` OK, HTTP→HTTPS 307, HSTS, proceso sin root, registros 100 % JSON sin datos sensibles, claves de Data Protection en PostgreSQL. |
 
 ### Observaciones del bloque 2
 
@@ -120,3 +121,13 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 - **Composición de las 20 sesiones (propuesta):** 19 sesiones de ciudadano que emiten SOS de forma concurrente y 1 panel real de operador. RNF02 no fija la composición; RNF03 (otra prueba) exige además serenos y acompañamientos.
 - **Hosting (E7):** Render gratuito + Neon gratuito (ADR-06). La medición en ese entorno exige calentar antes el servicio.
 - **Ensayo local:** útil para validar la herramienta y detectar problemas, pero no sustituye la medición en el entorno de pruebas que exige el requisito.
+
+### Decisiones y observaciones del bloque 9
+
+- **Detrás del proxy de Render** (`Despliegue:DetrasDeProxy=true`, solo en ese entorno): se aceptan `X-Forwarded-For` y `X-Forwarded-Proto`, se redirige HTTP→HTTPS (RNF09) y se envía HSTS. Excepción: `/salud` y `/salud/lista`, que Render consulta por HTTP interno y no llevan datos. Fuera de Render, las cabeceras reenviadas no se aceptan, para que nadie se haga pasar por HTTPS.
+- **Sondeos:** `/salud` no toca la base de datos (no despierta Neon); `/salud/lista` sí la comprueba.
+- **Claves de Data Protection en PostgreSQL:** las cookies del panel y los tokens antifalsificación siguen siendo válidos tras cada despliegue (el disco del contenedor es efímero). Se guardan sin cifrado adicional en reposo: aceptable con datos ficticios; revisarlo antes de cualquier uso real.
+- **Npgsql sin GSSAPI:** no se usa Kerberos; sin desactivarlo, la imagen escribía errores de una librería ausente fuera del registro estructurado.
+- **Producción:** registros en JSON y consultas SQL solo a nivel `Warning`.
+- **CI** (`.github/workflows/ci.yml`): compilación y pruebas contra PostgreSQL 17 y construcción de la imagen en cada PR y en `main`. La base de CI es un contenedor efímero sin contraseña en el repositorio. Render despliega `main` solo si la CI pasa.
+- **Pendiente del equipo:** crear las cuentas de Neon y Render y aplicar el Blueprint ([despliegue.md](despliegue.md)). Después: comprobaciones de RNF09/HU02-CA05 en el entorno, datos por rol (S1-T02), medición formal de RNF02 y demostración de extremo a extremo (S1-T21).

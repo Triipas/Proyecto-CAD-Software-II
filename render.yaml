@@ -1,0 +1,32 @@
+# Blueprint de Render para el entorno de validación (ADR-06): plan gratuito, sin costo.
+# Los secretos NO están aquí: se introducen en el panel de Render (sync: false) o los genera Render.
+# Guía completa: docs/despliegue.md
+services:
+  - type: web
+    name: cad-servidor
+    runtime: docker
+    plan: free
+    region: virginia            # misma región que Neon (AWS us-east-1)
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /salud     # proceso vivo; /salud/lista comprueba además la base de datos
+    autoDeployTrigger: checksPass  # despliega main solo si la CI de GitHub pasa
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: PORT
+        value: "8080"
+      - key: ASPNETCORE_HTTPS_PORT
+        value: "443"
+      - key: Despliegue__DetrasDeProxy
+        value: "true"
+      - key: Medicion__Rnf02__Habilitada
+        value: "false"          # activar solo durante la medición de RNF02 (docs/pruebas.md)
+      - key: Jwt__ClaveFirma
+        generateValue: true     # Render genera un valor aleatorio de 256 bits en Base64
+      - key: ConnectionStrings__Cad
+        sync: false             # cadena de Neon en formato Npgsql (ver docs/despliegue.md)
+      - key: Admin__Email
+        sync: false
+      - key: Admin__ClaveInicial
+        sync: false

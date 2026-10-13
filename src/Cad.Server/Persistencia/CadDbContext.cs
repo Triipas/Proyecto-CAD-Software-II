@@ -1,5 +1,6 @@
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -7,8 +8,12 @@ using Microsoft.EntityFrameworkCore;
 namespace Cad.Server.Persistencia;
 
 public class CadDbContext(DbContextOptions<CadDbContext> options)
-    : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>(options)
+    : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
 {
+    // Claves que protegen las cookies del panel y los tokens antifalsificación. En la base de datos
+    // sobreviven a cada despliegue (el sistema de archivos del contenedor es efímero; Plan de Arquitectura, Tabla 21).
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     public DbSet<Caso> Casos => Set<Caso>();
     public DbSet<EventoCaso> EventosCaso => Set<EventoCaso>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
