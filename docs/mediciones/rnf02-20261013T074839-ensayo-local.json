@@ -1,0 +1,18 @@
+{
+  "Entorno": "ensayo-local",
+  "ejecucion": "20261013T074839",
+  "resultado": {
+    "SesionesConcurrentes": 20,
+    "SosAceptados": 100,
+    "SosConAcuse": 100,
+    "DentroDelLimite": 100,
+    "PorcentajeDentroDelLimite": 100,
+    "P50Ms": 45.482,
+    "P95Ms": 178.202,
+    "MaximoMs": 408.845,
+    "CumpleTamanoDeMuestra": true,
+    "CumpleSesiones": true,
+    "Cumple": true
+  },
+  "rechazos": {}
+}
