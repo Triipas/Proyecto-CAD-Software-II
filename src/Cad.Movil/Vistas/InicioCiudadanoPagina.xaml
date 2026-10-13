@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir) y HU07/HU08 (SOS con una única activación). -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.InicioCiudadanoPagina"
+             x:DataType="vm:InicioCiudadanoVistaModelo"
+             Title="Inicio">
+    <ScrollView>
+        <VerticalStackLayout Padding="16,24" Spacing="16" MaximumWidthRequest="480">
+            <Grid ColumnDefinitions="*,Auto">
+                <VerticalStackLayout>
+                    <Label Text="Ciudadano" Style="{StaticResource Sobretitulo}" />
+                    <Label Text="Pedir ayuda" Style="{StaticResource Titulo}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="Salir" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" VerticalOptions="Center" />
+            </Grid>
+
+            <!-- HU06: estado del permiso de ubicación (sin transmitir nada). -->
+            <v:Aviso Tipo="{Binding TipoAvisoUbicacion}" Texto="{Binding TextoUbicacion}" />
+            <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}"
+                    Command="{Binding PermitirUbicacion}" IsVisible="{Binding MostrarExplicacion}" />
+            <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}"
+                    Command="{Binding AbrirAjustes}" IsVisible="{Binding MostrarAjustes}" />
+
+            <!-- HU07: un toque inicia el SOS, sin formulario ni confirmación. -->
+            <Border Style="{StaticResource Superficie}" Padding="16,24">
+                <VerticalStackLayout Spacing="16">
+                    <Button x:Name="BotonSos"
+                            Text="{Binding TextoBotonSos}"
+                            Command="{Binding EmitirSos}"
+                            WidthRequest="200" HeightRequest="200" CornerRadius="100"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{StaticResource ColorUrgente}" TextColor="White"
+                            FontSize="40" FontAttributes="Bold"
+                            SemanticProperties.Description="Emitir SOS"
+                            SemanticProperties.Hint="Envía una alerta urgente a la central con una sola pulsación, sin confirmación">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroupList>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="{StaticResource ColorUrgenteActivo}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="FontSize" Value="22" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateGroupList>
+                        </VisualStateManager.VisualStateGroups>
+                    </Button>
+                    <Label Text="Pulsa una vez para pedir ayuda urgente. No se pide confirmación." Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
+
+                    <v:Aviso Tipo="{Binding TipoAvisoSos}" Texto="{Binding TextoSos}" IsVisible="{Binding HayEstadoSos}" />
+                    <Button Text="Reintentar el mismo SOS" Style="{StaticResource BotonPrincipal}"
+                            Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
+                    <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}"
+                            Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Android: los dispositivos de prueba del equipo son Android (Plan de Arquitectura, ADR-01).
+		     net10.0 (sin plataforma) solo existe para probar la lógica de la app con xUnit. -->
+		<TargetFrameworks>net10.0-android;net10.0</TargetFrameworks>
+		<OutputType Condition="'$(TargetFramework)' != 'net10.0'">Exe</OutputType>
+
+		<RootNamespace>Cad.Movil</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<MauiXamlInflator>SourceGen</MauiXamlInflator>
+
+		<ApplicationTitle>CAD Móvil</ApplicationTitle>
+		<ApplicationId>pe.cadmvp.movil</ApplicationId>
+		<ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Icono y pantalla de inicio con el azul marino de los tokens (#102A43). -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#102A43" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#102A43" BaseSize="128,128" />
+		<MauiImage Include="Resources\Images\*" />
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Cad.Contratos\Cad.Contratos.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- HU02 — Iniciar sesión (ciudadano y sereno). -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.IngresoPagina"
+             x:DataType="vm:IngresoVistaModelo"
+             Title="Ingresar">
+    <ScrollView>
+        <VerticalStackLayout Padding="16,32" Spacing="16" MaximumWidthRequest="480">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="CAD Móvil" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ColorMarino}" />
+                <Label Text="MVP académico · datos simulados · no es un canal oficial de emergencias" Style="{StaticResource TextoSecundario}" FontSize="13" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource Superficie}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Ciudadanos y serenos" Style="{StaticResource Sobretitulo}" />
+                    <Label Text="Ingresar" Style="{StaticResource Titulo}" />
+
+                    <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+
+                    <Label Text="Correo electrónico" Style="{StaticResource Etiqueta}" />
+                    <Border Style="{StaticResource MarcoCampo}">
+                        <Entry Text="{Binding Correo}" Keyboard="Email" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False"
+                               SemanticProperties.Description="Correo electrónico" />
+                    </Border>
+
+                    <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
+                    <Border Style="{StaticResource MarcoCampo}">
+                        <Entry Text="{Binding Contrasena}" IsPassword="True" SemanticProperties.Description="Contraseña" />
+                    </Border>
+
+                    <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" />
+                    <Button Text="Crear una cuenta de ciudadano" Style="{StaticResource BotonSecundario}" Command="{Binding IrARegistro}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Dirección del servidor" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}">
+                    <Entry Text="{Binding DireccionServidor}" Keyboard="Url" IsSpellCheckEnabled="False"
+                           SemanticProperties.Description="Dirección del servidor" />
+                </Border>
+                <Label Text="Debe usar https:// (canal cifrado). En el emulador, el servidor local es http://10.0.2.2:5220/."
+                       Style="{StaticResource TextoSecundario}" FontSize="13" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
