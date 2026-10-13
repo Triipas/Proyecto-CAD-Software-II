@@ -22,6 +22,94 @@ namespace Cad.Server.Persistencia.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Caso", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CiudadanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("IdSolicitud")
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Latitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<double?>("PrecisionMetros")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("RegistradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("UbicacionObtenidaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CiudadanoId", "IdSolicitud")
+                        .IsUnique();
+
+                    b.ToTable("Casos", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Casos_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
+
+                            t.HasCheckConstraint("CK_Casos_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
+
+                            t.HasCheckConstraint("CK_Casos_Precision", "\"PrecisionMetros\" > 0");
+
+                            t.HasCheckConstraint("CK_Casos_UbicacionCompleta", "(\"Latitud\" IS NULL AND \"Longitud\" IS NULL AND \"PrecisionMetros\" IS NULL AND \"UbicacionObtenidaEn\" IS NULL) OR (\"Latitud\" IS NOT NULL AND \"Longitud\" IS NOT NULL AND \"PrecisionMetros\" IS NOT NULL AND \"UbicacionObtenidaEn\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EventoCaso", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("OcurridoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Visibilidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("CasoId", "OcurridoEn");
+
+                    b.ToTable("EventosCaso", (string)null);
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -263,6 +351,30 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Caso", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CiudadanoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EventoCaso", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

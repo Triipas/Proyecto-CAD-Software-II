@@ -1,9 +1,15 @@
 @page "/panel/admin"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = Cad.Server.Modulos.Cuentas.Dominio.Roles.Administrador)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Cad.Server.Compartido.Politicas.Administrador)]
 @{
     ViewData["Title"] = "Administración";
 }
-<div class="tarjeta">
-    <h1>Administración</h1>
-    <p class="aviso">Interfaz del administrador. La gestión de cuentas institucionales se incorpora con HU04 (S1-T10).</p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Administrador</p>
+        <h1 class="titulo">Administración</h1>
+    </div>
 </div>
+<section class="superficie pila">
+    <p class="texto-secundario">Interfaz del administrador: gestión de las cuentas de operadores y serenos.</p>
+    <p><a class="boton boton--principal" href="/panel/admin/cuentas">Ver cuentas institucionales</a></p>
+</section>

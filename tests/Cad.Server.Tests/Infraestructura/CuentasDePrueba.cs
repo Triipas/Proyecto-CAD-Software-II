@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Microsoft.AspNetCore.Identity;
@@ -35,6 +36,17 @@ public static partial class CuentasDePrueba
         });
     }
 
+    // Cliente de la app móvil (ciudadano o sereno) autenticado con su JWT (HU02).
+    public static async Task<HttpClient> CrearClienteAppAsync(this FabricaCad fabrica, CuentaDePrueba cuenta)
+    {
+        var respuesta = await fabrica.CreateClient().PostAsJsonAsync("/api/auth/token",
+            new Cad.Contratos.Cuentas.SolicitudInicioSesion(cuenta.Correo, cuenta.Clave));
+        var token = await respuesta.Content.ReadFromJsonAsync<Cad.Contratos.Cuentas.RespuestaToken>();
+        var cliente = fabrica.CreateClient();
+        cliente.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token!.Token);
+        return cliente;
+    }
+
     // Cliente de navegador: HTTPS (la cookie del panel es Secure fuera de desarrollo) y sin seguir redirecciones.
     public static HttpClient CrearNavegador(this FabricaCad fabrica) =>
         fabrica.CreateClient(new WebApplicationFactoryClientOptions
@@ -61,6 +73,9 @@ public static partial class CuentasDePrueba
         Assert.True(coincidencia.Success, $"La página {pagina} no contiene un token antifalsificación.");
         return coincidencia.Groups[1].Value;
     }
+
+    public static int Contar(string texto, string fragmento) =>
+        (texto.Length - texto.Replace(fragmento, "").Length) / fragmento.Length;
 
     private static void Comprobar(IdentityResult resultado) =>
         Assert.True(resultado.Succeeded, string.Join(" ", resultado.Errors.Select(e => e.Code)));

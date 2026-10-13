@@ -1,0 +1,75 @@
+@page "/panel/admin/cuentas"
+@model Cad.Server.Panel.Pages.Admin.Cuentas.IndexModel
+@{
+    ViewData["Title"] = "Cuentas institucionales";
+}
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Administrador</p>
+        <h1 class="titulo">Cuentas institucionales</h1>
+        <p class="texto-secundario">Operadores de central y serenos.</p>
+    </div>
+    <a class="boton boton--principal" href="/panel/admin/cuentas/nueva">Nueva cuenta</a>
+</div>
+
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <div>
+            <p class="aviso__titulo">Cambios guardados</p>
+            <p class="aviso__texto">@Model.Mensaje</p>
+        </div>
+    </div>
+}
+
+@if (Model.Cuentas.Count == 0)
+{
+    <section class="superficie estado-vacio">
+        <p class="aviso__titulo">Aún no hay cuentas institucionales</p>
+        <p>Crea la primera cuenta de operador o de sereno.</p>
+        <a class="boton boton--secundario" href="/panel/admin/cuentas/nueva">Nueva cuenta</a>
+    </section>
+}
+else
+{
+    <div class="tabla-contenedor">
+        <table class="tabla">
+            <caption>@Model.Cuentas.Count @(Model.Cuentas.Count == 1 ? "cuenta" : "cuentas")</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Apellidos y nombres</th>
+                    <th scope="col">Correo electrónico</th>
+                    <th scope="col">Teléfono</th>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cuenta in Model.Cuentas)
+                {
+                    <tr data-cuenta="@cuenta.Id">
+                        <th scope="row">@cuenta.Apellidos, @cuenta.Nombres</th>
+                        <td>@cuenta.Correo</td>
+                        <td>@(cuenta.Telefono ?? "—")</td>
+                        <td>@cuenta.Rol</td>
+                        <td>
+                            @if (cuenta.Activa)
+                            {
+                                <span class="estado estado--activa"><partial name="_Icono" model="@("exito")" />Activa</span>
+                            }
+                            else
+                            {
+                                <span class="estado estado--inactiva"><partial name="_Icono" model="@("advertencia")" />Desactivada</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="/panel/admin/cuentas/@cuenta.Id/editar" aria-label="Modificar la cuenta de @cuenta.Nombres @cuenta.Apellidos">Modificar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

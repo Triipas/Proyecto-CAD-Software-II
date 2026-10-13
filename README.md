@@ -82,13 +82,14 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 | `POST /api/cuentas/registro` | Anónimo | HU01 | 201 cuenta creada · 400 datos faltantes o inválidos (con el motivo por campo) · 409 correo ya registrado |
 | `POST /api/auth/token` | Anónimo (ciudadano y sereno) | HU02 | 200 token JWT · 401 correo o contraseña incorrectos · 403 cuenta desactivada o rol que debe usar el panel |
 | `GET /api/cuentas/yo` | Cualquier cuenta autenticada (JWT o cookie del panel) | HU02 | 200 id, nombres, apellidos y rol · 401 sin sesión |
+| `POST /api/sos` | Ciudadano | HU07, HU08 | 201 SOS registrado (Pendiente, con o sin ubicación) · 200 mismo SOS ante un reintento con el mismo `idSolicitud` · 400 falta `idSolicitud` · 401/403 otros perfiles |
 
 ## Panel web
 
-`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
+`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
 
 ## Reglas del repositorio
 
 - Ningún secreto, contraseña ni cadena de conexión en el repositorio: se usan variables de entorno y un `.env` local (ignorado por Git).
 - No se registran en los logs contraseñas, tokens, coordenadas ni datos personales.
-- La autorización se aplica en el servidor, no solo en la interfaz.
+- La autorización se aplica en el servidor, no solo en la interfaz. Toda ruta exige sesión salvo que se declare pública; cada ruta nueva usa una política de `Compartido/Autorizacion.cs` y se añade a la matriz de [docs/matriz-permisos.md](docs/matriz-permisos.md) (la prueba `MatrizAutorizacionTests` falla si falta).

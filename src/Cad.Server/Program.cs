@@ -1,4 +1,5 @@
 using Cad.Server.Compartido;
+using Cad.Server.Modulos.Casos;
 using Cad.Server.Modulos.Cuentas;
 using Cad.Server.Modulos.Cuentas.Aplicacion;
 using Cad.Server.Persistencia;
@@ -21,12 +22,14 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddAutenticacionCad(builder.Configuration, builder.Environment.IsDevelopment());
+builder.Services.AddAutorizacionCad();
 builder.Services.AddRazorPages(opciones => opciones.RootDirectory = "/Panel/Pages");
 // El panel está en español: no convertir tildes ni «ñ» en entidades HTML.
 // <, >, & y comillas se siguen codificando, así que la protección frente a XSS no cambia.
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(opciones =>
     opciones.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
 builder.Services.AddModuloCuentas();
+builder.Services.AddModuloCasos();
 
 var app = builder.Build();
 
@@ -38,11 +41,15 @@ if (app.Configuration.GetValue<bool>("BaseDatos:MigrarAlIniciar"))
     await alcance.ServiceProvider.GetRequiredService<SembrarAdministrador>().EjecutarAsync();
 }
 
+// Hojas de estilo, scripts e iconos del panel (wwwroot); no requieren sesión.
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHealthChecks("/salud");
+app.MapHealthChecks("/salud").AllowAnonymous();
 app.MapModuloCuentas();
+app.MapModuloCasos();
 app.MapRazorPages();
 
 app.Run();

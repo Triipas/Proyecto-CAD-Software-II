@@ -29,7 +29,7 @@ public sealed class IniciarSesion(UserManager<Usuario> usuarios)
         if (string.IsNullOrWhiteSpace(correo) || string.IsNullOrEmpty(contrasena))
             return new ResultadoInicioSesion.CredencialesIncorrectas();
 
-        var usuario = await usuarios.FindByEmailAsync(RegistrarCiudadano.NormalizarCorreo(correo));
+        var usuario = await usuarios.FindByEmailAsync(ReglasCuenta.NormalizarCorreo(correo));
         if (usuario is null || !await usuarios.CheckPasswordAsync(usuario, contrasena))
             return new ResultadoInicioSesion.CredencialesIncorrectas();
 

@@ -17,12 +17,14 @@ public class IngresarModel(IniciarSesion iniciarSesion) : PageModel
     [BindProperty]
     public FormularioIngreso Formulario { get; set; } = new();
 
-    public string? Error { get; private set; }
+    public AvisoIngreso? Aviso { get; private set; }
 
     public IActionResult OnGet()
     {
+        // Solo los roles del panel tienen una página de inicio aquí; un ciudadano o sereno
+        // (por ejemplo, con su JWT) ve el formulario en lugar de ser enviado a una página que se le negaría.
         var rol = User.FindFirstValue(Autenticacion.ReclamoRol);
-        return rol is null ? Page() : LocalRedirect(InicioDe(rol));
+        return rol is Roles.Operador or Roles.Administrador ? LocalRedirect(InicioDe(rol)) : Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -32,7 +34,7 @@ public class IngresarModel(IniciarSesion iniciarSesion) : PageModel
 
         if (resultado is not ResultadoInicioSesion.Exito exito)
         {
-            Error = IniciarSesion.Mensaje(resultado);
+            Aviso = AvisoDe(resultado);
             return Page();
         }
 
@@ -42,6 +44,19 @@ public class IngresarModel(IniciarSesion iniciarSesion) : PageModel
     }
 
     public static string InicioDe(string rol) => rol == Roles.Administrador ? "/panel/admin" : "/panel/central";
+
+    // El tipo distingue el aviso con icono, título y color; el mensaje sigue siendo el de IniciarSesion.
+    private static AvisoIngreso AvisoDe(ResultadoInicioSesion resultado) => resultado switch
+    {
+        ResultadoInicioSesion.CuentaDesactivada =>
+            new("advertencia", "Acceso no habilitado", IniciarSesion.Mensaje(resultado), CamposInvalidos: false),
+        ResultadoInicioSesion.CanalNoPermitido =>
+            new("informacion", "Usa la aplicación móvil", IniciarSesion.Mensaje(resultado), CamposInvalidos: false),
+        _ =>
+            new("error", "No se pudo ingresar", IniciarSesion.Mensaje(resultado), CamposInvalidos: true),
+    };
+
+    public sealed record AvisoIngreso(string Tipo, string Titulo, string Mensaje, bool CamposInvalidos);
 
     public sealed class FormularioIngreso
     {

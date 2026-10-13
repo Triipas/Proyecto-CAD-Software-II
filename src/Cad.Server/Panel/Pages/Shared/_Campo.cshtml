@@ -1,0 +1,21 @@
+@model Cad.Server.Panel.Pages.CampoFormulario
+@{
+    var idAyuda = $"{Model.Id}-ayuda";
+    var idError = $"{Model.Id}-error";
+    var descrito = string.Join(" ", new[] { Model.Error is null ? null : idError, Model.Ayuda is null ? null : idAyuda }.OfType<string>());
+}
+<div class="campo">
+    <label class="campo__etiqueta" for="@Model.Id">@Model.Etiqueta@(Model.Requerido ? "" : " (opcional)")</label>
+    <input class="campo__control" id="@Model.Id" name="@Model.Nombre" type="@Model.Tipo" value="@Model.Valor"
+           autocomplete="@Model.Autocompletar" required="@Model.Requerido"
+           aria-invalid="@(Model.Error is null ? null : "true")"
+           aria-describedby="@(descrito.Length == 0 ? null : descrito)" />
+    @if (Model.Ayuda is not null)
+    {
+        <p id="@idAyuda" class="campo__ayuda">@Model.Ayuda</p>
+    }
+    @if (Model.Error is not null)
+    {
+        <p id="@idError" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.Error</span></p>
+    }
+</div>

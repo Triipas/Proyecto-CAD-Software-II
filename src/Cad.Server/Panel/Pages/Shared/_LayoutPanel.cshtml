@@ -1,0 +1,59 @@
+@using System.Security.Claims
+@using Cad.Server.Compartido
+@using Cad.Server.Modulos.Cuentas.Dominio
+@{
+    var rol = User.FindFirstValue(Autenticacion.ReclamoRol);
+    var ruta = Context.Request.Path.Value ?? "";
+    // Navegación orientativa por rol: los permisos los decide siempre el servidor (HU03).
+    var enlaces = rol switch
+    {
+        Roles.Operador => new[] { ("/panel/central", "Central") },
+        Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales") },
+        _ => Array.Empty<(string, string)>(),
+    };
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Central CAD</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="encabezado">
+        <div class="encabezado__contenido">
+            <div class="marca">
+                <partial name="_Icono" model="@("escudo")" />
+                <div>
+                    <p class="marca__nombre">Central CAD</p>
+                    <p class="marca__aviso">MVP académico · datos simulados</p>
+                </div>
+            </div>
+            @if (enlaces.Length > 0)
+            {
+                <nav class="encabezado__navegacion" aria-label="Secciones del panel">
+                    @foreach (var (href, texto) in enlaces)
+                    {
+                        <a href="@href" aria-current="@(ruta.StartsWith(href) ? "page" : null)">@texto</a>
+                    }
+                </nav>
+            }
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form method="post" asp-page="/Salir" class="encabezado__sesion">
+                    <span>@User.FindFirstValue(Autenticacion.ReclamoNombre)</span>
+                    <span class="etiqueta-rol">@rol</span>
+                    <button type="submit" class="boton boton--sobre-marino">Salir</button>
+                </form>
+            }
+        </div>
+    </header>
+    <main class="pagina @ViewData["ClasePagina"]">
+        @RenderBody()
+    </main>
+    <script src="~/js/formulario.js" asp-append-version="true"></script>
+</body>
+</html>
