@@ -1,0 +1,9 @@
+@page "/panel/admin"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = Cad.Server.Modulos.Cuentas.Dominio.Roles.Administrador)]
+@{
+    ViewData["Title"] = "Administración";
+}
+<div class="tarjeta">
+    <h1>Administración</h1>
+    <p class="aviso">Interfaz del administrador. La gestión de cuentas institucionales se incorpora con HU04 (S1-T10).</p>
+</div>

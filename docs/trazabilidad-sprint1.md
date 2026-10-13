@@ -15,7 +15,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S1-T04 | SPIKE01 | Nota técnica | Pendiente | — |
 | S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Implementada y verificada en local (falta el entorno publicado) | `POST /api/cuentas/registro`; `RegistroCiudadanoTests` CA01–CA05 en verde contra PostgreSQL 17 |
 | S1-T06 | HU01 | Hash de contraseña documentado | Implementada y verificada en local (falta revisar los registros del entorno publicado) | [seguridad-contrasenas.md](seguridad-contrasenas.md); `RegistroCiudadanoTests` CA06 en verde |
-| S1-T07 | HU02 | Inicio de sesión por rol | Pendiente | — |
+| S1-T07 | HU02 | Inicio de sesión por rol | Implementada y verificada en local | App: `POST /api/auth/token` (JWT). Panel: `/panel/ingresar` (cookie). `InicioSesionAppTests` e `InicioSesionPanelTests`: CA01–CA04 en verde. CA05 (canal cifrado) corresponde a S1-T08. |
 | S1-T08 | HU02 | Credenciales solo por canal cifrado | Pendiente | — |
 | S1-T09 | HU03 | Matriz de permisos y rechazo de solicitudes directas | Pendiente | — |
 | S1-T10 | HU04 | Gestión de cuentas institucionales | Pendiente | — |
@@ -53,8 +53,18 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 |---|---|---|---|
 | 1 — Esqueleto local | 12/10/2026 | S1-T01 (parcial) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 2/2 superadas. `GET /salud` → 200 `Healthy`. |
 | 2 — Registro de ciudadano | 12/10/2026 | S1-T05, S1-T06 (HU01) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 22/22 superadas contra PostgreSQL 17 (Docker). Servidor real: 201 / 409 / 400 con motivos por campo. Sin contraseñas, correos ni teléfonos en los registros. |
+| 3 — Inicio de sesión | 12/10/2026 | S1-T07 (HU02); DP02 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 50/50 superadas. Servidor real: ciudadano obtiene JWT y consulta `/api/cuentas/yo`; contraseña incorrecta → 401; administrador sembrado entra a `/panel/admin`. Sin contraseñas, correos ni tokens en los registros. |
 
 ### Observaciones del bloque 2
 
 - La prueba HTTP de CA05 (10 registros simultáneos) se resolvió en la comprobación previa del caso de uso: no llegó a producir una violación de unicidad en la base de datos. Por eso se añadió `CA05_IndiceUnico_*`, que verifica directamente que PostgreSQL rechaza la segunda cuenta con el mismo correo. La traducción de esa violación a 409 en `RegistrarCiudadano` está revisada en el código, pero no se ha forzado con una carrera real.
 - HU01 no se acepta todavía: falta verificarla en el entorno publicado (RNF09 y S1-T21).
+
+### Decisiones y observaciones del bloque 3
+
+- **Canal por rol (hecho documentado, Plan de Arquitectura Tabla 3):** ciudadano y sereno usan la app (JWT); operador y administrador, el panel (cookie). El servidor rechaza el canal equivocado.
+- **Mensajes:** correo inexistente y contraseña errónea reciben el mismo mensaje. «Cuenta desactivada» solo se muestra a quien acierta la contraseña.
+- **DP02:** administrador inicial creado al arrancar desde `Admin:Email` y `Admin:ClaveInicial`. El cambio obligatorio de contraseña tras el primer acceso, mencionado como supuesto en la arquitectura, **no está implementado**.
+- **DP03 respetada:** el token lleva el sello de seguridad, pero no se comprueba en cada solicitud. Revocar sesiones de cuentas desactivadas queda pendiente de la decisión.
+- **Parámetros técnicos propuestos (configurables):** duración del JWT y de la sesión del panel, 480 min.
+- **Pendiente:** limitación de intentos de inicio de sesión (opcional en la arquitectura, 9.6) y persistencia de las claves de Data Protection para el entorno publicado.

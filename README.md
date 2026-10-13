@@ -40,6 +40,23 @@ docker-compose.yml           PostgreSQL 17 local
    dotnet user-secrets set "ConnectionStrings:Cad" "Host=localhost;Port=5432;Database=cad;Username=cad;Password=TU_CONTRASEÑA" --project src/Cad.Server
    ```
 
+## Secretos locales
+
+El servidor no arranca si falta alguno de estos valores. Ninguno va en el repositorio: en desarrollo se guardan con user-secrets y en el entorno publicado como variables de entorno (`__` en lugar de `:`).
+
+| Clave | Uso | Cómo generarla |
+|---|---|---|
+| `ConnectionStrings:Cad` | PostgreSQL | Ver «Base de datos local» |
+| `Jwt:ClaveFirma` | Firma de los tokens de la app (HS256) | Base64 de 32 bytes aleatorios, p. ej. `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `Admin:Email` | Correo del administrador inicial (DP02) | Un correo ficticio, p. ej. `admin@cad.test` |
+| `Admin:ClaveInicial` | Contraseña del administrador inicial | Mínimo 8 caracteres, con letra y número |
+
+```bash
+dotnet user-secrets set "Jwt:ClaveFirma" "VALOR" --project src/Cad.Server
+```
+
+El administrador inicial se crea al arrancar si no existe una cuenta con ese correo; si ya existe, no se modifica. Para consultar tus valores locales: `dotnet user-secrets list --project src/Cad.Server`.
+
 El servidor aplica las migraciones al arrancar. Las pruebas usan otra base, `cad_pruebas`, que borran y recrean en cada ejecución, y leen las credenciales de `.env` (o de la variable `CAD_PRUEBAS_CONEXION`).
 
 Para crear una migración nueva:
@@ -63,6 +80,12 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 | Método y ruta | Rol | HU | Respuestas |
 |---|---|---|---|
 | `POST /api/cuentas/registro` | Anónimo | HU01 | 201 cuenta creada · 400 datos faltantes o inválidos (con el motivo por campo) · 409 correo ya registrado |
+| `POST /api/auth/token` | Anónimo (ciudadano y sereno) | HU02 | 200 token JWT · 401 correo o contraseña incorrectos · 403 cuenta desactivada o rol que debe usar el panel |
+| `GET /api/cuentas/yo` | Cualquier cuenta autenticada (JWT o cookie del panel) | HU02 | 200 id, nombres, apellidos y rol · 401 sin sesión |
+
+## Panel web
+
+`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
 
 ## Reglas del repositorio
 

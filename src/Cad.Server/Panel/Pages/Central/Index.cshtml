@@ -1,0 +1,9 @@
+@page "/panel/central"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = Cad.Server.Modulos.Cuentas.Dominio.Roles.Operador)]
+@{
+    ViewData["Title"] = "Central";
+}
+<div class="tarjeta">
+    <h1>Central de monitoreo</h1>
+    <p class="aviso">Interfaz del operador. La sección de atención urgente de SOS se incorpora con HU11 (S1-T17).</p>
+</div>

@@ -1,0 +1,20 @@
+@page "/panel/ingresar"
+@model IngresarModel
+@{
+    ViewData["Title"] = "Ingresar";
+}
+<div class="tarjeta" style="max-width: 420px; margin: 0 auto;">
+    <h1>Ingresar al panel</h1>
+    <p class="aviso">Acceso para operadores de central y administradores.</p>
+    <form method="post">
+        <label asp-for="Formulario.Correo">Correo electrónico</label>
+        <input asp-for="Formulario.Correo" type="email" autocomplete="username" required />
+        <label asp-for="Formulario.Contrasena">Contraseña</label>
+        <input asp-for="Formulario.Contrasena" type="password" autocomplete="current-password" required />
+        @if (Model.Error is not null)
+        {
+            <p class="error" role="alert">@Model.Error</p>
+        }
+        <button type="submit">Ingresar</button>
+    </form>
+</div>

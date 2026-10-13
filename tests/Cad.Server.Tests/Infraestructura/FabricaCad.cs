@@ -16,11 +16,19 @@ public sealed class FabricaCad : WebApplicationFactory<Program>, IAsyncLifetime
 
     public RegistrosCapturados Registros { get; } = new();
 
+    // Secretos de prueba generados en cada ejecución; nunca se guardan en el repositorio.
+    public string ClaveFirmaJwt { get; } = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+    public string AdminCorreo { get; } = $"admin.{Guid.NewGuid():N}@cad.test";
+    public string AdminClave { get; } = $"Admin-{Guid.NewGuid():N}";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Pruebas");
         builder.UseSetting("ConnectionStrings:Cad", conexion);
         builder.UseSetting("BaseDatos:MigrarAlIniciar", "true");
+        builder.UseSetting("Jwt:ClaveFirma", ClaveFirmaJwt);
+        builder.UseSetting("Admin:Email", AdminCorreo);
+        builder.UseSetting("Admin:ClaveInicial", AdminClave);
         builder.ConfigureLogging(registro =>
         {
             registro.AddProvider(Registros);
