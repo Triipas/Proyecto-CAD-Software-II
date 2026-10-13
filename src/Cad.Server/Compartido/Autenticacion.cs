@@ -66,7 +66,7 @@ public static class Autenticacion
                 opciones.SlidingExpiration = false;
                 opciones.LoginPath = "/panel/ingresar";
                 opciones.AccessDeniedPath = "/panel/acceso-denegado";
-                // Una solicitud a /api nunca se redirige a una página: responde 401/403.
+                // Una solicitud a /api o a un hub nunca se redirige a una página: responde 401/403.
                 opciones.Events.OnRedirectToLogin = contexto => ResponderORedirigir(contexto, StatusCodes.Status401Unauthorized);
                 opciones.Events.OnRedirectToAccessDenied = contexto => ResponderORedirigir(contexto, StatusCodes.Status403Forbidden);
             })
@@ -103,7 +103,7 @@ public static class Autenticacion
 
     private static Task ResponderORedirigir(Microsoft.AspNetCore.Authentication.RedirectContext<CookieAuthenticationOptions> contexto, int estado)
     {
-        if (contexto.Request.Path.StartsWithSegments("/api"))
+        if (contexto.Request.Path.StartsWithSegments("/api") || contexto.Request.Path.StartsWithSegments("/hubs"))
             contexto.Response.StatusCode = estado;
         else
             contexto.Response.Redirect(contexto.RedirectUri);

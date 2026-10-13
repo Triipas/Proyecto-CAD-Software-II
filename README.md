@@ -86,7 +86,11 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 
 ## Panel web
 
-`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
+`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). El operador ve en `/panel/central` la sección urgente de SOS en tiempo real (HU11), con aviso visual y sonoro (actívalo con «Activar avisos sonoros») y el mapa operativo base. Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
+
+## Librerías de terceros
+
+Incluidas en `src/Cad.Server/wwwroot/lib` (sin CDN): Leaflet 1.9.4 (BSD-2-Clause) y @microsoft/signalr 10.0.11 (MIT), con sus licencias. El mapa usa teselas de OpenStreetMap (requiere conexión a internet y muestra su atribución).
 
 ## Reglas del repositorio
 

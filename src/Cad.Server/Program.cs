@@ -3,6 +3,7 @@ using Cad.Server.Modulos.Casos;
 using Cad.Server.Modulos.Cuentas;
 using Cad.Server.Modulos.Cuentas.Aplicacion;
 using Cad.Server.Persistencia;
+using Cad.Server.TiempoReal;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,10 @@ builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o
 builder.Services.AddModuloCuentas();
 builder.Services.AddModuloCasos();
 
+// Tiempo real (HU11): eventos a la central después de cada confirmación.
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<INotificador, NotificadorSignalR>();
+
 var app = builder.Build();
 
 // Una sola instancia del servidor: las migraciones se aplican al arrancar (Plan de Arquitectura, 4).
@@ -50,6 +55,7 @@ app.UseAuthorization();
 app.MapHealthChecks("/salud").AllowAnonymous();
 app.MapModuloCuentas();
 app.MapModuloCasos();
+app.MapHub<CentralHub>(CentralHub.Ruta);
 app.MapRazorPages();
 
 app.Run();

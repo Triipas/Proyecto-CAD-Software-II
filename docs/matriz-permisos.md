@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 65 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 75 casos).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -30,7 +30,8 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `POST /panel/salir` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `GET /panel/central` (página base de HU11) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/central` (sección urgente y su fragmento `?handler=Lista`) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `POST /hubs/central/negotiate` y `/hubs/central` (tiempo real) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET` y `POST /panel/admin/cuentas/nueva` (alta) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -53,7 +54,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU08 | Asociar la ubicación actual al SOS | Ciudadano | Verificada en el servidor junto con HU07 (misma operación). Captura en la app pendiente. |
 | HU09 | Cancelar un SOS pendiente | Ciudadano | Pendiente (Sprint 5) |
 | HU10 | Registrar un reporte de incidencia | Ciudadano | Pendiente (Sprint 3) |
-| HU11 | Recibir los SOS en la sección de atención urgente | Operador | Pendiente (Sprint 1, S1-T17). Solo la página base `/panel/central` está verificada. |
+| HU11 | Recibir los SOS en la sección de atención urgente | Operador | **Verificada (13/10/2026):** página, fragmento y canal en tiempo real solo para Operador; un ciudadano con JWT o una conexión sin sesión no pueden conectarse al hub (`RecepcionSosTests.HU03_*`). |
 | HU12 | Contactar al ciudadano y registrar la verificación del SOS | Operador | Pendiente (Sprint 2) |
 | HU13 | Clasificar un SOS después de su registro | Operador | Pendiente (Sprint 2; DP09) |
 | HU14 | Iniciar la revisión de un reporte y corregir su categoría | Operador | Pendiente (Sprint 3) |
