@@ -13,7 +13,7 @@ Sprint 1 en curso. El avance por tarea está en [docs/trazabilidad-sprint1.md](d
 - [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0) (fijado en `global.json`; acepta cualquier 10.0.x igual o superior a 10.0.100).
 - Docker Desktop (con WSL 2) para PostgreSQL local.
 
-Requisito previsto para bloques posteriores: la carga de trabajo de .NET MAUI para Android.
+App móvil: carga de trabajo `maui-android`, JDK 17 y Android SDK. Guía, comandos y verificación en [docs/app-movil.md](docs/app-movil.md).
 
 ## Estructura
 
@@ -23,6 +23,9 @@ src/Cad.Server/              Servidor CAD (ASP.NET Core 10): API, panel y tiempo
   Modulos/Cuentas/           registro, inicio de sesión y cuentas (HU01–HU05)
   Persistencia/              CadDbContext y migraciones de EF Core
 src/Cad.Contratos/           DTO compartidos entre servidor y app móvil
+CadMovil.slnx                solución de la app móvil (Contratos + app + pruebas)
+src/Cad.Movil/               app .NET MAUI (Android): ciudadano y sereno
+tests/Cad.Movil.Tests/       pruebas de la lógica de la app (xUnit, sin emulador)
 tests/Cad.Server.Tests/      pruebas (xUnit + WebApplicationFactory + PostgreSQL real)
 docs/                        trazabilidad y documentación técnica
 docker-compose.yml           PostgreSQL 17 local

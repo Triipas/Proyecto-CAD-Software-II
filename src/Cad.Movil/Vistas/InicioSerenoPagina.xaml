@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Modo sereno: en el Sprint 1 solo el ingreso (HU02); estado operativo y despachos llegan en el Sprint 2. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.InicioSerenoPagina"
+             x:DataType="vm:InicioSerenoVistaModelo"
+             Title="Sereno">
+    <VerticalStackLayout Padding="16,32" Spacing="16" MaximumWidthRequest="480">
+        <Label Text="Sereno" Style="{StaticResource Sobretitulo}" />
+        <Label Text="Modo sereno" Style="{StaticResource Titulo}" />
+        <v:Aviso Tipo="informacion" Texto="Tu cuenta está activa. El estado operativo y la recepción de despachos se incorporan en el Sprint 2 (HU18–HU24)." />
+        <Button Text="Salir" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" />
+    </VerticalStackLayout>
+</ContentPage>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<!-- Tokens de color: mismos nombres y valores que src/Cad.Server/wwwroot/css/tokens.css
+     (contraste WCAG 2.2 verificado el 12/10/2026). -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    <Color x:Key="ColorMarino">#102A43</Color>
+    <Color x:Key="ColorPrimario">#2563EB</Color>
+    <Color x:Key="ColorPrimarioHover">#1D4ED8</Color>
+    <Color x:Key="ColorTenue">#EFF6FF</Color>
+    <Color x:Key="ColorFondo">#F4F7FB</Color>
+    <Color x:Key="ColorSuperficie">#FFFFFF</Color>
+    <Color x:Key="ColorTexto">#172B4D</Color>
+    <Color x:Key="ColorTextoSecundario">#4A5B73</Color>
+    <Color x:Key="ColorBorde">#DCE4EE</Color>
+    <Color x:Key="ColorBordeControl">#7B8BA1</Color>
+
+    <Color x:Key="ColorError">#B42318</Color>
+    <Color x:Key="ColorErrorFondo">#FEF3F2</Color>
+    <Color x:Key="ColorAdvertencia">#93370D</Color>
+    <Color x:Key="ColorAdvertenciaFondo">#FFFAEB</Color>
+    <Color x:Key="ColorInformacion">#1E40AF</Color>
+    <Color x:Key="ColorInformacionFondo">#EFF6FF</Color>
+    <Color x:Key="ColorExito">#05603A</Color>
+    <Color x:Key="ColorExitoFondo">#ECFDF3</Color>
+
+    <!-- Urgencia (SOS): blanco encima 6.57:1; siempre con el texto «SOS». -->
+    <Color x:Key="ColorUrgente">#B42318</Color>
+    <Color x:Key="ColorUrgenteActivo">#912018</Color>
+</ResourceDictionary>

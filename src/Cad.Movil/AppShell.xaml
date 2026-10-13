@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:v="clr-namespace:Cad.Movil.Vistas"
+       x:Class="Cad.Movil.AppShell"
+       Shell.FlyoutBehavior="Disabled"
+       Title="CAD Móvil">
+    <ShellContent Route="ingreso" ContentTemplate="{DataTemplate v:IngresoPagina}" />
+    <ShellContent Route="ciudadano" ContentTemplate="{DataTemplate v:InicioCiudadanoPagina}" />
+    <ShellContent Route="sereno" ContentTemplate="{DataTemplate v:InicioSerenoPagina}" />
+</Shell>
