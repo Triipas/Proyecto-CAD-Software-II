@@ -140,7 +140,11 @@
     .build();
 
   conexion.on("SosRecibido", async ({ id }) => {
-    if (await refrescar()) avisar(id);
+    if (!(await refrescar())) return;
+    avisar(id);
+    // RNF02 (solo con la medición activada): acuse cuando el SOS ya se muestra y se ha avisado.
+    if (seccion.dataset.medicion === "true" && document.getElementById(`sos-${id}`))
+      conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
   });
   conexion.onreconnecting(() => estadoConexion("reconectando", "Reconectando… La lista puede no estar actualizada."));
   conexion.onreconnected(async () => {

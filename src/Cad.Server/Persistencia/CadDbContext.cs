@@ -11,6 +11,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
 {
     public DbSet<Caso> Casos => Set<Caso>();
     public DbSet<EventoCaso> EventosCaso => Set<EventoCaso>();
+    public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -35,6 +36,17 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             // Idempotencia: una sola fila por ciudadano y solicitud (HU07-CA07).
             caso.HasIndex(c => new { c.CiudadanoId, c.IdSolicitud }).IsUnique();
             caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // RNF02: tabla de medición, solo para pruebas (Plan de Arquitectura, 9.1).
+        builder.Entity<Modulos.Mediciones.MedicionPresentacion>(medicion =>
+        {
+            medicion.ToTable("MedicionesPresentacion");
+            medicion.HasKey(m => m.Id);
+            medicion.HasIndex(m => new { m.CasoId, m.OperadorId }).IsUnique();
+            medicion.HasIndex(m => m.AceptadoEn);
+            medicion.HasOne<Caso>().WithMany().HasForeignKey(m => m.CasoId).OnDelete(DeleteBehavior.Cascade);
+            medicion.HasOne<Usuario>().WithMany().HasForeignKey(m => m.OperadorId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<EventoCaso>(evento =>

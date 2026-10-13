@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 75 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 12/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 80 casos).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -27,6 +27,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/auth/token` (la app; el caso de uso solo emite token a ciudadano y sereno) | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /api/cuentas/yo` | HU02 | ✘ | ✔ | ✔ | ✔ | ✔ |
 | `POST /api/sos` | HU07, HU08 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `GET /api/mediciones/presentacion` (resultados de RNF02; 404 si la medición está apagada) | RNF02 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `POST /panel/salir` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |

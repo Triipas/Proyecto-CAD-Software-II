@@ -13,6 +13,10 @@ public sealed class CentralHub : Hub
     public const string GrupoOperadores = "operadores";
     public const string EventoSosRecibido = "SosRecibido";
 
+    // RNF02: el panel confirma que el SOS ya se muestra. Sin efecto si la medición está desactivada.
+    public Task ConfirmarPresentacion(Guid casoId, Modulos.Mediciones.RegistrarPresentacion registrar) =>
+        registrar.EjecutarAsync(casoId, Context.User!.IdUsuario(), Context.ConnectionAborted);
+
     public override async Task OnConnectedAsync()
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, GrupoOperadores);

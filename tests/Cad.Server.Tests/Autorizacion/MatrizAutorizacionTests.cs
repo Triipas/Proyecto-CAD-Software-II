@@ -31,6 +31,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/api/cuentas/yo", "HU02", Acceso.CualquierSesion, Contenido: "\"rol\""),
         // Con cuerpo vacío el ciudadano llega al caso de uso (400 por falta de IdSolicitud); el resto es rechazado antes.
         new("POST", "/api/sos", "HU07", Acceso.SoloRol, Roles.Ciudadano),
+        // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
+        new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),
         new("POST", "/panel/salir", "HU02", Acceso.Publico),
         new("GET", "/panel/acceso-denegado", "HU03", Acceso.Publico, Contenido: "Tu rol no tiene permiso", EstadoPropio: 403),

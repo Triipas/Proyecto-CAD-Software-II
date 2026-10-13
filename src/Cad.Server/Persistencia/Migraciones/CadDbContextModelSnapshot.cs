@@ -193,6 +193,36 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Mediciones.MedicionPresentacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AceptadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("PresentadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AceptadoEn");
+
+                    b.HasIndex("OperadorId");
+
+                    b.HasIndex("CasoId", "OperadorId")
+                        .IsUnique();
+
+                    b.ToTable("MedicionesPresentacion", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")
@@ -374,6 +404,21 @@ namespace Cad.Server.Persistencia.Migraciones
                         .WithMany()
                         .HasForeignKey("CasoId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Mediciones.MedicionPresentacion", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

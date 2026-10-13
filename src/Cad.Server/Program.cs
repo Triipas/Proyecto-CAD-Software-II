@@ -1,6 +1,7 @@
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos;
 using Cad.Server.Modulos.Cuentas;
+using Cad.Server.Modulos.Mediciones;
 using Cad.Server.Modulos.Cuentas.Aplicacion;
 using Cad.Server.Persistencia;
 using Cad.Server.TiempoReal;
@@ -31,6 +32,7 @@ builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o
     opciones.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
 builder.Services.AddModuloCuentas();
 builder.Services.AddModuloCasos();
+builder.Services.AddModuloMediciones(builder.Configuration);
 
 // Tiempo real (HU11): eventos a la central después de cada confirmación.
 builder.Services.AddSignalR();
@@ -55,6 +57,7 @@ app.UseAuthorization();
 app.MapHealthChecks("/salud").AllowAnonymous();
 app.MapModuloCuentas();
 app.MapModuloCasos();
+app.MapModuloMediciones();
 app.MapHub<CentralHub>(CentralHub.Ruta);
 app.MapRazorPages();
 

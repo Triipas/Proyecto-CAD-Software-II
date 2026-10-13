@@ -27,7 +27,8 @@
 </div>
 
 <div class="central">
-    <section class="superficie central__urgente" aria-labelledby="titulo-urgente" data-avisos-sonoros="0">
+    <section class="superficie central__urgente" aria-labelledby="titulo-urgente" data-avisos-sonoros="0"
+             data-medicion="@(Model.MedicionActiva ? "true" : "false")">
         <h2 id="titulo-urgente" class="central__titulo">
             Atención urgente · SOS <span class="central__contador" data-contador>@Model.Pendientes.Count</span>
         </h2>

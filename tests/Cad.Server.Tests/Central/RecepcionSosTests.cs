@@ -22,26 +22,10 @@ public class RecepcionSosTests(FabricaCad fabrica)
     private static readonly TimeSpan Espera = TimeSpan.FromSeconds(10);
     private static readonly DateTimeOffset Activacion = DateTimeOffset.UtcNow;
 
-    // Operador del panel conectado al canal de la central con su cookie, como el navegador.
     private async Task<(HubConnection Conexion, HttpClient Navegador, ConcurrentQueue<Guid> Avisos)> OperadorConectadoAsync()
     {
-        var operador = await fabrica.CrearAsync(Roles.Operador);
-        var navegador = fabrica.CrearNavegador();
-        var ingreso = await navegador.IngresarAlPanelAsync(operador.Correo, operador.Clave);
-        var cookie = ingreso.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("cad.panel=")).Split(';')[0];
-
-        var avisos = new ConcurrentQueue<Guid>();
-        var conexion = new HubConnectionBuilder()
-            .WithUrl("https://localhost/hubs/central", opciones =>
-            {
-                opciones.HttpMessageHandlerFactory = _ => fabrica.Server.CreateHandler();
-                opciones.Transports = HttpTransportType.LongPolling;
-                opciones.Headers["Cookie"] = cookie;
-            })
-            .Build();
-        conexion.On<JsonElement>("SosRecibido", aviso => avisos.Enqueue(aviso.GetProperty("id").GetGuid()));
-        await conexion.StartAsync();
-        return (conexion, navegador, avisos);
+        var central = await fabrica.OperadorEnCentralAsync();
+        return (central.Conexion, central.Navegador, central.Avisos);
     }
 
     private async Task<(HttpClient App, CuentaDePrueba Ciudadano)> CiudadanoAsync()
@@ -50,16 +34,7 @@ public class RecepcionSosTests(FabricaCad fabrica)
         return (await fabrica.CrearClienteAppAsync(ciudadano), ciudadano);
     }
 
-    private static async Task<bool> EsperarAsync(Func<bool> condicion)
-    {
-        var limite = DateTime.UtcNow + Espera;
-        while (DateTime.UtcNow < limite)
-        {
-            if (condicion()) return true;
-            await Task.Delay(50);
-        }
-        return condicion();
-    }
+    private static Task<bool> EsperarAsync(Func<bool> condicion) => CentralDePrueba.EsperarAsync(condicion);
 
     [Fact]
     public async Task CA01_CA02_SosRegistrado_LlegaALaCentralSinRecargarYDespuesDeGuardarse()

@@ -26,7 +26,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S1-T15 | HU08 | SOS con y sin ubicación actual | Parte de servidor verificada en local; captura en la app pendiente (SPIKE01) | `SosTests` HU08-CA01, CA02, CA03 (posición anterior a la activación descartada); ubicación inválida no bloquea el SOS. |
 | S1-T16 | HU07, HU08 | Aceptación conjunta | Pendiente | — |
 | S1-T17 | HU11 | Tiempo real y sección urgente (+ mapa base mínimo) | Implementada y verificada en local | Hub SignalR solo para operadores; aviso tras la confirmación; `/panel/central` con aviso visual y sonoro, estados de conexión y mapa Leaflet. `RecepcionSosTests` + verificación en Chrome. CA05 (RNF02) se mide en S1-T18. |
-| S1-T18 | HU11 | Medición de RNF02 | Pendiente | — |
+| S1-T18 | HU11 | Medición de RNF02 | Instrumentación y herramienta listas; **medición formal pendiente del entorno publicado** | Acuse de presentación del panel real, tabla de medición (apagada por defecto) y `Cad.PruebaCarga`. Ensayo local (no válido): 100/100 en ≤ 3 s, p95 178 ms. Ver [pruebas.md](pruebas.md). |
 | S1-T19 | HU03 | Registro acumulativo de verificación por rol | En curso | Tabla B de [matriz-permisos.md](matriz-permisos.md): HU04 verificada; HU05–HU43 pendientes. HU03 no se acredita. |
 | S1-T20 | Transversal | Revisión de registros | Pendiente | — |
 | S1-T21 | TEC01, HU01–HU11 | Integración y demostración de extremo a extremo | Pendiente | — |
@@ -45,7 +45,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | DP04 — «operador autorizado» | **Decidida por delegación (12/10/2026):** cualquier cuenta activa con rol Operador, mediante políticas con nombre propio para poder restringirla después. El administrador no recibe permisos de operador. |
 | DP11 — ubicación del SOS | **Decidida por delegación (12/10/2026):** solo cuenta como actual una posición obtenida después de la activación; espera máxima configurable (10 s); si se agota, «Ubicación no disponible»; precisión guardada sin umbral de rechazo. |
 | DP14 — SOS repetidos | **Decidida por delegación (12/10/2026):** cada activación crea un SOS nuevo, aunque exista otro pendiente; solo los reintentos con el mismo IdSolicitud se tratan como el mismo SOS. |
-| Hosting del entorno de validación | Pendiente. Cualquier opción con costo requiere autorización expresa. |
+| Hosting del entorno de validación | **Decidido por delegación (13/10/2026):** Render Web Service (Docker) gratuito + Neon gratuito, USD 0. Render Starter solo con autorización (RNF10). Ver [ADR-06](decisiones/ADR-06-entorno-de-validacion.md). |
 
 ## Bloques ejecutados
 
@@ -58,6 +58,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | 5 — Cuentas institucionales | 12/10/2026 | S1-T10, S1-T11 (HU04) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 137/137 superadas. Prueba de mutación de la autorización del alta. Revisión en Chrome (1366×768): foco al resumen de errores, sin desbordes ni errores de consola. |
 | 6 — Emisión de SOS (servidor) | 12/10/2026 | S1-T13, S1-T14, S1-T15 (servidor) (HU07, HU08); DP11, DP14 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 161/161 superadas. Prueba de mutación: sin normalizar la hora a UTC, PostgreSQL rechaza la ubicación. |
 | 7 — Recepción en la central | 13/10/2026 | S1-T17 (HU11) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 176/176 superadas. Chrome (Playwright, 1366×768): SOS visible sin recargar, aviso visual y sonoro, marcador solo con ubicación, desconexión visible y SOS recuperado al reconectar, sin errores de consola. |
+| 8 — Medición de RNF02 | 13/10/2026 | S1-T18 (HU11-CA05); E7 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 188/188 superadas. Ensayo local con panel real en Chrome y 20 sesiones: 100/100 SOS presentados en ≤ 3 s (p50 45 ms, p95 178 ms, máx. 409 ms). **No válido para aceptar RNF02** (exige el entorno publicado). |
 
 ### Observaciones del bloque 2
 
@@ -111,3 +112,11 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 - **Mapa base mínimo (cláusula de HU11-CA01, opción aprobada):** Leaflet 1.9.4 con teselas de OpenStreetMap y su atribución; centro y zoom configurables (`Panel:Mapa`). Las peticiones de teselas revelan a OSM la zona visible del mapa, no los datos del SOS.
 - **Librerías en `wwwroot/lib`** (sin CDN): Leaflet 1.9.4 (BSD-2-Clause) y @microsoft/signalr 10.0.11 (MIT), con sus licencias.
 - **Pendiente:** medición de RNF02 (S1-T18), que requiere el acuse de presentación del panel y la herramienta de carga; verificación en Firefox (RNF05).
+
+### Decisiones y observaciones del bloque 8
+
+- **Qué se mide:** desde la aceptación del servidor (`Caso.RegistradoEn`) hasta el acuse del panel real cuando el SOS ya se muestra y se ha avisado; ambos instantes con el reloj del servidor. Un SOS sin acuse cuenta como incumplimiento. No es el tiempo de respuesta del sereno.
+- **Instrumentación apagada por defecto** (`Medicion:Rnf02:Habilitada`): apagada no registra nada, el panel no envía acuses y el endpoint de resultados responde 404. Los resultados solo los lee el administrador.
+- **Composición de las 20 sesiones (propuesta):** 19 sesiones de ciudadano que emiten SOS de forma concurrente y 1 panel real de operador. RNF02 no fija la composición; RNF03 (otra prueba) exige además serenos y acompañamientos.
+- **Hosting (E7):** Render gratuito + Neon gratuito (ADR-06). La medición en ese entorno exige calentar antes el servicio.
+- **Ensayo local:** útil para validar la herramienta y detectar problemas, pero no sustituye la medición en el entorno de pruebas que exige el requisito.

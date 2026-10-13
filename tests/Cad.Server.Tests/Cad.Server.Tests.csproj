@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Cad.Server\Cad.Server.csproj" />
+    <ProjectReference Include="..\Cad.PruebaCarga\Cad.PruebaCarga.csproj" />
   </ItemGroup>
 
 </Project>
