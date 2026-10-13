@@ -25,7 +25,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S1-T14 | HU07 | Idempotencia reutilizable | Implementada y verificada en local | `IdSolicitud` único por ciudadano (índice + 200 con el mismo SOS); 10 reintentos simultáneos → 1 SOS. Mecanismo descrito abajo para HU10, HU34 y HU41. |
 | S1-T15 | HU08 | SOS con y sin ubicación actual | Parte de servidor verificada en local; captura en la app pendiente (SPIKE01) | `SosTests` HU08-CA01, CA02, CA03 (posición anterior a la activación descartada); ubicación inválida no bloquea el SOS. |
 | S1-T16 | HU07, HU08 | Aceptación conjunta | Pendiente | — |
-| S1-T17 | HU11 | Tiempo real y sección urgente (+ mapa base mínimo) | Pendiente | — |
+| S1-T17 | HU11 | Tiempo real y sección urgente (+ mapa base mínimo) | Implementada y verificada en local | Hub SignalR solo para operadores; aviso tras la confirmación; `/panel/central` con aviso visual y sonoro, estados de conexión y mapa Leaflet. `RecepcionSosTests` + verificación en Chrome. CA05 (RNF02) se mide en S1-T18. |
 | S1-T18 | HU11 | Medición de RNF02 | Pendiente | — |
 | S1-T19 | HU03 | Registro acumulativo de verificación por rol | En curso | Tabla B de [matriz-permisos.md](matriz-permisos.md): HU04 verificada; HU05–HU43 pendientes. HU03 no se acredita. |
 | S1-T20 | Transversal | Revisión de registros | Pendiente | — |
@@ -57,6 +57,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | 4 — Matriz de permisos | 12/10/2026 | S1-T09, S1-T19 (HU03); DP04 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 102/102 superadas. Prueba de mutación: quitar una ruta de la matriz hace fallar el control de rutas no declaradas. |
 | 5 — Cuentas institucionales | 12/10/2026 | S1-T10, S1-T11 (HU04) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 137/137 superadas. Prueba de mutación de la autorización del alta. Revisión en Chrome (1366×768): foco al resumen de errores, sin desbordes ni errores de consola. |
 | 6 — Emisión de SOS (servidor) | 12/10/2026 | S1-T13, S1-T14, S1-T15 (servidor) (HU07, HU08); DP11, DP14 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 161/161 superadas. Prueba de mutación: sin normalizar la hora a UTC, PostgreSQL rechaza la ubicación. |
+| 7 — Recepción en la central | 13/10/2026 | S1-T17 (HU11) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 176/176 superadas. Chrome (Playwright, 1366×768): SOS visible sin recargar, aviso visual y sonoro, marcador solo con ubicación, desconexión visible y SOS recuperado al reconectar, sin errores de consola. |
 
 ### Observaciones del bloque 2
 
@@ -98,3 +99,15 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 - **Restricciones en la base de datos:** coordenadas «todas o ninguna», rangos de latitud y longitud, precisión positiva, índice único de idempotencia y claves foráneas sin borrado en cascada.
 - **Historial desde el primer momento:** cada SOS crea su evento `SosEmitido` en la misma transacción (base de HU27 y HU28).
 - **Fuera de este bloque:** la notificación en tiempo real a la central (HU11, S1-T17) y la app (activación única, confirmación visible y captura de posición: S1-T12, S1-T15 y S1-T16).
+
+### Decisiones y observaciones del bloque 7
+
+- **Canal en tiempo real** (`/hubs/central`): SignalR con la cookie del panel, solo política `OperadorAutorizado`. El servidor asigna el grupo; el cliente no elige. Solo envía eventos: las escrituras siguen por HTTP (ADR-04).
+- **Aviso posterior a la persistencia:** `EmitirSos` avisa después de confirmar la transacción y solo para un SOS nuevo (un reintento no repite el aviso). Si el aviso falla, el SOS queda registrado y confirmado al ciudadano; la central lo recupera al resincronizar. Verificado con una prueba que simula el fallo.
+- **El evento solo lleva el identificador:** el panel vuelve a pedir la lista al servidor (fragmento generado por la página). La base de datos es la fuente de verdad y los datos personales no viajan por el canal.
+- **Aviso sonoro:** generado con Web Audio (sin archivos), activado por el operador con un clic, por la política de reproducción automática de los navegadores (Plan de Arquitectura, SP-E). El aviso visual (resaltado «Nuevo», contador en el título y anuncio para lectores de pantalla) funciona siempre.
+- **Estados:** conectando, conectado, reconectando (lista posiblemente desactualizada) y sin conexión con reintento cada 5 s; al reconectar se resincroniza. Sesión vencida: se indica que hay que volver a ingresar.
+- **Orden de la sección urgente:** del SOS más reciente al más antiguo (ninguna HU fija el orden).
+- **Mapa base mínimo (cláusula de HU11-CA01, opción aprobada):** Leaflet 1.9.4 con teselas de OpenStreetMap y su atribución; centro y zoom configurables (`Panel:Mapa`). Las peticiones de teselas revelan a OSM la zona visible del mapa, no los datos del SOS.
+- **Librerías en `wwwroot/lib`** (sin CDN): Leaflet 1.9.4 (BSD-2-Clause) y @microsoft/signalr 10.0.11 (MIT), con sus licencias.
+- **Pendiente:** medición de RNF02 (S1-T18), que requiere el acuse de presentación del panel y la herramienta de carga; verificación en Firefox (RNF05).

@@ -1,0 +1,49 @@
+@model Cad.Server.Panel.Pages.Central.ListaSos
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+}
+@* Fragmento de la sección urgente. Lo genera el servidor tanto en la carga inicial como al resincronizar. *@
+<div data-lista-sos data-total="@Model.Pendientes.Count">
+    @if (Model.Pendientes.Count == 0)
+    {
+        <div class="estado-vacio">
+            <partial name="_Icono" model="@("exito")" />
+            <p class="aviso__titulo">No hay SOS pendientes</p>
+            <p>Los nuevos SOS aparecerán aquí sin recargar la página.</p>
+        </div>
+    }
+    else
+    {
+        <ol class="lista-sos">
+            @foreach (var sos in Model.Pendientes)
+            {
+                var local = TimeZoneInfo.ConvertTime(sos.RegistradoEn, Model.ZonaHoraria);
+                <li class="sos" id="sos-@sos.Id" tabindex="-1" data-sos="@sos.Id" data-ciudadano="@sos.Ciudadano"
+                    data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)"
+                    data-precision="@sos.PrecisionMetros?.ToString("0", inv)">
+                    <div class="sos__cabecera">
+                        <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@sos.Origen</span>
+                        <span class="sos__estado">@sos.Estado</span>
+                        <time class="sos__hora" datetime="@sos.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm:ss", inv)</time>
+                    </div>
+                    <p class="sos__ciudadano">@sos.Ciudadano</p>
+                    @if (sos.UbicacionDisponible)
+                    {
+                        <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa el SOS de @sos.Ciudadano">
+                            <partial name="_Icono" model="@("ubicacion")" />
+                            <span>Ubicación disponible · ± @sos.PrecisionMetros?.ToString("0", inv) m · Ver en el mapa</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <p class="sos__ubicacion sos__ubicacion--no">
+                            <partial name="_Icono" model="@("advertencia")" />
+                            <span>Ubicación no disponible</span>
+                        </p>
+                    }
+                </li>
+            }
+        </ol>
+    }
+</div>

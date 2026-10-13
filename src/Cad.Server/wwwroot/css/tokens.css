@@ -39,6 +39,11 @@
   --color-exito-fondo: #ECFDF3;
   --color-exito-borde: #ABEFC6;
 
+  /* Urgencia (SOS): siempre con icono de sirena y el texto «SOS», nunca solo color */
+  --color-urgente: #B42318;         /* 6.05:1 sobre su fondo; blanco encima: 6.57:1 */
+  --color-urgente-fondo: #FEF3F2;
+  --color-urgente-borde: #F4C7C3;
+
   /* Tipografía: fuentes del sistema, sin descargas */
   --fuente: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --texto-xs: 0.8125rem;  /* 13 px: tamaño mínimo */

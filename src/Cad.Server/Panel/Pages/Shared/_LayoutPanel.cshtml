@@ -21,6 +21,7 @@
     <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
+    @await RenderSectionAsync("Estilos", required: false)
 </head>
 <body>
     <header class="encabezado">
@@ -55,5 +56,6 @@
         @RenderBody()
     </main>
     <script src="~/js/formulario.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

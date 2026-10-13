@@ -34,7 +34,11 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),
         new("POST", "/panel/salir", "HU02", Acceso.Publico),
         new("GET", "/panel/acceso-denegado", "HU03", Acceso.Publico, Contenido: "Tu rol no tiene permiso", EstadoPropio: 403),
-        new("GET", "/panel/central", "HU11 (base)", Acceso.SoloRol, Roles.Operador, "Central de monitoreo"),
+        new("GET", "/panel/central", "HU11", Acceso.SoloRol, Roles.Operador, "Atención urgente · SOS"),
+        // Canal en tiempo real de la central: solo operadores. El operador negocia (200); el resto, 401/403.
+        new("POST", "/hubs/central/negotiate", "HU11", Acceso.SoloRol, Roles.Operador, Ejemplo: "/hubs/central/negotiate?negotiateVersion=1"),
+        // Sin identificador de conexión el operador recibe 400 (llega al hub); el resto es rechazado antes.
+        new("GET", "/hubs/central", "HU11", Acceso.SoloRol, Roles.Operador),
         new("GET", "/panel/admin", "HU04 (base)", Acceso.SoloRol, Roles.Administrador, "Interfaz del administrador"),
         new("GET", "/panel/admin/cuentas", "HU04", Acceso.SoloRol, Roles.Administrador, "Cuentas institucionales"),
         new("GET", "/panel/admin/cuentas/nueva", "HU04", Acceso.SoloRol, Roles.Administrador, "Nueva cuenta institucional"),

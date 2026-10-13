@@ -515,3 +515,220 @@ a.boton {
   display: grid;
   gap: var(--espacio-4);
 }
+
+/* ===== Central de monitoreo (HU11) ===== */
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.central {
+  display: grid;
+  gap: var(--espacio-6);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .central {
+    grid-template-columns: minmax(22rem, 2fr) 3fr;
+  }
+}
+
+.central__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.central__urgente,
+.central__mapa {
+  display: grid;
+  gap: var(--espacio-3);
+  padding: var(--espacio-6);
+}
+
+.central__titulo {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-lg);
+  color: var(--color-marino);
+}
+
+.central__contador {
+  min-width: 1.75rem;
+  padding: 0 var(--espacio-2);
+  border-radius: 999px;
+  font-size: var(--texto-sm);
+  text-align: center;
+  color: #FFFFFF;
+  background: var(--color-urgente);
+}
+
+/* Estado de la conexión en tiempo real: icono + texto + color */
+.conexion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: var(--espacio-1) var(--espacio-3);
+  border: var(--grosor-borde) solid;
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+}
+
+.conexion [data-icono] {
+  display: none;
+}
+
+.conexion--conectando { color: var(--color-informacion); background: var(--color-informacion-fondo); border-color: var(--color-informacion-borde); }
+.conexion--conectado { color: var(--color-exito); background: var(--color-exito-fondo); border-color: var(--color-exito-borde); }
+.conexion--reconectando { color: var(--color-advertencia); background: var(--color-advertencia-fondo); border-color: var(--color-advertencia-borde); }
+.conexion--desconectado { color: var(--color-error); background: var(--color-error-fondo); border-color: var(--color-error-borde); }
+
+.conexion--conectando [data-icono="conectando"],
+.conexion--conectado [data-icono="conectado"],
+.conexion--reconectando [data-icono="reconectando"],
+.conexion--desconectado [data-icono="desconectado"] {
+  display: inline-flex;
+}
+
+/* Lista de SOS pendientes */
+.lista-sos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+.sos {
+  display: grid;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-left: 4px solid var(--color-urgente);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+}
+
+.sos--nuevo {
+  border-color: var(--color-urgente-borde);
+  border-left-color: var(--color-urgente);
+  background: var(--color-urgente-fondo);
+}
+
+.sos--nuevo .sos__cabecera::after {
+  content: "Nuevo";
+  margin-left: auto;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  text-transform: uppercase;
+  color: var(--color-urgente);
+}
+
+.sos--seleccionado {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.sos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.etiqueta-urgente {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  padding: 0.125rem var(--espacio-2);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-urgente);
+}
+
+.etiqueta-urgente .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sos__estado {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+}
+
+.sos__hora {
+  font-size: var(--texto-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto-secundario);
+}
+
+.sos__ciudadano {
+  font-weight: var(--peso-medio);
+}
+
+.sos__ubicacion {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--espacio-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-primario);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sos__ubicacion:hover span {
+  text-decoration: underline;
+}
+
+.sos__ubicacion .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sos__ubicacion--no {
+  color: var(--color-advertencia);
+  cursor: default;
+}
+
+/* Mapa base mínimo */
+.mapa {
+  min-height: 28rem;
+  height: calc(100vh - 16rem);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-control);
+}
+
+.marcador-sos {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radio-control);
+  font: 700 0.75rem/1 var(--fuente);
+  color: #FFFFFF;                     /* 6.57:1 sobre el rojo de urgencia */
+  background: var(--color-urgente);
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 0 0 1px var(--color-urgente);
+}
+
+.marcador-sos:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 2px;
+}

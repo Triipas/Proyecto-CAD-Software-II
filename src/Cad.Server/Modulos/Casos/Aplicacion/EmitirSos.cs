@@ -1,4 +1,5 @@
 using Cad.Contratos.Sos;
+using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public abstract record ResultadoEmisionSos
 }
 
 // HU07 — Emitir un SOS con una única activación (S1-T13, S1-T14) y HU08 — ubicación del SOS (parte de servidor de S1-T15).
-public sealed class EmitirSos(CadDbContext db, TimeProvider reloj, ILogger<EmitirSos> registro)
+public sealed class EmitirSos(CadDbContext db, TimeProvider reloj, INotificador notificador, ILogger<EmitirSos> registro)
 {
     public async Task<ResultadoEmisionSos> EjecutarAsync(Guid ciudadanoId, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
@@ -50,6 +51,19 @@ public sealed class EmitirSos(CadDbContext db, TimeProvider reloj, ILogger<Emiti
         }
 
         registro.LogInformation("SOS {CasoId} registrado.", caso.Id);
+
+        // HU11: aviso a la central solo después de confirmar la transacción y solo para un SOS nuevo
+        // (un reintento no vuelve a avisar). Si el aviso falla, el SOS ya está guardado: la central lo
+        // recupera al resincronizarse, y el ciudadano recibe igualmente su confirmación.
+        try
+        {
+            await notificador.SosRegistradoAsync(caso.Id, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogError(ex, "No se pudo avisar a la central del SOS {CasoId}; se mostrará al resincronizar.", caso.Id);
+        }
+
         return new ResultadoEmisionSos.Registrado(caso);
     }
 

@@ -1,14 +1,54 @@
 @page "/panel/central"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Cad.Server.Compartido.Politicas.OperadorAutorizado)]
+@model Cad.Server.Panel.Pages.Central.IndexModel
 @{
     ViewData["Title"] = "Central";
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
 }
 <div class="pagina__encabezado">
     <div>
         <p class="sobretitulo">Operador</p>
         <h1 class="titulo">Central de monitoreo</h1>
     </div>
+    <div class="central__controles">
+        @* Estado del canal en tiempo real: icono + texto + color (nunca solo color). *@
+        <p class="conexion conexion--conectando" role="status" data-conexion data-estado="conectando">
+            <span data-icono="conectando"><partial name="_Icono" model="@("informacion")" /></span>
+            <span data-icono="conectado"><partial name="_Icono" model="@("exito")" /></span>
+            <span data-icono="reconectando"><partial name="_Icono" model="@("advertencia")" /></span>
+            <span data-icono="desconectado"><partial name="_Icono" model="@("error")" /></span>
+            <span data-texto>Conectando al tiempo real…</span>
+        </p>
+        <button type="button" class="boton boton--secundario" aria-pressed="false" data-activar-sonido>
+            Activar avisos sonoros
+        </button>
+    </div>
 </div>
-<section class="superficie">
-    <p class="texto-secundario">Interfaz del operador. La sección de atención urgente de SOS se incorpora con HU11 (S1-T17).</p>
-</section>
+
+<div class="central">
+    <section class="superficie central__urgente" aria-labelledby="titulo-urgente" data-avisos-sonoros="0">
+        <h2 id="titulo-urgente" class="central__titulo">
+            Atención urgente · SOS <span class="central__contador" data-contador>@Model.Pendientes.Count</span>
+        </h2>
+        <p class="texto-secundario">SOS pendientes, del más reciente al más antiguo. Se separan de reportes y acompañamientos.</p>
+        <div data-region-lista>
+            <partial name="_ListaSos" model="@Model.Lista" />
+        </div>
+        <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
+    </section>
+
+    <section class="superficie central__mapa" aria-labelledby="titulo-mapa">
+        <h2 id="titulo-mapa" class="central__titulo">Mapa operativo</h2>
+        <p class="texto-secundario">Solo se muestran los SOS con ubicación. Elige un marcador o «Ver en el mapa» para relacionarlos.</p>
+        <div id="mapa" class="mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de SOS con ubicación"></div>
+        <noscript><p class="texto-secundario">El mapa y los avisos en tiempo real necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/central.js" asp-append-version="true"></script>
+}
