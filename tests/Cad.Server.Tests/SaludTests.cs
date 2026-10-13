@@ -19,12 +19,13 @@ public class SaludTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task RutaRaiz_SinEndpointDefinido_Responde404()
+    public async Task RutaRaiz_SinSesion_RedirigeAlIngresoPorDenegacionPorDefecto()
     {
-        var cliente = fabrica.CreateClient();
+        // HU03: con la política por defecto, una ruta no declarada exige sesión; no se responde 404
+        // para no revelar qué rutas existen.
+        var respuesta = await fabrica.CrearNavegador().GetAsync("/");
 
-        var respuesta = await cliente.GetAsync("/");
-
-        Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.StartsWith("https://localhost/panel/ingresar", respuesta.Headers.Location?.ToString());
     }
 }

@@ -1,5 +1,5 @@
 @page "/panel/central"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = Cad.Server.Modulos.Cuentas.Dominio.Roles.Operador)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Cad.Server.Compartido.Politicas.OperadorAutorizado)]
 @{
     ViewData["Title"] = "Central";
 }

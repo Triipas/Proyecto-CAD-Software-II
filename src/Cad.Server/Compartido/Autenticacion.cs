@@ -85,7 +85,7 @@ public static class Autenticacion
                 };
             });
 
-        services.AddAuthorization();
+        // Las políticas y la denegación por defecto se registran en Autorizacion.AddAutorizacionCad.
         return services;
     }
 

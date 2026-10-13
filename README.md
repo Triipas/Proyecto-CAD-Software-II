@@ -91,4 +91,4 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 
 - Ningún secreto, contraseña ni cadena de conexión en el repositorio: se usan variables de entorno y un `.env` local (ignorado por Git).
 - No se registran en los logs contraseñas, tokens, coordenadas ni datos personales.
-- La autorización se aplica en el servidor, no solo en la interfaz.
+- La autorización se aplica en el servidor, no solo en la interfaz. Toda ruta exige sesión salvo que se declare pública; cada ruta nueva usa una política de `Compartido/Autorizacion.cs` y se añade a la matriz de [docs/matriz-permisos.md](docs/matriz-permisos.md) (la prueba `MatrizAutorizacionTests` falla si falta).

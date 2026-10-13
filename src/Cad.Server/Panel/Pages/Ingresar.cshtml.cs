@@ -21,8 +21,10 @@ public class IngresarModel(IniciarSesion iniciarSesion) : PageModel
 
     public IActionResult OnGet()
     {
+        // Solo los roles del panel tienen una página de inicio aquí; un ciudadano o sereno
+        // (por ejemplo, con su JWT) ve el formulario en lugar de ser enviado a una página que se le negaría.
         var rol = User.FindFirstValue(Autenticacion.ReclamoRol);
-        return rol is null ? Page() : LocalRedirect(InicioDe(rol));
+        return rol is Roles.Operador or Roles.Administrador ? LocalRedirect(InicioDe(rol)) : Page();
     }
 
     public async Task<IActionResult> OnPostAsync()

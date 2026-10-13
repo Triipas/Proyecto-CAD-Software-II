@@ -21,6 +21,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddAutenticacionCad(builder.Configuration, builder.Environment.IsDevelopment());
+builder.Services.AddAutorizacionCad();
 builder.Services.AddRazorPages(opciones => opciones.RootDirectory = "/Panel/Pages");
 // El panel está en español: no convertir tildes ni «ñ» en entidades HTML.
 // <, >, & y comillas se siguen codificando, así que la protección frente a XSS no cambia.
@@ -44,7 +45,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHealthChecks("/salud");
+app.MapHealthChecks("/salud").AllowAnonymous();
 app.MapModuloCuentas();
 app.MapRazorPages();
 

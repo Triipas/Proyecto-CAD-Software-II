@@ -1,5 +1,5 @@
 @page "/panel/admin"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = Cad.Server.Modulos.Cuentas.Dominio.Roles.Administrador)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Cad.Server.Compartido.Politicas.Administrador)]
 @{
     ViewData["Title"] = "Administración";
 }

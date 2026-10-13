@@ -51,7 +51,7 @@ public static class ModuloCuentas
                 ? StatusCodes.Status401Unauthorized
                 : StatusCodes.Status403Forbidden;
             return Results.Problem(statusCode: estado, title: Aplicacion.IniciarSesion.Mensaje(resultado));
-        });
+        }).AllowAnonymous();
 
         var cuentas = app.MapGroup("/api/cuentas");
 
@@ -75,7 +75,7 @@ public static class ModuloCuentas
                 _ =>
                     Results.Problem(statusCode: StatusCodes.Status409Conflict,
                         title: "Ya existe una cuenta registrada con ese correo electrónico."),
-            });
+            }).AllowAnonymous();
 
         return app;
     }
