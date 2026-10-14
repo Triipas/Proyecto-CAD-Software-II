@@ -24,15 +24,16 @@ Recorre en una sola ejecución el flujo completo del sprint, con datos ficticios
 3. Ingreso del administrador al panel, alta de un operador y cambio de su contraseña (HU02, HU04).
 4. Ingreso del operador al panel con la contraseña antigua (rechazado) y con la nueva (HU02).
 5. SOS con ubicación precisa recibido en tiempo real por un operador conectado al hub, y lista de la central (HU07, HU08, HU11).
+6. Sprint 2 (S2-T16): el operador ve el teléfono y registra un intento con información del hecho y referencia (HU12); un sereno se activa y envía posiciones (HU18); registra el token de su dispositivo y recibe el despacho por push (HU21, con un doble de FCM); el operador clasifica (HU13); el sereno va en camino, inicia la atención y cierra con un resultado y notas internas (HU22–HU24).
 
 Después busca cada valor sensible en **todas** las entradas capturadas, en **todos los niveles** (incluidos Debug y Trace). Es más estricto que la configuración real, que no registra esos niveles para el framework.
 
 | Categoría | Valores buscados | Hallazgos |
 |---|---|---|
 | Contraseñas | De la ciudadana, del operador (inicial y nueva), del administrador y las de los intentos fallidos | 0 |
-| Tokens y cookies | JWT emitido, cookies `cad.panel` del administrador y del operador, sellos de seguridad de Identity y cualquier texto con forma de JWT | 0 |
-| Datos personales | Correos, teléfono y apellidos ficticios | 0 |
-| Coordenadas | Latitud y longitud del SOS, con punto y con coma decimal | 0 |
+| Tokens y cookies | JWT emitido, cookies `cad.panel` del administrador y del operador, sellos de seguridad de Identity, token del dispositivo del sereno (ADR-07) y cualquier texto con forma de JWT | 0 |
+| Datos personales | Correos, teléfono y apellidos ficticios; información del hecho y referencia (HU12); resultado del cierre y notas internas (HU24) | 0 |
+| Coordenadas | Latitud y longitud del SOS y de las posiciones del sereno, con punto y con coma decimal | 0 |
 | Secretos del servidor | Clave de firma JWT, contraseña de la base de datos y cualquier `Password=` | 0 |
 
 **La prueba detecta fugas reales:** al añadir temporalmente un registro de nivel Debug con las coordenadas del SOS, falla y las señala («coordenadas: -12.07…»). Después se restauró el código.

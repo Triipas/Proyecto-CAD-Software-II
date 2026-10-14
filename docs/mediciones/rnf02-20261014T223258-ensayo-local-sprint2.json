@@ -1,0 +1,18 @@
+{
+  "Entorno": "ensayo-local-sprint2",
+  "ejecucion": "20261014T223258",
+  "resultado": {
+    "SesionesConcurrentes": 20,
+    "SosAceptados": 100,
+    "SosConAcuse": 100,
+    "DentroDelLimite": 100,
+    "PorcentajeDentroDelLimite": 100,
+    "P50Ms": 16.847,
+    "P95Ms": 62.854,
+    "MaximoMs": 139.656,
+    "CumpleTamanoDeMuestra": true,
+    "CumpleSesiones": true,
+    "Cumple": true
+  },
+  "rechazos": {}
+}
