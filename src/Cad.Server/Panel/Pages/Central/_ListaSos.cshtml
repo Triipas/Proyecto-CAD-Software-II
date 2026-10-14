@@ -28,6 +28,8 @@
                         <time class="sos__hora" datetime="@sos.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm:ss", inv)</time>
                     </div>
                     <p class="sos__ciudadano">@sos.Ciudadano</p>
+                    @* HU13-CA03: el tipo se muestra siempre; sin clasificar, «Tipo por determinar». *@
+                    <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
                     @if (sos.UbicacionDisponible)
                     {
                         <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa el SOS de @sos.Ciudadano">
@@ -42,7 +44,11 @@
                             <span>Ubicación no disponible</span>
                         </p>
                     }
-                    <a class="sos__detalle" href="/panel/central/sos/@sos.Id">Verificar y registrar contacto<span class="visualmente-oculto"> del SOS de @sos.Ciudadano</span></a>
+                    <div class="sos__acciones">
+                        <a class="sos__detalle" href="/panel/central/sos/@sos.Id">Verificar y registrar contacto<span class="visualmente-oculto"> del SOS de @sos.Ciudadano</span></a>
+                        @* HU20: selecciona el SOS (con o sin ubicación) y lleva a los serenos disponibles. *@
+                        <button type="button" class="sos__detalle sos__elegir" data-seleccionar-sos>Elegir sereno para asignar<span class="visualmente-oculto"> el SOS de @sos.Ciudadano</span></button>
+                    </div>
                 </li>
             }
         </ol>

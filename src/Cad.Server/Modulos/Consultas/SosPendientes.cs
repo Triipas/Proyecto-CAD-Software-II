@@ -13,9 +13,13 @@ public sealed record SosPendiente(
     string Ciudadano,
     double? Latitud,
     double? Longitud,
-    double? PrecisionMetros)
+    double? PrecisionMetros,
+    string? Tipo)
 {
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
+
+    // HU13-CA03: un SOS sin clasificar se muestra como «Tipo por determinar».
+    public const string TipoPorDeterminar = "Tipo por determinar";
 }
 
 public sealed class ConsultarSosPendientes(CadDbContext db)
@@ -24,10 +28,13 @@ public sealed class ConsultarSosPendientes(CadDbContext db)
     public async Task<IReadOnlyList<SosPendiente>> EjecutarAsync(CancellationToken ct) =>
         await (from caso in db.Casos.AsNoTracking()
                join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+               join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id into categorias
+               from categoria in categorias.DefaultIfEmpty()
                where caso.Origen == OrigenCaso.Sos && caso.Estado == EstadoCaso.Pendiente
                orderby caso.RegistradoEn descending
                select new SosPendiente(caso.Id, "SOS", "Pendiente", caso.RegistradoEn,
                    ciudadano.Nombres + " " + ciudadano.Apellidos,
-                   caso.Latitud, caso.Longitud, caso.PrecisionMetros))
+                   caso.Latitud, caso.Longitud, caso.PrecisionMetros,
+                   categoria == null ? null : categoria.Nombre))
               .ToListAsync(ct);
 }

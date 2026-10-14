@@ -34,7 +34,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/central` (sección urgente y su fragmento `?handler=Lista`) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /hubs/central/negotiate` y `/hubs/central` (tiempo real) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
-| `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia) | HU12 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET` y `POST /panel/admin/cuentas/nueva` (alta) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -59,14 +59,14 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU10 | Registrar un reporte de incidencia | Ciudadano | Pendiente (Sprint 3) |
 | HU11 | Recibir los SOS en la sección de atención urgente | Operador | **Verificada (13/10/2026):** página, fragmento y canal en tiempo real solo para Operador; un ciudadano con JWT o una conexión sin sesión no pueden conectarse al hub (`RecepcionSosTests.HU03_*`). |
 | HU12 | Contactar al ciudadano y registrar la verificación del SOS | Operador | **Verificada (13/10/2026):** consulta y registro solo para Operador; un administrador con token antifalsificación válido, o un ciudadano o un sereno con su token, no ven el teléfono ni registran intentos (`VerificacionSosTests.CA08_*`). Prueba de mutación: sin la política de operador, 9 pruebas fallan. |
-| HU13 | Clasificar un SOS después de su registro | Operador | Pendiente (Sprint 2; DP09) |
+| HU13 | Clasificar un SOS después de su registro | Operador | **Verificada en el servidor (14/10/2026):** clasificar (`POST /panel/central/sos/{id}?handler=Clasificar`) solo para Operador (DP09); un administrador con token antifalsificación válido es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no clasifica, sin modificar el caso (`ClasificacionTests.DP09_*`). |
 | HU14 | Iniciar la revisión de un reporte y corregir su categoría | Operador | Pendiente (Sprint 3) |
 | HU15 | Admitir un reporte para atención | Operador | Pendiente (Sprint 3) |
 | HU16 | Derivar un reporte | Operador | Pendiente (Sprint 3) |
 | HU17 | Descartar un reporte con justificación | Operador | Pendiente (Sprint 3) |
 | HU18 | Activar mi estado operativo y compartir mi ubicación | Sereno | **Servidor verificado (13/10/2026):** estado y posiciones solo para Sereno; un ciudadano con su token no crea estado ni posiciones (`EstadoOperativoTests.CA05_*`). Mutación: sin la política de sereno, 10 pruebas fallan. App verificada (14/10/2026): sin permiso de ubicación no se activa ni se llama al servidor; la pantalla del sereno solo existe en el modo sereno. |
 | HU19 | Monitorear el estado y la disponibilidad de los serenos | Operador | **Verificada (14/10/2026):** sección de serenos y fragmento `?handler=Serenos` solo para Operador (página `/panel/central`); un administrador es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no los obtiene (`MonitoreoSerenosTests.CA05_*`). El aviso `SerenoActualizado` va solo al grupo de operadores del canal de la central. |
-| HU20 | Asignar un caso pendiente a un sereno disponible | Operador | Pendiente (Sprints 2 y 3) |
+| HU20 | Asignar un caso pendiente a un sereno disponible | Operador | **Verificada en el servidor (14/10/2026):** asignar (`POST /panel/central/sos/{id}?handler=Asignar`) solo para Operador; un administrador con token antifalsificación válido es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no asigna, sin crear registros (`AsignacionTests.CA09_*`). Mutación: sin la política de operador, 3 pruebas fallan. CA07 (reportes) pendiente del Sprint 3. |
 | HU21 | Recibir y consultar un despacho | Sereno | Pendiente (Sprint 2) |
 | HU22 | Confirmar mi desplazamiento al caso | Sereno | Pendiente (Sprint 2) |
 | HU23 | Registrar el inicio de atención | Sereno; Operador (queda identificado como responsable) | Pendiente (Sprint 2) |

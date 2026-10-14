@@ -20,6 +20,16 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     // HU19 — serenos con su estado, disponibilidad y última ubicación.
     public IReadOnlyList<SerenoMonitoreo> Serenos { get; private set; } = [];
 
+    // HU20 — resultado de la última asignación hecha desde esta página (patrón PRG).
+    [TempData]
+    public string? Mensaje { get; set; }
+
+    [TempData]
+    public string? DetalleMensaje { get; set; }
+
+    [TempData]
+    public string? ErrorAccion { get; set; }
+
     // Mapa base mínimo (cláusula de mapa de HU11-CA01, opción aprobada). Valores de configuración, no de negocio.
     public string CentroLatitud => Numero("Panel:Mapa:CentroLatitud", -12.0464);
     public string CentroLongitud => Numero("Panel:Mapa:CentroLongitud", -77.0428);

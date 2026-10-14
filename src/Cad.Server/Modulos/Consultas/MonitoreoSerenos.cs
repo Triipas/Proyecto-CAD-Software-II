@@ -12,6 +12,7 @@ public sealed record SerenoMonitoreo(
     string Nombre,
     bool Operativo,
     bool Disponible,
+    bool ConAsignacion,
     double? Latitud,
     double? Longitud,
     double? PrecisionMetros,
@@ -30,6 +31,7 @@ public sealed class ConsultarSerenos(CadDbContext db)
                            where usuario.Activo && db.UserRoles.Any(r => r.UserId == usuario.Id && r.RoleId == RolSereno)
                            let estado = db.EstadosSereno.FirstOrDefault(e => e.SerenoId == usuario.Id)
                            let operativo = estado != null && estado.Operativo
+                           let conAsignacion = db.Asignaciones.Any(a => a.SerenoId == usuario.Id && a.Vigente)
                            // Solo posiciones recibidas desde la activación vigente (reloj del servidor): la última
                            // posición de un turno anterior no se presenta como actual.
                            let ultima = db.PosicionesSereno
@@ -42,6 +44,7 @@ public sealed class ConsultarSerenos(CadDbContext db)
                                Id = usuario.Id,
                                Nombre = usuario.Nombres + " " + usuario.Apellidos,
                                Operativo = operativo,
+                               ConAsignacion = conAsignacion,
                                Latitud = ultima == null ? null : ultima.Latitud,
                                Longitud = ultima == null ? null : ultima.Longitud,
                                PrecisionMetros = ultima == null ? null : ultima.PrecisionMetros,
@@ -51,9 +54,9 @@ public sealed class ConsultarSerenos(CadDbContext db)
 
         return filas.Select(f => new SerenoMonitoreo(
                 f.Id, f.Nombre, f.Operativo,
-                // HU19-CA02, regla del MVP: operativo y sin asignación vigente. Las asignaciones llegan con HU20
-                // (bloque 5); hasta entonces ningún sereno tiene asignación vigente.
-                Disponible: f.Operativo,
+                // HU19-CA02, regla del MVP: operativo y sin asignación vigente (HU20).
+                Disponible: f.Operativo && !f.ConAsignacion,
+                f.ConAsignacion,
                 f.Operativo ? f.Latitud : null,
                 f.Operativo ? f.Longitud : null,
                 f.Operativo ? f.PrecisionMetros : null,
@@ -66,6 +69,7 @@ public sealed class ConsultarSerenos(CadDbContext db)
         public Guid Id { get; init; }
         public string Nombre { get; init; } = "";
         public bool Operativo { get; init; }
+        public bool ConAsignacion { get; init; }
         public double? Latitud { get; init; }
         public double? Longitud { get; init; }
         public double? PrecisionMetros { get; init; }

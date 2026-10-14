@@ -222,5 +222,8 @@ public class MonitoreoSerenosTests(FabricaCad fabrica)
     {
         public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) => throw new InvalidOperationException("Fallo simulado.");
         public Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct) => throw new InvalidOperationException("Fallo simulado.");
+
+        public Task CasoActualizadoAsync(Guid casoId, CancellationToken ct) =>
+            throw new InvalidOperationException("Fallo simulado.");
     }
 }

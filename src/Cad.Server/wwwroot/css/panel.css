@@ -691,6 +691,15 @@ a.boton {
   font-weight: var(--peso-medio);
 }
 
+/* HU13: tipo del SOS. Sin clasificar se distingue en gris para no confundirse con una categoría. */
+.sos__tipo {
+  font-size: var(--texto-sm);
+}
+
+.sos__tipo--pendiente {
+  color: var(--color-texto-secundario);
+}
+
 .sos__ubicacion {
   display: inline-flex;
   align-items: center;
@@ -953,4 +962,44 @@ a.boton {
 .marcador-sereno:focus-visible {
   outline: 3px solid var(--color-foco);
   outline-offset: 2px;
+}
+
+/* El atributo hidden gana a los display propios de los componentes (botones, avisos, formularios). */
+[hidden] {
+  display: none !important;
+}
+
+/* ===== Asignación desde la central (HU20) ===== */
+
+.central__aviso,
+.central__confirmacion {
+  margin-bottom: var(--espacio-4);
+}
+
+.central__confirmacion {
+  position: sticky;
+  top: var(--espacio-2);
+  z-index: 1000; /* por encima del mapa (Leaflet usa índices de hasta 1000 en sus capas) */
+  box-shadow: 0 4px 16px rgba(16, 42, 67, 0.18);
+}
+
+.sereno__asignar {
+  justify-self: start;
+  min-height: 2.25rem;
+  padding: var(--espacio-1) var(--espacio-4);
+  font-size: var(--texto-sm);
+}
+
+.sos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-4);
+}
+
+.sos__elegir {
+  border: 0;
+  padding: 0;
+  background: none;
+  text-decoration: underline;
+  cursor: pointer;
 }
