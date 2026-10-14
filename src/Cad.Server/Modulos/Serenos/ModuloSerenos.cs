@@ -12,6 +12,8 @@ public static class ModuloSerenos
         services.Configure<OpcionesSerenos>(configuracion.GetSection(OpcionesSerenos.Seccion));
         services.AddScoped<GestionarEstadoOperativo>();
         services.AddScoped<Consultas.ConsultarSerenos>();
+        services.AddScoped<Consultas.ConsultarDespacho>();
+        services.AddScoped<GestionarDispositivo>();
         return services;
     }
 
@@ -45,6 +47,30 @@ public static class ModuloSerenos
                 ResultadoPosicion.Invalida i => Results.ValidationProblem(i.Errores, title: "La posición no es válida."),
                 _ => Results.StatusCode(StatusCodes.Status500InternalServerError),
             });
+
+        // HU21 — despacho vigente del sereno: 200 con los datos de DP06 o 204 si no tiene ninguno.
+        sereno.MapGet("/despacho", async (HttpContext contexto, Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
+            await despachos.VigenteAsync(contexto.User.IdUsuario(), ct) is { } despacho ? Results.Ok(despacho) : Results.NoContent());
+
+        // CA04: un caso que no está asignado a este sereno responde igual que uno que no existe (404).
+        sereno.MapGet("/casos/{id:guid}", async (Guid id, HttpContext contexto, Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
+            await despachos.DelCasoAsync(contexto.User.IdUsuario(), id, ct) is { } despacho ? Results.Ok(despacho) : Results.NotFound());
+
+        // ADR-07 — dispositivo para la notificación push del despacho. 204 en ambos casos.
+        sereno.MapPut("/dispositivo", async (SolicitudRegistroDispositivo solicitud, HttpContext contexto,
+                GestionarDispositivo dispositivos, CancellationToken ct) =>
+        {
+            if (GestionarDispositivo.Validar(solicitud.Token) is { } errores)
+                return Results.ValidationProblem(errores, title: "No se pudo registrar el dispositivo.");
+            await dispositivos.RegistrarAsync(contexto.User.IdUsuario(), solicitud.Token, ct);
+            return Results.NoContent();
+        });
+
+        sereno.MapDelete("/dispositivo", async (HttpContext contexto, GestionarDispositivo dispositivos, CancellationToken ct) =>
+        {
+            await dispositivos.QuitarAsync(contexto.User.IdUsuario(), ct);
+            return Results.NoContent();
+        });
 
         return app;
     }

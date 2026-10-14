@@ -29,6 +29,9 @@ public interface IApiCad
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);
     Task<ResultadoApi<RespuestaEstadoOperativo>> CambiarEstadoOperativoAsync(string token, SolicitudCambioEstadoOperativo solicitud, CancellationToken ct);
     Task<ResultadoApi<SinContenido>> EnviarPosicionSerenoAsync(string token, PosicionSerenoEnviada posicion, CancellationToken ct);
+
+    // HU21 — despacho vigente del sereno; Correcto(null) si no tiene ninguno (204).
+    Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct);
 }
 
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).

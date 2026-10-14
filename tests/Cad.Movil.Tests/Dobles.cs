@@ -89,6 +89,16 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaPosicion(posicion));
     }
 
+    // ----- HU21: despacho -----
+    public Func<ResultadoApi<DespachoSereno?>> RespuestaDespacho { get; set; } = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+    public int ConsultasDespacho;
+
+    public Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct)
+    {
+        Interlocked.Increment(ref ConsultasDespacho);
+        return Task.FromResult(RespuestaDespacho());
+    }
+
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
         SosEnviados.Enqueue(solicitud);
@@ -115,4 +125,18 @@ public sealed class RelojFijo(DateTimeOffset ahora) : TimeProvider
 {
     public DateTimeOffset Ahora { get; set; } = ahora;
     public override DateTimeOffset GetUtcNow() => Ahora;
+}
+
+// HU21: canal en tiempo real del sereno, controlado por la prueba.
+public sealed class CanalFalso : ICanalSereno
+{
+    public event Action? DespachoAsignado;
+    public event Action? Reconectado;
+    public bool Conecta { get; set; } = true;
+    public int Conexiones;
+
+    public Task<bool> ConectarAsync(CancellationToken ct) { Interlocked.Increment(ref Conexiones); return Task.FromResult(Conecta); }
+    public Task DesconectarAsync() => Task.CompletedTask;
+    public void Avisar() => DespachoAsignado?.Invoke();
+    public void Reconectar() => Reconectado?.Invoke();
 }

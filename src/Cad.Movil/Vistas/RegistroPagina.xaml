@@ -34,12 +34,12 @@
             <Label Text="{Binding ErrorTelefono}" Style="{StaticResource ErrorCampo}" />
 
             <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Contrasena}" IsPassword="True" SemanticProperties.Description="Contraseña" /></Border>
+            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Contrasena}" IsPassword="True" Placeholder="Tu contraseña" /></Border>
             <Label Text="Entre 8 y 128 caracteres, con al menos una letra y un número." Style="{StaticResource TextoSecundario}" FontSize="13" />
             <Label Text="{Binding ErrorContrasena}" Style="{StaticResource ErrorCampo}" />
 
             <Label Text="Repite la contraseña" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding ConfirmacionContrasena}" IsPassword="True" SemanticProperties.Description="Repite la contraseña" /></Border>
+            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding ConfirmacionContrasena}" IsPassword="True" Placeholder="Repite tu contraseña" /></Border>
             <Label Text="{Binding ErrorConfirmacion}" Style="{StaticResource ErrorCampo}" />
 
             <Button Text="Crear mi cuenta" Style="{StaticResource BotonPrincipal}" Command="{Binding Registrar}" />

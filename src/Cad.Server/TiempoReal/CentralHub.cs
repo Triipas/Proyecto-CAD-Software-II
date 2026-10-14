@@ -26,8 +26,12 @@ public sealed class CentralHub : Hub
     }
 }
 
-public sealed class NotificadorSignalR(IHubContext<CentralHub> central) : INotificador
+public sealed class NotificadorSignalR(IHubContext<CentralHub> central, IHubContext<SerenoHub> serenos) : INotificador
 {
+    // HU21: sin datos del caso; la app los consulta con la sesión del sereno (DP06).
+    public Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct) =>
+        serenos.Clients.Group(SerenoHub.Grupo(serenoId)).SendAsync(SerenoHub.EventoDespachoAsignado, ct);
+
     // Solo el identificador: el panel lee el detalle de la base de datos (fuente de verdad).
     public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) =>
         central.Clients.Group(CentralHub.GrupoOperadores).SendAsync(CentralHub.EventoSosRecibido, new { id = casoId }, ct);

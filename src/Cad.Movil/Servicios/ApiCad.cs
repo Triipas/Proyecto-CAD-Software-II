@@ -38,6 +38,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<SinContenido>> EnviarPosicionSerenoAsync(string token, PosicionSerenoEnviada posicion, CancellationToken ct) =>
         EnviarAsync<SinContenido>(HttpMethod.Post, "api/sereno/posiciones", posicion, token, ct);
 
+    public Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct) =>
+        EnviarAsync<DespachoSereno?>(HttpMethod.Get, "api/sereno/despacho", null, token, ct);
+
     private async Task<ResultadoApi<T>> EnviarAsync<T>(HttpMethod metodo, string ruta, object? cuerpo, string? token, CancellationToken ct)
     {
         if (configuracion.Direccion is not { } direccion)
@@ -56,7 +59,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
             if (respuesta.IsSuccessStatusCode)
                 return new ResultadoApi<T>.Correcto(typeof(T) == typeof(SinContenido)
                     ? (T)(object)new SinContenido()
-                    : (await respuesta.Content.ReadFromJsonAsync<T>(Json, ct))!);
+                    : respuesta.StatusCode == HttpStatusCode.NoContent
+                        ? default! // p. ej., un sereno sin despacho (HU21)
+                        : (await respuesta.Content.ReadFromJsonAsync<T>(Json, ct))!);
 
             // Un error del servidor no registró nada (transacción): se puede reintentar sin duplicar.
             if ((int)respuesta.StatusCode >= 500 || respuesta.StatusCode is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests)

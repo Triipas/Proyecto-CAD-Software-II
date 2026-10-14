@@ -3,23 +3,26 @@ using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
 
-// Modo sereno — HU18: activar el estado operativo y compartir la ubicación. Los despachos llegan con HU21.
+// Modo sereno — HU18: activar el estado operativo y compartir la ubicación; HU21: recibir y consultar el despacho.
 public sealed class InicioSerenoVistaModelo : VistaModeloBase
 {
     private readonly ServicioTurnoSereno turno;
+    private readonly ServicioDespacho despacho;
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
     private bool mostrarExplicacion, mostrarAjustes;
 
-    public InicioSerenoVistaModelo(ServicioTurnoSereno turno, IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes)
+    public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, IAlmacenSesion sesiones,
+        INavegacion navegacion, Action abrirAjustes)
     {
-        (this.turno, this.sesiones, this.navegacion) = (turno, sesiones, navegacion);
+        (this.turno, this.despacho, this.sesiones, this.navegacion) = (turno, despacho, sesiones, navegacion);
         Alternar = new ComandoAsincrono(AlternarAsync, () => !turno.SesionTerminada);
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
         Salir = new ComandoAsincrono(SalirAsync, () => PuedeSalir);
         // El servicio avisa desde el hilo del envío; la interfaz se actualiza en el principal.
         turno.Cambio += () => _ = HiloPrincipal(Actualizar);
+        despacho.Cambio += () => _ = HiloPrincipal(ActualizarDespacho);
     }
 
     // Se puede sustituir en las pruebas (no hay hilo principal de MAUI en net10.0).
@@ -59,11 +62,36 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public string TextoAyudaSalir => PuedeSalir ? "" : "Desactiva tu estado operativo antes de salir.";
     public bool HayAyudaSalir => !PuedeSalir;
 
+    // ----- HU21: despacho (datos de DP06) -----
+    public bool HayDespacho => despacho.Actual is not null;
+    public bool SinDespacho => despacho.Actual is null && despacho.Consultado;
+    public string TextoDespacho => despacho.Actual is { } d ? $"{d.Origen} · {d.Estado}" : "";
+    public string TextoAsignado => despacho.Actual is { } d
+        ? $"Asignado a las {Hora(d.AsignadoEn)}. Registrado a las {Hora(d.RegistradoEn)}." : "";
+    public string TextoIdentificador => despacho.Actual is { } d ? $"Identificador del caso: {d.CasoId}" : "";
+    // CA03: sin ubicación del dispositivo no se muestran coordenadas.
+    public bool HayUbicacionDespacho => despacho.Actual?.Ubicacion is not null;
+    public bool SinUbicacionDespacho => despacho.Actual is { Ubicacion: null };
+    public string TextoUbicacionDespacho => despacho.Actual?.Ubicacion is { } u
+        ? $"{u.Latitud.ToString("0.00000", CultureInfo.InvariantCulture)}, {u.Longitud.ToString("0.00000", CultureInfo.InvariantCulture)} · ± {u.PrecisionMetros.ToString("0", CultureInfo.InvariantCulture)} m · obtenida a las {Hora(u.ObtenidaEn)}"
+        : "";
+    public IReadOnlyList<ElementoInformacionDespacho> InformacionDespacho =>
+        despacho.Actual?.Informacion.Select(i => new ElementoInformacionDespacho(Hora(i.RegistradaEn), i.InformacionHecho, i.ReferenciaUbicacion)).ToList()
+        ?? [];
+    public bool HayInformacionDespacho => despacho.Actual is { Informacion.Count: > 0 };
+    public bool SinInformacionDespacho => despacho.Actual is { Informacion.Count: 0 };
+    public bool AvisoNuevoDespacho => despacho.AvisoNuevo && HayDespacho;
+    public string? ErrorDespacho => despacho.Error;
+    public bool HayErrorDespacho => despacho.Error is not null;
+
+    private static string Hora(DateTimeOffset momento) => momento.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+
     // Cada vez que aparece la pantalla: Shell reutiliza la página entre sesiones, y el estado vive en el servidor.
     public async Task AlAparecerAsync()
     {
         await turno.CargarAsync();
         Actualizar();
+        await despacho.IniciarAsync();
     }
 
     private async Task AlternarAsync()
@@ -95,6 +123,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private async Task SalirAsync()
     {
         await turno.ReiniciarAsync();
+        await despacho.ReiniciarAsync();
         sesiones.Cerrar();
         await navegacion.IrAAsync(Rutas.Ingreso);
     }
@@ -108,4 +137,20 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         Alternar.ActualizarDisponibilidad();
         Salir.ActualizarDisponibilidad();
     }
+
+    private void ActualizarDespacho()
+    {
+        foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(TextoAsignado), nameof(TextoIdentificador),
+                     nameof(HayUbicacionDespacho), nameof(SinUbicacionDespacho), nameof(TextoUbicacionDespacho), nameof(InformacionDespacho),
+                     nameof(HayInformacionDespacho), nameof(SinInformacionDespacho), nameof(AvisoNuevoDespacho), nameof(ErrorDespacho), nameof(HayErrorDespacho) })
+            Notificar(p);
+    }
+}
+
+// Información que registró la central (HU12). La referencia indicada por el ciudadano se muestra aparte de la
+// ubicación del dispositivo (HU21-CA03).
+public sealed record ElementoInformacionDespacho(string Hora, string? InformacionHecho, string? ReferenciaUbicacion)
+{
+    public bool HayHecho => InformacionHecho is not null;
+    public bool HayReferencia => ReferenciaUbicacion is not null;
 }

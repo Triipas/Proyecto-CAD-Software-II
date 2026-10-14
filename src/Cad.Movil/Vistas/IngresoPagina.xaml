@@ -29,7 +29,7 @@
 
                     <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
                     <Border Style="{StaticResource MarcoCampo}">
-                        <Entry Text="{Binding Contrasena}" IsPassword="True" SemanticProperties.Description="Contraseña" />
+                        <Entry Text="{Binding Contrasena}" IsPassword="True" Placeholder="Tu contraseña" />
                     </Border>
 
                     <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" />
