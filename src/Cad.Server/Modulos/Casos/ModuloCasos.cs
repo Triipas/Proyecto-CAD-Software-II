@@ -11,6 +11,7 @@ public static class ModuloCasos
     {
         services.AddScoped<EmitirSos>();
         services.AddScoped<RegistrarIntentoContacto>();
+        services.AddScoped<AsignarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         return services;

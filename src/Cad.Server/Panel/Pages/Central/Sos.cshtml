@@ -27,7 +27,7 @@
         <partial name="_Icono" model="@("exito")" />
         <div>
             <p class="aviso__titulo">@Model.Mensaje</p>
-            <p class="aviso__texto">El SOS sigue en estado @sos.Estado. Puedes registrar más intentos.</p>
+            <p class="aviso__texto">El SOS está en estado @sos.Estado. @Model.DetalleMensaje</p>
         </div>
     </div>
 }
@@ -75,6 +75,63 @@
                 </p>
             }
             <p class="texto-secundario">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
+        </section>
+
+        @* HU20 — asignación a un sereno disponible. También se puede hacer desde el mapa de la central. *@
+        <section class="superficie" aria-labelledby="titulo-asignacion">
+            <h2 id="titulo-asignacion" class="central__titulo">Asignación</h2>
+            @if (Model.ErrorAsignacion is not null)
+            {
+                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo asignar el caso</p>
+                        <p class="aviso__texto">@Model.ErrorAsignacion</p>
+                    </div>
+                </div>
+            }
+            @if (sos.Asignacion is { } vigente)
+            {
+                <p class="estado estado--activa">
+                    <partial name="_Icono" model="@("exito")" />Asignado a @vigente.Sereno a las @Local(vigente.AsignadaEn)
+                </p>
+            }
+            else if (sos.Estado != "Pendiente")
+            {
+                <p class="texto-secundario">El caso no está pendiente: no se puede asignar.</p>
+            }
+            else
+            {
+                @if (Model.SerenosDisponibles.Count == 0)
+                {
+                    <p class="texto-secundario">No hay serenos disponibles en este momento (operativos y sin asignación vigente).</p>
+                }
+                else
+                {
+                    <form method="post" asp-page-handler="Asignar" class="formulario" data-formulario novalidate>
+                        <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.Asignacion.IdSolicitud" />
+                        <fieldset class="opciones">
+                            <legend class="campo__etiqueta">Sereno disponible</legend>
+                            @foreach (var sereno in Model.SerenosDisponibles)
+                            {
+                                var idOpcion = $"Asignacion_Sereno_{sereno.Id:N}";
+                                <label class="opcion" for="@idOpcion">
+                                    <input type="radio" id="@idOpcion" name="Asignacion.SerenoId" value="@sereno.Id" required />
+                                    <span>
+                                        @sereno.Nombre
+                                        <span class="texto-secundario">
+                                            · @(sereno.UltimaPosicionEn is { } h ? $"última ubicación a las {Local(h)}" : "ubicación no disponible")
+                                        </span>
+                                    </span>
+                                </label>
+                            }
+                        </fieldset>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--principal" data-texto-carga="Asignando…">Asignar el caso</button>
+                        </div>
+                    </form>
+                }
+            }
         </section>
     </div>
 

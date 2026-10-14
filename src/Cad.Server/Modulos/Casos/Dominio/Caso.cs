@@ -3,8 +3,9 @@ namespace Cad.Server.Modulos.Casos.Dominio;
 // Caso común a SOS y reportes (Plan de Arquitectura, 9.1). En el Sprint 1 solo existe el origen SOS.
 public enum OrigenCaso { Sos }
 
-// Estados documentados del SOS; en el Sprint 1 solo se registra «Pendiente» (HU07-CA02).
-public enum EstadoCaso { Pendiente }
+// Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20); los demás
+// estados del ciclo (En camino, En atención, Cerrada) llegan con HU22–HU24.
+public enum EstadoCaso { Pendiente, Asignada }
 
 public sealed class Caso
 {
@@ -26,6 +27,20 @@ public sealed class Caso
     public DateTimeOffset? UbicacionObtenidaEn { get; private set; }
 
     public bool UbicacionDisponible => Latitud is not null;
+
+    // Token de concurrencia optimista (columna del sistema xmin de PostgreSQL): si dos operadores deciden a la
+    // vez sobre el mismo caso, la segunda transacción no encuentra la versión leída y se rechaza (HU20-CA04).
+    public uint Version { get; private set; }
+
+    // HU20-CA01/CA02: solo un caso «Pendiente» puede asignarse.
+    public bool PuedeAsignarse => Estado == EstadoCaso.Pendiente;
+
+    public void Asignar()
+    {
+        if (!PuedeAsignarse)
+            throw new InvalidOperationException("Solo un caso pendiente puede asignarse.");
+        Estado = EstadoCaso.Asignada;
+    }
 
     private Caso() { } // EF Core
 

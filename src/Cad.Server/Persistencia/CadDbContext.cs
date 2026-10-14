@@ -17,6 +17,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Caso> Casos => Set<Caso>();
     public DbSet<EventoCaso> EventosCaso => Set<EventoCaso>();
     public DbSet<IntentoContacto> IntentosContacto => Set<IntentoContacto>();
+    public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
@@ -41,6 +42,9 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             caso.Property(c => c.Origen).HasConversion<string>().HasMaxLength(20);
             caso.Property(c => c.Estado).HasConversion<string>().HasMaxLength(20);
             caso.Ignore(c => c.UbicacionDisponible);
+            caso.Ignore(c => c.PuedeAsignarse);
+            // Npgsql asocia un uint marcado como versión a la columna del sistema xmin (sin columna nueva).
+            caso.Property(c => c.Version).IsRowVersion();
             // Idempotencia: una sola fila por ciudadano y solicitud (HU07-CA07).
             caso.HasIndex(c => new { c.CiudadanoId, c.IdSolicitud }).IsUnique();
             caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
@@ -83,6 +87,20 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             intento.HasIndex(i => new { i.CasoId, i.RegistradoEn });
             intento.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
             intento.HasOne<Usuario>().WithMany().HasForeignKey(i => i.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU20: asignaciones. Una sola vigente por caso y una sola vigente por sereno (CA04, CA05, RNF08).
+        builder.Entity<Asignacion>(asignacion =>
+        {
+            asignacion.ToTable("Asignaciones");
+            asignacion.HasKey(a => a.Id);
+            asignacion.HasIndex(a => a.CasoId).IsUnique().HasFilter("\"Vigente\"").HasDatabaseName("IX_Asignaciones_CasoVigente");
+            asignacion.HasIndex(a => a.SerenoId).IsUnique().HasFilter("\"Vigente\"").HasDatabaseName("IX_Asignaciones_SerenoVigente");
+            // La misma solicitud reenviada no crea una segunda asignación (CA08).
+            asignacion.HasIndex(a => new { a.OperadorId, a.IdSolicitud }).IsUnique();
+            asignacion.HasOne<Caso>().WithMany().HasForeignKey(a => a.CasoId).OnDelete(DeleteBehavior.Restrict);
+            asignacion.HasOne<Usuario>().WithMany().HasForeignKey(a => a.SerenoId).OnDelete(DeleteBehavior.Restrict);
+            asignacion.HasOne<Usuario>().WithMany().HasForeignKey(a => a.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU18: estado operativo (una fila por sereno) y posiciones recibidas (solo inserción).

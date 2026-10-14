@@ -42,7 +42,10 @@
     }
   }
 
+  let sosSeleccionado = null;
+
   function seleccionar(id, { desdeMapa = false } = {}) {
+    sosSeleccionado = id;
     for (const item of region.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
     const item = document.getElementById(`sos-${id}`);
     if (item) {
@@ -59,11 +62,20 @@
       marcador.openPopup();
     }
     marcarComoVisto();
+    actualizarAsignacion();
   }
 
   region.addEventListener("click", (evento) => {
     const boton = evento.target.closest("[data-ver-en-mapa]");
     if (boton) seleccionar(boton.closest("[data-sos]").dataset.sos);
+    // HU20: elegir sereno para un SOS (también sin ubicación): se selecciona y se va a los serenos.
+    const elegir = evento.target.closest("[data-seleccionar-sos]");
+    if (elegir) {
+      seleccionar(elegir.closest("[data-sos]").dataset.sos);
+      const primero = regionSerenos.querySelector("[data-asignar-sereno]:not([hidden])");
+      (primero ?? regionSerenos).scrollIntoView({ block: "center" });
+      primero?.focus();
+    }
   });
 
   // ---------- HU19: serenos en el mismo mapa (sin rutas, líneas ni distancias) ----------
@@ -114,6 +126,39 @@
   regionSerenos.addEventListener("click", (evento) => {
     const boton = evento.target.closest("[data-ver-sereno]");
     if (boton) seleccionarSereno(boton.closest("[data-sereno]").dataset.sereno);
+    const asignar = evento.target.closest("[data-asignar-sereno]");
+    if (asignar) abrirConfirmacion(asignar.closest("[data-sereno]"));
+  });
+
+  // ---------- HU20: asignar el SOS seleccionado a un sereno disponible ----------
+  // El operador compara las ubicaciones en el mapa y elige; el panel solo pide confirmación.
+  const confirmacion = document.querySelector("[data-confirmar-asignacion]");
+  const textoConfirmacion = confirmacion.querySelector("[data-texto-confirmacion]");
+
+  function actualizarAsignacion() {
+    const sos = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
+    if (!sos) {
+      sosSeleccionado = null;
+      confirmacion.hidden = true;
+    }
+    for (const boton of regionSerenos.querySelectorAll("[data-asignar-sereno]")) boton.hidden = !sos;
+  }
+
+  function abrirConfirmacion(itemSereno) {
+    const sos = document.getElementById(`sos-${sosSeleccionado}`);
+    if (!sos || !itemSereno) return;
+    confirmacion.action = `/panel/central/sos/${sosSeleccionado}?handler=Asignar`;
+    confirmacion.querySelector("[data-campo-sereno]").value = itemSereno.dataset.sereno;
+    // Un identificador por confirmación: un reenvío no crea una segunda asignación (CA08).
+    confirmacion.querySelector("[data-campo-solicitud]").value = crypto.randomUUID();
+    const hora = sos.querySelector("time")?.textContent ?? "";
+    textoConfirmacion.textContent = `¿Asignar el SOS de ${sos.dataset.ciudadano} (${hora}) a ${itemSereno.dataset.nombre}?`;
+    confirmacion.hidden = false;
+    confirmacion.querySelector("button[type=submit]").focus();
+  }
+
+  confirmacion.querySelector("[data-cancelar-asignacion]").addEventListener("click", () => {
+    confirmacion.hidden = true;
   });
 
   // HU19-CA03: se vuelve a pedir el fragmento al servidor (fuente de verdad); se conserva la selección.
@@ -124,6 +169,7 @@
     regionSerenos.innerHTML = await respuesta.text();
     dibujarSerenos();
     if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+    actualizarAsignacion();
     return true;
   }
 
@@ -186,6 +232,8 @@
     region.innerHTML = await respuesta.text();
     contador.textContent = region.querySelector("[data-lista-sos]").dataset.total;
     dibujarMarcadores();
+    if (sosSeleccionado) document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
+    actualizarAsignacion();
     return true;
   }
 
@@ -209,6 +257,8 @@
       conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
   });
   conexion.on("SerenoActualizado", () => refrescarSerenos());
+  // HU20: un caso cambió de estado (p. ej., asignado por otro operador): deja la sección urgente.
+  conexion.on("CasoActualizado", () => refrescar());
   conexion.onreconnecting(() => estadoConexion("reconectando", "Reconectando… La lista puede no estar actualizada."));
   conexion.onreconnected(async () => {
     // Los avisos emitidos durante el corte se recuperan consultando la base de datos.

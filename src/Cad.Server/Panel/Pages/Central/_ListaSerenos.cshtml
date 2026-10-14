@@ -27,7 +27,7 @@
                         <span class="estado @(sereno.Operativo ? "estado--activa" : "estado--inactiva")">
                             <partial name="_Icono" model="@(sereno.Operativo ? "exito" : "informacion")" />@(sereno.Operativo ? "Operativo" : "No operativo")
                         </span>
-                        <span class="sereno__disponibilidad">@(sereno.Disponible ? "Disponible" : "No disponible")</span>
+                        <span class="sereno__disponibilidad">@(sereno.Disponible ? "Disponible" : sereno.ConAsignacion ? "No disponible · con asignación vigente" : "No disponible")</span>
                     </div>
                     @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is { } recibida)
                     {
@@ -44,6 +44,13 @@
                             <partial name="_Icono" model="@("advertencia")" />
                             <span>Ubicación no disponible</span>
                         </p>
+                    }
+                    @if (sereno.Disponible)
+                    {
+                        @* HU20: visible solo con un SOS seleccionado (lo muestra el panel). *@
+                        <button type="button" class="boton boton--secundario sereno__asignar" data-asignar-sereno hidden>
+                            Asignar al SOS seleccionado<span class="visualmente-oculto"> a @sereno.Nombre</span>
+                        </button>
                     }
                 </li>
             }

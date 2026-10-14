@@ -15,10 +15,14 @@ public sealed record DetalleSos(
     double? Longitud,
     double? PrecisionMetros,
     DateTimeOffset? UbicacionObtenidaEn,
-    IReadOnlyList<IntentoContactoVista> Intentos)
+    IReadOnlyList<IntentoContactoVista> Intentos,
+    AsignacionVista? Asignacion)
 {
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
 }
+
+// HU20: asignación vigente del caso (sereno y momento).
+public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffset AsignadaEn);
 
 public sealed record IntentoContactoVista(
     ResultadoContacto Resultado,
@@ -54,7 +58,13 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
                                   intento.RegistradoEn, intento.InformacionHecho, intento.ReferenciaUbicacion))
                              .ToListAsync(ct);
 
+        var asignacion = await (from a in db.Asignaciones.AsNoTracking()
+                                join sereno in db.Users.AsNoTracking() on a.SerenoId equals sereno.Id
+                                where a.CasoId == casoId && a.Vigente
+                                select new AsignacionVista(a.SerenoId, sereno.Nombres + " " + sereno.Apellidos, a.AsignadaEn))
+                               .SingleOrDefaultAsync(ct);
+
         return new DetalleSos(sos.Id, sos.Estado.ToString(), sos.RegistradoEn, sos.Ciudadano, sos.PhoneNumber,
-            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos);
+            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion);
     }
 }

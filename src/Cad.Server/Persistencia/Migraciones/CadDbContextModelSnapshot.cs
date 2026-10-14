@@ -22,6 +22,48 @@ namespace Cad.Server.Persistencia.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Asignacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AsignadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IdSolicitud")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Vigente")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CasoId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Asignaciones_CasoVigente")
+                        .HasFilter("\"Vigente\"");
+
+                    b.HasIndex("SerenoId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Asignaciones_SerenoVigente")
+                        .HasFilter("\"Vigente\"");
+
+                    b.HasIndex("OperadorId", "IdSolicitud")
+                        .IsUnique();
+
+                    b.ToTable("Asignaciones", (string)null);
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Caso", b =>
                 {
                     b.Property<Guid>("Id")
@@ -58,6 +100,12 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.Property<DateTimeOffset?>("UbicacionObtenidaEn")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -501,6 +549,27 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Asignacion", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Caso", b =>

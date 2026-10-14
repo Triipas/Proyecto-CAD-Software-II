@@ -13,6 +13,9 @@ public sealed record OperadorEnCentral(HubConnection Conexion, HttpClient Navega
     // HU19-CA03: identificadores de los serenos de los avisos «SerenoActualizado».
     public ConcurrentQueue<Guid> AvisosSerenos { get; init; } = new();
 
+    // HU20: identificadores de los casos de los avisos «CasoActualizado».
+    public ConcurrentQueue<Guid> AvisosCasos { get; init; } = new();
+
     public ValueTask DisposeAsync() => Conexion.DisposeAsync();
 }
 
@@ -39,8 +42,10 @@ public static class CentralDePrueba
         conexion.On<JsonElement>("SosRecibido", aviso => avisos.Enqueue(aviso.GetProperty("id").GetGuid()));
         var avisosSerenos = new ConcurrentQueue<Guid>();
         conexion.On<JsonElement>("SerenoActualizado", aviso => avisosSerenos.Enqueue(aviso.GetProperty("id").GetGuid()));
+        var avisosCasos = new ConcurrentQueue<Guid>();
+        conexion.On<JsonElement>("CasoActualizado", aviso => avisosCasos.Enqueue(aviso.GetProperty("id").GetGuid()));
         await conexion.StartAsync();
-        return new OperadorEnCentral(conexion, navegador, avisos) { AvisosSerenos = avisosSerenos };
+        return new OperadorEnCentral(conexion, navegador, avisos) { AvisosSerenos = avisosSerenos, AvisosCasos = avisosCasos };
     }
 
     public static async Task<bool> EsperarAsync(Func<bool> condicion, int segundos = 10)

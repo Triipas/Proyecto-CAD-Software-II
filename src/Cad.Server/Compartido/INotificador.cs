@@ -10,4 +10,7 @@ public interface INotificador
 
     // HU19-CA03 (y HU18-CA04): cambió el estado operativo, la posición o la disponibilidad de un sereno.
     Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct);
+
+    // HU20 (y siguientes transiciones): cambió el estado de un caso; la central resincroniza sus listas.
+    Task CasoActualizadoAsync(Guid casoId, CancellationToken ct);
 }
