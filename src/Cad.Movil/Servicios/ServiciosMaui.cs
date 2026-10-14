@@ -28,12 +28,30 @@ public sealed class ServicioUbicacionMaui : IServicioUbicacion
     }
 
     // Siempre una lectura nueva del sistema: nunca GetLastKnownLocationAsync (HU08-CA03).
+    // El límite se aplica también aquí: si el sistema no entrega ninguna lectura (p. ej., la app pasa a
+    // segundo plano con el permiso «mientras se usa»), la espera termina igualmente y el SOS sale sin
+    // ubicación (HU08-CA02) en lugar de quedarse esperando (SPIKE01).
     public async Task<UbicacionSos?> ObtenerActualAsync(TimeSpan tiempoMaximo, CancellationToken ct)
     {
-        var lectura = await Geolocation.Default.GetLocationAsync(new GeolocationRequest(GeolocationAccuracy.High, tiempoMaximo), ct);
-        return lectura is null
-            ? null
-            : new UbicacionSos(lectura.Latitude, lectura.Longitude, lectura.Accuracy ?? 0, lectura.Timestamp);
+        using var limite = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        limite.CancelAfter(tiempoMaximo);
+        try
+        {
+            var lectura = await Geolocation.Default
+                .GetLocationAsync(new GeolocationRequest(GeolocationAccuracy.High, tiempoMaximo), limite.Token)
+                .WaitAsync(tiempoMaximo, ct);
+            return lectura is null
+                ? null
+                : new UbicacionSos(lectura.Latitude, lectura.Longitude, lectura.Accuracy ?? 0, lectura.Timestamp);
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return null;
+        }
     }
 
     private static EstadoPermisoUbicacion Convertir(PermissionStatus estado) => estado switch
@@ -67,10 +85,13 @@ public sealed class ConfiguracionServidorMaui : IConfiguracionServidor
     private const string Clave = "cad.servidor";
 
 #if DEBUG
-    // Emulador de Android → servidor local del equipo de desarrollo (10.0.2.2 es el anfitrión).
-    private const string PorDefecto = "http://10.0.2.2:5220/";
+    // Servidor local del equipo de desarrollo: desde el emulador es 10.0.2.2; desde un teléfono real
+    // conectado por USB, «adb reverse tcp:5220 tcp:5220» lo expone en localhost.
+    private static string PorDefecto => DeviceInfo.Current.DeviceType == DeviceType.Virtual
+        ? "http://10.0.2.2:5220/"
+        : "http://localhost:5220/";
 #else
-    private const string PorDefecto = "";
+    private static string PorDefecto => "";
 #endif
 
     public Uri? Direccion => Uri.TryCreate(Preferences.Default.Get(Clave, PorDefecto), UriKind.Absolute, out var uri) ? uri : null;
@@ -86,7 +107,7 @@ public sealed class ConfiguracionServidorMaui : IConfiguracionServidor
 
 public static class ValidacionDireccion
 {
-    // RNF09: HTTPS obligatorio, salvo el servidor local visto desde el emulador (solo para desarrollo).
+    // RNF09: HTTPS obligatorio, salvo el servidor local de desarrollo (emulador o teléfono por USB).
     public static string? Validar(string direccion, out Uri? uri)
     {
         uri = null;
@@ -94,7 +115,7 @@ public static class ValidacionDireccion
         if (!texto.EndsWith('/')) texto += "/";
         if (!Uri.TryCreate(texto, UriKind.Absolute, out var leida))
             return "La dirección del servidor no es válida.";
-        var local = leida.Host is "10.0.2.2" or "localhost";
+        var local = leida.Host is "10.0.2.2" or "localhost" or "127.0.0.1";
         if (leida.Scheme != Uri.UriSchemeHttps && !(local && leida.Scheme == Uri.UriSchemeHttp))
             return "La dirección debe empezar por https:// (canal cifrado).";
         uri = leida;

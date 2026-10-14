@@ -1,4 +1,5 @@
 using Cad.Movil.Servicios;
+using Cad.Movil.Servicios.Diagnostico;
 using Cad.Movil.Vistas;
 using Cad.Movil.VistasModelo;
 using Microsoft.Extensions.Logging;
@@ -45,8 +46,18 @@ public static class MauiProgram
         builder.Services.AddTransient<InicioCiudadanoPagina>();
         builder.Services.AddTransient<InicioSerenoPagina>();
 
+        builder.Services.AddSingleton<EstadoAppMaui>();
 #if DEBUG
         builder.Logging.AddDebug();
+
+        // SPIKE01 (S1-T03): sonda de diagnóstico de ubicación, solo en Debug.
+        builder.Services.AddSingleton<IEstadoApp>(s => s.GetRequiredService<EstadoAppMaui>());
+        builder.Services.AddSingleton<IEstadoRed, EstadoRedMaui>();
+        builder.Services.AddSingleton<IComprobadorServidor, ComprobadorServidorHttp>();
+        builder.Services.AddSingleton<IRegistroSonda, RegistroSondaArchivo>();
+        builder.Services.AddSingleton<SondaUbicacion>();
+        builder.Services.AddSingleton<DiagnosticoVistaModelo>();
+        builder.Services.AddTransient<DiagnosticoPagina>();
 #endif
         return builder.Build();
     }

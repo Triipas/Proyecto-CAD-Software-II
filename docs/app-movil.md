@@ -66,6 +66,19 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - El doble toque se inyectó con `adb`, no con un dedo; la garantía de fondo es el semáforo de `EmisorSos` (prueba unitaria y prueba de mutación) más el índice único del servidor.
 - Emulador ≠ dispositivo: segundo plano, pérdida de cobertura real y la precisión del GPS corresponden a SPIKE01 (S1-T03/T04), en un teléfono Android real.
 
+## Teléfono real por USB y sonda de SPIKE01
+
+1. Activa la depuración USB en el teléfono, conéctalo y comprueba que `adb devices` lo muestra.
+2. Expón el servidor local en el teléfono:
+   ```bash
+   adb reverse tcp:5220 tcp:5220
+   ```
+3. Instala la app en Debug (`dotnet build src/Cad.Movil/Cad.Movil.csproj -t:Install -f net10.0-android`). En un teléfono real, la dirección por defecto es `http://localhost:5220/`; también puedes poner `https://cad-servidor.onrender.com/`.
+4. En la pantalla de ingreso, «Diagnóstico de ubicación (SPIKE01)» → «Iniciar». El botón solo existe en Debug. Recorre las condiciones de la [nota técnica](spike01/nota-tecnica.md) y recupera el registro:
+   ```bash
+   adb exec-out run-as pe.cadmvp.movil cat files/spike01.csv
+   ```
+
 ## Integración continua
 
 `.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.

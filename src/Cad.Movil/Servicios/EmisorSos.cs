@@ -75,7 +75,8 @@ public sealed class EmisorSos(IApiCad api, IServicioUbicacion ubicacion, IAlmace
             Publicar(new EstadoSos.ObteniendoUbicacion());
             try
             {
-                actual = await ubicacion.ObtenerActualAsync(EsperaUbicacion, ct);
+                // Límite propio: aunque el servicio de ubicación no responda, el SOS sale a los 10 s (DP11).
+                actual = await ubicacion.ObtenerActualAsync(EsperaUbicacion, ct).WaitAsync(EsperaUbicacion, reloj, ct);
             }
             catch (Exception) when (!ct.IsCancellationRequested)
             {
@@ -102,7 +103,17 @@ public sealed class EmisorSos(IApiCad api, IServicioUbicacion ubicacion, IAlmace
         for (var intento = 1; ; intento++)
         {
             Publicar(new EstadoSos.Enviando(intento));
-            var resultado = await api.EmitirSosAsync(sesion.Token, solicitud, ct);
+            ResultadoApi<RespuestaSos> resultado;
+            try
+            {
+                resultado = await api.EmitirSosAsync(sesion.Token, solicitud, ct);
+            }
+            catch (Exception e) when (!ct.IsCancellationRequested)
+            {
+                // Un fallo inesperado de la red nunca debe cerrar la app ni dar el SOS por enviado:
+                // se trata como «sin respuesta» y se reintenta con el mismo IdSolicitud.
+                resultado = new ResultadoApi<RespuestaSos>.SinRespuesta(e.GetType().Name);
+            }
             switch (resultado)
             {
                 case ResultadoApi<RespuestaSos>.Correcto correcto:

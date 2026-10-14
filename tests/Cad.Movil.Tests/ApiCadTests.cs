@@ -91,6 +91,17 @@ public class ApiCadTests
         Assert.IsType<ResultadoApi<RespuestaSos>.SinRespuesta>(await api.EmitirSosAsync("t", Sos, CancellationToken.None));
     }
 
+    [Theory]
+    [InlineData(typeof(WebException))]
+    [InlineData(typeof(IOException))]
+    public async Task CambioDeRedEnAndroid_EsSinRespuesta(Type excepcion)
+    {
+        // SPIKE01: durante un cambio de red, el manejador de Android lanza estas excepciones.
+        var (api, _) = Crear(_ => throw (Exception)Activator.CreateInstance(excepcion, "red cambiada")!);
+
+        Assert.IsType<ResultadoApi<RespuestaSos>.SinRespuesta>(await api.EmitirSosAsync("t", Sos, CancellationToken.None));
+    }
+
     [Fact]
     public async Task TiempoAgotado_EsSinRespuesta()
     {
@@ -144,6 +155,7 @@ public class ValidacionDireccionTests
     [InlineData("  https://cad.ejemplo.test/  ", "https://cad.ejemplo.test/")]
     [InlineData("http://10.0.2.2:5220", "http://10.0.2.2:5220/")]
     [InlineData("http://localhost:5220/", "http://localhost:5220/")]
+    [InlineData("http://127.0.0.1:5220", "http://127.0.0.1:5220/")]
     public void DireccionesAceptadas(string entrada, string esperada)
     {
         Assert.Null(ValidacionDireccion.Validar(entrada, out var uri));
