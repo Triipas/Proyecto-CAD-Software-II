@@ -42,6 +42,12 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("POST", "/hubs/central/negotiate", "HU11", Acceso.SoloRol, Roles.Operador, Ejemplo: "/hubs/central/negotiate?negotiateVersion=1"),
         // Sin identificador de conexión el operador recibe 400 (llega al hub); el resto es rechazado antes.
         new("GET", "/hubs/central", "HU11", Acceso.SoloRol, Roles.Operador),
+        // HU12 — verificación del SOS. Con un SOS inexistente el operador llega a la página (404); al enviar
+        // sin token antifalsificación recibe 400. El resto es rechazado antes, sin ver ni registrar nada.
+        new("GET", "/panel/central/sos/{id:guid}", "HU12", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/central/sos/00000000-0000-0000-0000-000000000000"),
+        new("POST", "/panel/central/sos/{id:guid}", "HU12", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/central/sos/00000000-0000-0000-0000-000000000000"),
         new("GET", "/panel/admin", "HU04 (base)", Acceso.SoloRol, Roles.Administrador, "Interfaz del administrador"),
         new("GET", "/panel/admin/cuentas", "HU04", Acceso.SoloRol, Roles.Administrador, "Cuentas institucionales"),
         new("GET", "/panel/admin/cuentas/nueva", "HU04", Acceso.SoloRol, Roles.Administrador, "Nueva cuenta institucional"),

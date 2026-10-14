@@ -16,6 +16,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
 
     public DbSet<Caso> Casos => Set<Caso>();
     public DbSet<EventoCaso> EventosCaso => Set<EventoCaso>();
+    public DbSet<IntentoContacto> IntentosContacto => Set<IntentoContacto>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -63,6 +64,23 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             evento.HasOne<Caso>().WithMany().HasForeignKey(e => e.CasoId).OnDelete(DeleteBehavior.Restrict);
             evento.HasOne<Usuario>().WithMany().HasForeignKey(e => e.ActorId).OnDelete(DeleteBehavior.Restrict);
             evento.HasIndex(e => new { e.CasoId, e.OcurridoEn });
+        });
+
+        // HU12: intentos de contacto, solo inserción (CA07).
+        builder.Entity<IntentoContacto>(intento =>
+        {
+            // CA03: la base de datos tampoco admite un resultado distinto de los tres definidos.
+            intento.ToTable("IntentosContacto", tabla => tabla.HasCheckConstraint("CK_IntentosContacto_Resultado",
+                "\"Resultado\" IN ('Contactado', 'SinRespuesta', 'NoFuePosibleComunicar')"));
+            intento.HasKey(i => i.Id);
+            intento.Property(i => i.Resultado).HasConversion<string>().HasMaxLength(30);
+            intento.Property(i => i.InformacionHecho).HasMaxLength(IntentoContacto.MaximoInformacion);
+            intento.Property(i => i.ReferenciaUbicacion).HasMaxLength(IntentoContacto.MaximoReferencia);
+            // Un reenvío del mismo formulario no crea un segundo intento (RNF08).
+            intento.HasIndex(i => new { i.CasoId, i.IdSolicitud }).IsUnique();
+            intento.HasIndex(i => new { i.CasoId, i.RegistradoEn });
+            intento.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
+            intento.HasOne<Usuario>().WithMany().HasForeignKey(i => i.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Usuario>(usuario =>

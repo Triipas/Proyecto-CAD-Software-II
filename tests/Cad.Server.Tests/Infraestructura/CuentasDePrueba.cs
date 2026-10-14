@@ -12,7 +12,7 @@ public sealed record CuentaDePrueba(Guid Id, string Correo, string Clave, string
 public static partial class CuentasDePrueba
 {
     // Crea directamente una cuenta del rol indicado (HU04 aún no existe para operadores y serenos).
-    public static async Task<CuentaDePrueba> CrearAsync(this FabricaCad fabrica, string rol, bool activa = true)
+    public static async Task<CuentaDePrueba> CrearAsync(this FabricaCad fabrica, string rol, bool activa = true, string? telefono = null)
     {
         var correo = $"{rol.ToLowerInvariant()}.{Guid.NewGuid():N}@correo.test";
         var clave = $"Clave-{Guid.NewGuid():N}";
@@ -28,6 +28,7 @@ public static partial class CuentasDePrueba
                 Nombres = "Prueba",
                 Apellidos = rol,
                 Activo = activa,
+                PhoneNumber = telefono,
                 CreadoEn = DateTimeOffset.UtcNow,
             };
             Comprobar(await usuarios.CreateAsync(usuario, clave));
