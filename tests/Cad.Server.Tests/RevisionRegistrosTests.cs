@@ -11,7 +11,7 @@ using Npgsql;
 
 namespace Cad.Server.Tests;
 
-// S1-T20 (transversal HU01–HU11): revisión de los registros del sprint. Recorre el flujo completo y
+// S1-T20 (transversal HU01–HU11), ampliada en el Sprint 2 (S2-T16, HU12): revisión de los registros. Recorre el flujo completo y
 // busca cada dato sensible en TODAS las entradas capturadas (todos los niveles, incluidos Debug y Trace),
 // lo que es más estricto que la configuración real (Microsoft.AspNetCore y SQL solo a partir de Warning).
 // RNF01: sin contraseñas. RNF07: sin coordenadas. Plan de Arquitectura 9.7: sin tokens, cookies,
@@ -91,6 +91,18 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
             .Content.ReadFromJsonAsync<RespuestaSos>())!;
         Assert.True(await CentralDePrueba.EsperarAsync(() => central.Avisos.Contains(sos.Id)), "No llegó el aviso del SOS.");
         Assert.Contains(sos.Id.ToString(), await central.Navegador.GetStringAsync("/panel/central?handler=Lista"));
+
+        // HU12 (Sprint 2): el operador ve el teléfono y registra un intento con información y referencia,
+        // que pueden contener datos personales y lugares concretos.
+        Assert.Contains(telefono, await central.Navegador.GetStringAsync($"/panel/central/sos/{sos.Id}"));
+        var informacion = $"Informa pelea en el domicilio {sello}";
+        var referencia = $"Frente a la bodega {sello}";
+        sensibles["datos personales"].AddRange([informacion, referencia]);
+        await EnviarAsync(central.Navegador, $"/panel/central/sos/{sos.Id}", new()
+        {
+            ["Formulario.IdSolicitud"] = Guid.NewGuid().ToString(), ["Formulario.Resultado"] = "Contactado",
+            ["Formulario.InformacionHecho"] = informacion, ["Formulario.ReferenciaUbicacion"] = referencia,
+        });
 
         // Sellos de seguridad de Identity (equivalen a credenciales para revocar sesiones).
         sensibles["tokens y cookies"].AddRange(await fabrica.ConBaseDatosAsync(db => db.Users

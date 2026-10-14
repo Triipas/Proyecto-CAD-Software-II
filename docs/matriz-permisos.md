@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 13/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 87 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 13/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 97 casos).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -33,6 +33,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/central` (sección urgente y su fragmento `?handler=Lista`) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /hubs/central/negotiate` y `/hubs/central` (tiempo real) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia) | HU12 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET` y `POST /panel/admin/cuentas/nueva` (alta) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -56,7 +57,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU09 | Cancelar un SOS pendiente | Ciudadano | Pendiente (Sprint 5) |
 | HU10 | Registrar un reporte de incidencia | Ciudadano | Pendiente (Sprint 3) |
 | HU11 | Recibir los SOS en la sección de atención urgente | Operador | **Verificada (13/10/2026):** página, fragmento y canal en tiempo real solo para Operador; un ciudadano con JWT o una conexión sin sesión no pueden conectarse al hub (`RecepcionSosTests.HU03_*`). |
-| HU12 | Contactar al ciudadano y registrar la verificación del SOS | Operador | Pendiente (Sprint 2) |
+| HU12 | Contactar al ciudadano y registrar la verificación del SOS | Operador | **Verificada (13/10/2026):** consulta y registro solo para Operador; un administrador con token antifalsificación válido, o un ciudadano o un sereno con su token, no ven el teléfono ni registran intentos (`VerificacionSosTests.CA08_*`). Prueba de mutación: sin la política de operador, 9 pruebas fallan. |
 | HU13 | Clasificar un SOS después de su registro | Operador | Pendiente (Sprint 2; DP09) |
 | HU14 | Iniciar la revisión de un reporte y corregir su categoría | Operador | Pendiente (Sprint 3) |
 | HU15 | Admitir un reporte para atención | Operador | Pendiente (Sprint 3) |

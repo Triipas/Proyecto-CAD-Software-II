@@ -732,3 +732,149 @@ a.boton {
   outline: 3px solid var(--color-foco);
   outline-offset: 2px;
 }
+
+/* ===== Verificación del SOS (HU12) ===== */
+
+.verificacion {
+  display: grid;
+  gap: var(--espacio-6);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .verificacion {
+    grid-template-columns: minmax(20rem, 2fr) 3fr;
+  }
+}
+
+.verificacion .superficie {
+  display: grid;
+  gap: var(--espacio-4);
+  padding: var(--espacio-6);
+}
+
+/* Pares dato-valor */
+.datos {
+  display: grid;
+  gap: var(--espacio-3);
+  margin: 0;
+}
+
+.datos dt {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.datos dd {
+  margin: 0;
+  font-weight: var(--peso-medio);
+}
+
+.datos__telefono {
+  font-size: var(--texto-lg);
+  color: var(--color-primario);
+}
+
+/* Grupo de opciones excluyentes: cada opción es un objetivo táctil completo */
+.opciones {
+  display: grid;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.opciones legend {
+  margin-bottom: var(--espacio-2);
+  padding: 0;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: var(--alto-control);
+  padding: var(--espacio-2) var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde-control);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  cursor: pointer;
+}
+
+.opcion:hover {
+  background: var(--color-tenue);
+}
+
+.opcion:has(input:checked) {
+  border-color: var(--color-primario);
+  border-width: var(--grosor-foco);
+  background: var(--color-tenue);
+  font-weight: var(--peso-medio);
+}
+
+.opcion input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--color-primario);
+}
+
+.opciones[aria-invalid="true"] .opcion {
+  border-color: var(--color-error);
+}
+
+.campo__control--texto {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+/* Historial de intentos: el más reciente primero */
+.historial {
+  display: grid;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial__elemento {
+  display: grid;
+  gap: var(--espacio-1);
+  padding-bottom: var(--espacio-3);
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+}
+
+.historial__elemento:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.historial__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-sm);
+}
+
+.historial__texto {
+  font-size: var(--texto-sm);
+  overflow-wrap: anywhere;
+}
+
+.estado--contactado {
+  color: var(--color-exito);
+}
+
+.estado--sin-contacto {
+  color: var(--color-advertencia);
+}
+
+/* Enlace al detalle desde la sección urgente */
+.sos__detalle {
+  justify-self: start;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+}

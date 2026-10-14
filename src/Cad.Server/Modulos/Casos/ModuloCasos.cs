@@ -10,7 +10,9 @@ public static class ModuloCasos
     public static IServiceCollection AddModuloCasos(this IServiceCollection services)
     {
         services.AddScoped<EmitirSos>();
+        services.AddScoped<RegistrarIntentoContacto>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
+        services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         return services;
     }
 

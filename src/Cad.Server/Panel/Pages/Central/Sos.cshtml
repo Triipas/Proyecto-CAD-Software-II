@@ -1,0 +1,176 @@
+@page "/panel/central/sos/{id:guid}"
+@model Cad.Server.Panel.Pages.Central.SosModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Verificar SOS";
+    ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
+    var inv = CultureInfo.InvariantCulture;
+    var sos = Model.Sos;
+    string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
+    var errorResultado = Model.ErrorDe("resultado");
+    var errorInformacion = Model.ErrorDe("informacionHecho");
+    var errorReferencia = Model.ErrorDe("referenciaUbicacion");
+    var errorSolicitud = Model.ErrorDe("idSolicitud");
+}
+<p><a class="enlace-volver" href="/panel/central">← Central de monitoreo</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador · SOS @sos.Estado</p>
+        <h1 class="titulo">Verificar SOS</h1>
+        <p class="texto-secundario">Registrado el @Local(sos.RegistradoEn).</p>
+    </div>
+</div>
+
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <div>
+            <p class="aviso__titulo">@Model.Mensaje</p>
+            <p class="aviso__texto">El SOS sigue en estado @sos.Estado. Puedes registrar más intentos.</p>
+        </div>
+    </div>
+}
+
+<div class="verificacion">
+    <div class="pila">
+        <section class="superficie" aria-labelledby="titulo-ciudadano">
+            <h2 id="titulo-ciudadano" class="central__titulo">Ciudadano</h2>
+            <dl class="datos">
+                <div><dt>Nombre</dt><dd>@sos.Ciudadano</dd></div>
+                <div>
+                    <dt>Teléfono registrado</dt>
+                    <dd>
+                        @if (sos.Telefono is { Length: > 0 } telefono)
+                        {
+                            <a class="datos__telefono" href="tel:@telefono">@telefono</a>
+                        }
+                        else
+                        {
+                            <span>No registrado</span>
+                        }
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="superficie" aria-labelledby="titulo-ubicacion">
+            <h2 id="titulo-ubicacion" class="central__titulo">Ubicación del dispositivo</h2>
+            @if (sos.UbicacionDisponible)
+            {
+                <dl class="datos">
+                    <div><dt>Coordenadas</dt><dd>@sos.Latitud?.ToString("0.00000", inv), @sos.Longitud?.ToString("0.00000", inv)</dd></div>
+                    <div><dt>Precisión</dt><dd>± @sos.PrecisionMetros?.ToString("0", inv) m</dd></div>
+                    @if (sos.UbicacionObtenidaEn is { } obtenida)
+                    {
+                        <div><dt>Obtenida</dt><dd>@Local(obtenida)</dd></div>
+                    }
+                </dl>
+            }
+            else
+            {
+                <p class="sos__ubicacion sos__ubicacion--no">
+                    <partial name="_Icono" model="@("advertencia")" />
+                    <span>Ubicación no disponible</span>
+                </p>
+            }
+            <p class="texto-secundario">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
+        </section>
+    </div>
+
+    <div class="pila">
+        <section class="superficie" aria-labelledby="titulo-intento">
+            <h2 id="titulo-intento" class="central__titulo">Registrar intento de contacto</h2>
+            <form method="post" class="formulario" data-formulario novalidate>
+                <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+                <input type="hidden" name="Formulario.IdSolicitud" value="@Model.Formulario.IdSolicitud" />
+                @if (errorSolicitud is not null)
+                {
+                    <p class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorSolicitud</span></p>
+                }
+
+                <fieldset class="opciones" aria-invalid="@(errorResultado is null ? null : "true")"
+                          aria-describedby="@(errorResultado is null ? null : "Formulario_Resultado-error")">
+                    <legend class="campo__etiqueta">Resultado del intento</legend>
+                    @foreach (var (valor, texto) in SosModel.Resultados)
+                    {
+                        var idOpcion = $"Formulario_Resultado_{valor}";
+                        <label class="opcion" for="@idOpcion">
+                            <input type="radio" id="@idOpcion" name="Formulario.Resultado" value="@valor" required
+                                   checked="@(Model.Formulario.Resultado == valor.ToString())" />
+                            <span>@texto</span>
+                        </label>
+                    }
+                    @if (errorResultado is not null)
+                    {
+                        <p id="Formulario_Resultado-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado</span></p>
+                    }
+                </fieldset>
+
+                <div class="campo">
+                    <label class="campo__etiqueta" for="Formulario_InformacionHecho">Información del hecho (opcional)</label>
+                    <textarea class="campo__control campo__control--texto" id="Formulario_InformacionHecho" name="Formulario.InformacionHecho"
+                              rows="4" maxlength="@Cad.Server.Modulos.Casos.Dominio.IntentoContacto.MaximoInformacion"
+                              aria-invalid="@(errorInformacion is null ? null : "true")"
+                              aria-describedby="@(errorInformacion is null ? null : "Formulario_InformacionHecho-error")">@Model.Formulario.InformacionHecho</textarea>
+                    @if (errorInformacion is not null)
+                    {
+                        <p id="Formulario_InformacionHecho-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorInformacion</span></p>
+                    }
+                </div>
+
+                <div class="campo">
+                    <label class="campo__etiqueta" for="Formulario_ReferenciaUbicacion">Referencia de ubicación indicada por el ciudadano (opcional)</label>
+                    <input class="campo__control" id="Formulario_ReferenciaUbicacion" name="Formulario.ReferenciaUbicacion" type="text"
+                           value="@Model.Formulario.ReferenciaUbicacion" autocomplete="off"
+                           maxlength="@Cad.Server.Modulos.Casos.Dominio.IntentoContacto.MaximoReferencia"
+                           aria-invalid="@(errorReferencia is null ? null : "true")"
+                           aria-describedby="Formulario_ReferenciaUbicacion-ayuda@(errorReferencia is null ? "" : " Formulario_ReferenciaUbicacion-error")" />
+                    <p id="Formulario_ReferenciaUbicacion-ayuda" class="campo__ayuda">Por ejemplo, «frente al mercado». Se guarda como texto y no sustituye la ubicación del dispositivo.</p>
+                    @if (errorReferencia is not null)
+                    {
+                        <p id="Formulario_ReferenciaUbicacion-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorReferencia</span></p>
+                    }
+                </div>
+
+                <div class="acciones">
+                    <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar intento</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="superficie" aria-labelledby="titulo-historial">
+            <h2 id="titulo-historial" class="central__titulo">Intentos registrados · @sos.Intentos.Count</h2>
+            @if (sos.Intentos.Count == 0)
+            {
+                <p class="texto-secundario">Todavía no hay intentos de contacto.</p>
+            }
+            else
+            {
+                <ol class="historial">
+                    @foreach (var intento in sos.Intentos)
+                    {
+                        <li class="historial__elemento">
+                            <p class="historial__cabecera">
+                                @{ var contactado = intento.Resultado == Cad.Server.Modulos.Casos.Dominio.ResultadoContacto.Contactado; }
+                                <span class="estado estado--@(contactado ? "contactado" : "sin-contacto")">
+                                    <partial name="_Icono" model="@(contactado ? "exito" : "advertencia")" />@SosModel.Texto(intento.Resultado)
+                                </span>
+                                <time datetime="@intento.RegistradoEn.ToString("O", inv)">@Local(intento.RegistradoEn)</time>
+                                <span class="texto-secundario">· @intento.Operador</span>
+                            </p>
+                            @if (intento.InformacionHecho is not null)
+                            {
+                                <p class="historial__texto"><strong>Información del hecho:</strong> @intento.InformacionHecho</p>
+                            }
+                            @if (intento.ReferenciaUbicacion is not null)
+                            {
+                                <p class="historial__texto"><strong>Referencia indicada por el ciudadano:</strong> @intento.ReferenciaUbicacion</p>
+                            }
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    </div>
+</div>

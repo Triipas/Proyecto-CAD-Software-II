@@ -6,7 +6,7 @@ Documentos de referencia (fuera del repositorio): Plan Scrum, Historias de usuar
 
 ## Estado
 
-Sprint 1 en curso. El avance por tarea está en [docs/trazabilidad-sprint1.md](docs/trazabilidad-sprint1.md).
+Sprint 2 en curso. El avance por tarea está en [docs/trazabilidad-sprint2.md](docs/trazabilidad-sprint2.md) (Sprint 1: [docs/trazabilidad-sprint1.md](docs/trazabilidad-sprint1.md)).
 
 ## Requisitos
 
@@ -89,7 +89,7 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 
 ## Panel web
 
-`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). El operador ve en `/panel/central` la sección urgente de SOS en tiempo real (HU11), con aviso visual y sonoro (actívalo con «Activar avisos sonoros») y el mapa operativo base. Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
+`http://localhost:5220/panel/ingresar`: acceso de operadores y administradores. El administrador gestiona las cuentas de operador y sereno en `/panel/admin/cuentas` (HU04): listado, alta y modificación (cookie HttpOnly, SameSite Strict; Secure fuera de desarrollo). Cada rol llega a su interfaz: `/panel/central` (operador) o `/panel/admin` (administrador). El operador ve en `/panel/central` la sección urgente de SOS en tiempo real (HU11), con aviso visual y sonoro (actívalo con «Activar avisos sonoros») y el mapa operativo base. Desde cada SOS abre `/panel/central/sos/{id}` para ver el teléfono del ciudadano y registrar intentos de contacto, información del hecho y referencias de ubicación (HU12). Las cuentas de ciudadano y sereno se rechazan en el panel y las de operador y administrador en `/api/auth/token`, según la Tabla 3 del Plan de Arquitectura.
 
 ## Despliegue
 

@@ -110,6 +110,52 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("EventosCaso", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.IntentoContacto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IdSolicitud")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("InformacionHecho")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReferenciaUbicacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("RegistradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Resultado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperadorId");
+
+                    b.HasIndex("CasoId", "IdSolicitud")
+                        .IsUnique();
+
+                    b.HasIndex("CasoId", "RegistradoEn");
+
+                    b.ToTable("IntentosContacto", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_IntentosContacto_Resultado", "\"Resultado\" IN ('Contactado', 'SinRespuesta', 'NoFuePosibleComunicar')");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -422,6 +468,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
                         .WithMany()
                         .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.IntentoContacto", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
