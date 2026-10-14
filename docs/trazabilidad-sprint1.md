@@ -9,14 +9,14 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 
 | ID | HU/PBI | Tarea | Estado | Evidencia |
 |---|---|---|---|---|
-| S1-T01 | TEC01 | Procedimiento de despliegue repetible | Preparado y verificado con el contenedor en local; **despliegue en Render pendiente del equipo** | `Dockerfile` (sin root), `render.yaml` (plan gratuito, ADR-06), [despliegue.md](despliegue.md). CI en GitHub Actions. Contenedor ejecutado en Docker contra PostgreSQL. |
+| S1-T01 | TEC01 | Procedimiento de despliegue repetible | Desplegado en Render + Neon (13/10/2026) | `Dockerfile` (sin root), `render.yaml` (plan gratuito, ADR-06), [despliegue.md](despliegue.md). Blueprint aplicado desde `main`: `https://cad-servidor.onrender.com`, `/salud` y `/salud/lista` 200 (migraciones en Neon), administrador sembrado ingresa. CI en GitHub Actions. |
 | S1-T02 | TEC01 | Datos de prueba por rol y canal cifrado | Preparado; pendiente de ejecutar en el entorno publicado | HTTPS forzado tras el proxy, HSTS y cookie Secure (`DespliegueTests`); procedimiento de datos por rol en [despliegue.md](despliegue.md), sección 3. |
 | S1-T03 | SPIKE01 | Captura y transmisión de ubicación en 4 condiciones | Pendiente | — |
 | S1-T04 | SPIKE01 | Nota técnica | Pendiente | — |
 | S1-T05 | HU01 | Registro con validaciones y unicidad bajo concurrencia | Implementada y verificada en local (falta el entorno publicado) | `POST /api/cuentas/registro`; `RegistroCiudadanoTests` CA01–CA05 en verde contra PostgreSQL 17 |
 | S1-T06 | HU01 | Hash de contraseña documentado | Implementada y verificada en local (falta revisar los registros del entorno publicado) | [seguridad-contrasenas.md](seguridad-contrasenas.md); `RegistroCiudadanoTests` CA06 en verde |
 | S1-T07 | HU02 | Inicio de sesión por rol | Implementada y verificada en local | App: `POST /api/auth/token` (JWT). Panel: `/panel/ingresar` (cookie). `InicioSesionAppTests` e `InicioSesionPanelTests`: CA01–CA04 en verde. CA05 (canal cifrado) corresponde a S1-T08. |
-| S1-T08 | HU02 | Credenciales solo por canal cifrado | Preparado; pendiente de comprobar en el entorno publicado | Redirección HTTP→HTTPS salvo `/salud`; comprobación de HU02-CA05 descrita en [despliegue.md](despliegue.md). |
+| S1-T08 | HU02 | Credenciales solo por canal cifrado | Parcialmente comprobada en el entorno publicado | En Render: HTTP→HTTPS (301) y HSTS. La cookie antifalsificación salía sin `Secure`: corregida (bloque 12) y pendiente de comprobar tras el siguiente despliegue, junto con la petición de ingreso y `wss://` ([despliegue.md](despliegue.md), sección 3). |
 | S1-T09 | HU03 | Matriz de permisos y rechazo de solicitudes directas | Implementada y verificada en local | Políticas con nombre y denegación por defecto; [matriz-permisos.md](matriz-permisos.md); `MatrizAutorizacionTests` (45 casos ruta × perfil + control de rutas no declaradas). |
 | S1-T10 | HU04 | Gestión de cuentas institucionales | Implementada y verificada en local | `/panel/admin/cuentas` (listado, alta, modificación); `CuentasInstitucionalesTests` CA01–CA05. |
 | S1-T11 | HU04 | Sin contraseñas en claro; solo administrador | Implementada y verificada en local | `CuentasInstitucionalesTests` CA06 (solicitudes directas de los otros perfiles, sin cambios en los datos) y CA07 (hash V3 al crear y al cambiar la contraseña; nada en registros). |
@@ -62,6 +62,7 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | 9 — Preparación del despliegue | 13/10/2026 | S1-T01, S1-T02, S1-T08 (TEC01); RNF09 | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 201/201 superadas. Imagen Docker construida y **contenedor ejecutado** como en Render: `/salud` y `/salud/lista` OK, HTTP→HTTPS 307, HSTS, proceso sin root, registros 100 % JSON sin datos sensibles, claves de Data Protection en PostgreSQL. |
 | 10 — Revisión de registros | 13/10/2026 | S1-T20 (transversal HU01–HU11) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 202/202 superadas. Auditoría del flujo completo: 0 contraseñas, tokens, cookies, datos personales, coordenadas o secretos en los registros (todos los niveles). Prueba de mutación: una fuga de coordenadas a nivel Debug se detecta. CI del PR #4 en GitHub: compilación, pruebas e imagen superadas. |
 | 11 — App móvil (MAUI) | 13/10/2026 | S1-T12, S1-T13, S1-T15, S1-T16 (app) (HU01, HU02, HU06, HU07, HU08) | `Cad.Movil` compila para net10.0-android y net10.0: 0 advertencias, 0 errores. `Cad.Movil.Tests`: 54/54 superadas; 5 de 5 mutaciones de `EmisorSos` detectadas. Emulador Android 15 contra el servidor local y la central en Chrome: registro, ingreso, permisos, SOS con y sin ubicación, sin red y reintento; 9 activaciones = 9 SOS sin duplicados; 0 datos sensibles en los registros del servidor. Defecto de HU06-CA01 encontrado en el emulador y corregido. |
+| 12 — Validación en Render y CI de la app | 13/10/2026 | S1-T01, S1-T08 (TEC01, HU02-CA05); RNF09, RNF14 | Render + Neon en marcha: `/salud` y `/salud/lista` 200, HTTP→HTTPS 301, HSTS, ingreso del administrador (equipo). Cookie antifalsificación con `Secure` fuera de desarrollo: `dotnet test` 202/202; la mutación (`SecurePolicy.None`) se detecta. Nuevo flujo `ci-movil.yml` (Windows, `maui-android`): pruebas de la app y APK en Release; compilación Release verificada en local (0 advertencias, 0 errores). |
 
 ### Observaciones del bloque 2
 
@@ -139,4 +140,11 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 - **Solución aparte** (`CadMovil.slnx`): `Cad.slnx` y la CI de Linux no necesitan la carga de trabajo de MAUI. `Cad.Movil` también compila para `net10.0` para probar su lógica sin emulador.
 - **Defecto encontrado en el emulador:** Android informa «denegado» antes de la primera solicitud del permiso, y la app saltaba la explicación de HU06-CA01. Corregido: se trata como pendiente mientras el sistema permita volver a preguntar.
 - **Limitaciones:** ver [app-movil.md](app-movil.md). El GPS apagado con el permiso concedido, el segundo plano y la pérdida de cobertura real quedan para SPIKE01 (S1-T03/T04), en un teléfono Android real.
-- **Pendiente:** trabajo de CI para la app (Windows con la carga `maui-android`) y SPIKE01.
+- **Pendiente:** SPIKE01. La CI de la app se añadió en el bloque 12.
+
+### Decisiones y observaciones del bloque 12
+
+- **Credenciales de Neon:** no van en el repositorio. Solo se guardan como `ConnectionStrings__Cad` en el panel de Render, en formato Npgsql y con el host directo (sin `-pooler`): hay una sola instancia y las migraciones se aplican al arrancar. Neon Object Storage no se usa.
+- **Cookie antifalsificación:** ahora usa la misma política que `cad.panel` (`Secure` fuera de desarrollo). La prueba de RNF09 gestiona las cookies a mano, porque un gestor de cookies no reenvía una cookie `Secure` por el tramo HTTP interno entre el proxy y el servidor.
+- **CI de la app** (`.github/workflows/ci-movil.yml`): flujo aparte en `windows-latest`, filtrado por rutas (app, contratos, solución y el propio flujo). En un repositorio privado, los minutos de Windows cuentan el doble de la cuota gratuita.
+- **Pendiente del equipo en el entorno publicado:** datos por rol (S1-T02), la petición de ingreso y `wss://` (S1-T08), la app contra `https://cad-servidor.onrender.com/`, la medición de RNF02 y S1-T21. Requieren iniciar sesión o crear cuentas en Render.

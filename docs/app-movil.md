@@ -66,6 +66,10 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - El doble toque se inyectó con `adb`, no con un dedo; la garantía de fondo es el semáforo de `EmisorSos` (prueba unitaria y prueba de mutación) más el índice único del servidor.
 - Emulador ≠ dispositivo: segundo plano, pérdida de cobertura real y la precisión del GPS corresponden a SPIKE01 (S1-T03/T04), en un teléfono Android real.
 
+## Integración continua
+
+`.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.
+
 ## Pruebas automatizadas
 
 `Cad.Movil.Tests`: 54 pruebas (EmisorSos, PreparacionUbicacion, ApiCad con un `HttpMessageHandler` falso, ValidacionDireccion y modelos de vista). Pruebas de mutación sobre `EmisorSos`, todas detectadas: sin el filtro de la posición anterior, con un `IdSolicitud` nuevo en el reintento, sin la activación única, confirmando antes de la respuesta y reintentando los rechazos.
