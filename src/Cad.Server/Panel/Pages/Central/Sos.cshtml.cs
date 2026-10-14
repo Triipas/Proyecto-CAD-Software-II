@@ -10,10 +10,11 @@ namespace Cad.Server.Panel.Pages.Central;
 
 // HU12 — Contactar al ciudadano y registrar la verificación del SOS (S2-T01) y
 // HU20 — Asignar el caso pendiente a un sereno disponible (S2-T05) y
-// HU13 — Clasificar el SOS después de su registro (S2-T08). Solo operadores (HU12-CA08, HU20-CA09, DP09).
+// HU13 — Clasificar el SOS después de su registro (S2-T08) y
+// HU23 — Registrar el inicio de atención como operador (S2-T11, CA02). Solo operadores.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
-    ClasificarCaso clasificar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
+    ClasificarCaso clasificar, AvanzarCaso avanzar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
     IConfiguration configuracion) : PageModel
 {
     [BindProperty]
@@ -37,6 +38,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public string? ErrorAsignacion { get; private set; }
     public string? ErrorCategoria { get; private set; }
     public string? ErrorClasificacion { get; private set; }
+    public string? ErrorAvance { get; private set; }
 
     [TempData]
     public string? Mensaje { get; set; }
@@ -146,6 +148,25 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                 Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
                 Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
                 return Page();
+        }
+    }
+
+    // HU23-CA02: el operador registra el inicio de atención y queda como responsable.
+    public async Task<IActionResult> OnPostIniciarAtencionAsync(Guid id, CancellationToken ct)
+    {
+        switch (await avanzar.EjecutarAsync(id, Avance.IniciarAtencion, User.IdUsuario(), ActorAvance.Operador, ct))
+        {
+            case ResultadoAvance.Registrado or ResultadoAvance.YaRegistrado:
+                Mensaje = "Inicio de atención registrado.";
+                DetalleMensaje = "Quedas como responsable del registro.";
+                return RedirectToPage(new { id });
+            case ResultadoAvance.Rechazado r when await CargarAsync(id, ct):
+                ErrorAvance = r.Motivo;
+                Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
+                Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+                return Page();
+            default:
+                return NotFound();
         }
     }
 

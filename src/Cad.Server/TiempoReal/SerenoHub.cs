@@ -12,6 +12,7 @@ public sealed class SerenoHub : Hub
 {
     public const string Ruta = "/hubs/sereno";
     public const string EventoDespachoAsignado = "DespachoAsignado";
+    public const string EventoDespachoActualizado = "DespachoActualizado";
 
     public static string Grupo(Guid serenoId) => $"sereno:{serenoId}";
 

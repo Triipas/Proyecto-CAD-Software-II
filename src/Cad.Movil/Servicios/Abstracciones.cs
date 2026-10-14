@@ -32,6 +32,10 @@ public interface IApiCad
 
     // HU21 — despacho vigente del sereno; Correcto(null) si no tiene ninguno (204).
     Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct);
+
+    // HU22 y HU23 — avances del despacho; devuelven el despacho actualizado.
+    Task<ResultadoApi<DespachoSereno?>> ConfirmarDesplazamientoAsync(string token, Guid casoId, CancellationToken ct);
+    Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, CancellationToken ct);
 }
 
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).

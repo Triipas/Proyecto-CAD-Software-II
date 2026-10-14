@@ -29,6 +29,13 @@
                         </span>
                         <span class="sereno__disponibilidad">@(sereno.Disponible ? "Disponible" : sereno.ConAsignacion ? "No disponible · con asignación vigente" : "No disponible")</span>
                     </div>
+                    @if (sereno.CasoAsignadoId is { } casoAsignado)
+                    {
+                        @* HU23-CA03: el estado del caso asignado se refleja en la central. *@
+                        <p class="sereno__caso" data-estado-caso="@sereno.EstadoCasoAsignado">
+                            Caso @sereno.EstadoCasoAsignado · <a href="/panel/central/sos/@casoAsignado">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
+                        </p>
+                    }
                     @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is { } recibida)
                     {
                         <button type="button" class="sos__ubicacion" data-ver-sereno aria-label="Ver en el mapa al sereno @sereno.Nombre">

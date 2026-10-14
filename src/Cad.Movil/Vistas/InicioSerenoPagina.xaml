@@ -29,6 +29,12 @@
                         <Label Text="{Binding TextoDespacho}" FontAttributes="Bold" />
                         <Label Text="{Binding TextoAsignado}" Style="{StaticResource TextoSecundario}" />
                         <Label Text="{Binding TextoIdentificador}" Style="{StaticResource TextoSecundario}" FontSize="12" />
+                        <Label Text="{Binding TextoAvances}" Style="{StaticResource TextoSecundario}" IsVisible="{Binding HayAvances}" />
+                        <!-- HU22: confirmar el desplazamiento; HU23: registrar el inicio de atención. -->
+                        <Button Text="Voy en camino" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarDesplazamiento}"
+                                IsVisible="{Binding PuedeConfirmarDesplazamiento}" SemanticProperties.Hint="Confirma a la central que te diriges a atender el caso" />
+                        <Button Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
+                                IsVisible="{Binding PuedeIniciarAtencion}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
                         <Label Text="Ubicación del dispositivo" FontAttributes="Bold" />
                         <Label Text="{Binding TextoUbicacionDespacho}" IsVisible="{Binding HayUbicacionDespacho}" />
                         <v:Aviso Tipo="advertencia" Texto="Ubicación del dispositivo no disponible." IsVisible="{Binding SinUbicacionDespacho}" />

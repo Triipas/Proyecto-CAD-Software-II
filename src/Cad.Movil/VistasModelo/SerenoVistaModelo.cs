@@ -1,4 +1,5 @@
 using System.Globalization;
+using Cad.Contratos.Serenos;
 using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
@@ -20,6 +21,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
         Salir = new ComandoAsincrono(SalirAsync, () => PuedeSalir);
+        ConfirmarDesplazamiento = new ComandoAsincrono(() => despacho.ConfirmarDesplazamientoAsync());
+        IniciarAtencion = new ComandoAsincrono(() => despacho.IniciarAtencionAsync());
         // El servicio avisa desde el hilo del envío; la interfaz se actualiza en el principal.
         turno.Cambio += () => _ = HiloPrincipal(Actualizar);
         despacho.Cambio += () => _ = HiloPrincipal(ActualizarDespacho);
@@ -32,6 +35,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public ComandoAsincrono PermitirUbicacion { get; }
     public ComandoAsincrono AbrirAjustes { get; }
     public ComandoAsincrono Salir { get; }
+    public ComandoAsincrono ConfirmarDesplazamiento { get; }
+    public ComandoAsincrono IniciarAtencion { get; }
 
     public bool Operativo => turno.Operativo;
     public string TextoEstado => Operativo ? "Estás operativo" : "No estás operativo";
@@ -81,6 +86,17 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public bool HayInformacionDespacho => despacho.Actual is { Informacion.Count: > 0 };
     public bool SinInformacionDespacho => despacho.Actual is { Informacion.Count: 0 };
     public bool AvisoNuevoDespacho => despacho.AvisoNuevo && HayDespacho;
+    // HU22: «Voy en camino» solo con el caso «Asignada»; HU23: «Iniciar atención» solo «En camino».
+    public bool PuedeConfirmarDesplazamiento => despacho.Actual?.Estado == DespachoSereno.EstadoAsignada;
+    public bool PuedeIniciarAtencion => despacho.Actual?.Estado == DespachoSereno.EstadoEnCamino;
+    public string TextoAvances => despacho.Actual is { } a
+        ? string.Join(" ", new[]
+          {
+              a.EnCaminoEn is { } c ? $"En camino desde las {Hora(c)}." : null,
+              a.EnAtencionEn is { } t ? $"En atención desde las {Hora(t)}." : null,
+          }.Where(t => t is not null))
+        : "";
+    public bool HayAvances => TextoAvances.Length > 0;
     public string? ErrorDespacho => despacho.Error;
     public bool HayErrorDespacho => despacho.Error is not null;
 
@@ -142,7 +158,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     {
         foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(TextoAsignado), nameof(TextoIdentificador),
                      nameof(HayUbicacionDespacho), nameof(SinUbicacionDespacho), nameof(TextoUbicacionDespacho), nameof(InformacionDespacho),
-                     nameof(HayInformacionDespacho), nameof(SinInformacionDespacho), nameof(AvisoNuevoDespacho), nameof(ErrorDespacho), nameof(HayErrorDespacho) })
+                     nameof(HayInformacionDespacho), nameof(SinInformacionDespacho), nameof(AvisoNuevoDespacho), nameof(ErrorDespacho), nameof(HayErrorDespacho),
+                     nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances) })
             Notificar(p);
     }
 }

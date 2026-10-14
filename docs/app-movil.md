@@ -91,6 +91,7 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - `Servicios/Despacho.cs` (`ServicioDespacho`): consulta el despacho vigente al abrir la pantalla del sereno, al recibir el aviso del canal y al reconectarlo. Sin conexión conserva el último despacho conocido y avisa. Salir lo olvida y deja de escuchar.
 - `Servicios/CanalSerenoSignalR.cs`: conexión a `/hubs/sereno` con el token en la cabecera `Authorization` y reconexión automática. Solo funciona con la app abierta.
 - La pantalla muestra los datos de DP06: origen, estado, horas, identificador, ubicación del dispositivo o «no disponible», y la información y las referencias registradas por la central (rotuladas como referencias del ciudadano, no como ubicación).
+- HU22/HU23: «Voy en camino» con el caso «Asignada» e «Iniciar atención» con el caso «En camino». Si el estado ya cambió, se informa y se vuelve a consultar; si un operador registra el inicio, el canal avisa (`DespachoActualizado`) y la app se actualiza.
 - La notificación push (ADR-07) se integrará cuando el equipo cree el proyecto de Firebase (`google-services.json`, no versionado).
 
 ## Integración continua

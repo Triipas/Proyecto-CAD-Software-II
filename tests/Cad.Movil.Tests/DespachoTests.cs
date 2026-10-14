@@ -157,6 +157,90 @@ public class DespachoTests
         Assert.False(informacion.HayHecho);
     }
 
+    // ---------------- HU22 y HU23 ----------------
+
+    [Fact]
+    public async Task HU22_VoyEnCamino_SoloConElCasoAsignada_YActualizaElDespacho()
+    {
+        var asignado = Despacho();
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(asignado);
+        api.RespuestaAvance = _ => new ResultadoApi<DespachoSereno?>.Correcto(asignado with { Estado = DespachoSereno.EstadoEnCamino, EnCaminoEn = Inicio.AddMinutes(3) });
+        var despacho = Servicio();
+        var vm = VistaModelo(despacho);
+        await vm.AlAparecerAsync();
+        Assert.True(vm.PuedeConfirmarDesplazamiento);
+        Assert.False(vm.PuedeIniciarAtencion);
+
+        await vm.ConfirmarDesplazamiento.EjecutarAsync();
+
+        Assert.Equal(["desplazamiento"], api.Avances);
+        Assert.Equal(DespachoSereno.EstadoEnCamino, despacho.Actual!.Estado);
+        Assert.False(vm.PuedeConfirmarDesplazamiento);
+        Assert.True(vm.PuedeIniciarAtencion);
+        Assert.StartsWith("En camino desde las ", vm.TextoAvances);
+    }
+
+    [Fact]
+    public async Task HU23_IniciarAtencion_ConElCasoEnCamino()
+    {
+        var enCamino = Despacho() with { Estado = DespachoSereno.EstadoEnCamino };
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(enCamino);
+        api.RespuestaAvance = _ => new ResultadoApi<DespachoSereno?>.Correcto(enCamino with { Estado = DespachoSereno.EstadoEnAtencion });
+        var vm = VistaModelo(Servicio());
+        await vm.AlAparecerAsync();
+
+        await vm.IniciarAtencion.EjecutarAsync();
+
+        Assert.Equal(["atencion"], api.Avances);
+        Assert.False(vm.PuedeIniciarAtencion);
+        Assert.False(vm.PuedeConfirmarDesplazamiento);
+    }
+
+    [Fact]
+    public async Task HU23_SiElEstadoYaCambio_InformaYVuelveAConsultar()
+    {
+        var enCamino = Despacho() with { Estado = DespachoSereno.EstadoEnCamino };
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(enCamino);
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        // Un operador registró el inicio antes: el servidor rechaza y el despacho ya está «En atención».
+        api.RespuestaAvance = _ => new ResultadoApi<DespachoSereno?>.Rechazado(409, "El inicio de atención ya fue registrado por otro responsable.", new Dictionary<string, string[]>());
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(enCamino with { Estado = DespachoSereno.EstadoEnAtencion });
+
+        Assert.False(await despacho.IniciarAtencionAsync());
+
+        Assert.Equal(DespachoSereno.EstadoEnAtencion, despacho.Actual!.Estado);
+        Assert.Equal("El inicio de atención ya fue registrado por otro responsable.", despacho.Error);
+    }
+
+    [Fact]
+    public async Task HU22_SinConexion_ConservaElEstadoYPideReintentar()
+    {
+        var asignado = Despacho();
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(asignado);
+        api.RespuestaAvance = _ => new ResultadoApi<DespachoSereno?>.SinRespuesta("No hay conexión con el servidor.");
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+
+        Assert.False(await despacho.ConfirmarDesplazamientoAsync());
+
+        Assert.Equal(asignado, despacho.Actual);
+        Assert.EndsWith("Reinténtalo.", despacho.Error);
+    }
+
+    [Fact]
+    public async Task HU23_CA02_SiUnOperadorCambiaElEstado_LaAppVuelveAConsultar()
+    {
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        var consultas = api.ConsultasDespacho;
+
+        canal.Actualizar();
+
+        await Esperar(() => api.ConsultasDespacho > consultas, "se consulta tras el aviso de actualización");
+        Assert.False(despacho.AvisoNuevo); // no es un despacho nuevo
+    }
+
     [Fact]
     public async Task SinDespacho_LoDiceSoloTrasConsultar()
     {
