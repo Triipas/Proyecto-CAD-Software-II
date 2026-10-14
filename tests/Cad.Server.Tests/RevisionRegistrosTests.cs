@@ -104,6 +104,16 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
             ["Formulario.InformacionHecho"] = informacion, ["Formulario.ReferenciaUbicacion"] = referencia,
         });
 
+        // HU18 (Sprint 2): un sereno se activa y transmite posiciones con coordenadas precisas.
+        var serenoApp = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Sereno));
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PutAsJsonAsync("/api/sereno/estado",
+            new Cad.Contratos.Serenos.SolicitudCambioEstadoOperativo(true, true))).StatusCode);
+        var (latSereno, lonSereno) = (-12.0 - Random.Shared.Next(100_000, 999_999) / 1e7, -77.0 - Random.Shared.Next(100_000, 999_999) / 1e7);
+        sensibles["coordenadas"].AddRange([latSereno.ToString(CultureInfo.InvariantCulture), lonSereno.ToString(CultureInfo.InvariantCulture),
+            latSereno.ToString(new CultureInfo("es-PE")), lonSereno.ToString(new CultureInfo("es-PE"))]);
+        Assert.Equal(HttpStatusCode.Created, (await serenoApp.PostAsJsonAsync("/api/sereno/posiciones",
+            new Cad.Contratos.Serenos.PosicionSerenoEnviada(latSereno, lonSereno, 9, DateTimeOffset.UtcNow))).StatusCode);
+
         // Sellos de seguridad de Identity (equivalen a credenciales para revocar sesiones).
         sensibles["tokens y cookies"].AddRange(await fabrica.ConBaseDatosAsync(db => db.Users
             .Where(u => u.Email == correoCiudadana || u.Email == correoOperador).Select(u => u.SecurityStamp!).ToListAsync()));

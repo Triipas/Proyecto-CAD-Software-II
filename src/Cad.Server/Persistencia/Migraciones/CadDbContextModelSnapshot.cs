@@ -269,6 +269,61 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("MedicionesPresentacion", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.EstadoSereno", b =>
+                {
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CambiadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Operativo")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("SerenoId");
+
+                    b.ToTable("EstadosSereno", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.PosicionSereno", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Latitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("ObtenidaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("PrecisionMetros")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("RecibidaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SerenoId", "ObtenidaEn")
+                        .IsUnique();
+
+                    b.ToTable("PosicionesSereno", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PosicionesSereno_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
+
+                            t.HasCheckConstraint("CK_PosicionesSereno_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
+
+                            t.HasCheckConstraint("CK_PosicionesSereno_Precision", "\"PrecisionMetros\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -499,6 +554,24 @@ namespace Cad.Server.Persistencia.Migraciones
                         .WithMany()
                         .HasForeignKey("OperadorId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.EstadoSereno", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Serenos.Dominio.EstadoSereno", "SerenoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.PosicionSereno", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

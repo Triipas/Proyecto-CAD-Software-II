@@ -48,6 +48,11 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/panel/central/sos/00000000-0000-0000-0000-000000000000"),
         new("POST", "/panel/central/sos/{id:guid}", "HU12", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/central/sos/00000000-0000-0000-0000-000000000000"),
+        // HU18 — estado operativo y posiciones del sereno (canal de la app). Sin cuerpo válido el sereno
+        // llega al endpoint (400); el resto es rechazado antes, sin crear estado ni posiciones.
+        new("GET", "/api/sereno/estado", "HU18", Acceso.SoloRol, Roles.Sereno, Contenido: "intervaloPosicionesSegundos"),
+        new("PUT", "/api/sereno/estado", "HU18", Acceso.SoloRol, Roles.Sereno),
+        new("POST", "/api/sereno/posiciones", "HU18", Acceso.SoloRol, Roles.Sereno),
         new("GET", "/panel/admin", "HU04 (base)", Acceso.SoloRol, Roles.Administrador, "Interfaz del administrador"),
         new("GET", "/panel/admin/cuentas", "HU04", Acceso.SoloRol, Roles.Administrador, "Cuentas institucionales"),
         new("GET", "/panel/admin/cuentas/nueva", "HU04", Acceso.SoloRol, Roles.Administrador, "Nueva cuenta institucional"),

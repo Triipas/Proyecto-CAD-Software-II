@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 13/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 97 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 13/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 112 casos).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -27,6 +27,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/auth/token` (la app; el caso de uso solo emite token a ciudadano y sereno) | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /api/cuentas/yo` | HU02 | ✘ | ✔ | ✔ | ✔ | ✔ |
 | `POST /api/sos` | HU07, HU08 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `GET` y `PUT /api/sereno/estado`, `POST /api/sereno/posiciones` (estado operativo y posiciones del sereno) | HU18 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET /api/mediciones/presentacion` (resultados de RNF02; 404 si la medición está apagada) | RNF02 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `POST /panel/salir` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -63,7 +64,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU15 | Admitir un reporte para atención | Operador | Pendiente (Sprint 3) |
 | HU16 | Derivar un reporte | Operador | Pendiente (Sprint 3) |
 | HU17 | Descartar un reporte con justificación | Operador | Pendiente (Sprint 3) |
-| HU18 | Activar mi estado operativo y compartir mi ubicación | Sereno | Pendiente (Sprint 2) |
+| HU18 | Activar mi estado operativo y compartir mi ubicación | Sereno | **Servidor verificado (13/10/2026):** estado y posiciones solo para Sereno; un ciudadano con su token no crea estado ni posiciones (`EstadoOperativoTests.CA05_*`). Mutación: sin la política de sereno, 10 pruebas fallan. App pendiente (bloque 3). |
 | HU19 | Monitorear el estado y la disponibilidad de los serenos | Operador | Pendiente (Sprint 2) |
 | HU20 | Asignar un caso pendiente a un sereno disponible | Operador | Pendiente (Sprints 2 y 3) |
 | HU21 | Recibir y consultar un despacho | Sereno | Pendiente (Sprint 2) |
