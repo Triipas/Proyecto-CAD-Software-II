@@ -36,6 +36,11 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     public bool AvisoNuevo { get; private set; }
     public bool CanalConectado { get; private set; }
 
+    // HU24: catálogo para la tipificación final (DP07), errores del último intento de cierre y aviso del cierre.
+    public IReadOnlyList<CategoriaCatalogo> Categorias { get; private set; } = [];
+    public IReadOnlyDictionary<string, string[]> ErroresCierre { get; private set; } = new Dictionary<string, string[]>();
+    public string? CierreReciente { get; private set; }
+
     public async Task IniciarAsync(CancellationToken ct = default)
     {
         if (!suscrito)
@@ -65,6 +70,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
                     Actual = c.Valor;
                     Consultado = true;
                     Error = null;
+                    if (c.Valor is not null)
+                        CierreReciente = null;
                     break;
                 case ResultadoApi<DespachoSereno?>.Rechazado { Estado: 401 }:
                     break; // ídem
@@ -136,6 +143,72 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         return aplicado;
     }
 
+    public async Task CargarCategoriasAsync(CancellationToken ct = default)
+    {
+        if (Categorias.Count > 0)
+            return;
+        var sesion = await sesiones.LeerAsync();
+        if (sesion is null || !sesion.Vigente(reloj.GetUtcNow()))
+            return;
+        if (await api.ConsultarCategoriasAsync(sesion.Token, ct) is ResultadoApi<List<CategoriaCatalogo>>.Correcto c)
+            Categorias = c.Valor;
+        else
+            Error = "No se pudo cargar el catálogo de tipificaciones. Reinténtalo.";
+        Cambio?.Invoke();
+    }
+
+    // HU24 — cierre por el sereno asignado. Devuelve true si el caso quedó cerrado (también ante un reenvío).
+    public async Task<bool> CerrarAsync(Guid? categoriaId, string? resultadoPublico, string? notasInternas, CancellationToken ct = default)
+    {
+        if (Actual is not { } despacho || !await consulta.WaitAsync(0, ct))
+            return false;
+        var cerrado = false;
+        var recargar = false;
+        try
+        {
+            var sesion = await sesiones.LeerAsync();
+            if (sesion is null || !sesion.Vigente(reloj.GetUtcNow()))
+                return false;
+            ErroresCierre = new Dictionary<string, string[]>();
+            switch (await api.CerrarCasoAsync(sesion.Token, despacho.CasoId, new SolicitudCierreCaso(categoriaId, resultadoPublico, notasInternas), ct))
+            {
+                case ResultadoApi<RespuestaCierreCaso>.Correcto c:
+                    Actual = null;
+                    Consultado = true;
+                    Error = null;
+                    CierreReciente = $"Caso cerrado a las {c.Valor.CerradoEn.ToLocalTime():HH:mm:ss}.";
+                    cerrado = true;
+                    break;
+                case ResultadoApi<RespuestaCierreCaso>.Rechazado { Estado: 400 } r:
+                    ErroresCierre = r.Errores; // CA02: faltan la tipificación o el resultado
+                    Error = null;
+                    break;
+                case ResultadoApi<RespuestaCierreCaso>.Rechazado { Estado: 401 }:
+                    break;
+                case ResultadoApi<RespuestaCierreCaso>.Rechazado r:
+                    Error = r.Mensaje; // p. ej., el operador ya lo cerró
+                    recargar = true;
+                    break;
+                case ResultadoApi<RespuestaCierreCaso>.SinRespuesta s:
+                    Error = $"No se pudo cerrar el caso: {s.Motivo} Reinténtalo.";
+                    break;
+            }
+        }
+        finally
+        {
+            consulta.Release();
+            Cambio?.Invoke();
+        }
+        if (recargar)
+        {
+            var motivo = Error;
+            await ActualizarAsync(ct);
+            Error = motivo;
+            Cambio?.Invoke();
+        }
+        return cerrado;
+    }
+
     // Al salir de la sesión: el siguiente sereno que ingrese en este teléfono no hereda nada.
     public async Task ReiniciarAsync()
     {
@@ -147,7 +220,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             suscrito = false;
         }
         await canal.DesconectarAsync();
-        (Actual, Consultado, Error, AvisoNuevo, CanalConectado) = (null, false, null, false, false);
+        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente) = (null, false, null, false, false, null);
+        ErroresCierre = new Dictionary<string, string[]>();
         Cambio?.Invoke();
     }
 

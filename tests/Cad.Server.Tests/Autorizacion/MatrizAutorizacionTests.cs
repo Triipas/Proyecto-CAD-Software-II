@@ -63,6 +63,10 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/api/sereno/casos/00000000-0000-0000-0000-000000000000/desplazamiento"),
         new("POST", "/api/sereno/casos/{id:guid}/atencion", "HU23", Acceso.SoloRol, Roles.Sereno,
             Ejemplo: "/api/sereno/casos/00000000-0000-0000-0000-000000000000/atencion"),
+        // HU24 — cierre por el sereno (404 con un caso que no es suyo) y catálogo para la tipificación final.
+        new("POST", "/api/sereno/casos/{id:guid}/cierre", "HU24", Acceso.SoloRol, Roles.Sereno,
+            Ejemplo: "/api/sereno/casos/00000000-0000-0000-0000-000000000000/cierre"),
+        new("GET", "/api/sereno/categorias", "HU24", Acceso.SoloRol, Roles.Sereno, Contenido: "Violencia doméstica"),
         new("PUT", "/api/sereno/dispositivo", "HU21", Acceso.SoloRol, Roles.Sereno),
         new("DELETE", "/api/sereno/dispositivo", "HU21", Acceso.SoloRol, Roles.Sereno),
         // Canal en tiempo real del sereno (HU21-CA01): solo serenos, con su JWT.

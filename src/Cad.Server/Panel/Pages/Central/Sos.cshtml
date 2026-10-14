@@ -155,6 +155,10 @@
                 <p class="estado estado--activa">
                     <partial name="_Icono" model="@("exito")" />Asignado a @vigente.Sereno a las @Local(vigente.AsignadaEn)
                 </p>
+                @if (vigente.FinalizadaEn is { } finalizada)
+                {
+                    <p class="texto-secundario">Asignación finalizada con el cierre a las @Local(finalizada).</p>
+                }
                 @* HU22/HU23: avances con responsable, fecha y hora. *@
                 @if (sos.Avances is { Count: > 0 } avances)
                 {
@@ -216,6 +220,90 @@
                         </div>
                     </form>
                 }
+            }
+        </section>
+
+        @* HU24 — cierre con tipificación final y resultado (CA01, CA05). El resultado público y las notas
+           internas se muestran diferenciados (CA04). *@
+        <section class="superficie" aria-labelledby="titulo-cierre">
+            <h2 id="titulo-cierre" class="central__titulo">Cierre</h2>
+            @if (Model.ErrorCierre is not null)
+            {
+                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo cerrar el caso</p>
+                        <p class="aviso__texto">@Model.ErrorCierre</p>
+                    </div>
+                </div>
+            }
+            @if (sos.Cierre is { } cierre)
+            {
+                <dl class="datos" data-cierre>
+                    <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                    <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
+                    <div>
+                        <dt>Notas internas (solo personal autorizado)</dt>
+                        <dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd>
+                    </div>
+                    <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
+                    <div><dt>Fecha y hora</dt><dd>@Local(cierre.CerradoEn)</dd></div>
+                </dl>
+            }
+            else if (sos.EnAtencion)
+            {
+                var errorCategoria = Model.ErrorCierreDe("categoriaId");
+                var errorResultado2 = Model.ErrorCierreDe("resultadoPublico");
+                var errorNotas = Model.ErrorCierreDe("notasInternas");
+                <form method="post" asp-page-handler="Cerrar" class="formulario" data-formulario novalidate>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="Cierre_CategoriaId">Tipificación final</label>
+                        <select class="campo__control campo__control--seleccion" id="Cierre_CategoriaId" name="Cierre.CategoriaId" required
+                                aria-invalid="@(errorCategoria is null ? null : "true")"
+                                aria-describedby="@(errorCategoria is null ? null : "Cierre_CategoriaId-error")">
+                            <option value="">Elige una categoría</option>
+                            @foreach (var categoria in Model.Categorias)
+                            {
+                                <option value="@categoria.Id" selected="@(Model.Cierre.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                            }
+                        </select>
+                        @if (errorCategoria is not null)
+                        {
+                            <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
+                        }
+                    </div>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                        <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
+                                  maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoResultado"
+                                  aria-invalid="@(errorResultado2 is null ? null : "true")"
+                                  aria-describedby="Cierre_ResultadoPublico-ayuda@(errorResultado2 is null ? "" : " Cierre_ResultadoPublico-error")">@Model.Cierre.ResultadoPublico</textarea>
+                        <p id="Cierre_ResultadoPublico-ayuda" class="campo__ayuda">Es el resultado público: el ciudadano podrá verlo.</p>
+                        @if (errorResultado2 is not null)
+                        {
+                            <p id="Cierre_ResultadoPublico-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado2</span></p>
+                        }
+                    </div>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="Cierre_NotasInternas">Notas internas (opcional)</label>
+                        <textarea class="campo__control campo__control--texto" id="Cierre_NotasInternas" name="Cierre.NotasInternas" rows="3"
+                                  maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoNotas"
+                                  aria-invalid="@(errorNotas is null ? null : "true")"
+                                  aria-describedby="Cierre_NotasInternas-ayuda@(errorNotas is null ? "" : " Cierre_NotasInternas-error")">@Model.Cierre.NotasInternas</textarea>
+                        <p id="Cierre_NotasInternas-ayuda" class="campo__ayuda">Solo para el personal autorizado; el ciudadano no las verá.</p>
+                        @if (errorNotas is not null)
+                        {
+                            <p id="Cierre_NotasInternas-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorNotas</span></p>
+                        }
+                    </div>
+                    <div class="acciones">
+                        <button type="submit" class="boton boton--principal" data-texto-carga="Cerrando…">Cerrar el caso</button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <p class="texto-secundario">El caso se podrá cerrar cuando esté «En atención».</p>
             }
         </section>
     </div>

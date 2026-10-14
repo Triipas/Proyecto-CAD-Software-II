@@ -92,6 +92,7 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - `Servicios/CanalSerenoSignalR.cs`: conexión a `/hubs/sereno` con el token en la cabecera `Authorization` y reconexión automática. Solo funciona con la app abierta.
 - La pantalla muestra los datos de DP06: origen, estado, horas, identificador, ubicación del dispositivo o «no disponible», y la información y las referencias registradas por la central (rotuladas como referencias del ciudadano, no como ubicación).
 - HU22/HU23: «Voy en camino» con el caso «Asignada» e «Iniciar atención» con el caso «En camino». Si el estado ya cambió, se informa y se vuelve a consultar; si un operador registra el inicio, el canal avisa (`DespachoActualizado`) y la app se actualiza.
+- HU24: «Cerrar el caso» con el caso «En atención»: tipificación final (catálogo de `GET /api/sereno/categorias`), resultado (público) y notas internas (opcionales). Los errores de cada campo los devuelve el servidor. Al cerrar, el despacho desaparece y se muestra «Caso cerrado a las …».
 - La notificación push (ADR-07) se integrará cuando el equipo cree el proyecto de Firebase (`google-services.json`, no versionado).
 
 ## Integración continua

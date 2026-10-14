@@ -36,6 +36,10 @@ public interface IApiCad
     // HU22 y HU23 — avances del despacho; devuelven el despacho actualizado.
     Task<ResultadoApi<DespachoSereno?>> ConfirmarDesplazamientoAsync(string token, Guid casoId, CancellationToken ct);
     Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, CancellationToken ct);
+
+    // HU24 — cierre del caso y catálogo para la tipificación final (DP07).
+    Task<ResultadoApi<RespuestaCierreCaso>> CerrarCasoAsync(string token, Guid casoId, SolicitudCierreCaso solicitud, CancellationToken ct);
+    Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasAsync(string token, CancellationToken ct);
 }
 
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).

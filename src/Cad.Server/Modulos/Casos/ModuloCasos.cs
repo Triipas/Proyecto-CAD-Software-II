@@ -14,6 +14,7 @@ public static class ModuloCasos
         services.AddScoped<AsignarCaso>();
         services.AddScoped<ClasificarCaso>();
         services.AddScoped<AvanzarCaso>();
+        services.AddScoped<CerrarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();

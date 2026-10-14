@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             xmlns:sr="clr-namespace:Cad.Contratos.Serenos;assembly=Cad.Contratos"
              x:Class="Cad.Movil.Vistas.InicioSerenoPagina"
              x:DataType="vm:InicioSerenoVistaModelo"
              Title="Sereno">
@@ -24,6 +25,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Despacho" FontSize="18" FontAttributes="Bold" />
                     <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
+                    <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
                     <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" IsVisible="{Binding SinDespacho}" />
                     <VerticalStackLayout Spacing="8" IsVisible="{Binding HayDespacho}">
                         <Label Text="{Binding TextoDespacho}" FontAttributes="Bold" />
@@ -35,6 +37,30 @@
                                 IsVisible="{Binding PuedeConfirmarDesplazamiento}" SemanticProperties.Hint="Confirma a la central que te diriges a atender el caso" />
                         <Button Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
                                 IsVisible="{Binding PuedeIniciarAtencion}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
+                        <!-- HU24: cierre con tipificación final y resultado (obligatorios) y notas internas (opcionales). -->
+                        <Button Text="Cerrar el caso" Style="{StaticResource BotonPrincipal}" Command="{Binding AbrirCierre}" IsVisible="{Binding PuedeAbrirCierre}" />
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarCierre}">
+                            <Label Text="Tipificación final" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Picker Title="Elige una categoría" ItemsSource="{Binding CategoriasCierre}" SelectedItem="{Binding CategoriaCierre}"
+                                        ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" />
+                            </Border>
+                            <Label Text="{Binding ErrorCategoriaCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoriaCierre}" />
+                            <Label Text="Resultado de la atención" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Editor Text="{Binding ResultadoCierre}" HeightRequest="100" Placeholder="Cómo se resolvió el caso" />
+                            </Border>
+                            <Label Text="Es el resultado público: el ciudadano podrá verlo." Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <Label Text="{Binding ErrorResultadoCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorResultadoCierre}" />
+                            <Label Text="Notas internas (opcional)" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Editor Text="{Binding NotasCierre}" HeightRequest="80" Placeholder="Solo para el personal autorizado" />
+                            </Border>
+                            <Label Text="El ciudadano no verá estas notas." Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <Label Text="{Binding ErrorNotasCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNotasCierre}" />
+                            <Button Text="Confirmar cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCierre}" />
+                            <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarCierre}" />
+                        </VerticalStackLayout>
                         <Label Text="Ubicación del dispositivo" FontAttributes="Bold" />
                         <Label Text="{Binding TextoUbicacionDespacho}" IsVisible="{Binding HayUbicacionDespacho}" />
                         <v:Aviso Tipo="advertencia" Texto="Ubicación del dispositivo no disponible." IsVisible="{Binding SinUbicacionDespacho}" />

@@ -36,6 +36,8 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /hubs/central/negotiate` y `/hubs/central` (tiempo real) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /api/sereno/despacho`, `GET /api/sereno/casos/{id}` (solo el caso asignado al propio sereno), `PUT` y `DELETE /api/sereno/dispositivo` | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `POST /api/sereno/casos/{id}/desplazamiento` y `/atencion` (solo el sereno asignado) | HU22, HU23 | ✘ | ✘ | ✘ | ✔ | ✘ |
+| `POST /api/sereno/casos/{id}/cierre` (solo el sereno asignado) y `GET /api/sereno/categorias` | HU24 | ✘ | ✘ | ✘ | ✔ | ✘ |
+| `POST /panel/central/sos/{id}?handler=Cerrar` (cierre por el operador) | HU24 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /panel/central/sos/{id}?handler=IniciarAtencion` (inicio de atención por el operador) | HU23 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /hubs/sereno/negotiate` y `/hubs/sereno` (aviso del despacho; cada sereno solo recibe los suyos) | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
@@ -74,7 +76,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU21 | Recibir y consultar un despacho | Sereno | **Verificada en el servidor (14/10/2026):** solo el sereno con la asignación vigente consulta el caso; otro sereno recibe 404 y un ciudadano o un operador con su sesión son rechazados (`DespachoTests.CA04_*`). El aviso en tiempo real solo llega al sereno asignado (`CA01_*`). Datos limitados por DP06 (`CA05_*`). |
 | HU22 | Confirmar mi desplazamiento al caso | Sereno | **Verificada en el servidor (14/10/2026):** solo el sereno asignado confirma; otro sereno recibe 404 y un operador es rechazado por la política y por el caso de uso (`AtencionTests.HU22_CA03_*`, `HU22_CA04_*`). |
 | HU23 | Registrar el inicio de atención | Sereno; Operador (queda identificado como responsable) | **Verificada en el servidor (14/10/2026):** el sereno asignado (API) o un operador (panel); otro sereno recibe 404 y un administrador con token antifalsificación válido es redirigido a «acceso denegado» (`AtencionTests.HU23_*`). |
-| HU24 | Cerrar un caso con su tipificación y resultado | Sereno; Operador (queda identificado como responsable) | Pendiente (Sprint 2) |
+| HU24 | Cerrar un caso con su tipificación y resultado | Sereno; Operador (queda identificado como responsable) | **Verificada en el servidor (14/10/2026):** cierra el sereno asignado (API) o un operador (panel); otro sereno recibe 404 y un administrador con token antifalsificación válido es redirigido a «acceso denegado» (`CierreTests`). Las notas internas no llegan a ninguna ruta del ciudadano (`CierreTests.CA04_*`, DP05). |
 | HU25 | Visualizar los casos en el mapa | Operador | Pendiente (Sprint 4; mapa base con HU11) |
 | HU26 | Buscar y filtrar casos | Operador | Pendiente (Sprint 3) |
 | HU27 | Consultar el historial de un caso | Operador | Pendiente (Sprint 3) |

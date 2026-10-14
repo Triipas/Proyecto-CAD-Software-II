@@ -65,6 +65,24 @@ public static class ModuloSerenos
                 Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
             AvanzarAsync(id, Casos.Aplicacion.Avance.IniciarAtencion, contexto, avanzar, despachos, ct));
 
+        // HU24 — cierre por el sereno asignado. 200 también ante un reenvío del mismo cierre; 400 si faltan la
+        // tipificación o el resultado (CA02); 409 si el estado lo impide (CA03); 404 si el caso no es suyo (CA06).
+        sereno.MapPost("/casos/{id:guid}/cierre", async (Guid id, SolicitudCierreCaso solicitud, HttpContext contexto,
+                Casos.Aplicacion.CerrarCaso cerrar, CancellationToken ct) =>
+            await cerrar.EjecutarAsync(id, new Casos.Aplicacion.DatosCierre(solicitud.CategoriaId, solicitud.ResultadoPublico, solicitud.NotasInternas),
+                    contexto.User.IdUsuario(), Casos.Aplicacion.ActorAvance.Sereno, ct) switch
+            {
+                Casos.Aplicacion.ResultadoCierre.Cerrado c => Results.Ok(RespuestaCierre(c.Cierre)),
+                Casos.Aplicacion.ResultadoCierre.YaCerrado c => Results.Ok(RespuestaCierre(c.Cierre)),
+                Casos.Aplicacion.ResultadoCierre.Invalido i => Results.ValidationProblem(i.Errores, title: "No se pudo cerrar el caso."),
+                Casos.Aplicacion.ResultadoCierre.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
+                _ => Results.NotFound(),
+            });
+
+        // DP07 — catálogo para elegir la tipificación final.
+        sereno.MapGet("/categorias", async (Consultas.ConsultarCategorias categorias, CancellationToken ct) =>
+            Results.Ok((await categorias.EjecutarAsync(ct)).Select(c => new CategoriaCatalogo(c.Id, c.Nombre))));
+
         // ADR-07 — dispositivo para la notificación push del despacho. 204 en ambos casos.
         sereno.MapPut("/dispositivo", async (SolicitudRegistroDispositivo solicitud, HttpContext contexto,
                 GestionarDispositivo dispositivos, CancellationToken ct) =>
@@ -96,6 +114,9 @@ public static class ModuloSerenos
             _ => Results.NotFound(),
         };
     }
+
+    private static RespuestaCierreCaso RespuestaCierre(Casos.Dominio.CierreCaso cierre) =>
+        new(cierre.CasoId, Casos.Dominio.EstadosCaso.Texto(Casos.Dominio.EstadoCaso.Cerrada), cierre.CerradoEn);
 
     private static RespuestaEstadoOperativo Respuesta(EstadoSereno? estado, GestionarEstadoOperativo estados) =>
         new(estado?.Operativo ?? false, estado?.CambiadoEn, estados.IntervaloPosicionesSegundos);

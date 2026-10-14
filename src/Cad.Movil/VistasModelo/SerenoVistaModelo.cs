@@ -11,7 +11,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private readonly ServicioDespacho despacho;
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
-    private bool mostrarExplicacion, mostrarAjustes;
+    private bool mostrarExplicacion, mostrarAjustes, mostrarCierre;
+    private CategoriaCatalogo? categoriaCierre;
+    private string? resultadoCierre, notasCierre;
 
     public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, IAlmacenSesion sesiones,
         INavegacion navegacion, Action abrirAjustes)
@@ -23,6 +25,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         Salir = new ComandoAsincrono(SalirAsync, () => PuedeSalir);
         ConfirmarDesplazamiento = new ComandoAsincrono(() => despacho.ConfirmarDesplazamientoAsync());
         IniciarAtencion = new ComandoAsincrono(() => despacho.IniciarAtencionAsync());
+        AbrirCierre = new ComandoAsincrono(AbrirCierreAsync);
+        CancelarCierre = new ComandoAsincrono(() => { MostrarCierre = false; ActualizarDespacho(); return Task.CompletedTask; });
+        ConfirmarCierre = new ComandoAsincrono(ConfirmarCierreAsync);
         // El servicio avisa desde el hilo del envío; la interfaz se actualiza en el principal.
         turno.Cambio += () => _ = HiloPrincipal(Actualizar);
         despacho.Cambio += () => _ = HiloPrincipal(ActualizarDespacho);
@@ -37,6 +42,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public ComandoAsincrono Salir { get; }
     public ComandoAsincrono ConfirmarDesplazamiento { get; }
     public ComandoAsincrono IniciarAtencion { get; }
+    public ComandoAsincrono AbrirCierre { get; }
+    public ComandoAsincrono CancelarCierre { get; }
+    public ComandoAsincrono ConfirmarCierre { get; }
 
     public bool Operativo => turno.Operativo;
     public string TextoEstado => Operativo ? "Estás operativo" : "No estás operativo";
@@ -97,6 +105,42 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
           }.Where(t => t is not null))
         : "";
     public bool HayAvances => TextoAvances.Length > 0;
+
+    // ----- HU24: cierre -----
+    private bool EnAtencion => despacho.Actual?.Estado == DespachoSereno.EstadoEnAtencion;
+    public bool MostrarCierre { get => mostrarCierre && EnAtencion; private set => Asignar(ref mostrarCierre, value); }
+    public bool PuedeAbrirCierre => EnAtencion && !mostrarCierre;
+    public IReadOnlyList<CategoriaCatalogo> CategoriasCierre => despacho.Categorias;
+    public CategoriaCatalogo? CategoriaCierre { get => categoriaCierre; set => Asignar(ref categoriaCierre, value); }
+    public string? ResultadoCierre { get => resultadoCierre; set => Asignar(ref resultadoCierre, value); }
+    public string? NotasCierre { get => notasCierre; set => Asignar(ref notasCierre, value); }
+    public string? ErrorCategoriaCierre => PrimerError("categoriaId");
+    public bool HayErrorCategoriaCierre => ErrorCategoriaCierre is not null;
+    public string? ErrorResultadoCierre => PrimerError("resultadoPublico");
+    public bool HayErrorResultadoCierre => ErrorResultadoCierre is not null;
+    public string? ErrorNotasCierre => PrimerError("notasInternas");
+    public bool HayErrorNotasCierre => ErrorNotasCierre is not null;
+    public string? CierreReciente => despacho.CierreReciente;
+    public bool HayCierreReciente => despacho.CierreReciente is not null && !HayDespacho;
+
+    private string? PrimerError(string campo) => despacho.ErroresCierre.TryGetValue(campo, out var m) && m.Length > 0 ? m[0] : null;
+
+    private async Task AbrirCierreAsync()
+    {
+        await despacho.CargarCategoriasAsync();
+        MostrarCierre = true;
+        ActualizarDespacho();
+    }
+
+    private async Task ConfirmarCierreAsync()
+    {
+        if (await despacho.CerrarAsync(CategoriaCierre?.Id, ResultadoCierre, NotasCierre))
+        {
+            MostrarCierre = false;
+            (CategoriaCierre, ResultadoCierre, NotasCierre) = (null, null, null);
+        }
+        ActualizarDespacho();
+    }
     public string? ErrorDespacho => despacho.Error;
     public bool HayErrorDespacho => despacho.Error is not null;
 
@@ -159,7 +203,10 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(TextoAsignado), nameof(TextoIdentificador),
                      nameof(HayUbicacionDespacho), nameof(SinUbicacionDespacho), nameof(TextoUbicacionDespacho), nameof(InformacionDespacho),
                      nameof(HayInformacionDespacho), nameof(SinInformacionDespacho), nameof(AvisoNuevoDespacho), nameof(ErrorDespacho), nameof(HayErrorDespacho),
-                     nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances) })
+                     nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances),
+                     nameof(MostrarCierre), nameof(PuedeAbrirCierre), nameof(CategoriasCierre), nameof(ErrorCategoriaCierre), nameof(HayErrorCategoriaCierre),
+                     nameof(ErrorResultadoCierre), nameof(HayErrorResultadoCierre), nameof(ErrorNotasCierre), nameof(HayErrorNotasCierre),
+                     nameof(CierreReciente), nameof(HayCierreReciente) })
             Notificar(p);
     }
 }
