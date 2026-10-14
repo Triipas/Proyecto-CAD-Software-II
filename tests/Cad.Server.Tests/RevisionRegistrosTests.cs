@@ -11,7 +11,7 @@ using Npgsql;
 
 namespace Cad.Server.Tests;
 
-// S1-T20 (transversal HU01–HU11), ampliada en el Sprint 2 (S2-T16, HU12): revisión de los registros. Recorre el flujo completo y
+// S1-T20 (transversal HU01–HU11), ampliada en el Sprint 2 (S2-T16, HU12–HU24): revisión de los registros. Recorre el flujo completo y
 // busca cada dato sensible en TODAS las entradas capturadas (todos los niveles, incluidos Debug y Trace),
 // lo que es más estricto que la configuración real (Microsoft.AspNetCore y SQL solo a partir de Warning).
 // RNF01: sin contraseñas. RNF07: sin coordenadas. Plan de Arquitectura 9.7: sin tokens, cookies,
@@ -126,6 +126,21 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         });
         Assert.True(await CentralDePrueba.EsperarAsync(() => fabrica.Push.Enviadas.Contains(tokenDispositivo)), "No se envió la push del despacho.");
         Assert.Contains(referencia, await serenoApp.GetStringAsync("/api/sereno/despacho"));
+
+        // HU13 y HU22–HU24 (Sprint 2): el operador clasifica; el sereno va en camino, inicia la atención y cierra con
+        // un resultado público y notas internas, que pueden contener datos personales.
+        await EnviarAsync(central.Navegador, $"/panel/central/sos/{sos.Id}?handler=Clasificar", new()
+        {
+            ["Clasificacion.CategoriaId"] = Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id.ToString(),
+        });
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{sos.Id}/desplazamiento", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{sos.Id}/atencion", null)).StatusCode);
+        var resultadoCierre = $"Se atendió a la señora del domicilio {sello}";
+        var notasCierre = $"Vecino identificado como agresor {sello}";
+        sensibles["datos personales"].AddRange([resultadoCierre, notasCierre]);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{sos.Id}/cierre",
+            new Cad.Contratos.Serenos.SolicitudCierreCaso(Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id, resultadoCierre, notasCierre))).StatusCode);
+        Assert.Contains(notasCierre, await central.Navegador.GetStringAsync($"/panel/central/sos/{sos.Id}"));
 
         // Sellos de seguridad de Identity (equivalen a credenciales para revocar sesiones).
         sensibles["tokens y cookies"].AddRange(await fabrica.ConBaseDatosAsync(db => db.Users
