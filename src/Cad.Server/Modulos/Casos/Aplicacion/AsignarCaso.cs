@@ -20,7 +20,8 @@ public abstract record ResultadoAsignacion
 // HU20 — Asignar un caso pendiente a un sereno disponible (S2-T05, S2-T06). Unificada (A+B) por el PO el
 // 13/10/2026: vale para cualquier caso «Pendiente», sin distinguir el origen; CA07 (reporte admitido) se
 // verifica cuando existan reportes (HU15, Sprint 3). La autorización (solo operador, CA09) la aplica la página.
-public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificador notificador, ILogger<AsignarCaso> registro)
+public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificador notificador,
+    Notificaciones.ColaAvisosDespacho avisosDespacho, ILogger<AsignarCaso> registro)
 {
     public const string MotivoNoPendiente = "El caso ya no está pendiente: no se puede asignar.";
     public const string MotivoSerenoNoDisponible = "El sereno no está disponible (no está operativo o ya tiene una asignación vigente).";
@@ -63,8 +64,10 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
         var caso = await db.Casos.SingleOrDefaultAsync(c => c.Id == casoId, ct);
         if (caso is null)
             return new ResultadoAsignacion.CasoNoEncontrado();
+        // Antes de rechazar se vuelve a comprobar la solicitud: la primera petición de un reenvío pudo confirmar
+        // justo después de la comprobación inicial (CA08).
         if (!caso.PuedeAsignarse)
-            return new ResultadoAsignacion.Rechazado(MotivoNoPendiente); // CA02
+            return await RechazoTrasCarreraAsync(operadorId, idSolicitud, MotivoNoPendiente, ct); // CA02
 
         // CA03 — regla de disponibilidad del MVP (HU19-CA02): sereno activo, operativo y sin asignación vigente.
         var disponible = await db.Users.AnyAsync(u => u.Id == serenoId && u.Activo
@@ -72,7 +75,7 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
             && await db.EstadosSereno.AnyAsync(e => e.SerenoId == serenoId && e.Operativo, ct)
             && !await db.Asignaciones.AnyAsync(a => a.SerenoId == serenoId && a.Vigente, ct);
         if (!disponible)
-            return new ResultadoAsignacion.Rechazado(MotivoSerenoNoDisponible);
+            return await RechazoTrasCarreraAsync(operadorId, idSolicitud, MotivoSerenoNoDisponible, ct);
 
         var ahora = reloj.GetUtcNow();
         caso.Asignar();
@@ -109,9 +112,10 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
         db.Asignaciones.AsNoTracking().SingleOrDefaultAsync(a => a.OperadorId == operadorId && a.IdSolicitud == idSolicitud, ct);
 
     // Avisos después del COMMIT: la central retira el caso de «Pendientes» y el sereno deja de estar disponible.
-    // HU21 añadirá la notificación al sereno asignado (incluida la push, ADR-07).
+    // HU21-CA01: el aviso al sereno asignado (tiempo real y push, ADR-07) se envía en segundo plano.
     private async Task AvisarAsync(Guid casoId, Guid serenoId)
     {
+        avisosDespacho.Encolar(serenoId);
         try
         {
             await notificador.CasoActualizadoAsync(casoId, CancellationToken.None);

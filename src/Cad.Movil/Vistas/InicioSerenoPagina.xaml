@@ -19,6 +19,37 @@
             <Label Text="{Binding TextoAyudaSalir}" Style="{StaticResource TextoSecundario}" FontSize="13"
                    IsVisible="{Binding HayAyudaSalir}" HorizontalTextAlignment="End" />
 
+            <!-- HU21 — despacho vigente (datos de DP06). -->
+            <Border Style="{StaticResource Superficie}" Padding="16,20">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Despacho" FontSize="18" FontAttributes="Bold" />
+                    <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
+                    <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" IsVisible="{Binding SinDespacho}" />
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HayDespacho}">
+                        <Label Text="{Binding TextoDespacho}" FontAttributes="Bold" />
+                        <Label Text="{Binding TextoAsignado}" Style="{StaticResource TextoSecundario}" />
+                        <Label Text="{Binding TextoIdentificador}" Style="{StaticResource TextoSecundario}" FontSize="12" />
+                        <Label Text="Ubicación del dispositivo" FontAttributes="Bold" />
+                        <Label Text="{Binding TextoUbicacionDespacho}" IsVisible="{Binding HayUbicacionDespacho}" />
+                        <v:Aviso Tipo="advertencia" Texto="Ubicación del dispositivo no disponible." IsVisible="{Binding SinUbicacionDespacho}" />
+                        <Label Text="Información registrada por la central" FontAttributes="Bold" />
+                        <Label Text="Sin información registrada." Style="{StaticResource TextoSecundario}" IsVisible="{Binding SinInformacionDespacho}" />
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding InformacionDespacho}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ElementoInformacionDespacho">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Hora}" Style="{StaticResource TextoSecundario}" FontSize="12" />
+                                        <Label Text="{Binding InformacionHecho, StringFormat='Hecho: {0}'}" IsVisible="{Binding HayHecho}" />
+                                        <Label Text="{Binding ReferenciaUbicacion, StringFormat='Referencia indicada por el ciudadano (no es la ubicación del dispositivo): {0}'}" IsVisible="{Binding HayReferencia}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                    <v:Aviso Tipo="error" Texto="{Binding ErrorDespacho}" IsVisible="{Binding HayErrorDespacho}" />
+                </VerticalStackLayout>
+            </Border>
+
             <Border Style="{StaticResource Superficie}" Padding="16,20">
                 <VerticalStackLayout Spacing="16">
                     <v:Aviso Tipo="{Binding TipoAvisoEstado}" Texto="{Binding TextoEstado}" />

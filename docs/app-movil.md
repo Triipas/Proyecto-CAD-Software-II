@@ -1,6 +1,6 @@
 # App móvil CAD (.NET MAUI, Android)
 
-App nativa del ciudadano y del sereno (ADR-01). En el Sprint 1 cubre: registro (HU01), ingreso por rol (HU02), preparación de la ubicación (HU06) y SOS con una única activación y ubicación actual (HU07, HU08). En el Sprint 2 se añade el modo sereno: estado operativo y envío periódico de la ubicación (HU18); los despachos llegan con HU21–HU24.
+App nativa del ciudadano y del sereno (ADR-01). En el Sprint 1 cubre: registro (HU01), ingreso por rol (HU02), preparación de la ubicación (HU06) y SOS con una única activación y ubicación actual (HU07, HU08). En el Sprint 2 se añade el modo sereno: estado operativo y envío periódico de la ubicación (HU18); los despachos llegan con HU21 (consulta y aviso) y HU22–HU24.
 
 ## Estructura
 
@@ -85,6 +85,13 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - Mientras está operativo envía una posición actual al activarse y otra cada intervalo indicado por el servidor (DP15: 30 s). Cada lectura tiene un límite de 10 s; sin posición o sin conexión se avisa y se intenta en el siguiente intervalo. Si el servidor responde que ya no está operativo, el envío se detiene.
 - Desactivar detiene primero el envío en el dispositivo y después lo comunica al servidor (CA02). Mientras está operativo no se puede salir de la sesión.
 - Solo con la app abierta y con conexión (SPIKE01); no hay servicio en primer plano.
+
+## Despacho (HU21, Sprint 2)
+
+- `Servicios/Despacho.cs` (`ServicioDespacho`): consulta el despacho vigente al abrir la pantalla del sereno, al recibir el aviso del canal y al reconectarlo. Sin conexión conserva el último despacho conocido y avisa. Salir lo olvida y deja de escuchar.
+- `Servicios/CanalSerenoSignalR.cs`: conexión a `/hubs/sereno` con el token en la cabecera `Authorization` y reconexión automática. Solo funciona con la app abierta.
+- La pantalla muestra los datos de DP06: origen, estado, horas, identificador, ubicación del dispositivo o «no disponible», y la información y las referencias registradas por la central (rotuladas como referencias del ciudadano, no como ubicación).
+- La notificación push (ADR-07) se integrará cuando el equipo cree el proyecto de Firebase (`google-services.json`, no versionado).
 
 ## Integración continua
 

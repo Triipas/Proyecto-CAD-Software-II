@@ -21,6 +21,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
+    public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -129,6 +130,18 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             estado.HasKey(e => e.SerenoId);
             estado.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Serenos.Dominio.EstadoSereno>(e => e.SerenoId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU21 (ADR-07): dispositivo para la notificación push, uno por sereno. Un mismo token no puede quedar
+        // asociado a dos serenos (el teléfono lo usa quien ingresó por última vez).
+        builder.Entity<Modulos.Serenos.Dominio.DispositivoSereno>(dispositivo =>
+        {
+            dispositivo.ToTable("DispositivosSereno");
+            dispositivo.HasKey(d => d.SerenoId);
+            dispositivo.Property(d => d.Token).HasMaxLength(Modulos.Serenos.Dominio.DispositivoSereno.MaximoToken);
+            dispositivo.HasIndex(d => d.Token).IsUnique();
+            dispositivo.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Serenos.Dominio.DispositivoSereno>(d => d.SerenoId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<Modulos.Serenos.Dominio.PosicionSereno>(posicion =>

@@ -300,7 +300,7 @@ public class SerenoVistaModeloTests
     private InicioSerenoVistaModelo Crear(out ServicioTurnoSereno turno)
     {
         turno = new ServicioTurnoSereno(api, ubicacion, sesiones, new FakeTimeProvider(Inicio));
-        return new InicioSerenoVistaModelo(turno, sesiones, navegacion, () => ajustes++) { HiloPrincipal = a => { a(); return Task.CompletedTask; } };
+        return new InicioSerenoVistaModelo(turno, new ServicioDespacho(api, sesiones, new CanalFalso(), TimeProvider.System), sesiones, navegacion, () => ajustes++) { HiloPrincipal = a => { a(); return Task.CompletedTask; } };
     }
 
     [Fact]

@@ -53,6 +53,16 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/api/sereno/estado", "HU18", Acceso.SoloRol, Roles.Sereno, Contenido: "intervaloPosicionesSegundos"),
         new("PUT", "/api/sereno/estado", "HU18", Acceso.SoloRol, Roles.Sereno),
         new("POST", "/api/sereno/posiciones", "HU18", Acceso.SoloRol, Roles.Sereno),
+        // HU21 — despacho del sereno. Sin despacho el sereno recibe 204; con un caso que no es suyo, 404 (CA04).
+        // El resto es rechazado antes. El dispositivo (ADR-07) solo lo registra o quita el propio sereno.
+        new("GET", "/api/sereno/despacho", "HU21", Acceso.SoloRol, Roles.Sereno),
+        new("GET", "/api/sereno/casos/{id:guid}", "HU21", Acceso.SoloRol, Roles.Sereno,
+            Ejemplo: "/api/sereno/casos/00000000-0000-0000-0000-000000000000"),
+        new("PUT", "/api/sereno/dispositivo", "HU21", Acceso.SoloRol, Roles.Sereno),
+        new("DELETE", "/api/sereno/dispositivo", "HU21", Acceso.SoloRol, Roles.Sereno),
+        // Canal en tiempo real del sereno (HU21-CA01): solo serenos, con su JWT.
+        new("POST", "/hubs/sereno/negotiate", "HU21", Acceso.SoloRol, Roles.Sereno, Ejemplo: "/hubs/sereno/negotiate?negotiateVersion=1"),
+        new("GET", "/hubs/sereno", "HU21", Acceso.SoloRol, Roles.Sereno),
         new("GET", "/panel/admin", "HU04 (base)", Acceso.SoloRol, Roles.Administrador, "Interfaz del administrador"),
         new("GET", "/panel/admin/cuentas", "HU04", Acceso.SoloRol, Roles.Administrador, "Cuentas institucionales"),
         new("GET", "/panel/admin/cuentas/nueva", "HU04", Acceso.SoloRol, Roles.Administrador, "Nueva cuenta institucional"),
