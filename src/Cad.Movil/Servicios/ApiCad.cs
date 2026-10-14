@@ -55,7 +55,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
                 problema?.Title ?? MensajePorEstado(respuesta.StatusCode),
                 problema?.Errors ?? new Dictionary<string, string[]>());
         }
-        catch (HttpRequestException)
+        // En Android, un cambio de red durante la petición llega como WebException o IOException, no siempre
+        // como HttpRequestException (observado en SPIKE01): todas son «sin respuesta» y se pueden reintentar.
+        catch (Exception e) when (e is HttpRequestException or WebException or IOException)
         {
             return new ResultadoApi<T>.SinRespuesta("No hay conexión con el servidor.");
         }

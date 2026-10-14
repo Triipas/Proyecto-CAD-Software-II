@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SPIKE01 (S1-T03): diagnóstico de captura y transmisión de ubicación. Solo en compilaciones Debug. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.DiagnosticoPagina"
+             x:DataType="vm:DiagnosticoVistaModelo"
+             Title="Diagnóstico">
+    <Grid RowDefinitions="Auto,*" Padding="16,24" RowSpacing="12" MaximumWidthRequest="560">
+        <VerticalStackLayout Spacing="12">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="SPIKE01 · solo desarrollo" Style="{StaticResource Sobretitulo}" />
+                <Label Text="Diagnóstico de ubicación" Style="{StaticResource Titulo}" />
+            </VerticalStackLayout>
+            <v:Aviso Tipo="informacion"
+                     Texto="Cada 5 s intenta obtener la posición actual y comprueba el servidor (GET /salud). No envía coordenadas. Sigue activa en segundo plano mientras Android lo permita." />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                <Button Text="Iniciar" Style="{StaticResource BotonPrincipal}" Command="{Binding Iniciar}" />
+                <Button Grid.Column="1" Text="Detener" Style="{StaticResource BotonSecundario}" Command="{Binding Detener}" />
+                <Button Grid.Column="2" Text="Borrar" Style="{StaticResource BotonSecundario}" Command="{Binding Borrar}" />
+            </Grid>
+            <Border Style="{StaticResource Superficie}" Padding="12">
+                <Label Text="{Binding Resumen}" FontSize="15" />
+            </Border>
+            <Label Text="{Binding RutaRegistro, StringFormat='Registro: {0}'}" Style="{StaticResource TextoSecundario}" FontSize="12" />
+        </VerticalStackLayout>
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Muestras}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <Label Text="{Binding .}" FontSize="13" Padding="0,6" TextColor="{StaticResource ColorTexto}" />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

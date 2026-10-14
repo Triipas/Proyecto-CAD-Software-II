@@ -34,6 +34,8 @@
 
                     <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" />
                     <Button Text="Crear una cuenta de ciudadano" Style="{StaticResource BotonSecundario}" Command="{Binding IrARegistro}" />
+                    <Button Text="Diagnóstico de ubicación (SPIKE01)" Style="{StaticResource BotonSecundario}"
+                            Command="{Binding IrADiagnostico}" IsVisible="{Binding MostrarDiagnostico}" />
                 </VerticalStackLayout>
             </Border>
 
@@ -43,7 +45,7 @@
                     <Entry Text="{Binding DireccionServidor}" Keyboard="Url" IsSpellCheckEnabled="False"
                            SemanticProperties.Description="Dirección del servidor" />
                 </Border>
-                <Label Text="Debe usar https:// (canal cifrado). En el emulador, el servidor local es http://10.0.2.2:5220/."
+                <Label Text="Debe usar https:// (canal cifrado). Servidor local: http://10.0.2.2:5220/ en el emulador o http://localhost:5220/ en un teléfono por USB."
                        Style="{StaticResource TextoSecundario}" FontSize="13" />
             </VerticalStackLayout>
         </VerticalStackLayout>

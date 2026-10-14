@@ -94,6 +94,20 @@ public class EmisorSosTests
         Assert.False(emisor.PuedeReintentar);
     }
 
+    [Fact]
+    public async Task HU07_CA04_FalloInesperadoDeLaApi_NoCierraLaApp_YPermiteReintentar()
+    {
+        api.RespuestasSos.Enqueue(_ => throw new InvalidOperationException("fallo imprevisto"));
+        var emisor = Emisor();
+
+        await emisor.ActivarAsync(); // no debe lanzar
+
+        Assert.Equal(3, api.SosEnviados.Count);
+        Assert.Single(api.SosEnviados.Select(s => s.IdSolicitud).Distinct());
+        Assert.IsType<EstadoSos.NoConfirmado>(emisor.Estado);
+        Assert.True(emisor.PuedeReintentar);
+    }
+
     [Theory]
     [InlineData(400)]
     [InlineData(401)]
@@ -167,6 +181,25 @@ public class EmisorSosTests
         await emisor.ActivarAsync();
 
         Assert.Null(api.SosEnviados.Single().Ubicacion);
+    }
+
+    [Fact]
+    public async Task HU08_CA02_UbicacionQueNoResponde_ElSosSaleSinUbicacionALos10s()
+    {
+        // Hallazgo de SPIKE01: con la app en segundo plano, Android puede no entregar ninguna lectura.
+        var relojSimulado = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(Activacion);
+        ubicacion.NoResponde = true;
+        var emisor = new EmisorSos(api, ubicacion, sesiones, relojSimulado) { EsperasEntreIntentos = [TimeSpan.Zero, TimeSpan.Zero] };
+
+        var envio = emisor.ActivarAsync();
+        Assert.IsType<EstadoSos.ObteniendoUbicacion>(emisor.Estado);
+        relojSimulado.Advance(TimeSpan.FromSeconds(9));
+        Assert.Empty(api.SosEnviados);
+        relojSimulado.Advance(TimeSpan.FromSeconds(1));
+        await envio.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Null(Assert.Single(api.SosEnviados).Ubicacion);
+        Assert.IsType<EstadoSos.Confirmado>(emisor.Estado);
     }
 
     [Fact]

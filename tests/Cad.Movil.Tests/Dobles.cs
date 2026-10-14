@@ -13,6 +13,8 @@ public sealed class UbicacionFalsa : IServicioUbicacion
     public EstadoPermisoUbicacion RespuestaAlSolicitar { get; set; } = EstadoPermisoUbicacion.Concedido;
     public Func<UbicacionSos?> Posicion { get; set; } = () => null;
     public bool Falla { get; set; }
+    // Simula una plataforma que nunca entrega lectura ni respeta el límite ni la cancelación.
+    public bool NoResponde { get; set; }
     public int Solicitudes { get; private set; }
     public List<TimeSpan> Lecturas { get; } = [];
 
@@ -28,6 +30,7 @@ public sealed class UbicacionFalsa : IServicioUbicacion
     public Task<UbicacionSos?> ObtenerActualAsync(TimeSpan tiempoMaximo, CancellationToken ct)
     {
         Lecturas.Add(tiempoMaximo);
+        if (NoResponde) return new TaskCompletionSource<UbicacionSos?>().Task;
         return Falla ? throw new InvalidOperationException("GPS no disponible") : Task.FromResult(Posicion());
     }
 }
