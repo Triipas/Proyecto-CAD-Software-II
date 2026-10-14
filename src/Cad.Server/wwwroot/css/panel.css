@@ -1003,3 +1003,8 @@ a.boton {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* HU23-CA03: estado del caso asignado a cada sereno. */
+.sereno__caso {
+  font-size: var(--texto-sm);
+}

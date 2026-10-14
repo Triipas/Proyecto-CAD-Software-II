@@ -32,6 +32,9 @@ public sealed class NotificadorSignalR(IHubContext<CentralHub> central, IHubCont
     public Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct) =>
         serenos.Clients.Group(SerenoHub.Grupo(serenoId)).SendAsync(SerenoHub.EventoDespachoAsignado, ct);
 
+    public Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct) =>
+        serenos.Clients.Group(SerenoHub.Grupo(serenoId)).SendAsync(SerenoHub.EventoDespachoActualizado, ct);
+
     // Solo el identificador: el panel lee el detalle de la base de datos (fuente de verdad).
     public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) =>
         central.Clients.Group(CentralHub.GrupoOperadores).SendAsync(CentralHub.EventoSosRecibido, new { id = casoId }, ct);

@@ -56,6 +56,15 @@ public static class ModuloSerenos
         sereno.MapGet("/casos/{id:guid}", async (Guid id, HttpContext contexto, Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
             await despachos.DelCasoAsync(contexto.User.IdUsuario(), id, ct) is { } despacho ? Results.Ok(despacho) : Results.NotFound());
 
+        // HU22 — el sereno asignado confirma que va en camino; HU23 — registra el inicio de atención.
+        // 200 con el despacho actualizado (también ante un reenvío); 409 si el estado lo impide; 404 si no es suyo.
+        sereno.MapPost("/casos/{id:guid}/desplazamiento", (Guid id, HttpContext contexto, Casos.Aplicacion.AvanzarCaso avanzar,
+                Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
+            AvanzarAsync(id, Casos.Aplicacion.Avance.ConfirmarDesplazamiento, contexto, avanzar, despachos, ct));
+        sereno.MapPost("/casos/{id:guid}/atencion", (Guid id, HttpContext contexto, Casos.Aplicacion.AvanzarCaso avanzar,
+                Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
+            AvanzarAsync(id, Casos.Aplicacion.Avance.IniciarAtencion, contexto, avanzar, despachos, ct));
+
         // ADR-07 — dispositivo para la notificación push del despacho. 204 en ambos casos.
         sereno.MapPut("/dispositivo", async (SolicitudRegistroDispositivo solicitud, HttpContext contexto,
                 GestionarDispositivo dispositivos, CancellationToken ct) =>
@@ -73,6 +82,19 @@ public static class ModuloSerenos
         });
 
         return app;
+    }
+
+    private static async Task<IResult> AvanzarAsync(Guid casoId, Casos.Aplicacion.Avance avance, HttpContext contexto,
+        Casos.Aplicacion.AvanzarCaso avanzar, Consultas.ConsultarDespacho despachos, CancellationToken ct)
+    {
+        var serenoId = contexto.User.IdUsuario();
+        return await avanzar.EjecutarAsync(casoId, avance, serenoId, Casos.Aplicacion.ActorAvance.Sereno, ct) switch
+        {
+            Casos.Aplicacion.ResultadoAvance.Registrado or Casos.Aplicacion.ResultadoAvance.YaRegistrado =>
+                Results.Ok(await despachos.DelCasoAsync(serenoId, casoId, ct)),
+            Casos.Aplicacion.ResultadoAvance.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
+            _ => Results.NotFound(),
+        };
     }
 
     private static RespuestaEstadoOperativo Respuesta(EstadoSereno? estado, GestionarEstadoOperativo estados) =>

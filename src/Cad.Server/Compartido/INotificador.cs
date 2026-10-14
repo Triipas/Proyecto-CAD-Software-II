@@ -16,4 +16,7 @@ public interface INotificador
 
     // HU21-CA01: el sereno tiene un despacho nuevo. Solo a ese sereno y sin datos del caso (ADR-07).
     Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct);
+
+    // HU23-CA02: otro responsable (un operador) cambió el estado del despacho del sereno.
+    Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct);
 }

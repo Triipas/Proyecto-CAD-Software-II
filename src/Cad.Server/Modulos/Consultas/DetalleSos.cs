@@ -17,10 +17,16 @@ public sealed record DetalleSos(
     DateTimeOffset? UbicacionObtenidaEn,
     IReadOnlyList<IntentoContactoVista> Intentos,
     AsignacionVista? Asignacion,
-    ClasificacionVista? Clasificacion)
+    ClasificacionVista? Clasificacion,
+    IReadOnlyList<AvanceVista>? Avances = null)
 {
+    public bool EnCamino => Estado == EstadosCaso.Texto(EstadoCaso.EnCamino);
+
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
 }
+
+// HU22/HU23: avances del caso con su responsable, fecha y hora.
+public sealed record AvanceVista(string Descripcion, string Responsable, DateTimeOffset En);
 
 // HU13: categoría asignada, responsable y momento (CA01). Nula = «Tipo por determinar» (CA03).
 public sealed record ClasificacionVista(string Categoria, string Operador, DateTimeOffset ClasificadoEn);
@@ -76,7 +82,17 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
                                        caso.ClasificadoEn!.Value))
                                   .SingleOrDefaultAsync(ct);
 
-        return new DetalleSos(sos.Id, sos.Estado.ToString(), sos.RegistradoEn, sos.Ciudadano, sos.PhoneNumber,
-            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion);
+        var avances = (await (from evento in db.EventosCaso.AsNoTracking()
+                              join actor in db.Users.AsNoTracking() on evento.ActorId equals actor.Id
+                              where evento.CasoId == casoId
+                                  && (evento.Tipo == TipoEventoCaso.DesplazamientoConfirmado || evento.Tipo == TipoEventoCaso.AtencionIniciada)
+                              orderby evento.OcurridoEn
+                              select new { evento.Tipo, Responsable = actor.Nombres + " " + actor.Apellidos, evento.OcurridoEn })
+                             .ToListAsync(ct))
+            .Select(a => new AvanceVista(a.Tipo == TipoEventoCaso.DesplazamientoConfirmado ? "En camino" : "En atención", a.Responsable, a.OcurridoEn))
+            .ToList();
+
+        return new DetalleSos(sos.Id, EstadosCaso.Texto(sos.Estado), sos.RegistradoEn, sos.Ciudadano, sos.PhoneNumber,
+            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion, avances);
     }
 }

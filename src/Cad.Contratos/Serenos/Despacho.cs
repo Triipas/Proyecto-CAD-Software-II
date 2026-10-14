@@ -10,7 +10,16 @@ public sealed record DespachoSereno(
     DateTimeOffset RegistradoEn,
     DateTimeOffset AsignadoEn,
     UbicacionDespacho? Ubicacion,
-    IReadOnlyList<InformacionDespacho> Informacion);
+    IReadOnlyList<InformacionDespacho> Informacion,
+    // HU22 y HU23: horas de los avances del caso (sin el responsable: DP06).
+    DateTimeOffset? EnCaminoEn = null,
+    DateTimeOffset? EnAtencionEn = null)
+{
+    // Textos de estado que envía el servidor (HU22, HU23).
+    public const string EstadoAsignada = "Asignada";
+    public const string EstadoEnCamino = "En camino";
+    public const string EstadoEnAtencion = "En atención";
+}
 
 // Ubicación que envió el dispositivo del ciudadano. Nula = «Ubicación no disponible» (CA03: sin coordenadas inventadas).
 public sealed record UbicacionDespacho(double Latitud, double Longitud, double PrecisionMetros, DateTimeOffset ObtenidaEn);

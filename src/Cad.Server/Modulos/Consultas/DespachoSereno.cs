@@ -1,4 +1,5 @@
 using Cad.Contratos.Serenos;
+using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,12 +41,20 @@ public sealed class ConsultarDespacho(CadDbContext db)
             .Select(i => new InformacionDespacho(i.RegistradoEn, i.InformacionHecho, i.ReferenciaUbicacion))
             .ToListAsync(ct);
 
+        // HU22/HU23: horas de los avances, desde el historial del caso.
+        var avances = await db.EventosCaso.AsNoTracking()
+            .Where(e => e.CasoId == casoId && (e.Tipo == TipoEventoCaso.DesplazamientoConfirmado || e.Tipo == TipoEventoCaso.AtencionIniciada))
+            .Select(e => new { e.Tipo, e.OcurridoEn })
+            .ToListAsync(ct);
+
         // CA03: sin ubicación del dispositivo no se envían coordenadas.
         var ubicacion = despacho.Latitud is { } latitud && despacho.Longitud is { } longitud
             ? new UbicacionDespacho(latitud, longitud, despacho.PrecisionMetros!.Value, despacho.UbicacionObtenidaEn!.Value)
             : null;
 
-        return new DespachoSereno(despacho.Id, despacho.Origen.ToString().ToUpperInvariant(), despacho.Estado.ToString(),
-            despacho.RegistradoEn, despacho.AsignadaEn, ubicacion, informacion);
+        return new DespachoSereno(despacho.Id, despacho.Origen.ToString().ToUpperInvariant(), EstadosCaso.Texto(despacho.Estado),
+            despacho.RegistradoEn, despacho.AsignadaEn, ubicacion, informacion,
+            avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.DesplazamientoConfirmado)?.OcurridoEn,
+            avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.AtencionIniciada)?.OcurridoEn);
     }
 }

@@ -3,9 +3,22 @@ namespace Cad.Server.Modulos.Casos.Dominio;
 // Caso común a SOS y reportes (Plan de Arquitectura, 9.1). En el Sprint 1 solo existe el origen SOS.
 public enum OrigenCaso { Sos }
 
-// Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20); los demás
-// estados del ciclo (En camino, En atención, Cerrada) llegan con HU22–HU24.
-public enum EstadoCaso { Pendiente, Asignada }
+// Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
+// (HU22) y «En atención» (HU23); «Cerrada» llega con HU24.
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion }
+
+public static class EstadosCaso
+{
+    // Texto que ven el panel y la app.
+    public static string Texto(EstadoCaso estado) => estado switch
+    {
+        EstadoCaso.Pendiente => "Pendiente",
+        EstadoCaso.Asignada => "Asignada",
+        EstadoCaso.EnCamino => "En camino",
+        EstadoCaso.EnAtencion => "En atención",
+        _ => estado.ToString(),
+    };
+}
 
 public sealed class Caso
 {
@@ -40,6 +53,22 @@ public sealed class Caso
         if (!PuedeAsignarse)
             throw new InvalidOperationException("Solo un caso pendiente puede asignarse.");
         Estado = EstadoCaso.Asignada;
+    }
+
+    // HU22-CA01/CA02: solo un caso «Asignada» pasa a «En camino».
+    public void ConfirmarDesplazamiento()
+    {
+        if (Estado != EstadoCaso.Asignada)
+            throw new InvalidOperationException("Solo un caso asignado puede pasar a «En camino».");
+        Estado = EstadoCaso.EnCamino;
+    }
+
+    // HU23-CA01/CA04: solo un caso «En camino» pasa a «En atención».
+    public void IniciarAtencion()
+    {
+        if (Estado != EstadoCaso.EnCamino)
+            throw new InvalidOperationException("Solo un caso en camino puede pasar a «En atención».");
+        Estado = EstadoCaso.EnAtencion;
     }
 
     // HU13 — clasificación posterior al registro. Sin categoría = «Tipo por determinar» (CA03). La emisión,

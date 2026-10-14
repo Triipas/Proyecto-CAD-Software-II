@@ -16,7 +16,10 @@ public sealed record SerenoMonitoreo(
     double? Latitud,
     double? Longitud,
     double? PrecisionMetros,
-    DateTimeOffset? UltimaPosicionEn)
+    DateTimeOffset? UltimaPosicionEn,
+    // HU23-CA03: caso de la asignación vigente y su estado (Asignada, En camino, En atención).
+    Guid? CasoAsignadoId = null,
+    string? EstadoCasoAsignado = null)
 {
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
 }
@@ -32,6 +35,8 @@ public sealed class ConsultarSerenos(CadDbContext db)
                            let estado = db.EstadosSereno.FirstOrDefault(e => e.SerenoId == usuario.Id)
                            let operativo = estado != null && estado.Operativo
                            let conAsignacion = db.Asignaciones.Any(a => a.SerenoId == usuario.Id && a.Vigente)
+                           let casoAsignado = db.Asignaciones.Where(a => a.SerenoId == usuario.Id && a.Vigente).Select(a => (Guid?)a.CasoId).FirstOrDefault()
+                           let estadoCaso = db.Casos.Where(c => c.Id == casoAsignado).Select(c => (Casos.Dominio.EstadoCaso?)c.Estado).FirstOrDefault()
                            // Solo posiciones recibidas desde la activación vigente (reloj del servidor): la última
                            // posición de un turno anterior no se presenta como actual.
                            let ultima = db.PosicionesSereno
@@ -45,6 +50,8 @@ public sealed class ConsultarSerenos(CadDbContext db)
                                Nombre = usuario.Nombres + " " + usuario.Apellidos,
                                Operativo = operativo,
                                ConAsignacion = conAsignacion,
+                               CasoAsignado = casoAsignado,
+                               EstadoCaso = estadoCaso,
                                Latitud = ultima == null ? null : ultima.Latitud,
                                Longitud = ultima == null ? null : ultima.Longitud,
                                PrecisionMetros = ultima == null ? null : ultima.PrecisionMetros,
@@ -60,7 +67,9 @@ public sealed class ConsultarSerenos(CadDbContext db)
                 f.Operativo ? f.Latitud : null,
                 f.Operativo ? f.Longitud : null,
                 f.Operativo ? f.PrecisionMetros : null,
-                f.Operativo ? f.RecibidaEn : null))
+                f.Operativo ? f.RecibidaEn : null,
+                f.CasoAsignado,
+                f.EstadoCaso is { } estado ? Casos.Dominio.EstadosCaso.Texto(estado) : null))
             .ToList();
     }
 
@@ -70,6 +79,8 @@ public sealed class ConsultarSerenos(CadDbContext db)
         public string Nombre { get; init; } = "";
         public bool Operativo { get; init; }
         public bool ConAsignacion { get; init; }
+        public Guid? CasoAsignado { get; init; }
+        public Casos.Dominio.EstadoCaso? EstadoCaso { get; init; }
         public double? Latitud { get; init; }
         public double? Longitud { get; init; }
         public double? PrecisionMetros { get; init; }

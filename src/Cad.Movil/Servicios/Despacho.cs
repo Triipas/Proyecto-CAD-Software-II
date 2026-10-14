@@ -11,6 +11,9 @@ public interface ICanalSereno
     // Tras una reconexión pudo perderse un aviso: hay que volver a consultar.
     event Action? Reconectado;
 
+    // HU23-CA02: otro responsable (un operador) cambió el estado del despacho.
+    event Action? DespachoActualizado;
+
     // Devuelve false si no se pudo conectar (sin red o sin servidor); el despacho sigue siendo consultable.
     Task<bool> ConectarAsync(CancellationToken ct);
     Task DesconectarAsync();
@@ -39,6 +42,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         {
             canal.DespachoAsignado += AlRecibirAviso;
             canal.Reconectado += AlReconectar;
+            canal.DespachoActualizado += AlReconectar;
             suscrito = true;
         }
         AvisoNuevo = false;
@@ -80,6 +84,58 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         }
     }
 
+    // HU22 — «Voy en camino» y HU23 — «Iniciar atención». Un reenvío no duplica nada (el servidor lo reconoce).
+    // Si el estado ya no lo permite, se informa y se vuelve a consultar el despacho.
+    public Task<bool> ConfirmarDesplazamientoAsync(CancellationToken ct = default) =>
+        AvanzarAsync((api, token, id) => api.ConfirmarDesplazamientoAsync(token, id, ct), "confirmar el desplazamiento", ct);
+
+    public Task<bool> IniciarAtencionAsync(CancellationToken ct = default) =>
+        AvanzarAsync((api, token, id) => api.IniciarAtencionAsync(token, id, ct), "registrar el inicio de atención", ct);
+
+    private async Task<bool> AvanzarAsync(Func<IApiCad, string, Guid, Task<ResultadoApi<DespachoSereno?>>> llamada, string accion, CancellationToken ct)
+    {
+        if (Actual is not { } despacho || !await consulta.WaitAsync(0, ct))
+            return false; // sin despacho, o con otra operación en curso (doble toque)
+        var aplicado = false;
+        var recargar = false;
+        try
+        {
+            var sesion = await sesiones.LeerAsync();
+            if (sesion is null || !sesion.Vigente(reloj.GetUtcNow()))
+                return false;
+            switch (await llamada(api, sesion.Token, despacho.CasoId))
+            {
+                case ResultadoApi<DespachoSereno?>.Correcto c:
+                    Actual = c.Valor;
+                    Error = null;
+                    aplicado = true;
+                    break;
+                case ResultadoApi<DespachoSereno?>.Rechazado { Estado: 401 }:
+                    break;
+                case ResultadoApi<DespachoSereno?>.Rechazado r:
+                    Error = r.Mensaje;
+                    recargar = true; // el estado cambió (p. ej., un operador registró el inicio) o el caso ya no es suyo
+                    break;
+                case ResultadoApi<DespachoSereno?>.SinRespuesta s:
+                    Error = $"No se pudo {accion}: {s.Motivo} Reinténtalo.";
+                    break;
+            }
+        }
+        finally
+        {
+            consulta.Release();
+            Cambio?.Invoke();
+        }
+        if (recargar)
+        {
+            var motivo = Error;
+            await ActualizarAsync(ct);
+            Error = motivo;
+            Cambio?.Invoke();
+        }
+        return aplicado;
+    }
+
     // Al salir de la sesión: el siguiente sereno que ingrese en este teléfono no hereda nada.
     public async Task ReiniciarAsync()
     {
@@ -87,6 +143,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         {
             canal.DespachoAsignado -= AlRecibirAviso;
             canal.Reconectado -= AlReconectar;
+            canal.DespachoActualizado -= AlReconectar;
             suscrito = false;
         }
         await canal.DesconectarAsync();

@@ -12,6 +12,7 @@ public sealed class CanalSerenoSignalR(IConfiguracionServidor configuracion, IAl
 
     public event Action? DespachoAsignado;
     public event Action? Reconectado;
+    public event Action? DespachoActualizado;
 
     public async Task<bool> ConectarAsync(CancellationToken ct)
     {
@@ -31,6 +32,7 @@ public sealed class CanalSerenoSignalR(IConfiguracionServidor configuracion, IAl
                     .WithAutomaticReconnect()
                     .Build();
                 conexion.On("DespachoAsignado", () => DespachoAsignado?.Invoke());
+                conexion.On("DespachoActualizado", () => DespachoActualizado?.Invoke());
                 conexion.Reconnected += _ =>
                 {
                     Reconectado?.Invoke();

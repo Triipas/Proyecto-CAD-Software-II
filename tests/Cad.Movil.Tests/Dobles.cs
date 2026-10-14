@@ -93,6 +93,18 @@ public sealed class ApiFalsa : IApiCad
     public Func<ResultadoApi<DespachoSereno?>> RespuestaDespacho { get; set; } = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
     public int ConsultasDespacho;
 
+    public Func<string, ResultadoApi<DespachoSereno?>>? RespuestaAvance { get; set; }
+    public ConcurrentQueue<string> Avances { get; } = new();
+
+    public Task<ResultadoApi<DespachoSereno?>> ConfirmarDesplazamientoAsync(string token, Guid casoId, CancellationToken ct) => Avanzar("desplazamiento");
+    public Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, CancellationToken ct) => Avanzar("atencion");
+
+    private Task<ResultadoApi<DespachoSereno?>> Avanzar(string avance)
+    {
+        Avances.Enqueue(avance);
+        return Task.FromResult(RespuestaAvance?.Invoke(avance) ?? RespuestaDespacho());
+    }
+
     public Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct)
     {
         Interlocked.Increment(ref ConsultasDespacho);
@@ -132,6 +144,7 @@ public sealed class CanalFalso : ICanalSereno
 {
     public event Action? DespachoAsignado;
     public event Action? Reconectado;
+    public event Action? DespachoActualizado;
     public bool Conecta { get; set; } = true;
     public int Conexiones;
 
@@ -139,4 +152,5 @@ public sealed class CanalFalso : ICanalSereno
     public Task DesconectarAsync() => Task.CompletedTask;
     public void Avisar() => DespachoAsignado?.Invoke();
     public void Reconectar() => Reconectado?.Invoke();
+    public void Actualizar() => DespachoActualizado?.Invoke();
 }
