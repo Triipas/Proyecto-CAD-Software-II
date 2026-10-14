@@ -9,7 +9,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private readonly ServicioTurnoSereno turno;
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
-    private bool mostrarExplicacion, mostrarAjustes, cargado;
+    private bool mostrarExplicacion, mostrarAjustes;
 
     public InicioSerenoVistaModelo(ServicioTurnoSereno turno, IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes)
     {
@@ -59,10 +59,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public string TextoAyudaSalir => PuedeSalir ? "" : "Desactiva tu estado operativo antes de salir.";
     public bool HayAyudaSalir => !PuedeSalir;
 
+    // Cada vez que aparece la pantalla: Shell reutiliza la página entre sesiones, y el estado vive en el servidor.
     public async Task AlAparecerAsync()
     {
-        if (cargado) return;
-        cargado = true;
         await turno.CargarAsync();
         Actualizar();
     }
@@ -95,7 +94,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
 
     private async Task SalirAsync()
     {
-        await turno.DetenerAsync();
+        await turno.ReiniciarAsync();
         sesiones.Cerrar();
         await navegacion.IrAAsync(Rutas.Ingreso);
     }

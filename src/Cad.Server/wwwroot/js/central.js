@@ -1,4 +1,5 @@
 // HU11 — sección urgente de la central: SOS nuevos sin recargar, con aviso visual y sonoro.
+// HU19 — serenos (estado, disponibilidad y última ubicación) en el mismo mapa, actualizados sin recargar.
 // La base de datos es la fuente de verdad: ante cada aviso o reconexión se vuelve a pedir la lista
 // al servidor (fragmento HTML generado por la página), en lugar de reconstruirla con datos del evento.
 (() => {
@@ -64,6 +65,67 @@
     const boton = evento.target.closest("[data-ver-en-mapa]");
     if (boton) seleccionar(boton.closest("[data-sos]").dataset.sos);
   });
+
+  // ---------- HU19: serenos en el mismo mapa (sin rutas, líneas ni distancias) ----------
+  const regionSerenos = document.querySelector("[data-region-serenos]");
+  const marcadoresSerenos = new Map();
+
+  function dibujarSerenos() {
+    for (const marcador of marcadoresSerenos.values()) marcador.remove();
+    marcadoresSerenos.clear();
+    for (const item of regionSerenos.querySelectorAll("[data-sereno][data-lat]")) {
+      if (!item.dataset.lat) continue; // HU19-CA04: sin ubicación no hay marcador
+      const id = item.dataset.sereno;
+      const disponible = item.dataset.disponible === "true";
+      const texto = `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
+      const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
+        icon: L.divIcon({
+          className: `marcador-sereno${disponible ? "" : " marcador-sereno--no-disponible"}`,
+          html: "<span>S</span>", iconSize: [30, 30], iconAnchor: [15, 15],
+        }),
+        title: texto,
+        alt: texto,
+        keyboard: true,
+      })
+        .bindPopup(`<strong>Sereno · Operativo</strong><br>${escapar(item.dataset.nombre)}<br>${disponible ? "Disponible" : "No disponible"}<br>Última ubicación a las ${escapar(item.dataset.hora)}`)
+        .on("click", () => seleccionarSereno(id, { desdeMapa: true }))
+        .addTo(mapa);
+      marcadoresSerenos.set(id, marcador);
+    }
+  }
+
+  function seleccionarSereno(id, { desdeMapa = false } = {}) {
+    for (const item of regionSerenos.querySelectorAll(".sereno--seleccionado")) item.classList.remove("sereno--seleccionado");
+    const item = document.getElementById(`sereno-${id}`);
+    if (item) {
+      item.classList.add("sereno--seleccionado");
+      if (desdeMapa) {
+        item.scrollIntoView({ block: "nearest" });
+        item.focus();
+      }
+    }
+    const marcador = marcadoresSerenos.get(id);
+    if (marcador && !desdeMapa) {
+      mapa.setView(marcador.getLatLng(), Math.max(mapa.getZoom(), 15));
+      marcador.openPopup();
+    }
+  }
+
+  regionSerenos.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("[data-ver-sereno]");
+    if (boton) seleccionarSereno(boton.closest("[data-sereno]").dataset.sereno);
+  });
+
+  // HU19-CA03: se vuelve a pedir el fragmento al servidor (fuente de verdad); se conserva la selección.
+  async function refrescarSerenos() {
+    const respuesta = await fetch("/panel/central?handler=Serenos", { headers: { Accept: "text/html" }, credentials: "same-origin" });
+    if (respuesta.redirected || !respuesta.ok) return false;
+    const seleccionado = regionSerenos.querySelector(".sereno--seleccionado")?.dataset.sereno;
+    regionSerenos.innerHTML = await respuesta.text();
+    dibujarSerenos();
+    if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+    return true;
+  }
 
   // ---------- Aviso visual y sonoro ----------
   let audio = null;
@@ -146,10 +208,12 @@
     if (seccion.dataset.medicion === "true" && document.getElementById(`sos-${id}`))
       conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
   });
+  conexion.on("SerenoActualizado", () => refrescarSerenos());
   conexion.onreconnecting(() => estadoConexion("reconectando", "Reconectando… La lista puede no estar actualizada."));
   conexion.onreconnected(async () => {
     // Los avisos emitidos durante el corte se recuperan consultando la base de datos.
     if (await refrescar()) estadoConexion("conectado", "Conectado en tiempo real");
+    await refrescarSerenos();
   });
   conexion.onclose(() => {
     estadoConexion("desconectado", "Sin conexión en tiempo real. Reintentando…");
@@ -160,6 +224,7 @@
     try {
       await conexion.start();
       if (await refrescar()) estadoConexion("conectado", "Conectado en tiempo real");
+      await refrescarSerenos();
     } catch {
       estadoConexion("desconectado", "Sin conexión en tiempo real. Reintentando…");
       setTimeout(iniciar, 5000);
@@ -171,8 +236,9 @@
   }
 
   dibujarMarcadores();
+  dibujarSerenos();
   iniciar();
 
   // Acceso para la verificación automatizada (estado de la conexión, sin datos).
-  window.cadCentral = { conexion, refrescar };
+  window.cadCentral = { conexion, refrescar, refrescarSerenos };
 })();

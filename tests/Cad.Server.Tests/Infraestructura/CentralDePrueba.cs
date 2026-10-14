@@ -10,6 +10,9 @@ namespace Cad.Server.Tests.Infraestructura;
 // Operador del panel conectado al canal de la central con su cookie, como el navegador (HU11).
 public sealed record OperadorEnCentral(HubConnection Conexion, HttpClient Navegador, ConcurrentQueue<Guid> Avisos) : IAsyncDisposable
 {
+    // HU19-CA03: identificadores de los serenos de los avisos «SerenoActualizado».
+    public ConcurrentQueue<Guid> AvisosSerenos { get; init; } = new();
+
     public ValueTask DisposeAsync() => Conexion.DisposeAsync();
 }
 
@@ -34,8 +37,10 @@ public static class CentralDePrueba
             })
             .Build();
         conexion.On<JsonElement>("SosRecibido", aviso => avisos.Enqueue(aviso.GetProperty("id").GetGuid()));
+        var avisosSerenos = new ConcurrentQueue<Guid>();
+        conexion.On<JsonElement>("SerenoActualizado", aviso => avisosSerenos.Enqueue(aviso.GetProperty("id").GetGuid()));
         await conexion.StartAsync();
-        return new OperadorEnCentral(conexion, navegador, avisos);
+        return new OperadorEnCentral(conexion, navegador, avisos) { AvisosSerenos = avisosSerenos };
     }
 
     public static async Task<bool> EsperarAsync(Func<bool> condicion, int segundos = 10)

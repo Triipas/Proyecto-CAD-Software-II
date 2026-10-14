@@ -46,6 +46,7 @@ public sealed class ServicioTurnoSereno(IApiCad api, IServicioUbicacion ubicacio
             case ResultadoApi<RespuestaEstadoOperativo>.Correcto c:
                 Aplicar(c.Valor);
                 Error = null;
+                SesionTerminada = false; // la sesión actual es válida (p. ej., tras volver a ingresar)
                 if (Operativo)
                 {
                     if (await ubicacion.ConsultarPermisoAsync() == EstadoPermisoUbicacion.Concedido)
@@ -151,8 +152,21 @@ public sealed class ServicioTurnoSereno(IApiCad api, IServicioUbicacion ubicacio
         }
     }
 
-    // Al salir de la sesión o cerrar el modo sereno: deja de enviar sin cambiar el estado en el servidor.
+    // Deja de enviar sin cambiar el estado en el servidor.
     public Task DetenerAsync() => DetenerEnvioAsync();
+
+    // Al salir de la sesión: deja de enviar y olvida el estado de esta sesión. El servicio vive toda la vida
+    // de la app, así que la siguiente sesión no debe heredar avisos ni la marca de «sesión terminada».
+    public async Task ReiniciarAsync()
+    {
+        await DetenerEnvioAsync();
+        Operativo = false;
+        UltimoEnvio = null;
+        AvisoEnvio = null;
+        Error = null;
+        SesionTerminada = false;
+        Notificar();
+    }
 
     private void IniciarEnvio()
     {

@@ -39,11 +39,20 @@
         <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
     </section>
 
+    @* HU19 — estado y disponibilidad de los serenos, actualizados sin recargar. *@
+    <section class="superficie central__serenos" aria-labelledby="titulo-serenos">
+        <h2 id="titulo-serenos" class="central__titulo">Serenos</h2>
+        <p class="texto-secundario">Disponible: operativo y sin asignación vigente. La ubicación solo se comparte mientras el sereno está operativo.</p>
+        <div data-region-serenos>
+            <partial name="_ListaSerenos" model="@Model.ListaDeSerenos" />
+        </div>
+    </section>
+
     <section class="superficie central__mapa" aria-labelledby="titulo-mapa">
         <h2 id="titulo-mapa" class="central__titulo">Mapa operativo</h2>
-        <p class="texto-secundario">Solo se muestran los SOS con ubicación. Elige un marcador o «Ver en el mapa» para relacionarlos.</p>
+        <p class="texto-secundario">SOS (rojo) y serenos operativos (azul si están disponibles) con ubicación. Elige un marcador o «Ver en el mapa» para relacionarlos.</p>
         <div id="mapa" class="mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de SOS con ubicación"></div>
+             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de SOS y serenos con ubicación"></div>
         <noscript><p class="texto-secundario">El mapa y los avisos en tiempo real necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
     </section>
 </div>

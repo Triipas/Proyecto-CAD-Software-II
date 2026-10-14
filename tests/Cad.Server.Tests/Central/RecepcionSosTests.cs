@@ -167,5 +167,8 @@ public class RecepcionSosTests(FabricaCad fabrica)
     {
         public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) =>
             throw new InvalidOperationException("Fallo simulado del canal en tiempo real.");
+
+        public Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct) =>
+            throw new InvalidOperationException("Fallo simulado del canal en tiempo real.");
     }
 }
