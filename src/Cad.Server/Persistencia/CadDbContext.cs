@@ -17,6 +17,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Caso> Casos => Set<Caso>();
     public DbSet<EventoCaso> EventosCaso => Set<EventoCaso>();
     public DbSet<IntentoContacto> IntentosContacto => Set<IntentoContacto>();
+    public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
+    public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -81,6 +83,29 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             intento.HasIndex(i => new { i.CasoId, i.RegistradoEn });
             intento.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
             intento.HasOne<Usuario>().WithMany().HasForeignKey(i => i.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU18: estado operativo (una fila por sereno) y posiciones recibidas (solo inserción).
+        builder.Entity<Modulos.Serenos.Dominio.EstadoSereno>(estado =>
+        {
+            estado.ToTable("EstadosSereno");
+            estado.HasKey(e => e.SerenoId);
+            estado.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Serenos.Dominio.EstadoSereno>(e => e.SerenoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Modulos.Serenos.Dominio.PosicionSereno>(posicion =>
+        {
+            posicion.ToTable("PosicionesSereno", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_PosicionesSereno_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
+                tabla.HasCheckConstraint("CK_PosicionesSereno_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
+                tabla.HasCheckConstraint("CK_PosicionesSereno_Precision", "\"PrecisionMetros\" > 0");
+            });
+            posicion.HasKey(p => p.Id);
+            // Un reenvío de la misma posición no la duplica; también sirve para leer la última posición (HU19).
+            posicion.HasIndex(p => new { p.SerenoId, p.ObtenidaEn }).IsUnique();
+            posicion.HasOne<Usuario>().WithMany().HasForeignKey(p => p.SerenoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Usuario>(usuario =>

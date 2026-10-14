@@ -12,8 +12,8 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | ID | HU | Tarea | Estado | Evidencia |
 |---|---|---|---|---|
 | S2-T01 | HU12 | Intentos de contacto y verificación con tres resultados, sin sobrescribir | Implementada y verificada en local | `/panel/central/sos/{id}` (solo operador): teléfono registrado, intentos con tres resultados, información del hecho y referencia separada de las coordenadas (DP10). `VerificacionSosTests` CA01–CA08 + reenvío idempotente. Revisión en Chrome (escritorio y móvil). |
-| S2-T02 | HU18 | Activar y desactivar el estado operativo | Pendiente | DP16 resuelta (ver decisiones). |
-| S2-T03 | HU18 | Transmisión periódica de la ubicación con marca de tiempo | Pendiente | DP15: 30 s como valor inicial. |
+| S2-T02 | HU18 | Activar y desactivar el estado operativo | Servidor implementado y verificado en local; app pendiente (bloque 3) | `GET`/`PUT /api/sereno/estado`: activación solo con el permiso de ubicación declarado (DP16-a); desactivación siempre permitida (DP16-b). `EstadoOperativoTests` CA02, CA03, CA05 y CA06 (parte sin asignación). |
+| S2-T03 | HU18 | Transmisión periódica de la ubicación con marca de tiempo | Servidor implementado y verificado en local; app pendiente (bloque 3) | `POST /api/sereno/posiciones`: solo con el sereno operativo; marca de tiempo del dispositivo y de recepción (CA01); reenvío sin duplicar. Intervalo de 30 s configurable (DP15), entregado a la app en `GET /api/sereno/estado`. |
 | S2-T04 | HU19 | Panel de estado y disponibilidad actualizado por eventos | Pendiente | Mapa base del Sprint 1 (decisión del 13/10/2026). |
 | S2-T05 | HU20 | Asignar un caso pendiente a un sereno disponible | Pendiente | HU20 unificada (ver decisiones). |
 | S2-T06 | HU20 | Concurrencia, idempotencia y ausencia de registros parciales | Pendiente | — |
@@ -24,9 +24,9 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S2-T11 | HU23 | Registrar el inicio de atención | Pendiente | — |
 | S2-T12 | HU24 | Cierre con tipificación y resultado; notas internas separadas | Pendiente | DP05 y DP07 resueltas. |
 | S2-T13 | HU24 | Cierre por el operador y liberación de la disponibilidad | Pendiente | — |
-| S2-T14 | HU03 | Verificación por rol de HU12–HU24 | En curso | Matriz ejecutable: rutas de HU12 añadidas (97 casos). |
+| S2-T14 | HU03 | Verificación por rol de HU12–HU24 | En curso | Matriz ejecutable: rutas de HU12 y HU18 añadidas (112 casos). |
 | S2-T15 | HU11 | Repetir la medición de RNF02 | Pendiente | Necesita antes la medición formal del Sprint 1 (S1-T18). |
-| S2-T16 | Transversal | Revisión de registros | En curso | `RevisionRegistrosTests` incluye HU12: ni el teléfono, ni la información del hecho, ni la referencia aparecen en los registros. |
+| S2-T16 | Transversal | Revisión de registros | En curso | `RevisionRegistrosTests` incluye HU12 y HU18: ni el teléfono, ni la información del hecho, ni la referencia, ni las coordenadas del sereno aparecen en los registros. |
 | S2-T17 | HU12–HU24 | Integración y demostración del ciclo del SOS | Pendiente | — |
 
 ## Decisiones del Product Owner (13/10/2026)
@@ -52,6 +52,7 @@ Respuestas a las decisiones E1–E12 de la planificación del Sprint 2. El Plan 
 | Bloque | Fecha | Tareas | Resultado |
 |---|---|---|---|
 | 1 — Verificación del SOS | 13/10/2026 | S2-T01 (HU12); S2-T14 y S2-T16 (parcial) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 234/234 superadas (32 nuevas). Pruebas de mutación detectadas: sin la política de operador (9 pruebas fallan); con `Enum.TryParse` para el resultado (CA03 falla con «1» y «contactado»); con la información del hecho en un registro de depuración (la auditoría de registros falla). Chrome (1366×768 y 390×844): foco en el resumen de errores, sin desbordamiento horizontal, sin errores de consola. Capturas: [escritorio](capturas/panel/hu12-verificacion-escritorio.png), [error en móvil](capturas/panel/hu12-error-movil.png). |
+| 2 — Estado operativo y posiciones del sereno (servidor) | 13/10/2026 | S2-T02, S2-T03 (HU18, servidor); S2-T14 y S2-T16 (parcial) | `dotnet build`: 0 advertencias, 0 errores. `dotnet test`: 265/265 superadas (31 nuevas). Mutaciones detectadas: sin la regla DP16-a (falla CA03); aceptando posiciones sin estar operativo (3 pruebas fallan); sin la política de sereno (10 pruebas fallan); con las coordenadas en un registro de depuración (falla la auditoría). |
 
 ### Decisiones y observaciones del bloque 1
 
@@ -60,3 +61,14 @@ Respuestas a las decisiones E1–E12 de la planificación del Sprint 2. El Plan 
 - **Sin reglas añadidas:** HU12 no limita los intentos por estado del SOS ni condiciona la información al resultado, así que no se restringe. Las longitudes máximas (2000 y 500 caracteres) son límites técnicos de la base de datos, no reglas de negocio.
 - **CA06:** un intento «Sin respuesta» o «No fue posible comunicar» no cambia el estado del SOS, que sigue en la sección urgente. La parte «puede asignarse» se verificará con HU20 (S2-T07).
 - **CA08:** la autorización está en el servidor (política `OperadorAutorizado`). Un administrador con un token antifalsificación válido no puede registrar intentos, y un ciudadano o un sereno con su token tampoco pueden consultar ni registrar.
+
+### Decisiones y observaciones del bloque 2
+
+- **Módulo nuevo `Serenos`:** `EstadosSereno` (una fila por sereno: operativo y hora del último cambio) y `PosicionesSereno` (solo inserción, con `CHECK` de rangos). La disponibilidad no se guarda: se calculará con HU19 (operativo y sin asignación vigente, HU19-CA02).
+- **DP16-a:** el servidor no puede consultar el permiso de ubicación del sistema operativo. La app declara si lo tiene (`ubicacionAutorizada`) y lo comprobará antes de activar (bloque 3); el servidor rechaza la activación sin esa declaración. Es la única garantía posible en el servidor.
+- **DP16-b:** desactivarse siempre está permitido y no toca asignaciones. Cuando exista HU20, una prueba comprobará que la asignación sigue vigente.
+- **Posiciones:** se aceptan o rechazan según el estado del servidor en el momento de recibirlas, no según el reloj del dispositivo (podría estar desajustado). Con el sereno no operativo se responde 409 y no se guarda nada (CA02, CA03). La misma posición reenviada (mismo sereno y misma marca de tiempo) no se duplica.
+- **Sin reglas añadidas:** HU18 no fija antigüedad máxima ni precisión mínima para las posiciones; solo se validan rangos de coordenadas, precisión positiva y marca de tiempo presente.
+- **Precisión de tiempos:** la hora del último cambio se redondea a microsegundos (la precisión de PostgreSQL) para que la API devuelva lo mismo al cambiar que al consultar.
+- **CA04 (disponibilidad que ve el operador):** el aviso en tiempo real a la central se añade con HU19 (bloque 4), que es quien lo muestra.
+- **Pendiente sin decidir:** la conservación de las posiciones del sereno no está definida (DP22 trata los recorridos del acompañamiento). No se borra nada automáticamente.
