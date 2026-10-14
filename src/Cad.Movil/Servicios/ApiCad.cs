@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 
 namespace Cad.Movil.Servicios;
@@ -20,22 +21,31 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public Task<ResultadoApi<RespuestaRegistroCiudadano>> RegistrarAsync(SolicitudRegistroCiudadano solicitud, CancellationToken ct) =>
-        EnviarAsync<RespuestaRegistroCiudadano>("api/cuentas/registro", solicitud, null, ct);
+        EnviarAsync<RespuestaRegistroCiudadano>(HttpMethod.Post, "api/cuentas/registro", solicitud, null, ct);
 
     public Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct) =>
-        EnviarAsync<RespuestaToken>("api/auth/token", solicitud, null, ct);
+        EnviarAsync<RespuestaToken>(HttpMethod.Post, "api/auth/token", solicitud, null, ct);
 
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct) =>
-        EnviarAsync<RespuestaSos>("api/sos", solicitud, token, ct);
+        EnviarAsync<RespuestaSos>(HttpMethod.Post, "api/sos", solicitud, token, ct);
 
-    private async Task<ResultadoApi<T>> EnviarAsync<T>(string ruta, object cuerpo, string? token, CancellationToken ct)
+    public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
+        EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Get, "api/sereno/estado", null, token, ct);
+
+    public Task<ResultadoApi<RespuestaEstadoOperativo>> CambiarEstadoOperativoAsync(string token, SolicitudCambioEstadoOperativo solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Put, "api/sereno/estado", solicitud, token, ct);
+
+    public Task<ResultadoApi<SinContenido>> EnviarPosicionSerenoAsync(string token, PosicionSerenoEnviada posicion, CancellationToken ct) =>
+        EnviarAsync<SinContenido>(HttpMethod.Post, "api/sereno/posiciones", posicion, token, ct);
+
+    private async Task<ResultadoApi<T>> EnviarAsync<T>(HttpMethod metodo, string ruta, object? cuerpo, string? token, CancellationToken ct)
     {
         if (configuracion.Direccion is not { } direccion)
             return new ResultadoApi<T>.SinRespuesta("Configura la dirección del servidor.");
 
-        using var peticion = new HttpRequestMessage(HttpMethod.Post, new Uri(direccion, ruta))
+        using var peticion = new HttpRequestMessage(metodo, new Uri(direccion, ruta))
         {
-            Content = JsonContent.Create(cuerpo, options: Json),
+            Content = cuerpo is null ? null : JsonContent.Create(cuerpo, options: Json),
         };
         if (token is not null)
             peticion.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -44,7 +54,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
         {
             using var respuesta = await http.SendAsync(peticion, ct);
             if (respuesta.IsSuccessStatusCode)
-                return new ResultadoApi<T>.Correcto((await respuesta.Content.ReadFromJsonAsync<T>(Json, ct))!);
+                return new ResultadoApi<T>.Correcto(typeof(T) == typeof(SinContenido)
+                    ? (T)(object)new SinContenido()
+                    : (await respuesta.Content.ReadFromJsonAsync<T>(Json, ct))!);
 
             // Un error del servidor no registró nada (transacción): se puede reintentar sin duplicar.
             if ((int)respuesta.StatusCode >= 500 || respuesta.StatusCode is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests)

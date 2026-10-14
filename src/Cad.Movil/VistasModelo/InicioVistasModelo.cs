@@ -111,13 +111,3 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         await navegacion.IrAAsync(Rutas.Ingreso);
     }
 }
-
-// Modo sereno: sus funciones (estado operativo, despachos) llegan en el Sprint 2 (HU18–HU24).
-public sealed class InicioSerenoVistaModelo(IAlmacenSesion sesiones, INavegacion navegacion) : VistaModeloBase
-{
-    public ComandoAsincrono Salir { get; } = new(async () =>
-    {
-        sesiones.Cerrar();
-        await navegacion.IrAAsync(Rutas.Ingreso);
-    });
-}

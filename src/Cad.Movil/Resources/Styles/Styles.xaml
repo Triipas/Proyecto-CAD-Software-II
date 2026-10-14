@@ -89,6 +89,21 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="MinimumHeightRequest" Value="48" />
+        <!-- Deshabilitado: texto y borde atenuados (el estado no depende solo del color: hay un texto que lo explica). -->
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="TextColor" Value="{StaticResource ColorTextoSecundario}" />
+                            <Setter Property="BorderColor" Value="{StaticResource ColorBorde}" />
+                            <Setter Property="BackgroundColor" Value="{StaticResource ColorFondo}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
     </Style>
 
     <Style x:Key="Superficie" TargetType="Border">
