@@ -691,6 +691,15 @@ a.boton {
   font-weight: var(--peso-medio);
 }
 
+/* HU13: tipo del SOS. Sin clasificar se distingue en gris para no confundirse con una categoría. */
+.sos__tipo {
+  font-size: var(--texto-sm);
+}
+
+.sos__tipo--pendiente {
+  color: var(--color-texto-secundario);
+}
+
 .sos__ubicacion {
   display: inline-flex;
   align-items: center;

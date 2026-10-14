@@ -77,6 +77,56 @@
             <p class="texto-secundario">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
         </section>
 
+        @* HU13 — clasificación posterior al registro. No es necesaria para asignar (CA02). *@
+        <section class="superficie" aria-labelledby="titulo-clasificacion">
+            <h2 id="titulo-clasificacion" class="central__titulo">Clasificación</h2>
+            @if (Model.ErrorClasificacion is not null)
+            {
+                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo clasificar el SOS</p>
+                        <p class="aviso__texto">@Model.ErrorClasificacion</p>
+                    </div>
+                </div>
+            }
+            @if (sos.Clasificacion is { } clasificacion)
+            {
+                <dl class="datos">
+                    <div><dt>Tipo</dt><dd data-tipo>@clasificacion.Categoria</dd></div>
+                    <div><dt>Clasificado por</dt><dd>@clasificacion.Operador</dd></div>
+                    <div><dt>Fecha y hora</dt><dd>@Local(clasificacion.ClasificadoEn)</dd></div>
+                </dl>
+            }
+            else
+            {
+                <dl class="datos">
+                    <div><dt>Tipo</dt><dd class="texto-secundario" data-tipo>@Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar</dd></div>
+                </dl>
+                <form method="post" asp-page-handler="Clasificar" class="formulario" data-formulario novalidate>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="Clasificacion_CategoriaId">Categoría</label>
+                        <select class="campo__control campo__control--seleccion" id="Clasificacion_CategoriaId" name="Clasificacion.CategoriaId" required
+                                aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
+                                aria-describedby="@(Model.ErrorCategoria is null ? null : "Clasificacion_CategoriaId-error")">
+                            <option value="">Elige una categoría</option>
+                            @foreach (var categoria in Model.Categorias)
+                            {
+                                <option value="@categoria.Id" selected="@(Model.Clasificacion.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                            }
+                        </select>
+                        @if (Model.ErrorCategoria is not null)
+                        {
+                            <p id="Clasificacion_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
+                        }
+                    </div>
+                    <div class="acciones">
+                        <button type="submit" class="boton boton--principal" data-texto-carga="Clasificando…">Clasificar el SOS</button>
+                    </div>
+                </form>
+            }
+        </section>
+
         @* HU20 — asignación a un sereno disponible. También se puede hacer desde el mapa de la central. *@
         <section class="superficie" aria-labelledby="titulo-asignacion">
             <h2 id="titulo-asignacion" class="central__titulo">Asignación</h2>

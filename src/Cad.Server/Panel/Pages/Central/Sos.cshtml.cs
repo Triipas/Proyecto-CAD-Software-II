@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace Cad.Server.Panel.Pages.Central;
 
 // HU12 — Contactar al ciudadano y registrar la verificación del SOS (S2-T01) y
-// HU20 — Asignar el caso pendiente a un sereno disponible (S2-T05). Solo operadores (HU12-CA08, HU20-CA09).
+// HU20 — Asignar el caso pendiente a un sereno disponible (S2-T05) y
+// HU13 — Clasificar el SOS después de su registro (S2-T08). Solo operadores (HU12-CA08, HU20-CA09, DP09).
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
-    ConsultarSerenos consultarSerenos, IConfiguration configuracion) : PageModel
+    ClasificarCaso clasificar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
+    IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioIntento Formulario { get; set; } = new();
@@ -20,13 +22,21 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     [BindProperty]
     public FormularioAsignacion Asignacion { get; set; } = new();
 
+    [BindProperty]
+    public FormularioClasificacion Clasificacion { get; set; } = new();
+
     public DetalleSos Sos { get; private set; } = null!;
 
     // HU20: serenos que pueden recibir el caso (operativos y sin asignación vigente).
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
 
+    // HU13-CA04: solo las categorías del catálogo vigente (DP07).
+    public IReadOnlyList<CategoriaVista> Categorias { get; private set; } = [];
+
     public Dictionary<string, string[]> Errores { get; private set; } = [];
     public string? ErrorAsignacion { get; private set; }
+    public string? ErrorCategoria { get; private set; }
+    public string? ErrorClasificacion { get; private set; }
 
     [TempData]
     public string? Mensaje { get; set; }
@@ -115,12 +125,44 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         }
     }
 
+    // HU13: clasificar el SOS con una categoría del catálogo.
+    public async Task<IActionResult> OnPostClasificarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await clasificar.EjecutarAsync(id, Clasificacion.CategoriaId, User.IdUsuario(), ct);
+
+        switch (resultado)
+        {
+            case ResultadoClasificacion.Clasificado c:
+                return Clasificado(id, c.Categoria);
+            case ResultadoClasificacion.YaClasificado c:
+                return Clasificado(id, c.Categoria);
+            case ResultadoClasificacion.CasoNoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErrorCategoria = (resultado as ResultadoClasificacion.Invalido)?.Motivo;
+                ErrorClasificacion = (resultado as ResultadoClasificacion.Rechazado)?.Motivo;
+                Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
+                Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+                return Page();
+        }
+    }
+
+    private RedirectToPageResult Clasificado(Guid id, string categoria)
+    {
+        Mensaje = "SOS clasificado.";
+        DetalleMensaje = $"Tipo: {categoria}.";
+        return RedirectToPage(new { id }); // PRG
+    }
+
     private async Task<bool> CargarAsync(Guid id, CancellationToken ct)
     {
         if (await consultar.EjecutarAsync(id, ct) is not { } sos)
             return false;
         Sos = sos;
         SerenosDisponibles = (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList();
+        Categorias = await consultarCategorias.EjecutarAsync(ct);
         return true;
     }
 
@@ -137,5 +179,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         public Guid IdSolicitud { get; set; }
         public Guid SerenoId { get; set; }
         public string? Volver { get; set; }
+    }
+
+    public sealed class FormularioClasificacion
+    {
+        public Guid? CategoriaId { get; set; }
     }
 }

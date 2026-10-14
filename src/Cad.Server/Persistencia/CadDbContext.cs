@@ -18,6 +18,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<EventoCaso> EventosCaso => Set<EventoCaso>();
     public DbSet<IntentoContacto> IntentosContacto => Set<IntentoContacto>();
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
+    public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
@@ -37,17 +38,35 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
                 tabla.HasCheckConstraint("CK_Casos_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
                 tabla.HasCheckConstraint("CK_Casos_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
                 tabla.HasCheckConstraint("CK_Casos_Precision", "\"PrecisionMetros\" > 0");
+                // HU13-CA01: una clasificación guarda siempre categoría, responsable y momento juntos.
+                tabla.HasCheckConstraint("CK_Casos_ClasificacionCompleta",
+                    "(\"CategoriaId\" IS NULL AND \"ClasificadoPor\" IS NULL AND \"ClasificadoEn\" IS NULL) OR " +
+                    "(\"CategoriaId\" IS NOT NULL AND \"ClasificadoPor\" IS NOT NULL AND \"ClasificadoEn\" IS NOT NULL)");
             });
             caso.HasKey(c => c.Id);
             caso.Property(c => c.Origen).HasConversion<string>().HasMaxLength(20);
             caso.Property(c => c.Estado).HasConversion<string>().HasMaxLength(20);
             caso.Ignore(c => c.UbicacionDisponible);
             caso.Ignore(c => c.PuedeAsignarse);
+            caso.Ignore(c => c.Clasificado);
             // Npgsql asocia un uint marcado como versión a la columna del sistema xmin (sin columna nueva).
             caso.Property(c => c.Version).IsRowVersion();
             // Idempotencia: una sola fila por ciudadano y solicitud (HU07-CA07).
             caso.HasIndex(c => new { c.CiudadanoId, c.IdSolicitud }).IsUnique();
             caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+            // HU13-CA04: solo una categoría del catálogo (la base de datos lo garantiza aunque falle el código).
+            caso.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaId).OnDelete(DeleteBehavior.Restrict);
+            caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ClasificadoPor).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // DP07: catálogo compartido de categorías de incidencia (HU10, HU13, HU14, HU24).
+        builder.Entity<CategoriaIncidencia>(categoria =>
+        {
+            categoria.ToTable("CategoriasIncidencia");
+            categoria.HasKey(c => c.Id);
+            categoria.Property(c => c.Nombre).HasMaxLength(100);
+            categoria.HasIndex(c => c.Nombre).IsUnique();
+            categoria.HasData(CategoriaIncidencia.Iniciales.Select(c => new { c.Id, c.Nombre, c.Orden }));
         });
 
         // RNF02: tabla de medición, solo para pruebas (Plan de Arquitectura, 9.1).

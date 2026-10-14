@@ -34,7 +34,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/central` (sección urgente y su fragmento `?handler=Lista`) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /hubs/central/negotiate` y `/hubs/central` (tiempo real) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
-| `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia) | HU12 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET` y `POST /panel/admin/cuentas/nueva` (alta) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -59,7 +59,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU10 | Registrar un reporte de incidencia | Ciudadano | Pendiente (Sprint 3) |
 | HU11 | Recibir los SOS en la sección de atención urgente | Operador | **Verificada (13/10/2026):** página, fragmento y canal en tiempo real solo para Operador; un ciudadano con JWT o una conexión sin sesión no pueden conectarse al hub (`RecepcionSosTests.HU03_*`). |
 | HU12 | Contactar al ciudadano y registrar la verificación del SOS | Operador | **Verificada (13/10/2026):** consulta y registro solo para Operador; un administrador con token antifalsificación válido, o un ciudadano o un sereno con su token, no ven el teléfono ni registran intentos (`VerificacionSosTests.CA08_*`). Prueba de mutación: sin la política de operador, 9 pruebas fallan. |
-| HU13 | Clasificar un SOS después de su registro | Operador | Pendiente (Sprint 2; DP09) |
+| HU13 | Clasificar un SOS después de su registro | Operador | **Verificada en el servidor (14/10/2026):** clasificar (`POST /panel/central/sos/{id}?handler=Clasificar`) solo para Operador (DP09); un administrador con token antifalsificación válido es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no clasifica, sin modificar el caso (`ClasificacionTests.DP09_*`). |
 | HU14 | Iniciar la revisión de un reporte y corregir su categoría | Operador | Pendiente (Sprint 3) |
 | HU15 | Admitir un reporte para atención | Operador | Pendiente (Sprint 3) |
 | HU16 | Derivar un reporte | Operador | Pendiente (Sprint 3) |

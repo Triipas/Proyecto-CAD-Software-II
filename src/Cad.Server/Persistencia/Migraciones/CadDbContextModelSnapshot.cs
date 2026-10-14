@@ -70,7 +70,16 @@ namespace Cad.Server.Persistencia.Migraciones
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CategoriaId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CiudadanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClasificadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClasificadoPor")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Estado")
@@ -109,11 +118,17 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("ClasificadoPor");
+
                     b.HasIndex("CiudadanoId", "IdSolicitud")
                         .IsUnique();
 
                     b.ToTable("Casos", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Casos_ClasificacionCompleta", "(\"CategoriaId\" IS NULL AND \"ClasificadoPor\" IS NULL AND \"ClasificadoEn\" IS NULL) OR (\"CategoriaId\" IS NOT NULL AND \"ClasificadoPor\" IS NOT NULL AND \"ClasificadoEn\" IS NOT NULL)");
+
                             t.HasCheckConstraint("CK_Casos_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
 
                             t.HasCheckConstraint("CK_Casos_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
@@ -121,6 +136,54 @@ namespace Cad.Server.Persistencia.Migraciones
                             t.HasCheckConstraint("CK_Casos_Precision", "\"PrecisionMetros\" > 0");
 
                             t.HasCheckConstraint("CK_Casos_UbicacionCompleta", "(\"Latitud\" IS NULL AND \"Longitud\" IS NULL AND \"PrecisionMetros\" IS NULL AND \"UbicacionObtenidaEn\" IS NULL) OR (\"Latitud\" IS NOT NULL AND \"Longitud\" IS NOT NULL AND \"PrecisionMetros\" IS NOT NULL AND \"UbicacionObtenidaEn\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("CategoriasIncidencia", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000001"),
+                            Nombre = "Violencia doméstica",
+                            Orden = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000002"),
+                            Nombre = "Robo",
+                            Orden = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000003"),
+                            Nombre = "Presunta actividad relacionada con drogas",
+                            Orden = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000004"),
+                            Nombre = "Otros",
+                            Orden = 4
                         });
                 });
 
@@ -574,11 +637,21 @@ namespace Cad.Server.Persistencia.Migraciones
 
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Caso", b =>
                 {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("CiudadanoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ClasificadoPor")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EventoCaso", b =>

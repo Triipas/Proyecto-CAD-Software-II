@@ -42,6 +42,25 @@ public sealed class Caso
         Estado = EstadoCaso.Asignada;
     }
 
+    // HU13 — clasificación posterior al registro. Sin categoría = «Tipo por determinar» (CA03). La emisión,
+    // la presentación y la asignación no la requieren (CA02).
+    public Guid? CategoriaId { get; private set; }
+    public Guid? ClasificadoPor { get; private set; }
+    public DateTimeOffset? ClasificadoEn { get; private set; }
+
+    public bool Clasificado => CategoriaId is not null;
+
+    // CA01: un SOS sin tipo se clasifica con responsable, fecha y hora. Reclasificar no está definido en HU13:
+    // se rechaza hasta que el PO lo decida (no se añade una regla que la HU no tiene).
+    public void Clasificar(Guid categoriaId, Guid operadorId, DateTimeOffset ahora)
+    {
+        if (Clasificado)
+            throw new InvalidOperationException("El caso ya está clasificado.");
+        CategoriaId = categoriaId;
+        ClasificadoPor = operadorId;
+        ClasificadoEn = ahora;
+    }
+
     private Caso() { } // EF Core
 
     public static Caso EmitirSos(Guid ciudadanoId, Guid idSolicitud, Posicion? ubicacionActual, DateTimeOffset ahora)

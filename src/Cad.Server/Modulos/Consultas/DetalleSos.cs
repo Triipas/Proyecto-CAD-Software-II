@@ -16,10 +16,14 @@ public sealed record DetalleSos(
     double? PrecisionMetros,
     DateTimeOffset? UbicacionObtenidaEn,
     IReadOnlyList<IntentoContactoVista> Intentos,
-    AsignacionVista? Asignacion)
+    AsignacionVista? Asignacion,
+    ClasificacionVista? Clasificacion)
 {
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
 }
+
+// HU13: categoría asignada, responsable y momento (CA01). Nula = «Tipo por determinar» (CA03).
+public sealed record ClasificacionVista(string Categoria, string Operador, DateTimeOffset ClasificadoEn);
 
 // HU20: asignación vigente del caso (sereno y momento).
 public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffset AsignadaEn);
@@ -64,7 +68,15 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
                                 select new AsignacionVista(a.SerenoId, sereno.Nombres + " " + sereno.Apellidos, a.AsignadaEn))
                                .SingleOrDefaultAsync(ct);
 
+        var clasificacion = await (from caso in db.Casos.AsNoTracking()
+                                   join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id
+                                   join operador in db.Users.AsNoTracking() on caso.ClasificadoPor equals (Guid?)operador.Id
+                                   where caso.Id == casoId
+                                   select new ClasificacionVista(categoria.Nombre, operador.Nombres + " " + operador.Apellidos,
+                                       caso.ClasificadoEn!.Value))
+                                  .SingleOrDefaultAsync(ct);
+
         return new DetalleSos(sos.Id, sos.Estado.ToString(), sos.RegistradoEn, sos.Ciudadano, sos.PhoneNumber,
-            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion);
+            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion);
     }
 }

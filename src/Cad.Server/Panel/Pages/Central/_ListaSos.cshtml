@@ -28,6 +28,8 @@
                         <time class="sos__hora" datetime="@sos.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm:ss", inv)</time>
                     </div>
                     <p class="sos__ciudadano">@sos.Ciudadano</p>
+                    @* HU13-CA03: el tipo se muestra siempre; sin clasificar, «Tipo por determinar». *@
+                    <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
                     @if (sos.UbicacionDisponible)
                     {
                         <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa el SOS de @sos.Ciudadano">

@@ -24,8 +24,13 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
 {
     public const string MotivoNoPendiente = "El caso ya no está pendiente: no se puede asignar.";
     public const string MotivoSerenoNoDisponible = "El sereno no está disponible (no está operativo o ya tiene una asignación vigente).";
+    public const string MotivoCambioConcurrente = "El caso cambió mientras se asignaba. Revisa su estado e inténtalo de nuevo.";
 
     private static readonly Guid RolSereno = Roles.Todos.Single(r => r.Nombre == Roles.Sereno).Id;
+
+    // El token xmin cambia con cualquier modificación del caso (también la clasificación de HU13). Ante un
+    // conflicto se vuelve a evaluar con los datos nuevos: solo se rechaza si el caso ya no está pendiente.
+    private const int Intentos = 3;
 
     public async Task<ResultadoAsignacion> EjecutarAsync(Guid casoId, Guid serenoId, Guid operadorId, Guid idSolicitud, CancellationToken ct)
     {
@@ -34,6 +39,23 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
         if (serenoId == Guid.Empty)
             return new ResultadoAsignacion.Invalido("Elige un sereno disponible.");
 
+        for (var intento = 1; ; intento++)
+        {
+            try
+            {
+                return await IntentarAsync(casoId, serenoId, operadorId, idSolicitud, ct);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                db.ChangeTracker.Clear();
+                if (intento == Intentos)
+                    return await RechazoTrasCarreraAsync(operadorId, idSolicitud, MotivoCambioConcurrente, ct);
+            }
+        }
+    }
+
+    private async Task<ResultadoAsignacion> IntentarAsync(Guid casoId, Guid serenoId, Guid operadorId, Guid idSolicitud, CancellationToken ct)
+    {
         // Primero la idempotencia: si esta solicitud ya se registró, el caso ya no estará pendiente.
         if (await BuscarAsync(operadorId, idSolicitud, ct) is { } existente)
             return new ResultadoAsignacion.YaAsignado(existente);
@@ -59,15 +81,11 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
         db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.CasoAsignado, operadorId, VisibilidadEvento.Interna, ahora));
 
         // Caso, asignación y evento en una sola transacción. Las carreras las resuelve la base de datos:
-        // el token xmin del caso (CA04) y los índices únicos parciales de asignaciones vigentes (CA04, CA05).
+        // el token xmin del caso (CA04; el reintento lo vuelve a leer ya asignado) y los índices únicos
+        // parciales de asignaciones vigentes (CA04, CA05).
         try
         {
             await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            db.ChangeTracker.Clear();
-            return await RechazoTrasCarreraAsync(operadorId, idSolicitud, MotivoNoPendiente, ct);
         }
         catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
         {
