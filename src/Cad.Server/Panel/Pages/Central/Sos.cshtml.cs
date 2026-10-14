@@ -11,10 +11,11 @@ namespace Cad.Server.Panel.Pages.Central;
 // HU12 — Contactar al ciudadano y registrar la verificación del SOS (S2-T01) y
 // HU20 — Asignar el caso pendiente a un sereno disponible (S2-T05) y
 // HU13 — Clasificar el SOS después de su registro (S2-T08) y
-// HU23 — Registrar el inicio de atención como operador (S2-T11, CA02). Solo operadores.
+// HU23 — Registrar el inicio de atención como operador (S2-T11, CA02) y
+// HU24 — Cerrar el caso como operador (S2-T13, CA05). Solo operadores.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
-    ClasificarCaso clasificar, AvanzarCaso avanzar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
+    ClasificarCaso clasificar, AvanzarCaso avanzar, CerrarCaso cerrar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
     IConfiguration configuracion) : PageModel
 {
     [BindProperty]
@@ -25,6 +26,9 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
 
     [BindProperty]
     public FormularioClasificacion Clasificacion { get; set; } = new();
+
+    [BindProperty]
+    public FormularioCierre Cierre { get; set; } = new();
 
     public DetalleSos Sos { get; private set; } = null!;
 
@@ -39,6 +43,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public string? ErrorCategoria { get; private set; }
     public string? ErrorClasificacion { get; private set; }
     public string? ErrorAvance { get; private set; }
+    public string? ErrorCierre { get; private set; }
+    public Dictionary<string, string[]> ErroresCierre { get; private set; } = [];
+
+    public string? ErrorCierreDe(string campo) => ErroresCierre.TryGetValue(campo, out var mensajes) ? mensajes[0] : null;
 
     [TempData]
     public string? Mensaje { get; set; }
@@ -170,6 +178,30 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         }
     }
 
+    // HU24-CA05: el operador cierra el caso y queda como responsable.
+    public async Task<IActionResult> OnPostCerrarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await cerrar.EjecutarAsync(id, new DatosCierre(Cierre.CategoriaId, Cierre.ResultadoPublico, Cierre.NotasInternas),
+            User.IdUsuario(), ActorAvance.Operador, ct);
+        switch (resultado)
+        {
+            case ResultadoCierre.Cerrado or ResultadoCierre.YaCerrado:
+                Mensaje = "Caso cerrado.";
+                DetalleMensaje = "El sereno vuelve a figurar como disponible si sigue operativo.";
+                return RedirectToPage(new { id });
+            case ResultadoCierre.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErroresCierre = (resultado as ResultadoCierre.Invalido)?.Errores ?? [];
+                ErrorCierre = (resultado as ResultadoCierre.Rechazado)?.Motivo;
+                Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
+                Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+                return Page();
+        }
+    }
+
     private RedirectToPageResult Clasificado(Guid id, string categoria)
     {
         Mensaje = "SOS clasificado.";
@@ -205,5 +237,12 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public sealed class FormularioClasificacion
     {
         public Guid? CategoriaId { get; set; }
+    }
+
+    public sealed class FormularioCierre
+    {
+        public Guid? CategoriaId { get; set; }
+        public string? ResultadoPublico { get; set; }
+        public string? NotasInternas { get; set; }
     }
 }

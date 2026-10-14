@@ -47,6 +47,12 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, CancellationToken ct) =>
         EnviarAsync<DespachoSereno?>(HttpMethod.Post, $"api/sereno/casos/{casoId}/atencion", null, token, ct);
 
+    public Task<ResultadoApi<RespuestaCierreCaso>> CerrarCasoAsync(string token, Guid casoId, SolicitudCierreCaso solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaCierreCaso>(HttpMethod.Post, $"api/sereno/casos/{casoId}/cierre", solicitud, token, ct);
+
+    public Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasAsync(string token, CancellationToken ct) =>
+        EnviarAsync<List<CategoriaCatalogo>>(HttpMethod.Get, "api/sereno/categorias", null, token, ct);
+
     private async Task<ResultadoApi<T>> EnviarAsync<T>(HttpMethod metodo, string ruta, object? cuerpo, string? token, CancellationToken ct)
     {
         if (configuracion.Direccion is not { } direccion)

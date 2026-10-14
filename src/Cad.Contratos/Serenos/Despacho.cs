@@ -31,3 +31,12 @@ public sealed record InformacionDespacho(DateTimeOffset RegistradaEn, string? In
 // ADR-07: token de FCM del dispositivo del sereno, para la notificación push del despacho. Dato sensible:
 // no se escribe en los registros.
 public sealed record SolicitudRegistroDispositivo(string Token);
+
+// HU24 — cierre del caso desde la app del sereno. Tipificación del catálogo (DP07) y resultado obligatorios (CA02);
+// notas internas opcionales y separadas del resultado público (CA04).
+public sealed record SolicitudCierreCaso(Guid? CategoriaId, string? ResultadoPublico, string? NotasInternas);
+
+public sealed record RespuestaCierreCaso(Guid CasoId, string Estado, DateTimeOffset CerradoEn);
+
+// DP07: una categoría del catálogo, para elegir la tipificación final.
+public sealed record CategoriaCatalogo(Guid Id, string Nombre);

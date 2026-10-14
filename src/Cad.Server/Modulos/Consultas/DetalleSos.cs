@@ -18,9 +18,11 @@ public sealed record DetalleSos(
     IReadOnlyList<IntentoContactoVista> Intentos,
     AsignacionVista? Asignacion,
     ClasificacionVista? Clasificacion,
-    IReadOnlyList<AvanceVista>? Avances = null)
+    IReadOnlyList<AvanceVista>? Avances = null,
+    CierreVista? Cierre = null)
 {
     public bool EnCamino => Estado == EstadosCaso.Texto(EstadoCaso.EnCamino);
+    public bool EnAtencion => Estado == EstadosCaso.Texto(EstadoCaso.EnAtencion);
 
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
 }
@@ -32,7 +34,10 @@ public sealed record AvanceVista(string Descripcion, string Responsable, DateTim
 public sealed record ClasificacionVista(string Categoria, string Operador, DateTimeOffset ClasificadoEn);
 
 // HU20: asignación vigente del caso (sereno y momento).
-public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffset AsignadaEn);
+public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffset AsignadaEn, DateTimeOffset? FinalizadaEn = null);
+
+// HU24: cierre registrado. Resultado público y notas internas diferenciados (CA04).
+public sealed record CierreVista(string Tipificacion, string ResultadoPublico, string? NotasInternas, string Responsable, DateTimeOffset CerradoEn);
 
 public sealed record IntentoContactoVista(
     ResultadoContacto Resultado,
@@ -70,9 +75,19 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
 
         var asignacion = await (from a in db.Asignaciones.AsNoTracking()
                                 join sereno in db.Users.AsNoTracking() on a.SerenoId equals sereno.Id
-                                where a.CasoId == casoId && a.Vigente
-                                select new AsignacionVista(a.SerenoId, sereno.Nombres + " " + sereno.Apellidos, a.AsignadaEn))
-                               .SingleOrDefaultAsync(ct);
+                                where a.CasoId == casoId
+                                // La vigente o, si el caso se cerró, la que finalizó con el cierre (HU24).
+                                orderby a.Vigente descending, a.AsignadaEn descending
+                                select new AsignacionVista(a.SerenoId, sereno.Nombres + " " + sereno.Apellidos, a.AsignadaEn, a.FinalizadaEn))
+                               .FirstOrDefaultAsync(ct);
+
+        var cierre = await (from c in db.CierresCaso.AsNoTracking()
+                            join categoria in db.CategoriasIncidencia.AsNoTracking() on c.CategoriaId equals categoria.Id
+                            join responsable in db.Users.AsNoTracking() on c.ResponsableId equals responsable.Id
+                            where c.CasoId == casoId
+                            select new CierreVista(categoria.Nombre, c.ResultadoPublico, c.NotasInternas,
+                                responsable.Nombres + " " + responsable.Apellidos, c.CerradoEn))
+                           .SingleOrDefaultAsync(ct);
 
         var clasificacion = await (from caso in db.Casos.AsNoTracking()
                                    join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id
@@ -93,6 +108,6 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
             .ToList();
 
         return new DetalleSos(sos.Id, EstadosCaso.Texto(sos.Estado), sos.RegistradoEn, sos.Ciudadano, sos.PhoneNumber,
-            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion, avances);
+            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion, avances, cierre);
     }
 }

@@ -34,6 +34,9 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<Guid>("CasoId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("FinalizadaEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("IdSolicitud")
                         .HasColumnType("uuid");
 
@@ -184,6 +187,41 @@ namespace Cad.Server.Persistencia.Migraciones
                             Id = new Guid("0199e2b0-0000-7000-8000-000000000004"),
                             Nombre = "Otros",
                             Orden = 4
+                        });
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.CierreCaso", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CerradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NotasInternas")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("ResponsableId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResultadoPublico")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("ResponsableId");
+
+                    b.ToTable("CierresCaso", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CierresCaso_Resultado", "length(btrim(\"ResultadoPublico\")) > 0");
                         });
                 });
 
@@ -673,6 +711,27 @@ namespace Cad.Server.Persistencia.Migraciones
                         .WithMany()
                         .HasForeignKey("ClasificadoPor")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.CierreCaso", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Casos.Dominio.CierreCaso", "CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ResponsableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EventoCaso", b =>

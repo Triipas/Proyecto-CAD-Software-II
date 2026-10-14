@@ -105,6 +105,21 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaAvance?.Invoke(avance) ?? RespuestaDespacho());
     }
 
+    // ----- HU24: cierre -----
+    public Func<SolicitudCierreCaso, ResultadoApi<RespuestaCierreCaso>> RespuestaCierre { get; set; } =
+        _ => new ResultadoApi<RespuestaCierreCaso>.Correcto(new RespuestaCierreCaso(Guid.NewGuid(), "Cerrada", DateTimeOffset.UtcNow));
+    public ConcurrentQueue<SolicitudCierreCaso> Cierres { get; } = new();
+    public List<CategoriaCatalogo> Categorias { get; set; } = [new(Guid.NewGuid(), "Robo"), new(Guid.NewGuid(), "Otros")];
+
+    public Task<ResultadoApi<RespuestaCierreCaso>> CerrarCasoAsync(string token, Guid casoId, SolicitudCierreCaso solicitud, CancellationToken ct)
+    {
+        Cierres.Enqueue(solicitud);
+        return Task.FromResult(RespuestaCierre(solicitud));
+    }
+
+    public Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasAsync(string token, CancellationToken ct) =>
+        Task.FromResult<ResultadoApi<List<CategoriaCatalogo>>>(new ResultadoApi<List<CategoriaCatalogo>>.Correcto(Categorias));
+
     public Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct)
     {
         Interlocked.Increment(ref ConsultasDespacho);

@@ -4,8 +4,8 @@ namespace Cad.Server.Modulos.Casos.Dominio;
 public enum OrigenCaso { Sos }
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
-// (HU22) y «En atención» (HU23); «Cerrada» llega con HU24.
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion }
+// (HU22), «En atención» (HU23) y «Cerrada» (HU24).
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada }
 
 public static class EstadosCaso
 {
@@ -16,6 +16,7 @@ public static class EstadosCaso
         EstadoCaso.Asignada => "Asignada",
         EstadoCaso.EnCamino => "En camino",
         EstadoCaso.EnAtencion => "En atención",
+        EstadoCaso.Cerrada => "Cerrada",
         _ => estado.ToString(),
     };
 }
@@ -69,6 +70,14 @@ public sealed class Caso
         if (Estado != EstadoCaso.EnCamino)
             throw new InvalidOperationException("Solo un caso en camino puede pasar a «En atención».");
         Estado = EstadoCaso.EnAtencion;
+    }
+
+    // HU24-CA01/CA03: solo un caso «En atención» se cierra.
+    public void Cerrar()
+    {
+        if (Estado != EstadoCaso.EnAtencion)
+            throw new InvalidOperationException("Solo un caso en atención puede cerrarse.");
+        Estado = EstadoCaso.Cerrada;
     }
 
     // HU13 — clasificación posterior al registro. Sin categoría = «Tipo por determinar» (CA03). La emisión,

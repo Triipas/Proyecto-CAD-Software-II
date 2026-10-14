@@ -16,6 +16,17 @@ public sealed class Asignacion
     public DateTimeOffset AsignadaEn { get; private set; }
     public bool Vigente { get; private set; }
 
+    // HU24-CA07: al cerrar el caso la asignación deja de ser vigente y el sereno queda libre.
+    public DateTimeOffset? FinalizadaEn { get; private set; }
+
+    public void Finalizar(DateTimeOffset ahora)
+    {
+        if (!Vigente)
+            throw new InvalidOperationException("La asignación ya no está vigente.");
+        Vigente = false;
+        FinalizadaEn = ahora;
+    }
+
     private Asignacion() { } // EF Core
 
     public static Asignacion Registrar(Caso caso, Guid serenoId, Guid operadorId, Guid idSolicitud, DateTimeOffset ahora) => new()

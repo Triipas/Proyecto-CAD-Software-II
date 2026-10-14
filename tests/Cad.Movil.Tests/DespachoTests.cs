@@ -241,6 +241,100 @@ public class DespachoTests
         Assert.False(despacho.AvisoNuevo); // no es un despacho nuevo
     }
 
+    // ---------------- HU24 ----------------
+
+    private DespachoSereno EnAtencion() => Despacho() with { Estado = DespachoSereno.EstadoEnAtencion };
+
+    [Fact]
+    public async Task HU24_CerrarElCaso_EnviaTipificacionResultadoYNotas_YDejaDeMostrarElDespacho()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(EnAtencion());
+        var vm = VistaModelo(Servicio());
+        await vm.AlAparecerAsync();
+        Assert.True(vm.PuedeAbrirCierre);
+
+        await vm.AbrirCierre.EjecutarAsync();
+        Assert.True(vm.MostrarCierre);
+        Assert.Equal(api.Categorias, vm.CategoriasCierre);
+        vm.CategoriaCierre = vm.CategoriasCierre[0];
+        vm.ResultadoCierre = "Resultado ficticio";
+        vm.NotasCierre = "Nota interna ficticia";
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+        await vm.ConfirmarCierre.EjecutarAsync();
+
+        var enviado = Assert.Single(api.Cierres);
+        Assert.Equal(api.Categorias[0].Id, enviado.CategoriaId);
+        Assert.Equal("Resultado ficticio", enviado.ResultadoPublico);
+        Assert.Equal("Nota interna ficticia", enviado.NotasInternas);
+        Assert.False(vm.HayDespacho);
+        Assert.False(vm.MostrarCierre);
+        Assert.True(vm.HayCierreReciente);
+        Assert.StartsWith("Caso cerrado a las ", vm.CierreReciente);
+    }
+
+    [Fact]
+    public async Task HU24_CA02_SinTipificacionOResultado_MuestraLosErroresYSigueAbierto()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(EnAtencion());
+        api.RespuestaCierre = _ => new ResultadoApi<RespuestaCierreCaso>.Rechazado(400, "No se pudo cerrar el caso.", new Dictionary<string, string[]>
+        {
+            ["categoriaId"] = ["Elige la tipificación final del catálogo."],
+            ["resultadoPublico"] = ["Describe el resultado de la atención."],
+        });
+        var vm = VistaModelo(Servicio());
+        await vm.AlAparecerAsync();
+        await vm.AbrirCierre.EjecutarAsync();
+
+        await vm.ConfirmarCierre.EjecutarAsync();
+
+        Assert.True(vm.MostrarCierre);
+        Assert.True(vm.HayDespacho);
+        Assert.Equal("Elige la tipificación final del catálogo.", vm.ErrorCategoriaCierre);
+        Assert.Equal("Describe el resultado de la atención.", vm.ErrorResultadoCierre);
+    }
+
+    [Fact]
+    public async Task HU24_SiElOperadorYaLoCerro_InformaYVuelveAConsultar()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(EnAtencion());
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        api.RespuestaCierre = _ => new ResultadoApi<RespuestaCierreCaso>.Rechazado(409, "El caso ya fue cerrado por otro responsable.", new Dictionary<string, string[]>());
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+
+        Assert.False(await despacho.CerrarAsync(Guid.NewGuid(), "x", null));
+
+        Assert.Null(despacho.Actual);
+        Assert.Equal("El caso ya fue cerrado por otro responsable.", despacho.Error);
+    }
+
+    [Fact]
+    public async Task HU24_SinConexion_ConservaElDespachoYPideReintentar()
+    {
+        var caso = EnAtencion();
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(caso);
+        api.RespuestaCierre = _ => new ResultadoApi<RespuestaCierreCaso>.SinRespuesta("No hay conexión con el servidor.");
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+
+        Assert.False(await despacho.CerrarAsync(Guid.NewGuid(), "x", null));
+
+        Assert.Equal(caso, despacho.Actual);
+        Assert.EndsWith("Reinténtalo.", despacho.Error);
+    }
+
+    [Fact]
+    public async Task HU24_ElBotonDeCierreSoloAparece_EnAtencion()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho() with { Estado = DespachoSereno.EstadoEnCamino });
+        var vm = VistaModelo(Servicio());
+
+        await vm.AlAparecerAsync();
+
+        Assert.False(vm.PuedeAbrirCierre);
+        Assert.False(vm.MostrarCierre);
+    }
+
     [Fact]
     public async Task SinDespacho_LoDiceSoloTrasConsultar()
     {

@@ -63,6 +63,52 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
         return await accion(db, alcance.ServiceProvider.GetRequiredService<INotificador>());
     }
 
+    // HU24-CA08: un caso «En atención» listo para cerrar (asignado, en camino y en atención por los casos de uso).
+    private async Task<(Guid CasoId, Guid SerenoId)> CasoEnAtencionAsync()
+    {
+        var casoId = await SosAsync();
+        var operador = await fabrica.CrearAsync(Roles.Operador);
+        var sereno = await fabrica.CrearAsync(Roles.Sereno);
+        var app = await fabrica.CrearClienteAppAsync(sereno);
+        Assert.Equal(HttpStatusCode.OK, (await app.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
+        await fabrica.ConServiciosAsync(async s =>
+        {
+            Assert.IsType<ResultadoAsignacion.Asignado>(await s.GetRequiredService<AsignarCaso>().EjecutarAsync(casoId, sereno.Id, operador.Id, Guid.NewGuid(), CancellationToken.None));
+            return true;
+        });
+        foreach (var avance in new[] { Avance.ConfirmarDesplazamiento, Avance.IniciarAtencion })
+            await fabrica.ConServiciosAsync(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(casoId, avance, sereno.Id, ActorAvance.Sereno, CancellationToken.None));
+        return (casoId, sereno.Id);
+    }
+
+    [Fact]
+    public async Task Cerrar_TrasUnCambioConcurrenteDelCaso_VuelveAEvaluarYSeConfirma()
+    {
+        var (casoId, serenoId) = await CasoEnAtencionAsync();
+
+        var resultado = await ConConflictosAsync(casoId, 1, (db, notificador) =>
+            new CerrarCaso(db, TimeProvider.System, notificador, NullLogger<CerrarCaso>.Instance)
+                .EjecutarAsync(casoId, new DatosCierre(CategoriaIncidencia.Iniciales[0].Id, "Resultado ficticio", null), serenoId, ActorAvance.Sereno, CancellationToken.None));
+
+        Assert.IsType<ResultadoCierre.Cerrado>(resultado);
+        Assert.Equal(EstadoCaso.Cerrada, (await CasoAsync(casoId)).Estado);
+    }
+
+    [Fact]
+    public async Task Cerrar_ConConflictosPersistentes_SeRechazaSinRegistrosParciales()
+    {
+        var (casoId, serenoId) = await CasoEnAtencionAsync();
+
+        var resultado = await ConConflictosAsync(casoId, int.MaxValue, (db, notificador) =>
+            new CerrarCaso(db, TimeProvider.System, notificador, NullLogger<CerrarCaso>.Instance)
+                .EjecutarAsync(casoId, new DatosCierre(CategoriaIncidencia.Iniciales[0].Id, "Resultado ficticio", null), serenoId, ActorAvance.Sereno, CancellationToken.None));
+
+        Assert.Equal(CerrarCaso.MotivoCambioConcurrente, Assert.IsType<ResultadoCierre.Rechazado>(resultado).Motivo);
+        Assert.Equal(EstadoCaso.EnAtencion, (await CasoAsync(casoId)).Estado);
+        Assert.False(await fabrica.ConBaseDatosAsync(db => db.CierresCaso.AnyAsync(c => c.CasoId == casoId)));
+        Assert.True(await fabrica.ConBaseDatosAsync(db => db.Asignaciones.AnyAsync(a => a.CasoId == casoId && a.Vigente)));
+    }
+
     // La primera petición de un reenvío confirma justo después de que este comprobara que la solicitud no existía.
     private sealed class PrimeraPeticionConfirma(string conexion, Guid casoId, Guid serenoId, Guid operadorId, Guid idSolicitud)
         : DbCommandInterceptor

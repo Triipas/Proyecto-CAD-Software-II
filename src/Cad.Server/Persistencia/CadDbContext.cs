@@ -19,6 +19,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<IntentoContacto> IntentosContacto => Set<IntentoContacto>();
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
+    public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
@@ -107,6 +108,20 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             intento.HasIndex(i => new { i.CasoId, i.RegistradoEn });
             intento.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
             intento.HasOne<Usuario>().WithMany().HasForeignKey(i => i.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU24: un cierre por caso (CA08). Tipificación del catálogo (DP07) y resultado obligatorio (CA02), también
+        // garantizados por la base de datos; las notas internas, en una columna aparte del resultado público (CA04).
+        builder.Entity<CierreCaso>(cierre =>
+        {
+            cierre.ToTable("CierresCaso", tabla =>
+                tabla.HasCheckConstraint("CK_CierresCaso_Resultado", "length(btrim(\"ResultadoPublico\")) > 0"));
+            cierre.HasKey(c => c.CasoId);
+            cierre.Property(c => c.ResultadoPublico).HasMaxLength(CierreCaso.MaximoResultado);
+            cierre.Property(c => c.NotasInternas).HasMaxLength(CierreCaso.MaximoNotas);
+            cierre.HasOne<Caso>().WithOne().HasForeignKey<CierreCaso>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+            cierre.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaId).OnDelete(DeleteBehavior.Restrict);
+            cierre.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ResponsableId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU20: asignaciones. Una sola vigente por caso y una sola vigente por sereno (CA04, CA05, RNF08).
