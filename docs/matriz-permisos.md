@@ -64,7 +64,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU15 | Admitir un reporte para atención | Operador | Pendiente (Sprint 3) |
 | HU16 | Derivar un reporte | Operador | Pendiente (Sprint 3) |
 | HU17 | Descartar un reporte con justificación | Operador | Pendiente (Sprint 3) |
-| HU18 | Activar mi estado operativo y compartir mi ubicación | Sereno | **Servidor verificado (13/10/2026):** estado y posiciones solo para Sereno; un ciudadano con su token no crea estado ni posiciones (`EstadoOperativoTests.CA05_*`). Mutación: sin la política de sereno, 10 pruebas fallan. App pendiente (bloque 3). |
+| HU18 | Activar mi estado operativo y compartir mi ubicación | Sereno | **Servidor verificado (13/10/2026):** estado y posiciones solo para Sereno; un ciudadano con su token no crea estado ni posiciones (`EstadoOperativoTests.CA05_*`). Mutación: sin la política de sereno, 10 pruebas fallan. App verificada (14/10/2026): sin permiso de ubicación no se activa ni se llama al servidor; la pantalla del sereno solo existe en el modo sereno. |
 | HU19 | Monitorear el estado y la disponibilidad de los serenos | Operador | Pendiente (Sprint 2) |
 | HU20 | Asignar un caso pendiente a un sereno disponible | Operador | Pendiente (Sprints 2 y 3) |
 | HU21 | Recibir y consultar un despacho | Sereno | Pendiente (Sprint 2) |

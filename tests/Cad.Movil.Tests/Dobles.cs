@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 using Cad.Movil.Servicios;
 
@@ -60,6 +61,32 @@ public sealed class ApiFalsa : IApiCad
     {
         Ingresos++;
         return Task.FromResult(RespuestaIngreso);
+    }
+
+    // ----- HU18: modo sereno -----
+    public RespuestaEstadoOperativo EstadoServidor { get; set; } = new(false, null, 30);
+    public Func<SolicitudCambioEstadoOperativo, ResultadoApi<RespuestaEstadoOperativo>>? RespuestaCambio { get; set; }
+    public Func<PosicionSerenoEnviada, ResultadoApi<SinContenido>> RespuestaPosicion { get; set; } =
+        _ => new ResultadoApi<SinContenido>.Correcto(new SinContenido());
+    public ConcurrentQueue<SolicitudCambioEstadoOperativo> CambiosEstado { get; } = new();
+    public ConcurrentQueue<PosicionSerenoEnviada> PosicionesEnviadas { get; } = new();
+
+    public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
+        Task.FromResult<ResultadoApi<RespuestaEstadoOperativo>>(new ResultadoApi<RespuestaEstadoOperativo>.Correcto(EstadoServidor));
+
+    public Task<ResultadoApi<RespuestaEstadoOperativo>> CambiarEstadoOperativoAsync(string token, SolicitudCambioEstadoOperativo solicitud, CancellationToken ct)
+    {
+        CambiosEstado.Enqueue(solicitud);
+        if (RespuestaCambio is not null)
+            return Task.FromResult(RespuestaCambio(solicitud));
+        EstadoServidor = EstadoServidor with { Operativo = solicitud.Operativo, CambiadoEn = DateTimeOffset.UtcNow };
+        return Task.FromResult<ResultadoApi<RespuestaEstadoOperativo>>(new ResultadoApi<RespuestaEstadoOperativo>.Correcto(EstadoServidor));
+    }
+
+    public Task<ResultadoApi<SinContenido>> EnviarPosicionSerenoAsync(string token, PosicionSerenoEnviada posicion, CancellationToken ct)
+    {
+        PosicionesEnviadas.Enqueue(posicion);
+        return Task.FromResult(RespuestaPosicion(posicion));
     }
 
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)

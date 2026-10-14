@@ -1,4 +1,5 @@
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 
 namespace Cad.Movil.Servicios;
@@ -23,7 +24,15 @@ public interface IApiCad
     Task<ResultadoApi<RespuestaRegistroCiudadano>> RegistrarAsync(SolicitudRegistroCiudadano solicitud, CancellationToken ct);
     Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct);
     Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct);
+
+    // HU18 — modo sereno.
+    Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<RespuestaEstadoOperativo>> CambiarEstadoOperativoAsync(string token, SolicitudCambioEstadoOperativo solicitud, CancellationToken ct);
+    Task<ResultadoApi<SinContenido>> EnviarPosicionSerenoAsync(string token, PosicionSerenoEnviada posicion, CancellationToken ct);
 }
+
+// Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).
+public sealed record SinContenido;
 
 public interface IAlmacenSesion
 {

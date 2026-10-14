@@ -1,6 +1,6 @@
 # App móvil CAD (.NET MAUI, Android)
 
-App nativa del ciudadano y del sereno (ADR-01). En el Sprint 1 cubre: registro (HU01), ingreso por rol (HU02), preparación de la ubicación (HU06) y SOS con una única activación y ubicación actual (HU07, HU08). El modo sereno solo permite ingresar y salir; sus funciones llegan en el Sprint 2.
+App nativa del ciudadano y del sereno (ADR-01). En el Sprint 1 cubre: registro (HU01), ingreso por rol (HU02), preparación de la ubicación (HU06) y SOS con una única activación y ubicación actual (HU07, HU08). En el Sprint 2 se añade el modo sereno: estado operativo y envío periódico de la ubicación (HU18); los despachos llegan con HU21–HU24.
 
 ## Estructura
 
@@ -78,6 +78,13 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
    ```bash
    adb exec-out run-as pe.cadmvp.movil cat files/spike01.csv
    ```
+
+## Modo sereno (HU18, Sprint 2)
+
+- `Servicios/TurnoSereno.cs` (`ServicioTurnoSereno`): consulta el estado operativo en el servidor al abrir el modo sereno y, si ya era operativo, reanuda el envío. Activar exige el permiso de ubicación concedido (DP16-a): si no se ha decidido, se explica antes de pedirlo; si está denegado, se orienta a los ajustes.
+- Mientras está operativo envía una posición actual al activarse y otra cada intervalo indicado por el servidor (DP15: 30 s). Cada lectura tiene un límite de 10 s; sin posición o sin conexión se avisa y se intenta en el siguiente intervalo. Si el servidor responde que ya no está operativo, el envío se detiene.
+- Desactivar detiene primero el envío en el dispositivo y después lo comunica al servidor (CA02). Mientras está operativo no se puede salir de la sesión.
+- Solo con la app abierta y con conexión (SPIKE01); no hay servicio en primer plano.
 
 ## Integración continua
 
