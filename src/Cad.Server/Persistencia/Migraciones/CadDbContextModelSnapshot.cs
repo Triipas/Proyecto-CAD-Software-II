@@ -380,6 +380,27 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("MedicionesPresentacion", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.DispositivoSereno", b =>
+                {
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.HasKey("SerenoId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("DispositivosSereno", (string)null);
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.EstadoSereno", b =>
                 {
                     b.Property<Guid>("SerenoId")
@@ -695,6 +716,15 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.DispositivoSereno", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Serenos.Dominio.DispositivoSereno", "SerenoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

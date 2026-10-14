@@ -1,5 +1,6 @@
 using Cad.Server.Persistencia;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,9 @@ public sealed class FabricaCad : WebApplicationFactory<Program>, IAsyncLifetime
 
     public RegistrosCapturados Registros { get; } = new();
 
+    // ADR-07: doble de FCM. Las pruebas nunca contactan con Firebase.
+    public PushDePrueba Push { get; } = new();
+
     // Secretos de prueba generados en cada ejecución; nunca se guardan en el repositorio.
     public string ClaveFirmaJwt { get; } = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
     public string AdminCorreo { get; } = $"admin.{Guid.NewGuid():N}@cad.test";
@@ -29,6 +33,7 @@ public sealed class FabricaCad : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Jwt:ClaveFirma", ClaveFirmaJwt);
         builder.UseSetting("Admin:Email", AdminCorreo);
         builder.UseSetting("Admin:ClaveInicial", AdminClave);
+        builder.ConfigureTestServices(servicios => servicios.AddSingleton<Cad.Server.Compartido.IEnviadorPush>(Push));
         builder.ConfigureLogging(registro =>
         {
             registro.AddProvider(Registros);

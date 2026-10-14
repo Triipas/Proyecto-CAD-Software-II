@@ -4,6 +4,7 @@ using Cad.Server.Modulos.Cuentas;
 using Cad.Server.Modulos.Mediciones;
 using Cad.Server.Modulos.Serenos;
 using Cad.Server.Modulos.Cuentas.Aplicacion;
+using Cad.Server.Notificaciones;
 using Cad.Server.Persistencia;
 using Cad.Server.TiempoReal;
 using Microsoft.AspNetCore.DataProtection;
@@ -67,6 +68,9 @@ builder.Services.AddModuloSerenos(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<INotificador, NotificadorSignalR>();
 
+// HU21 (ADR-07): notificación push del despacho. Sin credencial configurada no se envía ninguna push.
+builder.Services.AddNotificacionesDespacho(builder.Configuration);
+
 var app = builder.Build();
 
 // Una sola instancia del servidor: las migraciones se aplican al arrancar (Plan de Arquitectura, 4).
@@ -100,6 +104,7 @@ app.MapModuloCasos();
 app.MapModuloMediciones();
 app.MapModuloSerenos();
 app.MapHub<CentralHub>(CentralHub.Ruta);
+app.MapHub<SerenoHub>(SerenoHub.Ruta);
 app.MapRazorPages();
 
 app.Run();

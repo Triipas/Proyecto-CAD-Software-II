@@ -6,6 +6,7 @@ using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Aplicacion;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
+using Cad.Server.Notificaciones;
 using Cad.Server.Persistencia;
 using Cad.Server.Tests.Infraestructura;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,98 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
         return await accion(db, alcance.ServiceProvider.GetRequiredService<INotificador>());
     }
 
+    // La primera petición de un reenvío confirma justo después de que este comprobara que la solicitud no existía.
+    private sealed class PrimeraPeticionConfirma(string conexion, Guid casoId, Guid serenoId, Guid operadorId, Guid idSolicitud)
+        : DbCommandInterceptor
+    {
+        private bool hecho;
+
+        public override async ValueTask<System.Data.Common.DbDataReader> ReaderExecutedAsync(System.Data.Common.DbCommand comando,
+            CommandExecutedEventData datos, System.Data.Common.DbDataReader lector, CancellationToken ct = default)
+        {
+            if (!hecho && comando.CommandText.Contains("FROM \"Asignaciones\""))
+            {
+                hecho = true;
+                await using var otra = new NpgsqlConnection(conexion);
+                await otra.OpenAsync(ct);
+                await using var orden = new NpgsqlCommand(
+                    "UPDATE \"Casos\" SET \"Estado\" = 'Asignada' WHERE \"Id\" = @caso; " +
+                    "INSERT INTO \"Asignaciones\" (\"Id\", \"CasoId\", \"SerenoId\", \"OperadorId\", \"IdSolicitud\", \"AsignadaEn\", \"Vigente\") " +
+                    "VALUES (@id, @caso, @sereno, @operador, @solicitud, now(), true)", otra);
+                orden.Parameters.AddWithValue("id", Guid.CreateVersion7());
+                orden.Parameters.AddWithValue("caso", casoId);
+                orden.Parameters.AddWithValue("sereno", serenoId);
+                orden.Parameters.AddWithValue("operador", operadorId);
+                orden.Parameters.AddWithValue("solicitud", idSolicitud);
+                await orden.ExecuteNonQueryAsync(ct);
+            }
+            return lector;
+        }
+    }
+
+    // HU20-CA08: un reenvío que pierde la carrera contra su propia primera petición devuelve la asignación ya
+    // registrada, no un rechazo («ya no está pendiente» o «el sereno no está disponible»).
+    [Fact]
+    public async Task Asignar_ReenvioQueLlegaJustoTrasConfirmarLaPrimera_DevuelveLaAsignacionExistente()
+    {
+        var casoId = await SosAsync();
+        var operador = await fabrica.CrearAsync(Roles.Operador);
+        var sereno = await fabrica.CrearAsync(Roles.Sereno);
+        var app = await fabrica.CrearClienteAppAsync(sereno);
+        Assert.Equal(HttpStatusCode.OK, (await app.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
+        var idSolicitud = Guid.NewGuid();
+        var conexion = await fabrica.ConBaseDatosAsync(db => Task.FromResult(db.Database.GetConnectionString()!));
+        await using var db = new CadDbContext(new DbContextOptionsBuilder<CadDbContext>().UseNpgsql(conexion)
+            .AddInterceptors(new PrimeraPeticionConfirma(conexion, casoId, sereno.Id, operador.Id, idSolicitud)).Options);
+        using var alcance = fabrica.Services.CreateScope();
+
+        var resultado = await new AsignarCaso(db, TimeProvider.System, alcance.ServiceProvider.GetRequiredService<INotificador>(),
+                new ColaAvisosDespacho(), NullLogger<AsignarCaso>.Instance)
+            .EjecutarAsync(casoId, sereno.Id, operador.Id, idSolicitud, CancellationToken.None);
+
+        Assert.IsType<ResultadoAsignacion.YaAsignado>(resultado);
+        Assert.Single(await fabrica.ConBaseDatosAsync(d => d.Asignaciones.Where(a => a.CasoId == casoId).ToListAsync()));
+    }
+
+    // Otro registro del mismo sereno llega primero desde otra conexión (la app abierta dos veces).
+    private sealed class RegistroSimultaneo(string conexion, Guid serenoId) : SaveChangesInterceptor
+    {
+        private bool hecho;
+
+        public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData datos,
+            InterceptionResult<int> resultado, CancellationToken ct = default)
+        {
+            if (!hecho)
+            {
+                hecho = true;
+                await using var otra = new NpgsqlConnection(conexion);
+                await otra.OpenAsync(ct);
+                await using var orden = new NpgsqlCommand(
+                    "INSERT INTO \"DispositivosSereno\" (\"SerenoId\", \"Token\", \"ActualizadoEn\") VALUES (@id, @token, now())", otra);
+                orden.Parameters.AddWithValue("id", serenoId);
+                orden.Parameters.AddWithValue("token", $"token-anterior-{Guid.NewGuid():N}");
+                await orden.ExecuteNonQueryAsync(ct);
+            }
+            return resultado;
+        }
+    }
+
+    [Fact]
+    public async Task RegistrarDispositivo_SiOtroRegistroDelMismoSerenoLlegaAntes_ActualizaEnLugarDeFallar()
+    {
+        var sereno = await fabrica.CrearAsync(Roles.Sereno);
+        var conexion = await fabrica.ConBaseDatosAsync(db => Task.FromResult(db.Database.GetConnectionString()!));
+        await using var db = new CadDbContext(new DbContextOptionsBuilder<CadDbContext>()
+            .UseNpgsql(conexion).AddInterceptors(new RegistroSimultaneo(conexion, sereno.Id)).Options);
+        var token = $"token-ficticio-{Guid.NewGuid():N}";
+
+        await new Cad.Server.Modulos.Serenos.Aplicacion.GestionarDispositivo(db, TimeProvider.System)
+            .RegistrarAsync(sereno.Id, token, CancellationToken.None);
+
+        var guardado = await fabrica.ConBaseDatosAsync(d => d.DispositivosSereno.AsNoTracking().SingleAsync(x => x.SerenoId == sereno.Id));
+        Assert.Equal(token, guardado.Token);
+    }
+
     private Task<Caso> CasoAsync(Guid casoId) =>
         fabrica.ConBaseDatosAsync(db => db.Casos.AsNoTracking().SingleAsync(c => c.Id == casoId));
 
@@ -104,7 +197,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
         Assert.Equal(HttpStatusCode.OK, (await app.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
 
         var resultado = await ConConflictosAsync(casoId, 1, (db, notificador) =>
-            new AsignarCaso(db, TimeProvider.System, notificador, NullLogger<AsignarCaso>.Instance)
+            new AsignarCaso(db, TimeProvider.System, notificador, new ColaAvisosDespacho(), NullLogger<AsignarCaso>.Instance)
                 .EjecutarAsync(casoId, sereno.Id, operador.Id, Guid.NewGuid(), CancellationToken.None));
 
         Assert.IsType<ResultadoAsignacion.Asignado>(resultado);
@@ -121,7 +214,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
         Assert.Equal(HttpStatusCode.OK, (await app.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
 
         var resultado = await ConConflictosAsync(casoId, int.MaxValue, (db, notificador) =>
-            new AsignarCaso(db, TimeProvider.System, notificador, NullLogger<AsignarCaso>.Instance)
+            new AsignarCaso(db, TimeProvider.System, notificador, new ColaAvisosDespacho(), NullLogger<AsignarCaso>.Instance)
                 .EjecutarAsync(casoId, sereno.Id, operador.Id, Guid.NewGuid(), CancellationToken.None));
 
         Assert.Equal(AsignarCaso.MotivoCambioConcurrente, Assert.IsType<ResultadoAsignacion.Rechazado>(resultado).Motivo);

@@ -105,7 +105,8 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         });
 
         // HU18 (Sprint 2): un sereno se activa y transmite posiciones con coordenadas precisas.
-        var serenoApp = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Sereno));
+        var cuentaSereno = await fabrica.CrearAsync(Roles.Sereno);
+        var serenoApp = await fabrica.CrearClienteAppAsync(cuentaSereno);
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PutAsJsonAsync("/api/sereno/estado",
             new Cad.Contratos.Serenos.SolicitudCambioEstadoOperativo(true, true))).StatusCode);
         var (latSereno, lonSereno) = (-12.0 - Random.Shared.Next(100_000, 999_999) / 1e7, -77.0 - Random.Shared.Next(100_000, 999_999) / 1e7);
@@ -113,6 +114,18 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
             latSereno.ToString(new CultureInfo("es-PE")), lonSereno.ToString(new CultureInfo("es-PE"))]);
         Assert.Equal(HttpStatusCode.Created, (await serenoApp.PostAsJsonAsync("/api/sereno/posiciones",
             new Cad.Contratos.Serenos.PosicionSerenoEnviada(latSereno, lonSereno, 9, DateTimeOffset.UtcNow))).StatusCode);
+
+        // HU21 (Sprint 2): el sereno registra el token de su dispositivo (ADR-07), recibe el despacho y lo consulta.
+        var tokenDispositivo = $"token-dispositivo-{sello}";
+        sensibles["tokens y cookies"].Add(tokenDispositivo);
+        Assert.Equal(HttpStatusCode.NoContent, (await serenoApp.PutAsJsonAsync("/api/sereno/dispositivo",
+            new Cad.Contratos.Serenos.SolicitudRegistroDispositivo(tokenDispositivo))).StatusCode);
+        await EnviarAsync(central.Navegador, $"/panel/central/sos/{sos.Id}?handler=Asignar", new()
+        {
+            ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.SerenoId"] = cuentaSereno.Id.ToString(),
+        });
+        Assert.True(await CentralDePrueba.EsperarAsync(() => fabrica.Push.Enviadas.Contains(tokenDispositivo)), "No se envió la push del despacho.");
+        Assert.Contains(referencia, await serenoApp.GetStringAsync("/api/sereno/despacho"));
 
         // Sellos de seguridad de Identity (equivalen a credenciales para revocar sesiones).
         sensibles["tokens y cookies"].AddRange(await fabrica.ConBaseDatosAsync(db => db.Users

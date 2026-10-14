@@ -41,8 +41,10 @@ public static class MauiProgram
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
         builder.Services.AddSingleton<ServicioTurnoSereno>();
+        builder.Services.AddSingleton<ICanalSereno, CanalSerenoSignalR>();
+        builder.Services.AddSingleton<ServicioDespacho>();
         builder.Services.AddTransient(s => new InicioSerenoVistaModelo(
-            s.GetRequiredService<ServicioTurnoSereno>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<ServicioTurnoSereno>(), s.GetRequiredService<ServicioDespacho>(), s.GetRequiredService<IAlmacenSesion>(),
             s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
         builder.Services.AddTransient<IngresoPagina>();
         builder.Services.AddTransient<RegistroPagina>();

@@ -34,6 +34,8 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/acceso-denegado` | HU03 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /panel/central` (sección urgente y su fragmento `?handler=Lista`) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /hubs/central/negotiate` y `/hubs/central` (tiempo real) | HU11 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /api/sereno/despacho`, `GET /api/sereno/casos/{id}` (solo el caso asignado al propio sereno), `PUT` y `DELETE /api/sereno/dispositivo` | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
+| `POST /hubs/sereno/negotiate` y `/hubs/sereno` (aviso del despacho; cada sereno solo recibe los suyos) | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -67,7 +69,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU18 | Activar mi estado operativo y compartir mi ubicación | Sereno | **Servidor verificado (13/10/2026):** estado y posiciones solo para Sereno; un ciudadano con su token no crea estado ni posiciones (`EstadoOperativoTests.CA05_*`). Mutación: sin la política de sereno, 10 pruebas fallan. App verificada (14/10/2026): sin permiso de ubicación no se activa ni se llama al servidor; la pantalla del sereno solo existe en el modo sereno. |
 | HU19 | Monitorear el estado y la disponibilidad de los serenos | Operador | **Verificada (14/10/2026):** sección de serenos y fragmento `?handler=Serenos` solo para Operador (página `/panel/central`); un administrador es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no los obtiene (`MonitoreoSerenosTests.CA05_*`). El aviso `SerenoActualizado` va solo al grupo de operadores del canal de la central. |
 | HU20 | Asignar un caso pendiente a un sereno disponible | Operador | **Verificada en el servidor (14/10/2026):** asignar (`POST /panel/central/sos/{id}?handler=Asignar`) solo para Operador; un administrador con token antifalsificación válido es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no asigna, sin crear registros (`AsignacionTests.CA09_*`). Mutación: sin la política de operador, 3 pruebas fallan. CA07 (reportes) pendiente del Sprint 3. |
-| HU21 | Recibir y consultar un despacho | Sereno | Pendiente (Sprint 2) |
+| HU21 | Recibir y consultar un despacho | Sereno | **Verificada en el servidor (14/10/2026):** solo el sereno con la asignación vigente consulta el caso; otro sereno recibe 404 y un ciudadano o un operador con su sesión son rechazados (`DespachoTests.CA04_*`). El aviso en tiempo real solo llega al sereno asignado (`CA01_*`). Datos limitados por DP06 (`CA05_*`). |
 | HU22 | Confirmar mi desplazamiento al caso | Sereno | Pendiente (Sprint 2) |
 | HU23 | Registrar el inicio de atención | Sereno; Operador (queda identificado como responsable) | Pendiente (Sprint 2) |
 | HU24 | Cerrar un caso con su tipificación y resultado | Sereno; Operador (queda identificado como responsable) | Pendiente (Sprint 2) |

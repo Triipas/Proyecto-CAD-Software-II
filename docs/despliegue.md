@@ -27,6 +27,8 @@ Entorno decidido en [ADR-06](decisiones/ADR-06-entorno-de-validacion.md): **Rend
    | `Admin__ClaveInicial` | Contraseña del administrador inicial (mínimo 8, con letra y número) |
 
    `Jwt__ClaveFirma` la genera Render (256 bits aleatorios). El resto de variables ya vienen en `render.yaml`.
+
+   **Notificaciones push (HU21, ADR-07), opcional:** cuando el equipo cree el proyecto de Firebase, añadir a mano en Render la variable secreta `Push__CredencialFcm` con el contenido JSON de la cuenta de servicio. Sin ella el servidor no envía ninguna push (el despacho sigue llegando por el canal en tiempo real y se consulta al abrir la app). No va en `render.yaml` ni en el repositorio.
 4. **Apply**. La primera compilación de la imagen tarda unos minutos; al arrancar, el servidor aplica las migraciones en Neon y crea el administrador inicial.
 5. Despliegues siguientes: automáticos al fusionar en `main`, **solo si la CI de GitHub pasa** (`autoDeployTrigger: checksPass`).
 
