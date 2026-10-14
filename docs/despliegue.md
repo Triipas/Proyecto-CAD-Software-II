@@ -38,14 +38,26 @@ Sustituir `SERVICIO` por la URL de Render (`https://cad-servidor-xxxx.onrender.c
 |---|---|---|
 | Proceso vivo | `https://SERVICIO/salud` | `Healthy` |
 | Base de datos accesible | `https://SERVICIO/salud/lista` | `Healthy` |
-| RNF09: sin HTTP en claro | `http://SERVICIO/panel/ingresar` | Redirección 307 a `https://` |
+| RNF09: sin HTTP en claro | `http://SERVICIO/panel/ingresar` | Redirección a `https://` (301 del borde de Render; 307 del servidor si la petición llega sin cifrar) |
 | RNF09: HSTS | Herramientas del navegador → respuesta de `/panel/ingresar` | Cabecera `Strict-Transport-Security` |
 | RNF09: tiempo real cifrado | Herramientas del navegador → red, en `/panel/central` | Conexión `wss://SERVICIO/hubs/central` |
-| HU02-CA05: credenciales solo cifradas | Ingresar como administrador; ver la petición `POST /panel/ingresar` | Va por `https://`; cookie `cad.panel` con `Secure`, `HttpOnly`, `SameSite=Strict` |
+| HU02-CA05: credenciales solo cifradas | Ingresar como administrador; ver la petición `POST /panel/ingresar` | Va por `https://`; cookies `cad.panel` y `.AspNetCore.Antiforgery.*` con `Secure`, `HttpOnly`, `SameSite=Strict` |
 | S1-T02: datos de prueba por rol | Como administrador, crear en «Cuentas institucionales» un operador y un sereno ficticios; registrar un ciudadano ficticio con `POST /api/cuentas/registro` | Los cuatro roles entran en su canal: panel (operador, administrador) y `POST /api/auth/token` (ciudadano, sereno) |
 | Flujo de extremo a extremo (S1-T21) | Operador en `/panel/central`; ciudadano emite `POST /api/sos` | El SOS aparece sin recargar, con aviso visual y sonoro |
 
 Registrar fecha, URL y resultado de cada comprobación en `docs/trazabilidad-sprint1.md`.
+
+### Resultados en `https://cad-servidor.onrender.com` (13/10/2026)
+
+| Comprobación | Resultado |
+|---|---|
+| Blueprint aplicado desde `main` (`73bffbe`, PR #5) | Servicio `cad-servidor` creado en Render (Free, Virginia) con Neon en `us-east-1` |
+| `/salud` y `/salud/lista` | 200 `Healthy`: proceso vivo, migraciones aplicadas en Neon |
+| `http://…/panel/ingresar` | 301 a `https://…/panel/ingresar` |
+| HSTS | `Strict-Transport-Security: max-age=2592000` |
+| Ingreso del administrador sembrado | Correcto (verificado por el equipo) |
+| Cookie antifalsificación | Sin `Secure` en ese despliegue; corregido después (misma política que `cad.panel`) y pendiente de comprobar tras el siguiente despliegue |
+| Datos por rol (S1-T02), tiempo real `wss://`, extremo a extremo (S1-T21) | Pendientes: requieren iniciar sesión y crear cuentas en el entorno publicado (equipo) |
 
 ## 4. Antes de una demostración o medición
 

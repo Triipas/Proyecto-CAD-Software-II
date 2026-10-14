@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Cad.Server.Tests.Infraestructura;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -34,16 +35,35 @@ public class DespliegueTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task RNF09_TrasElProxyConTls_SeAtiendeYLaCookieDelPanelEsSecure()
+    public async Task RNF09_TrasElProxyConTls_SeAtiendeYLasCookiesDelPanelSonSecure()
     {
+        // El tramo proxy → servidor es HTTP con X-Forwarded-Proto. Las cookies se gestionan a mano: un gestor
+        // de cookies no reenvía una cookie Secure por HTTP, y el navegador real sí las envía porque está en HTTPS.
         await using var servidor = ComoEnRender();
-        var navegador = Cliente(servidor, "http://cad-validacion.test");
+        var navegador = servidor.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("http://cad-validacion.test"), AllowAutoRedirect = false, HandleCookies = false,
+        });
         navegador.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
 
         var pagina = await navegador.GetAsync("/panel/ingresar");
         Assert.Equal(HttpStatusCode.OK, pagina.StatusCode);
+        var antifalsificacion = Assert.Single(pagina.Headers.GetValues("Set-Cookie"), c => c.StartsWith(".AspNetCore.Antiforgery."));
+        Assert.Contains("secure", antifalsificacion, StringComparison.OrdinalIgnoreCase);
 
-        var ingreso = await navegador.IngresarAlPanelAsync(fabrica.AdminCorreo, fabrica.AdminClave);
+        var token = Regex.Match(await pagina.Content.ReadAsStringAsync(),
+            "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"").Groups[1].Value;
+        using var formulario = new HttpRequestMessage(HttpMethod.Post, "/panel/ingresar")
+        {
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["Formulario.Correo"] = fabrica.AdminCorreo,
+                ["Formulario.Contrasena"] = fabrica.AdminClave,
+                ["__RequestVerificationToken"] = token,
+            }),
+        };
+        formulario.Headers.Add("Cookie", antifalsificacion.Split(';')[0]);
+        var ingreso = await navegador.SendAsync(formulario);
         var cookie = Assert.Single(ingreso.Headers.GetValues("Set-Cookie"), c => c.StartsWith("cad.panel="));
         Assert.Contains("secure", cookie, StringComparison.OrdinalIgnoreCase);
     }

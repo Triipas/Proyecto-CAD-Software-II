@@ -49,6 +49,10 @@ if (detrasDeProxy)
 builder.Services.AddAutenticacionCad(builder.Configuration, builder.Environment.IsDevelopment());
 builder.Services.AddAutorizacionCad();
 builder.Services.AddRazorPages(opciones => opciones.RootDirectory = "/Panel/Pages");
+// La cookie antifalsificación de los formularios del panel sigue la misma política que la de sesión:
+// Secure fuera de desarrollo (RNF09).
+builder.Services.AddAntiforgery(opciones => opciones.Cookie.SecurePolicy =
+    builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always);
 // El panel está en español: no convertir tildes ni «ñ» en entidades HTML.
 // <, >, & y comillas se siguen codificando, así que la protección frente a XSS no cambia.
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(opciones =>
