@@ -12,6 +12,7 @@ public sealed class CentralHub : Hub
     public const string Ruta = "/hubs/central";
     public const string GrupoOperadores = "operadores";
     public const string EventoSosRecibido = "SosRecibido";
+    public const string EventoSerenoActualizado = "SerenoActualizado";
 
     // RNF02: el panel confirma que el SOS ya se muestra. Sin efecto si la medición está desactivada.
     public Task ConfirmarPresentacion(Guid casoId, Modulos.Mediciones.RegistrarPresentacion registrar) =>
@@ -29,4 +30,7 @@ public sealed class NotificadorSignalR(IHubContext<CentralHub> central) : INotif
     // Solo el identificador: el panel lee el detalle de la base de datos (fuente de verdad).
     public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) =>
         central.Clients.Group(CentralHub.GrupoOperadores).SendAsync(CentralHub.EventoSosRecibido, new { id = casoId }, ct);
+
+    public Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct) =>
+        central.Clients.Group(CentralHub.GrupoOperadores).SendAsync(CentralHub.EventoSerenoActualizado, new { id = serenoId }, ct);
 }

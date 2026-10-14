@@ -1,0 +1,52 @@
+@model Cad.Server.Panel.Pages.Central.ListaSerenos
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+    var operativos = Model.Serenos.Count(s => s.Operativo);
+    var disponibles = Model.Serenos.Count(s => s.Disponible);
+}
+@* HU19 — fragmento de serenos. Lo genera el servidor en la carga inicial y al resincronizar (HU19-CA03). *@
+<div data-lista-serenos data-operativos="@operativos" data-disponibles="@disponibles">
+    @if (Model.Serenos.Count == 0)
+    {
+        <p class="texto-secundario">No hay cuentas de sereno activas.</p>
+    }
+    else
+    {
+        <p class="texto-secundario">@operativos operativo@(operativos == 1 ? "" : "s") · @disponibles disponible@(disponibles == 1 ? "" : "s")</p>
+        <ul class="lista-serenos">
+            @foreach (var sereno in Model.Serenos)
+            {
+                <li class="sereno @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
+                    data-sereno="@sereno.Id" data-nombre="@sereno.Nombre"
+                    data-disponible="@(sereno.Disponible ? "true" : "false")"
+                    data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)"
+                    data-hora="@(sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "")">
+                    <div class="sereno__cabecera">
+                        <span class="sereno__nombre">@sereno.Nombre</span>
+                        <span class="estado @(sereno.Operativo ? "estado--activa" : "estado--inactiva")">
+                            <partial name="_Icono" model="@(sereno.Operativo ? "exito" : "informacion")" />@(sereno.Operativo ? "Operativo" : "No operativo")
+                        </span>
+                        <span class="sereno__disponibilidad">@(sereno.Disponible ? "Disponible" : "No disponible")</span>
+                    </div>
+                    @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is { } recibida)
+                    {
+                        <button type="button" class="sos__ubicacion" data-ver-sereno aria-label="Ver en el mapa al sereno @sereno.Nombre">
+                            <partial name="_Icono" model="@("ubicacion")" />
+                            <span>Última ubicación a las @TimeZoneInfo.ConvertTime(recibida, Model.ZonaHoraria).ToString("HH:mm:ss", inv) · ± @sereno.PrecisionMetros?.ToString("0", inv) m · Ver en el mapa</span>
+                        </button>
+                    }
+                    else
+                    {
+                        @* HU19-CA04: sin posiciones recibidas (o sin compartirlas por no estar operativo) no hay
+                           marcador ni coordenadas inventadas. *@
+                        <p class="sos__ubicacion sos__ubicacion--no">
+                            <partial name="_Icono" model="@("advertencia")" />
+                            <span>Ubicación no disponible</span>
+                        </p>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>

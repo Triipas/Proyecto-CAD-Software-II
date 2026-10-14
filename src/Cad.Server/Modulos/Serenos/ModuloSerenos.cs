@@ -11,6 +11,7 @@ public static class ModuloSerenos
     {
         services.Configure<OpcionesSerenos>(configuracion.GetSection(OpcionesSerenos.Seccion));
         services.AddScoped<GestionarEstadoOperativo>();
+        services.AddScoped<Consultas.ConsultarSerenos>();
         return services;
     }
 

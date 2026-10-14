@@ -32,7 +32,7 @@ public abstract record ResultadoPosicion
 // HU18 — Activar mi estado operativo y compartir mi ubicación (S2-T02, S2-T03).
 // La autorización (solo sereno, CA05) la aplica la política de los endpoints.
 public sealed class GestionarEstadoOperativo(CadDbContext db, TimeProvider reloj, IOptions<OpcionesSerenos> opciones,
-    ILogger<GestionarEstadoOperativo> registro)
+    Compartido.INotificador notificador, ILogger<GestionarEstadoOperativo> registro)
 {
     public int IntervaloPosicionesSegundos => opciones.Value.IntervaloPosicionesSegundos;
 
@@ -75,7 +75,10 @@ public sealed class GestionarEstadoOperativo(CadDbContext db, TimeProvider reloj
             }
 
             if (cambio)
+            {
                 registro.LogInformation("Sereno {SerenoId} {Estado}.", serenoId, estado.Operativo ? "operativo" : "no operativo");
+                await AvisarAsync(serenoId); // HU18-CA04, HU19-CA03
+            }
             return new ResultadoCambioEstado.Correcto(estado);
         }
     }
@@ -108,6 +111,21 @@ public sealed class GestionarEstadoOperativo(CadDbContext db, TimeProvider reloj
 
         // Sin coordenadas en el registro (RNF07).
         registro.LogDebug("Posición del sereno {SerenoId} registrada.", serenoId);
+        await AvisarAsync(serenoId); // HU19-CA03: nueva posición
         return new ResultadoPosicion.Registrada();
+    }
+
+    // Aviso a la central solo después de confirmar la transacción. Si falla, el cambio ya está guardado:
+    // el panel lo recupera al resincronizarse (como los SOS de HU11).
+    private async Task AvisarAsync(Guid serenoId)
+    {
+        try
+        {
+            await notificador.SerenoActualizadoAsync(serenoId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogError(ex, "No se pudo avisar a la central del cambio del sereno {SerenoId}; se mostrará al resincronizar.", serenoId);
+        }
     }
 }

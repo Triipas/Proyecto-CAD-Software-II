@@ -7,4 +7,7 @@ public interface INotificador
 {
     // HU11: un SOS nuevo quedó registrado y debe aparecer en la sección urgente de la central.
     Task SosRegistradoAsync(Guid casoId, CancellationToken ct);
+
+    // HU19-CA03 (y HU18-CA04): cambió el estado operativo, la posición o la disponibilidad de un sereno.
+    Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct);
 }

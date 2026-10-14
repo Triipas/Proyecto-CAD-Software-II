@@ -247,6 +247,25 @@ public class TurnoSerenoTests
     }
 
     [Fact]
+    public async Task TrasVolverAIngresar_NoSeHeredaLaSesionTerminada()
+    {
+        // Defecto encontrado en el emulador (14/10/2026): el servicio vive toda la vida de la app.
+        sesiones.Sesion = new SesionApp("token-viejo", "Sereno", Inicio.AddMinutes(-1));
+        var turno = Turno();
+        await turno.ActivarAsync();
+        Assert.True(turno.SesionTerminada);
+
+        await turno.ReiniciarAsync(); // salir
+        sesiones.Sesion = new SesionApp("token-nuevo", "Sereno", Inicio.AddHours(8)); // volver a ingresar
+        await turno.CargarAsync();
+
+        Assert.False(turno.SesionTerminada);
+        Assert.Null(turno.Error);
+        Assert.Equal(ResultadoActivacion.Activado, await turno.ActivarAsync());
+        await turno.DetenerAsync();
+    }
+
+    [Fact]
     public async Task DobleToqueEnActivar_SoloUnCambioDeEstado()
     {
         var bloqueo = new TaskCompletionSource();
@@ -316,6 +335,26 @@ public class SerenoVistaModeloTests
         Assert.False(vm.Operativo);
         Assert.Equal(1, ajustes);
         Assert.Empty(api.CambiosEstado);
+    }
+
+    [Fact]
+    public async Task SesionCaducada_SalirYVolverAIngresar_LaMismaPantallaVuelveAPermitirActivar()
+    {
+        // Shell reutiliza la página (y su modelo de vista) entre sesiones.
+        sesiones.Sesion = new SesionApp("t", "Sereno", Inicio.AddMinutes(-1)); // caducada según el reloj simulado
+        var vm = Crear(out var turno);
+        await vm.Alternar.EjecutarAsync();
+        Assert.True(vm.SesionTerminada);
+        Assert.False(vm.Alternar.CanExecute(null));
+
+        await vm.Salir.EjecutarAsync();
+        sesiones.Sesion = new SesionApp("t2", "Sereno", Inicio.AddHours(8));
+        await vm.AlAparecerAsync();
+
+        Assert.False(vm.SesionTerminada);
+        Assert.False(vm.HayError);
+        Assert.True(vm.Alternar.CanExecute(null));
+        await turno.DetenerAsync();
     }
 
     [Fact]
