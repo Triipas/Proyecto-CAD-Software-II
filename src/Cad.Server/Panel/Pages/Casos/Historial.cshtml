@@ -7,12 +7,16 @@
     var h = Model.Historial;
     string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
 }
-<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : "/panel/central")">← Volver al caso</a></p>
+<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : "/panel/central")">@(h.Origen == "SOS" ? "← Volver al caso" : "← Volver a la central")</a></p>
 <div class="pagina__encabezado">
     <div>
         <p class="sobretitulo">Operador · @h.Origen @h.Estado</p>
         <h1 class="titulo">Historial del caso</h1>
         <p class="texto-secundario">Registrado el @Local(h.RegistradoEn). Identificador: @h.Id</p>
+        @if (h.HechoOcurridoEn is { } hecho)
+        {
+            <p class="texto-secundario" data-hecho>Hecho ocurrido aproximadamente el @TimeZoneInfo.ConvertTime(hecho, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv), según el ciudadano.</p>
+        }
     </div>
 </div>
 
@@ -29,7 +33,7 @@
 }
 
 <section class="superficie" aria-labelledby="titulo-secuencia">
-    <h2 id="titulo-secuencia" class="central__titulo">Secuencia de atención · @h.Entradas.Count actuaciones</h2>
+    <h2 id="titulo-secuencia" class="central__titulo">Secuencia de atención · @h.Entradas.Count @(h.Entradas.Count == 1 ? "actuación" : "actuaciones")</h2>
     @* HU27-CA01/CA03: actuaciones en orden, con responsable y marca de tiempo. CA05: sin acompañamiento. *@
     <ol class="historial" data-historial>
         @foreach (var entrada in h.Entradas)

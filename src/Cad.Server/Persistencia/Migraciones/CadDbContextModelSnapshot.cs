@@ -225,6 +225,58 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoriaOriginalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("FuenteUbicacion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<double?>("LatitudHecho")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("LongitudHecho")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("OcurridoAproximadamenteEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("PrecisionHechoMetros")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("ReferenciaHecho")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("CategoriaOriginalId");
+
+                    b.ToTable("DetallesReporte", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DetallesReporte_Descripcion", "length(btrim(\"Descripcion\")) > 0");
+
+                            t.HasCheckConstraint("CK_DetallesReporte_Latitud", "\"LatitudHecho\" BETWEEN -90 AND 90");
+
+                            t.HasCheckConstraint("CK_DetallesReporte_Longitud", "\"LongitudHecho\" BETWEEN -180 AND 180");
+
+                            t.HasCheckConstraint("CK_DetallesReporte_Precision", "\"PrecisionHechoMetros\" > 0");
+
+                            t.HasCheckConstraint("CK_DetallesReporte_Ubicacion", "(\"FuenteUbicacion\" = 'Texto' AND \"LatitudHecho\" IS NULL AND \"LongitudHecho\" IS NULL AND \"PrecisionHechoMetros\" IS NULL AND \"ReferenciaHecho\" IS NOT NULL AND length(btrim(\"ReferenciaHecho\")) > 0) OR (\"FuenteUbicacion\" IN ('Mapa', 'PosicionActual') AND \"LatitudHecho\" IS NOT NULL AND \"LongitudHecho\" IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EventoCaso", b =>
                 {
                     b.Property<Guid>("Id")
@@ -730,6 +782,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("ResponsableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", "CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaOriginalId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

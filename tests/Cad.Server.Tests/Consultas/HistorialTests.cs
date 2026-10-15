@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 using Cad.Server.Modulos.Casos.Dominio;
@@ -9,8 +10,8 @@ using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests.Consultas;
 
-// HU27 — Consultar el historial de un caso (S3-T11), para los SOS. Las actuaciones de los reportes se añaden con
-// HU14–HU17. Datos ficticios.
+// HU27 — Consultar el historial de un caso (S3-T11), para los SOS y el registro de los reportes (HU10). Las demás
+// actuaciones de los reportes se añaden con HU14–HU17. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public partial class HistorialTests(FabricaCad fabrica)
 {
@@ -90,6 +91,27 @@ public partial class HistorialTests(FabricaCad fabrica)
         Assert.Contains("· Prueba Sereno", html);
         Assert.Contains("Hecho: Discusión entre vecinos · Referencia indicada por el ciudadano: Frente al parque", html);
         Assert.Equal(9, Regex.Matches(html, "<time datetime=").Count);
+    }
+
+    [Fact]
+    public async Task CA01_UnReporte_MuestraSuRegistroConLaCategoriaDelCiudadanoYLaUbicacionDelHecho()
+    {
+        var ciudadano = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Ciudadano));
+        var ocurrido = new DateTimeOffset(2026, 10, 14, 18, 40, 0, TimeSpan.FromHours(-5));
+        var reporte = (await (await ciudadano.PostAsJsonAsync("/api/reportes", new SolicitudRegistroReporte(Guid.NewGuid(),
+            new Guid("0199e2b0-0000-7000-8000-000000000002"), "Descripción ficticia", ocurrido,
+            new UbicacionHecho(FuentesUbicacionHecho.Texto, null, null, null, "Esquina del mercado")))).Content.ReadFromJsonAsync<RespuestaReporte>())!;
+        var (operador, _) = await PanelAsync();
+
+        var html = await operador.GetStringAsync(Ruta(reporte.Id));
+
+        // La categoría del ciudadano figura en el registro, no como una clasificación aparte.
+        Assert.Equal(["Reporte registrado como «Robo»"], Actuaciones(html));
+        Assert.Contains("Operador · Reporte Recibido", html);
+        Assert.Contains("Ubicación del hecho: referencia textual · Referencia: Esquina del mercado", html);
+        Assert.Contains("Hecho ocurrido aproximadamente el 14/10/2026 18:40", html);
+        Assert.Contains("· Prueba Ciudadano", html);
+        Assert.Contains("Volver a la central", html);
     }
 
     [Fact]

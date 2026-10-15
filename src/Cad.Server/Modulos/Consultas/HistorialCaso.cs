@@ -13,7 +13,9 @@ public sealed record HistorialCaso(
     string Estado,
     DateTimeOffset RegistradoEn,
     ResultadoFinal? Resultado,
-    IReadOnlyList<EntradaHistorial> Entradas);
+    IReadOnlyList<EntradaHistorial> Entradas,
+    // HU10: fecha y hora aproximadas del hecho que indicó el ciudadano (solo reportes).
+    DateTimeOffset? HechoOcurridoEn = null);
 
 // CA02: un caso finalizado queda identificado con su resultado.
 public sealed record ResultadoFinal(string Estado, string Descripcion, DateTimeOffset En);
@@ -38,19 +40,28 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             return nombre;
         }
 
-        var entradas = new List<EntradaHistorial>
+        var entradas = new List<EntradaHistorial>();
+        DateTimeOffset? hechoOcurridoEn = null;
+        if (caso.Origen == OrigenCaso.Reporte)
         {
-            new(caso.RegistradoEn, caso.Origen == OrigenCaso.Sos ? "SOS emitido" : "Caso registrado", await NombreAsync(caso.CiudadanoId),
-                caso.UbicacionDisponible ? "Con ubicación del dispositivo" : "Ubicación no disponible"),
-        };
+            // HU10: el reporte con la categoría que eligió el ciudadano (CA07) y la ubicación del hecho (CA03).
+            var detalle = await db.DetallesReporte.AsNoTracking().SingleAsync(d => d.CasoId == casoId, ct);
+            hechoOcurridoEn = detalle.OcurridoAproximadamenteEn;
+            entradas.Add(new(caso.RegistradoEn, $"Reporte registrado como «{await CategoriaAsync(detalle.CategoriaOriginalId, ct)}»",
+                await NombreAsync(caso.CiudadanoId), Unir(TextoFuente(detalle.FuenteUbicacion), detalle.ReferenciaHecho is { } r ? $"Referencia: {r}" : null)));
+        }
+        else
+            entradas.Add(new(caso.RegistradoEn, "SOS emitido", await NombreAsync(caso.CiudadanoId),
+                caso.UbicacionDisponible ? "Con ubicación del dispositivo" : "Ubicación no disponible"));
 
         // HU12: intentos de contacto con su resultado.
         foreach (var intento in await db.IntentosContacto.AsNoTracking().Where(i => i.CasoId == casoId).ToListAsync(ct))
             entradas.Add(new(intento.RegistradoEn, $"Intento de contacto: {TextoResultado(intento.Resultado)}", await NombreAsync(intento.OperadorId),
                 Unir(intento.InformacionHecho is { } h ? $"Hecho: {h}" : null, intento.ReferenciaUbicacion is { } r ? $"Referencia indicada por el ciudadano: {r}" : null)));
 
-        // HU13: clasificación.
-        if (caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
+        // HU13: clasificación. La de un reporte al registrarse es la del ciudadano y ya figura en su registro.
+        if (caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn
+            && !(caso.Origen == OrigenCaso.Reporte && clasificador == caso.CiudadanoId))
             entradas.Add(new(clasificadoEn, $"Clasificado como «{await CategoriaAsync(categoria, ct)}»", await NombreAsync(clasificador), null));
 
         // HU20: asignaciones (y su fin, al cerrar el caso).
@@ -80,14 +91,21 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);
         }
 
-        return new HistorialCaso(caso.Id, caso.Origen == OrigenCaso.Sos ? "SOS" : caso.Origen.ToString(), EstadosCaso.Texto(caso.Estado),
+        return new HistorialCaso(caso.Id, caso.Origen == OrigenCaso.Sos ? "SOS" : "Reporte", EstadosCaso.Texto(caso.Estado),
             caso.RegistradoEn, resultado,
             // Orden temporal; a igual momento, el orden en que se añadieron (registro, cierre antes que sus notas).
-            entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList());
+            entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn);
     }
 
     private async Task<string> CategoriaAsync(Guid id, CancellationToken ct) =>
         await db.CategoriasIncidencia.AsNoTracking().Where(c => c.Id == id).Select(c => c.Nombre).SingleOrDefaultAsync(ct) ?? "Categoría no disponible";
+
+    private static string TextoFuente(string fuente) => fuente switch
+    {
+        Cad.Contratos.Reportes.FuentesUbicacionHecho.Mapa => "Ubicación del hecho: punto en el mapa",
+        Cad.Contratos.Reportes.FuentesUbicacionHecho.PosicionActual => "Ubicación del hecho: posición actual elegida por el ciudadano",
+        _ => "Ubicación del hecho: referencia textual",
+    };
 
     private static string TextoResultado(ResultadoContacto resultado) => resultado switch
     {

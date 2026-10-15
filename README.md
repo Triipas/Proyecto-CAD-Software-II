@@ -86,6 +86,8 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 | `POST /api/auth/token` | Anónimo (ciudadano y sereno) | HU02 | 200 token JWT · 401 correo o contraseña incorrectos · 403 cuenta desactivada o rol que debe usar el panel |
 | `GET /api/cuentas/yo` | Cualquier cuenta autenticada (JWT o cookie del panel) | HU02 | 200 id, nombres, apellidos y rol · 401 sin sesión |
 | `POST /api/sos` | Ciudadano | HU07, HU08 | 201 SOS registrado (Pendiente, con o sin ubicación) · 200 mismo SOS ante un reintento con el mismo `idSolicitud` · 400 falta `idSolicitud` · 401/403 otros perfiles |
+| `POST /api/reportes` | Ciudadano | HU10 | 201 reporte registrado («Recibido») · 200 mismo reporte ante un reintento con el mismo `idSolicitud` · 400 falta o no es válido algún dato (tipo, descripción, fecha y hora no futuras, ubicación del hecho), con el motivo por campo · 401/403 otros perfiles |
+| `GET /api/reportes/categorias` | Ciudadano | HU10 | 200 catálogo de tipos de incidencia (DP07) |
 | `GET /api/sereno/estado` | Sereno | HU18 | 200 estado operativo, hora del último cambio e intervalo de envío de posiciones (DP15: 30 s, `Serenos:IntervaloPosicionesSegundos`) |
 | `PUT /api/sereno/estado` | Sereno | HU18 | 200 estado actualizado · 400 activación sin permiso de ubicación declarado (DP16-a); desactivarse siempre está permitido (DP16-b) |
 | `POST /api/sereno/posiciones` | Sereno | HU18 | 201 posición registrada · 200 reenvío de la misma posición · 409 sereno no operativo (no se registra) · 400 posición inválida |

@@ -27,6 +27,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/auth/token` (la app; el caso de uso solo emite token a ciudadano y sereno) | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `GET /api/cuentas/yo` | HU02 | ✘ | ✔ | ✔ | ✔ | ✔ |
 | `POST /api/sos` | HU07, HU08 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `POST /api/reportes` y `GET /api/reportes/categorias` | HU10 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET` y `PUT /api/sereno/estado`, `POST /api/sereno/posiciones` (estado operativo y posiciones del sereno) | HU18 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET /api/mediciones/presentacion` (resultados de RNF02; 404 si la medición está apagada) | RNF02 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -65,7 +66,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU07 | Emitir un SOS con una única activación | Ciudadano | **Verificada (13/10/2026).** Servidor: `POST /api/sos` solo para Ciudadano; las solicitudes directas de los otros perfiles no crean casos (`SosTests.HU03_*`). App: el SOS solo está en el modo ciudadano; un rechazo 401 o 403 del servidor no se reintenta ni se presenta como registrado (`EmisorSosTests.RechazoDelServidor_*`); verificado en emulador contra el servidor ([app-movil.md](app-movil.md)). |
 | HU08 | Asociar la ubicación actual al SOS | Ciudadano | **Verificada (13/10/2026)** junto con HU07 (misma operación). En la app, la ubicación solo se lee con el permiso del ciudadano ya concedido (`EmisorSosTests.HU08_*`); verificado en emulador con y sin ubicación. |
 | HU09 | Cancelar un SOS pendiente | Ciudadano | Pendiente (Sprint 5) |
-| HU10 | Registrar un reporte de incidencia | Ciudadano | Pendiente (Sprint 3) |
+| HU10 | Registrar un reporte de incidencia | Ciudadano | **Verificada en el servidor (14/10/2026):** `POST /api/reportes` y `GET /api/reportes/categorias` solo para Ciudadano; las solicitudes directas de un anónimo, un operador, un sereno o un administrador no crean casos (`ReporteTests.HU03_*`, matriz). La app se verifica en el bloque 3. |
 | HU11 | Recibir los SOS en la sección de atención urgente | Operador | **Verificada (13/10/2026):** página, fragmento y canal en tiempo real solo para Operador; un ciudadano con JWT o una conexión sin sesión no pueden conectarse al hub (`RecepcionSosTests.HU03_*`). |
 | HU12 | Contactar al ciudadano y registrar la verificación del SOS | Operador | **Verificada (13/10/2026):** consulta y registro solo para Operador; un administrador con token antifalsificación válido, o un ciudadano o un sereno con su token, no ven el teléfono ni registran intentos (`VerificacionSosTests.CA08_*`). Prueba de mutación: sin la política de operador, 9 pruebas fallan. |
 | HU13 | Clasificar un SOS después de su registro | Operador | **Verificada en el servidor (14/10/2026):** clasificar (`POST /panel/central/sos/{id}?handler=Clasificar`) solo para Operador (DP09); un administrador con token antifalsificación válido es redirigido a «acceso denegado» y la app de un sereno o un ciudadano no clasifica, sin modificar el caso (`ClasificacionTests.DP09_*`). |

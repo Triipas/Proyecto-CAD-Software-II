@@ -1,11 +1,11 @@
 namespace Cad.Server.Modulos.Casos.Dominio;
 
-// Caso común a SOS y reportes (Plan de Arquitectura, 9.1). En el Sprint 1 solo existe el origen SOS.
-public enum OrigenCaso { Sos }
+// Caso común a SOS y reportes (Plan de Arquitectura, 9.1). El Sprint 3 añade el origen «Reporte» (HU10).
+public enum OrigenCaso { Sos, Reporte }
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
-// (HU22), «En atención» (HU23) y «Cerrada» (HU24).
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada }
+// (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte.
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido }
 
 public static class EstadosCaso
 {
@@ -17,6 +17,7 @@ public static class EstadosCaso
         EstadoCaso.EnCamino => "En camino",
         EstadoCaso.EnAtencion => "En atención",
         EstadoCaso.Cerrada => "Cerrada",
+        EstadoCaso.Recibido => "Recibido",
         _ => estado.ToString(),
     };
 }
@@ -100,6 +101,21 @@ public sealed class Caso
     }
 
     private Caso() { } // EF Core
+
+    // HU10-CA01: un reporte nace «Recibido». La categoría que elige el ciudadano es la del caso desde el inicio (el
+    // ciudadano queda como responsable de esa primera clasificación); HU14 podrá corregirla conservando la original.
+    public static Caso RegistrarReporte(Guid ciudadanoId, Guid idSolicitud, Guid categoriaId, DateTimeOffset ahora) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        Origen = OrigenCaso.Reporte,
+        Estado = EstadoCaso.Recibido,
+        CiudadanoId = ciudadanoId,
+        IdSolicitud = idSolicitud,
+        RegistradoEn = ahora,
+        CategoriaId = categoriaId,
+        ClasificadoPor = ciudadanoId,
+        ClasificadoEn = ahora,
+    };
 
     public static Caso EmitirSos(Guid ciudadanoId, Guid idSolicitud, Posicion? ubicacionActual, DateTimeOffset ahora)
     {

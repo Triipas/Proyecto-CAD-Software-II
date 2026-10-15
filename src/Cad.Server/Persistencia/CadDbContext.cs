@@ -20,6 +20,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
+    public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
@@ -122,6 +123,30 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cierre.HasOne<Caso>().WithOne().HasForeignKey<CierreCaso>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
             cierre.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaId).OnDelete(DeleteBehavior.Restrict);
             cierre.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ResponsableId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU10: datos del reporte, uno por caso. La base de datos garantiza los campos obligatorios (CA02) y que la
+        // ubicación del hecho sea un punto completo o una referencia sin coordenadas (CA03, CA04; DP10).
+        builder.Entity<DetalleReporte>(detalle =>
+        {
+            detalle.ToTable("DetallesReporte", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_DetallesReporte_Descripcion", "length(btrim(\"Descripcion\")) > 0");
+                tabla.HasCheckConstraint("CK_DetallesReporte_Ubicacion",
+                    "(\"FuenteUbicacion\" = 'Texto' AND \"LatitudHecho\" IS NULL AND \"LongitudHecho\" IS NULL AND \"PrecisionHechoMetros\" IS NULL " +
+                    "AND \"ReferenciaHecho\" IS NOT NULL AND length(btrim(\"ReferenciaHecho\")) > 0) OR " +
+                    "(\"FuenteUbicacion\" IN ('Mapa', 'PosicionActual') AND \"LatitudHecho\" IS NOT NULL AND \"LongitudHecho\" IS NOT NULL)");
+                tabla.HasCheckConstraint("CK_DetallesReporte_Latitud", "\"LatitudHecho\" BETWEEN -90 AND 90");
+                tabla.HasCheckConstraint("CK_DetallesReporte_Longitud", "\"LongitudHecho\" BETWEEN -180 AND 180");
+                tabla.HasCheckConstraint("CK_DetallesReporte_Precision", "\"PrecisionHechoMetros\" > 0");
+            });
+            detalle.HasKey(d => d.CasoId);
+            detalle.Property(d => d.Descripcion).HasMaxLength(DetalleReporte.MaximoDescripcion);
+            detalle.Property(d => d.ReferenciaHecho).HasMaxLength(DetalleReporte.MaximoReferencia);
+            detalle.Property(d => d.FuenteUbicacion).HasMaxLength(20);
+            detalle.HasOne<Caso>().WithOne().HasForeignKey<DetalleReporte>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
+            // CA07: la categoría original también es del catálogo.
+            detalle.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(d => d.CategoriaOriginalId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU20: asignaciones. Una sola vigente por caso y una sola vigente por sereno (CA04, CA05, RNF08).
