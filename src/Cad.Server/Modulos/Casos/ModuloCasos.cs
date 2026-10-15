@@ -18,6 +18,7 @@ public static class ModuloCasos
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();
+        services.AddScoped<Modulos.Consultas.ConsultarHistorialCaso>();
         return services;
     }
 

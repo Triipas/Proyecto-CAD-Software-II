@@ -1,0 +1,56 @@
+@page "/panel/casos/{id:guid}/historial"
+@model Cad.Server.Panel.Pages.Casos.HistorialModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Historial del caso";
+    var inv = CultureInfo.InvariantCulture;
+    var h = Model.Historial;
+    string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
+}
+<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : "/panel/central")">← Volver al caso</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador · @h.Origen @h.Estado</p>
+        <h1 class="titulo">Historial del caso</h1>
+        <p class="texto-secundario">Registrado el @Local(h.RegistradoEn). Identificador: @h.Id</p>
+    </div>
+</div>
+
+@* HU27-CA02: un caso finalizado queda identificado con su resultado. *@
+@if (h.Resultado is { } resultado)
+{
+    <div class="aviso aviso--exito" data-resultado-final>
+        <partial name="_Icono" model="@("exito")" />
+        <div>
+            <p class="aviso__titulo">@resultado.Estado el @Local(resultado.En)</p>
+            <p class="aviso__texto">@resultado.Descripcion</p>
+        </div>
+    </div>
+}
+
+<section class="superficie" aria-labelledby="titulo-secuencia">
+    <h2 id="titulo-secuencia" class="central__titulo">Secuencia de atención · @h.Entradas.Count actuaciones</h2>
+    @* HU27-CA01/CA03: actuaciones en orden, con responsable y marca de tiempo. CA05: sin acompañamiento. *@
+    <ol class="historial" data-historial>
+        @foreach (var entrada in h.Entradas)
+        {
+            <li class="historial__elemento" data-actuacion>
+                <p class="historial__cabecera">
+                    <span class="estado @(entrada.Interna ? "estado--inactiva" : "estado--activa")">@entrada.Actuacion</span>
+                    <time datetime="@entrada.En.ToString("O", inv)">@Local(entrada.En)</time>
+                    <span class="texto-secundario">· @entrada.Responsable</span>
+                </p>
+                @if (entrada.Detalle is not null)
+                {
+                    <p class="historial__texto">
+                        @if (entrada.Interna)
+                        {
+                            <strong>Solo personal autorizado:</strong>
+                        }
+                        @entrada.Detalle
+                    </p>
+                }
+            </li>
+        }
+    </ol>
+</section>

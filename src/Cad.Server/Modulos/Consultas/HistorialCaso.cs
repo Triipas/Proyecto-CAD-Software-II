@@ -1,0 +1,105 @@
+using Cad.Server.Modulos.Casos.Dominio;
+using Cad.Server.Persistencia;
+using Microsoft.EntityFrameworkCore;
+
+namespace Cad.Server.Modulos.Consultas;
+
+// HU27 — Consultar el historial de un caso (S3-T11). Solo lectura y solo para operadores (CA06, lo aplica la página).
+// Reúne, en orden temporal, las actuaciones registradas por las demás historias de casos, cada una con su responsable y
+// su marca de tiempo (CA01, CA03). No incluye posiciones ni sesiones de acompañamiento (CA05: son de HU39).
+public sealed record HistorialCaso(
+    Guid Id,
+    string Origen,
+    string Estado,
+    DateTimeOffset RegistradoEn,
+    ResultadoFinal? Resultado,
+    IReadOnlyList<EntradaHistorial> Entradas);
+
+// CA02: un caso finalizado queda identificado con su resultado.
+public sealed record ResultadoFinal(string Estado, string Descripcion, DateTimeOffset En);
+
+// Interna = solo para el personal autorizado (CA04): por ejemplo, las notas internas del cierre.
+public sealed record EntradaHistorial(DateTimeOffset En, string Actuacion, string Responsable, string? Detalle, bool Interna = false);
+
+public sealed class ConsultarHistorialCaso(CadDbContext db)
+{
+    public async Task<HistorialCaso?> EjecutarAsync(Guid casoId, CancellationToken ct)
+    {
+        var caso = await db.Casos.AsNoTracking().SingleOrDefaultAsync(c => c.Id == casoId, ct);
+        if (caso is null)
+            return null;
+
+        var nombres = new Dictionary<Guid, string>();
+        async Task<string> NombreAsync(Guid usuario)
+        {
+            if (!nombres.TryGetValue(usuario, out var nombre))
+                nombres[usuario] = nombre = await db.Users.AsNoTracking().Where(u => u.Id == usuario)
+                    .Select(u => u.Nombres + " " + u.Apellidos).SingleOrDefaultAsync(ct) ?? "Cuenta no disponible";
+            return nombre;
+        }
+
+        var entradas = new List<EntradaHistorial>
+        {
+            new(caso.RegistradoEn, caso.Origen == OrigenCaso.Sos ? "SOS emitido" : "Caso registrado", await NombreAsync(caso.CiudadanoId),
+                caso.UbicacionDisponible ? "Con ubicación del dispositivo" : "Ubicación no disponible"),
+        };
+
+        // HU12: intentos de contacto con su resultado.
+        foreach (var intento in await db.IntentosContacto.AsNoTracking().Where(i => i.CasoId == casoId).ToListAsync(ct))
+            entradas.Add(new(intento.RegistradoEn, $"Intento de contacto: {TextoResultado(intento.Resultado)}", await NombreAsync(intento.OperadorId),
+                Unir(intento.InformacionHecho is { } h ? $"Hecho: {h}" : null, intento.ReferenciaUbicacion is { } r ? $"Referencia indicada por el ciudadano: {r}" : null)));
+
+        // HU13: clasificación.
+        if (caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
+            entradas.Add(new(clasificadoEn, $"Clasificado como «{await CategoriaAsync(categoria, ct)}»", await NombreAsync(clasificador), null));
+
+        // HU20: asignaciones (y su fin, al cerrar el caso).
+        foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))
+        {
+            entradas.Add(new(asignacion.AsignadaEn, $"Asignado al sereno {await NombreAsync(asignacion.SerenoId)}", await NombreAsync(asignacion.OperadorId), null));
+            if (asignacion.FinalizadaEn is { } fin)
+                entradas.Add(new(fin, "Asignación finalizada", await NombreAsync(asignacion.SerenoId), "El sereno queda libre para otro caso."));
+        }
+
+        // HU22 y HU23: avances registrados como eventos.
+        foreach (var evento in await db.EventosCaso.AsNoTracking()
+                     .Where(e => e.CasoId == casoId && (e.Tipo == TipoEventoCaso.DesplazamientoConfirmado || e.Tipo == TipoEventoCaso.AtencionIniciada))
+                     .ToListAsync(ct))
+            entradas.Add(new(evento.OcurridoEn, evento.Tipo == TipoEventoCaso.DesplazamientoConfirmado ? "En camino" : "Inicio de atención",
+                await NombreAsync(evento.ActorId), null));
+
+        // HU24: cierre, con el resultado público y, aparte, las notas internas (CA04).
+        ResultadoFinal? resultado = null;
+        if (await db.CierresCaso.AsNoTracking().SingleOrDefaultAsync(c => c.CasoId == casoId, ct) is { } cierre)
+        {
+            var tipificacion = await CategoriaAsync(cierre.CategoriaId, ct);
+            var responsable = await NombreAsync(cierre.ResponsableId);
+            entradas.Add(new(cierre.CerradoEn, $"Caso cerrado · tipificación «{tipificacion}»", responsable, $"Resultado público: {cierre.ResultadoPublico}"));
+            if (cierre.NotasInternas is { } notas)
+                entradas.Add(new(cierre.CerradoEn, "Notas internas del cierre", responsable, notas, Interna: true));
+            resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);
+        }
+
+        return new HistorialCaso(caso.Id, caso.Origen == OrigenCaso.Sos ? "SOS" : caso.Origen.ToString(), EstadosCaso.Texto(caso.Estado),
+            caso.RegistradoEn, resultado,
+            // Orden temporal; a igual momento, el orden en que se añadieron (registro, cierre antes que sus notas).
+            entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList());
+    }
+
+    private async Task<string> CategoriaAsync(Guid id, CancellationToken ct) =>
+        await db.CategoriasIncidencia.AsNoTracking().Where(c => c.Id == id).Select(c => c.Nombre).SingleOrDefaultAsync(ct) ?? "Categoría no disponible";
+
+    private static string TextoResultado(ResultadoContacto resultado) => resultado switch
+    {
+        ResultadoContacto.Contactado => "Contactado",
+        ResultadoContacto.SinRespuesta => "Sin respuesta",
+        ResultadoContacto.NoFuePosibleComunicar => "No fue posible comunicar",
+        _ => resultado.ToString(),
+    };
+
+    private static string? Unir(params string?[] partes)
+    {
+        var presentes = partes.Where(p => p is not null).ToList();
+        return presentes.Count == 0 ? null : string.Join(" · ", presentes);
+    }
+}
