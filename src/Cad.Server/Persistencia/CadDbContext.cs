@@ -21,6 +21,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
+    public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
@@ -147,6 +148,19 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             detalle.HasOne<Caso>().WithOne().HasForeignKey<DetalleReporte>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
             // CA07: la categoría original también es del catálogo.
             detalle.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(d => d.CategoriaOriginalId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU14-CA03: correcciones de categoría (solo inserción), ambas del catálogo y con su responsable.
+        builder.Entity<CorreccionCategoria>(correccion =>
+        {
+            correccion.ToTable("CorreccionesCategoria", tabla =>
+                tabla.HasCheckConstraint("CK_CorreccionesCategoria_Cambio", "\"CategoriaAnteriorId\" <> \"CategoriaNuevaId\""));
+            correccion.HasKey(c => c.Id);
+            correccion.HasIndex(c => new { c.CasoId, c.CorregidaEn });
+            correccion.HasOne<Caso>().WithMany().HasForeignKey(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+            correccion.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaAnteriorId).OnDelete(DeleteBehavior.Restrict);
+            correccion.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaNuevaId).OnDelete(DeleteBehavior.Restrict);
+            correccion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU20: asignaciones. Una sola vigente por caso y una sola vigente por sereno (CA04, CA05, RNF08).

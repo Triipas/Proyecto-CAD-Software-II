@@ -13,6 +13,9 @@ public static class ModuloCasos
     {
         services.AddScoped<EmitirSos>();
         services.AddScoped<RegistrarReporte>();
+        services.AddScoped<RevisarReporte>();
+        services.AddScoped<Modulos.Consultas.ConsultarReportes>();
+        services.AddScoped<Modulos.Consultas.ConsultarDetalleReporte>();
         services.AddScoped<RegistrarIntentoContacto>();
         services.AddScoped<AsignarCaso>();
         services.AddScoped<ClasificarCaso>();

@@ -225,6 +225,43 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.CorreccionCategoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoriaAnteriorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoriaNuevaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CorregidaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaAnteriorId");
+
+                    b.HasIndex("CategoriaNuevaId");
+
+                    b.HasIndex("OperadorId");
+
+                    b.HasIndex("CasoId", "CorregidaEn");
+
+                    b.ToTable("CorreccionesCategoria", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CorreccionesCategoria_Cambio", "\"CategoriaAnteriorId\" <> \"CategoriaNuevaId\"");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", b =>
                 {
                     b.Property<Guid>("CasoId")
@@ -782,6 +819,33 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("ResponsableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.CorreccionCategoria", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaAnteriorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaNuevaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

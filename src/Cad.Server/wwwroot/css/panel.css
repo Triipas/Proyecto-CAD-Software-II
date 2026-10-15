@@ -387,6 +387,12 @@ a.boton {
   gap: var(--espacio-6);
 }
 
+/* Sin esto, una tabla ancha ensancha la columna de la rejilla y desborda la página en móvil
+   en lugar de desplazarse dentro de .tabla-contenedor. */
+.pagina > * {
+  min-width: 0;
+}
+
 .pagina--estrecha {
   max-width: 48rem;
 }
@@ -406,6 +412,8 @@ a.boton {
 
 /* Tabla de datos */
 .tabla-contenedor {
+  /* Contiene también el texto visualmente oculto (posición absoluta) de las celdas. */
+  position: relative;
   overflow-x: auto;
   border: var(--grosor-borde) solid var(--color-borde);
   border-radius: var(--radio-superficie);
@@ -1007,4 +1015,29 @@ a.boton {
 /* HU23-CA03: estado del caso asignado a cada sereno. */
 .sereno__caso {
   font-size: var(--texto-sm);
+}
+
+/* ===== Reportes (HU10, HU14) ===== */
+
+.mapa--hecho {
+  min-height: 18rem;
+  height: 18rem;
+}
+
+/* Lugar del hecho: alfiler rojo con borde blanco, distinto del marcador SOS (que lleva texto). */
+.marcador-hecho span {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--color-urgente);
+  border: 3px solid #FFFFFF;
+  transform: rotate(-45deg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* La descripción del ciudadano conserva sus saltos de línea. */
+.datos__texto {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

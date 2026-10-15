@@ -1,0 +1,67 @@
+@page "/panel/reportes"
+@model Cad.Server.Panel.Pages.Reportes.IndexModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Reportes";
+    var inv = CultureInfo.InvariantCulture;
+    string Local(DateTimeOffset momento, string formato = "dd/MM/yyyy HH:mm") => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString(formato, inv);
+    static string Fuente(string fuente) => fuente switch
+    {
+        "Mapa" => "Punto en el mapa",
+        "PosicionActual" => "Posición del ciudadano (elegida)",
+        _ => "Referencia textual",
+    };
+}
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador</p>
+        <h1 class="titulo">Reportes</h1>
+        <p class="texto-secundario">Reportes de incidencia recibidos y en revisión, los más recientes primero. No son alertas urgentes: los SOS siguen en la central.</p>
+    </div>
+</div>
+
+@if (Model.Reportes.Count == 0)
+{
+    <div class="estado-vacio">
+        <partial name="_Icono" model="@("exito")" />
+        <p class="aviso__titulo">No hay reportes por revisar</p>
+        <p>Los reportes que envíen los ciudadanos aparecerán aquí.</p>
+    </div>
+}
+else
+{
+    <div class="tabla-contenedor">
+        <table class="tabla" data-reportes>
+            <caption>@Model.Reportes.Count @(Model.Reportes.Count == 1 ? "reporte" : "reportes")</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Registrado</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Categoría vigente</th>
+                    <th scope="col">Ciudadano</th>
+                    <th scope="col">Hecho (aprox.)</th>
+                    <th scope="col">Ubicación del hecho</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var reporte in Model.Reportes)
+                {
+                    <tr data-reporte="@reporte.Id">
+                        <th scope="row"><time datetime="@reporte.RegistradoEn.ToString("O", inv)">@Local(reporte.RegistradoEn)</time></th>
+                        <td>
+                            <span class="estado @(reporte.Estado == "Recibido" ? "estado--activa" : "estado--contactado")" data-estado>
+                                <partial name="_Icono" model="@(reporte.Estado == "Recibido" ? "informacion" : "exito")" />@reporte.Estado
+                            </span>
+                        </td>
+                        <td>@reporte.Categoria</td>
+                        <td>@reporte.Ciudadano</td>
+                        <td>@Local(reporte.OcurridoAproximadamenteEn)</td>
+                        <td>@Fuente(reporte.FuenteUbicacion)</td>
+                        <td><a href="/panel/reportes/@reporte.Id">Abrir<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

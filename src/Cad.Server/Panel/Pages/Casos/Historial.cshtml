@@ -7,7 +7,7 @@
     var h = Model.Historial;
     string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
 }
-<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : "/panel/central")">@(h.Origen == "SOS" ? "← Volver al caso" : "← Volver a la central")</a></p>
+<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : $"/panel/reportes/{h.Id}")">← Volver al caso</a></p>
 <div class="pagina__encabezado">
     <div>
         <p class="sobretitulo">Operador · @h.Origen @h.Estado</p>

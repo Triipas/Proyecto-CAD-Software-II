@@ -59,10 +59,19 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Add(new(intento.RegistradoEn, $"Intento de contacto: {TextoResultado(intento.Resultado)}", await NombreAsync(intento.OperadorId),
                 Unir(intento.InformacionHecho is { } h ? $"Hecho: {h}" : null, intento.ReferenciaUbicacion is { } r ? $"Referencia indicada por el ciudadano: {r}" : null)));
 
-        // HU13: clasificación. La de un reporte al registrarse es la del ciudadano y ya figura en su registro.
-        if (caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn
-            && !(caso.Origen == OrigenCaso.Reporte && clasificador == caso.CiudadanoId))
+        // HU13: clasificación de un SOS. En un reporte, la categoría del ciudadano figura en su registro y los cambios en
+        // las correcciones (HU14).
+        if (caso.Origen == OrigenCaso.Sos && caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
             entradas.Add(new(clasificadoEn, $"Clasificado como «{await CategoriaAsync(categoria, ct)}»", await NombreAsync(clasificador), null));
+
+        // HU14: inicio de la revisión y correcciones de categoría (anterior → nueva).
+        foreach (var evento in await db.EventosCaso.AsNoTracking()
+                     .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.RevisionIniciada).ToListAsync(ct))
+            entradas.Add(new(evento.OcurridoEn, "Revisión iniciada", await NombreAsync(evento.ActorId), null));
+        foreach (var correccion in await db.CorreccionesCategoria.AsNoTracking().Where(c => c.CasoId == casoId).ToListAsync(ct))
+            entradas.Add(new(correccion.CorregidaEn,
+                $"Categoría corregida de «{await CategoriaAsync(correccion.CategoriaAnteriorId, ct)}» a «{await CategoriaAsync(correccion.CategoriaNuevaId, ct)}»",
+                await NombreAsync(correccion.OperadorId), null));
 
         // HU20: asignaciones (y su fin, al cerrar el caso).
         foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))

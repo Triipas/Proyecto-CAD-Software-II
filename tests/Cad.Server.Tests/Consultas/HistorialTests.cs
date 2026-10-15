@@ -111,7 +111,7 @@ public partial class HistorialTests(FabricaCad fabrica)
         Assert.Contains("Ubicación del hecho: referencia textual · Referencia: Esquina del mercado", html);
         Assert.Contains("Hecho ocurrido aproximadamente el 14/10/2026 18:40", html);
         Assert.Contains("· Prueba Ciudadano", html);
-        Assert.Contains("Volver a la central", html);
+        Assert.Contains($"href=\"/panel/reportes/{reporte.Id}\">← Volver al caso", html);
     }
 
     [Fact]

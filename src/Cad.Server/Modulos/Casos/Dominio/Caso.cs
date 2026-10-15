@@ -4,8 +4,9 @@ namespace Cad.Server.Modulos.Casos.Dominio;
 public enum OrigenCaso { Sos, Reporte }
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
-// (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte.
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido }
+// (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte,
+// y «En revisión» (HU14).
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision }
 
 public static class EstadosCaso
 {
@@ -18,6 +19,7 @@ public static class EstadosCaso
         EstadoCaso.EnAtencion => "En atención",
         EstadoCaso.Cerrada => "Cerrada",
         EstadoCaso.Recibido => "Recibido",
+        EstadoCaso.EnRevision => "En revisión",
         _ => estado.ToString(),
     };
 }
@@ -95,6 +97,25 @@ public sealed class Caso
     {
         if (Clasificado)
             throw new InvalidOperationException("El caso ya está clasificado.");
+        CategoriaId = categoriaId;
+        ClasificadoPor = operadorId;
+        ClasificadoEn = ahora;
+    }
+
+    // HU14-CA01/CA02: solo un reporte «Recibido» pasa a «En revisión».
+    public void IniciarRevision()
+    {
+        if (Origen != OrigenCaso.Reporte || Estado != EstadoCaso.Recibido)
+            throw new InvalidOperationException("Solo un reporte recibido puede pasar a «En revisión».");
+        Estado = EstadoCaso.EnRevision;
+    }
+
+    // HU14-CA03/CA04: la categoría vigente se corrige solo durante la revisión, con su responsable y momento.
+    // La categoría original del ciudadano queda en el detalle del reporte (HU10-CA07).
+    public void CorregirCategoria(Guid categoriaId, Guid operadorId, DateTimeOffset ahora)
+    {
+        if (Origen != OrigenCaso.Reporte || Estado != EstadoCaso.EnRevision)
+            throw new InvalidOperationException("Solo se corrige la categoría de un reporte en revisión.");
         CategoriaId = categoriaId;
         ClasificadoPor = operadorId;
         ClasificadoEn = ahora;

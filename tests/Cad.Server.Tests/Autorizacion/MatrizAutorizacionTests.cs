@@ -50,6 +50,13 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/panel/central/sos/00000000-0000-0000-0000-000000000000"),
         new("POST", "/panel/central/sos/{id:guid}", "HU12", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/central/sos/00000000-0000-0000-0000-000000000000"),
+        // HU14 — página «Reportes» (E5) y detalle de un reporte. Con un reporte inexistente el operador llega a la página
+        // (404); al enviar sin token antifalsificación recibe 400. El resto es rechazado antes, sin ver ni registrar nada.
+        new("GET", "/panel/reportes", "HU14", Acceso.SoloRol, Roles.Operador),
+        new("GET", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
+        new("POST", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
         // HU27 — historial de un caso. Con un caso inexistente el operador llega a la página (404); el resto, rechazado antes.
         new("GET", "/panel/casos/{id:guid}/historial", "HU27", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/casos/00000000-0000-0000-0000-000000000000/historial"),
