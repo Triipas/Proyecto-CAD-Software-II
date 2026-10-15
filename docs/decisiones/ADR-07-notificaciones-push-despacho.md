@@ -1,7 +1,7 @@
 # ADR-07 — Notificación push del despacho al sereno (HU21-CA01)
 
 - **Fecha:** 13/10/2026
-- **Estado:** decidida por el Product Owner (planificación del Sprint 2, respuesta a la decisión E10). Implementada en el servidor el 14/10/2026 (bloque 7: envío por FCM con FirebaseAdmin, canal `/hubs/sereno`, registro del dispositivo); pendiente la recepción en la app, que necesita el proyecto de Firebase del equipo.
+- **Estado:** decidida por el Product Owner (planificación del Sprint 2, respuesta a la decisión E10). Implementada en el servidor el 14/10/2026 (bloque 7: envío por FCM con FirebaseAdmin, canal `/hubs/sereno`, registro del dispositivo); en la app el 14/10/2026 (bloque 7b: proyecto de Firebase `cad-validacion`, permiso con explicación previa, registro del dispositivo). Credencial de servidor configurada en Render por el equipo el 14/10/2026. Pendiente: comprobar la entrega real en el entorno publicado.
 - **Relación:** modifica la exclusión de «notificaciones push (FCM)» del Plan de Arquitectura (alcance excluido y alternativas descartadas) y matiza la «limitación de plataforma» del Plan Scrum (1.5). No modifica RNF11 ni la nota técnica de SPIKE01.
 
 ## Contexto

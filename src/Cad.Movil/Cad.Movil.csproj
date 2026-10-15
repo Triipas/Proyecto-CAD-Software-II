@@ -41,4 +41,22 @@
 		<ProjectReference Include="..\Cad.Contratos\Cad.Contratos.csproj" />
 	</ItemGroup>
 
+	<!-- HU21 (ADR-07): notificación push del despacho con Firebase Cloud Messaging, solo en Android.
+	     google-services.json es la configuración de cliente del proyecto de Firebase del equipo: no se versiona
+	     (.gitignore). Sin el archivo, la app compila y funciona igual, sin push (p. ej., en la CI). -->
+	<PropertyGroup>
+		<CadGoogleServicesJson Condition="'$(CadGoogleServicesJson)' == ''">$(MSBuildProjectDirectory)\Platforms\Android\google-services.json</CadGoogleServicesJson>
+	</PropertyGroup>
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="125.1.3" />
+		<!-- Firebase trae versiones de AndroidX más nuevas que algunos paquetes «Ktx» de MAUI: sin alinearlos, D8
+		     encuentra clases duplicadas. Se fijan las mismas versiones que resuelve Firebase. -->
+		<PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.9.0" />
+		<PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.6.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.11.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core.Ktx" Version="2.11.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Process" Version="2.11.0.1" />
+		<GoogleServicesJson Include="$(CadGoogleServicesJson)" Condition="Exists('$(CadGoogleServicesJson)')" />
+	</ItemGroup>
+
 </Project>

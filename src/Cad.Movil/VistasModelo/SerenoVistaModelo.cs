@@ -9,16 +9,18 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
 {
     private readonly ServicioTurnoSereno turno;
     private readonly ServicioDespacho despacho;
+    private readonly ServicioNotificaciones notificaciones;
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
     private bool mostrarExplicacion, mostrarAjustes, mostrarCierre;
     private CategoriaCatalogo? categoriaCierre;
     private string? resultadoCierre, notasCierre;
 
-    public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, IAlmacenSesion sesiones,
-        INavegacion navegacion, Action abrirAjustes)
+    public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, ServicioNotificaciones notificaciones,
+        IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes)
     {
-        (this.turno, this.despacho, this.sesiones, this.navegacion) = (turno, despacho, sesiones, navegacion);
+        (this.turno, this.despacho, this.notificaciones, this.sesiones, this.navegacion) = (turno, despacho, notificaciones, sesiones, navegacion);
+        PermitirNotificaciones = new ComandoAsincrono(() => notificaciones.PermitirAsync());
         Alternar = new ComandoAsincrono(AlternarAsync, () => !turno.SesionTerminada);
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
@@ -31,6 +33,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         // El servicio avisa desde el hilo del envío; la interfaz se actualiza en el principal.
         turno.Cambio += () => _ = HiloPrincipal(Actualizar);
         despacho.Cambio += () => _ = HiloPrincipal(ActualizarDespacho);
+        notificaciones.Cambio += () => _ = HiloPrincipal(ActualizarNotificaciones);
     }
 
     // Se puede sustituir en las pruebas (no hay hilo principal de MAUI en net10.0).
@@ -45,6 +48,17 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public ComandoAsincrono AbrirCierre { get; }
     public ComandoAsincrono CancelarCierre { get; }
     public ComandoAsincrono ConfirmarCierre { get; }
+    public ComandoAsincrono PermitirNotificaciones { get; }
+
+    // ----- HU21 (ADR-07): aviso del despacho por notificación push -----
+    // Primero se explica y después se pide el permiso (como la ubicación, HU06); si está denegado, se orienta a los ajustes.
+    public bool MostrarExplicacionNotificaciones =>
+        notificaciones.Disponible && notificaciones.Permiso == EstadoPermisoNotificaciones.Desconocido;
+    public bool MostrarAjustesNotificaciones =>
+        notificaciones.Disponible && notificaciones.Permiso == EstadoPermisoNotificaciones.Denegado;
+    public bool NotificacionesActivas => notificaciones.Registrado;
+    public string? AvisoNotificaciones => notificaciones.Aviso;
+    public bool HayAvisoNotificaciones => notificaciones.Aviso is not null;
 
     public bool Operativo => turno.Operativo;
     public string TextoEstado => Operativo ? "Estás operativo" : "No estás operativo";
@@ -152,6 +166,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         await turno.CargarAsync();
         Actualizar();
         await despacho.IniciarAsync();
+        await notificaciones.PrepararAsync();
     }
 
     private async Task AlternarAsync()
@@ -184,6 +199,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     {
         await turno.ReiniciarAsync();
         await despacho.ReiniciarAsync();
+        await notificaciones.QuitarAsync(); // antes de cerrar la sesión: necesita su token
         sesiones.Cerrar();
         await navegacion.IrAAsync(Rutas.Ingreso);
     }
@@ -196,6 +212,13 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
             Notificar(p);
         Alternar.ActualizarDisponibilidad();
         Salir.ActualizarDisponibilidad();
+    }
+
+    private void ActualizarNotificaciones()
+    {
+        foreach (var p in new[] { nameof(MostrarExplicacionNotificaciones), nameof(MostrarAjustesNotificaciones),
+                     nameof(NotificacionesActivas), nameof(AvisoNotificaciones), nameof(HayAvisoNotificaciones) })
+            Notificar(p);
     }
 
     private void ActualizarDespacho()

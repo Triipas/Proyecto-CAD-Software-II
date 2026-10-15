@@ -40,6 +40,26 @@ public interface IApiCad
     // HU24 — cierre del caso y catálogo para la tipificación final (DP07).
     Task<ResultadoApi<RespuestaCierreCaso>> CerrarCasoAsync(string token, Guid casoId, SolicitudCierreCaso solicitud, CancellationToken ct);
     Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasAsync(string token, CancellationToken ct);
+
+    // HU21 (ADR-07) — dispositivo que recibe la notificación push del despacho.
+    Task<ResultadoApi<SinContenido>> RegistrarDispositivoAsync(string token, SolicitudRegistroDispositivo solicitud, CancellationToken ct);
+    Task<ResultadoApi<SinContenido>> QuitarDispositivoAsync(string token, CancellationToken ct);
+}
+
+public enum EstadoPermisoNotificaciones { Desconocido, Concedido, Denegado }
+
+// HU21 (ADR-07) — notificaciones push en el dispositivo (Firebase Cloud Messaging en Android). Sin la configuración
+// de Firebase o sin Google Play Services, Disponible es false y la app funciona igual: el despacho llega por el canal
+// en tiempo real con la app abierta y se consulta al abrirla.
+public interface IServicioPush
+{
+    bool Disponible { get; }
+    Task<EstadoPermisoNotificaciones> ConsultarPermisoAsync();
+    Task<EstadoPermisoNotificaciones> SolicitarPermisoAsync();
+    // Token de registro de FCM; null si no se obtiene. Dato sensible: no se registra en ningún log.
+    Task<string?> ObtenerTokenAsync(CancellationToken ct);
+    // FCM renovó el token: hay que volver a registrarlo en el servidor.
+    event Action<string>? TokenRenovado;
 }
 
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).

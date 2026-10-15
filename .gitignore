@@ -485,5 +485,7 @@ $RECYCLE.BIN/
 # Secretos y variables locales: nunca en el repositorio (.env.example sí se versiona)
 .env.*
 !.env.example
+# Configuración de cliente de Firebase de la app (ADR-07): cada equipo la descarga de su proyecto.
+google-services.json
 # Configuración local de Claude Code
 .claude/settings.local.json
