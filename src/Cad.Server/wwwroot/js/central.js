@@ -10,6 +10,10 @@
   const botonSonido = document.querySelector("[data-activar-sonido]");
   const seccion = document.querySelector(".central__urgente");
   const contenedorMapa = document.getElementById("mapa");
+  // HU15-CA02 y HU20-CA07: reportes admitidos, en su propia sección; se seleccionan y asignan como un SOS.
+  const regionReportes = document.querySelector("[data-region-reportes]");
+  const contadorReportes = document.querySelector("[data-contador-reportes]");
+  const casos = () => [...region.querySelectorAll("[data-sos]"), ...(regionReportes?.querySelectorAll("[data-sos]") ?? [])];
   const tituloBase = document.title;
   let sinVer = 0;
 
@@ -26,9 +30,23 @@
   function dibujarMarcadores() {
     for (const marcador of marcadores.values()) marcador.remove();
     marcadores.clear();
-    for (const item of region.querySelectorAll("[data-sos][data-lat]")) {
+    for (const item of casos()) {
       if (!item.dataset.lat) continue;
       const id = item.dataset.sos;
+      if (item.dataset.origen === "Reporte") {
+        const texto = `Reporte admitido de ${item.dataset.ciudadano}`;
+        const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
+          icon: L.divIcon({ className: "marcador-reporte", html: "<span>R</span>", iconSize: [30, 30], iconAnchor: [15, 15] }),
+          title: texto,
+          alt: texto,
+          keyboard: true,
+        })
+          .bindPopup(`<strong>Reporte · Pendiente</strong><br>${escapar(item.dataset.ciudadano)}<br>Tipo: ${escapar(item.dataset.categoria)}<br>Lugar del hecho indicado por el ciudadano`)
+          .on("click", () => seleccionar(id, { desdeMapa: true }))
+          .addTo(mapa);
+        marcadores.set(id, marcador);
+        continue;
+      }
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
         icon: L.divIcon({ className: "marcador-sos", html: "<span>SOS</span>", iconSize: [44, 28], iconAnchor: [22, 28] }),
         title: `SOS de ${item.dataset.ciudadano}`,
@@ -46,7 +64,7 @@
 
   function seleccionar(id, { desdeMapa = false } = {}) {
     sosSeleccionado = id;
-    for (const item of region.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
+    for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
     const item = document.getElementById(`sos-${id}`);
     if (item) {
       item.classList.add("sos--seleccionado");
@@ -65,7 +83,7 @@
     actualizarAsignacion();
   }
 
-  region.addEventListener("click", (evento) => {
+  function alHacerClicEnLista(evento) {
     const boton = evento.target.closest("[data-ver-en-mapa]");
     if (boton) seleccionar(boton.closest("[data-sos]").dataset.sos);
     // HU20: elegir sereno para un SOS (también sin ubicación): se selecciona y se va a los serenos.
@@ -76,7 +94,9 @@
       (primero ?? regionSerenos).scrollIntoView({ block: "center" });
       primero?.focus();
     }
-  });
+  }
+  region.addEventListener("click", alHacerClicEnLista);
+  regionReportes?.addEventListener("click", alHacerClicEnLista);
 
   // ---------- HU19: serenos en el mismo mapa (sin rutas, líneas ni distancias) ----------
   const regionSerenos = document.querySelector("[data-region-serenos]");
@@ -147,12 +167,15 @@
   function abrirConfirmacion(itemSereno) {
     const sos = document.getElementById(`sos-${sosSeleccionado}`);
     if (!sos || !itemSereno) return;
-    confirmacion.action = `/panel/central/sos/${sosSeleccionado}?handler=Asignar`;
+    const esReporte = sos.dataset.origen === "Reporte";
+    confirmacion.action = esReporte
+      ? `/panel/reportes/${sosSeleccionado}?handler=Asignar`
+      : `/panel/central/sos/${sosSeleccionado}?handler=Asignar`;
     confirmacion.querySelector("[data-campo-sereno]").value = itemSereno.dataset.sereno;
     // Un identificador por confirmación: un reenvío no crea una segunda asignación (CA08).
     confirmacion.querySelector("[data-campo-solicitud]").value = crypto.randomUUID();
     const hora = sos.querySelector("time")?.textContent ?? "";
-    textoConfirmacion.textContent = `¿Asignar el SOS de ${sos.dataset.ciudadano} (${hora}) a ${itemSereno.dataset.nombre}?`;
+    textoConfirmacion.textContent = `¿Asignar el ${esReporte ? "reporte" : "SOS"} de ${sos.dataset.ciudadano} (${hora}) a ${itemSereno.dataset.nombre}?`;
     confirmacion.hidden = false;
     confirmacion.querySelector("button[type=submit]").focus();
   }
@@ -231,6 +254,13 @@
     }
     region.innerHTML = await respuesta.text();
     contador.textContent = region.querySelector("[data-lista-sos]").dataset.total;
+    if (regionReportes) {
+      const reportes = await fetch("/panel/central?handler=Reportes", { headers: { Accept: "text/html" }, credentials: "same-origin" });
+      if (reportes.ok && !reportes.redirected) {
+        regionReportes.innerHTML = await reportes.text();
+        contadorReportes.textContent = regionReportes.querySelector("[data-lista-reportes]").dataset.total;
+      }
+    }
     dibujarMarcadores();
     if (sosSeleccionado) document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
     actualizarAsignacion();

@@ -19,7 +19,9 @@ public sealed record SerenoMonitoreo(
     DateTimeOffset? UltimaPosicionEn,
     // HU23-CA03: caso de la asignación vigente y su estado (Asignada, En camino, En atención).
     Guid? CasoAsignadoId = null,
-    string? EstadoCasoAsignado = null)
+    string? EstadoCasoAsignado = null,
+    // HU20-CA07: el caso asignado puede ser un reporte admitido; su detalle está en «Reportes».
+    bool CasoAsignadoEsReporte = false)
 {
     public bool UbicacionDisponible => Latitud is not null && Longitud is not null;
 }
@@ -37,6 +39,7 @@ public sealed class ConsultarSerenos(CadDbContext db)
                            let conAsignacion = db.Asignaciones.Any(a => a.SerenoId == usuario.Id && a.Vigente)
                            let casoAsignado = db.Asignaciones.Where(a => a.SerenoId == usuario.Id && a.Vigente).Select(a => (Guid?)a.CasoId).FirstOrDefault()
                            let estadoCaso = db.Casos.Where(c => c.Id == casoAsignado).Select(c => (Casos.Dominio.EstadoCaso?)c.Estado).FirstOrDefault()
+                           let esReporte = db.Casos.Any(c => c.Id == casoAsignado && c.Origen == Casos.Dominio.OrigenCaso.Reporte)
                            // Solo posiciones recibidas desde la activación vigente (reloj del servidor): la última
                            // posición de un turno anterior no se presenta como actual.
                            let ultima = db.PosicionesSereno
@@ -52,6 +55,7 @@ public sealed class ConsultarSerenos(CadDbContext db)
                                ConAsignacion = conAsignacion,
                                CasoAsignado = casoAsignado,
                                EstadoCaso = estadoCaso,
+                               EsReporte = esReporte,
                                Latitud = ultima == null ? null : ultima.Latitud,
                                Longitud = ultima == null ? null : ultima.Longitud,
                                PrecisionMetros = ultima == null ? null : ultima.PrecisionMetros,
@@ -69,7 +73,8 @@ public sealed class ConsultarSerenos(CadDbContext db)
                 f.Operativo ? f.PrecisionMetros : null,
                 f.Operativo ? f.RecibidaEn : null,
                 f.CasoAsignado,
-                f.EstadoCaso is { } estado ? Casos.Dominio.EstadosCaso.Texto(estado) : null))
+                f.EstadoCaso is { } estado ? Casos.Dominio.EstadosCaso.Texto(estado) : null,
+                f.EsReporte))
             .ToList();
     }
 
@@ -81,6 +86,7 @@ public sealed class ConsultarSerenos(CadDbContext db)
         public bool ConAsignacion { get; init; }
         public Guid? CasoAsignado { get; init; }
         public Casos.Dominio.EstadoCaso? EstadoCaso { get; init; }
+        public bool EsReporte { get; init; }
         public double? Latitud { get; init; }
         public double? Longitud { get; init; }
         public double? PrecisionMetros { get; init; }

@@ -80,7 +80,13 @@
                             <Button Text="Confirmar cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCierre}" />
                             <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarCierre}" />
                         </VerticalStackLayout>
-                        <Label Text="Ubicación del dispositivo" FontAttributes="Bold" />
+                        <!-- HU20-CA07: en un reporte admitido, el lugar del hecho (no hay ubicación del dispositivo). -->
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding EsReporteDespacho}">
+                            <Label Text="Lugar del hecho (indicado por el ciudadano)" FontAttributes="Bold" />
+                            <Label Text="{Binding TextoLugarHecho}" IsVisible="{Binding HayPuntoLugarHecho}" />
+                            <Label Text="{Binding TextoReferenciaLugarHecho}" IsVisible="{Binding HayReferenciaLugarHecho}" />
+                        </VerticalStackLayout>
+                        <Label Text="Ubicación del dispositivo" FontAttributes="Bold" IsVisible="{Binding MostrarUbicacionDispositivo}" />
                         <Label Text="{Binding TextoUbicacionDespacho}" IsVisible="{Binding HayUbicacionDespacho}" />
                         <v:Aviso Tipo="advertencia" Texto="Ubicación del dispositivo no disponible." IsVisible="{Binding SinUbicacionDespacho}" />
                         <Label Text="Información registrada por la central" FontAttributes="Bold" />

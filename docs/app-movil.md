@@ -102,6 +102,11 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - Lugar del hecho: «Marcar en el mapa», «Usar mi posición actual» (único momento en que se lee la posición; el permiso se pide solo entonces) o «Escribir una referencia» (sin posición). El mapa es `Resources/Raw/mapa/reporte.html` con Leaflet 1.9.4 incluido (`leaflet.js`, `leaflet.css` y su licencia) y teselas de OpenStreetMap; un toque se comunica a la app con una navegación `cadmapa://punto?lat=…&lon=…` que se cancela.
 - `Servicios/Reportes.cs` (`RegistradorReporte`): comprueba los datos, envía con un `IdSolicitud` y lo reutiliza en los reintentos (automáticos y «Reintentar el mismo reporte»), como el SOS. Confirma solo con la respuesta del servidor.
 
+## Reporte admitido en el despacho (HU20-CA07, Sprint 3)
+
+- Un reporte admitido y asignado llega al sereno con `LugarHecho`: el punto del hecho, su precisión si el ciudadano usó su posición, y la referencia. No trae ubicación del dispositivo. La pantalla lo muestra como «Lugar del hecho (indicado por el ciudadano)» y oculta la sección «Ubicación del dispositivo». El resto del flujo (en camino, inicio de atención y cierre) es el de un SOS.
+- Siguiendo DP06, el sereno no recibe la descripción del ciudadano ni sus datos personales.
+
 ## Integración continua
 
 `.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.

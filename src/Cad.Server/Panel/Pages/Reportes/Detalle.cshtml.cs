@@ -1,5 +1,6 @@
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Aplicacion;
+using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Consultas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,14 +8,26 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Cad.Server.Panel.Pages.Reportes;
 
-// HU14 — Iniciar la revisión de un reporte y corregir su categoría (S3-T05). Solo operadores (también en el servidor:
+// HU14 — Iniciar la revisión de un reporte y corregir su categoría (S3-T05); HU15–HU17 — admitirlo, derivarlo o
+// descartarlo (S3-T06, S3-T07, S3-T09); HU20-CA07 — asignar un reporte admitido desde la central (S3-T08). Solo operadores (también en el servidor:
 // la política de la página rechaza cualquier otra sesión, incluida una solicitud directa).
 [Authorize(Policy = Politicas.OperadorAutorizado)]
-public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, ConsultarCategorias consultarCategorias,
-    IConfiguration configuracion) : PageModel
+public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
+    ConsultarCategorias consultarCategorias, IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public Guid? CategoriaId { get; set; }
+
+    [BindProperty]
+    public FormularioDecision Decision { get; set; } = new();
+
+    [BindProperty]
+    public FormularioAsignacion Asignacion { get; set; } = new();
+
+    public string? ErrorDecision { get; private set; }
+    public Dictionary<string, string[]> ErroresDecision { get; private set; } = [];
+
+    public string? ErrorDecisionDe(string campo) => ErroresDecision.TryGetValue(campo, out var mensajes) ? mensajes[0] : null;
 
     public DetalleReporteVista Reporte { get; private set; } = null!;
     public IReadOnlyList<CategoriaVista> Categorias { get; private set; } = [];
@@ -74,6 +87,54 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         }
     }
 
+    // HU15, HU16 y HU17.
+    public async Task<IActionResult> OnPostDecidirAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await decidir.EjecutarAsync(id, new DatosDecision(Decision.Tipo, Decision.Motivo, Decision.Destino, Decision.Accion),
+            User.IdUsuario(), ct);
+        switch (resultado)
+        {
+            case ResultadoDecision.Registrado r:
+                return Hecho(id, "Decisión registrada.", Siguiente(r.Estado));
+            case ResultadoDecision.YaRegistrado r:
+                return Hecho(id, "Decisión registrada.", Siguiente(r.Estado));
+            case ResultadoDecision.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErroresDecision = (resultado as ResultadoDecision.Invalido)?.Errores ?? [];
+                ErrorDecision = (resultado as ResultadoDecision.Rechazado)?.Motivo;
+                return Page();
+        }
+    }
+
+    // HU20-CA07: un reporte admitido se asigna desde la central con las mismas reglas que un SOS. Vuelve a la central.
+    public async Task<IActionResult> OnPostAsignarAsync(Guid id, CancellationToken ct)
+    {
+        switch (await asignar.EjecutarAsync(id, Asignacion.SerenoId, User.IdUsuario(), Asignacion.IdSolicitud, ct))
+        {
+            case ResultadoAsignacion.Asignado or ResultadoAsignacion.YaAsignado:
+                TempData[nameof(Central.IndexModel.Mensaje)] = "Reporte asignado.";
+                TempData[nameof(Central.IndexModel.DetalleMensaje)] = "El sereno ya no figura como disponible.";
+                break;
+            case ResultadoAsignacion.CasoNoEncontrado:
+                return NotFound();
+            case ResultadoAsignacion.Rechazado r:
+                TempData[nameof(Central.IndexModel.ErrorAccion)] = r.Motivo;
+                break;
+            case ResultadoAsignacion.Invalido i:
+                TempData[nameof(Central.IndexModel.ErrorAccion)] = i.Motivo;
+                break;
+        }
+        return RedirectToPage("/Central/Index");
+    }
+
+    // El aviso ya muestra el estado; aquí, solo lo que sigue.
+    private static string Siguiente(string estado) => estado == "Pendiente"
+        ? "Asígnalo a un sereno disponible desde la central."
+        : "Es un estado final.";
+
     private RedirectToPageResult Hecho(Guid id, string mensaje, string detalle)
     {
         Mensaje = mensaje;
@@ -89,5 +150,20 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Categorias = await consultarCategorias.EjecutarAsync(ct);
         CategoriaId ??= reporte.CategoriaActualId;
         return true;
+    }
+
+    public sealed class FormularioDecision
+    {
+        public TipoDecisionReporte Tipo { get; set; } = TipoDecisionReporte.Admision;
+        public string? Motivo { get; set; }
+        public string? Destino { get; set; }
+        public string? Accion { get; set; }
+    }
+
+    public sealed class FormularioAsignacion
+    {
+        public Guid IdSolicitud { get; set; }
+        public Guid SerenoId { get; set; }
+        public string? Volver { get; set; }
     }
 }

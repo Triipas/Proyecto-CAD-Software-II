@@ -551,7 +551,7 @@ a.boton {
      visible al desplazar la columna izquierda: «Ver en el mapa» funciona aunque la lista sea larga. */
   .central__mapa {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 3;
     position: sticky;
     top: var(--espacio-4);
     align-self: start;
@@ -566,6 +566,7 @@ a.boton {
 }
 
 .central__urgente,
+.central__reportes,
 .central__serenos,
 .central__mapa {
   display: grid;
@@ -1040,4 +1041,41 @@ a.boton {
 .datos__texto {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* ===== Reportes admitidos en la central (HU15-CA02, HU20-CA07) ===== */
+
+.sos--reporte {
+  border-left-color: var(--color-reporte);
+}
+
+.etiqueta-reporte {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--espacio-2);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-reporte);
+}
+
+.central__contador--reportes {
+  background: var(--color-reporte);
+}
+
+.marcador-reporte {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radio-control);
+  font: 700 0.8rem/1 var(--fuente);
+  color: #FFFFFF;
+  background: var(--color-reporte);
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 0 0 1px var(--color-reporte);
+}
+
+.marcador-reporte:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 2px;
 }

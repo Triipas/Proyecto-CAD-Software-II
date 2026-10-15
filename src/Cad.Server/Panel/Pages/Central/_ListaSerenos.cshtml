@@ -33,7 +33,7 @@
                     {
                         @* HU23-CA03: el estado del caso asignado se refleja en la central. *@
                         <p class="sereno__caso" data-estado-caso="@sereno.EstadoCasoAsignado">
-                            Caso @sereno.EstadoCasoAsignado · <a href="/panel/central/sos/@casoAsignado">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
+                            Caso @sereno.EstadoCasoAsignado · <a href="@(sereno.CasoAsignadoEsReporte ? $"/panel/reportes/{casoAsignado}" : $"/panel/central/sos/{casoAsignado}")">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
                         </p>
                     }
                     @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is { } recibida)
@@ -56,7 +56,7 @@
                     {
                         @* HU20: visible solo con un SOS seleccionado (lo muestra el panel). *@
                         <button type="button" class="boton boton--secundario sereno__asignar" data-asignar-sereno hidden>
-                            Asignar al SOS seleccionado<span class="visualmente-oculto"> a @sereno.Nombre</span>
+                            Asignar al caso seleccionado<span class="visualmente-oculto"> a @sereno.Nombre</span>
                         </button>
                     }
                 </li>

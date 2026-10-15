@@ -262,6 +262,47 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DecisionReporte", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Accion")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("DecididaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Destino")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("OperadorId");
+
+                    b.ToTable("DecisionesReporte", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DecisionesReporte_Derivacion", "(\"Tipo\" = 'Derivacion' AND \"Destino\" IS NOT NULL AND \"Accion\" IS NOT NULL AND length(btrim(\"Destino\")) > 0 AND length(btrim(\"Accion\")) > 0) OR (\"Tipo\" IN ('Admision', 'Descarte') AND \"Destino\" IS NULL AND \"Accion\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_DecisionesReporte_Motivo", "length(btrim(\"Motivo\")) > 0");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", b =>
                 {
                     b.Property<Guid>("CasoId")
@@ -840,6 +881,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
                         .WithMany()
                         .HasForeignKey("CategoriaNuevaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DecisionReporte", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Casos.Dominio.DecisionReporte", "CasoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

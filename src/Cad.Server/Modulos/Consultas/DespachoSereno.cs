@@ -52,9 +52,17 @@ public sealed class ConsultarDespacho(CadDbContext db)
             ? new UbicacionDespacho(latitud, longitud, despacho.PrecisionMetros!.Value, despacho.UbicacionObtenidaEn!.Value)
             : null;
 
+        // HU20-CA07: un reporte admitido lleva el lugar del hecho (DP06: sin la descripción ni los datos del ciudadano).
+        var lugar = despacho.Origen == OrigenCaso.Reporte
+            ? await db.DetallesReporte.AsNoTracking().Where(d => d.CasoId == casoId)
+                .Select(d => new LugarHechoDespacho(d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros, d.ReferenciaHecho))
+                .SingleOrDefaultAsync(ct)
+            : null;
+
         return new DespachoSereno(despacho.Id, despacho.Origen.ToString().ToUpperInvariant(), EstadosCaso.Texto(despacho.Estado),
             despacho.RegistradoEn, despacho.AsignadaEn, ubicacion, informacion,
             avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.DesplazamientoConfirmado)?.OcurridoEn,
-            avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.AtencionIniciada)?.OcurridoEn);
+            avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.AtencionIniciada)?.OcurridoEn,
+            lugar);
     }
 }
