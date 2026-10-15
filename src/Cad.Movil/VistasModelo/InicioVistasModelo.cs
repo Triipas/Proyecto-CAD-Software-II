@@ -3,7 +3,7 @@ using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
 
-// Pantalla principal del ciudadano: preparación de la ubicación (HU06) y control SOS (HU07, HU08).
+// Pantalla principal del ciudadano: preparación de la ubicación (HU06), control SOS (HU07, HU08) y acceso al reporte (HU10).
 public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
 {
     private readonly EmisorSos emisor;
@@ -23,6 +23,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
         Salir = new ComandoAsincrono(SalirAsync);
+        Reportar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Reporte));
         emisor.Cambio += _ => ActualizarSos();
     }
 
@@ -31,6 +32,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     public ComandoAsincrono PermitirUbicacion { get; }
     public ComandoAsincrono AbrirAjustes { get; }
     public ComandoAsincrono Salir { get; }
+    public ComandoAsincrono Reportar { get; }
 
     // ----- HU06: preparación al abrir la aplicación -----
     public bool MostrarExplicacion => estadoUbicacion == ResultadoPreparacion.NecesitaExplicacion;

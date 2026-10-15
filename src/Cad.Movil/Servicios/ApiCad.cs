@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 
@@ -28,6 +29,12 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
 
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct) =>
         EnviarAsync<RespuestaSos>(HttpMethod.Post, "api/sos", solicitud, token, ct);
+
+    public Task<ResultadoApi<RespuestaReporte>> RegistrarReporteAsync(string token, SolicitudRegistroReporte solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaReporte>(HttpMethod.Post, "api/reportes", solicitud, token, ct);
+
+    public Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasReporteAsync(string token, CancellationToken ct) =>
+        EnviarAsync<List<CategoriaCatalogo>>(HttpMethod.Get, "api/reportes/categorias", null, token, ct);
 
     public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
         EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Get, "api/sereno/estado", null, token, ct);

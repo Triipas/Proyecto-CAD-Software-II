@@ -106,7 +106,7 @@ Medición de RNF02 con `tests/Cad.PruebaCarga`: procedimiento y resultados en [d
 
 ## Librerías de terceros
 
-Incluidas en `src/Cad.Server/wwwroot/lib` (sin CDN): Leaflet 1.9.4 (BSD-2-Clause) y @microsoft/signalr 10.0.11 (MIT), con sus licencias. El mapa usa teselas de OpenStreetMap (requiere conexión a internet y muestra su atribución).
+Incluidas en `src/Cad.Server/wwwroot/lib` (sin CDN): Leaflet 1.9.4 (BSD-2-Clause) y @microsoft/signalr 10.0.11 (MIT), con sus licencias. La app incluye la misma versión de Leaflet en `src/Cad.Movil/Resources/Raw/mapa` (con su licencia) para el mapa del reporte (HU10). El mapa usa teselas de OpenStreetMap (requiere conexión a internet y muestra su atribución).
 
 ## Reglas del repositorio
 

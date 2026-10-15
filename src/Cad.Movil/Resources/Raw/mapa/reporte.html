@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- HU10-CA03 (E3): mapa para marcar el lugar del hecho. Leaflet 1.9.4 incluido en la app (sin CDN); teselas de
+     OpenStreetMap. La app inserta Leaflet y la configuración al cargar la página. Nunca lee la posición del
+     dispositivo: el punto lo pone el ciudadano con un toque o la app cuando él elige «Usar mi posición actual». -->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>/*LEAFLET_CSS*/</style>
+    <style>
+        html, body, #mapa { height: 100%; margin: 0; }
+        .punto-hecho span {
+            display: block; width: 22px; height: 22px; border-radius: 50% 50% 50% 0;
+            background: #b42318; border: 3px solid #fff; transform: rotate(-45deg); box-shadow: 0 1px 4px rgba(0,0,0,.45);
+        }
+    </style>
+</head>
+<body>
+    <div id="mapa" role="region" aria-label="Mapa para marcar el lugar del hecho"></div>
+    <script>/*LEAFLET_JS*/</script>
+    <script>
+        (() => {
+            const config = /*CONFIG*/;
+            const mapa = L.map("mapa").setView([config.lat, config.lon], config.zoom);
+            L.tileLayer(config.teselas, {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
+            }).addTo(mapa);
+            let marcador = null;
+
+            function poner(lat, lon, centrar) {
+                if (!marcador) {
+                    marcador = L.marker([lat, lon], {
+                        icon: L.divIcon({ className: "punto-hecho", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 26] }),
+                        keyboard: false, title: "Lugar del hecho", alt: "Lugar del hecho",
+                    }).addTo(mapa);
+                } else {
+                    marcador.setLatLng([lat, lon]);
+                }
+                if (centrar) mapa.setView([lat, lon], Math.max(mapa.getZoom(), 17));
+            }
+
+            // Un toque en el mapa elige el punto y se lo comunica a la app (que cancela esta navegación).
+            mapa.on("click", (e) => {
+                const p = e.latlng.wrap();
+                const lat = Number(p.lat.toFixed(6)), lon = Number(p.lng.toFixed(6));
+                poner(lat, lon, false);
+                window.location.href = `cadmapa://punto?lat=${lat}&lon=${lon}`;
+            });
+
+            window.cad = {
+                ponerPunto: (lat, lon) => poner(lat, lon, true),
+                quitarPunto: () => { if (marcador) { marcador.remove(); marcador = null; } },
+            };
+            if (config.punto) poner(config.punto[0], config.punto[1], true);
+        })();
+    </script>
+</body>
+</html>

@@ -10,6 +10,7 @@ public static class Rutas
     public const string Diagnostico = "diagnostico"; // SPIKE01, solo Debug
     public const string Ciudadano = "//ciudadano";
     public const string Sereno = "//sereno";
+    public const string Reporte = "reporte"; // HU10, desde el inicio del ciudadano
 
     // Cada rol entra en su modo; el servidor solo emite tokens de la app a ciudadano y sereno (HU02).
     public static string InicioDe(string rol) => rol == "Sereno" ? Sereno : Ciudadano;
