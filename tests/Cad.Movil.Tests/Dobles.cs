@@ -120,6 +120,23 @@ public sealed class ApiFalsa : IApiCad
     public Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasAsync(string token, CancellationToken ct) =>
         Task.FromResult<ResultadoApi<List<CategoriaCatalogo>>>(new ResultadoApi<List<CategoriaCatalogo>>.Correcto(Categorias));
 
+    // ----- HU21 (ADR-07): dispositivo -----
+    public ConcurrentQueue<string> DispositivosRegistrados { get; } = new();
+    public int DispositivosQuitados;
+    public Func<ResultadoApi<SinContenido>> RespuestaDispositivo { get; set; } = () => new ResultadoApi<SinContenido>.Correcto(new SinContenido());
+
+    public Task<ResultadoApi<SinContenido>> RegistrarDispositivoAsync(string token, SolicitudRegistroDispositivo solicitud, CancellationToken ct)
+    {
+        DispositivosRegistrados.Enqueue(solicitud.Token);
+        return Task.FromResult(RespuestaDispositivo());
+    }
+
+    public Task<ResultadoApi<SinContenido>> QuitarDispositivoAsync(string token, CancellationToken ct)
+    {
+        Interlocked.Increment(ref DispositivosQuitados);
+        return Task.FromResult<ResultadoApi<SinContenido>>(new ResultadoApi<SinContenido>.Correcto(new SinContenido()));
+    }
+
     public Task<ResultadoApi<DespachoSereno?>> ConsultarDespachoAsync(string token, CancellationToken ct)
     {
         Interlocked.Increment(ref ConsultasDespacho);
@@ -168,4 +185,27 @@ public sealed class CanalFalso : ICanalSereno
     public void Avisar() => DespachoAsignado?.Invoke();
     public void Reconectar() => Reconectado?.Invoke();
     public void Actualizar() => DespachoActualizado?.Invoke();
+}
+
+// HU21 (ADR-07): notificaciones push del dispositivo, controladas por la prueba.
+public sealed class PushFalso : IServicioPush
+{
+    public bool Disponible { get; set; } = true;
+    public EstadoPermisoNotificaciones Permiso { get; set; } = EstadoPermisoNotificaciones.Desconocido;
+    public EstadoPermisoNotificaciones RespuestaSolicitud { get; set; } = EstadoPermisoNotificaciones.Concedido;
+    public string? Token { get; set; } = "token-fcm-ficticio";
+    public int Solicitudes;
+    public event Action<string>? TokenRenovado;
+
+    public Task<EstadoPermisoNotificaciones> ConsultarPermisoAsync() => Task.FromResult(Permiso);
+
+    public Task<EstadoPermisoNotificaciones> SolicitarPermisoAsync()
+    {
+        Solicitudes++;
+        Permiso = RespuestaSolicitud;
+        return Task.FromResult(Permiso);
+    }
+
+    public Task<string?> ObtenerTokenAsync(CancellationToken ct) => Task.FromResult(Token);
+    public void Renovar(string token) { Token = token; TokenRenovado?.Invoke(token); }
 }

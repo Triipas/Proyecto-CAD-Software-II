@@ -19,7 +19,8 @@ public class DespachoTests
     private ServicioDespacho Servicio() => new(api, sesiones, canal, TimeProvider.System);
 
     private InicioSerenoVistaModelo VistaModelo(ServicioDespacho despacho) =>
-        new(new ServicioTurnoSereno(api, new UbicacionFalsa(), sesiones, new FakeTimeProvider(Inicio)), despacho, sesiones, new NavegacionFalsa(), () => { })
+        new(new ServicioTurnoSereno(api, new UbicacionFalsa(), sesiones, new FakeTimeProvider(Inicio)), despacho,
+            new ServicioNotificaciones(api, sesiones, new ServicioPushNoDisponible(), TimeProvider.System), sesiones, new NavegacionFalsa(), () => { })
         { HiloPrincipal = a => { a(); return Task.CompletedTask; } };
 
     private static async Task Esperar(Func<bool> condicion, string descripcion)

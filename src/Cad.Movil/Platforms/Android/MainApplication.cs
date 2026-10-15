@@ -12,4 +12,11 @@ public class MainApplication : MauiApplication
 	}
 
 	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+
+	public override void OnCreate()
+	{
+		base.OnCreate();
+		// HU21 (ADR-07): canal de las notificaciones del despacho (Android 8+).
+		Platforms.Android.ServicioPushAndroid.CrearCanal(this);
+	}
 }

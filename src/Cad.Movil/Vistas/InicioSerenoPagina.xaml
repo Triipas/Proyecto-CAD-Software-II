@@ -20,10 +20,29 @@
             <Label Text="{Binding TextoAyudaSalir}" Style="{StaticResource TextoSecundario}" FontSize="13"
                    IsVisible="{Binding HayAyudaSalir}" HorizontalTextAlignment="End" />
 
+            <!-- HU21 (ADR-07): aviso del despacho por notificación push. Primero se explica y después se pide el permiso. -->
+            <Border Style="{StaticResource Superficie}" Padding="16,20" IsVisible="{Binding MostrarExplicacionNotificaciones}">
+                <VerticalStackLayout Spacing="12">
+                    <v:Aviso Tipo="informacion"
+                             Texto="Activa las notificaciones para saber al momento cuándo te asignan un caso, aunque no tengas la app abierta. Solo avisan de que hay un despacho: los datos del caso se ven dentro de la app." />
+                    <Button Text="Permitir notificaciones" Style="{StaticResource BotonPrincipal}" Command="{Binding PermitirNotificaciones}" />
+                </VerticalStackLayout>
+            </Border>
+            <Border Style="{StaticResource Superficie}" Padding="16,20" IsVisible="{Binding MostrarAjustesNotificaciones}">
+                <VerticalStackLayout Spacing="12">
+                    <v:Aviso Tipo="advertencia"
+                             Texto="Las notificaciones de la app están desactivadas: no recibirás el aviso del despacho con la app cerrada. Puedes activarlas en los ajustes del teléfono." />
+                    <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}" Command="{Binding AbrirAjustes}" />
+                </VerticalStackLayout>
+            </Border>
+            <v:Aviso Tipo="advertencia" Texto="{Binding AvisoNotificaciones}" IsVisible="{Binding HayAvisoNotificaciones}" />
+
             <!-- HU21 — despacho vigente (datos de DP06). -->
             <Border Style="{StaticResource Superficie}" Padding="16,20">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Despacho" FontSize="18" FontAttributes="Bold" />
+                    <Label Text="Recibirás un aviso en este teléfono cuando te asignen un caso, aunque la app esté cerrada." Style="{StaticResource TextoSecundario}"
+                           FontSize="13" IsVisible="{Binding NotificacionesActivas}" />
                     <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
                     <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
                     <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" IsVisible="{Binding SinDespacho}" />

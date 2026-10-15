@@ -3,12 +3,17 @@
 	<!-- allowBackup=false: SecureStorage (JWT) no debe restaurarse en otro dispositivo (recomendación de MAUI).
 	     networkSecurityConfig: sin tráfico en claro salvo el servidor local del emulador (RNF09). -->
 	<application android:allowBackup="false" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round"
-	             android:supportsRtl="true" android:networkSecurityConfig="@xml/network_security_config"></application>
+	             android:supportsRtl="true" android:networkSecurityConfig="@xml/network_security_config">
+		<!-- HU21 (ADR-07): las notificaciones push del despacho usan el canal «despachos» (lo crea la app al arrancar). -->
+		<meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="despachos" />
+	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<!-- Ubicación solo con la app en uso (HU06, HU08). Sin ubicación en segundo plano: fuera del alcance (RNF11). -->
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<!-- HU21 (ADR-07): aviso del despacho al sereno. En Android 13+ se pide con una explicación previa. -->
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-feature android:name="android.hardware.location" android:required="false" />
 	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>

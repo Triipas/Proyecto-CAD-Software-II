@@ -42,9 +42,10 @@ desde la app ya se verificó en el Sprint 1 (HU07, HU08).
 
 ## Qué no se muestra todavía
 
-- **Notificación push del despacho (ADR-07):** el servidor la envía si tiene la credencial de Firebase; la recepción en el
-  teléfono está pendiente de que el equipo cree el proyecto de Firebase (bloque 7b). En la demo el aviso llega por el canal
-  en tiempo real con la app abierta.
+- **Notificación push del despacho (ADR-07):** la app ya pide el permiso y registra el dispositivo en el proyecto de
+  Firebase del equipo (bloque 7b). La credencial de servidor `Push__CredencialFcm` ya está configurada en Render; tras el
+  despliegue, comprobar en la demo que la notificación llega con la app cerrada. Con la app abierta, el aviso llega además por
+  el canal en tiempo real.
 - **Vista del ciudadano del resultado (HU30, Sprint 3):** el resultado público ya se guarda separado de las notas internas.
 - **Asignación de reportes admitidos (HU20-CA07, Sprint 3).**
 - **Medición formal de RNF02 en el entorno publicado (S1-T18 / S2-T15).**

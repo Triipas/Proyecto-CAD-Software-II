@@ -42,9 +42,16 @@ public static class MauiProgram
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
         builder.Services.AddSingleton<ServicioTurnoSereno>();
         builder.Services.AddSingleton<ICanalSereno, CanalSerenoSignalR>();
+#if ANDROID
+        builder.Services.AddSingleton<IServicioPush, Platforms.Android.ServicioPushAndroid>();
+#else
+        builder.Services.AddSingleton<IServicioPush, ServicioPushNoDisponible>();
+#endif
+        builder.Services.AddSingleton<ServicioNotificaciones>();
         builder.Services.AddSingleton<ServicioDespacho>();
         builder.Services.AddTransient(s => new InicioSerenoVistaModelo(
-            s.GetRequiredService<ServicioTurnoSereno>(), s.GetRequiredService<ServicioDespacho>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<ServicioTurnoSereno>(), s.GetRequiredService<ServicioDespacho>(), s.GetRequiredService<ServicioNotificaciones>(),
+            s.GetRequiredService<IAlmacenSesion>(),
             s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
         builder.Services.AddTransient<IngresoPagina>();
         builder.Services.AddTransient<RegistroPagina>();

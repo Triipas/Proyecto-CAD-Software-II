@@ -93,7 +93,8 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - La pantalla muestra los datos de DP06: origen, estado, horas, identificador, ubicación del dispositivo o «no disponible», y la información y las referencias registradas por la central (rotuladas como referencias del ciudadano, no como ubicación).
 - HU22/HU23: «Voy en camino» con el caso «Asignada» e «Iniciar atención» con el caso «En camino». Si el estado ya cambió, se informa y se vuelve a consultar; si un operador registra el inicio, el canal avisa (`DespachoActualizado`) y la app se actualiza.
 - HU24: «Cerrar el caso» con el caso «En atención»: tipificación final (catálogo de `GET /api/sereno/categorias`), resultado (público) y notas internas (opcionales). Los errores de cada campo los devuelve el servidor. Al cerrar, el despacho desaparece y se muestra «Caso cerrado a las …».
-- La notificación push (ADR-07) se integrará cuando el equipo cree el proyecto de Firebase (`google-services.json`, no versionado).
+- Notificación push (ADR-07, bloque 7b): `Platforms/Android/Push.cs` (token de FCM, permiso de notificaciones de Android 13+, canal «despachos» y receptor de mensajes) y `Servicios/Notificaciones.cs` (cuándo pedir el permiso y registrar o quitar el dispositivo en el servidor). La pantalla del sereno explica el aviso antes de pedir el permiso.
+- **Configurar Firebase en un equipo:** descargar `google-services.json` del proyecto `cad-validacion` (consola de Firebase → Configuración del proyecto → app Android `pe.cadmvp.movil`) y copiarlo en `src/Cad.Movil/Platforms/Android/google-services.json`, o compilar con `-p:CadGoogleServicesJson=<ruta>`. No se versiona. Sin él, la app funciona sin push. El dispositivo o emulador necesita Google Play Services (imágenes «Google APIs» o «Google Play»).
 
 ## Integración continua
 
