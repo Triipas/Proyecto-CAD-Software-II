@@ -34,4 +34,5 @@ La herramienta crea cuentas de ciudadano ficticias (`carga.<ejecución>.<n>@corr
 | Fecha | Entorno | Resultado | Informe |
 |---|---|---|---|
 | 13/10/2026 | Ensayo local (no válido para RNF02) | 100/100 en ≤ 3 s; p95 178 ms | [rnf02-20261013T074839-ensayo-local.md](mediciones/rnf02-20261013T074839-ensayo-local.md) |
-| — | Entorno de validación publicado | **Pendiente** (despliegue: ADR-06) | — |
+| 14/10/2026 | Ensayo local con el código del Sprint 2 (no válido para RNF02) | 100/100 en ≤ 3 s; p95 63 ms | [rnf02-20261014T223258-ensayo-local-sprint2.md](mediciones/rnf02-20261014T223258-ensayo-local-sprint2.md) |
+| — | Entorno de validación publicado | Planificada en el Sprint 3 (S1-T18 y S2-T15) | — |

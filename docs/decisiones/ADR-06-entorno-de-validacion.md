@@ -15,7 +15,7 @@
 **Render Web Service (Docker) en plan gratuito + Neon PostgreSQL gratuito**, en la misma región (EE. UU. Este). **Costo: USD 0.**
 
 - No se contrata Render Starter (≈ USD 7/mes prorrateado). Solo sería necesario para la prueba de disponibilidad de 8 h (RNF10), que no es del Sprint 1; se pedirá autorización expresa cuando corresponda.
-- Las cuentas de Render y Neon, y la conexión de GitHub con Render (OAuth), las crea el equipo: el asistente no crea cuentas ni concede permisos.
+- Las cuentas de Render y Neon, y la conexión de GitHub con Render (OAuth), las crea y gestiona el equipo.
 
 ## Consecuencias
 
