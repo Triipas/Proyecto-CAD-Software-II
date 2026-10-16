@@ -28,6 +28,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<INavegacion, NavegacionShell>();
         builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
         builder.Services.AddSingleton<IApiCad, ApiCad>();
+        builder.Services.AddSingleton<IAlmacenLocal, AlmacenLocalMaui>();
 
         // Lógica de la app.
         builder.Services.AddSingleton<EmisorSos>();
@@ -38,10 +39,15 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<IngresoVistaModelo>();
         builder.Services.AddTransient<RegistroVistaModelo>();
+        builder.Services.AddSingleton<ServicioAcompanamiento>(); // la sesión y la transmisión sobreviven al cambio de pantalla
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
-            s.GetRequiredService<ServicioBandeja>()));
+            s.GetRequiredService<ServicioBandeja>(), s.GetRequiredService<ServicioAcompanamiento>()));
+        builder.Services.AddTransient(s => new AcompanamientoVistaModelo(s.GetRequiredService<ServicioAcompanamiento>(),
+            s.GetRequiredService<IServicioUbicacion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
+            s.GetRequiredService<TimeProvider>()));
+        builder.Services.AddTransient<AcompanamientoPagina>();
         builder.Services.AddTransient(s => new ReporteVistaModelo(
             s.GetRequiredService<IApiCad>(), s.GetRequiredService<RegistradorReporte>(), s.GetRequiredService<IServicioUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));

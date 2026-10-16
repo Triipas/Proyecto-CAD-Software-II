@@ -1,0 +1,181 @@
+using System.Globalization;
+using Cad.Movil.Servicios;
+
+namespace Cad.Movil.VistasModelo;
+
+// HU34–HU37 — pantalla «Acompañamiento» del ciudadano. El control es independiente del SOS y del reporte (HU34-CA05).
+public sealed class AcompanamientoVistaModelo : VistaModeloBase
+{
+    // HU35-CA05 y DP13 (pendiente): la interfaz no promete la transmisión fuera de las condiciones validadas (SPIKE01).
+    public const string TextoEntorno =
+        "La transmisión funciona con esta aplicación abierta y con conexión. Si cierras la aplicación, apagas la pantalla o te quedas sin conexión, puede detenerse.";
+
+    private readonly ServicioAcompanamiento servicio;
+    private readonly IServicioUbicacion ubicacion;
+    private readonly INavegacion navegacion;
+    private readonly TimeProvider reloj;
+    private ResultadoInicioAcompanamiento? ultimoIntento;
+    private bool finalidadAceptada;
+    private CancellationTokenSource? segundero;
+
+    public AcompanamientoVistaModelo(ServicioAcompanamiento servicio, IServicioUbicacion ubicacion, INavegacion navegacion,
+        Action abrirAjustes, TimeProvider reloj)
+    {
+        (this.servicio, this.ubicacion, this.navegacion, this.reloj) = (servicio, ubicacion, navegacion, reloj);
+        Iniciar = new ComandoAsincrono(IniciarAsync, () => PuedeIniciar);
+        PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
+        AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
+        Finalizar = new ComandoAsincrono(() => servicio.FinalizarAsync(), () => servicio.Activo);
+        Volver = new ComandoAsincrono(() => navegacion.IrAAsync(".."));
+        VolverAIngresar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Ingreso));
+        servicio.Cambio += () => _ = HiloPrincipal(Actualizar);
+    }
+
+    // Los avisos del servicio llegan desde el bucle de envío: los enlaces de MAUI se actualizan en el hilo principal.
+    public Func<Action, Task> HiloPrincipal { get; init; } = accion => MainThread.InvokeOnMainThreadAsync(accion);
+
+    public ComandoAsincrono Iniciar { get; }
+    public ComandoAsincrono PermitirUbicacion { get; }
+    public ComandoAsincrono AbrirAjustes { get; }
+    public ComandoAsincrono Finalizar { get; }
+    public ComandoAsincrono Volver { get; }
+    public ComandoAsincrono VolverAIngresar { get; }
+
+    // HU34-CA02: el ciudadano marca expresamente que acepta compartir su ubicación con la central durante el trayecto.
+    public bool FinalidadAceptada
+    {
+        get => finalidadAceptada;
+        set
+        {
+            if (Asignar(ref finalidadAceptada, value) && ultimoIntento == ResultadoInicioAcompanamiento.FaltaFinalidad)
+            {
+                ultimoIntento = null;
+                Notificar(nameof(MensajeInicio));
+                Notificar(nameof(HayMensajeInicio));
+            }
+        }
+    }
+
+    public EstadoAcompanamiento Estado => servicio.Estado;
+    public bool MostrarInicio => servicio.Estado is EstadoAcompanamiento.SinSesion or EstadoAcompanamiento.NoConfirmado
+        or EstadoAcompanamiento.Finalizado or EstadoAcompanamiento.Vencido or EstadoAcompanamiento.Iniciando;
+    public bool MostrarActivo => servicio.Activo;
+    public bool PuedeIniciar => MostrarInicio && servicio.Estado != EstadoAcompanamiento.Iniciando;
+    public string TextoBotonIniciar => servicio.Estado switch
+    {
+        EstadoAcompanamiento.Iniciando => "Iniciando…",
+        EstadoAcompanamiento.NoConfirmado => "Reintentar el inicio",
+        _ => "Iniciar acompañamiento",
+    };
+
+    // HU34-CA01/CA08: estado activo y tiempo restante.
+    public string TiempoRestante => servicio.Restante is { } r ? $"{(int)r.TotalMinutes:00}:{r.Seconds:00}" : "";
+    public string TextoActivo => servicio.Sesion is { } s
+        ? $"Acompañamiento activo hasta las {s.VenceEn.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}. Termina solo a los 30 minutos; no se renueva."
+        : "";
+
+    // HU35-CA04: la condición real de la transmisión.
+    public string TextoTransmision => servicio.Condicion
+        ?? (servicio.UltimoEnvio is { } u ? $"Última posición enviada a las {u.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture)}." : "Enviando tu posición…");
+    public string TipoAvisoTransmision => servicio.Condicion is null ? "exito" : "advertencia";
+
+    // Resultado del estado general (inicio no confirmado, finalización, vencimiento, cierre pendiente).
+    public bool HayEstado => servicio.Estado is not (EstadoAcompanamiento.SinSesion or EstadoAcompanamiento.Activo) || servicio.Error is not null;
+    public string TipoAvisoEstado => servicio.Estado switch
+    {
+        EstadoAcompanamiento.Finalizado or EstadoAcompanamiento.Vencido => "exito",
+        EstadoAcompanamiento.NoConfirmado or EstadoAcompanamiento.CierrePendiente => "advertencia",
+        _ when servicio.Error is not null => "error",
+        _ => "informacion",
+    };
+    public string TextoEstado => servicio.Estado switch
+    {
+        EstadoAcompanamiento.Iniciando => "Iniciando el acompañamiento con la central…",
+        EstadoAcompanamiento.Finalizando => "Dejaste de compartir tu ubicación. Comunicando el cierre a la central…",
+        // HU36-CA03: la captura ya se detuvo; el cierre se envía al recuperar la conexión (efecto en la central: DP20).
+        EstadoAcompanamiento.CierrePendiente =>
+            "Dejaste de compartir tu ubicación. No hay conexión con la central: el cierre se enviará en cuanto vuelva la conexión.",
+        EstadoAcompanamiento.Finalizado => "Acompañamiento finalizado. Tu ubicación ya no se comparte.",
+        // HU37: termina solo a los 30 minutos y no se renueva.
+        EstadoAcompanamiento.Vencido => "El acompañamiento terminó a los 30 minutos. Tu ubicación ya no se comparte. Si lo necesitas, inicia uno nuevo.",
+        _ => servicio.Error ?? "",
+    };
+
+    public bool SesionTerminada => servicio.SesionTerminada;
+
+    // Resultado del último intento de inicio que no llegó al servidor (finalidad, permiso, ubicación).
+    public bool HayMensajeInicio => MensajeInicio.Length > 0;
+    public string MensajeInicio => ultimoIntento switch
+    {
+        ResultadoInicioAcompanamiento.FaltaFinalidad => "Para iniciar, marca que aceptas compartir tu ubicación con la central durante el trayecto.",
+        ResultadoInicioAcompanamiento.NecesitaExplicarPermiso =>
+            "El acompañamiento necesita el permiso de ubicación. Tu ubicación solo se comparte mientras el acompañamiento esté activo.",
+        ResultadoInicioAcompanamiento.PermisoDenegado => "Sin permiso de ubicación no se puede iniciar el acompañamiento. Puedes concederlo en los ajustes del teléfono.",
+        ResultadoInicioAcompanamiento.SinUbicacion or ResultadoInicioAcompanamiento.OtraSesionActiva or ResultadoInicioAcompanamiento.Rechazado
+            => servicio.Error ?? "",
+        _ => "",
+    };
+    public bool MostrarPermitir => ultimoIntento == ResultadoInicioAcompanamiento.NecesitaExplicarPermiso;
+    public bool MostrarAjustes => ultimoIntento == ResultadoInicioAcompanamiento.PermisoDenegado;
+
+    public async Task AlAparecerAsync()
+    {
+        await servicio.CargarAsync();
+        Actualizar();
+        IniciarSegundero();
+    }
+
+    public void AlDesaparecer()
+    {
+        segundero?.Cancel();
+        segundero = null;
+    }
+
+    private async Task IniciarAsync()
+    {
+        ultimoIntento = await servicio.IniciarAsync(FinalidadAceptada);
+        if (ultimoIntento == ResultadoInicioAcompanamiento.OtraSesionActiva)
+            await servicio.CargarAsync(); // muestra la sesión que ya estaba activa
+        Actualizar();
+    }
+
+    private async Task PermitirUbicacionAsync()
+    {
+        if (await ubicacion.SolicitarPermisoAsync() == EstadoPermisoUbicacion.Concedido)
+            await IniciarAsync();
+        else
+        {
+            ultimoIntento = ResultadoInicioAcompanamiento.PermisoDenegado;
+            Actualizar();
+        }
+    }
+
+    // El tiempo restante se actualiza cada segundo mientras la pantalla está visible.
+    private void IniciarSegundero()
+    {
+        segundero?.Cancel();
+        var propio = segundero = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            using var temporizador = new PeriodicTimer(TimeSpan.FromSeconds(1), reloj);
+            try
+            {
+                while (await temporizador.WaitForNextTickAsync(propio.Token))
+                    await HiloPrincipal(() => Notificar(nameof(TiempoRestante)));
+            }
+            catch (OperationCanceledException) { }
+        });
+    }
+
+    private void Actualizar()
+    {
+        foreach (var p in new[] { nameof(Estado), nameof(MostrarInicio), nameof(MostrarActivo), nameof(PuedeIniciar), nameof(TextoBotonIniciar),
+                     nameof(TiempoRestante), nameof(TextoActivo), nameof(TextoTransmision), nameof(TipoAvisoTransmision), nameof(HayEstado),
+                     nameof(TipoAvisoEstado), nameof(TextoEstado), nameof(SesionTerminada), nameof(HayMensajeInicio), nameof(MensajeInicio),
+                     nameof(MostrarPermitir), nameof(MostrarAjustes) })
+            Notificar(p);
+        Iniciar.ActualizarDisponibilidad();
+        Finalizar.ActualizarDisponibilidad();
+    }
+
+}

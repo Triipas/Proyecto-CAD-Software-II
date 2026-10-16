@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Cad.Contratos.Acompanamiento;
 using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
@@ -48,6 +49,21 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
 
     public Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct) =>
         EnviarAsync<SinContenido>(HttpMethod.Post, $"api/notificaciones/{notificacionId}/leida", null, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> IniciarAcompanamientoAsync(string token, SolicitudInicioAcompanamiento solicitud, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Post, "api/acompanamiento", solicitud, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista?>> ConsultarAcompanamientoActualAsync(string token, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista?>(HttpMethod.Get, "api/acompanamiento/actual", null, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Get, $"api/acompanamiento/{sesionId}", null, token, ct);
+
+    public Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct) =>
+        EnviarAsync<SinContenido>(HttpMethod.Post, $"api/acompanamiento/{sesionId}/posiciones", posicion, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Post, $"api/acompanamiento/{sesionId}/finalizacion", null, token, ct);
 
     public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
         EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Get, "api/sereno/estado", null, token, ct);
