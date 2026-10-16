@@ -34,6 +34,10 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("POST", "/api/sos", "HU07", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/reportes", "HU10", Acceso.SoloRol, Roles.Ciudadano),
         new("GET", "/api/reportes/categorias", "HU10", Acceso.SoloRol, Roles.Ciudadano, Contenido: "Violencia doméstica"),
+        // HU30 — mis casos. Con un caso inexistente (o ajeno) el ciudadano recibe 404; el resto es rechazado antes.
+        new("GET", "/api/casos/mios", "HU30", Acceso.SoloRol, Roles.Ciudadano),
+        new("GET", "/api/casos/mios/{id:guid}", "HU30", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000"),
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),

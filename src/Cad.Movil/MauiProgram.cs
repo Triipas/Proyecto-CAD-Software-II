@@ -61,6 +61,12 @@ public static class MauiProgram
         builder.Services.AddTransient<RegistroPagina>();
         builder.Services.AddTransient<InicioCiudadanoPagina>();
         builder.Services.AddTransient<ReportePagina>();
+        builder.Services.AddTransient(s => new MisCasosVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+        builder.Services.AddTransient(s => new MiCasoVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+        builder.Services.AddTransient<MisCasosPagina>();
+        builder.Services.AddTransient<MiCasoPagina>();
         builder.Services.AddTransient<InicioSerenoPagina>();
 
         builder.Services.AddSingleton<EstadoAppMaui>();

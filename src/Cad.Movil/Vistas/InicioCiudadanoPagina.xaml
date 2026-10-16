@@ -71,6 +71,10 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- HU30: estado y avances públicos de los SOS y reportes propios. -->
+            <Button Text="Mis casos" Style="{StaticResource BotonSecundario}" Command="{Binding VerMisCasos}"
+                    SemanticProperties.Hint="Muestra tus SOS y reportes con su estado" />
+
             <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
     </ScrollView>

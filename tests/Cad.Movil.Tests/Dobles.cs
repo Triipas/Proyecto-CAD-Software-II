@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
@@ -166,6 +167,25 @@ public sealed class ApiFalsa : IApiCad
     {
         Interlocked.Increment(ref ConsultasCategoriasReporte);
         return Task.FromResult(RespuestaCategoriasReporte?.Invoke() ?? new ResultadoApi<List<CategoriaCatalogo>>.Correcto(Categorias));
+    }
+
+    // ----- HU30: mis casos -----
+    public Func<ResultadoApi<List<MiCasoResumen>>> RespuestaMisCasos { get; set; } = () => new ResultadoApi<List<MiCasoResumen>>.Correcto([]);
+    public Func<Guid, ResultadoApi<MiCasoDetalle>> RespuestaMiCaso { get; set; } =
+        _ => new ResultadoApi<MiCasoDetalle>.Rechazado(404, "No encontrado", new Dictionary<string, string[]>());
+    public int ConsultasMisCasos;
+    public ConcurrentQueue<Guid> CasosConsultados { get; } = new();
+
+    public Task<ResultadoApi<List<MiCasoResumen>>> ConsultarMisCasosAsync(string token, CancellationToken ct)
+    {
+        Interlocked.Increment(ref ConsultasMisCasos);
+        return Task.FromResult(RespuestaMisCasos());
+    }
+
+    public Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct)
+    {
+        CasosConsultados.Enqueue(casoId);
+        return Task.FromResult(RespuestaMiCaso(casoId));
     }
 
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)

@@ -28,6 +28,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /api/cuentas/yo` | HU02 | ✘ | ✔ | ✔ | ✔ | ✔ |
 | `POST /api/sos` | HU07, HU08 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `POST /api/reportes` y `GET /api/reportes/categorias` | HU10 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `GET /api/casos/mios` y `GET /api/casos/mios/{id}` (solo los casos propios) | HU30 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET` y `PUT /api/sereno/estado`, `POST /api/sereno/posiciones` (estado operativo y posiciones del sereno) | HU18 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET /api/mediciones/presentacion` (resultados de RNF02; 404 si la medición está apagada) | RNF02 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -88,7 +89,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU27 | Consultar el historial de un caso | Operador | **Verificada en el servidor para los SOS (14/10/2026):** `/panel/casos/{id}/historial` solo para Operador; un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no lo obtiene ni ve las notas internas (`HistorialTests.CA04_CA06_*`, `CA06_*`). Los reportes se añaden en el Sprint 3. |
 | HU28 | Consultar los tiempos de respuesta y de atención | Operador | Pendiente (Sprint 5) |
 | HU29 | Consultar el mapa de concentración de incidencias | Operador | Pendiente (Sprint 5) |
-| HU30 | Consultar mis casos | Ciudadano | Pendiente (Sprint 3; titularidad) |
+| HU30 | Consultar mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/casos/mios` y `/api/casos/mios/{id}` solo para Ciudadano y solo sus casos; el caso de otro ciudadano responde 404 aunque se conozca su identificador; un anónimo, un sereno o un operador reciben 401/403 (`MisCasosTests.CA04_*`, matriz). Sin notas internas, intentos de contacto, operador ni sereno (`MisCasosTests.CA05_*`). |
 | HU31 | Recibir notificaciones de avances de mis casos | Ciudadano | Pendiente (Sprint 3; titularidad) |
 | HU32 | Evaluar la atención de un caso cerrado | Ciudadano | Pendiente (Sprint 5; titularidad) |
 | HU33 | Consultar las evaluaciones de atención | Operador (autorizado, DP04) | Pendiente (Sprint 5) |

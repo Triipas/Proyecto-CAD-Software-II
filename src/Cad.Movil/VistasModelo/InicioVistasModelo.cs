@@ -24,6 +24,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
         Salir = new ComandoAsincrono(SalirAsync);
         Reportar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Reporte));
+        VerMisCasos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisCasos));
         emisor.Cambio += _ => ActualizarSos();
     }
 
@@ -33,6 +34,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     public ComandoAsincrono AbrirAjustes { get; }
     public ComandoAsincrono Salir { get; }
     public ComandoAsincrono Reportar { get; }
+    public ComandoAsincrono VerMisCasos { get; }
 
     // ----- HU06: preparación al abrir la aplicación -----
     public bool MostrarExplicacion => estadoUbicacion == ResultadoPreparacion.NecesitaExplicacion;
