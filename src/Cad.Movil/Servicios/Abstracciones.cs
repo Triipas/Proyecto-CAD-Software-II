@@ -35,6 +35,10 @@ public interface IApiCad
     Task<ResultadoApi<List<MiCasoResumen>>> ConsultarMisCasosAsync(string token, CancellationToken ct);
     Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct);
 
+    // HU31 — bandeja de notificaciones del ciudadano.
+    Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct);
+
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);
     Task<ResultadoApi<RespuestaEstadoOperativo>> CambiarEstadoOperativoAsync(string token, SolicitudCambioEstadoOperativo solicitud, CancellationToken ct);

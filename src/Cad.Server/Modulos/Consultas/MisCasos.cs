@@ -9,19 +9,8 @@ namespace Cad.Server.Modulos.Consultas;
 // existe para él). Proyección cerrada a DP05: nunca lee notas internas, intentos de contacto, operador ni sereno (CA05).
 public sealed class ConsultarMisCasos(CadDbContext db)
 {
-    // DP05: el estado que ve el titular. Un SOS pendiente aún no tiene sereno: se muestra «Recibido» (DP05 no nombra
-    // otro estado para él). Asignada, En camino y En atención se agrupan en «En atención».
-    public static string EstadoPublico(OrigenCaso origen, EstadoCaso estado) => estado switch
-    {
-        EstadoCaso.Recibido => EstadosPublicos.Recibido,
-        EstadoCaso.EnRevision => EstadosPublicos.EnRevision,
-        EstadoCaso.Pendiente => origen == OrigenCaso.Reporte ? EstadosPublicos.Admitido : EstadosPublicos.Recibido,
-        EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion => EstadosPublicos.EnAtencion,
-        EstadoCaso.Cerrada => EstadosPublicos.Cerrado,
-        EstadoCaso.Derivada => EstadosPublicos.Derivado,
-        EstadoCaso.Descartada => EstadosPublicos.Descartado,
-        _ => throw new ArgumentOutOfRangeException(nameof(estado)),
-    };
+    // DP05: el estado que ve el titular (definido en el dominio; lo comparten HU30 y HU31).
+    public static string EstadoPublico(OrigenCaso origen, EstadoCaso estado) => EstadoPublicoCaso.De(origen, estado);
 
     private static string TextoOrigen(OrigenCaso origen) => origen == OrigenCaso.Sos ? "SOS" : "Reporte";
 

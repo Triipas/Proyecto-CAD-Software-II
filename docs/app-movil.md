@@ -112,6 +112,12 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - `Vistas/MisCasosPagina.xaml` y `Vistas/MiCasoPagina.xaml` con `VistasModelo/MisCasosVistaModelo.cs`: la lista de SOS y reportes propios (origen, estado público, fecha y resultado) y el detalle con los avances públicos. Se abre desde «Mis casos» en el inicio del ciudadano.
 - Solo datos públicos (DP05): nunca operador, sereno, notas internas ni intentos de contacto. Se vuelve a consultar al abrir cada pantalla y al deslizar hacia abajo.
 
+## Notificaciones del ciudadano (HU31, Sprint 3)
+
+- `Servicios/Bandeja.cs` (`ServicioBandeja`), `Vistas/NotificacionesPagina.xaml` y `VistasModelo/NotificacionesVistaModelo.cs`: la bandeja de avisos por cambios de estado público de los casos propios. Las genera el servidor y persisten.
+- El inicio muestra «Notificaciones (N sin leer)», actualizado cada vez que aparece. Tocar una notificación la marca como leída y abre el caso en «Mis casos».
+- Sin push al ciudadano (E4): la bandeja se consulta al abrir la app y al volver al inicio.
+
 ## Integración continua
 
 `.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.

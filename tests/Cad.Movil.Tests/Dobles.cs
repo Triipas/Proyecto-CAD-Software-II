@@ -188,6 +188,24 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaMiCaso(casoId));
     }
 
+    // ----- HU31: bandeja -----
+    public Func<ResultadoApi<BandejaNotificaciones>> RespuestaBandeja { get; set; } =
+        () => new ResultadoApi<BandejaNotificaciones>.Correcto(new BandejaNotificaciones(0, []));
+    public ConcurrentQueue<Guid> NotificacionesLeidas { get; } = new();
+    public int ConsultasBandeja;
+
+    public Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct)
+    {
+        Interlocked.Increment(ref ConsultasBandeja);
+        return Task.FromResult(RespuestaBandeja());
+    }
+
+    public Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct)
+    {
+        NotificacionesLeidas.Enqueue(notificacionId);
+        return Task.FromResult<ResultadoApi<SinContenido>>(new ResultadoApi<SinContenido>.Correcto(new SinContenido()));
+    }
+
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
         SosEnviados.Enqueue(solicitud);

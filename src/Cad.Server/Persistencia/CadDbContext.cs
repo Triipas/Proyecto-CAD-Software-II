@@ -23,10 +23,42 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
     public DbSet<DecisionReporte> DecisionesReporte => Set<DecisionReporte>();
+    public DbSet<NotificacionCiudadano> NotificacionesCiudadano => Set<NotificacionCiudadano>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
+
+    // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
+    // su titular; un cambio interno que no cambia el estado público (en camino, inicio de la atención) no la genera.
+    // Registrar un caso no notifica: es el propio ciudadano quien lo crea.
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        NotificarCambiosPublicos();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        NotificarCambiosPublicos();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void NotificarCambiosPublicos()
+    {
+        var ahora = DateTimeOffset.UtcNow;
+        foreach (var entrada in ChangeTracker.Entries<Caso>().Where(e => e.State == EntityState.Modified).ToList())
+        {
+            var estado = entrada.Property(c => c.Estado);
+            if (!estado.IsModified)
+                continue;
+            var caso = entrada.Entity;
+            var antes = EstadoPublicoCaso.De(caso.Origen, estado.OriginalValue);
+            var despues = EstadoPublicoCaso.De(caso.Origen, estado.CurrentValue);
+            if (antes != despues)
+                NotificacionesCiudadano.Add(NotificacionCiudadano.PorCambioDeEstado(caso, despues, ahora));
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -184,6 +216,18 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             decision.Property(d => d.Accion).HasMaxLength(DecisionReporte.MaximoAccion);
             decision.HasOne<Caso>().WithOne().HasForeignKey<DecisionReporte>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
             decision.HasOne<Usuario>().WithMany().HasForeignKey(d => d.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU31: bandeja de notificaciones del ciudadano (persistente: CA02). Solo inserción, salvo la marca de lectura.
+        builder.Entity<NotificacionCiudadano>(notificacion =>
+        {
+            notificacion.ToTable("NotificacionesCiudadano");
+            notificacion.HasKey(n => n.Id);
+            notificacion.Property(n => n.EstadoPublico).HasMaxLength(30);
+            notificacion.Property(n => n.Texto).HasMaxLength(200);
+            notificacion.HasIndex(n => new { n.CiudadanoId, n.CreadaEn });
+            notificacion.HasOne<Caso>().WithMany().HasForeignKey(n => n.CasoId).OnDelete(DeleteBehavior.Restrict);
+            notificacion.HasOne<Usuario>().WithMany().HasForeignKey(n => n.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU20: asignaciones. Una sola vigente por caso y una sola vigente por sereno (CA04, CA05, RNF08).

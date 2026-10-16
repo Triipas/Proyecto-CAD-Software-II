@@ -11,12 +11,15 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
     private readonly Action abrirAjustes;
+    private readonly ServicioBandeja? bandeja;
     private ResultadoPreparacion? estadoUbicacion;
+    private int? noLeidas;
     private bool preparada;
 
     public InicioCiudadanoVistaModelo(EmisorSos emisor, PreparacionUbicacion preparacion, IAlmacenSesion sesiones,
-        INavegacion navegacion, Action abrirAjustes)
+        INavegacion navegacion, Action abrirAjustes, ServicioBandeja? bandeja = null)
     {
+        this.bandeja = bandeja;
         (this.emisor, this.preparacion, this.sesiones, this.navegacion, this.abrirAjustes) = (emisor, preparacion, sesiones, navegacion, abrirAjustes);
         EmitirSos = new ComandoAsincrono(() => emisor.ActivarAsync(), () => !SosEnCurso);
         Reintentar = new ComandoAsincrono(() => emisor.ReintentarAsync(), () => emisor.PuedeReintentar);
@@ -25,6 +28,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         Salir = new ComandoAsincrono(SalirAsync);
         Reportar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Reporte));
         VerMisCasos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisCasos));
+        VerNotificaciones = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Notificaciones));
         emisor.Cambio += _ => ActualizarSos();
     }
 
@@ -35,6 +39,11 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     public ComandoAsincrono Salir { get; }
     public ComandoAsincrono Reportar { get; }
     public ComandoAsincrono VerMisCasos { get; }
+    public ComandoAsincrono VerNotificaciones { get; }
+
+    // HU31: aviso de notificaciones sin leer (sin número si no se pudo consultar).
+    public string TextoNotificaciones => noLeidas is > 0 ? $"Notificaciones ({noLeidas} sin leer)" : "Notificaciones";
+    public bool HayNoLeidas => noLeidas is > 0;
 
     // ----- HU06: preparación al abrir la aplicación -----
     public bool MostrarExplicacion => estadoUbicacion == ResultadoPreparacion.NecesitaExplicacion;
@@ -61,6 +70,13 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     // Una sola comprobación por apertura de la app (CA01, CA02).
     public async Task AlAparecerAsync()
     {
+        // HU31: cada vez que se muestra el inicio (también al volver de la bandeja) se actualiza el número sin leer.
+        if (bandeja is not null)
+        {
+            noLeidas = await bandeja.ContarNoLeidasAsync();
+            Notificar(nameof(TextoNotificaciones));
+            Notificar(nameof(HayNoLeidas));
+        }
         if (preparada) return;
         preparada = true;
         CambiarUbicacion(await preparacion.ComprobarAlAbrirAsync());

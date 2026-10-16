@@ -38,6 +38,10 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/api/casos/mios", "HU30", Acceso.SoloRol, Roles.Ciudadano),
         new("GET", "/api/casos/mios/{id:guid}", "HU30", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000"),
+        // HU31 — bandeja de notificaciones. Con una notificación inexistente (o ajena) el ciudadano recibe 404.
+        new("GET", "/api/notificaciones", "HU31", Acceso.SoloRol, Roles.Ciudadano),
+        new("POST", "/api/notificaciones/{id:guid}/leida", "HU31", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/notificaciones/00000000-0000-0000-0000-000000000000/leida"),
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),

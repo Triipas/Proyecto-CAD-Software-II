@@ -435,6 +435,43 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.NotificacionCiudadano", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CiudadanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EstadoPublico")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("LeidaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CasoId");
+
+                    b.HasIndex("CiudadanoId", "CreadaEn");
+
+                    b.ToTable("NotificacionesCiudadano", (string)null);
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -947,6 +984,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.NotificacionCiudadano", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CiudadanoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

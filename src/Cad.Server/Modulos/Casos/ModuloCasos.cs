@@ -18,6 +18,7 @@ public static class ModuloCasos
         services.AddScoped<Modulos.Consultas.ConsultarReportesAdmitidos>();
         services.AddScoped<Modulos.Consultas.ConsultarCasos>();
         services.AddScoped<Modulos.Consultas.ConsultarMisCasos>();
+        services.AddScoped<Modulos.Consultas.BandejaCiudadano>();
         services.AddScoped<Modulos.Consultas.ConsultarReportes>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleReporte>();
         services.AddScoped<RegistrarIntentoContacto>();
@@ -69,6 +70,14 @@ public static class ModuloCasos
             .RequireAuthorization(Politicas.Ciudadano);
         app.MapGet("/api/casos/mios/{id:guid}", async (Guid id, HttpContext contexto, Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
                 await consultar.DetalleAsync(contexto.User.IdUsuario(), id, ct) is { } detalle ? Results.Ok(detalle) : Results.NotFound())
+            .RequireAuthorization(Politicas.Ciudadano);
+
+        // HU31 — bandeja de notificaciones: solo las del ciudadano que consulta (CA04).
+        app.MapGet("/api/notificaciones", async (HttpContext contexto, Modulos.Consultas.BandejaCiudadano bandeja, CancellationToken ct) =>
+                Results.Ok(await bandeja.ConsultarAsync(contexto.User.IdUsuario(), ct)))
+            .RequireAuthorization(Politicas.Ciudadano);
+        app.MapPost("/api/notificaciones/{id:guid}/leida", async (Guid id, HttpContext contexto, Modulos.Consultas.BandejaCiudadano bandeja, CancellationToken ct) =>
+                await bandeja.MarcarLeidaAsync(contexto.User.IdUsuario(), id, ct) ? Results.NoContent() : Results.NotFound())
             .RequireAuthorization(Politicas.Ciudadano);
 
         return app;

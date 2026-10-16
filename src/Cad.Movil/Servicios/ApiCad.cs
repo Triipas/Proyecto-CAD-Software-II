@@ -43,6 +43,12 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct) =>
         EnviarAsync<MiCasoDetalle>(HttpMethod.Get, $"api/casos/mios/{casoId}", null, token, ct);
 
+    public Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct) =>
+        EnviarAsync<BandejaNotificaciones>(HttpMethod.Get, "api/notificaciones", null, token, ct);
+
+    public Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct) =>
+        EnviarAsync<SinContenido>(HttpMethod.Post, $"api/notificaciones/{notificacionId}/leida", null, token, ct);
+
     public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
         EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Get, "api/sereno/estado", null, token, ct);
 
