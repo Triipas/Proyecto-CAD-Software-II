@@ -52,6 +52,8 @@ Las operaciones públicas lo son por definición (registro, inicio de sesión, s
 
 ## B. Registro acumulativo HU04–HU43 (HU03-CA04)
 
+Las historias de los Sprints 1 y 2 de esta tabla fueron aceptadas en sus Sprint Review.
+
 Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de *Historias de usuario estructuradas*. Una HU pasa a «Verificada» solo cuando sus operaciones están en la matriz ejecutable y se prueban con los demás roles.
 
 | HU | Operación | Rol(es) según la HU | Estado de la verificación por rol |

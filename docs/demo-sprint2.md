@@ -40,12 +40,11 @@ desde la app ya se verificó en el Sprint 1 (HU07, HU08).
 7. [Caso cerrado en la app](capturas/demo-sprint2/07-app-cerrado.png)
 8. [Detalle final en la central](capturas/demo-sprint2/08-detalle-final.png)
 
-## Qué no se muestra todavía
+## Planificado para el Sprint 3
 
-- **Notificación push del despacho (ADR-07):** la app ya pide el permiso y registra el dispositivo en el proyecto de
-  Firebase del equipo (bloque 7b). La credencial de servidor `Push__CredencialFcm` ya está configurada en Render; tras el
-  despliegue, comprobar en la demo que la notificación llega con la app cerrada. Con la app abierta, el aviso llega además por
-  el canal en tiempo real.
+- **Entrega real de la notificación push (ADR-07):** la app pide el permiso y registra el dispositivo en el proyecto de
+  Firebase del equipo, y la credencial de servidor `Push__CredencialFcm` está configurada en Render. En el Sprint 3 se
+  comprueba que la notificación llega con la app cerrada. Con la app abierta, el aviso llega además por el canal en tiempo real.
 - **Vista del ciudadano del resultado (HU30, Sprint 3):** el resultado público ya se guarda separado de las notas internas.
 - **Asignación de reportes admitidos (HU20-CA07, Sprint 3).**
 - **Medición formal de RNF02 en el entorno publicado (S1-T18 / S2-T15).**

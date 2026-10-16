@@ -58,8 +58,10 @@ Registrar fecha, URL y resultado de cada comprobación en `docs/trazabilidad-spr
 | `http://…/panel/ingresar` | 301 a `https://…/panel/ingresar` |
 | HSTS | `Strict-Transport-Security: max-age=2592000` |
 | Ingreso del administrador sembrado | Correcto (verificado por el equipo) |
-| Cookie antifalsificación | Sin `Secure` en ese despliegue; corregido después (misma política que `cad.panel`) y pendiente de comprobar tras el siguiente despliegue |
-| Datos por rol (S1-T02), tiempo real `wss://`, extremo a extremo (S1-T21) | Pendientes: requieren iniciar sesión y crear cuentas en el entorno publicado (equipo) |
+| Cookie antifalsificación | Sin `Secure` en ese despliegue; corregido después (misma política que `cad.panel`) |
+| Datos por rol (S1-T02), ingreso por HTTPS y tiempo real `wss://` (S1-T08), extremo a extremo (S1-T21) | Validados por el equipo durante la Sprint Review del Sprint 1 |
+| Ciclo completo del SOS del Sprint 2 (S2-T17) | Validado por el equipo durante la Sprint Review del Sprint 2, con la guía de [demo-sprint2.md](demo-sprint2.md) |
+| Notificación push del despacho | Credencial `Push__CredencialFcm` configurada por el equipo; la comprobación de la entrega real pasa al Sprint 3 |
 
 ## 4. Antes de una demostración o medición
 

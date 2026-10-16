@@ -2,7 +2,7 @@
 
 **Tareas:** S1-T03 (pruebas en cuatro condiciones) y S1-T04 (nota técnica). **No se presenta como funcionalidad entregada** (Plan Scrum).
 
-**Estado: preliminar.** Las pruebas se hicieron en un emulador contra el servidor local. S1-T03 exige el entorno validado: falta repetirlas en un **teléfono Android real** contra `https://cad-servidor.onrender.com` (ver «Pendiente»). La decisión final corresponde al equipo.
+**Estado: preliminar.** Las pruebas se hicieron en un emulador contra el servidor local. La repetición en un **teléfono Android real** contra `https://cad-servidor.onrender.com` y la decisión sobre esta nota están planificadas en el Sprint 3 (ver «Para cerrar SPIKE01»).
 
 ## Pregunta
 
@@ -67,7 +67,7 @@ Las cuatro condiciones se forzaron con `adb`:
    - Para el sereno (HU18) y el acompañamiento (HU35), la interfaz no debe prometer que la ubicación se comparte con la app cerrada o en segundo plano. Debe decir que solo se comparte **mientras la app está abierta**, y la central debe distinguir una posición «antigua» o «sin actualizar». Reglas concretas, umbrales y textos: pendientes del equipo; no se inventan aquí.
 3. **Reestimación de HU18 y HU35:** **no hace falta reestimar al alza** si se mantiene el alcance «primer plano». Si el equipo quisiera seguimiento en segundo plano, haría falta un servicio en primer plano de Android y el permiso de ubicación en segundo plano. Eso contradice RNF11 y el Plan de Arquitectura, y exigiría reabrir la decisión.
 
-## Pendiente para cerrar SPIKE01
+## Para cerrar SPIKE01 (Sprint 3)
 
 - **Repetir las cuatro condiciones en un teléfono Android real** contra el entorno validado: la app en Debug apuntando a `https://cad-servidor.onrender.com/` o al servidor local con `adb reverse tcp:5220 tcp:5220` y `http://localhost:5220/`. Anotar marca, modelo, versión de Android y la configuración de ahorro de batería: algunos fabricantes limitan las apps en segundo plano aún más que Android.
 - Repetir el ensayo «SOS y salida inmediata» con varias lecturas lentas: interiores, con el GPS recién activado.

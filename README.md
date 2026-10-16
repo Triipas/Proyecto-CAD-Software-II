@@ -6,7 +6,7 @@ Documentos de referencia (fuera del repositorio): Plan Scrum, Historias de usuar
 
 ## Estado
 
-Sprint 2 cerrado en desarrollo (pendiente de aceptación: ver el resumen del incremento). El avance por tarea está en [docs/trazabilidad-sprint2.md](docs/trazabilidad-sprint2.md) y la guía de la demostración en [docs/demo-sprint2.md](docs/demo-sprint2.md) (Sprint 1: [docs/trazabilidad-sprint1.md](docs/trazabilidad-sprint1.md)).
+Sprints 1 y 2 cerrados y aceptados en sus Sprint Review; lo trasladado al Sprint 3 está en el cierre de cada trazabilidad. El avance por tarea está en [docs/trazabilidad-sprint2.md](docs/trazabilidad-sprint2.md) y la guía de la demostración en [docs/demo-sprint2.md](docs/demo-sprint2.md) (Sprint 1: [docs/trazabilidad-sprint1.md](docs/trazabilidad-sprint1.md)).
 
 ## Requisitos
 
