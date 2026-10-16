@@ -25,6 +25,7 @@ Recorre en una sola ejecución el flujo completo del sprint, con datos ficticios
 4. Ingreso del operador al panel con la contraseña antigua (rechazado) y con la nueva (HU02).
 5. SOS con ubicación precisa recibido en tiempo real por un operador conectado al hub, y lista de la central (HU07, HU08, HU11).
 6. Sprint 2 (S2-T16): el operador ve el teléfono y registra un intento con información del hecho y referencia (HU12); un sereno se activa y envía posiciones (HU18); registra el token de su dispositivo y recibe el despacho por push (HU21, con un doble de FCM); el operador clasifica (HU13); el sereno va en camino, inicia la atención y cierra con un resultado y notas internas (HU22–HU24).
+7. Sprint 3 (S3-T17, prueba `S3T17_FlujoDeReportesYSeguimiento_*`): una ciudadana registra tres reportes, uno por cada fuente de la ubicación del hecho (punto del mapa, posición actual elegida y referencia), con descripciones y referencias que contienen datos personales; el operador abre la bandeja y cada detalle, inicia la revisión, corrige la categoría, admite uno, deriva otro (destino, acción y motivo) y descarta el tercero (motivo) (HU10, HU14–HU17); el admitido se asigna desde la central a un sereno, que lo atiende y lo cierra con resultado y notas internas (HU20-CA07, HU21–HU24); el operador busca con filtros y abre los historiales (HU26, HU27); la ciudadana consulta «Mis casos», un detalle y su bandeja, y marca una notificación como leída (HU30, HU31).
 
 Después busca cada valor sensible en **todas** las entradas capturadas, en **todos los niveles** (incluidos Debug y Trace). Es más estricto que la configuración real, que no registra esos niveles para el framework.
 
@@ -37,6 +38,14 @@ Después busca cada valor sensible en **todas** las entradas capturadas, en **to
 | Secretos del servidor | Clave de firma JWT, contraseña de la base de datos y cualquier `Password=` | 0 |
 
 **La prueba detecta fugas reales:** al añadir temporalmente un registro de nivel Debug con las coordenadas del SOS, falla y las señala («coordenadas: -12.07…»). Después se restauró el código.
+
+### Sprint 3 (S3-T17, 16/10/2026)
+
+**Resultado:** sin datos sensibles. Se buscaron, además de las categorías anteriores, las descripciones y referencias de los reportes, las coordenadas del lugar del hecho (punto del mapa y posición actual), los motivos de las tres decisiones, el destino y la acción de la derivación, el resultado y las notas internas del cierre, la contraseña y el token de la ciudadana y la cookie del operador: 0 hallazgos. Los registros del Sprint 3 solo llevan el identificador del caso, la fuente de la ubicación del hecho y el tipo de decisión.
+
+**La prueba detecta fugas reales:** tres mutaciones temporales —registrar la descripción del reporte (Debug), el destino de una derivación (Information) y la latitud del lugar del hecho (Trace)— hacen fallar la prueba; después se restauró el código.
+
+**Posiciones no elegidas por el ciudadano (S3-T17):** un reporte no guarda la ubicación del dispositivo (las columnas del caso quedan vacías y una referencia con coordenadas se rechaza, también en la base de datos: `ReporteTests`); la posición actual solo se lee cuando la ciudadana elige «Usar mi posición actual» (`Cad.Movil.Tests/ReporteTests`, verificado en el emulador en el bloque 3). El despacho de un reporte lleva el lugar del hecho, nunca la ubicación del dispositivo (bloque 5 y demostración).
 
 ## Otras comprobaciones del sprint
 

@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 13/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 112 casos).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 217 casos: 43 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -87,7 +87,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU24 | Cerrar un caso con su tipificación y resultado | Sereno; Operador (queda identificado como responsable) | **Verificada en el servidor (14/10/2026):** cierra el sereno asignado (API) o un operador (panel); otro sereno recibe 404 y un administrador con token antifalsificación válido es redirigido a «acceso denegado» (`CierreTests`). Las notas internas no llegan a ninguna ruta del ciudadano (`CierreTests.CA04_*`, DP05). |
 | HU25 | Visualizar los casos en el mapa | Operador | Pendiente (Sprint 4; mapa base con HU11) |
 | HU26 | Buscar y filtrar casos | Operador | **Verificada (15/10/2026):** `/panel/casos` solo para Operador; un administrador es enviado a «acceso denegado» y la app de un ciudadano o un sereno no obtiene la página (`BusquedaCasosTests.CA06_*`, matriz). |
-| HU27 | Consultar el historial de un caso | Operador | **Verificada en el servidor para los SOS (14/10/2026):** `/panel/casos/{id}/historial` solo para Operador; un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no lo obtiene ni ve las notas internas (`HistorialTests.CA04_CA06_*`, `CA06_*`). Los reportes se añaden en el Sprint 3. |
+| HU27 | Consultar el historial de un caso | Operador | **Verificada (14/10/2026 para los SOS; 16/10/2026 para los reportes, S3-T16):** `/panel/casos/{id}/historial` solo para Operador, con el mismo control para los SOS y los reportes (revisión, corrección, decisión, derivación y descarte incluidos); un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no lo obtiene ni ve las notas internas (`HistorialTests.CA04_CA06_*`, `CA06_*`, matriz). La cláusula «Cancelada» (CA02) llega con HU09. |
 | HU28 | Consultar los tiempos de respuesta y de atención | Operador | Pendiente (Sprint 5) |
 | HU29 | Consultar el mapa de concentración de incidencias | Operador | Pendiente (Sprint 5) |
 | HU30 | Consultar mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/casos/mios` y `/api/casos/mios/{id}` solo para Ciudadano y solo sus casos; el caso de otro ciudadano responde 404 aunque se conozca su identificador; un anónimo, un sereno o un operador reciben 401/403 (`MisCasosTests.CA04_*`, matriz). Sin notas internas, intentos de contacto, operador ni sereno (`MisCasosTests.CA05_*`). |
@@ -104,6 +104,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU41 | Responder una confirmación de bienestar | Ciudadano | Pendiente (Sprint 5) |
 | HU42 | Recibir avisos técnicos y de verificación del acompañamiento | Operador | Pendiente (Sprint 5) |
 | HU43 | Revisar avisos y registrar su atención | Operador | Pendiente (Sprint 5; DP19) |
+
+**Cierre del Sprint 3 (S3-T16, 16/10/2026):** las operaciones de HU10, HU14–HU17, HU20-CA07, HU26, HU27, HU30 y HU31 están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones de los Sprints 4 y 5.
 
 ## Al implementar una HU
 
