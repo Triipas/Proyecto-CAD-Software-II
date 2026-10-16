@@ -98,7 +98,17 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public string TextoIdentificador => despacho.Actual is { } d ? $"Identificador del caso: {d.CasoId}" : "";
     // CA03: sin ubicación del dispositivo no se muestran coordenadas.
     public bool HayUbicacionDespacho => despacho.Actual?.Ubicacion is not null;
-    public bool SinUbicacionDespacho => despacho.Actual is { Ubicacion: null };
+    public bool SinUbicacionDespacho => despacho.Actual is { Ubicacion: null, LugarHecho: null };
+    // HU20-CA07: un reporte admitido no tiene ubicación del dispositivo; trae el lugar del hecho que indicó el ciudadano.
+    public bool EsReporteDespacho => despacho.Actual?.LugarHecho is not null;
+    public bool MostrarUbicacionDispositivo => HayDespacho && !EsReporteDespacho;
+    public bool HayPuntoLugarHecho => despacho.Actual?.LugarHecho is { Latitud: not null, Longitud: not null };
+    public string TextoLugarHecho => despacho.Actual?.LugarHecho is { Latitud: { } lat, Longitud: { } lon } l
+        ? $"{lat.ToString("0.00000", CultureInfo.InvariantCulture)}, {lon.ToString("0.00000", CultureInfo.InvariantCulture)}" +
+          (l.PrecisionMetros is { } p ? $" · ± {p.ToString("0", CultureInfo.InvariantCulture)} m" : "")
+        : "";
+    public bool HayReferenciaLugarHecho => despacho.Actual?.LugarHecho?.Referencia is { Length: > 0 };
+    public string TextoReferenciaLugarHecho => despacho.Actual?.LugarHecho?.Referencia is { } r ? $"Referencia: {r}" : "";
     public string TextoUbicacionDespacho => despacho.Actual?.Ubicacion is { } u
         ? $"{u.Latitud.ToString("0.00000", CultureInfo.InvariantCulture)}, {u.Longitud.ToString("0.00000", CultureInfo.InvariantCulture)} · ± {u.PrecisionMetros.ToString("0", CultureInfo.InvariantCulture)} m · obtenida a las {Hora(u.ObtenidaEn)}"
         : "";
@@ -225,6 +235,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     {
         foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(TextoAsignado), nameof(TextoIdentificador),
                      nameof(HayUbicacionDespacho), nameof(SinUbicacionDespacho), nameof(TextoUbicacionDespacho), nameof(InformacionDespacho),
+                     nameof(EsReporteDespacho), nameof(MostrarUbicacionDispositivo), nameof(HayPuntoLugarHecho), nameof(TextoLugarHecho),
+                     nameof(HayReferenciaLugarHecho), nameof(TextoReferenciaLugarHecho),
                      nameof(HayInformacionDespacho), nameof(SinInformacionDespacho), nameof(AvisoNuevoDespacho), nameof(ErrorDespacho), nameof(HayErrorDespacho),
                      nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances),
                      nameof(MostrarCierre), nameof(PuedeAbrirCierre), nameof(CategoriasCierre), nameof(ErrorCategoriaCierre), nameof(HayErrorCategoriaCierre),

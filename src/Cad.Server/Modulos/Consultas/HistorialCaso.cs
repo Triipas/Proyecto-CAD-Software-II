@@ -73,6 +73,29 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
                 $"Categoría corregida de «{await CategoriaAsync(correccion.CategoriaAnteriorId, ct)}» a «{await CategoriaAsync(correccion.CategoriaNuevaId, ct)}»",
                 await NombreAsync(correccion.OperadorId), null));
 
+        // HU15–HU17: decisión sobre el reporte, con su motivo (y destino y acción en una derivación). Derivado y descartado
+        // son resultados finales identificables (HU16-CA04, HU17-CA03).
+        ResultadoFinal? resultado = null;
+        if (await db.DecisionesReporte.AsNoTracking().SingleOrDefaultAsync(d => d.CasoId == casoId, ct) is { } decision)
+        {
+            var responsable = await NombreAsync(decision.OperadorId);
+            switch (decision.Tipo)
+            {
+                case TipoDecisionReporte.Admision:
+                    entradas.Add(new(decision.DecididaEn, "Reporte admitido para atención", responsable, $"Motivo: {decision.Motivo}"));
+                    break;
+                case TipoDecisionReporte.Derivacion:
+                    entradas.Add(new(decision.DecididaEn, $"Reporte derivado a {decision.Destino}", responsable,
+                        $"Acción realizada: {decision.Accion} · Motivo: {decision.Motivo}"));
+                    resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Derivada), $"Derivado a {decision.Destino}: {decision.Accion}", decision.DecididaEn);
+                    break;
+                default:
+                    entradas.Add(new(decision.DecididaEn, "Reporte descartado", responsable, $"Motivo: {decision.Motivo}"));
+                    resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Descartada), $"Motivo: {decision.Motivo}", decision.DecididaEn);
+                    break;
+            }
+        }
+
         // HU20: asignaciones (y su fin, al cerrar el caso).
         foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))
         {
@@ -89,7 +112,6 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
                 await NombreAsync(evento.ActorId), null));
 
         // HU24: cierre, con el resultado público y, aparte, las notas internas (CA04).
-        ResultadoFinal? resultado = null;
         if (await db.CierresCaso.AsNoTracking().SingleOrDefaultAsync(c => c.CasoId == casoId, ct) is { } cierre)
         {
             var tipificacion = await CategoriaAsync(cierre.CategoriaId, ct);

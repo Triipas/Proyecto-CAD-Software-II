@@ -5,8 +5,8 @@ public enum OrigenCaso { Sos, Reporte }
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
 // (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte,
-// y «En revisión» (HU14).
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision }
+// «En revisión» (HU14), «Derivada» (HU16) y «Descartada» (HU17). Un reporte admitido pasa a «Pendiente» (HU15).
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision, Derivada, Descartada }
 
 public static class EstadosCaso
 {
@@ -20,6 +20,8 @@ public static class EstadosCaso
         EstadoCaso.Cerrada => "Cerrada",
         EstadoCaso.Recibido => "Recibido",
         EstadoCaso.EnRevision => "En revisión",
+        EstadoCaso.Derivada => "Derivada",
+        EstadoCaso.Descartada => "Descartada",
         _ => estado.ToString(),
     };
 }
@@ -119,6 +121,21 @@ public sealed class Caso
         CategoriaId = categoriaId;
         ClasificadoPor = operadorId;
         ClasificadoEn = ahora;
+    }
+
+    // HU15, HU16 y HU17: solo un reporte «En revisión» se admite (pasa a «Pendiente», asignable como un SOS: HU20-CA07),
+    // se deriva o se descarta. Derivado y descartado son estados finales: no son asignables (HU17-CA04).
+    public void Decidir(TipoDecisionReporte decision)
+    {
+        if (Origen != OrigenCaso.Reporte || Estado != EstadoCaso.EnRevision)
+            throw new InvalidOperationException("Solo se decide sobre un reporte en revisión.");
+        Estado = decision switch
+        {
+            TipoDecisionReporte.Admision => EstadoCaso.Pendiente,
+            TipoDecisionReporte.Derivacion => EstadoCaso.Derivada,
+            TipoDecisionReporte.Descarte => EstadoCaso.Descartada,
+            _ => throw new ArgumentOutOfRangeException(nameof(decision)),
+        };
     }
 
     private Caso() { } // EF Core

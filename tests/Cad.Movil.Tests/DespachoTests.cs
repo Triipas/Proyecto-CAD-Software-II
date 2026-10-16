@@ -142,6 +142,55 @@ public class DespachoTests
     }
 
     [Fact]
+    public async Task HU20_CA07_UnReporteAdmitido_MuestraElLugarDelHecho_NoUnaUbicacionDelDispositivo()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho() with
+        {
+            Origen = "REPORTE",
+            LugarHecho = new LugarHechoDespacho(-12.0589, -77.0461, 9.5, "Frente a la plaza ficticia"),
+        });
+        var vm = VistaModelo(Servicio());
+
+        await vm.AlAparecerAsync();
+
+        Assert.True(vm.EsReporteDespacho);
+        Assert.False(vm.MostrarUbicacionDispositivo);
+        Assert.False(vm.SinUbicacionDespacho); // no se avisa «Ubicación del dispositivo no disponible»
+        Assert.Equal("-12.05890, -77.04610 · ± 10 m", vm.TextoLugarHecho);
+        Assert.Equal("Referencia: Frente a la plaza ficticia", vm.TextoReferenciaLugarHecho);
+        Assert.Equal("REPORTE · Asignada", vm.TextoDespacho);
+    }
+
+    [Fact]
+    public async Task HU20_CA07_UnReporteConSoloReferencia_NoMuestraCoordenadas()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho() with
+        {
+            Origen = "REPORTE",
+            LugarHecho = new LugarHechoDespacho(null, null, null, "Pasaje ficticio"),
+        });
+        var vm = VistaModelo(Servicio());
+
+        await vm.AlAparecerAsync();
+
+        Assert.False(vm.HayPuntoLugarHecho);
+        Assert.Equal("", vm.TextoLugarHecho);
+        Assert.True(vm.HayReferenciaLugarHecho);
+    }
+
+    [Fact]
+    public async Task UnSos_SigueMostrandoLaUbicacionDelDispositivo()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho(new UbicacionDespacho(-12.0464, -77.0428, 10, Inicio)));
+        var vm = VistaModelo(Servicio());
+
+        await vm.AlAparecerAsync();
+
+        Assert.False(vm.EsReporteDespacho);
+        Assert.True(vm.MostrarUbicacionDispositivo);
+    }
+
+    [Fact]
     public async Task CA03_SinUbicacion_NoHayCoordenadas_YLaReferenciaVaAparte()
     {
         api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(

@@ -22,6 +22,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
+    public DbSet<DecisionReporte> DecisionesReporte => Set<DecisionReporte>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
@@ -161,6 +162,28 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             correccion.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaAnteriorId).OnDelete(DeleteBehavior.Restrict);
             correccion.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaNuevaId).OnDelete(DeleteBehavior.Restrict);
             correccion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU15–HU17: una decisión por reporte (la clave es el caso: dos decisiones a la vez no pueden quedar ambas).
+        // La base de datos exige el motivo y, en la derivación, el destino y la acción (HU16-CA02).
+        builder.Entity<DecisionReporte>(decision =>
+        {
+            decision.ToTable("DecisionesReporte", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_DecisionesReporte_Motivo", "length(btrim(\"Motivo\")) > 0");
+                tabla.HasCheckConstraint("CK_DecisionesReporte_Derivacion",
+                    // IS NOT NULL explícito: con un valor nulo, length(btrim(NULL)) > 0 es NULL y un CHECK con NULL se acepta.
+                    "(\"Tipo\" = 'Derivacion' AND \"Destino\" IS NOT NULL AND \"Accion\" IS NOT NULL " +
+                    "AND length(btrim(\"Destino\")) > 0 AND length(btrim(\"Accion\")) > 0) OR " +
+                    "(\"Tipo\" IN ('Admision', 'Descarte') AND \"Destino\" IS NULL AND \"Accion\" IS NULL)");
+            });
+            decision.HasKey(d => d.CasoId);
+            decision.Property(d => d.Tipo).HasConversion<string>().HasMaxLength(20);
+            decision.Property(d => d.Motivo).HasMaxLength(DecisionReporte.MaximoMotivo);
+            decision.Property(d => d.Destino).HasMaxLength(DecisionReporte.MaximoDestino);
+            decision.Property(d => d.Accion).HasMaxLength(DecisionReporte.MaximoAccion);
+            decision.HasOne<Caso>().WithOne().HasForeignKey<DecisionReporte>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
+            decision.HasOne<Usuario>().WithMany().HasForeignKey(d => d.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU20: asignaciones. Una sola vigente por caso y una sola vigente por sereno (CA04, CA05, RNF08).
