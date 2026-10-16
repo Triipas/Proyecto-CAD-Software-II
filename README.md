@@ -88,6 +88,8 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 | `POST /api/sos` | Ciudadano | HU07, HU08 | 201 SOS registrado (Pendiente, con o sin ubicación) · 200 mismo SOS ante un reintento con el mismo `idSolicitud` · 400 falta `idSolicitud` · 401/403 otros perfiles |
 | `POST /api/reportes` | Ciudadano | HU10 | 201 reporte registrado («Recibido») · 200 mismo reporte ante un reintento con el mismo `idSolicitud` · 400 falta o no es válido algún dato (tipo, descripción, fecha y hora no futuras, ubicación del hecho), con el motivo por campo · 401/403 otros perfiles |
 | `GET /api/reportes/categorias` | Ciudadano | HU10 | 200 catálogo de tipos de incidencia (DP07) |
+| `GET /api/casos/mios` | Ciudadano | HU30 | 200 SOS y reportes propios con estado público, fecha y resultado (DP05) |
+| `GET /api/casos/mios/{id}` | Ciudadano | HU30 | 200 detalle con avances públicos · 404 caso inexistente o de otro ciudadano |
 | `GET /api/sereno/estado` | Sereno | HU18 | 200 estado operativo, hora del último cambio e intervalo de envío de posiciones (DP15: 30 s, `Serenos:IntervaloPosicionesSegundos`) |
 | `PUT /api/sereno/estado` | Sereno | HU18 | 200 estado actualizado · 400 activación sin permiso de ubicación declarado (DP16-a); desactivarse siempre está permitido (DP16-b) |
 | `POST /api/sereno/posiciones` | Sereno | HU18 | 201 posición registrada · 200 reenvío de la misma posición · 409 sereno no operativo (no se registra) · 400 posición inválida |

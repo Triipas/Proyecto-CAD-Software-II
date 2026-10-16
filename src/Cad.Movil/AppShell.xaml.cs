@@ -11,6 +11,8 @@ public partial class AppShell : Shell
         InitializeComponent();
         Routing.RegisterRoute(Rutas.Registro, typeof(RegistroPagina));
         Routing.RegisterRoute(Rutas.Reporte, typeof(ReportePagina));
+        Routing.RegisterRoute(Rutas.MisCasos, typeof(MisCasosPagina));
+        Routing.RegisterRoute(Rutas.MiCaso, typeof(MiCasoPagina));
 #if DEBUG
         Routing.RegisterRoute(Rutas.Diagnostico, typeof(DiagnosticoPagina)); // SPIKE01
 #endif

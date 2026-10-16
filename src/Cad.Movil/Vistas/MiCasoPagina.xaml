@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- HU30 — un caso propio: estado actual, avances públicos y resultado público (DP05). Sin responsables ni notas internas. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.MiCasoPagina"
+             x:DataType="vm:MiCasoVistaModelo"
+             Title="Mi caso">
+    <RefreshView IsRefreshing="{Binding Cargando}" Command="{Binding Actualizar}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16,24" Spacing="12" MaximumWidthRequest="480">
+                <VerticalStackLayout>
+                    <Label Text="Mis casos" Style="{StaticResource Sobretitulo}" />
+                    <Label Text="{Binding Titulo}" Style="{StaticResource Titulo}" IsVisible="{Binding HayCaso}" />
+                    <Label Text="{Binding Registrado}" Style="{StaticResource TextoSecundario}" IsVisible="{Binding HayCaso}" />
+                    <Label Text="{Binding Identificador}" Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding HayCaso}" />
+                </VerticalStackLayout>
+
+                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
+
+                <!-- CA03 -->
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayResultado}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Resultado" FontAttributes="Bold" />
+                        <Label Text="{Binding Resultado}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayCaso}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Avances" FontAttributes="Bold" />
+                        <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Avances}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ElementoAvance">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Estado}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Hora}" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                        <Label Text="{Binding Detalle}" IsVisible="{Binding HayDetalle}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

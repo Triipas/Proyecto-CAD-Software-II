@@ -107,6 +107,11 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - Un reporte admitido y asignado llega al sereno con `LugarHecho`: el punto del hecho, su precisión si el ciudadano usó su posición, y la referencia. No trae ubicación del dispositivo. La pantalla lo muestra como «Lugar del hecho (indicado por el ciudadano)» y oculta la sección «Ubicación del dispositivo». El resto del flujo (en camino, inicio de atención y cierre) es el de un SOS.
 - Siguiendo DP06, el sereno no recibe la descripción del ciudadano ni sus datos personales.
 
+## Mis casos (HU30, Sprint 3)
+
+- `Vistas/MisCasosPagina.xaml` y `Vistas/MiCasoPagina.xaml` con `VistasModelo/MisCasosVistaModelo.cs`: la lista de SOS y reportes propios (origen, estado público, fecha y resultado) y el detalle con los avances públicos. Se abre desde «Mis casos» en el inicio del ciudadano.
+- Solo datos públicos (DP05): nunca operador, sereno, notas internas ni intentos de contacto. Se vuelve a consultar al abrir cada pantalla y al deslizar hacia abajo.
+
 ## Integración continua
 
 `.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.
