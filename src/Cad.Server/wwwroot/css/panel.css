@@ -1079,3 +1079,36 @@ a.boton {
   outline: 3px solid var(--color-foco);
   outline-offset: 2px;
 }
+
+/* ===== Búsqueda de casos (HU26) ===== */
+
+.filtros {
+  display: grid;
+  gap: var(--espacio-4);
+  padding: var(--espacio-6);
+}
+
+.filtros__campos {
+  display: grid;
+  gap: var(--espacio-4);
+}
+
+@media (min-width: 40rem) {
+  .filtros__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .filtros__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-4);
+}

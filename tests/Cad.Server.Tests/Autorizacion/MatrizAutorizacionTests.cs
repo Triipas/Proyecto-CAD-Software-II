@@ -57,6 +57,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
         new("POST", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
+        // HU26 — búsqueda de casos con filtros (solo operador, CA06).
+        new("GET", "/panel/casos", "HU26", Acceso.SoloRol, Roles.Operador),
         // HU27 — historial de un caso. Con un caso inexistente el operador llega a la página (404); el resto, rechazado antes.
         new("GET", "/panel/casos/{id:guid}/historial", "HU27", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/casos/00000000-0000-0000-0000-000000000000/historial"),

@@ -7,7 +7,7 @@
     // Navegación orientativa por rol: los permisos los decide siempre el servidor (HU03).
     var enlaces = rol switch
     {
-        Roles.Operador => new[] { ("/panel/central", "Central"), ("/panel/reportes", "Reportes") },
+        Roles.Operador => new[] { ("/panel/central", "Central"), ("/panel/reportes", "Reportes"), ("/panel/casos", "Casos") },
         Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales") },
         _ => Array.Empty<(string, string)>(),
     };
