@@ -43,6 +43,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /hubs/sereno/negotiate` y `/hubs/sereno` (aviso del despacho; cada sereno solo recibe los suyos) | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/casos` (búsqueda de casos con filtros) | HU26 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos/{id}/historial` (historial del caso, con notas internas rotuladas) | HU27 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -83,7 +84,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU23 | Registrar el inicio de atención | Sereno; Operador (queda identificado como responsable) | **Verificada en el servidor (14/10/2026):** el sereno asignado (API) o un operador (panel); otro sereno recibe 404 y un administrador con token antifalsificación válido es redirigido a «acceso denegado» (`AtencionTests.HU23_*`). |
 | HU24 | Cerrar un caso con su tipificación y resultado | Sereno; Operador (queda identificado como responsable) | **Verificada en el servidor (14/10/2026):** cierra el sereno asignado (API) o un operador (panel); otro sereno recibe 404 y un administrador con token antifalsificación válido es redirigido a «acceso denegado» (`CierreTests`). Las notas internas no llegan a ninguna ruta del ciudadano (`CierreTests.CA04_*`, DP05). |
 | HU25 | Visualizar los casos en el mapa | Operador | Pendiente (Sprint 4; mapa base con HU11) |
-| HU26 | Buscar y filtrar casos | Operador | Pendiente (Sprint 3) |
+| HU26 | Buscar y filtrar casos | Operador | **Verificada (15/10/2026):** `/panel/casos` solo para Operador; un administrador es enviado a «acceso denegado» y la app de un ciudadano o un sereno no obtiene la página (`BusquedaCasosTests.CA06_*`, matriz). |
 | HU27 | Consultar el historial de un caso | Operador | **Verificada en el servidor para los SOS (14/10/2026):** `/panel/casos/{id}/historial` solo para Operador; un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no lo obtiene ni ve las notas internas (`HistorialTests.CA04_CA06_*`, `CA06_*`). Los reportes se añaden en el Sprint 3. |
 | HU28 | Consultar los tiempos de respuesta y de atención | Operador | Pendiente (Sprint 5) |
 | HU29 | Consultar el mapa de concentración de incidencias | Operador | Pendiente (Sprint 5) |
