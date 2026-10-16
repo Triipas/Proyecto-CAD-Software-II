@@ -3,7 +3,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Reportes;
 using Cad.Contratos.Sos;
+using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Cad.Server.Tests.Infraestructura;
 using Microsoft.EntityFrameworkCore;
@@ -146,7 +148,128 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         sensibles["tokens y cookies"].AddRange(await fabrica.ConBaseDatosAsync(db => db.Users
             .Where(u => u.Email == correoCiudadana || u.Email == correoOperador).Select(u => u.SecurityStamp!).ToListAsync()));
 
-        // Revisión: ningún valor sensible en ninguna entrada, y ningún JWT con forma reconocible.
+        AfirmarSinDatosSensibles(sensibles);
+    }
+
+    // S3-T17 (Sprint 3, HU10–HU31): reportes con su descripción, la ubicación del hecho por punto, por posición elegida y por
+    // referencia; revisión, corrección de categoría, admisión, derivación (destino, acción y motivo) y descarte (motivo);
+    // asignación del admitido y su cierre por el sereno; búsqueda e historial en el panel; «Mis casos» y la bandeja
+    // de notificaciones del ciudadano. Las descripciones, referencias, motivos, destinos y acciones pueden contener
+    // datos personales y lugares concretos.
+    [Fact]
+    public async Task S3T17_FlujoDeReportesYSeguimiento_NingunDatoSensibleEnLosRegistros()
+    {
+        var sello = Guid.NewGuid().ToString("N")[..10];
+        var sensibles = new Dictionary<string, List<string>>
+        {
+            ["contraseñas"] = [],
+            ["tokens y cookies"] = [],
+            ["datos personales"] = [],
+            ["coordenadas"] = [],
+            ["secretos del servidor"] = [fabrica.ClaveFirmaJwt, fabrica.AdminClave, new NpgsqlConnectionStringBuilder(ConexionPruebas.Obtener()).Password!],
+        };
+
+        var ciudadana = await fabrica.CrearAsync(Roles.Ciudadano);
+        sensibles["contraseñas"].Add(ciudadana.Clave);
+        sensibles["datos personales"].Add(ciudadana.Correo);
+        var app = await fabrica.CrearClienteAppAsync(ciudadana);
+        sensibles["tokens y cookies"].Add(app.DefaultRequestHeaders.Authorization!.Parameter!);
+
+        // HU10: tres reportes, uno por cada fuente de la ubicación del hecho.
+        Coordenadas(sensibles, out var latMapa, out var lonMapa);
+        Coordenadas(sensibles, out var latActual, out var lonActual);
+        var descripciones = new[] { $"Robaron la moto del vecino {sello}", $"Hombre armado en el parque {sello}", $"Venta de drogas en la esquina {sello}" };
+        var referencias = new[] { $"Al costado del mercado {sello}", $"Junto al colegio {sello}", $"Pasaje sin nombre {sello}" };
+        sensibles["datos personales"].AddRange([.. descripciones, .. referencias]);
+        var lugares = new[]
+        {
+            new UbicacionHecho(FuentesUbicacionHecho.Mapa, latMapa, lonMapa, null, referencias[0]),
+            new UbicacionHecho(FuentesUbicacionHecho.PosicionActual, latActual, lonActual, 8, referencias[1]),
+            new UbicacionHecho(FuentesUbicacionHecho.Texto, null, null, null, referencias[2]),
+        };
+        var reportes = new List<Guid>();
+        for (var i = 0; i < 3; i++)
+        {
+            var respuesta = await app.PostAsJsonAsync("/api/reportes", new SolicitudRegistroReporte(Guid.NewGuid(),
+                CategoriaIncidencia.Iniciales[1].Id, descripciones[i], DateTimeOffset.UtcNow.AddMinutes(-30), lugares[i]));
+            Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+            reportes.Add((await respuesta.Content.ReadFromJsonAsync<RespuestaReporte>())!.Id);
+        }
+
+        // HU14: el operador ve la bandeja, inicia la revisión y corrige la categoría de cada uno.
+        var operador = await fabrica.CrearAsync(Roles.Operador);
+        var panel = fabrica.CrearNavegador();
+        var ingreso = await panel.IngresarAlPanelAsync(operador.Correo, operador.Clave);
+        sensibles["contraseñas"].Add(operador.Clave);
+        sensibles["tokens y cookies"].Add(ValorCookie(ingreso));
+        Assert.Contains(reportes[0].ToString(), await panel.GetStringAsync("/panel/reportes"));
+        foreach (var id in reportes)
+        {
+            Assert.Contains(descripciones[reportes.IndexOf(id)], System.Net.WebUtility.HtmlDecode(await panel.GetStringAsync($"/panel/reportes/{id}")));
+            await EnviarAsync(panel, $"/panel/reportes/{id}?handler=IniciarRevision", [], $"/panel/reportes/{id}");
+            await EnviarAsync(panel, $"/panel/reportes/{id}?handler=Corregir",
+                new() { ["CategoriaId"] = CategoriaIncidencia.Iniciales[3].Id.ToString() }, $"/panel/reportes/{id}");
+        }
+
+        // HU15–HU17: admite el primero, deriva el segundo y descarta el tercero, con motivos, destino y acción.
+        var motivos = new[] { $"Riesgo para la familia del denunciante {sello}", $"Competencia de la comisaría {sello}", $"Duplicado del vecino {sello}" };
+        var destino = $"Comisaría de Lince, suboficial {sello}";
+        var accion = $"Llamada al 105 con el DNI del denunciante {sello}";
+        sensibles["datos personales"].AddRange([.. motivos, destino, accion]);
+        await EnviarAsync(panel, $"/panel/reportes/{reportes[0]}?handler=Decidir",
+            new() { ["Decision.Tipo"] = "Admision", ["Decision.Motivo"] = motivos[0] }, $"/panel/reportes/{reportes[0]}");
+        await EnviarAsync(panel, $"/panel/reportes/{reportes[1]}?handler=Decidir", new()
+        {
+            ["Decision.Tipo"] = "Derivacion", ["Decision.Motivo"] = motivos[1], ["Decision.Destino"] = destino, ["Decision.Accion"] = accion,
+        }, $"/panel/reportes/{reportes[1]}");
+        await EnviarAsync(panel, $"/panel/reportes/{reportes[2]}?handler=Decidir",
+            new() { ["Decision.Tipo"] = "Descarte", ["Decision.Motivo"] = motivos[2] }, $"/panel/reportes/{reportes[2]}");
+
+        // HU20-CA07: el admitido se asigna desde la central a un sereno operativo, que lo atiende y lo cierra (HU21–HU24).
+        var sereno = await fabrica.CrearAsync(Roles.Sereno);
+        var serenoApp = await fabrica.CrearClienteAppAsync(sereno);
+        sensibles["contraseñas"].Add(sereno.Clave);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PutAsJsonAsync("/api/sereno/estado",
+            new Cad.Contratos.Serenos.SolicitudCambioEstadoOperativo(true, true))).StatusCode);
+        Assert.Contains(reportes[0].ToString(), await panel.GetStringAsync("/panel/central"));
+        await EnviarAsync(panel, $"/panel/reportes/{reportes[0]}?handler=Asignar", new()
+        {
+            ["Asignacion.SerenoId"] = sereno.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.Volver"] = "central",
+        }, "/panel/central");
+        Assert.Contains(referencias[0], await serenoApp.GetStringAsync("/api/sereno/despacho"));
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{reportes[0]}/desplazamiento", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{reportes[0]}/atencion", null)).StatusCode);
+        var resultado = $"Se recuperó la moto del señor {sello}";
+        var notas = $"El denunciante es primo del sospechoso {sello}";
+        sensibles["datos personales"].AddRange([resultado, notas]);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{reportes[0]}/cierre",
+            new Cad.Contratos.Serenos.SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, resultado, notas))).StatusCode);
+
+        // HU26 y HU27: búsqueda con filtros e historial con notas internas.
+        Assert.Contains(reportes[1].ToString(), await panel.GetStringAsync("/panel/casos?Origen=Reporte"));
+        foreach (var id in reportes)
+            Assert.Equal(HttpStatusCode.OK, (await panel.GetAsync($"/panel/casos/{id}/historial")).StatusCode);
+
+        // HU30 y HU31: la ciudadana consulta sus casos y su bandeja, y marca una notificación como leída.
+        Assert.Contains(destino, await app.GetStringAsync("/api/casos/mios"));
+        Assert.Contains(resultado, await app.GetStringAsync($"/api/casos/mios/{reportes[0]}"));
+        var bandeja = (await app.GetFromJsonAsync<Cad.Contratos.Casos.BandejaNotificaciones>("/api/notificaciones"))!;
+        Assert.NotEmpty(bandeja.Notificaciones);
+        Assert.Equal(HttpStatusCode.NoContent, (await app.PostAsync($"/api/notificaciones/{bandeja.Notificaciones[0].Id}/leida", null)).StatusCode);
+
+        AfirmarSinDatosSensibles(sensibles);
+    }
+
+    private static void Coordenadas(Dictionary<string, List<string>> sensibles, out double latitud, out double longitud)
+    {
+        (latitud, longitud) = (-12.0 - Random.Shared.Next(100_000, 999_999) / 1e7, -77.0 - Random.Shared.Next(100_000, 999_999) / 1e7);
+        sensibles["coordenadas"].AddRange([latitud.ToString(CultureInfo.InvariantCulture), longitud.ToString(CultureInfo.InvariantCulture),
+            latitud.ToString(new CultureInfo("es-PE")), longitud.ToString(new CultureInfo("es-PE"))]);
+    }
+
+    // Ningún valor sensible en ninguna entrada capturada (de todas las pruebas de la colección), y ningún JWT con forma reconocible.
+    private void AfirmarSinDatosSensibles(Dictionary<string, List<string>> sensibles)
+    {
         var entradas = fabrica.Registros.Entradas.ToList();
         Assert.True(entradas.Count > 50, $"Muy pocas entradas capturadas ({entradas.Count}): la revisión no sería significativa.");
         var hallazgos = sensibles
@@ -160,9 +283,10 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         Assert.True(hallazgos.Count == 0, "Datos sensibles en los registros:\n" + string.Join("\n", hallazgos));
     }
 
-    private static async Task EnviarAsync(HttpClient navegador, string ruta, Dictionary<string, string> campos)
+    // pagina: la página que contiene el formulario (por defecto, la misma ruta).
+    private static async Task EnviarAsync(HttpClient navegador, string ruta, Dictionary<string, string> campos, string? pagina = null)
     {
-        campos["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, ruta);
+        campos["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, pagina ?? ruta);
         Assert.Equal(HttpStatusCode.Redirect, (await navegador.PostAsync(ruta, new FormUrlEncodedContent(campos))).StatusCode);
     }
 

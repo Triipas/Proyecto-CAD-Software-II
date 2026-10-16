@@ -30,9 +30,9 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S3-T13 | HU30 | «Mis casos» con control de titularidad y resultado público | Implementada | `GET /api/casos/mios` y `/api/casos/mios/{id}` (solo el titular; un caso ajeno responde 404) con estados y avances públicos y resultado (DP05); pantallas «Mis casos» y detalle en la app. `MisCasosTests` (servidor y app). |
 | S3-T14 | HU31 | Notificaciones persistentes de cambios públicos de los casos propios | Implementada | Cada cambio del estado público genera, en la misma transacción, una notificación para el titular vinculada con el caso; los cambios internos no notifican; bandeja persistente en la app con el número sin leer en el inicio (E4). `NotificacionesCiudadanoTests`, `BandejaTests`. |
 | S3-T15 | HU31 | Vista previa sin datos sensibles; acceso solo del titular | Implementada | La vista previa solo indica el origen y el nuevo estado público; `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` solo para el titular (una ajena responde 404). `NotificacionesCiudadanoTests.CA03_*`, `CA04_*`. |
-| S3-T16 | HU03 | Verificación por rol de HU10–HU31 y registro acumulativo | Pendiente | — |
-| S3-T17 | Transversal | Revisión de registros y ausencia de posiciones no elegidas por el ciudadano | Pendiente | — |
-| S3-T18 | HU10–HU31 | Integración, despliegue y demostración del sprint | Pendiente | — |
+| S3-T16 | HU03 | Verificación por rol de HU10–HU31 y registro acumulativo | Implementada | `MatrizAutorizacionTests`: 217 casos (43 operaciones × 5 perfiles y las dos comprobaciones globales), todos superados el 16/10/2026; tabla B de [matriz-permisos.md](matriz-permisos.md) actualizada (HU27 con reportes). HU03 sigue sin acreditarse (Sprints 4 y 5). |
+| S3-T17 | Transversal | Revisión de registros y ausencia de posiciones no elegidas por el ciudadano | Implementada | `RevisionRegistrosTests.S3T17_*`: flujo completo de reportes y seguimiento sin descripciones, referencias, coordenadas, motivos, destinos, acciones, resultados, notas, contraseñas ni tokens en ningún nivel de registro; 3 fugas introducidas a propósito se detectan ([revision-registros.md](revision-registros.md)). |
+| S3-T18 | HU10–HU31 | Integración, despliegue y demostración del sprint | Implementada (demostración local); recorrido en Render pendiente | Bloques 1–8 integrados en `main` (PR #21 y #25) con la CI en verde; Render despliega `main` y `/salud` responde. Guion y demostración de extremo a extremo con capturas en [demo-sprint3.md](demo-sprint3.md). El recorrido en el entorno publicado lo hace el equipo en la Sprint Review. |
 | S3-T19 | RNF02 | Medición formal en el entorno de validación e informe, con revisión de sus registros (trasladada: S1-T18, S1-T20, S2-T15) | Pendiente | La ejecuta el equipo en Render ([pruebas.md](pruebas.md)). |
 | S3-T20 | SPIKE01 | Repetición en un teléfono Android real y decisión sobre la nota técnica (trasladada: S1-T03, S1-T04) | Pendiente | Incluye la prueba de HU06, HU07, HU08 y HU18 en un dispositivo real. |
 | S3-T21 | HU21 | Entrega real de la notificación push del despacho con la app cerrada (trasladada) | Pendiente | Credencial `Push__CredencialFcm` ya configurada en Render. |
@@ -82,6 +82,7 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 | 6 — Búsqueda y filtros de casos | 15/10/2026 | S3-T03, S3-T04; S3-T16 (parcial) | `dotnet test`: servidor **555/555** (20 nuevas, incluida la ruta en la matriz). Release: 0 advertencias. 14 mutaciones detectadas: sin cada uno de los filtros (desde, hasta, origen, tipo, «Tipo por determinar», estado), sereno limitado a la asignación vigente, orden inverso, páginas de 60, ubicación de un reporte tomada del dispositivo, tipo vacío en lugar de «Tipo por determinar», fecha final sin incluir el último día, fechas invertidas aceptadas y página abierta a cualquier sesión. Chrome contra el servidor local (130 casos de prueba): sin filtros, 50 por página y paginación; reportes cerrados (origen + estado) con todas las filas que cumplen ambos filtros; SOS sin clasificar, todos «Tipo por determinar»; filtro por sereno; sin coincidencias informado; fechas invertidas explicadas; «Limpiar filtros» vuelve a `/panel/casos` sin filtros; 390 px sin desbordamiento; el administrador es enviado a «acceso denegado»; 0 errores de consola. Capturas: [casos](capturas/panel/hu26-casos.png), [filtros combinados](capturas/panel/hu26-filtros-combinados.png), [sin coincidencias](capturas/panel/hu26-sin-coincidencias.png), [móvil](capturas/panel/hu26-casos-movil.png). |
 | 7 — «Mis casos» en la app | 16/10/2026 | S3-T13; S3-T16 (parcial) | `dotnet test`: servidor **586/586** (31 nuevas, incluidas las dos rutas en la matriz) y app **179/179** (11 nuevas). Release del servidor y de la app: 0 advertencias. 12 mutaciones detectadas: lista sin filtrar por el titular, detalle sin control de titularidad, SOS pendiente mostrado como «Admitido», «En camino» fuera de «En atención», cerrado sin resultado, sin el avance «En atención», descarte sin motivo, derivación con su motivo interno, lista abierta a cualquier sesión y, en la app, abrir otro caso, consultar con la sesión vencida y no terminarla ante un 401. Emulador contra el servidor local (cuenta ciudadana de prueba): «Mis casos» desde el inicio con sus reportes y SOS, estado público y resultado de los finalizados (cerrado, derivado con su destino, descartado con su motivo); el detalle del reporte cerrado muestra el resultado y los avances públicos Recibido → En revisión → Admitido → En atención → Cerrado, sin operador ni sereno. Capturas: [mis casos](capturas/movil/50-mis-casos.png), [caso cerrado](capturas/movil/51-mi-caso-cerrado.png). |
 | 8 — Notificaciones de avances | 16/10/2026 | S3-T14, S3-T15; S3-T16 (parcial) | `dotnet test`: servidor **607/607** (21 nuevas, incluidas las dos rutas en la matriz; el resto de la suite sigue pasando con la generación automática) y app **188/188** (9 nuevas). Release del servidor y de la app: 0 advertencias. 13 mutaciones detectadas: notificar también los cambios internos, no notificar, bandeja y marca de lectura sin control de titularidad, sin leer mal contado, orden inverso, bandeja abierta a cualquier sesión, texto de un SOS como reporte, «En camino» fuera de «En atención» y, en la app, marcar de nuevo una leída, abrir otro caso, no actualizar el inicio al volver y resumen vacío. De extremo a extremo contra el servidor local (cuentas de prueba): con la app cerrada, el ciudadano registra un reporte por la API (sin notificación) y el operador lo revisa y admite en Chrome (2 notificaciones, sin datos reservados en la vista previa); al volver a ingresar en el emulador, el inicio muestra «Notificaciones (2 sin leer)»; la bandeja muestra «Tu reporte pasó a «Admitido».» y «…«En revisión».»; tocar una abre el caso en «Mis casos» y la marca como leída: la bandeja y el inicio pasan a 1 sin leer. Capturas: [inicio](capturas/movil/54-inicio-notificaciones.png), [bandeja](capturas/movil/52-bandeja-notificaciones.png), [caso abierto desde la notificación](capturas/movil/53-caso-desde-notificacion.png). |
+| 9 — Cierre del sprint | 16/10/2026 | S3-T16–S3-T18 | `dotnet test`: servidor **608/608** (1 nueva: revisión de registros del Sprint 3) y app **188/188** (sin cambios). Release: 0 advertencias. Matriz de autorización: 217 casos superados. 3 mutaciones detectadas en la revisión de registros (descripción, destino y latitud del lugar del hecho registrados). Demostración de extremo a extremo contra el servidor local: la ciudadana envía un reporte con un punto del mapa desde el emulador; el operador, en Chrome, lo revisa, corrige su categoría de «Otros» a «Robo», lo admite, deriva y descarta otros dos y asigna el admitido al sereno; el sereno lo recibe en la app con el lugar del hecho, lo atiende y lo cierra; la ciudadana ve 8 notificaciones nuevas, abre la del cierre y ve el resultado y los avances públicos; el operador filtra los casos por origen y abre el historial (9 actuaciones). 0 errores de consola. Capturas en [demo-sprint3.md](demo-sprint3.md). |
 
 ### Decisiones y observaciones del bloque 1
 
@@ -168,3 +169,46 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 - **Persistencia y titular (CA02, CA04):** `GET /api/notificaciones` (las 100 más recientes y el total sin leer) y `POST /api/notificaciones/{id}/leida`, solo para el titular. Una notificación ajena responde 404. Las generadas mientras el ciudadano no está conectado quedan guardadas y se consultan al volver a ingresar. Marcarla como leída no la borra.
 - **App (E4):** en el inicio, «Notificaciones (N sin leer)» y un aviso cuando hay nuevas. El número se actualiza cada vez que se muestra el inicio y no se muestra si no hay respuesta, para no dar un dato falso. En la bandeja, tocar una notificación la marca como leída y abre el caso vinculado. Sin push al ciudadano (E4) y sin tiempo real: la bandeja se consulta al abrir la app y al volver al inicio.
 - **Estado público en el dominio:** la correspondencia de DP05 pasó de la consulta de HU30 al dominio (`EstadoPublicoCaso`), porque la usan HU30 y HU31.
+
+### Decisiones y observaciones del bloque 9
+
+- **Matriz (S3-T16):** no hubo rutas nuevas en el bloque; la matriz ejecutable ya recorría las 43 operaciones del servidor. Se actualizó el registro acumulativo: HU27 queda verificada también para los reportes. HU03 sigue abierta hasta verificar las operaciones de los Sprints 4 y 5.
+- **Registros (S3-T17):** la revisión automatizada se amplió con una segunda prueba para el flujo del Sprint 3, en lugar de alargar la del Sprint 1; las dos comparten la comprobación (todas las entradas, todos los niveles). Las descripciones, referencias, motivos, destinos y acciones se tratan como datos personales porque pueden contenerlos.
+- **Posiciones no elegidas (S3-T17):** se apoya en lo ya verificado por historia: el reporte no guarda la ubicación del dispositivo, la posición actual solo se lee si la ciudadana la elige y el despacho de un reporte lleva el lugar del hecho.
+- **Demostración (S3-T18):** se hizo en local, con la ciudadana y el sereno en el mismo emulador (cambiando de sesión). La base local conserva 111 SOS pendientes del ensayo de carga, por eso la demostración no incluye capturas de la central. El emulador usa la zona horaria UTC: la app muestra las horas 5 horas por delante del panel (hora de Lima).
+- **Entorno publicado:** el PR #25 se fusionó en `main` y la CI de `main` pasó, así que Render despliega el Sprint 3 completo. Desde el desarrollo solo se consultó `/salud` (sin entrar a Render, por indicación del equipo).
+
+## Resumen del incremento del Sprint 3
+
+| Indicador | Valor al cierre |
+|---|---|
+| Pruebas del servidor | 608/608 |
+| Pruebas de la app | 188/188 |
+| Casos de la matriz de autorización | 217 |
+| Compilaciones Release (servidor y app Android) | 0 advertencias |
+| Mutaciones de los bloques 1–9 | 105 introducidas: 104 detectadas y 1 equivalente justificada (bloque 3) |
+
+**Historias implementadas y verificadas de extremo a extremo:** HU10, HU14, HU15, HU16, HU26, HU30 y HU31, y HU20-CA07.
+
+**Con cláusulas pendientes según el Plan Scrum (no se acreditan aún):**
+
+- **HU17:** CA04 (exclusión del mapa de concentración) llega con HU29 (Sprint 5).
+- **HU27:** CA02 («Cancelada») llega con HU09 (Sprint 5).
+- **HU03:** CA04 acumulativo, hasta el Sprint 5.
+
+**Interpretaciones que el PO debe confirmar en la Review:**
+
+- Un SOS pendiente se muestra al ciudadano como «Recibido» (DP05 no nombra otro estado).
+- Cualquier operador puede corregir la categoría de un reporte en revisión (HU14 no lo limita).
+- El filtro «sereno asignado» incluye las asignaciones terminadas; las fechas del filtro son días completos en hora de Lima.
+
+**Decisiones pendientes del PO:**
+
+- **DP06 (reportes):** ¿debe el sereno recibir la descripción de un reporte? Hoy solo recibe el lugar del hecho.
+- **Acciones del operador sobre un reporte en curso:** registrar el inicio de la atención y cerrar (HU23-CA02, HU24-CA05) solo están en el detalle de los SOS. Propuesta: añadirlas al detalle del reporte con las mismas reglas.
+
+**Trasladado (lo ejecuta el equipo):** S3-T19 (RNF02 en Render), S3-T20 (SPIKE01 en un teléfono real) y S3-T21 (push con la app cerrada), y un APK nuevo para el teléfono del equipo.
+
+## Cierre del Sprint 3
+
+**Estado: pendiente de aceptación.** El incremento está implementado, integrado en `main` y demostrado de extremo a extremo en local ([demo-sprint3.md](demo-sprint3.md)). La aceptación de cada historia la decide el PO en la Sprint Review, después del recorrido en el entorno publicado.

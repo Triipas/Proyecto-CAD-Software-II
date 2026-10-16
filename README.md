@@ -6,7 +6,7 @@ Documentos de referencia (fuera del repositorio): Plan Scrum, Historias de usuar
 
 ## Estado
 
-Sprints 1 y 2 cerrados y aceptados en sus Sprint Review; lo trasladado al Sprint 3 está en el cierre de cada trazabilidad. El avance por tarea está en [docs/trazabilidad-sprint2.md](docs/trazabilidad-sprint2.md) y la guía de la demostración en [docs/demo-sprint2.md](docs/demo-sprint2.md) (Sprint 1: [docs/trazabilidad-sprint1.md](docs/trazabilidad-sprint1.md)).
+Sprints 1 y 2 cerrados y aceptados en sus Sprint Review. Sprint 3 (reportes, revisión, historial y seguimiento ciudadano) implementado, integrado en `main` y demostrado en local; pendiente de aceptación en su Sprint Review. El avance por tarea está en [docs/trazabilidad-sprint3.md](docs/trazabilidad-sprint3.md) y la guía de la demostración en [docs/demo-sprint3.md](docs/demo-sprint3.md) (sprints anteriores: [Sprint 1](docs/trazabilidad-sprint1.md), [Sprint 2](docs/trazabilidad-sprint2.md) y [su demostración](docs/demo-sprint2.md)).
 
 ## Requisitos
 
