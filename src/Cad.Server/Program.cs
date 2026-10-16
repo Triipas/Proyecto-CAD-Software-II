@@ -1,4 +1,5 @@
 using Cad.Server.Compartido;
+using Cad.Server.Modulos.Acompanamiento;
 using Cad.Server.Modulos.Casos;
 using Cad.Server.Modulos.Cuentas;
 using Cad.Server.Modulos.Mediciones;
@@ -63,6 +64,7 @@ builder.Services.AddModuloCuentas();
 builder.Services.AddModuloCasos();
 builder.Services.AddModuloMediciones(builder.Configuration);
 builder.Services.AddModuloSerenos(builder.Configuration);
+builder.Services.AddModuloAcompanamiento(builder.Configuration);
 
 // Tiempo real (HU11): eventos a la central después de cada confirmación.
 builder.Services.AddSignalR();
@@ -103,6 +105,7 @@ app.MapModuloCuentas();
 app.MapModuloCasos();
 app.MapModuloMediciones();
 app.MapModuloSerenos();
+app.MapModuloAcompanamiento();
 app.MapHub<CentralHub>(CentralHub.Ruta);
 app.MapHub<SerenoHub>(SerenoHub.Ruta);
 app.MapRazorPages();
