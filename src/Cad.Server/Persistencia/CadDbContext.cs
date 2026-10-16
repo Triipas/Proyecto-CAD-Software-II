@@ -27,6 +27,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
+    public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
+    public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
@@ -277,6 +279,41 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             // Un reenvío de la misma posición no la duplica; también sirve para leer la última posición (HU19).
             posicion.HasIndex(p => new { p.SerenoId, p.ObtenidaEn }).IsUnique();
             posicion.HasOne<Usuario>().WithMany().HasForeignKey(p => p.SerenoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU34–HU37: sesiones de acompañamiento. Una sola activa por ciudadano (HU34-CA06, índice único parcial) y una por
+        // pulsación (IdSolicitud). La base de datos exige que una sesión cerrada tenga su hora de cierre y una activa no.
+        builder.Entity<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>(sesion =>
+        {
+            sesion.ToTable("SesionesAcompanamiento", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_SesionesAcompanamiento_Vencimiento", "\"VenceEn\" > \"IniciadaEn\"");
+                // IS NOT NULL explícito: un CHECK con NULL se acepta.
+                tabla.HasCheckConstraint("CK_SesionesAcompanamiento_Cierre",
+                    "(\"Estado\" = 'Activa' AND \"CerradaEn\" IS NULL) OR " +
+                    "(\"Estado\" IN ('Finalizada', 'Vencida') AND \"CerradaEn\" IS NOT NULL AND \"CerradaEn\" >= \"IniciadaEn\")");
+            });
+            sesion.HasKey(s => s.Id);
+            sesion.Property(s => s.Estado).HasConversion<string>().HasMaxLength(20);
+            sesion.Property(s => s.Version).IsRowVersion();
+            sesion.HasIndex(s => new { s.CiudadanoId, s.IdSolicitud }).IsUnique();
+            sesion.HasIndex(s => s.CiudadanoId).IsUnique().HasFilter("\"Estado\" = 'Activa'").HasDatabaseName("IX_SesionesAcompanamiento_Activa");
+            sesion.HasIndex(s => new { s.Estado, s.VenceEn });
+            sesion.HasOne<Usuario>().WithMany().HasForeignKey(s => s.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU35: posiciones del acompañamiento (solo inserción). Un reenvío de la misma posición no la duplica.
+        builder.Entity<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>(posicion =>
+        {
+            posicion.ToTable("PosicionesAcompanamiento", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_PosicionesAcompanamiento_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
+                tabla.HasCheckConstraint("CK_PosicionesAcompanamiento_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
+                tabla.HasCheckConstraint("CK_PosicionesAcompanamiento_Precision", "\"PrecisionMetros\" > 0");
+            });
+            posicion.HasKey(p => p.Id);
+            posicion.HasIndex(p => new { p.SesionId, p.ObtenidaEn }).IsUnique();
+            posicion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(p => p.SesionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Usuario>(usuario =>

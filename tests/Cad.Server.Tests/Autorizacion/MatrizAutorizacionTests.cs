@@ -42,6 +42,16 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/api/notificaciones", "HU31", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/notificaciones/{id:guid}/leida", "HU31", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/notificaciones/00000000-0000-0000-0000-000000000000/leida"),
+        // HU34–HU37 — acompañamiento temporal (solo el ciudadano titular). Sin cuerpo válido el ciudadano llega al caso de uso
+        // (400 o 404 con una sesión inexistente); el resto es rechazado antes, sin crear sesiones ni posiciones.
+        new("POST", "/api/acompanamiento", "HU34", Acceso.SoloRol, Roles.Ciudadano),
+        new("GET", "/api/acompanamiento/actual", "HU34", Acceso.SoloRol, Roles.Ciudadano),
+        new("GET", "/api/acompanamiento/{id:guid}", "HU37", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000"),
+        new("POST", "/api/acompanamiento/{id:guid}/posiciones", "HU35", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/posiciones"),
+        new("POST", "/api/acompanamiento/{id:guid}/finalizacion", "HU36", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/finalizacion"),
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),
