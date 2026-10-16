@@ -43,6 +43,8 @@
   --color-urgente: #B42318;         /* 6.05:1 sobre su fondo; blanco encima: 6.57:1 */
   --color-urgente-fondo: #FEF3F2;
   --color-urgente-borde: #F4C7C3;
+  /* Reportes admitidos (HU15, HU20-CA07): distintos del rojo urgente de los SOS. */
+  --color-reporte: #6D28D9;         /* blanco encima: 7.10:1 */
 
   /* Tipografía: fuentes del sistema, sin descargas */
   --fuente: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;

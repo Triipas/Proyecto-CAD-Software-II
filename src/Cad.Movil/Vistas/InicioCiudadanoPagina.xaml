@@ -71,6 +71,15 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- HU31: avisos de cambios de estado de los casos propios (bandeja dentro de la app). -->
+            <v:Aviso Tipo="informacion" Texto="Tienes notificaciones nuevas sobre tus casos." IsVisible="{Binding HayNoLeidas}" />
+            <Button Text="{Binding TextoNotificaciones}" Style="{StaticResource BotonSecundario}" Command="{Binding VerNotificaciones}"
+                    SemanticProperties.Hint="Muestra los avisos de cambios de estado de tus casos" />
+
+            <!-- HU30: estado y avances públicos de los SOS y reportes propios. -->
+            <Button Text="Mis casos" Style="{StaticResource BotonSecundario}" Command="{Binding VerMisCasos}"
+                    SemanticProperties.Hint="Muestra tus SOS y reportes con su estado" />
+
             <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
     </ScrollView>

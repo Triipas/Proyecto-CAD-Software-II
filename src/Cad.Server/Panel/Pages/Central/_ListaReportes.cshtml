@@ -1,0 +1,51 @@
+@model Cad.Server.Panel.Pages.Central.ListaReportes
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+}
+@* HU15-CA02 y HU20-CA07 — reportes admitidos, pendientes de asignación. Fragmento que el servidor genera en la carga
+   inicial y al resincronizar. Se asignan con las mismas reglas que un SOS; la ubicación es la del hecho. *@
+<div data-lista-reportes data-total="@Model.Admitidos.Count">
+    @if (Model.Admitidos.Count == 0)
+    {
+        <p class="texto-secundario">No hay reportes admitidos pendientes de asignación.</p>
+    }
+    else
+    {
+        <ol class="lista-sos">
+            @foreach (var reporte in Model.Admitidos)
+            {
+                var local = TimeZoneInfo.ConvertTime(reporte.AdmitidoEn, Model.ZonaHoraria);
+                <li class="sos sos--reporte" id="sos-@reporte.Id" tabindex="-1" data-sos="@reporte.Id" data-origen="Reporte"
+                    data-ciudadano="@reporte.Ciudadano" data-categoria="@reporte.Categoria"
+                    data-lat="@reporte.Latitud?.ToString(inv)" data-lon="@reporte.Longitud?.ToString(inv)">
+                    <div class="sos__cabecera">
+                        <span class="etiqueta-reporte">Reporte</span>
+                        <span class="sos__estado">Pendiente</span>
+                        <span class="sos__hora">Admitido a las <time datetime="@reporte.AdmitidoEn.ToString("O", inv)">@local.ToString("HH:mm", inv)</time></span>
+                    </div>
+                    <p class="sos__ciudadano">@reporte.Ciudadano</p>
+                    <p class="sos__tipo" data-tipo>Tipo: @reporte.Categoria</p>
+                    @if (reporte.ConPunto)
+                    {
+                        <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa el lugar del hecho del reporte de @reporte.Ciudadano">
+                            <partial name="_Icono" model="@("ubicacion")" />
+                            <span>Lugar del hecho indicado por el ciudadano · Ver en el mapa</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <p class="sos__ubicacion sos__ubicacion--no">
+                            <partial name="_Icono" model="@("advertencia")" />
+                            <span>Sin punto en el mapa · Referencia: @reporte.Referencia</span>
+                        </p>
+                    }
+                    <div class="sos__acciones">
+                        <a class="sos__detalle" href="/panel/reportes/@reporte.Id">Ver el reporte<span class="visualmente-oculto"> de @reporte.Ciudadano</span></a>
+                        <button type="button" class="sos__detalle sos__elegir" data-seleccionar-sos>Elegir sereno para asignar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></button>
+                    </div>
+                </li>
+            }
+        </ol>
+    }
+</div>

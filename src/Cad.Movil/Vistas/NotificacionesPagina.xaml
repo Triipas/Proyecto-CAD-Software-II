@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- HU31 — bandeja de notificaciones: cambios del estado público de los casos propios, sin detalles del hecho. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.NotificacionesPagina"
+             x:DataType="vm:NotificacionesVistaModelo"
+             Title="Notificaciones">
+    <RefreshView IsRefreshing="{Binding Cargando}" Command="{Binding Actualizar}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16,24" Spacing="12" MaximumWidthRequest="480">
+                <VerticalStackLayout>
+                    <Label Text="Ciudadano" Style="{StaticResource Sobretitulo}" />
+                    <Label Text="Notificaciones" Style="{StaticResource Titulo}" />
+                    <Label Text="{Binding Resumen}" Style="{StaticResource TextoSecundario}" />
+                </VerticalStackLayout>
+
+                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
+                <v:Aviso Tipo="informacion" Texto="Aún no tienes notificaciones. Te avisaremos aquí cuando cambie el estado de tus casos." IsVisible="{Binding SinNotificaciones}" />
+
+                <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Notificaciones}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ElementoNotificacion">
+                            <Border Style="{StaticResource Superficie}" Padding="16" SemanticProperties.Description="{Binding Descripcion}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Abrir}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding Estado}" Style="{StaticResource Sobretitulo}" />
+                                    <Label Text="{Binding Texto}" FontAttributes="Bold" />
+                                    <Label Text="{Binding Fecha}" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                    <Button Text="Ver el caso" Style="{StaticResource BotonSecundario}" Command="{Binding Abrir}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

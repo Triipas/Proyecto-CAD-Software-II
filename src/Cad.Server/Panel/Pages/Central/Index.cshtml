@@ -47,8 +47,8 @@
     </div>
 }
 
-@* HU20 — confirmación de la asignación desde el mapa: el panel la muestra al elegir «Asignar al SOS
-   seleccionado» en un sereno disponible. Es un formulario normal (PRG) con token antifalsificación. *@
+@* HU20 — confirmación de la asignación desde el mapa: el panel la muestra al elegir «Asignar al caso
+   seleccionado» en un sereno disponible (un SOS o un reporte admitido). Es un formulario normal (PRG) con token antifalsificación. *@
 <form method="post" class="aviso aviso--informacion central__confirmacion" data-confirmar-asignacion data-formulario hidden novalidate>
     @Html.AntiForgeryToken()
     <input type="hidden" name="Asignacion.SerenoId" data-campo-sereno />
@@ -77,6 +77,17 @@
         <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
     </section>
 
+    @* HU15-CA02 y HU20-CA07 — reportes admitidos, separados de los SOS (no son urgentes) y asignables igual. *@
+    <section class="superficie central__reportes" aria-labelledby="titulo-reportes">
+        <h2 id="titulo-reportes" class="central__titulo">
+            Reportes admitidos <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
+        </h2>
+        <p class="texto-secundario">Pendientes de asignación tras su revisión. No son alertas urgentes. Su ubicación es el lugar del hecho que indicó el ciudadano.</p>
+        <div data-region-reportes>
+            <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
+        </div>
+    </section>
+
     @* HU19 — estado y disponibilidad de los serenos, actualizados sin recargar. *@
     <section class="superficie central__serenos" aria-labelledby="titulo-serenos">
         <h2 id="titulo-serenos" class="central__titulo">Serenos</h2>
@@ -88,9 +99,9 @@
 
     <section class="superficie central__mapa" aria-labelledby="titulo-mapa">
         <h2 id="titulo-mapa" class="central__titulo">Mapa operativo</h2>
-        <p class="texto-secundario">SOS (rojo) y serenos operativos (azul si están disponibles) con ubicación. Elige un marcador o «Ver en el mapa» para relacionarlos.</p>
+        <p class="texto-secundario">SOS (rojo), lugar del hecho de los reportes admitidos (violeta) y serenos operativos (azul si están disponibles) con ubicación. Elige un marcador o «Ver en el mapa» para relacionarlos.</p>
         <div id="mapa" class="mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de SOS y serenos con ubicación"></div>
+             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de SOS, reportes admitidos y serenos con ubicación"></div>
         <noscript><p class="texto-secundario">El mapa y los avisos en tiempo real necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
     </section>
 </div>

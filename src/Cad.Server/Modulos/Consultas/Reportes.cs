@@ -16,6 +16,31 @@ public sealed record ReporteEnBandeja(
 
 public sealed record CorreccionVista(string Anterior, string Nueva, string Operador, DateTimeOffset En);
 
+// HU15–HU17: la decisión registrada sobre el reporte.
+public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En)
+{
+    public string Texto => Tipo switch
+    {
+        TipoDecisionReporte.Admision => "Admitido para atención",
+        TipoDecisionReporte.Derivacion => "Derivado",
+        _ => "Descartado",
+    };
+}
+
+// HU15-CA02 y HU20-CA07: reporte admitido, pendiente de asignación en la central. La ubicación es la del hecho.
+public sealed record ReporteAdmitido(
+    Guid Id,
+    DateTimeOffset RegistradoEn,
+    DateTimeOffset AdmitidoEn,
+    string Ciudadano,
+    string Categoria,
+    double? Latitud,
+    double? Longitud,
+    string? Referencia)
+{
+    public bool ConPunto => Latitud is not null && Longitud is not null;
+}
+
 public sealed record DetalleReporteVista(
     Guid Id,
     EstadoCaso Estado,
@@ -34,10 +59,14 @@ public sealed record DetalleReporteVista(
     string CategoriaOriginal,
     string? RevisionIniciadaPor,
     DateTimeOffset? RevisionIniciadaEn,
-    IReadOnlyList<CorreccionVista> Correcciones)
+    IReadOnlyList<CorreccionVista> Correcciones,
+    DecisionVista? Decision = null)
 {
     public bool PuedeIniciarRevision => Estado == EstadoCaso.Recibido;
     public bool PuedeCorregirCategoria => Estado == EstadoCaso.EnRevision;
+    public bool PuedeDecidir => Estado == EstadoCaso.EnRevision;
+    // Tras la admisión sigue el flujo de un caso: pendiente de asignación, asignado, en camino, en atención, cerrado.
+    public bool EnAtencionOperativa => Estado is EstadoCaso.Pendiente or EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion or EstadoCaso.Cerrada;
     public bool ConPunto => LatitudHecho is not null && LongitudHecho is not null;
 }
 
@@ -89,11 +118,33 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
             .OrderBy(c => c.correccion.CorregidaEn)
             .Select(c => new CorreccionVista(categorias[c.correccion.CategoriaAnteriorId], categorias[c.correccion.CategoriaNuevaId], c.Operador, c.correccion.CorregidaEn))
             .ToList();
+        var decision = await (from registro in db.DecisionesReporte.AsNoTracking()
+                              join operador in db.Users.AsNoTracking() on registro.OperadorId equals operador.Id
+                              where registro.CasoId == casoId
+                              select new DecisionVista(registro.Tipo, registro.Motivo, registro.Destino, registro.Accion,
+                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn))
+            .SingleOrDefaultAsync(ct);
 
         var (c, d) = (fila.caso, fila.detalle);
         return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
             d.OcurridoAproximadamenteEn, d.FuenteUbicacion, d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros,
             d.ReferenciaHecho, c.CategoriaId!.Value, categorias[c.CategoriaId!.Value], categorias[d.CategoriaOriginalId],
-            revision?.Operador, revision?.OcurridoEn, correcciones);
+            revision?.Operador, revision?.OcurridoEn, correcciones, decision);
     }
+}
+
+// HU15-CA02: los reportes admitidos que esperan asignación, los más recientes primero, como los SOS pendientes.
+public sealed class ConsultarReportesAdmitidos(CadDbContext db)
+{
+    public async Task<IReadOnlyList<ReporteAdmitido>> EjecutarAsync(CancellationToken ct) =>
+        await (from caso in db.Casos.AsNoTracking()
+               join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId
+               join decision in db.DecisionesReporte.AsNoTracking() on caso.Id equals decision.CasoId
+               join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+               join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id
+               where caso.Origen == OrigenCaso.Reporte && caso.Estado == EstadoCaso.Pendiente
+               orderby caso.RegistradoEn descending
+               select new ReporteAdmitido(caso.Id, caso.RegistradoEn, decision.DecididaEn, ciudadano.Nombres + " " + ciudadano.Apellidos,
+                   categoria.Nombre, detalle.LatitudHecho, detalle.LongitudHecho, detalle.ReferenciaHecho))
+              .ToListAsync(ct);
 }

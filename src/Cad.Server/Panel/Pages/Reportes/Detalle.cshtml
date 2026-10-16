@@ -172,6 +172,96 @@
                 <p class="texto-secundario">Inicia la revisión para poder corregir la categoría.</p>
             }
         </section>
+
+        @* HU15–HU17 — admitir, derivar o descartar, solo desde «En revisión». *@
+        <section class="superficie" aria-labelledby="titulo-decision">
+            <h2 id="titulo-decision" class="central__titulo">Decisión</h2>
+            @if (Model.ErrorDecision is not null)
+            {
+                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo registrar la decisión</p>
+                        <p class="aviso__texto">@Model.ErrorDecision</p>
+                    </div>
+                </div>
+            }
+            @if (r.Decision is { } decision)
+            {
+                <dl class="datos" data-decision="@decision.Tipo">
+                    <div><dt>Decisión</dt><dd>@decision.Texto</dd></div>
+                    @if (decision.Destino is { } destino)
+                    {
+                        <div><dt>Destino</dt><dd data-destino>@destino</dd></div>
+                        <div><dt>Acción realizada</dt><dd class="datos__texto">@decision.Accion</dd></div>
+                    }
+                    <div><dt>Motivo</dt><dd class="datos__texto" data-motivo>@decision.Motivo</dd></div>
+                    <div><dt>Responsable</dt><dd>@decision.Operador</dd></div>
+                    <div><dt>Fecha y hora</dt><dd>@Local(decision.En)</dd></div>
+                </dl>
+                @if (decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Derivacion)
+                {
+                    <p class="texto-secundario">La derivación es solo un registro: el sistema no envía información a la entidad de destino.</p>
+                }
+                @if (r.Estado == Cad.Server.Modulos.Casos.Dominio.EstadoCaso.Pendiente)
+                {
+                    <p data-pendiente-asignacion>Pendiente de asignación. Asígnalo a un sereno disponible desde la <a href="/panel/central#titulo-reportes">central</a>, como un SOS.</p>
+                }
+                else if (r.EnAtencionOperativa)
+                {
+                    <p>En atención por un sereno: estado «@r.TextoEstado». El seguimiento está en la central y en el historial.</p>
+                }
+            }
+            else if (r.PuedeDecidir)
+            {
+                <form method="post" asp-page-handler="Decidir" class="formulario" data-formulario novalidate>
+                    <fieldset class="campo">
+                        <legend class="campo__etiqueta">Decisión</legend>
+                        <div class="opciones">
+                            <label class="opcion"><input type="radio" name="Decision.Tipo" value="Admision" checked="@(Model.Decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Admision)" /> Admitir para atención (pasa a «Pendiente» para asignarlo)</label>
+                            <label class="opcion"><input type="radio" name="Decision.Tipo" value="Derivacion" checked="@(Model.Decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Derivacion)" /> Derivar a otra entidad (solo registro)</label>
+                            <label class="opcion"><input type="radio" name="Decision.Tipo" value="Descarte" checked="@(Model.Decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Descarte)" /> Descartar</label>
+                        </div>
+                    </fieldset>
+                    @foreach (var (campo, etiqueta, ayuda, valor, multilinea, maximo) in new[]
+                    {
+                        ("Motivo", "Motivo", "Obligatorio en las tres decisiones. En un descarte es la justificación.", Model.Decision.Motivo, true, Cad.Server.Modulos.Casos.Dominio.DecisionReporte.MaximoMotivo),
+                        ("Destino", "Destino (solo para derivar)", "Entidad o área a la que se deriva. Obligatorio al derivar.", Model.Decision.Destino, false, Cad.Server.Modulos.Casos.Dominio.DecisionReporte.MaximoDestino),
+                        ("Accion", "Acción realizada (solo para derivar)", "Por ejemplo, cómo se comunicó el caso. Obligatoria al derivar.", Model.Decision.Accion, true, Cad.Server.Modulos.Casos.Dominio.DecisionReporte.MaximoAccion),
+                    })
+                    {
+                        var id = $"Decision_{campo}";
+                        var error = Model.ErrorDecisionDe(campo.ToLowerInvariant());
+                        var descrito = error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda";
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                            @if (multilinea)
+                            {
+                                <textarea class="campo__control campo__control--texto" id="@id" name="Decision.@campo" rows="3" maxlength="@maximo"
+                                          aria-invalid="@(error is null ? null : "true")" aria-describedby="@descrito">@valor</textarea>
+                            }
+                            else
+                            {
+                                <input class="campo__control" id="@id" name="Decision.@campo" type="text" value="@valor" maxlength="@maximo"
+                                       aria-invalid="@(error is null ? null : "true")" aria-describedby="@descrito" />
+                            }
+                            <p id="@id-ayuda" class="campo__ayuda">@ayuda</p>
+                            @if (error is not null)
+                            {
+                                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                            }
+                        </div>
+                    }
+                    <div class="acciones">
+                        <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar la decisión</button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <p class="texto-secundario">Se decide sobre el reporte cuando está «En revisión».</p>
+            }
+        </section>
     </div>
 </div>
 

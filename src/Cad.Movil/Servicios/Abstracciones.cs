@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
@@ -29,6 +30,14 @@ public interface IApiCad
     // HU10 — reporte de incidencia y catálogo de tipos (DP07).
     Task<ResultadoApi<RespuestaReporte>> RegistrarReporteAsync(string token, SolicitudRegistroReporte solicitud, CancellationToken ct);
     Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasReporteAsync(string token, CancellationToken ct);
+
+    // HU30 — mis casos (solo datos públicos, DP05). El caso de otro ciudadano responde 404 (CA04).
+    Task<ResultadoApi<List<MiCasoResumen>>> ConsultarMisCasosAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct);
+
+    // HU31 — bandeja de notificaciones del ciudadano.
+    Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct);
 
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);

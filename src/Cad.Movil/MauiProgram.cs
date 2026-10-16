@@ -40,7 +40,8 @@ public static class MauiProgram
         builder.Services.AddTransient<RegistroVistaModelo>();
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),
-            s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
+            s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
+            s.GetRequiredService<ServicioBandeja>()));
         builder.Services.AddTransient(s => new ReporteVistaModelo(
             s.GetRequiredService<IApiCad>(), s.GetRequiredService<RegistradorReporte>(), s.GetRequiredService<IServicioUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
@@ -61,6 +62,16 @@ public static class MauiProgram
         builder.Services.AddTransient<RegistroPagina>();
         builder.Services.AddTransient<InicioCiudadanoPagina>();
         builder.Services.AddTransient<ReportePagina>();
+        builder.Services.AddTransient(s => new MisCasosVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+        builder.Services.AddTransient(s => new MiCasoVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+        builder.Services.AddTransient<MisCasosPagina>();
+        builder.Services.AddSingleton<ServicioBandeja>();
+        builder.Services.AddTransient(s => new NotificacionesVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+        builder.Services.AddTransient<NotificacionesPagina>();
+        builder.Services.AddTransient<MiCasoPagina>();
         builder.Services.AddTransient<InicioSerenoPagina>();
 
         builder.Services.AddSingleton<EstadoAppMaui>();

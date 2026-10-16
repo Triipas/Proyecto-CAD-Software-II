@@ -13,13 +13,19 @@ public sealed record DespachoSereno(
     IReadOnlyList<InformacionDespacho> Informacion,
     // HU22 y HU23: horas de los avances del caso (sin el responsable: DP06).
     DateTimeOffset? EnCaminoEn = null,
-    DateTimeOffset? EnAtencionEn = null)
+    DateTimeOffset? EnAtencionEn = null,
+    // HU20-CA07 y HU21-CA02: en un reporte admitido, el lugar del hecho que indicó el ciudadano (punto o referencia).
+    // Es distinto de la ubicación del dispositivo (Ubicacion), que un reporte no tiene.
+    LugarHechoDespacho? LugarHecho = null)
 {
     // Textos de estado que envía el servidor (HU22, HU23).
     public const string EstadoAsignada = "Asignada";
     public const string EstadoEnCamino = "En camino";
     public const string EstadoEnAtencion = "En atención";
 }
+
+// Lugar del hecho de un reporte: punto (con la precisión, si el ciudadano usó su posición) y/o referencia textual (DP10).
+public sealed record LugarHechoDespacho(double? Latitud, double? Longitud, double? PrecisionMetros, string? Referencia);
 
 // Ubicación que envió el dispositivo del ciudadano. Nula = «Ubicación no disponible» (CA03: sin coordenadas inventadas).
 public sealed record UbicacionDespacho(double Latitud, double Longitud, double PrecisionMetros, DateTimeOffset ObtenidaEn);

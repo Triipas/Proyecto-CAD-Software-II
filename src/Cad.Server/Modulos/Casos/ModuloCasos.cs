@@ -14,6 +14,11 @@ public static class ModuloCasos
         services.AddScoped<EmitirSos>();
         services.AddScoped<RegistrarReporte>();
         services.AddScoped<RevisarReporte>();
+        services.AddScoped<DecidirReporte>();
+        services.AddScoped<Modulos.Consultas.ConsultarReportesAdmitidos>();
+        services.AddScoped<Modulos.Consultas.ConsultarCasos>();
+        services.AddScoped<Modulos.Consultas.ConsultarMisCasos>();
+        services.AddScoped<Modulos.Consultas.BandejaCiudadano>();
         services.AddScoped<Modulos.Consultas.ConsultarReportes>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleReporte>();
         services.AddScoped<RegistrarIntentoContacto>();
@@ -57,6 +62,22 @@ public static class ModuloCasos
         // HU10-CA01 y DP07 — catálogo para elegir el tipo del reporte.
         app.MapGet("/api/reportes/categorias", async (Modulos.Consultas.ConsultarCategorias categorias, CancellationToken ct) =>
                 Results.Ok((await categorias.EjecutarAsync(ct)).Select(c => new CategoriaCatalogo(c.Id, c.Nombre))))
+            .RequireAuthorization(Politicas.Ciudadano);
+
+        // HU30 — mis casos: solo los del ciudadano que consulta; el de otro responde 404, también con una solicitud directa (CA04).
+        app.MapGet("/api/casos/mios", async (HttpContext contexto, Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
+                Results.Ok(await consultar.ListarAsync(contexto.User.IdUsuario(), ct)))
+            .RequireAuthorization(Politicas.Ciudadano);
+        app.MapGet("/api/casos/mios/{id:guid}", async (Guid id, HttpContext contexto, Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
+                await consultar.DetalleAsync(contexto.User.IdUsuario(), id, ct) is { } detalle ? Results.Ok(detalle) : Results.NotFound())
+            .RequireAuthorization(Politicas.Ciudadano);
+
+        // HU31 — bandeja de notificaciones: solo las del ciudadano que consulta (CA04).
+        app.MapGet("/api/notificaciones", async (HttpContext contexto, Modulos.Consultas.BandejaCiudadano bandeja, CancellationToken ct) =>
+                Results.Ok(await bandeja.ConsultarAsync(contexto.User.IdUsuario(), ct)))
+            .RequireAuthorization(Politicas.Ciudadano);
+        app.MapPost("/api/notificaciones/{id:guid}/leida", async (Guid id, HttpContext contexto, Modulos.Consultas.BandejaCiudadano bandeja, CancellationToken ct) =>
+                await bandeja.MarcarLeidaAsync(contexto.User.IdUsuario(), id, ct) ? Results.NoContent() : Results.NotFound())
             .RequireAuthorization(Politicas.Ciudadano);
 
         return app;
