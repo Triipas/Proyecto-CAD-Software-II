@@ -1,0 +1,184 @@
+@page "/panel/reportes/{id:guid}"
+@model Cad.Server.Panel.Pages.Reportes.DetalleModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Reporte";
+    var inv = CultureInfo.InvariantCulture;
+    var r = Model.Reporte;
+    string Local(DateTimeOffset momento, string formato = "dd/MM/yyyy HH:mm:ss") => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString(formato, inv);
+    var fuente = r.FuenteUbicacion switch
+    {
+        "Mapa" => "Punto elegido en el mapa por el ciudadano",
+        "PosicionActual" => "Posición del ciudadano al reportar (la eligió él)",
+        _ => "Referencia textual (sin punto)",
+    };
+}
+@section Estilos {
+    @if (r.ConPunto)
+    {
+        <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+    }
+}
+<p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador · Reporte <span data-estado>@r.TextoEstado</span></p>
+        <h1 class="titulo">Reporte de incidencia</h1>
+        <p class="texto-secundario">Registrado el @Local(r.RegistradoEn). <a href="/panel/casos/@r.Id/historial">Ver el historial del caso</a></p>
+    </div>
+</div>
+
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <div>
+            <p class="aviso__titulo">@Model.Mensaje</p>
+            <p class="aviso__texto">El reporte está «@r.TextoEstado». @Model.DetalleMensaje</p>
+        </div>
+    </div>
+}
+
+<div class="verificacion">
+    <div class="pila">
+        <section class="superficie" aria-labelledby="titulo-hecho">
+            <h2 id="titulo-hecho" class="central__titulo">Hecho reportado</h2>
+            <dl class="datos">
+                <div><dt>Ciudadano</dt><dd>@r.Ciudadano</dd></div>
+                <div><dt>Ocurrió aproximadamente</dt><dd>@Local(r.OcurridoAproximadamenteEn, "dd/MM/yyyy HH:mm")</dd></div>
+                <div><dt>Descripción</dt><dd class="datos__texto" data-descripcion>@r.Descripcion</dd></div>
+            </dl>
+        </section>
+
+        <section class="superficie" aria-labelledby="titulo-lugar">
+            <h2 id="titulo-lugar" class="central__titulo">Ubicación del hecho</h2>
+            <dl class="datos">
+                <div><dt>Indicada como</dt><dd data-fuente>@fuente</dd></div>
+                @if (r.ConPunto)
+                {
+                    <div><dt>Coordenadas</dt><dd>@r.LatitudHecho?.ToString("0.00000", inv), @r.LongitudHecho?.ToString("0.00000", inv)</dd></div>
+                    @if (r.PrecisionHechoMetros is { } precision)
+                    {
+                        <div><dt>Precisión</dt><dd>± @precision.ToString("0", inv) m</dd></div>
+                    }
+                }
+                @if (r.ReferenciaHecho is { } referencia)
+                {
+                    <div><dt>Referencia</dt><dd data-referencia>@referencia</dd></div>
+                }
+            </dl>
+            @if (r.ConPunto)
+            {
+                <div id="mapa-hecho" class="mapa mapa--hecho" role="region" aria-label="Mapa con el lugar del hecho"
+                     data-lat="@r.LatitudHecho?.ToString(inv)" data-lon="@r.LongitudHecho?.ToString(inv)" data-teselas="@Model.UrlTeselas"></div>
+            }
+            <p class="texto-secundario">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
+        </section>
+    </div>
+
+    <div class="pila">
+        @* HU14-CA01/CA02/CA05 — inicio de la revisión. *@
+        <section class="superficie" aria-labelledby="titulo-revision">
+            <h2 id="titulo-revision" class="central__titulo">Revisión</h2>
+            @if (Model.ErrorRevision is not null)
+            {
+                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo iniciar la revisión</p>
+                        <p class="aviso__texto">@Model.ErrorRevision</p>
+                    </div>
+                </div>
+            }
+            @if (r.RevisionIniciadaPor is { } responsable && r.RevisionIniciadaEn is { } iniciada)
+            {
+                <dl class="datos" data-revision>
+                    <div><dt>Responsable</dt><dd>@responsable</dd></div>
+                    <div><dt>Iniciada</dt><dd>@Local(iniciada)</dd></div>
+                </dl>
+            }
+            @if (r.PuedeIniciarRevision)
+            {
+                <form method="post" asp-page-handler="IniciarRevision" class="formulario" data-formulario>
+                    <p class="texto-secundario">El reporte pasará a «En revisión» y quedarás como responsable.</p>
+                    <div class="acciones">
+                        <button type="submit" class="boton boton--principal" data-texto-carga="Iniciando…">Iniciar la revisión</button>
+                    </div>
+                </form>
+            }
+        </section>
+
+        @* HU14-CA03/CA04 — categoría original y corrección, solo en revisión. *@
+        <section class="superficie" aria-labelledby="titulo-categoria">
+            <h2 id="titulo-categoria" class="central__titulo">Categoría</h2>
+            @if (Model.ErrorCorreccion is not null)
+            {
+                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo corregir la categoría</p>
+                        <p class="aviso__texto">@Model.ErrorCorreccion</p>
+                    </div>
+                </div>
+            }
+            <dl class="datos">
+                <div><dt>Original (elegida por el ciudadano)</dt><dd data-categoria-original>@r.CategoriaOriginal</dd></div>
+                <div><dt>Vigente</dt><dd data-categoria-vigente>@r.CategoriaActual</dd></div>
+            </dl>
+            @if (r.Correcciones.Count > 0)
+            {
+                <ol class="historial" data-correcciones>
+                    @foreach (var c in r.Correcciones)
+                    {
+                        <li class="historial__elemento">
+                            <p class="historial__cabecera">
+                                <span>«@c.Anterior» → «@c.Nueva»</span>
+                                <time datetime="@c.En.ToString("O", inv)">@Local(c.En)</time>
+                                <span class="texto-secundario">· @c.Operador</span>
+                            </p>
+                        </li>
+                    }
+                </ol>
+            }
+            @if (r.PuedeCorregirCategoria)
+            {
+                <form method="post" asp-page-handler="Corregir" class="formulario" data-formulario novalidate>
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="CategoriaId">Corregir a</label>
+                        <select class="campo__control campo__control--seleccion" id="CategoriaId" name="CategoriaId" required
+                                aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
+                                aria-describedby="@(Model.ErrorCategoria is null ? null : "CategoriaId-error")">
+                            @foreach (var categoria in Model.Categorias)
+                            {
+                                <option value="@categoria.Id" selected="@(Model.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                            }
+                        </select>
+                        @if (Model.ErrorCategoria is not null)
+                        {
+                            <p id="CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
+                        }
+                    </div>
+                    <div class="acciones">
+                        <button type="submit" class="boton boton--principal" data-texto-carga="Guardando…">Corregir la categoría</button>
+                    </div>
+                </form>
+            }
+            else if (!r.PuedeIniciarRevision)
+            {
+                <p class="texto-secundario">La categoría solo se corrige mientras el reporte está «En revisión».</p>
+            }
+            else
+            {
+                <p class="texto-secundario">Inicia la revisión para poder corregir la categoría.</p>
+            }
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    @if (r.ConPunto)
+    {
+        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+        <script src="~/js/mapa-hecho.js" asp-append-version="true"></script>
+    }
+}

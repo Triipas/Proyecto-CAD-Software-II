@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 using Cad.Movil.Servicios;
@@ -141,6 +142,30 @@ public sealed class ApiFalsa : IApiCad
     {
         Interlocked.Increment(ref ConsultasDespacho);
         return Task.FromResult(RespuestaDespacho());
+    }
+
+    // ----- HU10: reportes -----
+    // Respuestas en orden para cada envío de reporte; la última se repite.
+    public Queue<Func<SolicitudRegistroReporte, Task<ResultadoApi<RespuestaReporte>>>> RespuestasReporte { get; } = new();
+    public ConcurrentQueue<SolicitudRegistroReporte> ReportesEnviados { get; } = new();
+    public Func<ResultadoApi<List<CategoriaCatalogo>>>? RespuestaCategoriasReporte { get; set; }
+    public int ConsultasCategoriasReporte;
+
+    public static ResultadoApi<RespuestaReporte> ReporteRegistrado(SolicitudRegistroReporte s) =>
+        new ResultadoApi<RespuestaReporte>.Correcto(new RespuestaReporte(Guid.NewGuid(), "Recibido", DateTimeOffset.UtcNow));
+
+    public Task<ResultadoApi<RespuestaReporte>> RegistrarReporteAsync(string token, SolicitudRegistroReporte solicitud, CancellationToken ct)
+    {
+        ReportesEnviados.Enqueue(solicitud);
+        var respuesta = RespuestasReporte.Count > 1 ? RespuestasReporte.Dequeue()
+            : RespuestasReporte.TryPeek(out var ultima) ? ultima : s => Task.FromResult(ReporteRegistrado(s));
+        return respuesta(solicitud);
+    }
+
+    public Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasReporteAsync(string token, CancellationToken ct)
+    {
+        Interlocked.Increment(ref ConsultasCategoriasReporte);
+        return Task.FromResult(RespuestaCategoriasReporte?.Invoke() ?? new ResultadoApi<List<CategoriaCatalogo>>.Correcto(Categorias));
     }
 
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)

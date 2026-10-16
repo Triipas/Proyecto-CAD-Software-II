@@ -96,10 +96,16 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - Notificación push (ADR-07, bloque 7b): `Platforms/Android/Push.cs` (token de FCM, permiso de notificaciones de Android 13+, canal «despachos» y receptor de mensajes) y `Servicios/Notificaciones.cs` (cuándo pedir el permiso y registrar o quitar el dispositivo en el servidor). La pantalla del sereno explica el aviso antes de pedir el permiso.
 - **Configurar Firebase en un equipo:** descargar `google-services.json` del proyecto `cad-validacion` (consola de Firebase → Configuración del proyecto → app Android `pe.cadmvp.movil`) y copiarlo en `src/Cad.Movil/Platforms/Android/google-services.json`, o compilar con `-p:CadGoogleServicesJson=<ruta>`. No se versiona. Sin él, la app funciona sin push. El dispositivo o emulador necesita Google Play Services (imágenes «Google APIs» o «Google Play»).
 
+## Reporte de incidencia (HU10, Sprint 3)
+
+- `Vistas/ReportePagina.xaml` y `VistasModelo/ReporteVistaModelo.cs`: tipo (catálogo de `GET /api/reportes/categorias`), descripción (hasta 2000 caracteres), fecha y hora aproximadas (no futuras) y lugar del hecho. Arriba, la advertencia de usar el SOS ante peligro inmediato y «Ir al SOS».
+- Lugar del hecho: «Marcar en el mapa», «Usar mi posición actual» (único momento en que se lee la posición; el permiso se pide solo entonces) o «Escribir una referencia» (sin posición). El mapa es `Resources/Raw/mapa/reporte.html` con Leaflet 1.9.4 incluido (`leaflet.js`, `leaflet.css` y su licencia) y teselas de OpenStreetMap; un toque se comunica a la app con una navegación `cadmapa://punto?lat=…&lon=…` que se cancela.
+- `Servicios/Reportes.cs` (`RegistradorReporte`): comprueba los datos, envía con un `IdSolicitud` y lo reutiliza en los reintentos (automáticos y «Reintentar el mismo reporte»), como el SOS. Confirma solo con la respuesta del servidor.
+
 ## Integración continua
 
 `.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.
 
 ## Pruebas automatizadas
 
-`Cad.Movil.Tests`: 54 pruebas (EmisorSos, PreparacionUbicacion, ApiCad con un `HttpMessageHandler` falso, ValidacionDireccion y modelos de vista). Pruebas de mutación sobre `EmisorSos`, todas detectadas: sin el filtro de la posición anterior, con un `IdSolicitud` nuevo en el reintento, sin la activación única, confirmando antes de la respuesta y reintentando los rechazos.
+`Cad.Movil.Tests`: 165 pruebas al 14/10/2026 (entre ellas las 40 del reporte de HU10, en `ReporteTests`); la descripción que sigue es la del Sprint 1. 54 pruebas (EmisorSos, PreparacionUbicacion, ApiCad con un `HttpMessageHandler` falso, ValidacionDireccion y modelos de vista). Pruebas de mutación sobre `EmisorSos`, todas detectadas: sin el filtro de la posición anterior, con un `IdSolicitud` nuevo en el reintento, sin la activación única, confirmando antes de la respuesta y reintentando los rechazos.

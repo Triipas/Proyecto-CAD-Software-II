@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- HU10 — Registrar un reporte de incidencia: tipo, descripción, fecha y hora aproximadas y ubicación del hecho. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             xmlns:sr="clr-namespace:Cad.Contratos.Serenos;assembly=Cad.Contratos"
+             x:Class="Cad.Movil.Vistas.ReportePagina"
+             x:DataType="vm:ReporteVistaModelo"
+             Title="Reportar una incidencia">
+    <ScrollView x:Name="Desplazamiento">
+        <VerticalStackLayout Padding="16,24" Spacing="12" MaximumWidthRequest="480">
+            <VerticalStackLayout>
+                <Label Text="Ciudadano" Style="{StaticResource Sobretitulo}" />
+                <Label Text="Reportar una incidencia" Style="{StaticResource Titulo}" />
+            </VerticalStackLayout>
+
+            <!-- CA05: ante peligro inmediato, SOS. -->
+            <v:Aviso Tipo="advertencia" Texto="{Binding TextoAdvertenciaSos}" />
+            <Button Text="Ir al SOS" Style="{StaticResource BotonSecundario}" Command="{Binding IrAlSos}"
+                    SemanticProperties.Hint="Vuelve a la pantalla principal, donde está el botón SOS" />
+
+            <Border Style="{StaticResource Superficie}" Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <!-- CA01 y DP07: tipo del catálogo compartido. -->
+                    <Label Text="Tipo de incidencia" Style="{StaticResource Etiqueta}" />
+                    <Border Style="{StaticResource MarcoCampo}">
+                        <Picker Title="Elige el tipo" ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}"
+                                ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" IsEnabled="{Binding Editable}"
+                                SemanticProperties.Description="Tipo de incidencia" />
+                    </Border>
+                    <v:Aviso Tipo="error" Texto="{Binding MensajeCategorias}" IsVisible="{Binding HayMensajeCategorias}" />
+                    <Button Text="Volver a cargar los tipos" Style="{StaticResource BotonSecundario}" Command="{Binding CargarCategorias}"
+                            IsVisible="{Binding HayMensajeCategorias}" />
+                    <Label Text="{Binding ErrorCategoria}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoria}" />
+
+                    <!-- DP08: descripción obligatoria, hasta 2000 caracteres. -->
+                    <Label Text="Qué ocurrió" Style="{StaticResource Etiqueta}" />
+                    <Border Style="{StaticResource MarcoCampo}">
+                        <Editor Text="{Binding Descripcion}" HeightRequest="120" MaxLength="{Binding MaximoDescripcion}" IsEnabled="{Binding Editable}"
+                                Placeholder="Describe lo ocurrido" AutoSize="Disabled" SemanticProperties.Description="Descripción del hecho" />
+                    </Border>
+                    <Label Text="{Binding ContadorDescripcion}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
+                    <Label Text="{Binding ErrorDescripcion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorDescripcion}" />
+
+                    <!-- DP08: fecha y hora aproximadas, no futuras. -->
+                    <Label Text="Cuándo ocurrió (aproximadamente)" Style="{StaticResource Etiqueta}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <DatePicker Date="{Binding Fecha}" MaximumDate="{Binding FechaMaxima}" Format="dd/MM/yyyy" IsEnabled="{Binding Editable}"
+                                        SemanticProperties.Description="Fecha del hecho" />
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource MarcoCampo}">
+                            <TimePicker Time="{Binding Hora}" Format="HH:mm" IsEnabled="{Binding Editable}" SemanticProperties.Description="Hora del hecho" />
+                        </Border>
+                    </Grid>
+                    <Label Text="{Binding ErrorFecha}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFecha}" />
+
+                    <!-- CA03, CA04 y DP10: lugar del hecho por mapa, por la posición actual (solo si se elige) o por referencia. -->
+                    <Label Text="Dónde ocurrió" Style="{StaticResource Etiqueta}" />
+                    <Label Text="{Binding TextoUbicacion}" Style="{StaticResource TextoSecundario}" />
+                    <Button Text="Marcar en el mapa" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirMapa}"
+                            SemanticProperties.Hint="Muestra un mapa para tocar el lugar del hecho" />
+                    <Button Text="Usar mi posición actual" Style="{StaticResource BotonSecundario}" Command="{Binding UsarPosicionActual}"
+                            SemanticProperties.Hint="Usa la posición del teléfono como lugar del hecho; solo se lee si eliges esta opción" />
+                    <Button Text="Escribir una referencia" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirReferencia}"
+                            SemanticProperties.Hint="Describe el lugar con palabras, sin enviar ninguna posición" />
+                    <ActivityIndicator IsRunning="{Binding ObteniendoPosicion}" IsVisible="{Binding ObteniendoPosicion}" HorizontalOptions="Center" />
+                    <v:Aviso Tipo="advertencia" Texto="{Binding MensajeUbicacion}" IsVisible="{Binding HayMensajeUbicacion}" />
+                    <Border x:Name="MarcoMapa" Style="{StaticResource MarcoCampo}" Padding="0" HeightRequest="280" IsVisible="{Binding MostrarMapa}">
+                        <WebView x:Name="Mapa" Navigating="AlNavegarMapa" SemanticProperties.Description="Mapa para marcar el lugar del hecho" />
+                    </Border>
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarReferencia}">
+                        <Label Text="{Binding EtiquetaReferencia}" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Entry Text="{Binding Referencia}" MaxLength="{Binding MaximoReferencia}" IsEnabled="{Binding Editable}"
+                                   Placeholder="Por ejemplo: esquina del mercado, frente al parque" SemanticProperties.Description="Referencia del lugar del hecho" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <Label Text="{Binding ErrorUbicacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorUbicacion}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- CA08: la confirmación solo llega con la respuesta del servidor; el reintento no duplica el reporte. -->
+            <v:Aviso Tipo="{Binding TipoAviso}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
+            <Button Text="{Binding TextoBotonEnviar}" Style="{StaticResource BotonPrincipal}" Command="{Binding Enviar}" IsVisible="{Binding Editable}" />
+            <Button Text="Reintentar el mismo reporte" Style="{StaticResource BotonPrincipal}" Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
+            <Button Text="Volver al inicio" Style="{StaticResource BotonPrincipal}" Command="{Binding IrAlSos}" IsVisible="{Binding Registrado}" />
+            <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
+
+            <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

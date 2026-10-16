@@ -1,0 +1,496 @@
+using Cad.Contratos.Reportes;
+using Cad.Contratos.Serenos;
+using Cad.Contratos.Sos;
+using Cad.Movil.Servicios;
+using Cad.Movil.VistasModelo;
+
+namespace Cad.Movil.Tests;
+
+// HU10 — Registrar un reporte de incidencia (lado de la app: S3-T01 y S3-T02). Datos y coordenadas ficticios.
+public class ReporteTests
+{
+    // 14/10/2026 18:30 en Lima (UTC-5).
+    private static readonly DateTimeOffset Ahora = new(2026, 10, 14, 23, 30, 0, TimeSpan.Zero);
+    private static readonly TimeZoneInfo Lima = TimeZoneInfo.CreateCustomTimeZone("Lima", TimeSpan.FromHours(-5), "Lima", "Lima");
+    private static readonly Guid Robo = Guid.NewGuid();
+
+    private readonly ApiFalsa api = new() { Categorias = [new(Robo, "Robo"), new(Guid.NewGuid(), "Otros")] };
+    private readonly UbicacionFalsa ubicacion = new() { Posicion = () => new UbicacionSos(-12.07, -77.04, 9.5, Ahora) };
+    private readonly SesionesFalsas sesiones = new();
+    private readonly NavegacionFalsa navegacion = new();
+    private readonly RelojFijo reloj = new(Ahora);
+
+    private RegistradorReporte Registrador() => new(api, sesiones, reloj) { EsperasEntreIntentos = [TimeSpan.Zero, TimeSpan.Zero] };
+
+    private ReporteVistaModelo VistaModelo(RegistradorReporte? registrador = null) =>
+        new(api, registrador ?? Registrador(), ubicacion, sesiones, navegacion, reloj, Lima);
+
+    private static DatosReporte Validos(UbicacionHecho? lugar = null) =>
+        new(Robo, "Robo de una bicicleta", Ahora.AddHours(-1), lugar ?? new UbicacionHecho(FuentesUbicacionHecho.Texto, null, null, null, "Esquina del mercado"));
+
+    private static ResultadoApi<RespuestaReporte> SinRespuesta() => new ResultadoApi<RespuestaReporte>.SinRespuesta("sin red");
+
+    // Un formulario completo por referencia textual.
+    private async Task<ReporteVistaModelo> FormularioCompletoAsync(ReporteVistaModelo? vm = null)
+    {
+        vm ??= VistaModelo();
+        await vm.AlAparecerAsync();
+        vm.Categoria = vm.Categorias[0];
+        vm.Descripcion = "Robo de una bicicleta";
+        await vm.ElegirReferencia.EjecutarAsync();
+        vm.Referencia = "Esquina del mercado";
+        return vm;
+    }
+
+    // ----- Servicio de envío -----
+
+    [Fact]
+    public async Task CA01_UnReporteValido_SeEnviaYSeConfirmaConLaRespuestaDelServidor()
+    {
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(Validos());
+
+        var enviado = Assert.Single(api.ReportesEnviados);
+        Assert.NotEqual(Guid.Empty, enviado.IdSolicitud);
+        Assert.Equal(Robo, enviado.CategoriaId);
+        Assert.Equal("Esquina del mercado", enviado.Ubicacion!.Referencia);
+        Assert.Equal("Recibido", Assert.IsType<EstadoReporte.Registrado>(registrador.Estado).Respuesta.Estado);
+    }
+
+    public static TheoryData<string, DatosReporte> Incompletos => new()
+    {
+        { "categoriaId", Validos() with { CategoriaId = null } },
+        { "descripcion", Validos() with { Descripcion = "   " } },
+        { "descripcion", Validos() with { Descripcion = new string('a', RegistradorReporte.MaximoDescripcion + 1) } },
+        { "ocurridoAproximadamenteEn", Validos() with { OcurridoEn = null } },
+        { "ocurridoAproximadamenteEn", Validos() with { OcurridoEn = Ahora.AddMinutes(1) } },
+        { "ubicacion", Validos() with { Ubicacion = null } },
+        { "ubicacion", Validos(new UbicacionHecho(FuentesUbicacionHecho.Texto, null, null, null, " ")) },
+        { "ubicacion", Validos(new UbicacionHecho(FuentesUbicacionHecho.Mapa, null, null, null, null)) },
+        { "ubicacion", Validos(new UbicacionHecho(FuentesUbicacionHecho.Mapa, -12, -77, null, new string('r', RegistradorReporte.MaximoReferencia + 1))) },
+    };
+
+    [Theory]
+    [MemberData(nameof(Incompletos))]
+    public async Task CA02_UnCampoObligatorioIncompleto_NoSeEnviaYSeIndicaElCampo(string campo, DatosReporte datos)
+    {
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(datos);
+
+        Assert.Empty(api.ReportesEnviados);
+        var rechazo = Assert.IsType<EstadoReporte.Rechazado>(registrador.Estado);
+        Assert.True(rechazo.Errores.ContainsKey(campo), $"Se esperaba un error en «{campo}»");
+        Assert.True(registrador.PuedeEnviar); // corrige y vuelve a enviar
+    }
+
+    [Fact]
+    public async Task CA08_SinRespuesta_LosReintentosAutomaticosUsanElMismoIdSolicitud()
+    {
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult(SinRespuesta()));
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult(SinRespuesta()));
+        api.RespuestasReporte.Enqueue(s => Task.FromResult(ApiFalsa.ReporteRegistrado(s)));
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(Validos());
+
+        Assert.Equal(3, api.ReportesEnviados.Count);
+        Assert.Single(api.ReportesEnviados.Select(s => s.IdSolicitud).Distinct());
+        Assert.IsType<EstadoReporte.Registrado>(registrador.Estado);
+    }
+
+    [Fact]
+    public async Task CA08_SinConfirmar_NoSeDaPorRegistrado_YElReintentoManualEnviaLaMismaSolicitud()
+    {
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult(SinRespuesta()));
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(Validos());
+        Assert.IsType<EstadoReporte.NoConfirmado>(registrador.Estado);
+        Assert.False(registrador.PuedeEnviar); // no se admite otro envío con datos nuevos: podría estar ya registrado
+        api.RespuestasReporte.Clear();
+        await registrador.ReintentarAsync();
+
+        Assert.IsType<EstadoReporte.Registrado>(registrador.Estado);
+        Assert.Equal(4, api.ReportesEnviados.Count);
+        Assert.Single(api.ReportesEnviados.Distinct());
+    }
+
+    [Fact]
+    public async Task CA08_UnDobleToque_NoEnviaDosReportes()
+    {
+        var respuesta = new TaskCompletionSource<ResultadoApi<RespuestaReporte>>();
+        api.RespuestasReporte.Enqueue(_ => respuesta.Task);
+        var registrador = Registrador();
+
+        var primero = registrador.EnviarAsync(Validos());
+        var segundo = registrador.EnviarAsync(Validos());
+        Assert.True(segundo.IsCompleted);
+        respuesta.SetResult(ApiFalsa.ReporteRegistrado(api.ReportesEnviados.First()));
+        await Task.WhenAll(primero, segundo).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(api.ReportesEnviados);
+    }
+
+    // En el teléfono, la sesión se lee de SecureStorage de forma asíncrona: un segundo toque llega mientras tanto.
+    private sealed class SesionesLentas(TaskCompletionSource liberar) : IAlmacenSesion
+    {
+        public Task GuardarAsync(SesionApp sesion) => Task.CompletedTask;
+        public async Task<SesionApp?> LeerAsync()
+        {
+            await liberar.Task;
+            return new SesionApp("token-ficticio", "Ciudadano", Ahora.AddHours(8));
+        }
+        public void Cerrar() { }
+    }
+
+    [Fact]
+    public async Task CA08_UnDobleToqueMientrasSeLeeLaSesion_NoEnviaDosReportes()
+    {
+        var liberar = new TaskCompletionSource();
+        var registrador = new RegistradorReporte(api, new SesionesLentas(liberar), reloj) { EsperasEntreIntentos = [] };
+
+        var primero = registrador.EnviarAsync(Validos());
+        var segundo = registrador.EnviarAsync(Validos());
+        liberar.SetResult();
+        await Task.WhenAll(primero, segundo).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(api.ReportesEnviados);
+    }
+
+    [Fact]
+    public async Task CA08_UnaVezRegistrado_NoSePuedeEnviarOtraVez()
+    {
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(Validos());
+        await registrador.EnviarAsync(Validos());
+
+        Assert.Single(api.ReportesEnviados);
+    }
+
+    [Fact]
+    public async Task CA02_UnRechazoDelServidor_NoSeReintentaYTraeElMotivoPorCampo()
+    {
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult<ResultadoApi<RespuestaReporte>>(new ResultadoApi<RespuestaReporte>.Rechazado(400, "El reporte no es válido.",
+            new Dictionary<string, string[]> { ["ocurridoAproximadamenteEn"] = ["La fecha y hora del hecho no pueden ser futuras."] })));
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(Validos());
+
+        Assert.Single(api.ReportesEnviados);
+        Assert.Contains("ocurridoAproximadamenteEn", Assert.IsType<EstadoReporte.Rechazado>(registrador.Estado).Errores.Keys);
+        Assert.True(registrador.PuedeEnviar);
+    }
+
+    [Fact]
+    public async Task SesionVencida_NoEnviaElReporte()
+    {
+        sesiones.Sesion = new("token-ficticio", "Ciudadano", Ahora.AddMinutes(-1));
+        var registrador = Registrador();
+
+        await registrador.EnviarAsync(Validos());
+
+        Assert.Empty(api.ReportesEnviados);
+        Assert.Equal(401, Assert.IsType<EstadoReporte.Rechazado>(registrador.Estado).Estado);
+    }
+
+    // ----- Formulario -----
+
+    [Fact]
+    public void CA05_ElFormulario_AdvierteQueAntePeligroInmediatoSeUsaSos()
+    {
+        var vm = VistaModelo();
+
+        Assert.Contains("peligro inmediato", vm.TextoAdvertenciaSos);
+        Assert.Contains("SOS", vm.TextoAdvertenciaSos);
+    }
+
+    [Fact]
+    public async Task CA05_IrAlSos_VuelveALaPantallaDelSos()
+    {
+        var vm = VistaModelo();
+
+        await vm.IrAlSos.EjecutarAsync();
+
+        Assert.Equal([Rutas.Ciudadano], navegacion.Rutas);
+    }
+
+    [Fact]
+    public async Task CA01_DP07_ElFormulario_CargaElCatalogoDeTipos()
+    {
+        var vm = VistaModelo();
+
+        await vm.AlAparecerAsync();
+
+        Assert.Equal(["Robo", "Otros"], vm.Categorias.Select(c => c.Nombre));
+        Assert.Equal(1, api.ConsultasCategoriasReporte);
+    }
+
+    [Fact]
+    public async Task CA01_SinRespuestaAlCargarLosTipos_SeAvisaYSePuedeReintentar()
+    {
+        api.RespuestaCategoriasReporte = () => new ResultadoApi<List<CategoriaCatalogo>>.SinRespuesta("sin red");
+        var vm = VistaModelo();
+
+        await vm.AlAparecerAsync();
+        Assert.True(vm.HayMensajeCategorias);
+        api.RespuestaCategoriasReporte = null;
+        await vm.CargarCategorias.EjecutarAsync();
+
+        Assert.False(vm.HayMensajeCategorias);
+        Assert.Equal(2, vm.Categorias.Count);
+    }
+
+    [Fact]
+    public void DP08_LaFechaYHoraPorDefecto_SonLasActualesEnLaHoraLocal()
+    {
+        var vm = VistaModelo();
+
+        Assert.Equal(new DateTime(2026, 10, 14), vm.Fecha);
+        Assert.Equal(new TimeSpan(18, 30, 0), vm.Hora);
+        Assert.Equal(new DateTimeOffset(2026, 10, 14, 18, 30, 0, TimeSpan.FromHours(-5)), vm.Datos().OcurridoEn);
+    }
+
+    [Fact]
+    public async Task CA03_PorReferencia_SeEnviaSinCoordenadas()
+    {
+        var vm = await FormularioCompletoAsync();
+
+        await vm.Enviar.EjecutarAsync();
+
+        var lugar = Assert.Single(api.ReportesEnviados).Ubicacion!;
+        Assert.Equal(FuentesUbicacionHecho.Texto, lugar.Fuente);
+        Assert.Null(lugar.Latitud);
+        Assert.Null(lugar.Longitud);
+        Assert.Equal("Esquina del mercado", lugar.Referencia);
+        Assert.True(vm.Registrado);
+        Assert.False(vm.Editable);
+    }
+
+    [Fact]
+    public async Task CA03_PorMapa_SeEnviaElPuntoTocado()
+    {
+        var vm = await FormularioCompletoAsync();
+        await vm.ElegirMapa.EjecutarAsync();
+        vm.ElegirPuntoEnMapa(-12.1, -77.02);
+
+        await vm.Enviar.EjecutarAsync();
+
+        var lugar = Assert.Single(api.ReportesEnviados).Ubicacion!;
+        Assert.Equal(FuentesUbicacionHecho.Mapa, lugar.Fuente);
+        Assert.Equal(-12.1, lugar.Latitud);
+        Assert.Equal(-77.02, lugar.Longitud);
+        Assert.Null(lugar.PrecisionMetros);
+    }
+
+    [Fact]
+    public async Task CA03_ElMapaSinPunto_NoSeEnvia()
+    {
+        var vm = await FormularioCompletoAsync();
+        await vm.ElegirMapa.EjecutarAsync();
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Empty(api.ReportesEnviados);
+        Assert.True(vm.HayErrorUbicacion);
+    }
+
+    [Fact]
+    public async Task CA04_SinElegirLaPosicionActual_NuncaSeLeeLaPosicionDelDispositivo()
+    {
+        var vm = await FormularioCompletoAsync();
+        await vm.ElegirMapa.EjecutarAsync();
+        vm.ElegirPuntoEnMapa(-12.1, -77.02);
+        await vm.ElegirReferencia.EjecutarAsync();
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Empty(ubicacion.Lecturas);
+        Assert.Equal(0, ubicacion.Solicitudes);
+        Assert.Null(Assert.Single(api.ReportesEnviados).Ubicacion!.Latitud);
+    }
+
+    [Fact]
+    public async Task CA04_AlElegirLaPosicionActual_SeUsaComoUbicacionDelHecho()
+    {
+        var vm = await FormularioCompletoAsync();
+        (double, double)? punto = null;
+        vm.PuntoCambiado += (lat, lon) => punto = (lat, lon);
+
+        await vm.UsarPosicionActual.EjecutarAsync();
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Single(ubicacion.Lecturas);
+        Assert.Equal((-12.07, -77.04), punto);
+        var lugar = Assert.Single(api.ReportesEnviados).Ubicacion!;
+        Assert.Equal(FuentesUbicacionHecho.PosicionActual, lugar.Fuente);
+        Assert.Equal(-12.07, lugar.Latitud);
+        Assert.Equal(9.5, lugar.PrecisionMetros);
+    }
+
+    [Fact]
+    public async Task CA04_SiMueveElPuntoTrasUsarSuPosicion_SeEnviaComoPuntoDelMapa()
+    {
+        var vm = await FormularioCompletoAsync();
+        await vm.UsarPosicionActual.EjecutarAsync();
+
+        vm.ElegirPuntoEnMapa(-12.08, -77.05);
+        await vm.Enviar.EjecutarAsync();
+
+        var lugar = Assert.Single(api.ReportesEnviados).Ubicacion!;
+        Assert.Equal(FuentesUbicacionHecho.Mapa, lugar.Fuente);
+        Assert.Equal(-12.08, lugar.Latitud);
+        Assert.Null(lugar.PrecisionMetros);
+    }
+
+    [Fact]
+    public async Task CA04_SiPasaAReferenciaTrasUsarSuPosicion_LaPosicionNoSeEnvia()
+    {
+        var vm = await FormularioCompletoAsync();
+        await vm.UsarPosicionActual.EjecutarAsync();
+
+        await vm.ElegirReferencia.EjecutarAsync();
+        vm.Referencia = "Frente al parque";
+        await vm.Enviar.EjecutarAsync();
+
+        var lugar = Assert.Single(api.ReportesEnviados).Ubicacion!;
+        Assert.Equal(FuentesUbicacionHecho.Texto, lugar.Fuente);
+        Assert.Null(lugar.Latitud);
+        Assert.Null(lugar.PrecisionMetros);
+    }
+
+    [Fact]
+    public async Task CA04_SiPasaAlMapaTrasUsarSuPosicion_LaPosicionSeDescartaHastaQueToqueElMapa()
+    {
+        var vm = await FormularioCompletoAsync();
+        await vm.UsarPosicionActual.EjecutarAsync();
+
+        await vm.ElegirMapa.EjecutarAsync();
+
+        Assert.Null(vm.Latitud);
+        Assert.Equal(FuentesUbicacionHecho.Mapa, vm.Datos().Ubicacion!.Fuente);
+    }
+
+    [Theory]
+    [InlineData(EstadoPermisoUbicacion.Denegado)]
+    [InlineData(EstadoPermisoUbicacion.Restringido)]
+    public async Task CA04_SinPermiso_NoSeLeeLaPosicionYSeOfrecenLasOtrasFormas(EstadoPermisoUbicacion permiso)
+    {
+        ubicacion.Permiso = permiso;
+        var vm = await FormularioCompletoAsync();
+
+        await vm.UsarPosicionActual.EjecutarAsync();
+
+        Assert.Empty(ubicacion.Lecturas);
+        Assert.True(vm.HayMensajeUbicacion);
+        Assert.Equal(ModoUbicacionHecho.Texto, vm.Modo); // se mantiene lo que había elegido
+    }
+
+    [Fact]
+    public async Task CA04_ConElPermisoSinDecidir_SePideAlElegirLaPosicion()
+    {
+        ubicacion.Permiso = EstadoPermisoUbicacion.Desconocido;
+        var vm = await FormularioCompletoAsync();
+
+        await vm.UsarPosicionActual.EjecutarAsync();
+
+        Assert.Equal(1, ubicacion.Solicitudes);
+        Assert.Equal(ModoUbicacionHecho.PosicionActual, vm.Modo);
+    }
+
+    [Fact]
+    public async Task CA04_SiNoSeObtieneLaPosicion_SeAvisaYNoSeUsaNinguna()
+    {
+        ubicacion.Posicion = () => null;
+        var vm = await FormularioCompletoAsync();
+
+        await vm.UsarPosicionActual.EjecutarAsync();
+
+        Assert.True(vm.HayMensajeUbicacion);
+        Assert.Null(vm.Latitud);
+        Assert.Equal(ModoUbicacionHecho.Texto, vm.Modo);
+    }
+
+    [Fact]
+    public async Task CA02_UnaFechaFutura_SeMarcaYNoSeEnvia()
+    {
+        var vm = await FormularioCompletoAsync();
+        vm.Hora = new TimeSpan(19, 0, 0); // 30 minutos después de «ahora»
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Empty(api.ReportesEnviados);
+        Assert.True(vm.HayErrorFecha);
+        Assert.Contains("futuras", vm.ErrorFecha);
+    }
+
+    [Fact]
+    public async Task CA02_SinTipoNiDescripcion_SeMarcanAmbosCampos()
+    {
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+        await vm.ElegirReferencia.EjecutarAsync();
+        vm.Referencia = "Esquina";
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Empty(api.ReportesEnviados);
+        Assert.True(vm.HayErrorCategoria);
+        Assert.True(vm.HayErrorDescripcion);
+        Assert.False(vm.HayErrorUbicacion);
+        Assert.True(vm.Editable);
+    }
+
+    [Fact]
+    public async Task CA02_LosErroresDelServidor_SeMuestranEnSuCampo()
+    {
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult<ResultadoApi<RespuestaReporte>>(new ResultadoApi<RespuestaReporte>.Rechazado(400, "El reporte no es válido.",
+            new Dictionary<string, string[]> { ["ubicacion.referencia"] = ["La referencia admite hasta 500 caracteres."] })));
+        var vm = await FormularioCompletoAsync();
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Equal("La referencia admite hasta 500 caracteres.", vm.ErrorUbicacion);
+    }
+
+    [Fact]
+    public async Task CA08_SinRespuesta_SeOfreceReintentarElMismoReporteYNoEditarlo()
+    {
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult(SinRespuesta()));
+        var vm = await FormularioCompletoAsync();
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.True(vm.PuedeReintentar);
+        Assert.False(vm.Editable);
+        Assert.False(vm.Registrado);
+        Assert.Contains("no se duplicará", vm.TextoEstado);
+    }
+
+    [Fact]
+    public async Task CA01_AlRegistrarse_SeMuestraLaConfirmacionConLaHoraLocal()
+    {
+        api.RespuestasReporte.Enqueue(_ => Task.FromResult<ResultadoApi<RespuestaReporte>>(
+            new ResultadoApi<RespuestaReporte>.Correcto(new RespuestaReporte(Guid.NewGuid(), "Recibido", Ahora))));
+        var vm = await FormularioCompletoAsync();
+
+        await vm.Enviar.EjecutarAsync();
+
+        Assert.Equal("exito", vm.TipoAviso);
+        Assert.Contains("Reporte registrado a las 18:30 (estado: Recibido)", vm.TextoEstado);
+    }
+
+    [Fact]
+    public async Task CA01_DesdeElInicio_SeAbreElFormularioDeReporte()
+    {
+        var inicio = new InicioCiudadanoVistaModelo(new EmisorSos(api, ubicacion, sesiones, reloj), new PreparacionUbicacion(ubicacion),
+            sesiones, navegacion, () => { });
+
+        await inicio.Reportar.EjecutarAsync();
+
+        Assert.Equal([Rutas.Reporte], navegacion.Rutas);
+        Assert.Empty(ubicacion.Lecturas); // abrir el formulario no lee la posición
+    }
+}

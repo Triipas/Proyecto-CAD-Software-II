@@ -1,4 +1,5 @@
 using Cad.Contratos.Cuentas;
+using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 
@@ -24,6 +25,10 @@ public interface IApiCad
     Task<ResultadoApi<RespuestaRegistroCiudadano>> RegistrarAsync(SolicitudRegistroCiudadano solicitud, CancellationToken ct);
     Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct);
     Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct);
+
+    // HU10 — reporte de incidencia y catálogo de tipos (DP07).
+    Task<ResultadoApi<RespuestaReporte>> RegistrarReporteAsync(string token, SolicitudRegistroReporte solicitud, CancellationToken ct);
+    Task<ResultadoApi<List<CategoriaCatalogo>>> ConsultarCategoriasReporteAsync(string token, CancellationToken ct);
 
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);

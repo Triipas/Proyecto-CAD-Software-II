@@ -32,6 +32,7 @@ public static class MauiProgram
         // Lógica de la app.
         builder.Services.AddSingleton<EmisorSos>();
         builder.Services.AddSingleton<PreparacionUbicacion>();
+        builder.Services.AddTransient<RegistradorReporte>(); // un envío pendiente por formulario
 
         // Pantallas y modelos de vista.
         builder.Services.AddSingleton<AppShell>();
@@ -40,6 +41,9 @@ public static class MauiProgram
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
+        builder.Services.AddTransient(s => new ReporteVistaModelo(
+            s.GetRequiredService<IApiCad>(), s.GetRequiredService<RegistradorReporte>(), s.GetRequiredService<IServicioUbicacion>(),
+            s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
         builder.Services.AddSingleton<ServicioTurnoSereno>();
         builder.Services.AddSingleton<ICanalSereno, CanalSerenoSignalR>();
 #if ANDROID
@@ -56,6 +60,7 @@ public static class MauiProgram
         builder.Services.AddTransient<IngresoPagina>();
         builder.Services.AddTransient<RegistroPagina>();
         builder.Services.AddTransient<InicioCiudadanoPagina>();
+        builder.Services.AddTransient<ReportePagina>();
         builder.Services.AddTransient<InicioSerenoPagina>();
 
         builder.Services.AddSingleton<EstadoAppMaui>();

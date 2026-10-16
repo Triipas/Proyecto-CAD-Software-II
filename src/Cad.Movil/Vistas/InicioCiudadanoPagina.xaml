@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir) y HU07/HU08 (SOS con una única activación). -->
+<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir), HU07/HU08 (SOS con una única activación) y acceso al reporte (HU10). -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -58,6 +58,16 @@
                             Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
                     <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}"
                             Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- HU10: un reporte es para lo que no es urgente; la central lo revisa después. -->
+            <Border Style="{StaticResource Superficie}" Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="¿No es urgente?" FontAttributes="Bold" />
+                    <Label Text="Reporta una incidencia con su tipo, descripción, lugar y hora. La central la revisará." Style="{StaticResource TextoSecundario}" />
+                    <Button Text="Reportar una incidencia" Style="{StaticResource BotonSecundario}" Command="{Binding Reportar}"
+                            SemanticProperties.Hint="Abre el formulario de reporte; no es una alerta urgente" />
                 </VerticalStackLayout>
             </Border>
 

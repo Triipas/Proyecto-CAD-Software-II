@@ -86,7 +86,7 @@ public class SosTests(FabricaCad fabrica)
 
         await app.PostAsJsonAsync(Ruta, new SolicitudEmisionSos(Guid.NewGuid(), Activacion, null));
 
-        // Un único caso, de origen SOS. (Reportes y acompañamiento todavía no existen en el sistema.)
+        // Un único caso, de origen SOS (ni un reporte ni una sesión de acompañamiento).
         var caso = Assert.Single(await CasosDeAsync(ciudadano.Id));
         Assert.Equal(OrigenCaso.Sos, caso.Origen);
     }

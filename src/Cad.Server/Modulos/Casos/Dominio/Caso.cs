@@ -1,11 +1,12 @@
 namespace Cad.Server.Modulos.Casos.Dominio;
 
-// Caso común a SOS y reportes (Plan de Arquitectura, 9.1). En el Sprint 1 solo existe el origen SOS.
-public enum OrigenCaso { Sos }
+// Caso común a SOS y reportes (Plan de Arquitectura, 9.1). El Sprint 3 añade el origen «Reporte» (HU10).
+public enum OrigenCaso { Sos, Reporte }
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
-// (HU22), «En atención» (HU23) y «Cerrada» (HU24).
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada }
+// (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte,
+// y «En revisión» (HU14).
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision }
 
 public static class EstadosCaso
 {
@@ -17,6 +18,8 @@ public static class EstadosCaso
         EstadoCaso.EnCamino => "En camino",
         EstadoCaso.EnAtencion => "En atención",
         EstadoCaso.Cerrada => "Cerrada",
+        EstadoCaso.Recibido => "Recibido",
+        EstadoCaso.EnRevision => "En revisión",
         _ => estado.ToString(),
     };
 }
@@ -99,7 +102,41 @@ public sealed class Caso
         ClasificadoEn = ahora;
     }
 
+    // HU14-CA01/CA02: solo un reporte «Recibido» pasa a «En revisión».
+    public void IniciarRevision()
+    {
+        if (Origen != OrigenCaso.Reporte || Estado != EstadoCaso.Recibido)
+            throw new InvalidOperationException("Solo un reporte recibido puede pasar a «En revisión».");
+        Estado = EstadoCaso.EnRevision;
+    }
+
+    // HU14-CA03/CA04: la categoría vigente se corrige solo durante la revisión, con su responsable y momento.
+    // La categoría original del ciudadano queda en el detalle del reporte (HU10-CA07).
+    public void CorregirCategoria(Guid categoriaId, Guid operadorId, DateTimeOffset ahora)
+    {
+        if (Origen != OrigenCaso.Reporte || Estado != EstadoCaso.EnRevision)
+            throw new InvalidOperationException("Solo se corrige la categoría de un reporte en revisión.");
+        CategoriaId = categoriaId;
+        ClasificadoPor = operadorId;
+        ClasificadoEn = ahora;
+    }
+
     private Caso() { } // EF Core
+
+    // HU10-CA01: un reporte nace «Recibido». La categoría que elige el ciudadano es la del caso desde el inicio (el
+    // ciudadano queda como responsable de esa primera clasificación); HU14 podrá corregirla conservando la original.
+    public static Caso RegistrarReporte(Guid ciudadanoId, Guid idSolicitud, Guid categoriaId, DateTimeOffset ahora) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        Origen = OrigenCaso.Reporte,
+        Estado = EstadoCaso.Recibido,
+        CiudadanoId = ciudadanoId,
+        IdSolicitud = idSolicitud,
+        RegistradoEn = ahora,
+        CategoriaId = categoriaId,
+        ClasificadoPor = ciudadanoId,
+        ClasificadoEn = ahora,
+    };
 
     public static Caso EmitirSos(Guid ciudadanoId, Guid idSolicitud, Posicion? ubicacionActual, DateTimeOffset ahora)
     {
