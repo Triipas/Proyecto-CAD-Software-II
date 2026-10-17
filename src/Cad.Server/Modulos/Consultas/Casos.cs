@@ -31,7 +31,9 @@ public sealed record CasoEncontrado(
     string? Sereno,
     // SOS: ubicación del dispositivo; reporte: punto del hecho. Sin coordenadas inventadas (CA05).
     double? Latitud,
-    double? Longitud)
+    double? Longitud,
+    // HU28 (DP18): tiempos del caso como columnas de la búsqueda.
+    TiemposCaso Tiempos)
 {
     public const string TipoPorDeterminar = "Tipo por determinar";
     public bool ConUbicacion => Latitud is not null && Longitud is not null;
@@ -93,6 +95,10 @@ public sealed class ConsultarCasos(CadDbContext db)
                                Sereno = ultimoSereno,
                                Latitud = caso.Origen == OrigenCaso.Sos ? caso.Latitud : (detalle == null ? null : detalle.LatitudHecho),
                                Longitud = caso.Origen == OrigenCaso.Sos ? caso.Longitud : (detalle == null ? null : detalle.LongitudHecho),
+                               DecididoEn = db.DecisionesReporte.Where(d => d.CasoId == caso.Id).Select(d => (DateTimeOffset?)d.DecididaEn).FirstOrDefault(),
+                               Decision = db.DecisionesReporte.Where(d => d.CasoId == caso.Id).Select(d => (TipoDecisionReporte?)d.Tipo).FirstOrDefault(),
+                               AtencionIniciadaEn = db.EventosCaso.Where(e => e.CasoId == caso.Id && e.Tipo == TipoEventoCaso.AtencionIniciada)
+                                   .OrderBy(e => e.OcurridoEn).Select(e => (DateTimeOffset?)e.OcurridoEn).FirstOrDefault(),
                            })
                           .Skip((pagina - 1) * TamanoPagina)
                           .Take(TamanoPagina)
@@ -100,7 +106,7 @@ public sealed class ConsultarCasos(CadDbContext db)
 
         return new PaginaCasos(
             filas.Select(f => new CasoEncontrado(f.Id, f.Origen, EstadosCaso.Texto(f.Estado), f.RegistradoEn, f.Ciudadano, f.Tipo, f.Sereno,
-                f.Latitud, f.Longitud)).ToList(),
+                f.Latitud, f.Longitud, new TiemposCaso(f.Origen, f.RegistradoEn, f.DecididoEn, f.Decision, f.AtencionIniciadaEn))).ToList(),
             total, pagina, TamanoPagina);
     }
 

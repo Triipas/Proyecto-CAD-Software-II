@@ -16,7 +16,7 @@ namespace Cad.Server.Panel.Pages.Central;
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
     ClasificarCaso clasificar, AvanzarCaso avanzar, CerrarCaso cerrar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
-    IConfiguration configuracion) : PageModel
+    ConsultarTiemposCaso consultarTiempos, IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioIntento Formulario { get; set; } = new();
@@ -31,6 +31,9 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public FormularioCierre Cierre { get; set; } = new();
 
     public DetalleSos Sos { get; private set; } = null!;
+
+    // HU28: tiempo de respuesta del SOS.
+    public TiemposCaso? Tiempos { get; private set; }
 
     // HU20: serenos que pueden recibir el caso (operativos y sin asignación vigente).
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
@@ -216,6 +219,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         Sos = sos;
         SerenosDisponibles = (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList();
         Categorias = await consultarCategorias.EjecutarAsync(ct);
+        Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
         return true;
     }
 

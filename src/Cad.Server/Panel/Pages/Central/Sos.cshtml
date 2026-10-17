@@ -310,6 +310,11 @@
                 <p class="texto-secundario">El caso se podrá cerrar cuando esté «En atención».</p>
             }
         </section>
+
+        @if (Model.Tiempos is { } tiempos)
+        {
+            <partial name="_TiemposCaso" model="tiempos" />
+        }
     </div>
 
     <div class="pila">
