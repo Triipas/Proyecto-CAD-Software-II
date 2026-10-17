@@ -3,6 +3,26 @@
 @{
     var umbral = (int)Model.Umbral.TotalSeconds;
 }
+@* HU42-CA04: los avisos técnicos y de verificación, en su propia lista: no son SOS ni generan despacho. *@
+@if (Model.Avisos is { Count: > 0 } avisos)
+{
+    <section class="avisos-acompanamiento" aria-label="Avisos del acompañamiento sin resolver" data-avisos="@avisos.Count">
+        <h3 class="central__titulo">Avisos sin resolver · @avisos.Count</h3>
+        <ul class="lista-acompanamientos">
+            @foreach (var aviso in avisos)
+            {
+                <li class="aviso-acompanamiento" data-aviso="@aviso.Id" data-regla="@aviso.Regla" data-estado-aviso="@aviso.Estado">
+                    <p class="acompanamiento__cabecera">
+                        <span class="etiqueta-acompanamiento">@aviso.TextoTipo</span>
+                        <strong>@aviso.TextoRegla</strong>
+                        <span class="texto-secundario">· @Formato.Hora(aviso.GeneradoEn, Model.ZonaHoraria) · @aviso.TextoEstado@(aviso.Responsable is { } responsable ? $" ({responsable})" : "")</span>
+                    </p>
+                    <p>@aviso.Ciudadano · <a href="/panel/avisos/@aviso.Id">Revisar el aviso<span class="visualmente-oculto"> de @aviso.Ciudadano</span></a></p>
+                </li>
+            }
+        </ul>
+    </section>
+}
 @if (Model.Sesiones.Count == 0)
 {
     <p class="texto-secundario" data-sin-acompanamientos>No hay acompañamientos activos.</p>

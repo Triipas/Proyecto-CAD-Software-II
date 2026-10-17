@@ -10,7 +10,7 @@ namespace Cad.Server.Panel.Pages.Acompanamientos;
 // HU38 — Consultar los acompañamientos activos y sus posiciones (S4-T09, S4-T10). Solo el operador autorizado (DP04), también
 // ante una solicitud directa (CA05). Página propia, separada de los SOS y los reportes (CA04).
 [Authorize(Policy = Politicas.OperadorAutorizado)]
-public class IndexModel(ConsultarAcompanamientos consultar, IConfiguration configuracion) : PageModel
+public class IndexModel(ConsultarAcompanamientos consultar, ConsultarAvisos consultarAvisos, IConfiguration configuracion) : PageModel
 {
     public ListaAcompanamientos Lista { get; private set; } = null!;
 
@@ -25,12 +25,14 @@ public class IndexModel(ConsultarAcompanamientos consultar, IConfiguration confi
     public async Task<IActionResult> OnGetListaAsync(CancellationToken ct) => Partial("_ListaAcompanamientos", await ListaAsync(ct));
 
     private async Task<ListaAcompanamientos> ListaAsync(CancellationToken ct) =>
-        new(await consultar.ActivasAsync(ct), Formato.Zona(configuracion), consultar.Umbral);
+        new(await consultar.ActivasAsync(ct), Formato.Zona(configuracion), consultar.Umbral, await consultarAvisos.AbiertosAsync(ct));
 
     private string Numero(string clave, double porDefecto) => configuracion.GetValue(clave, porDefecto).ToString(CultureInfo.InvariantCulture);
 }
 
-public sealed record ListaAcompanamientos(IReadOnlyList<AcompanamientoActivo> Sesiones, TimeZoneInfo ZonaHoraria, TimeSpan Umbral);
+// HU42/HU43: los avisos sin resolver se muestran con la lista, separados de los SOS (HU42-CA04).
+public sealed record ListaAcompanamientos(IReadOnlyList<AcompanamientoActivo> Sesiones, TimeZoneInfo ZonaHoraria, TimeSpan Umbral,
+    IReadOnlyList<AvisoVista>? Avisos = null);
 
 public static class Formato
 {

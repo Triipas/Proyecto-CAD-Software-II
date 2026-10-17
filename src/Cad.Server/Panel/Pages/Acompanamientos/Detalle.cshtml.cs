@@ -11,8 +11,11 @@ namespace Cad.Server.Panel.Pages.Acompanamientos;
 // HU39-B (CA05): la conservación excepcional del recorrido se registra desde esta misma página.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanamiento.Aplicacion.ConservarRecorridos conservar,
-    Modulos.Acompanamiento.Aplicacion.ConfirmarBienestar confirmar, IConfiguration configuracion) : PageModel
+    Modulos.Acompanamiento.Aplicacion.ConfirmarBienestar confirmar, ConsultarAvisos consultarAvisos, IConfiguration configuracion) : PageModel
 {
+    // HU42: avisos de esta sesión.
+    public IReadOnlyList<AvisoVista> Avisos { get; private set; } = [];
+
     // HU40: identificador del formulario de solicitud; un reenvío no crea otra solicitud.
     [BindProperty]
     public Guid IdSolicitudConfirmacion { get; set; }
@@ -40,6 +43,7 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
         if (await consultar.DetalleAsync(id, ct) is not { } sesion)
             return NotFound();
         Sesion = sesion;
+        Avisos = await consultarAvisos.DeSesionAsync(id, ct);
         IdSolicitudConfirmacion = Guid.NewGuid();
         return Page();
     }

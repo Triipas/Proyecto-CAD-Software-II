@@ -1,0 +1,174 @@
+@page "/panel/avisos/{id:guid}"
+@model Cad.Server.Panel.Pages.Avisos.DetalleModel
+@using Cad.Server.Panel.Pages.Acompanamientos
+@using Cad.Server.Modulos.Acompanamiento.Dominio
+@{
+    ViewData["Title"] = "Aviso del acompañamiento";
+    var d = Model.Aviso;
+    var a = d.Aviso;
+    var zona = Model.ZonaHoraria;
+    var origen = a.Regla == ReglaAviso.UbicacionDesactualizada
+        ? (a.SinPosiciones
+            ? $"Más de {Model.UmbralSegundos} s sin ninguna posición desde el inicio de la sesión ({Formato.Hora(a.ReferenciaEn, zona, "dd/MM/yyyy HH:mm:ss")})."
+            : $"Más de {Model.UmbralSegundos} s sin una posición nueva. Última posición obtenida a las {Formato.Hora(a.ReferenciaEn, zona, "dd/MM/yyyy HH:mm:ss")}.")
+        : $"Confirmación de bienestar mostrada al ciudadano a las {Formato.Hora(a.ReferenciaEn, zona, "dd/MM/yyyy HH:mm:ss")}, sin respuesta durante {Model.PlazoConfirmacionSegundos / 60} minutos.";
+}
+<p><a class="enlace-volver" href="/panel/acompanamientos">← Acompañamientos</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador autorizado · @a.TextoTipo · no es un SOS</p>
+        <h1 class="titulo">@a.TextoRegla</h1>
+        <p class="texto-secundario" data-estado-aviso="@a.Estado">@a.TextoEstado@(d.Responsable is { } r ? $" · responsable: {r}" : "")</p>
+    </div>
+</div>
+
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <div><p class="aviso__titulo">@Model.Mensaje</p></div>
+    </div>
+}
+@if (Model.Error is not null)
+{
+    <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar data-error>
+        <partial name="_Icono" model="@("error")" />
+        <p class="aviso__texto">@Model.Error</p>
+    </div>
+}
+
+<div class="central">
+    <div class="pila">
+        @* HU42-CA01/CA02: regla, fecha, hora y datos de origen. *@
+        <section class="superficie" aria-labelledby="titulo-origen" data-datos-aviso>
+            <h2 id="titulo-origen" class="central__titulo">Datos del aviso</h2>
+            <dl class="datos">
+                <div><dt>Regla</dt><dd>@a.TextoRegla</dd></div>
+                <div><dt>Generado</dt><dd>@Formato.Hora(a.GeneradoEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+                <div><dt>Datos de origen</dt><dd data-origen-aviso>@origen</dd></div>
+                <div><dt>Ciudadano</dt><dd>@a.Ciudadano</dd></div>
+                <div><dt>Sesión</dt><dd><a href="/panel/acompanamientos/@a.SesionId">Ver el acompañamiento</a> (@(d.SesionActiva ? "activo" : "terminado"))</dd></div>
+                @if (d.RevisionIniciadaEn is { } revision)
+                {
+                    <div><dt>En revisión desde</dt><dd>@Formato.Hora(revision, zona, "dd/MM/yyyy HH:mm:ss") · @d.Responsable</dd></div>
+                }
+                @if (d.ResueltoEn is { } resuelto)
+                {
+                    <div><dt>Resuelto</dt><dd>@Formato.Hora(resuelto, zona, "dd/MM/yyyy HH:mm:ss") · @d.ResueltoPor</dd></div>
+                }
+            </dl>
+            <p class="texto-secundario">Un aviso no genera un SOS ni un despacho. Si hace falta atender al ciudadano, vincula el aviso con un caso o crea un caso urgente y asígnalo desde la central.</p>
+            @if (a.Estado == EstadoAviso.Generado)
+            {
+                <form method="post" asp-page-handler="Revisar" data-formulario>
+                    <div class="acciones"><button type="submit" class="boton boton--principal" data-texto-carga="Revisando…">Revisar el aviso</button></div>
+                </form>
+            }
+            else if (a.Estado == EstadoAviso.EnRevision)
+            {
+                <form method="post" asp-page-handler="Resolver" data-formulario>
+                    <div class="acciones"><button type="submit" class="boton boton--secundario" data-texto-carga="Resolviendo…">Marcar como resuelto</button></div>
+                </form>
+            }
+        </section>
+
+        @* HU43-CA04/CA05 — vínculo con un caso existente o creación de un caso urgente (DP19). *@
+        <section class="superficie" aria-labelledby="titulo-caso" data-caso-aviso>
+            <h2 id="titulo-caso" class="central__titulo">Caso</h2>
+            @if (a.CasoId is { } caso)
+            {
+                <dl class="datos" data-caso-vinculado="@caso">
+                    <div><dt>@(a.CasoCreado ? "Caso urgente creado" : "Vinculado con el caso")</dt><dd><a href="/panel/casos/@caso/historial">@caso</a> @(d.EstadoCaso is { } estado ? $"· {estado}" : "")</dd></div>
+                    <div><dt>Por</dt><dd>@d.VinculadoPor · @(d.VinculadoEn is { } v ? Formato.Hora(v, zona, "dd/MM/yyyy HH:mm:ss") : "")</dd></div>
+                    @if (d.JustificacionCaso is { } justificacion)
+                    {
+                        <div><dt>Justificación</dt><dd>@justificacion</dd></div>
+                    }
+                </dl>
+                <p class="texto-secundario">La asignación a un sereno se hace desde la central, como en cualquier caso pendiente (HU20).</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Vincular" class="formulario" data-formulario novalidate>
+                    <partial name="_Campo" model="@(new Cad.Server.Panel.Pages.CampoFormulario("CasoId", "CasoId", "Vincular con un caso existente", Valor: Model.CasoId?.ToString(), Error: Model.ErrorDe("casoId"), Ayuda: "Identificador del SOS o reporte (lo encuentras en «Casos»).", Autocompletar: "off"))" />
+                    <div class="acciones"><button type="submit" class="boton boton--secundario" data-texto-carga="Vinculando…">Vincular</button></div>
+                </form>
+                <form method="post" asp-page-handler="CrearCaso" class="formulario" data-formulario novalidate>
+                    <input type="hidden" name="IdSolicitud" value="@Model.IdSolicitud" />
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="Justificacion">Crear un caso urgente</label>
+                        <textarea class="campo__control campo__control--texto" id="Justificacion" name="Justificacion" rows="3" required
+                                  maxlength="@AvisoAcompanamiento.MaximoJustificacion" aria-describedby="Justificacion-ayuda @(Model.ErrorDe("justificacion") is null ? "" : "Justificacion-error")"
+                                  aria-invalid="@(Model.ErrorDe("justificacion") is null ? null : "true")">@Model.Justificacion</textarea>
+                        <p id="Justificacion-ayuda" class="campo__ayuda">Obligatoria. El caso queda «Pendiente» en la central, con origen «Acompañamiento», el ciudadano de la sesión y su última posición conocida.</p>
+                        @if (Model.ErrorDe("justificacion") is { } error)
+                        {
+                            <p id="Justificacion-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                        }
+                    </div>
+                    <div class="acciones"><button type="submit" class="boton boton--peligro" data-texto-carga="Creando…">Crear caso urgente</button></div>
+                </form>
+            }
+        </section>
+    </div>
+
+    @* HU43-CA02 — contactos, acciones y resultados con responsable, fecha y hora. *@
+    <section class="superficie" aria-labelledby="titulo-actuaciones" data-actuaciones>
+        <h2 id="titulo-actuaciones" class="central__titulo">Actuaciones · @d.Actuaciones.Count</h2>
+        @if (d.Actuaciones.Count == 0)
+        {
+            <p class="texto-secundario">Sin actuaciones registradas.</p>
+        }
+        else
+        {
+            <ol class="historial">
+                @foreach (var actuacion in d.Actuaciones)
+                {
+                    <li class="historial__elemento" data-actuacion="@actuacion.Tipo">
+                        <p class="historial__cabecera">
+                            <span class="estado estado--activa">@actuacion.TextoTipo</span>
+                            <time>@Formato.Hora(actuacion.RegistradaEn, zona, "dd/MM/yyyy HH:mm:ss")</time>
+                            <span class="texto-secundario">· @actuacion.Operador</span>
+                        </p>
+                        <p class="historial__texto">@actuacion.Descripcion</p>
+                    </li>
+                }
+            </ol>
+        }
+        @if (a.Estado == EstadoAviso.EnRevision)
+        {
+            <form method="post" asp-page-handler="Actuacion" class="formulario" data-formulario novalidate>
+                <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+                <input type="hidden" name="IdSolicitud" value="@Model.IdSolicitud" />
+                <div class="campo">
+                    <label class="campo__etiqueta" for="TipoActuacion">Tipo</label>
+                    <select class="campo__control campo__control--seleccion" id="TipoActuacion" name="TipoActuacion" required
+                            aria-invalid="@(Model.ErrorDe("tipo") is null ? null : "true")">
+                        <option value="">Elige el tipo</option>
+                        <option value="Contacto" selected="@(Model.TipoActuacion == "Contacto")">Contacto</option>
+                        <option value="Accion" selected="@(Model.TipoActuacion == "Accion")">Acción</option>
+                        <option value="Resultado" selected="@(Model.TipoActuacion == "Resultado")">Resultado</option>
+                    </select>
+                    @if (Model.ErrorDe("tipo") is { } errorTipo)
+                    {
+                        <p class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorTipo</span></p>
+                    }
+                </div>
+                <div class="campo">
+                    <label class="campo__etiqueta" for="Descripcion">Descripción</label>
+                    <textarea class="campo__control campo__control--texto" id="Descripcion" name="Descripcion" rows="3" required
+                              maxlength="@ActuacionAviso.MaximoDescripcion" aria-invalid="@(Model.ErrorDe("descripcion") is null ? null : "true")">@Model.Descripcion</textarea>
+                    @if (Model.ErrorDe("descripcion") is { } errorDescripcion)
+                    {
+                        <p class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorDescripcion</span></p>
+                    }
+                </div>
+                <div class="acciones"><button type="submit" class="boton boton--secundario" data-texto-carga="Guardando…">Registrar actuación</button></div>
+            </form>
+        }
+        else if (a.Estado == EstadoAviso.Generado)
+        {
+            <p class="texto-secundario">Para registrar contactos, acciones o resultados, primero revisa el aviso.</p>
+        }
+    </section>
+</div>

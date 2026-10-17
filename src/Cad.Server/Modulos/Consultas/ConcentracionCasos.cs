@@ -29,6 +29,8 @@ public sealed class ConsultarConcentracion(CadDbContext db)
         // CA01 y CA02: periodo y origen seleccionados. CA05: solo casos (nunca posiciones de acompañamiento ni de serenos).
         var casos = db.Casos.AsNoTracking()
             .Where(c => c.RegistradoEn >= filtro.Desde && c.RegistradoEn < filtro.Hasta && !EstadosExcluidos.Contains(c.Estado));
+        // HU29 representa SOS y reportes (CA04); un caso urgente creado desde un aviso no entra (es una decisión del operador).
+        casos = casos.Where(c => c.Origen == OrigenCaso.Sos || c.Origen == OrigenCaso.Reporte);
         if (filtro.Origen is { } origen)
             casos = casos.Where(c => c.Origen == origen);
 

@@ -19,8 +19,12 @@ public sealed record DetalleSos(
     AsignacionVista? Asignacion,
     ClasificacionVista? Clasificacion,
     IReadOnlyList<AvanceVista>? Avances = null,
-    CierreVista? Cierre = null)
+    CierreVista? Cierre = null,
+    // DP19: un caso urgente creado desde un aviso del acompañamiento se verifica y asigna desde esta misma vista.
+    string Origen = "SOS")
 {
+    public bool EsCasoUrgente => Origen != "SOS";
+
     public bool EnCamino => Estado == EstadosCaso.Texto(EstadoCaso.EnCamino);
     public bool EnAtencion => Estado == EstadosCaso.Texto(EstadoCaso.EnAtencion);
 
@@ -54,10 +58,10 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
     {
         var sos = await (from caso in db.Casos.AsNoTracking()
                          join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
-                         where caso.Id == casoId && (cualquierOrigen || caso.Origen == OrigenCaso.Sos)
+                         where caso.Id == casoId && (cualquierOrigen || caso.Origen != OrigenCaso.Reporte)
                          select new
                          {
-                             caso.Id, caso.Estado, caso.RegistradoEn,
+                             caso.Id, caso.Estado, caso.RegistradoEn, caso.Origen,
                              Ciudadano = ciudadano.Nombres + " " + ciudadano.Apellidos,
                              ciudadano.PhoneNumber,
                              caso.Latitud, caso.Longitud, caso.PrecisionMetros, caso.UbicacionObtenidaEn,
@@ -110,6 +114,7 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
             .ToList();
 
         return new DetalleSos(sos.Id, EstadosCaso.Texto(sos.Estado), sos.RegistradoEn, sos.Ciudadano, sos.PhoneNumber,
-            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion, avances, cierre);
+            sos.Latitud, sos.Longitud, sos.PrecisionMetros, sos.UbicacionObtenidaEn, intentos, asignacion, clasificacion, avances, cierre,
+            sos.Origen == OrigenCaso.Sos ? "SOS" : $"Caso urgente · {OrigenesCaso.Texto(sos.Origen)}");
     }
 }
