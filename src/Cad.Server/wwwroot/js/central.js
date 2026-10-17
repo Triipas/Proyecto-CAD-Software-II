@@ -14,6 +14,9 @@
   const regionReportes = document.querySelector("[data-region-reportes]");
   const contadorReportes = document.querySelector("[data-contador-reportes]");
   const casos = () => [...region.querySelectorAll("[data-sos]"), ...(regionReportes?.querySelectorAll("[data-sos]") ?? [])];
+  // HU25: casos en curso con ubicación (no asignables), con su origen y su estado.
+  const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
+  const marcadoresEnCurso = [];
   const tituloBase = document.title;
   let sinVer = 0;
 
@@ -41,7 +44,7 @@
           alt: texto,
           keyboard: true,
         })
-          .bindPopup(`<strong>Reporte · Pendiente</strong><br>${escapar(item.dataset.ciudadano)}<br>Tipo: ${escapar(item.dataset.categoria)}<br>Lugar del hecho indicado por el ciudadano`)
+          .bindPopup(`<strong>Reporte · Pendiente</strong><br>Identificador: ${escapar(id)}<br>${escapar(item.dataset.ciudadano)}<br>Tipo: ${escapar(item.dataset.categoria)}<br>Lugar del hecho indicado por el ciudadano`)
           .on("click", () => seleccionar(id, { desdeMapa: true }))
           .addTo(mapa);
         marcadores.set(id, marcador);
@@ -53,7 +56,7 @@
         alt: `SOS de ${item.dataset.ciudadano}`,
         keyboard: true,
       })
-        .bindPopup(`<strong>SOS · Pendiente</strong><br>${escapar(item.dataset.ciudadano)}<br>Precisión ± ${escapar(item.dataset.precision)} m`)
+        .bindPopup(`<strong>SOS · Pendiente</strong><br>Identificador: ${escapar(id)}<br>${escapar(item.dataset.ciudadano)}<br>Precisión ± ${escapar(item.dataset.precision)} m`)
         .on("click", () => seleccionar(id, { desdeMapa: true }))
         .addTo(mapa);
       marcadores.set(id, marcador);
@@ -81,6 +84,26 @@
     }
     marcarComoVisto();
     actualizarAsignacion();
+  }
+
+  // HU25-CA01/CA02/CA03: un marcador por caso en curso, distinto por origen (color) y por estado (con borde; reporte en
+  // revisión con borde discontinuo). Al elegirlo se ven su identificador, origen y estado, con un enlace a su detalle.
+  function dibujarCasosEnCurso() {
+    for (const m of marcadoresEnCurso.splice(0)) m.remove();
+    for (const item of regionCasosMapa?.querySelectorAll("[data-caso-mapa]") ?? []) {
+      const reporte = item.dataset.origen === "Reporte";
+      const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
+      const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
+      const texto = `${item.dataset.origen} · ${item.dataset.estado} · ${item.dataset.ciudadano}`;
+      marcadoresEnCurso.push(L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
+        icon: L.divIcon({ className: clase, html: `<span>${reporte ? "R" : "SOS"}</span>`, iconSize: reporte ? [30, 30] : [44, 28], iconAnchor: reporte ? [15, 15] : [22, 28] }),
+        title: texto,
+        alt: texto,
+        keyboard: true,
+      })
+        .bindPopup(`<strong>${escapar(item.dataset.origen)} · ${escapar(item.dataset.estado)}</strong><br>Identificador: ${escapar(item.dataset.casoMapa)}<br>${escapar(item.dataset.ciudadano)}<br><a href="${escapar(item.dataset.detalle)}">Ver el caso</a>`)
+        .addTo(mapa));
+    }
   }
 
   function alHacerClicEnLista(evento) {
@@ -261,7 +284,12 @@
         contadorReportes.textContent = regionReportes.querySelector("[data-lista-reportes]").dataset.total;
       }
     }
+    if (regionCasosMapa) {
+      const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
+      if (enCurso.ok && !enCurso.redirected) regionCasosMapa.innerHTML = await enCurso.text();
+    }
     dibujarMarcadores();
+    dibujarCasosEnCurso();
     if (sosSeleccionado) document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
     actualizarAsignacion();
     return true;
@@ -316,6 +344,7 @@
   }
 
   dibujarMarcadores();
+  dibujarCasosEnCurso();
   dibujarSerenos();
   iniciar();
 

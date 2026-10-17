@@ -1218,3 +1218,23 @@ a.boton {
   height: 22rem;
   margin-bottom: var(--espacio-4);
 }
+
+/* ===== Mapa de casos (HU25) ===== */
+
+/* Casos en curso: el color sigue siendo el del origen (rojo SOS, violeta reporte); el relleno blanco con borde los distingue
+   de los pendientes de asignación, y el borde discontinuo marca un reporte recibido o en revisión. Texto 6.05:1 y 7.10:1. */
+.marcador-caso--en-curso.marcador-sos {
+  color: var(--color-urgente);
+  background: #FFFFFF;
+  border: 3px solid var(--color-urgente);
+}
+
+.marcador-caso--en-curso.marcador-reporte {
+  color: var(--color-reporte);
+  background: #FFFFFF;
+  border: 3px solid var(--color-reporte);
+}
+
+.marcador-caso--revision {
+  border-style: dashed;
+}
