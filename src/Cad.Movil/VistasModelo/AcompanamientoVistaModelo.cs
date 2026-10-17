@@ -6,9 +6,9 @@ namespace Cad.Movil.VistasModelo;
 // HU34–HU37 — pantalla «Acompañamiento» del ciudadano. El control es independiente del SOS y del reporte (HU34-CA05).
 public sealed class AcompanamientoVistaModelo : VistaModeloBase
 {
-    // HU35-CA05 y DP13 (pendiente): la interfaz no promete la transmisión fuera de las condiciones validadas (SPIKE01).
+    // HU35-CA05 y DP13 (16/10/2026): con o sin la app abierta, solo con conexión. La interfaz no promete más que eso.
     public const string TextoEntorno =
-        "La transmisión funciona con esta aplicación abierta y con conexión. Si cierras la aplicación, apagas la pantalla o te quedas sin conexión, puede detenerse.";
+        "Tu ubicación se sigue enviando aunque cierres la aplicación o apagues la pantalla, mientras veas la notificación «Acompañamiento activo». Necesita conexión: sin ella, tu posición no llega a la central.";
 
     private readonly ServicioAcompanamiento servicio;
     private readonly IServicioUbicacion ubicacion;

@@ -16,6 +16,7 @@ public class AcompanamientoTests
     private readonly AlmacenLocalFalso almacen = new();
     private readonly SesionesFalsas sesiones = new() { Sesion = new SesionApp("token-ciudadano", "Ciudadano", Inicio.AddHours(8)) };
     private readonly Guid sesionId = Guid.NewGuid();
+    private readonly SegundoPlanoFalso segundoPlano = new();
 
     public AcompanamientoTests()
     {
@@ -23,7 +24,7 @@ public class AcompanamientoTests
         api.RespuestaInicioAcompanamiento = _ => new ResultadoApi<SesionAcompanamientoVista>.Correcto(ApiFalsa.SesionActiva(reloj.GetUtcNow(), id: sesionId));
     }
 
-    private ServicioAcompanamiento Servicio() => new(api, ubicacion, sesiones, almacen, reloj);
+    private ServicioAcompanamiento Servicio() => new(api, ubicacion, sesiones, almacen, reloj, segundoPlano);
 
     private AcompanamientoVistaModelo VistaModelo(ServicioAcompanamiento servicio) =>
         new(servicio, ubicacion, new NavegacionFalsa(), () => { }, reloj) { HiloPrincipal = a => { a(); return Task.CompletedTask; } };
@@ -366,10 +367,89 @@ public class AcompanamientoTests
     }
 
     [Fact]
-    public void HU35_CA05_LaInterfazNoPrometeLaTransmisionFueraDelEntornoValidado()
+    public void HU35_CA05_DP13_LaInterfazDiceQueSigueConLaAppCerradaYQueNecesitaConexion()
     {
-        Assert.Contains("con esta aplicación abierta y con conexión", AcompanamientoVistaModelo.TextoEntorno);
-        Assert.Contains("puede detenerse", AcompanamientoVistaModelo.TextoEntorno);
+        Assert.Contains("aunque cierres la aplicación o apagues la pantalla", AcompanamientoVistaModelo.TextoEntorno);
+        Assert.Contains("Necesita conexión", AcompanamientoVistaModelo.TextoEntorno);
+        Assert.Contains("mientras veas la notificación", AcompanamientoVistaModelo.TextoEntorno);
+    }
+
+    // ----- DP13: transmisión con la app fuera de la pantalla -----
+
+    [Fact]
+    public async Task DP13_AlIniciar_SeMantieneLaTransmisionEnSegundoPlanoHastaElVencimiento()
+    {
+        var servicio = Servicio();
+
+        await servicio.IniciarAsync(true);
+
+        Assert.True(segundoPlano.Activo);
+        Assert.Equal(Inicio.AddMinutes(30), Assert.Single(segundoPlano.Inicios));
+        await servicio.DetenerAsync();
+        Assert.False(segundoPlano.Activo);
+    }
+
+    [Fact]
+    public async Task DP13_SinIniciarLaSesion_NoSeActivaElSegundoPlano()
+    {
+        api.RespuestaInicioAcompanamiento = _ => new ResultadoApi<SesionAcompanamientoVista>.SinRespuesta("sin red");
+        var servicio = Servicio();
+
+        await servicio.IniciarAsync(false);
+        await servicio.IniciarAsync(true); // sin confirmación del servidor (HU34-CA07)
+
+        Assert.Empty(segundoPlano.Inicios);
+    }
+
+    [Fact]
+    public async Task DP13_AlFinalizar_SeDetieneElSegundoPlanoAunqueNoHayaConexion()
+    {
+        api.RespuestaFinalizacion = _ => new ResultadoApi<SesionAcompanamientoVista>.SinRespuesta("sin red");
+        var servicio = Servicio();
+        await servicio.IniciarAsync(true);
+
+        await servicio.FinalizarAsync();
+
+        Assert.False(segundoPlano.Activo);
+        Assert.Equal(EstadoAcompanamiento.CierrePendiente, servicio.Estado);
+    }
+
+    [Fact]
+    public async Task DP13_CuandoElServidorLaCierra_SeDetieneElSegundoPlano()
+    {
+        var servicio = Servicio();
+        await servicio.IniciarAsync(true);
+        await Esperar(() => api.PosicionesAcompanamiento.Count == 1, "primera posición");
+        api.RespuestaPosicionAcompanamiento = _ => new ResultadoApi<SinContenido>.Rechazado(409, "Terminó.", new Dictionary<string, string[]>());
+        api.RespuestaAcompanamiento = id => Cerrada(id, EstadosAcompanamiento.Vencida, Inicio);
+
+        reloj.Advance(TimeSpan.FromSeconds(15));
+        await Esperar(() => !segundoPlano.Activo, "segundo plano detenido");
+
+        Assert.Equal(EstadoAcompanamiento.Vencido, servicio.Estado);
+    }
+
+    [Fact]
+    public async Task DP13_AlSalirDeLaSesionDeLaApp_SeDetieneElSegundoPlano()
+    {
+        var servicio = Servicio();
+        await servicio.IniciarAsync(true);
+
+        await servicio.ReiniciarAsync();
+
+        Assert.False(segundoPlano.Activo);
+    }
+
+    [Fact]
+    public async Task DP13_AlVolverAAbrirLaAppConUnaSesionActiva_SeReanudaElSegundoPlano()
+    {
+        api.RespuestaAcompanamientoActual = () => new ResultadoApi<SesionAcompanamientoVista?>.Correcto(ApiFalsa.SesionActiva(Inicio.AddMinutes(-3), ahoraServidor: Inicio));
+        var servicio = Servicio();
+
+        await servicio.CargarAsync();
+
+        Assert.True(segundoPlano.Activo);
+        await servicio.DetenerAsync();
     }
 
     // ----- HU36 -----

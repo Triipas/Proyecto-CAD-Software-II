@@ -18,5 +18,7 @@ public class MainApplication : MauiApplication
 		base.OnCreate();
 		// HU21 (ADR-07): canal de las notificaciones del despacho (Android 8+).
 		Platforms.Android.ServicioPushAndroid.CrearCanal(this);
+		// DP13: canal del aviso permanente del acompañamiento.
+		Platforms.Android.SegundoPlanoAndroid.CrearCanal(this);
 	}
 }
