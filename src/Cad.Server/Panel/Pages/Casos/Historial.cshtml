@@ -32,6 +32,26 @@
     </div>
 }
 
+@* HU33 — evaluación del ciudadano (solo lectura). CA02: un caso sin evaluación no muestra ninguna puntuación. *@
+@if (h.Estado == "Cerrada" || h.Evaluacion is not null)
+{
+    <section class="superficie" aria-labelledby="titulo-evaluacion" data-evaluacion>
+        <h2 id="titulo-evaluacion" class="central__titulo">Evaluación del ciudadano</h2>
+        @if (h.Evaluacion is { } evaluacion)
+        {
+            <p class="evaluacion__puntuacion" data-puntuacion="@evaluacion.Puntuacion">
+                <span aria-hidden="true">@(new string('★', evaluacion.Puntuacion))@(new string('☆', 5 - evaluacion.Puntuacion))</span>
+                <strong>@evaluacion.Puntuacion de 5</strong> · <span class="texto-secundario">@Local(evaluacion.EvaluadaEn)</span>
+            </p>
+            <p class="historial__texto">@(evaluacion.Comentario is { } comentario ? $"Comentario: {comentario}" : "Sin comentario.")</p>
+        }
+        else
+        {
+            <p class="texto-secundario" data-sin-evaluacion>El ciudadano no ha evaluado este caso. Evaluar es voluntario.</p>
+        }
+    </section>
+}
+
 <section class="superficie" aria-labelledby="titulo-secuencia">
     <h2 id="titulo-secuencia" class="central__titulo">Secuencia de atención · @h.Entradas.Count @(h.Entradas.Count == 1 ? "actuación" : "actuaciones")</h2>
     @* HU27-CA01/CA03: actuaciones en orden, con responsable y marca de tiempo. CA05: sin acompañamiento. *@

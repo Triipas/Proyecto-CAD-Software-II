@@ -512,6 +512,37 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EvaluacionCaso", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CiudadanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("EvaluadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IdSolicitud")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Puntuacion")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("CiudadanoId");
+
+                    b.ToTable("EvaluacionesCaso", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EvaluacionesCaso_Puntuacion", "\"Puntuacion\" IS NOT NULL AND \"Puntuacion\" BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EventoCaso", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1165,6 +1196,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
                         .WithMany()
                         .HasForeignKey("CategoriaOriginalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EvaluacionCaso", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Casos.Dominio.EvaluacionCaso", "CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CiudadanoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

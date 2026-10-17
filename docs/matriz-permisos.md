@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 262 casos tras HU09 en el Sprint 5: 52 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 267 casos tras HU09 y HU32 en el Sprint 5: 53 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -30,6 +30,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/reportes` y `GET /api/reportes/categorias` | HU10 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET /api/casos/mios` y `GET /api/casos/mios/{id}` (solo los casos propios) | HU30 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `POST /api/casos/mios/{id}/cancelacion` (solo un SOS propio pendiente) | HU09 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `POST /api/casos/mios/{id}/evaluacion` (solo un caso propio cerrado) | HU32 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` (solo las propias) | HU31 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `POST /api/acompanamiento`, `GET /api/acompanamiento/actual` y `/{id}`, `POST /api/acompanamiento/{id}/posiciones` y `/finalizacion` (solo las sesiones propias) | HU34–HU37 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET` y `PUT /api/sereno/estado`, `POST /api/sereno/posiciones` (estado operativo y posiciones del sereno) | HU18 | ✘ | ✘ | ✘ | ✔ | ✘ |
@@ -49,7 +50,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/acompanamientos` (y su fragmento `?handler=Lista`), `/panel/acompanamientos/{id}` y `/panel/acompanamientos/historial` (acompañamientos activos, recorridos e historial de sesiones) | HU38, HU39 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos` (búsqueda de casos con filtros) | HU26 | ✘ | ✘ | ✔ | ✘ | ✘ |
-| `GET /panel/casos/{id}/historial` (historial del caso, con notas internas rotuladas) | HU27 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/casos/{id}/historial` (historial del caso, con notas internas rotuladas y la evaluación del ciudadano) | HU27, HU33 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET` y `POST /panel/admin/cuentas/nueva` (alta) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -95,8 +96,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU29 | Consultar el mapa de concentración de incidencias | Operador | Pendiente (Sprint 5) |
 | HU30 | Consultar mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/casos/mios` y `/api/casos/mios/{id}` solo para Ciudadano y solo sus casos; el caso de otro ciudadano responde 404 aunque se conozca su identificador; un anónimo, un sereno o un operador reciben 401/403 (`MisCasosTests.CA04_*`, matriz). Sin notas internas, intentos de contacto, operador ni sereno (`MisCasosTests.CA05_*`). |
 | HU31 | Recibir notificaciones de avances de mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` solo para Ciudadano y solo sus notificaciones; otro ciudadano no las ve ni puede marcarlas (404); un anónimo, un sereno o un operador reciben 401/403 (`NotificacionesCiudadanoTests.CA04_*`, matriz). |
-| HU32 | Evaluar la atención de un caso cerrado | Ciudadano | Pendiente (Sprint 5; titularidad) |
-| HU33 | Consultar las evaluaciones de atención | Operador (autorizado, DP04) | Pendiente (Sprint 5) |
+| HU32 | Evaluar la atención de un caso cerrado | Ciudadano | **Verificada (17/10/2026, S5-T11):** `POST /api/casos/mios/{id}/evaluacion` solo para Ciudadano y solo sobre sus casos; el caso de otro ciudadano responde 404 sin registrar nada (`EvaluacionCasoTests.HU32_CA05_*`); un sereno recibe 403 y un operador, un administrador o un anónimo son rechazados (matriz). |
+| HU33 | Consultar las evaluaciones de atención | Operador (autorizado, DP04) | **Verificada (17/10/2026, S5-T12):** la evaluación solo se ve en el historial, restringido a Operador; un administrador es redirigido a «acceso denegado» y la app de un sereno o de otro ciudadano no obtiene la página ni el comentario (`EvaluacionCasoTests.HU33_CA03_*`, matriz). |
 | HU34 | Activar el acompañamiento temporal | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento` y `GET /api/acompanamiento/actual` solo para Ciudadano; un operador o un sereno reciben 403 sin crear sesiones (`AcompanamientoTests.HU34_OtrosPerfiles_*`, matriz). Otro ciudadano no ve ni usa la sesión (404). |
 | HU35 | Compartir mi posición durante el acompañamiento | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento/{id}/posiciones` solo para el ciudadano titular; otros perfiles 403, otro ciudadano 404, sin registrar posiciones. |
 | HU36 | Finalizar el acompañamiento cuando yo decida | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento/{id}/finalizacion` solo para el ciudadano titular; otros perfiles 403, otro ciudadano 404, sin cerrar la sesión. |

@@ -54,6 +54,8 @@ public sealed class ConsultarMisCasos(CadDbContext db)
             .Select(d => new { d.Tipo, d.DecididaEn, d.Destino, d.Motivo }).SingleOrDefaultAsync(ct);
         var cancelacion = await db.CancelacionesSos.AsNoTracking().Where(c => c.CasoId == casoId)
             .Select(c => new { c.CanceladaEn, c.Motivo }).SingleOrDefaultAsync(ct);
+        var evaluacion = await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
+            .Select(e => new MiEvaluacion(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct);
         var revision = await db.EventosCaso.AsNoTracking()
             .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.RevisionIniciada)
             .Select(e => (DateTimeOffset?)e.OcurridoEn).FirstOrDefaultAsync(ct);
@@ -81,7 +83,7 @@ public sealed class ConsultarMisCasos(CadDbContext db)
 
         return new MiCasoDetalle(caso.Id, TextoOrigen(caso.Origen), caso.RegistradoEn, EstadoPublico(caso.Origen, caso.Estado),
             Resultado(caso.Estado, cierre?.ResultadoPublico, decision?.Tipo, decision?.Destino, decision?.Motivo, cancelacion?.Motivo),
-            avances.OrderBy(a => a.En).ToList());
+            avances.OrderBy(a => a.En).ToList(), evaluacion);
     }
 
     // CA03 y DP05: el resultado público de un caso finalizado (cerrado, derivado, descartado o cancelado por el titular).

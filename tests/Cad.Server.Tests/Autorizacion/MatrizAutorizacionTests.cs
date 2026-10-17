@@ -42,6 +42,10 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // uso (400 o 404); el resto es rechazado antes, sin cancelar nada.
         new("POST", "/api/casos/mios/{id:guid}/cancelacion", "HU09", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/cancelacion"),
+        // HU32 — evaluar un caso propio cerrado. Sin cuerpo válido (o con un caso inexistente o ajeno) el ciudadano llega al caso de
+        // uso (400 o 404); el resto es rechazado antes, sin registrar evaluaciones.
+        new("POST", "/api/casos/mios/{id:guid}/evaluacion", "HU32", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/evaluacion"),
         // HU31 — bandeja de notificaciones. Con una notificación inexistente (o ajena) el ciudadano recibe 404.
         new("GET", "/api/notificaciones", "HU31", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/notificaciones/{id:guid}/leida", "HU31", Acceso.SoloRol, Roles.Ciudadano,

@@ -21,6 +21,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<CancelacionSos> CancelacionesSos => Set<CancelacionSos>();
+    public DbSet<EvaluacionCaso> EvaluacionesCaso => Set<EvaluacionCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
     public DbSet<DecisionReporte> DecisionesReporte => Set<DecisionReporte>();
@@ -173,6 +174,17 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cancelacion.Property(c => c.Motivo).HasMaxLength(CancelacionSos.MaximoMotivo);
             cancelacion.HasOne<Caso>().WithOne().HasForeignKey<CancelacionSos>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
             cancelacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU32: una evaluación por caso (CA03), con la puntuación de 1 a 5 (CA02) también garantizada por la base de datos.
+        builder.Entity<EvaluacionCaso>(evaluacion =>
+        {
+            evaluacion.ToTable("EvaluacionesCaso", tabla =>
+                tabla.HasCheckConstraint("CK_EvaluacionesCaso_Puntuacion", "\"Puntuacion\" IS NOT NULL AND \"Puntuacion\" BETWEEN 1 AND 5"));
+            evaluacion.HasKey(e => e.CasoId);
+            evaluacion.Property(e => e.Comentario).HasMaxLength(EvaluacionCaso.MaximoComentario);
+            evaluacion.HasOne<Caso>().WithOne().HasForeignKey<EvaluacionCaso>(e => e.CasoId).OnDelete(DeleteBehavior.Restrict);
+            evaluacion.HasOne<Usuario>().WithMany().HasForeignKey(e => e.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU10: datos del reporte, uno por caso. La base de datos garantiza los campos obligatorios (CA02) y que la
