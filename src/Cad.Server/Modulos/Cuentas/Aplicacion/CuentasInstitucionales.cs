@@ -1,3 +1,4 @@
+using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Cad.Server.Persistencia;
 using Microsoft.AspNetCore.Identity;
@@ -152,12 +153,14 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
 
 // HU05 — Desactivar una cuenta institucional (S4-T12). Solo cambia el estado: la cuenta, su rol y todos los registros
 // vinculados con ella se conservan (CA03), y el inicio de sesión la rechaza a partir de ese momento (CA02, en IniciarSesion).
-// DP03 (pendiente): qué ocurre con una sesión ya abierta o con una asignación vigente (CA04). Hasta que el PO lo decida
-// no se aplica ninguna regla: la sesión abierta sigue hasta que vence y la asignación vigente no cambia.
-public sealed class DesactivarCuentaInstitucional(UserManager<Usuario> usuarios, ConsultarCuentasInstitucionales consultar,
-    ILogger<DesactivarCuentaInstitucional> registro)
+// DP03 (decisión del PO del 16/10/2026, CA04): la sesión abierta se cierra y la asignación vigente se cancela. La cuenta
+// recibe un sello de seguridad nuevo, que el servidor comprueba en cada solicitud (Autenticacion), así que el JWT de la app
+// y la cookie del panel dejan de valer en el acto. Una asignación vigente termina como cancelada y el caso vuelve a
+// «Pendiente» para asignarlo a otro sereno; todo en la misma transacción que la desactivación.
+public sealed class DesactivarCuentaInstitucional(CadDbContext db, UserManager<Usuario> usuarios, ConsultarCuentasInstitucionales consultar,
+    TimeProvider reloj, Compartido.INotificador notificador, ILogger<DesactivarCuentaInstitucional> registro)
 {
-    public async Task<ResultadoCuentaInstitucional> EjecutarAsync(Guid id, CancellationToken ct)
+    public async Task<ResultadoCuentaInstitucional> EjecutarAsync(Guid id, Guid administradorId, CancellationToken ct)
     {
         // Solo cuentas de operador o sereno (RF20): el resto no existe para esta operación.
         if (await consultar.ObtenerAsync(id, ct) is null)
@@ -170,18 +173,52 @@ public sealed class DesactivarCuentaInstitucional(UserManager<Usuario> usuarios,
             if (!usuario.Activo)
                 return new ResultadoCuentaInstitucional.Correcto(id);
 
+            // DP03: la asignación vigente del sereno se cancela y su caso vuelve a «Pendiente».
+            var ahora = reloj.GetUtcNow();
+            var asignacion = await db.Asignaciones.SingleOrDefaultAsync(a => a.SerenoId == id && a.Vigente, ct);
+            Caso? caso = null;
+            if (asignacion is not null)
+            {
+                caso = await db.Casos.SingleAsync(c => c.Id == asignacion.CasoId, ct);
+                asignacion.Cancelar(ahora);
+                caso.LiberarPorCancelacion();
+                db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.AsignacionCancelada, administradorId, VisibilidadEvento.Interna, ahora));
+            }
+
             usuario.Activo = false;
-            var actualizacion = await usuarios.UpdateAsync(usuario);
+            // Sello nuevo = sesiones abiertas revocadas. UpdateSecurityStampAsync guarda también la asignación y el caso
+            // (mismo contexto de datos): una sola transacción.
+            var actualizacion = await usuarios.UpdateSecurityStampAsync(usuario);
             if (actualizacion.Succeeded)
             {
-                registro.LogInformation("Cuenta institucional {UsuarioId} desactivada.", id);
+                registro.LogInformation("Cuenta institucional {UsuarioId} desactivada; sesiones revocadas{Asignacion}.", id,
+                    caso is null ? "" : $"; asignación del caso {caso.Id} cancelada");
+                if (caso is not null)
+                    await AvisarAsync(caso.Id, id);
                 return new ResultadoCuentaInstitucional.Correcto(id);
             }
             // Otra solicitud modificó la cuenta entre la lectura y la escritura (sello de concurrencia de Identity):
             // se vuelve a leer y a evaluar.
             if (intento < 2 && actualizacion.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.ConcurrencyFailure)))
+            {
+                db.ChangeTracker.Clear();
                 continue;
+            }
             throw new InvalidOperationException("No se pudo desactivar la cuenta institucional.");
+        }
+    }
+
+    // Después de confirmar: la central muestra el caso de nuevo como pendiente y al sereno sin asignación.
+    private async Task AvisarAsync(Guid casoId, Guid serenoId)
+    {
+        try
+        {
+            await notificador.CasoActualizadoAsync(casoId, CancellationToken.None);
+            await notificador.SerenoActualizadoAsync(serenoId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogError(ex, "No se pudo avisar a la central de la asignación cancelada del caso {CasoId}; se mostrará al resincronizar.", casoId);
         }
     }
 }

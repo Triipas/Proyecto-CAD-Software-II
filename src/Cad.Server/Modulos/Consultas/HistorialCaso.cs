@@ -100,9 +100,16 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
         foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))
         {
             entradas.Add(new(asignacion.AsignadaEn, $"Asignado al sereno {await NombreAsync(asignacion.SerenoId)}", await NombreAsync(asignacion.OperadorId), null));
-            if (asignacion.FinalizadaEn is { } fin)
+            // DP03: una asignación cancelada por desactivar la cuenta del sereno aparece con su propio evento.
+            if (asignacion.FinalizadaEn is { } fin && !asignacion.Cancelada)
                 entradas.Add(new(fin, "Asignación finalizada", await NombreAsync(asignacion.SerenoId), "El sereno queda libre para otro caso."));
         }
+
+        // DP03 (16/10/2026): asignación cancelada al desactivar la cuenta del sereno; el responsable es el administrador.
+        foreach (var evento in await db.EventosCaso.AsNoTracking()
+                     .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.AsignacionCancelada).ToListAsync(ct))
+            entradas.Add(new(evento.OcurridoEn, "Asignación cancelada: la cuenta del sereno se desactivó", await NombreAsync(evento.ActorId),
+                "El caso vuelve a «Pendiente» para asignarlo a otro sereno."));
 
         // HU22 y HU23: avances registrados como eventos.
         foreach (var evento in await db.EventosCaso.AsNoTracking()

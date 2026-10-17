@@ -209,7 +209,7 @@
                 }
                 else if (r.EnAtencionOperativa)
                 {
-                    <p>En atención por un sereno: estado «@r.TextoEstado». El seguimiento está en la central y en el historial.</p>
+                    <p>Reporte admitido: estado «@r.TextoEstado». La atención está en la sección «Atención».</p>
                 }
             }
             else if (r.PuedeDecidir)
@@ -262,6 +262,137 @@
                 <p class="texto-secundario">Se decide sobre el reporte cuando está «En revisión».</p>
             }
         </section>
+
+        @* Decisión del PO del 16/10/2026: atención de un reporte admitido, con las acciones del operador de HU23-CA02 y
+           HU24-CA05 (las mismas reglas que en un SOS). *@
+        @if (Model.Seguimiento is { } s)
+        {
+            <section class="superficie" aria-labelledby="titulo-atencion" data-atencion>
+                <h2 id="titulo-atencion" class="central__titulo">Atención</h2>
+                @if (Model.ErrorAtencion is not null)
+                {
+                    <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                        <partial name="_Icono" model="@("error")" />
+                        <div>
+                            <p class="aviso__titulo">No se registró el inicio de atención</p>
+                            <p class="aviso__texto">@Model.ErrorAtencion</p>
+                        </div>
+                    </div>
+                }
+                @if (s.Asignacion is { } asignacion)
+                {
+                    <dl class="datos">
+                        <div><dt>Sereno</dt><dd>@asignacion.Sereno</dd></div>
+                        <div><dt>Asignado</dt><dd>@Local(asignacion.AsignadaEn)</dd></div>
+                    </dl>
+                    @if (s.Avances is { Count: > 0 } avances)
+                    {
+                        <ol class="historial" data-avances>
+                            @foreach (var avance in avances)
+                            {
+                                <li class="historial__elemento">
+                                    <p class="historial__cabecera">
+                                        <span class="estado estado--activa">@avance.Descripcion</span>
+                                        <time datetime="@avance.En.ToString("O", inv)">@Local(avance.En)</time>
+                                        <span class="texto-secundario">· @avance.Responsable</span>
+                                    </p>
+                                </li>
+                            }
+                        </ol>
+                    }
+                    @if (s.EnCamino)
+                    {
+                        <form method="post" asp-page-handler="IniciarAtencion" class="formulario" data-formulario>
+                            <p class="texto-secundario">Si el sereno no puede registrarlo, puedes registrar el inicio de atención; quedarás como responsable.</p>
+                            <div class="acciones">
+                                <button type="submit" class="boton boton--secundario" data-texto-carga="Registrando…">Registrar inicio de atención</button>
+                            </div>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <p class="texto-secundario">Aún no está asignado a un sereno.</p>
+                }
+
+                <h3 class="campo__etiqueta">Cierre</h3>
+                @if (Model.ErrorCierre is not null)
+                {
+                    <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+                        <partial name="_Icono" model="@("error")" />
+                        <div>
+                            <p class="aviso__titulo">No se pudo cerrar el reporte</p>
+                            <p class="aviso__texto">@Model.ErrorCierre</p>
+                        </div>
+                    </div>
+                }
+                @if (s.Cierre is { } cierre)
+                {
+                    <dl class="datos" data-cierre>
+                        <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                        <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
+                        <div><dt>Notas internas (solo personal autorizado)</dt><dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd></div>
+                        <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
+                        <div><dt>Fecha y hora</dt><dd>@Local(cierre.CerradoEn)</dd></div>
+                    </dl>
+                }
+                else if (s.EnAtencion)
+                {
+                    var errorCategoria = Model.ErrorCierreDe("categoriaId");
+                    var errorResultado = Model.ErrorCierreDe("resultadoPublico");
+                    var errorNotas = Model.ErrorCierreDe("notasInternas");
+                    <form method="post" asp-page-handler="Cerrar" class="formulario" data-formulario novalidate>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_CategoriaId">Tipificación final</label>
+                            <select class="campo__control campo__control--seleccion" id="Cierre_CategoriaId" name="Cierre.CategoriaId" required
+                                    aria-invalid="@(errorCategoria is null ? null : "true")"
+                                    aria-describedby="@(errorCategoria is null ? null : "Cierre_CategoriaId-error")">
+                                <option value="">Elige una categoría</option>
+                                @foreach (var categoria in Model.Categorias)
+                                {
+                                    <option value="@categoria.Id" selected="@(Model.Cierre.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                                }
+                            </select>
+                            @if (errorCategoria is not null)
+                            {
+                                <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
+                            }
+                        </div>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                            <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
+                                      maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoResultado"
+                                      aria-invalid="@(errorResultado is null ? null : "true")"
+                                      aria-describedby="Cierre_ResultadoPublico-ayuda@(errorResultado is null ? "" : " Cierre_ResultadoPublico-error")">@Model.Cierre.ResultadoPublico</textarea>
+                            <p id="Cierre_ResultadoPublico-ayuda" class="campo__ayuda">Es el resultado público: el ciudadano podrá verlo.</p>
+                            @if (errorResultado is not null)
+                            {
+                                <p id="Cierre_ResultadoPublico-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado</span></p>
+                            }
+                        </div>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_NotasInternas">Notas internas (opcional)</label>
+                            <textarea class="campo__control campo__control--texto" id="Cierre_NotasInternas" name="Cierre.NotasInternas" rows="3"
+                                      maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoNotas"
+                                      aria-invalid="@(errorNotas is null ? null : "true")"
+                                      aria-describedby="Cierre_NotasInternas-ayuda@(errorNotas is null ? "" : " Cierre_NotasInternas-error")">@Model.Cierre.NotasInternas</textarea>
+                            <p id="Cierre_NotasInternas-ayuda" class="campo__ayuda">Solo para el personal autorizado; el ciudadano no las verá.</p>
+                            @if (errorNotas is not null)
+                            {
+                                <p id="Cierre_NotasInternas-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorNotas</span></p>
+                            }
+                        </div>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--principal" data-texto-carga="Cerrando…">Cerrar el reporte</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <p class="texto-secundario">El reporte se podrá cerrar cuando esté «En atención».</p>
+                }
+            </section>
+        }
     </div>
 </div>
 

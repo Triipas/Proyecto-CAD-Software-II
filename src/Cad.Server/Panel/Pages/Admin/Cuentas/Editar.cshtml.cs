@@ -63,12 +63,12 @@ public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCue
     // HU05-CA01: la cuenta pasa a «Desactivada». CA05: solo el administrador (política de la página).
     public async Task<IActionResult> OnPostDesactivarAsync(Guid id, CancellationToken ct)
     {
-        if (await desactivar.EjecutarAsync(id, ct) is not ResultadoCuentaInstitucional.Correcto
+        if (await desactivar.EjecutarAsync(id, User.IdUsuario(), ct) is not ResultadoCuentaInstitucional.Correcto
             || await consultar.ObtenerAsync(id, ct) is not { } cuenta)
             return NotFound();
 
         TempData[nameof(IndexModel.Mensaje)] =
-            $"Se desactivó la cuenta de {cuenta.Nombres} {cuenta.Apellidos}: ya no puede iniciar sesión. Sus registros se conservan.";
+            $"Se desactivó la cuenta de {cuenta.Nombres} {cuenta.Apellidos}: su sesión abierta se cerró y ya no puede iniciar sesión. Si tenía un caso asignado, volvió a «Pendiente». Sus registros se conservan.";
         return RedirectToPage("/Admin/Cuentas/Index");
     }
 

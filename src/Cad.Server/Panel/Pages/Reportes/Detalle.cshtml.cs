@@ -12,9 +12,23 @@ namespace Cad.Server.Panel.Pages.Reportes;
 // descartarlo (S3-T06, S3-T07, S3-T09); HU20-CA07 — asignar un reporte admitido desde la central (S3-T08). Solo operadores (también en el servidor:
 // la política de la página rechaza cualquier otra sesión, incluida una solicitud directa).
 [Authorize(Policy = Politicas.OperadorAutorizado)]
+// Decisión del PO del 16/10/2026: el operador registra el inicio de atención (HU23-CA02) y cierra (HU24-CA05) un reporte en
+// curso, como en un SOS.
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
-    ConsultarCategorias consultarCategorias, IConfiguration configuracion) : PageModel
+    ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
+    IConfiguration configuracion) : PageModel
 {
+    [BindProperty]
+    public FormularioCierre Cierre { get; set; } = new();
+
+    // Asignación, avances y cierre de un reporte admitido (null antes de la admisión).
+    public DetalleSos? Seguimiento { get; private set; }
+    public string? ErrorAtencion { get; private set; }
+    public string? ErrorCierre { get; private set; }
+    public Dictionary<string, string[]> ErroresCierre { get; private set; } = [];
+
+    public string? ErrorCierreDe(string campo) => ErroresCierre.TryGetValue(campo, out var mensajes) ? mensajes[0] : null;
+
     [BindProperty]
     public Guid? CategoriaId { get; set; }
 
@@ -130,6 +144,41 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         return RedirectToPage("/Central/Index");
     }
 
+    // HU23-CA02: el operador registra el inicio de atención y queda como responsable.
+    public async Task<IActionResult> OnPostIniciarAtencionAsync(Guid id, CancellationToken ct)
+    {
+        switch (await avanzar.EjecutarAsync(id, Avance.IniciarAtencion, User.IdUsuario(), ActorAvance.Operador, ct))
+        {
+            case ResultadoAvance.Registrado or ResultadoAvance.YaRegistrado:
+                return Hecho(id, "Inicio de atención registrado.", "Quedas como responsable del registro.");
+            case ResultadoAvance.Rechazado r when await CargarAsync(id, ct):
+                ErrorAtencion = r.Motivo;
+                return Page();
+            default:
+                return NotFound();
+        }
+    }
+
+    // HU24-CA05: el operador cierra el reporte en atención y queda como responsable.
+    public async Task<IActionResult> OnPostCerrarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await cerrar.EjecutarAsync(id, new DatosCierre(Cierre.CategoriaId, Cierre.ResultadoPublico, Cierre.NotasInternas),
+            User.IdUsuario(), ActorAvance.Operador, ct);
+        switch (resultado)
+        {
+            case ResultadoCierre.Cerrado or ResultadoCierre.YaCerrado:
+                return Hecho(id, "Reporte cerrado.", "El sereno vuelve a figurar como disponible si sigue operativo.");
+            case ResultadoCierre.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErroresCierre = (resultado as ResultadoCierre.Invalido)?.Errores ?? [];
+                ErrorCierre = (resultado as ResultadoCierre.Rechazado)?.Motivo;
+                return Page();
+        }
+    }
+
     // El aviso ya muestra el estado; aquí, solo lo que sigue.
     private static string Siguiente(string estado) => estado == "Pendiente"
         ? "Asígnalo a un sereno disponible desde la central."
@@ -148,6 +197,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
             return false;
         Reporte = reporte;
         Categorias = await consultarCategorias.EjecutarAsync(ct);
+        Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;
         return true;
     }
@@ -158,6 +208,13 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         public string? Motivo { get; set; }
         public string? Destino { get; set; }
         public string? Accion { get; set; }
+    }
+
+    public sealed class FormularioCierre
+    {
+        public Guid? CategoriaId { get; set; }
+        public string? ResultadoPublico { get; set; }
+        public string? NotasInternas { get; set; }
     }
 
     public sealed class FormularioAsignacion

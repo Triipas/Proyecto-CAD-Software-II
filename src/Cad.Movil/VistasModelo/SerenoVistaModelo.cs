@@ -109,6 +109,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         : "";
     public bool HayReferenciaLugarHecho => despacho.Actual?.LugarHecho?.Referencia is { Length: > 0 };
     public string TextoReferenciaLugarHecho => despacho.Actual?.LugarHecho?.Referencia is { } r ? $"Referencia: {r}" : "";
+    // DP06 ampliada por el PO (16/10/2026): la descripción que escribió el ciudadano en su reporte.
+    public bool HayDescripcionReporte => despacho.Actual?.DescripcionReporte is { Length: > 0 };
+    public string TextoDescripcionReporte => despacho.Actual?.DescripcionReporte ?? "";
     public string TextoUbicacionDespacho => despacho.Actual?.Ubicacion is { } u
         ? $"{u.Latitud.ToString("0.00000", CultureInfo.InvariantCulture)}, {u.Longitud.ToString("0.00000", CultureInfo.InvariantCulture)} · ± {u.PrecisionMetros.ToString("0", CultureInfo.InvariantCulture)} m · obtenida a las {Hora(u.ObtenidaEn)}"
         : "";
@@ -236,7 +239,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(TextoAsignado), nameof(TextoIdentificador),
                      nameof(HayUbicacionDespacho), nameof(SinUbicacionDespacho), nameof(TextoUbicacionDespacho), nameof(InformacionDespacho),
                      nameof(EsReporteDespacho), nameof(MostrarUbicacionDispositivo), nameof(HayPuntoLugarHecho), nameof(TextoLugarHecho),
-                     nameof(HayReferenciaLugarHecho), nameof(TextoReferenciaLugarHecho),
+                     nameof(HayReferenciaLugarHecho), nameof(TextoReferenciaLugarHecho), nameof(HayDescripcionReporte), nameof(TextoDescripcionReporte),
                      nameof(HayInformacionDespacho), nameof(SinInformacionDespacho), nameof(AvisoNuevoDespacho), nameof(ErrorDespacho), nameof(HayErrorDespacho),
                      nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances),
                      nameof(MostrarCierre), nameof(PuedeAbrirCierre), nameof(CategoriasCierre), nameof(ErrorCategoriaCierre), nameof(HayErrorCategoriaCierre),

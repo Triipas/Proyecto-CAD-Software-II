@@ -77,6 +77,15 @@ public sealed class Caso
         Estado = EstadoCaso.EnAtencion;
     }
 
+    // DP03 (16/10/2026): si se desactiva la cuenta del sereno asignado, la asignación se cancela y el caso vuelve a
+    // «Pendiente» para asignarlo a otro sereno (HU20). Solo desde un estado con asignación vigente y sin cerrar.
+    public void LiberarPorCancelacion()
+    {
+        if (Estado is not (EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion))
+            throw new InvalidOperationException("Solo un caso asignado y sin cerrar vuelve a «Pendiente».");
+        Estado = EstadoCaso.Pendiente;
+    }
+
     // HU24-CA01/CA03: solo un caso «En atención» se cierra.
     public void Cerrar()
     {

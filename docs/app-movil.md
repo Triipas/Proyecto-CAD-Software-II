@@ -105,7 +105,8 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 ## Reporte admitido en el despacho (HU20-CA07, Sprint 3)
 
 - Un reporte admitido y asignado llega al sereno con `LugarHecho`: el punto del hecho, su precisión si el ciudadano usó su posición, y la referencia. No trae ubicación del dispositivo. La pantalla lo muestra como «Lugar del hecho (indicado por el ciudadano)» y oculta la sección «Ubicación del dispositivo». El resto del flujo (en camino, inicio de atención y cierre) es el de un SOS.
-- Siguiendo DP06, el sereno no recibe la descripción del ciudadano ni sus datos personales.
+- Siguiendo DP06, el sereno no recibe los datos personales del ciudadano. Desde la decisión del PO del 16/10/2026 sí recibe la descripción del reporte, que la app muestra como «Descripción del ciudadano» ([captura](capturas/movil/69-sereno-despacho-con-descripcion.png)).
+- DP03 (16/10/2026): si el administrador desactiva la cuenta del sereno, su sesión deja de valer y la app muestra «Tu sesión terminó» en la siguiente acción ([captura](capturas/movil/70-sereno-desactivado-sesion-cerrada.png)).
 
 ## Mis casos (HU30, Sprint 3)
 

@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Cad.Server.Modulos.Cuentas.Dominio;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -37,7 +39,8 @@ public static class Autenticacion
     public const string ReclamoId = "sub";
     public const string ReclamoRol = "role";
     public const string ReclamoNombre = "name";
-    // Permitirá revocar sesiones cuando se resuelva DP03; hoy solo se emite, no se comprueba.
+    // DP03 (16/10/2026): el sello de seguridad de la cuenta se comprueba en cada solicitud; al desactivar la cuenta (o
+    // cambiar su contraseña) cambia el sello y la sesión abierta deja de valer.
     public const string ReclamoSello = "cad:sello";
 
     public static IServiceCollection AddAutenticacionCad(this IServiceCollection services, IConfiguration configuracion, bool desarrollo)
@@ -69,6 +72,14 @@ public static class Autenticacion
                 // Una solicitud a /api o a un hub nunca se redirige a una página: responde 401/403.
                 opciones.Events.OnRedirectToLogin = contexto => ResponderORedirigir(contexto, StatusCodes.Status401Unauthorized);
                 opciones.Events.OnRedirectToAccessDenied = contexto => ResponderORedirigir(contexto, StatusCodes.Status403Forbidden);
+                opciones.Events.OnValidatePrincipal = async contexto =>
+                {
+                    if (!await SesionVigenteAsync(contexto.HttpContext, contexto.Principal))
+                    {
+                        contexto.RejectPrincipal();
+                        await contexto.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    }
+                };
             })
             .AddJwtBearer(opciones =>
             {
@@ -82,6 +93,14 @@ public static class Autenticacion
                     NameClaimType = ReclamoId,
                     RoleClaimType = ReclamoRol,
                     ClockSkew = TimeSpan.FromSeconds(30),
+                };
+                opciones.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async contexto =>
+                    {
+                        if (!await SesionVigenteAsync(contexto.HttpContext, contexto.Principal))
+                            contexto.Fail("La sesión ya no es válida.");
+                    },
                 };
             });
 
@@ -100,6 +119,18 @@ public static class Autenticacion
 
     public static Guid IdUsuario(this ClaimsPrincipal principal) =>
         Guid.Parse(principal.FindFirstValue(ReclamoId) ?? throw new InvalidOperationException("Sesión sin identificador."));
+
+    // La cuenta existe, está activa y conserva el sello con el que se abrió la sesión (DP03).
+    private static async Task<bool> SesionVigenteAsync(HttpContext http, ClaimsPrincipal? principal)
+    {
+        if (principal?.FindFirstValue(ReclamoId) is not { } id || !Guid.TryParse(id, out var usuarioId))
+            return false;
+        var sello = principal.FindFirstValue(ReclamoSello) ?? "";
+        var db = http.RequestServices.GetRequiredService<Persistencia.CadDbContext>();
+        var cuenta = await db.Users.AsNoTracking().Where(u => u.Id == usuarioId)
+            .Select(u => new { u.Activo, u.SecurityStamp }).SingleOrDefaultAsync(http.RequestAborted);
+        return cuenta is { Activo: true } && (cuenta.SecurityStamp ?? "") == sello;
+    }
 
     private static Task ResponderORedirigir(Microsoft.AspNetCore.Authentication.RedirectContext<CookieAuthenticationOptions> contexto, int estado)
     {

@@ -122,6 +122,9 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<DateTimeOffset>("AsignadaEn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("Cancelada")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("CasoId")
                         .HasColumnType("uuid");
 
