@@ -71,6 +71,16 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
 
     public bool Activo => Estado == EstadoAcompanamiento.Activo;
 
+    // HU40/HU41 — confirmación de bienestar que pidió la central (null si no hay una pendiente). Se consulta en cada envío.
+    private readonly SemaphoreSlim respuesta = new(1, 1);
+    private Guid? confirmacionAvisada, confirmacionPresentada;
+    // HU41-CA07: el SOS de «Necesito ayuda» se prepara una vez por confirmación y se reenvía igual en cada reintento.
+    private (Guid Confirmacion, SolicitudEmisionSos Sos)? sosDeConfirmacion;
+    public ConfirmacionBienestarVista? Confirmacion { get; private set; }
+    public string? ResultadoConfirmacion { get; private set; }
+    public bool ConfirmacionNoConfirmada { get; private set; }
+    public bool RespondiendoConfirmacion { get; private set; }
+
     // HU34-CA01/CA08: tiempo restante según la hora del servidor; null si no hay sesión activa.
     public TimeSpan? Restante => Activo && Sesion is { } s
         ? Max(TimeSpan.Zero, s.VenceEn - (reloj.GetUtcNow() + desfase))
@@ -96,6 +106,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
                 case ResultadoApi<SesionAcompanamientoVista?>.Correcto { Valor: { } activa }:
                     Aplicar(activa);
                     Error = null;
+                    await ConsultarConfirmacionAsync(token, activa.Id, ct);
                     if (await ubicacion.ConsultarPermisoAsync() == EstadoPermisoUbicacion.Concedido)
                         IniciarEnvio();
                     else
@@ -322,6 +333,8 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             (actual, tarea) = (envio, tareaEnvio);
             (envio, tareaEnvio) = (null, null);
         }
+        // Sin sesión activa ya no se ofrece responder desde el acompañamiento (el botón SOS sigue disponible).
+        Confirmacion = null;
         if (actual is null)
             return;
         segundoPlano?.Detener();
@@ -344,6 +357,8 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
                     Retirar(propio);
                     return;
                 }
+                if (await TokenAsync() is { } token)
+                    await ConsultarConfirmacionAsync(token, sesionId, ct);
                 Notificar();
             }
             while (await temporizador.WaitForNextTickAsync(ct));
@@ -497,6 +512,134 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             reintento = null;
         }
         actual?.Cancel();
+    }
+
+    // HU41-CA01: la confirmación pendiente; si es nueva, se avisa en el teléfono. Sin respuesta del servidor se conserva lo
+    // que se sabía y se vuelve a consultar en el próximo envío.
+    private async Task ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct)
+    {
+        ResultadoApi<ConfirmacionBienestarVista?> resultado;
+        try
+        {
+            resultado = await api.ConsultarConfirmacionAsync(token, sesionId, ct);
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return;
+        }
+        if (resultado is not ResultadoApi<ConfirmacionBienestarVista?>.Correcto correcto)
+            return;
+        Confirmacion = correcto.Valor;
+        if (Confirmacion is { } confirmacion && confirmacionAvisada != confirmacion.Id)
+        {
+            confirmacionAvisada = confirmacion.Id;
+            ResultadoConfirmacion = null;
+            ConfirmacionNoConfirmada = false;
+            segundoPlano?.AvisarConfirmacion();
+        }
+    }
+
+    // HU41-CA01: la pantalla mostró la confirmación al ciudadano; se registra una vez por confirmación.
+    public async Task RegistrarPresentacionAsync(CancellationToken ct = default)
+    {
+        if (Confirmacion is not { } confirmacion || confirmacionPresentada == confirmacion.Id || await TokenAsync() is not { } token)
+            return;
+        confirmacionPresentada = confirmacion.Id;
+        try
+        {
+            if (await api.RegistrarPresentacionConfirmacionAsync(token, confirmacion.Id, ct) is not ResultadoApi<ConfirmacionBienestarVista>.Correcto)
+                confirmacionPresentada = null; // se reintenta al volver a mostrarla
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            confirmacionPresentada = null;
+        }
+    }
+
+    // HU41-CA02/CA03/CA04/CA06/CA07. «Necesito ayuda» emite un SOS (o se vincula con el vigente) y solo se confirma cuando
+    // responde el servidor; sin respuesta no se da por registrado y se puede reintentar sin duplicarlo.
+    public async Task ResponderConfirmacionAsync(bool necesitoAyuda, CancellationToken ct = default)
+    {
+        if (Confirmacion is not { } confirmacion)
+            return;
+        await respuesta.WaitAsync(ct);
+        RespondiendoConfirmacion = true;
+        Notificar();
+        try
+        {
+            if (await TokenAsync() is not { } token)
+                return;
+            SolicitudEmisionSos? sos = null;
+            if (necesitoAyuda)
+            {
+                if (sosDeConfirmacion is { } preparado && preparado.Confirmacion == confirmacion.Id)
+                    sos = preparado.Sos;
+                else
+                {
+                    sos = await PrepararSosAsync(ct);
+                    sosDeConfirmacion = (confirmacion.Id, sos);
+                }
+            }
+
+            ResultadoApi<ConfirmacionBienestarVista> resultado;
+            try
+            {
+                resultado = await api.ResponderConfirmacionAsync(token, confirmacion.Id,
+                    new SolicitudRespuestaBienestar(necesitoAyuda ? RespuestasBienestar.NecesitoAyuda : RespuestasBienestar.EstoyBien, sos), ct);
+            }
+            catch (Exception e) when (!ct.IsCancellationRequested)
+            {
+                resultado = new ResultadoApi<ConfirmacionBienestarVista>.SinRespuesta(e.GetType().Name);
+            }
+
+            ConfirmacionNoConfirmada = false;
+            switch (resultado)
+            {
+                case ResultadoApi<ConfirmacionBienestarVista>.Correcto correcto:
+                    Confirmacion = null;
+                    sosDeConfirmacion = null;
+                    ResultadoConfirmacion = correcto.Valor.CasoId is null
+                        ? "Respondiste «Estoy bien». La central lo verá."
+                        : "Pedido de ayuda registrado: la central recibió tu SOS.";
+                    break;
+                case ResultadoApi<ConfirmacionBienestarVista>.Rechazado { Estado: 401 }:
+                    MarcarSesionTerminada();
+                    break;
+                case ResultadoApi<ConfirmacionBienestarVista>.Rechazado { Estado: 404 or 409 } rechazo:
+                    Confirmacion = null;
+                    ResultadoConfirmacion = rechazo.Mensaje;
+                    break;
+                case ResultadoApi<ConfirmacionBienestarVista>.Rechazado rechazo:
+                    ResultadoConfirmacion = $"No se registró tu respuesta: {rechazo.Mensaje}";
+                    break;
+                default:
+                    // CA06: sin respuesta del servidor no se confirma nada.
+                    ConfirmacionNoConfirmada = true;
+                    ResultadoConfirmacion = necesitoAyuda
+                        ? "Sin respuesta del servidor: tu pedido de ayuda NO está confirmado. Vuelve a intentarlo o pulsa el botón SOS."
+                        : "Sin respuesta del servidor: tu respuesta no llegó a la central. Vuelve a intentarlo.";
+                    break;
+            }
+        }
+        finally
+        {
+            RespondiendoConfirmacion = false;
+            respuesta.Release();
+            Notificar();
+        }
+    }
+
+    // HU08 en el flujo SOS de «Necesito ayuda»: la posición actual, leída tras la pulsación y como mucho 10 s; una anterior a la
+    // pulsación no se presenta como actual (DP11). Sin ella, el SOS se emite igual.
+    private async Task<SolicitudEmisionSos> PrepararSosAsync(CancellationToken ct)
+    {
+        var activadoEn = reloj.GetUtcNow();
+        UbicacionSos? actual = null;
+        if (await ubicacion.ConsultarPermisoAsync() == EstadoPermisoUbicacion.Concedido)
+            actual = await LeerPosicionAsync(EsperaUbicacionMaxima, ct);
+        if (actual is not null && actual.ObtenidaEn < activadoEn)
+            actual = null;
+        return new SolicitudEmisionSos(Guid.NewGuid(), activadoEn, actual);
     }
 
     private void MarcarSesionTerminada()

@@ -14,6 +14,7 @@ public static class ModuloAcompanamiento
         services.AddScoped<Consultas.ConsultarAcompanamientos>();
         services.AddHostedService<VencimientoAcompanamientos>();
         services.AddScoped<ConservarRecorridos>();
+        services.AddScoped<ConfirmarBienestar>();
         services.AddHostedService<EliminacionRecorridos>();
         return services;
     }
@@ -68,8 +69,45 @@ public static class ModuloAcompanamiento
                 ? Results.Ok(Vista(c.Sesion, gestionar))
                 : Results.NotFound());
 
+        // HU41-CA01: la confirmación pendiente de una sesión propia (200) o ninguna (204); 404 si la sesión es ajena o no existe.
+        acompanamiento.MapGet("/{id:guid}/confirmacion", async (Guid id, HttpContext contexto, GestionarAcompanamiento gestionar,
+                ConfirmarBienestar confirmar, CancellationToken ct) =>
+            {
+                var ciudadano = contexto.User.IdUsuario();
+                if (await gestionar.DelTitularAsync(ciudadano, id, ct) is null)
+                    return Results.NotFound();
+                return await confirmar.PendienteAsync(ciudadano, id, ct) is { } pendiente ? Results.Ok(Vista(pendiente)) : Results.NoContent();
+            });
+
+        // HU41-CA01: la app la presentó al ciudadano (solo cuenta la primera vez).
+        acompanamiento.MapPost("/confirmaciones/{id:guid}/presentacion", async (Guid id, HttpContext contexto, ConfirmarBienestar confirmar,
+                CancellationToken ct) =>
+            await confirmar.RegistrarPresentacionAsync(contexto.User.IdUsuario(), id, ct) is { } confirmacion
+                ? Results.Ok(Vista(confirmacion))
+                : Results.NotFound());
+
+        // HU41: 200 con la respuesta registrada (también ante un reenvío, CA07); 400 sin respuesta válida o, con «Necesito ayuda»,
+        // sin la solicitud del SOS; 409 si ya se respondió con la otra opción; 404 si la confirmación es ajena o no existe.
+        acompanamiento.MapPost("/confirmaciones/{id:guid}/respuesta", async (Guid id, SolicitudRespuestaBienestar solicitud, HttpContext contexto,
+                ConfirmarBienestar confirmar, CancellationToken ct) =>
+            await confirmar.ResponderAsync(contexto.User.IdUsuario(), id, solicitud, ct) switch
+            {
+                ResultadoRespuestaBienestar.Registrada r => Results.Ok(Vista(r.Confirmacion)),
+                ResultadoRespuestaBienestar.YaRegistrada r => Results.Ok(Vista(r.Confirmacion)),
+                ResultadoRespuestaBienestar.OtraRespuesta => Results.Problem(
+                    title: "Ya respondiste esta confirmación con la otra opción.", statusCode: StatusCodes.Status409Conflict),
+                ResultadoRespuestaBienestar.Invalida i => Results.ValidationProblem(i.Errores, title: "No se registró la respuesta."),
+                _ => Results.NotFound(),
+            });
+
         return app;
     }
+
+    public static string Texto(RespuestaBienestar respuesta) =>
+        respuesta == RespuestaBienestar.EstoyBien ? RespuestasBienestar.EstoyBien : RespuestasBienestar.NecesitoAyuda;
+
+    private static ConfirmacionBienestarVista Vista(ConfirmacionBienestar c) =>
+        new(c.Id, c.SolicitadaEn, c.PresentadaEn, c.Respuesta is { } r ? Texto(r) : null, c.RespondidaEn, c.CasoId);
 
     public static string Texto(EstadoSesion estado) => estado switch
     {

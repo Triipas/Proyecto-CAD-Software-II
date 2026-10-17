@@ -60,6 +60,14 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/posiciones"),
         new("POST", "/api/acompanamiento/{id:guid}/finalizacion", "HU36", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/finalizacion"),
+        // HU41 — confirmación de bienestar del titular. Con una sesión o confirmación inexistente (o ajena) el ciudadano recibe 404
+        // (o 400 sin cuerpo válido); el resto es rechazado antes.
+        new("GET", "/api/acompanamiento/{id:guid}/confirmacion", "HU41", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/confirmacion"),
+        new("POST", "/api/acompanamiento/confirmaciones/{id:guid}/presentacion", "HU41", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/confirmaciones/00000000-0000-0000-0000-000000000000/presentacion"),
+        new("POST", "/api/acompanamiento/confirmaciones/{id:guid}/respuesta", "HU41", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/confirmaciones/00000000-0000-0000-0000-000000000000/respuesta"),
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),

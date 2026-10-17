@@ -17,6 +17,7 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     private ResultadoInicioAcompanamiento? ultimoIntento;
     private bool finalidadAceptada;
     private CancellationTokenSource? segundero;
+    private bool visible;
 
     public AcompanamientoVistaModelo(ServicioAcompanamiento servicio, IServicioUbicacion ubicacion, INavegacion navegacion,
         Action abrirAjustes, TimeProvider reloj)
@@ -28,6 +29,8 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
         Finalizar = new ComandoAsincrono(() => servicio.FinalizarAsync(), () => servicio.Activo);
         Volver = new ComandoAsincrono(() => navegacion.IrAAsync(".."));
         VolverAIngresar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Ingreso));
+        ResponderEstoyBien = new ComandoAsincrono(() => servicio.ResponderConfirmacionAsync(necesitoAyuda: false), () => !servicio.RespondiendoConfirmacion);
+        ResponderNecesitoAyuda = new ComandoAsincrono(() => servicio.ResponderConfirmacionAsync(necesitoAyuda: true), () => !servicio.RespondiendoConfirmacion);
         servicio.Cambio += () => _ = HiloPrincipal(Actualizar);
     }
 
@@ -40,6 +43,18 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public ComandoAsincrono Finalizar { get; }
     public ComandoAsincrono Volver { get; }
     public ComandoAsincrono VolverAIngresar { get; }
+    public ComandoAsincrono ResponderEstoyBien { get; }
+    public ComandoAsincrono ResponderNecesitoAyuda { get; }
+
+    // HU41-CA01: la confirmación que pidió la central, con sus dos respuestas.
+    public bool HayConfirmacion => servicio.Confirmacion is not null;
+    public string TextoConfirmacion => servicio.Confirmacion is { } c
+        ? $"La central te pide confirmar cómo estás (a las {c.SolicitadaEn.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)})."
+        : "";
+    public bool RespondiendoConfirmacion => servicio.RespondiendoConfirmacion;
+    public bool HayResultadoConfirmacion => servicio.ResultadoConfirmacion is not null;
+    public string ResultadoConfirmacion => servicio.ResultadoConfirmacion ?? "";
+    public string TipoResultadoConfirmacion => servicio.ConfirmacionNoConfirmada ? "error" : "exito";
 
     // HU34-CA02: el ciudadano marca expresamente que acepta compartir su ubicación con la central durante el trayecto.
     public bool FinalidadAceptada
@@ -120,6 +135,7 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
 
     public async Task AlAparecerAsync()
     {
+        visible = true;
         await servicio.CargarAsync();
         Actualizar();
         IniciarSegundero();
@@ -127,6 +143,7 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
 
     public void AlDesaparecer()
     {
+        visible = false;
         segundero?.Cancel();
         segundero = null;
     }
@@ -172,10 +189,16 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
         foreach (var p in new[] { nameof(Estado), nameof(MostrarInicio), nameof(MostrarActivo), nameof(PuedeIniciar), nameof(TextoBotonIniciar),
                      nameof(TiempoRestante), nameof(TextoActivo), nameof(TextoTransmision), nameof(TipoAvisoTransmision), nameof(HayEstado),
                      nameof(TipoAvisoEstado), nameof(TextoEstado), nameof(SesionTerminada), nameof(HayMensajeInicio), nameof(MensajeInicio),
-                     nameof(MostrarPermitir), nameof(MostrarAjustes) })
+                     nameof(MostrarPermitir), nameof(MostrarAjustes), nameof(HayConfirmacion), nameof(TextoConfirmacion),
+                     nameof(RespondiendoConfirmacion), nameof(HayResultadoConfirmacion), nameof(ResultadoConfirmacion), nameof(TipoResultadoConfirmacion) })
             Notificar(p);
         Iniciar.ActualizarDisponibilidad();
         Finalizar.ActualizarDisponibilidad();
+        ResponderEstoyBien.ActualizarDisponibilidad();
+        ResponderNecesitoAyuda.ActualizarDisponibilidad();
+        // HU41-CA01: se registra la presentación cuando la pantalla la muestra.
+        if (visible && HayConfirmacion)
+            _ = servicio.RegistrarPresentacionAsync();
     }
 
 }

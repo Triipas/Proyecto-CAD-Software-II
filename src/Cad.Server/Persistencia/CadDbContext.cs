@@ -32,6 +32,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.ConservacionRecorrido> ConservacionesRecorrido => Set<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>();
+    public DbSet<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar> ConfirmacionesBienestar => Set<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
@@ -340,6 +341,29 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             posicion.HasKey(p => p.Id);
             posicion.HasIndex(p => new { p.SesionId, p.ObtenidaEn }).IsUnique();
             posicion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(p => p.SesionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU40 y HU41: confirmaciones de bienestar. DP20 (decisión del PO del 16/10/2026): una sola pendiente por sesión, también
+        // garantizado por la base de datos. Una respuesta guarda siempre su momento, y solo «Necesito ayuda» lleva un SOS.
+        builder.Entity<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar>(confirmacion =>
+        {
+            confirmacion.ToTable("ConfirmacionesBienestar", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_ConfirmacionesBienestar_Respuesta",
+                    "(\"Respuesta\" IS NULL AND \"RespondidaEn\" IS NULL AND \"CasoId\" IS NULL) OR " +
+                    "(\"Respuesta\" = 'EstoyBien' AND \"RespondidaEn\" IS NOT NULL AND \"CasoId\" IS NULL) OR " +
+                    "(\"Respuesta\" = 'NecesitoAyuda' AND \"RespondidaEn\" IS NOT NULL AND \"CasoId\" IS NOT NULL)");
+            });
+            confirmacion.HasKey(c => c.Id);
+            confirmacion.Property(c => c.Respuesta).HasConversion<string>().HasMaxLength(20);
+            confirmacion.Property(c => c.Version).IsRowVersion();
+            confirmacion.Ignore(c => c.Pendiente);
+            confirmacion.HasIndex(c => new { c.OperadorId, c.IdSolicitud }).IsUnique();
+            confirmacion.HasIndex(c => c.SesionId).IsUnique().HasFilter("\"Respuesta\" IS NULL").HasDatabaseName("IX_ConfirmacionesBienestar_Pendiente");
+            confirmacion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(c => c.SesionId).OnDelete(DeleteBehavior.Restrict);
+            confirmacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+            confirmacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
+            confirmacion.HasOne<Caso>().WithMany().HasForeignKey(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU39-B (CA05): conservación excepcional de un recorrido, una por sesión, con su caso, su finalidad y su responsable.

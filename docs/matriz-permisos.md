@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 272 casos tras HU09, HU32 y HU29 en el Sprint 5: 54 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 287 casos tras HU09, HU32, HU29 y HU41 en el Sprint 5: 57 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -33,6 +33,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/casos/mios/{id}/evaluacion` (solo un caso propio cerrado) | HU32 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` (solo las propias) | HU31 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `POST /api/acompanamiento`, `GET /api/acompanamiento/actual` y `/{id}`, `POST /api/acompanamiento/{id}/posiciones` y `/finalizacion` (solo las sesiones propias) | HU34–HU37 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `GET /api/acompanamiento/{id}/confirmacion`, `POST /api/acompanamiento/confirmaciones/{id}/presentacion` y `/respuesta` (solo las propias) | HU41 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET` y `PUT /api/sereno/estado`, `POST /api/sereno/posiciones` (estado operativo y posiciones del sereno) | HU18 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET /api/mediciones/presentacion` (resultados de RNF02; 404 si la medición está apagada) | RNF02 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -105,8 +106,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU37 | Cierre automático del acompañamiento a los 30 minutos | Ciudadano (lo ejecuta el temporizador del sistema) | **Verificada en el servidor (16/10/2026):** el cierre lo hace el temporizador, sin ninguna ruta; `GET /api/acompanamiento/{id}` solo para el ciudadano titular (otro ciudadano 404). |
 | HU38 | Consultar los acompañamientos activos y sus posiciones | Operador (autorizado, DP04) | **Verificada (16/10/2026):** `/panel/acompanamientos`, su fragmento y `/panel/acompanamientos/{id}` solo para Operador (`OperadorAutorizado`); un anónimo, un ciudadano (también el titular de la sesión), un sereno o un administrador son rechazados sin recibir nombres ni coordenadas (`SupervisionAcompanamientoTests.HU38_CA05_*`, matriz). |
 | HU39 | Consultar el historial de sesiones de acompañamiento | Operador (autorizado, DP04) | **HU39-A verificada (16/10/2026):** `/panel/acompanamientos/historial` y los recorridos solo para Operador; los demás perfiles son rechazados también ante una solicitud directa (`SupervisionAcompanamientoTests.HU38_CA05_HU39_CA03_*`). HU39-B (16/10/2026): la acción `Conservar` del detalle de la sesión solo para Operador; un administrador con token antifalsificación válido es enviado a «acceso denegado» sin registrar nada (`ConservacionRecorridosTests.HU39_CA03_*`). La eliminación por plazo la hace el servidor, sin ninguna ruta. |
-| HU40 | Solicitar una confirmación de bienestar | Operador | Pendiente (Sprint 5) |
-| HU41 | Responder una confirmación de bienestar | Ciudadano | Pendiente (Sprint 5) |
+| HU40 | Solicitar una confirmación de bienestar | Operador | **Verificada (17/10/2026, S5-T04):** la acción «Solicitar confirmación» de `/panel/acompanamientos/{id}` solo para Operador; un administrador es redirigido a «acceso denegado» sin registrar nada (`BienestarTests.HU40_OtroPerfilDelPanel_*`), y la app de un ciudadano o un sereno no obtiene la página (matriz). |
+| HU41 | Responder una confirmación de bienestar | Ciudadano | **Verificada (17/10/2026, S5-T05):** las tres rutas solo para Ciudadano y solo sobre sus sesiones y confirmaciones. Otro ciudadano recibe 404 sin ver, presentar ni responder nada (`BienestarTests.HU41_CA01_OtroCiudadano_*`), y los demás perfiles son rechazados (matriz). |
 | HU42 | Recibir avisos técnicos y de verificación del acompañamiento | Operador | Pendiente (Sprint 5) |
 | HU43 | Revisar avisos y registrar su atención | Operador | Pendiente (Sprint 5; DP19) |
 

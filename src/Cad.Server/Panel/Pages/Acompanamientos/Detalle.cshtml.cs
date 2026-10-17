@@ -11,8 +11,14 @@ namespace Cad.Server.Panel.Pages.Acompanamientos;
 // HU39-B (CA05): la conservación excepcional del recorrido se registra desde esta misma página.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanamiento.Aplicacion.ConservarRecorridos conservar,
-    IConfiguration configuracion) : PageModel
+    Modulos.Acompanamiento.Aplicacion.ConfirmarBienestar confirmar, IConfiguration configuracion) : PageModel
 {
+    // HU40: identificador del formulario de solicitud; un reenvío no crea otra solicitud.
+    [BindProperty]
+    public Guid IdSolicitudConfirmacion { get; set; }
+
+    public string? ErrorConfirmacion { get; private set; }
+
     [BindProperty]
     public FormularioConservacion Conservacion { get; set; } = new();
 
@@ -34,7 +40,28 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
         if (await consultar.DetalleAsync(id, ct) is not { } sesion)
             return NotFound();
         Sesion = sesion;
+        IdSolicitudConfirmacion = Guid.NewGuid();
         return Page();
+    }
+
+    // HU40: pedir al ciudadano una confirmación de bienestar. No crea un SOS ni un despacho (CA03).
+    public async Task<IActionResult> OnPostSolicitarConfirmacionAsync(Guid id, CancellationToken ct)
+    {
+        switch (await confirmar.SolicitarAsync(id, User.IdUsuario(), IdSolicitudConfirmacion, ct))
+        {
+            case Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.NoEncontrada:
+                return NotFound();
+            case Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.Solicitada or Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.YaSolicitada:
+                Mensaje = "Confirmación solicitada. El ciudadano la verá en su aplicación.";
+                return RedirectToPage(new { id });
+            case Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.SesionNoActiva:
+                ErrorConfirmacion = "La sesión ya no está activa: no se puede pedir una confirmación.";
+                break;
+            default:
+                ErrorConfirmacion = "Ya hay una confirmación esperando respuesta en esta sesión.";
+                break;
+        }
+        return await OnGetAsync(id, ct);
     }
 
     // CA05: vincula el recorrido con un caso, con su finalidad; desde entonces no se elimina por plazo.
