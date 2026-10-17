@@ -17,13 +17,17 @@ public sealed record AcompanamientoActivo(Guid Id, string Ciudadano, string? Tel
 
 // HU39-A: una sesión terminada (finalizada por el ciudadano o vencida), con sus datos de inicio, vencimiento y cierre (CA02).
 public sealed record SesionTerminada(Guid Id, string Ciudadano, EstadoSesion Estado, DateTimeOffset IniciadaEn, DateTimeOffset VenceEn,
-    DateTimeOffset CerradaEn, int Posiciones);
+    DateTimeOffset CerradaEn, int Posiciones, DateTimeOffset? PosicionesEliminadasEn = null, Guid? CasoConservado = null);
+
+// HU39-B (CA05): conservación excepcional del recorrido, con su caso, finalidad, responsable y momento.
+public sealed record ConservacionVista(Guid CasoId, string Finalidad, string Operador, DateTimeOffset RegistradaEn);
 
 public sealed record PaginaSesiones(IReadOnlyList<SesionTerminada> Sesiones, int Total, int Pagina, int TotalPaginas);
 
 // Recorrido de una sesión (activa o terminada), de la posición más reciente a la más antigua.
 public sealed record DetalleAcompanamiento(Guid Id, string Ciudadano, string? Telefono, EstadoSesion Estado, DateTimeOffset IniciadaEn,
-    DateTimeOffset VenceEn, DateTimeOffset? CerradaEn, DateTimeOffset? UltimoContactoEn, bool SinConexion, IReadOnlyList<PosicionVista> Posiciones)
+    DateTimeOffset VenceEn, DateTimeOffset? CerradaEn, DateTimeOffset? UltimoContactoEn, bool SinConexion, IReadOnlyList<PosicionVista> Posiciones,
+    DateTimeOffset? PosicionesEliminadasEn = null, ConservacionVista? Conservacion = null)
 {
     public bool Activa => Estado == EstadoSesion.Activa;
 }
@@ -72,13 +76,18 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
             return null;
         var posiciones = await db.PosicionesAcompanamiento.AsNoTracking().Where(p => p.SesionId == id)
             .OrderByDescending(p => p.ObtenidaEn).ToListAsync(ct);
+        var conservacion = await (from c in db.ConservacionesRecorrido.AsNoTracking()
+                                  join operador in db.Users.AsNoTracking() on c.OperadorId equals operador.Id
+                                  where c.SesionId == id
+                                  select new ConservacionVista(c.CasoId, c.Finalidad, operador.Nombres + " " + operador.Apellidos, c.RegistradaEn))
+                                 .SingleOrDefaultAsync(ct);
         var datos = sesion.Sesion;
         var activa = datos.Estado == EstadoSesion.Activa;
         // En una sesión terminada no hay posición actual: la antigüedad se mide hasta el cierre y todas son históricas.
         var referencia = activa ? ahora : datos.CerradaEn ?? ahora;
         return new DetalleAcompanamiento(datos.Id, sesion.Ciudadano, sesion.PhoneNumber, datos.Estado, datos.IniciadaEn, datos.VenceEn, datos.CerradaEn,
             datos.UltimoContactoEn, activa && SinConexion(datos.UltimoContactoEn, ahora),
-            posiciones.Select(p => Vista(p, referencia, activa)).ToList());
+            posiciones.Select(p => Vista(p, referencia, activa)).ToList(), datos.PosicionesEliminadasEn, conservacion);
     }
 
     // HU39-A: solo las sesiones terminadas, de la más reciente a la más antigua, de 50 en 50 (como la búsqueda de casos).
@@ -95,7 +104,8 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
         var filas = await consulta.OrderByDescending(x => x.sesion.CerradaEn).ThenByDescending(x => x.sesion.Id)
             .Skip((pagina - 1) * TamanoPagina).Take(TamanoPagina)
             .Select(x => new SesionTerminada(x.sesion.Id, x.Ciudadano, x.sesion.Estado, x.sesion.IniciadaEn, x.sesion.VenceEn, x.sesion.CerradaEn!.Value,
-                db.PosicionesAcompanamiento.Count(p => p.SesionId == x.sesion.Id)))
+                db.PosicionesAcompanamiento.Count(p => p.SesionId == x.sesion.Id), x.sesion.PosicionesEliminadasEn,
+                db.ConservacionesRecorrido.Where(c => c.SesionId == x.sesion.Id).Select(c => (Guid?)c.CasoId).FirstOrDefault()))
             .ToListAsync(ct);
         return new PaginaSesiones(filas, total, pagina, totalPaginas);
     }

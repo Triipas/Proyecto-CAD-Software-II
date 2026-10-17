@@ -29,6 +29,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
+    public DbSet<Modulos.Acompanamiento.Dominio.ConservacionRecorrido> ConservacionesRecorrido => Set<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
@@ -314,6 +315,20 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             posicion.HasKey(p => p.Id);
             posicion.HasIndex(p => new { p.SesionId, p.ObtenidaEn }).IsUnique();
             posicion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(p => p.SesionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU39-B (CA05): conservación excepcional de un recorrido, una por sesión, con su caso, su finalidad y su responsable.
+        builder.Entity<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>(conservacion =>
+        {
+            conservacion.ToTable("ConservacionesRecorrido", tabla =>
+                // IS NOT NULL explícito: un CHECK con NULL se acepta.
+                tabla.HasCheckConstraint("CK_ConservacionesRecorrido_Finalidad", "\"Finalidad\" IS NOT NULL AND length(btrim(\"Finalidad\")) > 0"));
+            conservacion.HasKey(c => c.SesionId);
+            conservacion.Property(c => c.Finalidad).HasMaxLength(Modulos.Acompanamiento.Dominio.ConservacionRecorrido.MaximoFinalidad);
+            conservacion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithOne()
+                .HasForeignKey<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>(c => c.SesionId).OnDelete(DeleteBehavior.Restrict);
+            conservacion.HasOne<Caso>().WithMany().HasForeignKey(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+            conservacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Usuario>(usuario =>
