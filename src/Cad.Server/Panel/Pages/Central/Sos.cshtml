@@ -185,6 +185,10 @@
                     </form>
                 }
             }
+            else if (sos.Estado == "Cancelada")
+            {
+                <p class="texto-secundario">El ciudadano canceló este SOS: no se puede asignar. El motivo está en el historial.</p>
+            }
             else if (sos.Estado != "Pendiente")
             {
                 <p class="texto-secundario">El caso no está pendiente: no se puede asignar.</p>

@@ -33,7 +33,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     public static readonly IReadOnlyList<EstadoCaso> EstadosFiltrables =
     [
         EstadoCaso.Recibido, EstadoCaso.EnRevision, EstadoCaso.Pendiente, EstadoCaso.Asignada, EstadoCaso.EnCamino,
-        EstadoCaso.EnAtencion, EstadoCaso.Cerrada, EstadoCaso.Derivada, EstadoCaso.Descartada,
+        EstadoCaso.EnAtencion, EstadoCaso.Cerrada, EstadoCaso.Derivada, EstadoCaso.Descartada, EstadoCaso.Cancelada,
     ];
 
     public TimeZoneInfo ZonaHoraria =>

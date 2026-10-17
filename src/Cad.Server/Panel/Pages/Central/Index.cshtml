@@ -71,6 +71,10 @@
             Atención urgente · SOS <span class="central__contador" data-contador>@Model.Pendientes.Count</span>
         </h2>
         <p class="texto-secundario">SOS pendientes, del más reciente al más antiguo. Se separan de reportes y acompañamientos.</p>
+        @* HU09-CA02 — aviso de un SOS cancelado por su titular (lo muestra central.js al recibirlo). *@
+        <div class="aviso aviso--advertencia central__aviso" role="status" data-aviso-cancelacion hidden>
+            <p class="aviso__texto"><span data-texto></span> <a href="#">Ver historial</a></p>
+        </div>
         <div data-region-lista>
             <partial name="_ListaSos" model="@Model.Lista" />
         </div>

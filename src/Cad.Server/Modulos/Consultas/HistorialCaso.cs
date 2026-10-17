@@ -96,6 +96,13 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             }
         }
 
+        // HU09: cancelación por el titular, con su motivo; «Cancelada» es un resultado final identificable (HU27-CA02).
+        if (await db.CancelacionesSos.AsNoTracking().SingleOrDefaultAsync(c => c.CasoId == casoId, ct) is { } cancelacion)
+        {
+            entradas.Add(new(cancelacion.CanceladaEn, "SOS cancelado por el ciudadano", await NombreAsync(cancelacion.CiudadanoId), $"Motivo: {cancelacion.Motivo}"));
+            resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cancelada), $"Cancelado por el ciudadano. Motivo: {cancelacion.Motivo}", cancelacion.CanceladaEn);
+        }
+
         // HU20: asignaciones (y su fin, al cerrar el caso).
         foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))
         {

@@ -189,6 +189,17 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaMiCaso(casoId));
     }
 
+    // ----- HU09: cancelar un SOS pendiente -----
+    public Func<Guid, SolicitudCancelacionSos, ResultadoApi<MiCasoDetalle>> RespuestaCancelacion { get; set; } =
+        (_, _) => new ResultadoApi<MiCasoDetalle>.Rechazado(404, "No encontrado", new Dictionary<string, string[]>());
+    public ConcurrentQueue<(Guid CasoId, string? Motivo)> Cancelaciones { get; } = new();
+
+    public Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct)
+    {
+        Cancelaciones.Enqueue((casoId, solicitud.Motivo));
+        return Task.FromResult(RespuestaCancelacion(casoId, solicitud));
+    }
+
     // ----- HU31: bandeja -----
     public Func<ResultadoApi<BandejaNotificaciones>> RespuestaBandeja { get; set; } =
         () => new ResultadoApi<BandejaNotificaciones>.Correcto(new BandejaNotificaciones(0, []));
