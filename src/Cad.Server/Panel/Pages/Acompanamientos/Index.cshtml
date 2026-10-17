@@ -1,0 +1,39 @@
+@page "/panel/acompanamientos"
+@model Cad.Server.Panel.Pages.Acompanamientos.IndexModel
+@{
+    ViewData["Title"] = "Acompañamientos";
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+}
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador autorizado</p>
+        <h1 class="titulo">Acompañamientos activos</h1>
+        <p class="texto-secundario">Ciudadanos que comparten su ubicación durante un trayecto. No son SOS ni reportes: no se asignan ni generan despacho.</p>
+    </div>
+    <a class="boton boton--secundario" href="/panel/acompanamientos/historial">Historial de sesiones</a>
+</div>
+
+<div class="central">
+    <section class="superficie" aria-labelledby="titulo-activos">
+        <h2 id="titulo-activos" class="central__titulo">Sesiones activas</h2>
+        <p class="texto-secundario">Se actualiza cada 10 segundos. Una posición con más de @((int)Model.Lista.Umbral.TotalSeconds) s está desactualizada.</p>
+        <div data-region-acompanamientos aria-live="polite">
+            <partial name="_ListaAcompanamientos" model="@Model.Lista" />
+        </div>
+    </section>
+
+    <section class="superficie central__mapa" aria-labelledby="titulo-mapa">
+        <h2 id="titulo-mapa" class="central__titulo">Mapa de acompañamientos</h2>
+        <p class="texto-secundario">Última posición de cada sesión (verde «A»; gris si está desactualizada o sin conexión).</p>
+        <div id="mapa" class="mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de la última posición de cada acompañamiento activo"></div>
+        <noscript><p class="texto-secundario">El mapa y la actualización automática necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    <script src="~/js/acompanamientos.js" asp-append-version="true"></script>
+}

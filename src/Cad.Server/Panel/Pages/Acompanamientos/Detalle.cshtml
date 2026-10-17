@@ -1,0 +1,97 @@
+@page "/panel/acompanamientos/{id:guid}"
+@model Cad.Server.Panel.Pages.Acompanamientos.DetalleModel
+@using Cad.Server.Panel.Pages.Acompanamientos
+@using Cad.Server.Modulos.Acompanamiento.Dominio
+@{
+    ViewData["Title"] = "Acompañamiento";
+    var s = Model.Sesion;
+    var zona = Model.ZonaHoraria;
+    var estado = s.Estado switch
+    {
+        EstadoSesion.Activa => s.SinConexion ? "Activa · sin conexión" : "Activa",
+        EstadoSesion.Finalizada => "Finalizada por el ciudadano",
+        _ => "Vencida a los 30 minutos",
+    };
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+}
+<p><a class="enlace-volver" href="@(s.Activa ? "/panel/acompanamientos" : "/panel/acompanamientos/historial")">← @(s.Activa ? "Acompañamientos activos" : "Historial de sesiones")</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador autorizado · Acompañamiento</p>
+        <h1 class="titulo">@s.Ciudadano</h1>
+        <p class="texto-secundario" data-estado-sesion>@estado</p>
+    </div>
+</div>
+
+<div class="central">
+    <section class="superficie" aria-labelledby="titulo-datos">
+        <h2 id="titulo-datos" class="central__titulo">Datos de la sesión</h2>
+        <dl class="datos">
+            <div><dt>Ciudadano</dt><dd>@s.Ciudadano</dd></div>
+            <div><dt>Teléfono</dt><dd>@(s.Telefono ?? "No registrado")</dd></div>
+            <div><dt>Inicio</dt><dd data-inicio>@Formato.Hora(s.IniciadaEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+            <div><dt>Vencimiento</dt><dd data-vencimiento>@Formato.Hora(s.VenceEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+            <div><dt>Cierre</dt><dd data-cierre>@(s.CerradaEn is { } c ? $"{Formato.Hora(c, zona, "dd/MM/yyyy HH:mm:ss")} · {estado}" : "Sin cerrar (activa)")</dd></div>
+            <div><dt>Último envío recibido</dt><dd>@(s.UltimoContactoEn is { } u ? Formato.Hora(u, zona, "dd/MM/yyyy HH:mm:ss") : "—")</dd></div>
+        </dl>
+        @if (s.SinConexion)
+        {
+            <p class="aviso aviso--advertencia" data-sin-conexion-aviso>
+                <partial name="_Icono" model="@("advertencia")" />
+                <span>Sin conexión: no llega ningún envío del dispositivo desde hace más de @((int)Model.Umbral.TotalSeconds) s.</span>
+            </p>
+        }
+    </section>
+
+    <section class="superficie central__mapa" aria-labelledby="titulo-recorrido">
+        <h2 id="titulo-recorrido" class="central__titulo">Recorrido</h2>
+        @if (s.Posiciones.Count == 0)
+        {
+            <p class="texto-secundario" data-sin-posiciones>Sin posiciones registradas.</p>
+        }
+        else
+        {
+            <div id="mapa-recorrido" class="mapa mapa--recorrido" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"
+                 data-puntos="@string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}"))"
+                 data-actual="@(s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
+            <div class="tabla-contenedor">
+                <table class="tabla" data-posiciones>
+                    <caption>@s.Posiciones.Count @(s.Posiciones.Count == 1 ? "posición" : "posiciones"), de la más reciente a la más antigua</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Obtenida</th>
+                            <th scope="col">Precisión</th>
+                            <th scope="col">Recibida</th>
+                            <th scope="col">Antigüedad</th>
+                            <th scope="col">Coordenadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < s.Posiciones.Count; i++)
+                        {
+                            var p = s.Posiciones[i];
+                            var actual = i == 0 && s.Activa && !p.Desactualizada && !s.SinConexion;
+                            <tr data-posicion data-desactualizada="@(p.Desactualizada ? "true" : "false")">
+                                <td>@Formato.Hora(p.ObtenidaEn, zona) @(actual ? "· actual" : "")</td>
+                                <td>± @Formato.Numero(p.PrecisionMetros, "0") m</td>
+                                <td>@Formato.Hora(p.RecibidaEn, zona)</td>
+                                <td>@(s.Activa ? Formato.Antiguedad(p.Antiguedad) : "—")@(s.Activa && p.Desactualizada ? " · desactualizada" : "")</td>
+                                <td>@Formato.Numero(p.Latitud, "0.00000"), @Formato.Numero(p.Longitud, "0.00000")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    @if (s.Posiciones.Count > 0)
+    {
+        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+        <script src="~/js/recorrido.js" asp-append-version="true"></script>
+    }
+}

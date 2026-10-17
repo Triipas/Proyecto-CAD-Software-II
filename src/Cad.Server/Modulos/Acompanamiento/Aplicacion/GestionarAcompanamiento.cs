@@ -15,6 +15,10 @@ public sealed class OpcionesAcompanamiento
 
     // Plan de Arquitectura, 9.9: el temporizador revisa los vencimientos cada 5 s (parámetro).
     public int IntervaloVencimientoSegundos { get; set; } = 5;
+
+    // DP12 (16/10/2026): una posición con más de 60 s es desactualizada. DP20: sin ningún envío durante ese mismo tiempo,
+    // la sesión se muestra «Sin conexión».
+    public int UmbralDesactualizadaSegundos { get; set; } = 60;
 }
 
 public abstract record ResultadoInicioAcompanamiento
@@ -117,11 +121,13 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
     public async Task<ResultadoPosicionAcompanamiento> RegistrarPosicionAsync(Guid ciudadanoId, Guid sesionId,
         PosicionAcompanamientoEnviada enviada, CancellationToken ct)
     {
-        // La sesión se lee con un bloqueo compartido hasta guardar la posición: una finalización simultánea espera, así que
-        // una posición solo se incorpora si la sesión estaba activa al recibirla (regla de cierre compartida, S4-T06).
+        // La sesión se bloquea hasta guardar la posición: una finalización simultánea espera, así que una posición solo se
+        // incorpora si la sesión estaba activa al recibirla (regla de cierre compartida, S4-T06). Bloqueo de escritura y no
+        // compartido: cada envío actualiza el último contacto de la sesión (DP20), y dos bloqueos compartidos que después
+        // escriben la misma fila se interbloquean (lo encontraron las pruebas con envíos simultáneos).
         await using var transaccion = await db.Database.BeginTransactionAsync(ct);
         var sesion = await db.SesionesAcompanamiento
-            .FromSql($"SELECT *, xmin FROM \"SesionesAcompanamiento\" WHERE \"Id\" = {sesionId} FOR SHARE")
+            .FromSql($"SELECT *, xmin FROM \"SesionesAcompanamiento\" WHERE \"Id\" = {sesionId} FOR NO KEY UPDATE")
             .AsNoTracking().SingleOrDefaultAsync(ct);
         if (sesion is null || sesion.CiudadanoId != ciudadanoId)
             return new ResultadoPosicionAcompanamiento.NoEncontrada();
@@ -130,16 +136,26 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
         if (!sesion.AdmitePosiciones(ahora))
             return new ResultadoPosicionAcompanamiento.SesionCerrada(sesion);
 
+        // DP20: cualquier envío a una sesión activa cuenta como contacto, aunque repita una posición ya registrada.
+        await db.SesionesAcompanamiento.Where(s => s.Id == sesion.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UltimoContactoEn, (DateTimeOffset?)ahora), ct);
+
         var posicion = PosicionAcompanamiento.Crear(sesion.Id, enviada.Latitud, enviada.Longitud, enviada.PrecisionMetros, enviada.ObtenidaEn, ahora);
         if (posicion is null)
+        {
+            await transaccion.CommitAsync(ct); // conserva el último contacto
             return new ResultadoPosicionAcompanamiento.Invalida(new()
             {
                 ["posicion"] = ["La posición no es válida: revisa las coordenadas, la precisión y la hora de obtención."],
             });
+        }
 
         // Un reenvío de la misma posición se detecta antes de escribir, para no abortar la transacción.
         if (await db.PosicionesAcompanamiento.AnyAsync(p => p.SesionId == sesion.Id && p.ObtenidaEn == posicion.ObtenidaEn, ct))
+        {
+            await transaccion.CommitAsync(ct); // conserva el último contacto
             return new ResultadoPosicionAcompanamiento.YaRegistrada();
+        }
 
         db.PosicionesAcompanamiento.Add(posicion);
         try
