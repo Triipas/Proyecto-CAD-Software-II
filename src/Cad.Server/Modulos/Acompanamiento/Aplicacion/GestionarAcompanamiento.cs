@@ -25,6 +25,12 @@ public sealed class OpcionesAcompanamiento
 
     // Plan de Arquitectura 9.9: la eliminación por plazo se revisa al arrancar y cada hora.
     public int IntervaloEliminacionMinutos { get; set; } = 60;
+
+    // HU42-CA02: una confirmación presentada sin respuesta durante 2 minutos genera un aviso de verificación.
+    public int PlazoConfirmacionSegundos { get; set; } = 120;
+
+    // HU42: cada cuánto evalúa el servidor las reglas de los avisos.
+    public int IntervaloAvisosSegundos { get; set; } = 10;
 }
 
 public abstract record ResultadoInicioAcompanamiento

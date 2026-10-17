@@ -12,7 +12,7 @@ public sealed class ConsultarMisCasos(CadDbContext db)
     // DP05: el estado que ve el titular (definido en el dominio; lo comparten HU30 y HU31).
     public static string EstadoPublico(OrigenCaso origen, EstadoCaso estado) => EstadoPublicoCaso.De(origen, estado);
 
-    private static string TextoOrigen(OrigenCaso origen) => origen == OrigenCaso.Sos ? "SOS" : "Reporte";
+    private static string TextoOrigen(OrigenCaso origen) => OrigenesCaso.Texto(origen);
 
     // CA01: los casos propios, los más recientes primero.
     public async Task<IReadOnlyList<MiCasoResumen>> ListarAsync(Guid ciudadanoId, CancellationToken ct)

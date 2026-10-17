@@ -22,6 +22,144 @@ namespace Cad.Server.Persistencia.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.ActuacionAviso", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AvisoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("IdSolicitud")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RegistradaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AvisoId", "RegistradaEn");
+
+                    b.HasIndex("OperadorId", "IdSolicitud")
+                        .IsUnique();
+
+                    b.ToTable("ActuacionesAviso", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ActuacionesAviso_Descripcion", "\"Descripcion\" IS NOT NULL AND length(btrim(\"Descripcion\")) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.AvisoAcompanamiento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CasoCreado")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CiudadanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Clave")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid?>("ConfirmacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("GeneradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("JustificacionCaso")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset>("ReferenciaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Regla")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid?>("ResponsableId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ResueltoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResueltoPor")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RevisionIniciadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SesionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<DateTimeOffset?>("VinculadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VinculadoPor")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CasoId");
+
+                    b.HasIndex("CiudadanoId");
+
+                    b.HasIndex("ConfirmacionId");
+
+                    b.HasIndex("ResponsableId");
+
+                    b.HasIndex("ResueltoPor");
+
+                    b.HasIndex("VinculadoPor");
+
+                    b.HasIndex("Estado", "GeneradoEn");
+
+                    b.HasIndex("SesionId", "Regla", "Clave")
+                        .IsUnique();
+
+                    b.ToTable("AvisosAcompanamiento", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AvisosAcompanamiento_Caso", "(\"CasoId\" IS NULL AND \"VinculadoPor\" IS NULL AND \"CasoCreado\" = FALSE AND \"JustificacionCaso\" IS NULL) OR (\"CasoId\" IS NOT NULL AND \"VinculadoPor\" IS NOT NULL AND \"VinculadoEn\" IS NOT NULL AND (\"CasoCreado\" = FALSE OR (\"JustificacionCaso\" IS NOT NULL AND length(btrim(\"JustificacionCaso\")) > 0)))");
+
+                            t.HasCheckConstraint("CK_AvisosAcompanamiento_Estado", "(\"Estado\" = 'Generado' AND \"ResponsableId\" IS NULL AND \"ResueltoEn\" IS NULL) OR (\"Estado\" = 'EnRevision' AND \"ResponsableId\" IS NOT NULL AND \"RevisionIniciadaEn\" IS NOT NULL AND \"ResueltoEn\" IS NULL) OR (\"Estado\" = 'Resuelto' AND \"ResponsableId\" IS NOT NULL AND \"ResueltoPor\" IS NOT NULL AND \"ResueltoEn\" IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.ConfirmacionBienestar", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1086,6 +1224,61 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.ActuacionAviso", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Acompanamiento.Dominio.AvisoAcompanamiento", null)
+                        .WithMany()
+                        .HasForeignKey("AvisoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.AvisoAcompanamiento", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CiudadanoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Acompanamiento.Dominio.ConfirmacionBienestar", null)
+                        .WithMany()
+                        .HasForeignKey("ConfirmacionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ResponsableId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ResueltoPor")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cad.Server.Modulos.Acompanamiento.Dominio.SesionAcompanamiento", null)
+                        .WithMany()
+                        .HasForeignKey("SesionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("VinculadoPor")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.ConfirmacionBienestar", b =>

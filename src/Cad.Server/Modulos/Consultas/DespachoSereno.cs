@@ -62,7 +62,7 @@ public sealed class ConsultarDespacho(CadDbContext db)
                 .SingleOrDefaultAsync(ct)
             : null;
 
-        return new DespachoSereno(despacho.Id, despacho.Origen.ToString().ToUpperInvariant(), EstadosCaso.Texto(despacho.Estado),
+        return new DespachoSereno(despacho.Id, OrigenesCaso.Texto(despacho.Origen).ToUpperInvariant(), EstadosCaso.Texto(despacho.Estado),
             despacho.RegistradoEn, despacho.AsignadaEn, ubicacion, informacion,
             avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.DesplazamientoConfirmado)?.OcurridoEn,
             avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.AtencionIniciada)?.OcurridoEn,

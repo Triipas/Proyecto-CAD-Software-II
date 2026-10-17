@@ -157,6 +157,27 @@
         }
     </section>
 
+    @* HU42 y HU43 — avisos de esta sesión. *@
+    <section class="superficie" aria-labelledby="titulo-avisos" data-avisos-sesion="@Model.Avisos.Count">
+        <h2 id="titulo-avisos" class="central__titulo">Avisos de la sesión</h2>
+        @if (Model.Avisos.Count == 0)
+        {
+            <p class="texto-secundario">Sin avisos.</p>
+        }
+        else
+        {
+            <ul class="lista-acompanamientos">
+                @foreach (var aviso in Model.Avisos)
+                {
+                    <li data-aviso="@aviso.Id" data-estado-aviso="@aviso.Estado">
+                        <strong>@aviso.TextoRegla</strong> · @Formato.Hora(aviso.GeneradoEn, zona) · @aviso.TextoEstado
+                        · <a href="/panel/avisos/@aviso.Id">Ver el aviso</a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
     @* HU39-B: conservación del recorrido (DP22: 30 días tras el cierre; conservación excepcional vinculada con un caso). *@
     <section class="superficie" aria-labelledby="titulo-conservacion" data-conservacion>
         <h2 id="titulo-conservacion" class="central__titulo">Conservación del recorrido</h2>

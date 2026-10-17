@@ -34,7 +34,7 @@ public sealed class RegistrarIntentoContacto(CadDbContext db, TimeProvider reloj
         if (errores.Count > 0)
             return new ResultadoIntentoContacto.Invalido(errores);
 
-        var caso = await db.Casos.AsNoTracking().SingleOrDefaultAsync(c => c.Id == casoId && c.Origen == OrigenCaso.Sos, ct);
+        var caso = await db.Casos.AsNoTracking().SingleOrDefaultAsync(c => c.Id == casoId && c.Origen != OrigenCaso.Reporte, ct); // SOS o caso urgente (DP19)
         if (caso is null)
             return new ResultadoIntentoContacto.CasoNoEncontrado();
 

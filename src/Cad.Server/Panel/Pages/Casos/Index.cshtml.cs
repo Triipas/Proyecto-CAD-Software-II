@@ -74,6 +74,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
             null or "" => null,
             "Sos" => OrigenCaso.Sos,
             "Reporte" => OrigenCaso.Reporte,
+            "Acompanamiento" => OrigenCaso.Acompanamiento,
             _ => Invalido<OrigenCaso>("origen", "Elige un origen de la lista."),
         };
 
@@ -136,5 +137,5 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     public string? ErrorDe(string campo) => Errores.TryGetValue(campo, out var mensaje) ? mensaje : null;
 
     public static string Detalle(CasoEncontrado caso) =>
-        caso.Origen == OrigenCaso.Sos ? $"/panel/central/sos/{caso.Id}" : $"/panel/reportes/{caso.Id}";
+        caso.Origen != OrigenCaso.Reporte ? $"/panel/central/sos/{caso.Id}" : $"/panel/reportes/{caso.Id}";
 }

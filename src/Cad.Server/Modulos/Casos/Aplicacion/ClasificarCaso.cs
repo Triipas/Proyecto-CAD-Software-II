@@ -37,7 +37,7 @@ public sealed class ClasificarCaso(CadDbContext db, TimeProvider reloj, INotific
 
         for (var intento = 1; ; intento++)
         {
-            var caso = await db.Casos.SingleOrDefaultAsync(c => c.Id == casoId && c.Origen == OrigenCaso.Sos, ct);
+            var caso = await db.Casos.SingleOrDefaultAsync(c => c.Id == casoId && c.Origen != OrigenCaso.Reporte, ct); // SOS o caso urgente (DP19)
             if (caso is null)
                 return new ResultadoClasificacion.CasoNoEncontrado();
 

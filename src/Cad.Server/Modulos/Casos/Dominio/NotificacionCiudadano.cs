@@ -22,7 +22,7 @@ public sealed class NotificacionCiudadano
         CiudadanoId = caso.CiudadanoId,
         CasoId = caso.Id,
         EstadoPublico = estadoPublico,
-        Texto = $"Tu {(caso.Origen == OrigenCaso.Sos ? "SOS" : "reporte")} pasó a «{estadoPublico}».",
+        Texto = $"Tu {caso.Origen switch { OrigenCaso.Sos => "SOS", OrigenCaso.Reporte => "reporte", _ => "caso" }} pasó a «{estadoPublico}».",
         CreadaEn = ahora,
     };
 
