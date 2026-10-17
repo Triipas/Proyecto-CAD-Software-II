@@ -37,6 +37,8 @@ public interface IApiCad
     Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct);
     // HU09: cancela un SOS propio pendiente; devuelve el caso actualizado.
     Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct);
+    // HU32: evalúa un caso propio cerrado; devuelve la evaluación registrada.
+    Task<ResultadoApi<MiEvaluacion>> EvaluarCasoAsync(string token, Guid casoId, SolicitudEvaluacionCaso solicitud, CancellationToken ct);
 
     // HU31 — bandeja de notificaciones del ciudadano.
     Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct);

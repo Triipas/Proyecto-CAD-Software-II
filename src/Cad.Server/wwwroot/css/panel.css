@@ -923,6 +923,20 @@ a.boton {
   overflow-wrap: anywhere;
 }
 
+/* HU33 — evaluación del ciudadano en el historial. */
+.evaluacion__puntuacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.evaluacion__puntuacion [aria-hidden] {
+  color: var(--color-advertencia);
+  font-size: 1.25rem;
+  letter-spacing: 0.1em;
+}
+
 .estado--contactado {
   color: var(--color-exito);
 }

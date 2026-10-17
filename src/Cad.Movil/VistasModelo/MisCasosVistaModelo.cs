@@ -136,6 +136,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         MostrarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = true; return Task.CompletedTask; });
         OcultarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = false; ErrorMotivo = ""; return Task.CompletedTask; });
         ConfirmarCancelacion = new ComandoAsincrono(CancelarAsync);
+        EnviarEvaluacion = new ComandoAsincrono(EvaluarAsync);
+        Opciones = CrearOpciones();
     }
 
     public ComandoAsincrono Actualizar { get; }
@@ -168,6 +170,35 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     public ComandoAsincrono MostrarCancelacion { get; }
     public ComandoAsincrono OcultarCancelacion { get; }
     public ComandoAsincrono ConfirmarCancelacion { get; }
+
+    // HU32 — evaluación voluntaria de un caso cerrado: puntuación de 1 a 5 y comentario opcional (CA01, CA02). Una por caso
+    // (CA03): ya evaluado, se muestra la evaluación registrada en lugar del formulario. No evaluar no restringe nada (CA06).
+    public const int MaximoComentario = 2000;
+    private int? puntuacion;
+    private string comentario = "", errorEvaluacion = "";
+    private bool evaluando;
+    private Guid idEvaluacion = Guid.NewGuid();
+
+    public bool PuedeEvaluar => caso is { Estado: EstadosPublicos.Cerrado, Evaluacion: null };
+    public bool HayEvaluacion => caso?.Evaluacion is not null;
+    public string TextoEvaluacion => caso?.Evaluacion is { } e ? $"Tu evaluación: {e.Puntuacion} de 5" : "";
+    public string ComentarioRegistrado => caso?.Evaluacion is { } e ? e.Comentario is { } c ? $"Comentario: {c}" : "Sin comentario." : "";
+    public IReadOnlyList<OpcionPuntuacion> Opciones { get; private set; }
+    public int? Puntuacion
+    {
+        get => puntuacion;
+        set { if (Asignar(ref puntuacion, value)) { Opciones = CrearOpciones(); Notificar(nameof(Opciones)); } }
+    }
+    public string Comentario { get => comentario; set { Asignar(ref comentario, value ?? ""); Notificar(nameof(ContadorComentario)); } }
+    public string ContadorComentario => $"{comentario.Length}/{MaximoComentario}";
+    public string ErrorEvaluacion { get => errorEvaluacion; private set { Asignar(ref errorEvaluacion, value); Notificar(nameof(HayErrorEvaluacion)); } }
+    public bool HayErrorEvaluacion => errorEvaluacion.Length > 0;
+    public bool Evaluando { get => evaluando; private set => Asignar(ref evaluando, value); }
+    public ComandoAsincrono EnviarEvaluacion { get; }
+
+    private IReadOnlyList<OpcionPuntuacion> CrearOpciones() =>
+        Enumerable.Range(1, 5).Select(v => new OpcionPuntuacion(v, v == puntuacion,
+            new ComandoAsincrono(() => { Puntuacion = v; ErrorEvaluacion = ""; return Task.CompletedTask; }))).ToList();
 
     public Task CargarAsync(Guid id)
     {
@@ -206,7 +237,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     private void NotificarCaso()
     {
         foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
-                     nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion) })
+                     nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion),
+                     nameof(PuedeEvaluar), nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado) })
             Notificar(p);
     }
 
@@ -266,4 +298,66 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
             Cancelando = false;
         }
     }
+
+    private async Task EvaluarAsync()
+    {
+        // CA02: sin puntuación no se envía.
+        if (puntuacion is not { } valor)
+        {
+            ErrorEvaluacion = "Elige una puntuación de 1 a 5.";
+            return;
+        }
+        ErrorEvaluacion = "";
+        if (await TokenAsync() is not { } token)
+            return;
+
+        Evaluando = true;
+        try
+        {
+            // El mismo identificador en cada reintento técnico: el servidor no registra una segunda evaluación (CA03).
+            var resultado = await Api.EvaluarCasoAsync(token, casoId,
+                new SolicitudEvaluacionCaso(idEvaluacion, valor, string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim()), CancellationToken.None);
+            switch (resultado)
+            {
+                case ResultadoApi<MiEvaluacion>.Correcto correcto when caso is not null:
+                    caso = caso with { Evaluacion = correcto.Valor };
+                    Mensaje = "";
+                    Confirmacion = "Gracias por tu evaluación.";
+                    break;
+                // CA03 y CA04: ya evaluado (por ejemplo, desde otro dispositivo) o el caso no está cerrado: se muestra lo actual.
+                case ResultadoApi<MiEvaluacion>.Rechazado { Estado: 409 } rechazo:
+                    await ActualizarAsync();
+                    Mensaje = rechazo.Mensaje;
+                    break;
+                case ResultadoApi<MiEvaluacion>.Rechazado { Estado: 400 } invalida:
+                    ErrorEvaluacion = invalida.Errores.Values.SelectMany(e => e).FirstOrDefault() ?? invalida.Mensaje;
+                    break;
+                case ResultadoApi<MiEvaluacion>.Rechazado { Estado: 404 }:
+                    caso = null;
+                    SinExito(resultado, "No se encontró el caso.");
+                    break;
+                case ResultadoApi<MiEvaluacion>.Rechazado { Estado: 401 }:
+                    SinExito(resultado, "No se encontró el caso.");
+                    break;
+                case ResultadoApi<MiEvaluacion>.Rechazado:
+                    Mensaje = "No se pudo registrar la evaluación. Inténtalo de nuevo.";
+                    break;
+                default:
+                    Mensaje = "No hay respuesta del servidor: la evaluación no se registró. Inténtalo de nuevo.";
+                    break;
+            }
+            NotificarCaso();
+        }
+        finally
+        {
+            Evaluando = false;
+        }
+    }
+}
+
+// HU32: una opción de puntuación (1 a 5) del formulario de evaluación.
+public sealed record OpcionPuntuacion(int Valor, bool Elegida, ComandoAsincrono Elegir)
+{
+    public string Texto => Valor.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public string Descripcion => $"Puntuación {Valor} de 5{(Elegida ? ", elegida" : "")}";
 }

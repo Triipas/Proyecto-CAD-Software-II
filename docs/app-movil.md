@@ -119,6 +119,12 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - Con la respuesta del servidor, el caso pasa a «Cancelado» con el motivo como resultado y el aviso «Cancelaste el SOS. La central fue avisada.». Si la central ya lo asignó, se muestra el rechazo y el estado actual (CA03). Sin respuesta, el motivo se conserva para reintentar; el servidor registra una sola cancelación (CA08). No afecta a un acompañamiento activo (CA07).
 - Capturas: [SOS pendiente](capturas/movil/72-hu09-sos-pendiente.png), [sin motivo](capturas/movil/73-hu09-sin-motivo.png), [con motivo](capturas/movil/74-hu09-motivo.png) y [cancelado](capturas/movil/75-hu09-cancelado.png); en la central, [aviso](capturas/panel/hu09-central-cancelacion.png) e [historial](capturas/panel/hu09-historial-cancelada.png).
 
+## Evaluar un caso cerrado (HU32, Sprint 5)
+
+- En el detalle de «Mis casos», un caso propio «Cerrado» sin evaluar muestra «Evaluar la atención (opcional)»: cinco botones de puntuación (1 a 5, con su descripción para lectores de pantalla), un comentario opcional de hasta 2000 caracteres y «Enviar evaluación». Sin puntuación no se envía (CA02).
+- Registrada la evaluación, el detalle muestra «Tu evaluación: N de 5» con el comentario y ya no ofrece otra (CA03). Si el caso ya estaba evaluado (por ejemplo, desde otro dispositivo), se muestra el rechazo y la evaluación registrada. Un reintento técnico usa el mismo identificador de solicitud. No evaluar no restringe ninguna función (CA06).
+- Capturas: [caso cerrado](capturas/movil/76-hu32-evaluar.png), [sin puntuación](capturas/movil/77-hu32-sin-puntuacion.png), [formulario](capturas/movil/78-hu32-formulario.png) y [evaluado](capturas/movil/79-hu32-evaluado.png); en el panel, [historial con la evaluación](capturas/panel/hu33-evaluacion-historial.png) (HU33).
+
 ## Notificaciones del ciudadano (HU31, Sprint 3)
 
 - `Servicios/Bandeja.cs` (`ServicioBandeja`), `Vistas/NotificacionesPagina.xaml` y `VistasModelo/NotificacionesVistaModelo.cs`: la bandeja de avisos por cambios de estado público de los casos propios. Las genera el servidor y persisten.

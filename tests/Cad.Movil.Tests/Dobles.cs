@@ -200,6 +200,17 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaCancelacion(casoId, solicitud));
     }
 
+    // ----- HU32: evaluar un caso cerrado -----
+    public Func<Guid, SolicitudEvaluacionCaso, ResultadoApi<MiEvaluacion>> RespuestaEvaluacion { get; set; } =
+        (_, s) => new ResultadoApi<MiEvaluacion>.Correcto(new MiEvaluacion(s.Puntuacion ?? 0, s.Comentario, DateTimeOffset.UnixEpoch));
+    public ConcurrentQueue<(Guid CasoId, SolicitudEvaluacionCaso Solicitud)> Evaluaciones { get; } = new();
+
+    public Task<ResultadoApi<MiEvaluacion>> EvaluarCasoAsync(string token, Guid casoId, SolicitudEvaluacionCaso solicitud, CancellationToken ct)
+    {
+        Evaluaciones.Enqueue((casoId, solicitud));
+        return Task.FromResult(RespuestaEvaluacion(casoId, solicitud));
+    }
+
     // ----- HU31: bandeja -----
     public Func<ResultadoApi<BandejaNotificaciones>> RespuestaBandeja { get; set; } =
         () => new ResultadoApi<BandejaNotificaciones>.Correcto(new BandejaNotificaciones(0, []));

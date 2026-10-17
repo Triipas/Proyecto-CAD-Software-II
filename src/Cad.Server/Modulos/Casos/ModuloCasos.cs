@@ -28,6 +28,7 @@ public static class ModuloCasos
         services.AddScoped<AvanzarCaso>();
         services.AddScoped<CerrarCaso>();
         services.AddScoped<CancelarSos>();
+        services.AddScoped<EvaluarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
@@ -92,6 +93,20 @@ public static class ModuloCasos
             })
             .RequireAuthorization(Politicas.Ciudadano);
 
+        // HU32 — evaluar un caso propio cerrado: 201 la primera vez; 200 con la misma evaluación ante un reenvío técnico; 400 sin
+        // puntuación válida (CA02); 409 si ya está evaluado (CA03) o no está cerrado (CA04); 404 si no es suyo o no existe (CA05).
+        app.MapPost("/api/casos/mios/{id:guid}/evaluacion", async (Guid id, SolicitudEvaluacionCaso solicitud, HttpContext contexto, EvaluarCaso evaluar,
+                CancellationToken ct) =>
+            await evaluar.EjecutarAsync(contexto.User.IdUsuario(), id, solicitud, ct) switch
+            {
+                ResultadoEvaluacion.Registrada r => Results.Json(Vista(r.Evaluacion), statusCode: StatusCodes.Status201Created),
+                ResultadoEvaluacion.YaRegistrada r => Results.Ok(Vista(r.Evaluacion)),
+                ResultadoEvaluacion.Rechazada r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
+                ResultadoEvaluacion.Invalida i => Results.ValidationProblem(i.Errores, title: "No se registró la evaluación."),
+                _ => Results.NotFound(),
+            })
+            .RequireAuthorization(Politicas.Ciudadano);
+
         // HU31 — bandeja de notificaciones: solo las del ciudadano que consulta (CA04).
         app.MapGet("/api/notificaciones", async (HttpContext contexto, Modulos.Consultas.BandejaCiudadano bandeja, CancellationToken ct) =>
                 Results.Ok(await bandeja.ConsultarAsync(contexto.User.IdUsuario(), ct)))
@@ -105,6 +120,8 @@ public static class ModuloCasos
 
     private static RespuestaSos Respuesta(Caso caso) =>
         new(caso.Id, caso.Estado.ToString(), caso.RegistradoEn, caso.UbicacionDisponible);
+
+    private static MiEvaluacion Vista(EvaluacionCaso e) => new(e.Puntuacion, e.Comentario, e.EvaluadaEn);
 
     private static RespuestaReporte RespuestaDeReporte(Caso caso) =>
         new(caso.Id, EstadosCaso.Texto(caso.Estado), caso.RegistradoEn);
