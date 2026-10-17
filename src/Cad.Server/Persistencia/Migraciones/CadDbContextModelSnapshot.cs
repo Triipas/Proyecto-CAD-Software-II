@@ -22,6 +22,37 @@ namespace Cad.Server.Persistencia.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.ConservacionRecorrido", b =>
+                {
+                    b.Property<Guid>("SesionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Finalidad")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RegistradaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("SesionId");
+
+                    b.HasIndex("CasoId");
+
+                    b.HasIndex("OperadorId");
+
+                    b.ToTable("ConservacionesRecorrido", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ConservacionesRecorrido_Finalidad", "\"Finalidad\" IS NOT NULL AND length(btrim(\"Finalidad\")) > 0");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.PosicionAcompanamiento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -82,6 +113,9 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("IniciadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("PosicionesEliminadasEn")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("UltimoContactoEn")
@@ -935,6 +969,27 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.ConservacionRecorrido", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Acompanamiento.Dominio.SesionAcompanamiento", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Acompanamiento.Dominio.ConservacionRecorrido", "SesionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.PosicionAcompanamiento", b =>

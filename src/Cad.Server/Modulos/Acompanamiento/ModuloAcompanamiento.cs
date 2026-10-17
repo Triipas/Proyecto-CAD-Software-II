@@ -13,6 +13,8 @@ public static class ModuloAcompanamiento
         services.AddScoped<GestionarAcompanamiento>();
         services.AddScoped<Consultas.ConsultarAcompanamientos>();
         services.AddHostedService<VencimientoAcompanamientos>();
+        services.AddScoped<ConservarRecorridos>();
+        services.AddHostedService<EliminacionRecorridos>();
         return services;
     }
 

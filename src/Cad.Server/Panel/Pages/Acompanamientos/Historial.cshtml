@@ -49,7 +49,7 @@ else
                         <td>@Fecha(s.IniciadaEn)</td>
                         <td>@Fecha(s.VenceEn)</td>
                         <td>@Fecha(s.CerradaEn)</td>
-                        <td>@s.Posiciones</td>
+                        <td>@(s.CasoConservado is not null ? $"{s.Posiciones} · conservadas (caso vinculado)" : s.PosicionesEliminadasEn is not null ? "Eliminadas por plazo" : s.Posiciones.ToString())</td>
                         <td><a href="/panel/acompanamientos/@s.Id" aria-label="Ver el recorrido de la sesión de @s.Ciudadano iniciada a las @Fecha(s.IniciadaEn)">Ver</a></td>
                     </tr>
                 }
