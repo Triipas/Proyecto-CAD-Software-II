@@ -45,6 +45,20 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- HU41: confirmación de bienestar que pidió la central. «Necesito ayuda» emite un SOS (o usa el que ya tengas). -->
+            <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayConfirmacion}" Stroke="{StaticResource ColorAdvertencia}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="¿Cómo estás?" FontAttributes="Bold" FontSize="20" />
+                    <Label Text="{Binding TextoConfirmacion}" />
+                    <Button Text="Estoy bien" Style="{StaticResource BotonPrincipal}" Command="{Binding ResponderEstoyBien}"
+                            SemanticProperties.Hint="Avisa a la central de que estás bien. El acompañamiento sigue activo" />
+                    <Button Text="Necesito ayuda" Style="{StaticResource BotonPrincipal}" BackgroundColor="{StaticResource ColorError}"
+                            Command="{Binding ResponderNecesitoAyuda}" SemanticProperties.Hint="Emite un SOS a la central" />
+                    <ActivityIndicator IsRunning="{Binding RespondiendoConfirmacion}" IsVisible="{Binding RespondiendoConfirmacion}" />
+                </VerticalStackLayout>
+            </Border>
+            <v:Aviso Tipo="{Binding TipoResultadoConfirmacion}" Texto="{Binding ResultadoConfirmacion}" IsVisible="{Binding HayResultadoConfirmacion}" />
+
             <!-- HU34-CA01/CA08: estado activo, tiempo restante y control de finalización; HU35-CA04: condición real. -->
             <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarActivo}">
                 <VerticalStackLayout Spacing="12">

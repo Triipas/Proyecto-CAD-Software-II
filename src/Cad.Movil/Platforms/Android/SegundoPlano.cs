@@ -38,6 +38,35 @@ public sealed class SegundoPlanoAndroid : IServicioSegundoPlano
         contexto.StopService(new Intent(contexto, typeof(ServicioUbicacionAcompanamiento)));
     }
 
+    // HU41: con la app en segundo plano, una notificación avisa de que la central pide confirmar cómo está el ciudadano. Al
+    // tocarla se abre la app; la respuesta se da en la pantalla del acompañamiento (no hay botones en la notificación).
+    public const string CanalBienestar = "bienestar";
+    private const int IdNotificacionBienestar = 3002;
+
+    public void AvisarConfirmacion()
+    {
+        var contexto = global::Android.App.Application.Context;
+        var abrir = contexto.PackageManager?.GetLaunchIntentForPackage(contexto.PackageName!);
+        abrir?.AddFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop);
+        var pendiente = PendingIntent.GetActivity(contexto, 1, abrir, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
+        var constructor = new NotificationCompat.Builder(contexto, CanalBienestar);
+        constructor.SetSmallIcon(Resource.Mipmap.appicon);
+        constructor.SetContentTitle("La central pregunta cómo estás");
+        constructor.SetContentText("Abre «Acompañamiento» y responde «Estoy bien» o «Necesito ayuda».");
+        constructor.SetPriority(NotificationCompat.PriorityHigh);
+        constructor.SetCategory(NotificationCompat.CategoryMessage);
+        constructor.SetAutoCancel(true);
+        constructor.SetContentIntent(pendiente);
+        try
+        {
+            NotificationManagerCompat.From(contexto)!.Notify(IdNotificacionBienestar, constructor.Build()!);
+        }
+        catch (Java.Lang.SecurityException)
+        {
+            // Sin permiso de notificaciones: la confirmación se ve igual al abrir la pantalla del acompañamiento.
+        }
+    }
+
     // Android 8+: canal de prioridad baja (sin sonido): es un aviso permanente, no una alerta.
     public static void CrearCanal(Context contexto)
     {
@@ -47,7 +76,13 @@ public sealed class SegundoPlanoAndroid : IServicioSegundoPlano
         {
             Description = "Aviso permanente mientras compartes tu ubicación con la central",
         };
-        ((NotificationManager)contexto.GetSystemService(Context.NotificationService)!).CreateNotificationChannel(canal);
+        var gestor = (NotificationManager)contexto.GetSystemService(Context.NotificationService)!;
+        gestor.CreateNotificationChannel(canal);
+        // HU41: canal de prioridad alta: la central espera una respuesta.
+        gestor.CreateNotificationChannel(new NotificationChannel(CanalBienestar, "Confirmación de bienestar", NotificationImportance.High)
+        {
+            Description = "Avisos de la central que piden confirmar cómo estás durante un acompañamiento",
+        });
     }
 }
 

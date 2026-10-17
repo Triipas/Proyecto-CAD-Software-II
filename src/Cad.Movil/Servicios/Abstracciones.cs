@@ -50,6 +50,11 @@ public interface IApiCad
     Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct);
     Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct);
     Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct);
+    // HU41: confirmación de bienestar pendiente (null si no hay), su presentación y la respuesta.
+    Task<ResultadoApi<ConfirmacionBienestarVista?>> ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct);
+    Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct);
+    Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
+        CancellationToken ct);
 
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);
@@ -94,12 +99,15 @@ public interface IServicioSegundoPlano
 {
     void Iniciar(DateTimeOffset venceEn);
     void Detener();
+    // HU41: avisa en el teléfono de que la central pide una confirmación (útil con la app en segundo plano).
+    void AvisarConfirmacion();
 }
 
 public sealed class SegundoPlanoNoDisponible : IServicioSegundoPlano
 {
     public void Iniciar(DateTimeOffset venceEn) { }
     public void Detener() { }
+    public void AvisarConfirmacion() { }
 }
 
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).
