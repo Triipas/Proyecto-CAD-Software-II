@@ -11,6 +11,7 @@ public static class ModuloAcompanamiento
     {
         services.Configure<OpcionesAcompanamiento>(configuracion.GetSection(OpcionesAcompanamiento.Seccion));
         services.AddScoped<GestionarAcompanamiento>();
+        services.AddScoped<Consultas.ConsultarAcompanamientos>();
         services.AddHostedService<VencimientoAcompanamientos>();
         return services;
     }

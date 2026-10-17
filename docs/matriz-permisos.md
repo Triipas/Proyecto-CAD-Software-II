@@ -46,6 +46,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /hubs/sereno/negotiate` y `/hubs/sereno` (aviso del despacho; cada sereno solo recibe los suyos) | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/acompanamientos` (y su fragmento `?handler=Lista`), `/panel/acompanamientos/{id}` y `/panel/acompanamientos/historial` (acompañamientos activos, recorridos e historial de sesiones) | HU38, HU39 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos` (búsqueda de casos con filtros) | HU26 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos/{id}/historial` (historial del caso, con notas internas rotuladas) | HU27 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -99,8 +100,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU35 | Compartir mi posición durante el acompañamiento | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento/{id}/posiciones` solo para el ciudadano titular; otros perfiles 403, otro ciudadano 404, sin registrar posiciones. |
 | HU36 | Finalizar el acompañamiento cuando yo decida | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento/{id}/finalizacion` solo para el ciudadano titular; otros perfiles 403, otro ciudadano 404, sin cerrar la sesión. |
 | HU37 | Cierre automático del acompañamiento a los 30 minutos | Ciudadano (lo ejecuta el temporizador del sistema) | **Verificada en el servidor (16/10/2026):** el cierre lo hace el temporizador, sin ninguna ruta; `GET /api/acompanamiento/{id}` solo para el ciudadano titular (otro ciudadano 404). |
-| HU38 | Consultar los acompañamientos activos y sus posiciones | Operador (autorizado, DP04) | Pendiente (Sprint 4) |
-| HU39 | Consultar el historial de sesiones de acompañamiento | Operador (autorizado, DP04) | Pendiente (Sprint 4; HU39-B bloqueada por DP22) |
+| HU38 | Consultar los acompañamientos activos y sus posiciones | Operador (autorizado, DP04) | **Verificada (16/10/2026):** `/panel/acompanamientos`, su fragmento y `/panel/acompanamientos/{id}` solo para Operador (`OperadorAutorizado`); un anónimo, un ciudadano (también el titular de la sesión), un sereno o un administrador son rechazados sin recibir nombres ni coordenadas (`SupervisionAcompanamientoTests.HU38_CA05_*`, matriz). |
+| HU39 | Consultar el historial de sesiones de acompañamiento | Operador (autorizado, DP04) | **HU39-A verificada (16/10/2026):** `/panel/acompanamientos/historial` y los recorridos solo para Operador; los demás perfiles son rechazados también ante una solicitud directa (`SupervisionAcompanamientoTests.HU38_CA05_HU39_CA03_*`). HU39-B: Sprint 4, bloque 6 (DP22 delegada en el equipo). |
 | HU40 | Solicitar una confirmación de bienestar | Operador | Pendiente (Sprint 5) |
 | HU41 | Responder una confirmación de bienestar | Ciudadano | Pendiente (Sprint 5) |
 | HU42 | Recibir avisos técnicos y de verificación del acompañamiento | Operador | Pendiente (Sprint 5) |

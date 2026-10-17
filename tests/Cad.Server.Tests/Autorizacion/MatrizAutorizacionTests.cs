@@ -75,6 +75,12 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
         new("POST", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
+        // HU38 y HU39-A — acompañamientos activos, recorrido de una sesión e historial de sesiones: solo el operador
+        // autorizado (DP04). Con una sesión inexistente el operador llega a la página (404); el resto, rechazado antes.
+        new("GET", "/panel/acompanamientos", "HU38", Acceso.SoloRol, Roles.Operador, "Acompañamientos activos"),
+        new("GET", "/panel/acompanamientos/{id:guid}", "HU38", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/acompanamientos/00000000-0000-0000-0000-000000000000"),
+        new("GET", "/panel/acompanamientos/historial", "HU39", Acceso.SoloRol, Roles.Operador, "Historial de sesiones de acompañamiento"),
         // HU26 — búsqueda de casos con filtros (solo operador, CA06).
         new("GET", "/panel/casos", "HU26", Acceso.SoloRol, Roles.Operador),
         // HU27 — historial de un caso. Con un caso inexistente el operador llega a la página (404); el resto, rechazado antes.
