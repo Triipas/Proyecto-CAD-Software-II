@@ -27,6 +27,7 @@ public static class ModuloCasos
         services.AddScoped<AvanzarCaso>();
         services.AddScoped<CerrarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
+        services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();
         services.AddScoped<Modulos.Consultas.ConsultarHistorialCaso>();

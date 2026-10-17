@@ -16,7 +16,7 @@ public abstract record ResultadoRegistroReporte
 
 // HU10 — Registrar un reporte de incidencia (parte de servidor de S3-T01 y S3-T02). Mismo mecanismo de idempotencia
 // que el SOS (S1-T14). Un reporte no es un SOS: no avisa a la sección de atención urgente (CA06).
-public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, ILogger<RegistrarReporte> registro)
+public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compartido.INotificador notificador, ILogger<RegistrarReporte> registro)
 {
     // DP08: la fecha y hora del hecho no pueden ser futuras. Margen técnico para la diferencia entre el reloj del
     // teléfono y el del servidor (no es una regla de negocio): sin él, «ahora» en un teléfono adelantado se rechazaría.
@@ -82,7 +82,22 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, ILogge
 
         // Sin descripción, referencia ni coordenadas en el registro (RNF07): solo el identificador y la fuente.
         registro.LogInformation("Reporte {CasoId} registrado (ubicación del hecho: {Fuente}).", caso.Id, u.Fuente);
+        await AvisarAsync(caso.Id);
         return new ResultadoRegistroReporte.Registrado(caso);
+    }
+
+    // HU25-CA05: la central incorpora el marcador sin recargar (sin el aviso sonoro de un SOS: no es urgente). Después de
+    // confirmar; si falla, el caso ya está guardado y aparece al resincronizar.
+    private async Task AvisarAsync(Guid casoId)
+    {
+        try
+        {
+            await notificador.CasoActualizadoAsync(casoId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogError(ex, "No se pudo avisar a la central del reporte {CasoId}; se mostrará al resincronizar.", casoId);
+        }
     }
 
     private sealed record UbicacionValida(string Fuente, double? Latitud, double? Longitud, double? Precision, string? Referencia);

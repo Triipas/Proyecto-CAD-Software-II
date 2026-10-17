@@ -360,7 +360,7 @@ public class ReporteTests(FabricaCad fabrica)
         var carrera = new ReintentoQueGana(conexion, ciudadano.Id, solicitud.IdSolicitud);
         await using var db = new CadDbContext(new DbContextOptionsBuilder<CadDbContext>().UseNpgsql(conexion).AddInterceptors(carrera).Options);
 
-        var resultado = await new RegistrarReporte(db, TimeProvider.System, NullLogger<RegistrarReporte>.Instance)
+        var resultado = await new RegistrarReporte(db, TimeProvider.System, fabrica.Services.GetRequiredService<Cad.Server.Compartido.INotificador>(), NullLogger<RegistrarReporte>.Instance)
             .EjecutarAsync(ciudadano.Id, solicitud, CancellationToken.None);
 
         var ya = Assert.IsType<ResultadoRegistroReporte.YaRegistrado>(resultado);

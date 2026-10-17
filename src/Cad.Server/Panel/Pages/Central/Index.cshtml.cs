@@ -11,7 +11,7 @@ namespace Cad.Server.Panel.Pages.Central;
 // muestran aparte, en «Reportes admitidos», y se asignan con las mismas reglas.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consultarSerenos, ConsultarReportesAdmitidos consultarReportes,
-    IConfiguration configuracion,
+    ConsultarCasosEnMapa consultarCasosEnMapa, IConfiguration configuracion,
     Microsoft.Extensions.Options.IOptions<Modulos.Mediciones.OpcionesMedicion> medicion) : PageModel
 {
     // RNF02: con la medición activada, el panel envía el acuse de presentación de cada SOS.
@@ -20,6 +20,9 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public IReadOnlyList<SosPendiente> Pendientes { get; private set; } = [];
 
     public IReadOnlyList<ReporteAdmitido> ReportesAdmitidos { get; private set; } = [];
+
+    // HU25: casos en curso con ubicación (los pendientes de asignación ya están en las listas).
+    public IReadOnlyList<CasoEnMapa> CasosEnMapa { get; private set; } = [];
 
     // HU19 — serenos con su estado, disponibilidad y última ubicación.
     public IReadOnlyList<SerenoMonitoreo> Serenos { get; private set; } = [];
@@ -45,7 +48,12 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
         Pendientes = await consultar.EjecutarAsync(ct);
         ReportesAdmitidos = await consultarReportes.EjecutarAsync(ct);
         Serenos = await consultarSerenos.EjecutarAsync(ct);
+        CasosEnMapa = await consultarCasosEnMapa.EjecutarAsync(ct);
     }
+
+    // HU25-CA05: fragmento de los casos en curso del mapa, que el panel pide al resincronizar.
+    public async Task<IActionResult> OnGetCasosMapaAsync(CancellationToken ct) =>
+        Partial("_CasosMapa", await consultarCasosEnMapa.EjecutarAsync(ct));
 
     // Fragmento de los reportes admitidos: se pide junto con la lista de SOS al resincronizar.
     public async Task<IActionResult> OnGetReportesAsync(CancellationToken ct) =>
