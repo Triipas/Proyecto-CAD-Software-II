@@ -1,0 +1,22 @@
+@model Cad.Server.Modulos.Consultas.TiemposCaso
+@* HU28 — tiempos del caso con las marcas registradas (DP18: por caso, sin promedios). *@
+<section class="superficie" aria-labelledby="titulo-tiempos" data-tiempos>
+    <h2 id="titulo-tiempos" class="central__titulo">Tiempos del caso</h2>
+    <dl class="datos">
+        @if (Model.EsSos)
+        {
+            <dt>Tiempo de respuesta</dt>
+            <dd data-tiempo-respuesta>@Model.Respuesta</dd>
+        }
+        else
+        {
+            <dt>Hasta la decisión de la revisión</dt>
+            <dd data-tiempo-decision>@Model.HastaDecision</dd>
+            <dt>Hasta el inicio de la atención</dt>
+            <dd data-tiempo-atencion>@Model.HastaAtencion</dd>
+        }
+    </dl>
+    <p class="texto-secundario">@(Model.EsSos
+        ? "Del registro del SOS al inicio de la atención. No es el tiempo de presentación en la central."
+        : "Medidos desde el registro del reporte. Un reporte derivado o descartado no se atiende.")</p>
+</section>

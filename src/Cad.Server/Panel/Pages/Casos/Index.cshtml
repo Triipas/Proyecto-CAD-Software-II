@@ -2,6 +2,7 @@
 @model Cad.Server.Panel.Pages.Casos.IndexModel
 @using System.Globalization
 @using Cad.Server.Modulos.Casos.Dominio
+@using Tiempos = Cad.Server.Modulos.Consultas.TiemposCaso
 @{
     ViewData["Title"] = "Casos";
     var inv = CultureInfo.InvariantCulture;
@@ -106,6 +107,9 @@ else
                     <th scope="col">Ciudadano</th>
                     <th scope="col">Sereno asignado</th>
                     <th scope="col">Ubicación</th>
+                    @* HU28 (DP18): tiempos por caso, desde el registro. *@
+                    <th scope="col">Hasta la decisión <span class="texto-secundario">(reportes)</span></th>
+                    <th scope="col">Hasta el inicio de atención <span class="texto-secundario">(en un SOS, tiempo de respuesta)</span></th>
                     <th scope="col">Acciones</th>
                 </tr>
             </thead>
@@ -122,6 +126,8 @@ else
                         <td>@(caso.Sereno ?? "—")</td>
                         @* HU26-CA05: sin coordenadas inventadas. *@
                         <td data-ubicacion>@(caso.ConUbicacion ? (caso.Origen == OrigenCaso.Sos ? "Del dispositivo" : "Lugar del hecho") : "Sin ubicación")</td>
+                        <td data-tiempo-decision class="@(Tiempos.SinValor(caso.Tiempos.HastaDecision) ? "texto-secundario" : null)">@caso.Tiempos.HastaDecision</td>
+                        <td data-tiempo-atencion class="@(Tiempos.SinValor(caso.Tiempos.HastaInicioAtencion) ? "texto-secundario" : null)">@caso.Tiempos.HastaInicioAtencion</td>
                         <td>
                             <a href="@Cad.Server.Panel.Pages.Casos.IndexModel.Detalle(caso)">Detalle<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
                             · <a href="/panel/casos/@caso.Id/historial">Historial<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>

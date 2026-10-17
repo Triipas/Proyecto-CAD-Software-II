@@ -16,7 +16,7 @@ namespace Cad.Server.Panel.Pages.Reportes;
 // curso, como en un SOS.
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
     ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
-    IConfiguration configuracion) : PageModel
+    ConsultarTiemposCaso consultarTiempos, IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
@@ -44,6 +44,9 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     public string? ErrorDecisionDe(string campo) => ErroresDecision.TryGetValue(campo, out var mensajes) ? mensajes[0] : null;
 
     public DetalleReporteVista Reporte { get; private set; } = null!;
+
+    // HU28: tiempos hasta la decisión de la revisión y hasta el inicio de la atención.
+    public TiemposCaso? Tiempos { get; private set; }
     public IReadOnlyList<CategoriaVista> Categorias { get; private set; } = [];
     public string? ErrorRevision { get; private set; }
     public string? ErrorCorreccion { get; private set; }
@@ -199,6 +202,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Categorias = await consultarCategorias.EjecutarAsync(ct);
         Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;
+        Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
         return true;
     }
 
