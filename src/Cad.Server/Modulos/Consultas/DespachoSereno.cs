@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Cad.Server.Modulos.Consultas;
 
 // HU21 — lo que ve el sereno de su despacho. Solo lectura y solo el caso con su asignación vigente (CA04, CA05).
-// Proyección cerrada a DP06: nunca se leen el ciudadano, el resultado del contacto ni el operador.
+// Proyección cerrada a DP06: nunca se leen los datos personales del ciudadano, el resultado del contacto ni el operador.
 public sealed class ConsultarDespacho(CadDbContext db)
 {
     // Despacho vigente del sereno, o null si no tiene ninguno.
@@ -41,9 +41,11 @@ public sealed class ConsultarDespacho(CadDbContext db)
             .Select(i => new InformacionDespacho(i.RegistradoEn, i.InformacionHecho, i.ReferenciaUbicacion))
             .ToListAsync(ct);
 
-        // HU22/HU23: horas de los avances, desde el historial del caso.
+        // HU22/HU23: horas de los avances de esta asignación (si el caso se reasignó tras una cancelación, DP03, no se
+        // mezclan los avances del sereno anterior).
         var avances = await db.EventosCaso.AsNoTracking()
-            .Where(e => e.CasoId == casoId && (e.Tipo == TipoEventoCaso.DesplazamientoConfirmado || e.Tipo == TipoEventoCaso.AtencionIniciada))
+            .Where(e => e.CasoId == casoId && e.OcurridoEn >= despacho.AsignadaEn
+                && (e.Tipo == TipoEventoCaso.DesplazamientoConfirmado || e.Tipo == TipoEventoCaso.AtencionIniciada))
             .Select(e => new { e.Tipo, e.OcurridoEn })
             .ToListAsync(ct);
 
@@ -52,10 +54,11 @@ public sealed class ConsultarDespacho(CadDbContext db)
             ? new UbicacionDespacho(latitud, longitud, despacho.PrecisionMetros!.Value, despacho.UbicacionObtenidaEn!.Value)
             : null;
 
-        // HU20-CA07: un reporte admitido lleva el lugar del hecho (DP06: sin la descripción ni los datos del ciudadano).
-        var lugar = despacho.Origen == OrigenCaso.Reporte
+        // HU20-CA07: un reporte admitido lleva el lugar del hecho y, desde la decisión del PO del 16/10/2026 sobre DP06,
+        // la descripción del ciudadano. Nunca sus datos personales.
+        var reporte = despacho.Origen == OrigenCaso.Reporte
             ? await db.DetallesReporte.AsNoTracking().Where(d => d.CasoId == casoId)
-                .Select(d => new LugarHechoDespacho(d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros, d.ReferenciaHecho))
+                .Select(d => new { Lugar = new LugarHechoDespacho(d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros, d.ReferenciaHecho), d.Descripcion })
                 .SingleOrDefaultAsync(ct)
             : null;
 
@@ -63,6 +66,6 @@ public sealed class ConsultarDespacho(CadDbContext db)
             despacho.RegistradoEn, despacho.AsignadaEn, ubicacion, informacion,
             avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.DesplazamientoConfirmado)?.OcurridoEn,
             avances.FirstOrDefault(a => a.Tipo == TipoEventoCaso.AtencionIniciada)?.OcurridoEn,
-            lugar);
+            reporte?.Lugar, reporte?.Descripcion);
     }
 }

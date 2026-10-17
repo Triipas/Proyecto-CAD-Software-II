@@ -162,6 +162,28 @@ public class DespachoTests
     }
 
     [Fact]
+    public async Task DP06_UnReporte_MuestraLaDescripcionDelCiudadano_UnSosNo()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho() with
+        {
+            Origen = "REPORTE",
+            LugarHecho = new LugarHechoDespacho(null, null, null, "Pasaje ficticio"),
+            DescripcionReporte = "Árbol caído sobre la pista (ficticio)",
+        });
+        var vm = VistaModelo(Servicio());
+
+        await vm.AlAparecerAsync();
+
+        Assert.True(vm.HayDescripcionReporte);
+        Assert.Equal("Árbol caído sobre la pista (ficticio)", vm.TextoDescripcionReporte);
+
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho());
+        var sos = VistaModelo(Servicio());
+        await sos.AlAparecerAsync();
+        Assert.False(sos.HayDescripcionReporte);
+    }
+
+    [Fact]
     public async Task HU20_CA07_UnReporteConSoloReferencia_NoMuestraCoordenadas()
     {
         api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho() with

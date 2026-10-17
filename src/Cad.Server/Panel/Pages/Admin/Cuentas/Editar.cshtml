@@ -40,7 +40,7 @@
     @if (Model.Cuenta.Activa)
     {
         <p>La cuenta está activa. Al desactivarla, ya no podrá iniciar sesión en @(Model.Cuenta.Rol == "Sereno" ? "la aplicación" : "el panel"). Sus registros (actuaciones, asignaciones, cierres) se conservan y siguen apareciendo en los historiales.</p>
-        <p class="texto-secundario">Pendiente de decisión (DP03): una sesión ya abierta sigue hasta que vence y una asignación vigente no cambia.</p>
+        <p class="texto-secundario">Su sesión abierta se cierra en el acto y, si tiene un caso asignado, la asignación se cancela y el caso vuelve a «Pendiente» para asignarlo a otro sereno (DP03).</p>
         <details class="confirmacion">
             <summary class="boton boton--secundario">Desactivar la cuenta…</summary>
             <form method="post" asp-page-handler="Desactivar" class="pila confirmacion__contenido" data-formulario>

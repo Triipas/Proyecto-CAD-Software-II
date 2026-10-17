@@ -48,11 +48,13 @@ public sealed record IntentoContactoVista(
 
 public sealed class ConsultarDetalleSos(CadDbContext db)
 {
-    public async Task<DetalleSos?> EjecutarAsync(Guid casoId, CancellationToken ct)
+    // cualquierOrigen: el detalle de un reporte en curso usa la misma asignación, avances y cierre (decisión del PO del
+    // 16/10/2026: el operador registra el inicio de atención y cierra un reporte como un SOS).
+    public async Task<DetalleSos?> EjecutarAsync(Guid casoId, CancellationToken ct, bool cualquierOrigen = false)
     {
         var sos = await (from caso in db.Casos.AsNoTracking()
                          join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
-                         where caso.Id == casoId && caso.Origen == OrigenCaso.Sos
+                         where caso.Id == casoId && (cualquierOrigen || caso.Origen == OrigenCaso.Sos)
                          select new
                          {
                              caso.Id, caso.Estado, caso.RegistradoEn,

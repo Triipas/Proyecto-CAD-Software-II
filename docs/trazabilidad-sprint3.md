@@ -204,8 +204,8 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 
 **Decisiones pendientes del PO:**
 
-- **DP06 (reportes):** ¿debe el sereno recibir la descripción de un reporte? Hoy solo recibe el lugar del hecho.
-- **Acciones del operador sobre un reporte en curso:** registrar el inicio de la atención y cerrar (HU23-CA02, HU24-CA05) solo están en el detalle de los SOS. Propuesta: añadirlas al detalle del reporte con las mismas reglas.
+- **DP06 (reportes):** ¿debe el sereno recibir la descripción de un reporte? **Resuelta el 16/10/2026: sí.** Se implementa en el Sprint 4 (bloque 4, [trazabilidad-sprint4.md](trazabilidad-sprint4.md)).
+- **Acciones del operador sobre un reporte en curso:** registrar el inicio de la atención y cerrar (HU23-CA02, HU24-CA05). **Resuelta el 16/10/2026: sí, como en un SOS.** Sprint 4, bloque 4.
 
 **Trasladado (lo ejecuta el equipo):** S3-T19 (RNF02 en Render), S3-T20 (SPIKE01 en un teléfono real) y S3-T21 (push con la app cerrada), y un APK nuevo para el teléfono del equipo.
 
