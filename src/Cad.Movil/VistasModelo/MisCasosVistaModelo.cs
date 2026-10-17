@@ -126,9 +126,17 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     private Guid casoId;
     private MiCasoDetalle? caso;
 
+    private bool formularioCancelacion, cancelando;
+    private string motivoCancelacion = "", errorMotivo = "", confirmacion = "";
+
     public MiCasoVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null)
-        : base(api, sesiones, navegacion, reloj, zona) =>
+        : base(api, sesiones, navegacion, reloj, zona)
+    {
         Actualizar = new ComandoAsincrono(ActualizarAsync);
+        MostrarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = true; return Task.CompletedTask; });
+        OcultarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = false; ErrorMotivo = ""; return Task.CompletedTask; });
+        ConfirmarCancelacion = new ComandoAsincrono(CancelarAsync);
+    }
 
     public ComandoAsincrono Actualizar { get; }
     public bool HayCaso => caso is not null;
@@ -139,6 +147,27 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     public bool HayResultado => !string.IsNullOrEmpty(caso?.Resultado);
     public IReadOnlyList<ElementoAvance> Avances =>
         caso?.Avances.Select(a => new ElementoAvance(Local(a.En), a.Estado, a.Detalle)).ToList() ?? [];
+
+    // HU09 — cancelar un SOS propio mientras está pendiente (para su titular, «Recibido»: DP05), indicando el motivo (CA01, CA04).
+    // Asignado o en un estado posterior ya no se ofrece; si cambió mientras tanto, el servidor lo rechaza (CA03).
+    public const int MaximoMotivo = 500;
+    public bool PuedeCancelar => caso is { Origen: "SOS", Estado: EstadosPublicos.Recibido };
+    public bool OfrecerCancelacion => PuedeCancelar && !formularioCancelacion;
+    public bool FormularioCancelacion
+    {
+        get => formularioCancelacion && PuedeCancelar;
+        private set { Asignar(ref formularioCancelacion, value); Notificar(nameof(OfrecerCancelacion)); }
+    }
+    public string MotivoCancelacion { get => motivoCancelacion; set { Asignar(ref motivoCancelacion, value ?? ""); Notificar(nameof(ContadorMotivo)); } }
+    public string ContadorMotivo => $"{motivoCancelacion.Length}/{MaximoMotivo}";
+    public string ErrorMotivo { get => errorMotivo; private set { Asignar(ref errorMotivo, value); Notificar(nameof(HayErrorMotivo)); } }
+    public bool HayErrorMotivo => errorMotivo.Length > 0;
+    public bool Cancelando { get => cancelando; private set => Asignar(ref cancelando, value); }
+    public string Confirmacion { get => confirmacion; private set { Asignar(ref confirmacion, value); Notificar(nameof(HayConfirmacion)); } }
+    public bool HayConfirmacion => confirmacion.Length > 0;
+    public ComandoAsincrono MostrarCancelacion { get; }
+    public ComandoAsincrono OcultarCancelacion { get; }
+    public ComandoAsincrono ConfirmarCancelacion { get; }
 
     public Task CargarAsync(Guid id)
     {
@@ -166,13 +195,75 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
                     caso = null;
                 SinExito(resultado, "No se encontró el caso.");
             }
-            foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
-                         nameof(HayResultado), nameof(Avances) })
-                Notificar(p);
+            NotificarCaso();
         }
         finally
         {
             Cargando = false;
+        }
+    }
+
+    private void NotificarCaso()
+    {
+        foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
+                     nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion) })
+            Notificar(p);
+    }
+
+    private async Task CancelarAsync()
+    {
+        var motivo = motivoCancelacion.Trim();
+        if (motivo.Length == 0)
+        {
+            ErrorMotivo = "Indica el motivo de la cancelación.";
+            return;
+        }
+        ErrorMotivo = "";
+        if (await TokenAsync() is not { } token)
+            return;
+
+        Cancelando = true;
+        try
+        {
+            var resultado = await Api.CancelarSosAsync(token, casoId, new SolicitudCancelacionSos(motivo), CancellationToken.None);
+            switch (resultado)
+            {
+                case ResultadoApi<MiCasoDetalle>.Correcto correcto:
+                    caso = correcto.Valor;
+                    FormularioCancelacion = false;
+                    MotivoCancelacion = "";
+                    Mensaje = "";
+                    Confirmacion = "Cancelaste el SOS. La central fue avisada.";
+                    break;
+                // CA03: la central ya lo asignó; se muestra el estado actual.
+                case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 409 } rechazo:
+                    FormularioCancelacion = false;
+                    await ActualizarAsync();
+                    Mensaje = rechazo.Mensaje;
+                    break;
+                case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 400 } invalido:
+                    ErrorMotivo = invalido.Errores.TryGetValue("motivo", out var errores) && errores.Length > 0 ? errores[0] : invalido.Mensaje;
+                    break;
+                case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 404 }:
+                    caso = null;
+                    SinExito(resultado, "No se encontró el caso.");
+                    break;
+                case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 401 }:
+                    SinExito(resultado, "No se encontró el caso.");
+                    break;
+                case ResultadoApi<MiCasoDetalle>.Rechazado:
+                    Mensaje = "No se pudo cancelar el SOS. Inténtalo de nuevo.";
+                    break;
+                default:
+                    // Sin respuesta: se puede reintentar sin duplicar (el servidor registra una sola cancelación, CA08).
+                    Mensaje = "No hay respuesta del servidor: el SOS no se canceló. Inténtalo de nuevo.";
+                    break;
+            }
+            NotificarCaso();
+        }
+        finally
+        {
+            Cancelando = false;
         }
     }
 }

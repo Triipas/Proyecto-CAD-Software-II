@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
@@ -26,6 +27,7 @@ public static class ModuloCasos
         services.AddScoped<ClasificarCaso>();
         services.AddScoped<AvanzarCaso>();
         services.AddScoped<CerrarCaso>();
+        services.AddScoped<CancelarSos>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
@@ -71,6 +73,23 @@ public static class ModuloCasos
             .RequireAuthorization(Politicas.Ciudadano);
         app.MapGet("/api/casos/mios/{id:guid}", async (Guid id, HttpContext contexto, Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
                 await consultar.DetalleAsync(contexto.User.IdUsuario(), id, ct) is { } detalle ? Results.Ok(detalle) : Results.NotFound())
+            .RequireAuthorization(Politicas.Ciudadano);
+
+        // HU09 — cancelar un SOS propio pendiente, con motivo: 200 con el caso actualizado (también ante un reenvío, sin cambiar
+        // el motivo ni el momento ya registrados: CA08); 400 sin motivo (CA04); 409 si ya no está pendiente (CA03); 404 si no es
+        // suyo o no existe, sin distinguirlos (CA05).
+        app.MapPost("/api/casos/mios/{id:guid}/cancelacion", async (Guid id, SolicitudCancelacionSos solicitud, HttpContext contexto, CancelarSos cancelar,
+                Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
+            {
+                var ciudadano = contexto.User.IdUsuario();
+                return await cancelar.EjecutarAsync(ciudadano, id, solicitud.Motivo, ct) switch
+                {
+                    ResultadoCancelacion.Cancelado or ResultadoCancelacion.YaCancelado => Results.Ok(await consultar.DetalleAsync(ciudadano, id, ct)),
+                    ResultadoCancelacion.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
+                    ResultadoCancelacion.Invalido i => Results.ValidationProblem(i.Errores, title: "No se canceló el SOS."),
+                    _ => Results.NotFound(),
+                };
+            })
             .RequireAuthorization(Politicas.Ciudadano);
 
         // HU31 — bandeja de notificaciones: solo las del ciudadano que consulta (CA04).

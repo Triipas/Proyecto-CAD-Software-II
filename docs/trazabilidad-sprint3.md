@@ -193,7 +193,7 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 **Con cláusulas pendientes según el Plan Scrum (no se acreditan aún):**
 
 - **HU17:** CA04 (exclusión del mapa de concentración) llega con HU29 (Sprint 5).
-- **HU27:** CA02 («Cancelada») llega con HU09 (Sprint 5).
+- **HU27:** CA02 («Cancelada») llega con HU09 (Sprint 5). *Actualización del 16/10/2026:* verificada con HU09 (S5-T03, [trazabilidad-sprint5.md](trazabilidad-sprint5.md)).
 - **HU03:** CA04 acumulativo, hasta el Sprint 5.
 
 **Interpretaciones que el PO debe confirmar en la Review:**

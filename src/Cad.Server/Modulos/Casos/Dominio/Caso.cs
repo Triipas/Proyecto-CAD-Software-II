@@ -5,8 +5,9 @@ public enum OrigenCaso { Sos, Reporte }
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
 // (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte,
-// «En revisión» (HU14), «Derivada» (HU16) y «Descartada» (HU17). Un reporte admitido pasa a «Pendiente» (HU15).
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision, Derivada, Descartada }
+// «En revisión» (HU14), «Derivada» (HU16) y «Descartada» (HU17). Un reporte admitido pasa a «Pendiente» (HU15). El Sprint 5
+// añade «Cancelada» (HU09), un estado final: no es asignable (HU20).
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision, Derivada, Descartada, Cancelada }
 
 public static class EstadosCaso
 {
@@ -22,6 +23,7 @@ public static class EstadosCaso
         EstadoCaso.EnRevision => "En revisión",
         EstadoCaso.Derivada => "Derivada",
         EstadoCaso.Descartada => "Descartada",
+        EstadoCaso.Cancelada => "Cancelada",
         _ => estado.ToString(),
     };
 }
@@ -84,6 +86,16 @@ public sealed class Caso
         if (Estado is not (EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion))
             throw new InvalidOperationException("Solo un caso asignado y sin cerrar vuelve a «Pendiente».");
         Estado = EstadoCaso.Pendiente;
+    }
+
+    // HU09-CA01/CA03: el titular solo cancela un SOS «Pendiente»; asignado o en un estado posterior, ya no.
+    public bool PuedeCancelarse => Origen == OrigenCaso.Sos && Estado == EstadoCaso.Pendiente;
+
+    public void Cancelar()
+    {
+        if (!PuedeCancelarse)
+            throw new InvalidOperationException("Solo un SOS pendiente puede cancelarse.");
+        Estado = EstadoCaso.Cancelada;
     }
 
     // HU24-CA01/CA03: solo un caso «En atención» se cierra.

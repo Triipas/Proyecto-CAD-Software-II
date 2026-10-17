@@ -35,6 +35,8 @@ public interface IApiCad
     // HU30 — mis casos (solo datos públicos, DP05). El caso de otro ciudadano responde 404 (CA04).
     Task<ResultadoApi<List<MiCasoResumen>>> ConsultarMisCasosAsync(string token, CancellationToken ct);
     Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct);
+    // HU09: cancela un SOS propio pendiente; devuelve el caso actualizado.
+    Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct);
 
     // HU31 — bandeja de notificaciones del ciudadano.
     Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct);

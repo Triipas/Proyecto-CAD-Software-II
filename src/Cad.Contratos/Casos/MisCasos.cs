@@ -20,4 +20,9 @@ public static class EstadosPublicos
     public const string Cerrado = "Cerrado";
     public const string Derivado = "Derivado";
     public const string Descartado = "Descartado";
+    // HU09: SOS cancelado por su titular.
+    public const string Cancelado = "Cancelado";
 }
+
+// HU09 — cancelación de un SOS propio pendiente: el motivo es obligatorio (CA01, CA04).
+public sealed record SolicitudCancelacionSos(string? Motivo);
