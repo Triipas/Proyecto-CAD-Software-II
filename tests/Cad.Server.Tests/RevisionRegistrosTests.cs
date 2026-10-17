@@ -352,6 +352,83 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         AfirmarSinDatosSensibles(sensibles);
     }
 
+    [Fact]
+    public async Task S5T16_CancelacionEvaluacionBienestarAvisosYMapas_NingunDatoSensibleEnLosRegistros()
+    {
+        var sello = Guid.NewGuid().ToString("N")[..10];
+        var sensibles = new Dictionary<string, List<string>>
+        {
+            ["contraseñas"] = [],
+            ["tokens y cookies"] = [],
+            ["datos personales"] = [],
+            ["coordenadas"] = [],
+            ["secretos del servidor"] = [fabrica.ClaveFirmaJwt, fabrica.AdminClave, new NpgsqlConnectionStringBuilder(ConexionPruebas.Obtener()).Password!],
+        };
+        var ciudadana = await fabrica.CrearAsync(Roles.Ciudadano, telefono: $"9{Random.Shared.Next(10_000_000, 99_999_999)}");
+        sensibles["contraseñas"].Add(ciudadana.Clave);
+        sensibles["datos personales"].Add(ciudadana.Correo);
+        var app = await fabrica.CrearClienteAppAsync(ciudadana);
+        sensibles["tokens y cookies"].Add(app.DefaultRequestHeaders.Authorization!.Parameter!);
+        var operador = await fabrica.CrearAsync(Roles.Operador);
+        sensibles["contraseñas"].Add(operador.Clave);
+        var panel = fabrica.CrearNavegador();
+        sensibles["tokens y cookies"].Add(ValorCookie(await panel.IngresarAlPanelAsync(operador.Correo, operador.Clave)));
+
+        // HU09: un SOS con ubicación cancelado con un motivo personal.
+        Coordenadas(sensibles, out var latSos, out var lonSos);
+        var ahora = DateTimeOffset.UtcNow;
+        var sos = (await (await app.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), ahora, new UbicacionSos(latSos, lonSos, 9, ahora.AddSeconds(1)))))
+            .Content.ReadFromJsonAsync<RespuestaSos>())!.Id;
+        var motivo = $"Mi hermano {sello} ya llegó a casa";
+        sensibles["datos personales"].Add(motivo);
+        Assert.Equal(HttpStatusCode.OK, (await app.PostAsJsonAsync($"/api/casos/mios/{sos}/cancelacion", new Cad.Contratos.Casos.SolicitudCancelacionSos(motivo))).StatusCode);
+
+        // HU40/HU41: acompañamiento con posiciones, confirmación presentada y «Necesito ayuda» con la ubicación actual.
+        var sesion = (await (await app.PostAsJsonAsync("/api/acompanamiento", new Cad.Contratos.Acompanamiento.SolicitudInicioAcompanamiento(Guid.NewGuid(), true, true)))
+            .Content.ReadFromJsonAsync<Cad.Contratos.Acompanamiento.SesionAcompanamientoVista>())!;
+        Coordenadas(sensibles, out var latPos, out var lonPos);
+        await app.PostAsJsonAsync($"/api/acompanamiento/{sesion.Id}/posiciones",
+            new Cad.Contratos.Acompanamiento.PosicionAcompanamientoEnviada(latPos, lonPos, 6, DateTimeOffset.UtcNow));
+        await EnviarAsync(panel, $"/panel/acompanamientos/{sesion.Id}?handler=SolicitarConfirmacion",
+            new() { ["IdSolicitudConfirmacion"] = Guid.NewGuid().ToString() }, $"/panel/acompanamientos/{sesion.Id}");
+        var confirmacion = (await app.GetFromJsonAsync<Cad.Contratos.Acompanamiento.ConfirmacionBienestarVista>($"/api/acompanamiento/{sesion.Id}/confirmacion"))!;
+        await app.PostAsync($"/api/acompanamiento/confirmaciones/{confirmacion.Id}/presentacion", null);
+        Coordenadas(sensibles, out var latAyuda, out var lonAyuda);
+        ahora = DateTimeOffset.UtcNow;
+        Assert.Equal(HttpStatusCode.OK, (await app.PostAsJsonAsync($"/api/acompanamiento/confirmaciones/{confirmacion.Id}/respuesta",
+            new Cad.Contratos.Acompanamiento.SolicitudRespuestaBienestar(Cad.Contratos.Acompanamiento.RespuestasBienestar.NecesitoAyuda,
+                new SolicitudEmisionSos(Guid.NewGuid(), ahora, new UbicacionSos(latAyuda, lonAyuda, 8, ahora.AddSeconds(1)))))).StatusCode);
+
+        // HU42: avisos del servidor; HU43: revisión, actuación con datos personales y caso urgente con justificación.
+        await fabrica.ConServiciosAsync(s => s.GetRequiredService<Cad.Server.Modulos.Acompanamiento.Aplicacion.EvaluarAvisos>()
+            .EjecutarAsync(DateTimeOffset.UtcNow.AddMinutes(3), CancellationToken.None));
+        var aviso = await fabrica.ConBaseDatosAsync(db => db.AvisosAcompanamiento.Where(a => a.SesionId == sesion.Id).Select(a => a.Id).FirstAsync());
+        await EnviarAsync(panel, $"/panel/avisos/{aviso}?handler=Revisar", [], $"/panel/avisos/{aviso}");
+        var actuacion = $"Llamé al {sello} y respondió su madre";
+        var justificacion = $"Sin respuesta de {sello} tras la llamada";
+        sensibles["datos personales"].AddRange([actuacion, justificacion]);
+        await EnviarAsync(panel, $"/panel/avisos/{aviso}?handler=Actuacion",
+            new() { ["TipoActuacion"] = "Contacto", ["Descripcion"] = actuacion, ["IdSolicitud"] = Guid.NewGuid().ToString() }, $"/panel/avisos/{aviso}");
+        await EnviarAsync(panel, $"/panel/avisos/{aviso}?handler=CrearCaso",
+            new() { ["Justificacion"] = justificacion, ["IdSolicitud"] = Guid.NewGuid().ToString() }, $"/panel/avisos/{aviso}");
+        await EnviarAsync(panel, $"/panel/avisos/{aviso}?handler=Resolver", [], $"/panel/avisos/{aviso}");
+        Assert.NotNull(await fabrica.ConBaseDatosAsync(db => db.AvisosAcompanamiento.Where(a => a.Id == aviso).Select(a => a.CasoId).SingleAsync()));
+
+        // HU32/HU33: evaluación con comentario de un caso cerrado; HU28 y HU29: búsqueda con tiempos y mapa de concentración.
+        var cerrado = await fabrica.ConBaseDatosAsync(db => db.Casos.Where(c => c.Id == sos).Select(c => c.Id).SingleAsync());
+        await fabrica.ConBaseDatosAsync(db => db.Casos.Where(c => c.Id == cerrado).ExecuteUpdateAsync(c => c.SetProperty(x => x.Estado, Cad.Server.Modulos.Casos.Dominio.EstadoCaso.Cerrada)));
+        var comentario = $"El sereno {sello} fue muy amable";
+        sensibles["datos personales"].Add(comentario);
+        await app.PostAsJsonAsync($"/api/casos/mios/{cerrado}/evaluacion", new Cad.Contratos.Casos.SolicitudEvaluacionCaso(Guid.NewGuid(), 5, comentario));
+        await panel.GetStringAsync($"/panel/casos/{cerrado}/historial");
+        await panel.GetStringAsync("/panel/casos");
+        await panel.GetStringAsync("/panel/mapa-concentracion");
+
+        sensibles["datos personales"].Add(await fabrica.ConBaseDatosAsync(db => db.Users.Where(u => u.Id == ciudadana.Id).Select(u => u.PhoneNumber!).SingleAsync()));
+        sensibles["tokens y cookies"].Add(await fabrica.ConBaseDatosAsync(db => db.Users.Where(u => u.Id == ciudadana.Id).Select(u => u.SecurityStamp!).SingleAsync()));
+        AfirmarSinDatosSensibles(sensibles);
+    }
+
     private static void Coordenadas(Dictionary<string, List<string>> sensibles, out double latitud, out double longitud)
     {
         (latitud, longitud) = (-12.0 - Random.Shared.Next(100_000, 999_999) / 1e7, -77.0 - Random.Shared.Next(100_000, 999_999) / 1e7);
