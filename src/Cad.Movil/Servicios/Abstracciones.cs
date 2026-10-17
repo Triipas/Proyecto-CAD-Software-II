@@ -84,6 +84,20 @@ public interface IServicioPush
     event Action<string>? TokenRenovado;
 }
 
+// DP13 (16/10/2026): mantiene la transmisión del acompañamiento con la app fuera de la pantalla (en Android, un servicio en
+// primer plano con notificación). En las pruebas y fuera de Android no hace nada.
+public interface IServicioSegundoPlano
+{
+    void Iniciar(DateTimeOffset venceEn);
+    void Detener();
+}
+
+public sealed class SegundoPlanoNoDisponible : IServicioSegundoPlano
+{
+    public void Iniciar(DateTimeOffset venceEn) { }
+    public void Detener() { }
+}
+
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).
 public sealed record SinContenido;
 

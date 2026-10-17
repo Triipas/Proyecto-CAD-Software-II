@@ -36,9 +36,11 @@ public interface IAlmacenLocal
 
 // HU34–HU37 (lado de la app, S4-T01–S4-T07). La sesión la registra y la vence el servidor; la app la muestra, transmite la
 // última posición cada intervalo (15 s) solo mientras está activa y, al finalizar, deja de transmitir al instante.
-// Según SPIKE01 la transmisión solo es fiable con la app abierta y con conexión (DP13, pendiente): la interfaz lo dice.
+// DP13 (decisión del PO del 16/10/2026): con o sin la app abierta y solo con conexión. Mientras transmite, el servicio de
+// segundo plano mantiene viva la app (en Android, un servicio en primer plano con notificación); sin conexión no se
+// acumulan posiciones para enviarlas después.
 public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubicacion, IAlmacenSesion sesiones, IAlmacenLocal almacen,
-    TimeProvider reloj)
+    TimeProvider reloj, IServicioSegundoPlano? segundoPlano = null)
 {
     public const string ClaveCierrePendiente = "cad.acompanamiento.cierre-pendiente";
     // Igual que en el SOS y en HU18: una lectura de ubicación nunca espera más de 10 s (DP11, SPIKE01).
@@ -308,6 +310,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             var intervalo = TimeSpan.FromSeconds(Math.Max(1, sesion.IntervaloSegundos));
             tareaEnvio = Task.Run(() => BucleEnvioAsync(sesion.Id, intervalo, propio), propio.Token);
         }
+        segundoPlano?.Iniciar(Sesion!.VenceEn);
     }
 
     private async Task DetenerEnvioAsync()
@@ -321,6 +324,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
         }
         if (actual is null)
             return;
+        segundoPlano?.Detener();
         await actual.CancelAsync();
         try { if (tarea is not null) await tarea; } catch (OperationCanceledException) { }
         actual.Dispose();
@@ -442,7 +446,10 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             }
         }
         if (retirado)
+        {
+            segundoPlano?.Detener();
             propio.Dispose();
+        }
         Notificar();
     }
 
