@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 217 casos: 43 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 257 casos al cierre del Sprint 4: 51 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -108,6 +108,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU43 | Revisar avisos y registrar su atención | Operador | Pendiente (Sprint 5; DP19) |
 
 **Cierre del Sprint 3 (S3-T16, 16/10/2026):** las operaciones de HU10, HU14–HU17, HU20-CA07, HU26, HU27, HU30 y HU31 están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones de los Sprints 4 y 5.
+
+**Cierre del Sprint 4 (S4-T17, 16/10/2026):** las operaciones de HU05, HU25 y HU34–HU39 (incluidas las acciones añadidas por las decisiones del PO del 16/10/2026) están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones del Sprint 5.
 
 ## Al implementar una HU
 

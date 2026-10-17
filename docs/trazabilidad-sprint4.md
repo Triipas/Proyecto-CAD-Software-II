@@ -32,10 +32,10 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S4-T13 | HU05 | HU05-CA03 con el historial de HU27; sesión abierta o asignación vigente según DP03 | Implementada | CA03: un sereno que atendió y cerró un caso se desactiva y sus eventos, asignación y cierre se conservan en el historial y en la búsqueda (`DesactivacionCuentaTests.CA03_*`). CA04 (DP03, 16/10/2026, bloque 4): la sesión abierta de la app y del panel deja de valer en el acto y la asignación vigente se cancela; el caso vuelve a «Pendiente» y otro sereno lo recibe sin los avances del anterior (`DesactivacionCuentaTests.CA04_*`). |
 | S4-T14 | HU39-B | Registrar la decisión de DP22 antes de implementar | Implementada | El PO delegó el plazo en el equipo de desarrollo el 16/10/2026: 30 días tras el cierre de la sesión, con conservación excepcional vinculada a un caso (ver «Decisiones del Product Owner»). |
 | S4-T15 | HU39-B | Eliminación por plazo y conservación excepcional | Implementada | Tarea `EliminacionRecorridos` (al arrancar y cada hora): borra las posiciones de las sesiones cerradas hace más de 30 días, conserva los datos de la sesión y anota cuándo se eliminaron (CA04). Sección «Conservación del recorrido» en el detalle de la sesión: vínculo con un caso existente y finalidad obligatoria, con responsable, fecha y hora; esas posiciones no se eliminan (CA05). `ConservacionRecorridosTests`. |
-| S4-T16 | HU34–HU39-B | Compuerta de liberación del acompañamiento | Pendiente | — |
-| S4-T17 | HU03 | Verificación por rol de HU05, HU25 y HU34–HU39 | Pendiente | — |
-| S4-T18 | Transversal | Revisión de registros: sin posiciones fuera del acompañamiento activo ni contraseñas | Pendiente | — |
-| S4-T19 | HU05, HU25, HU34–HU39-B | Integración, despliegue y demostración controlada | Pendiente | — |
+| S4-T16 | HU34–HU39-B | Compuerta de liberación del acompañamiento | Implementada (evaluación registrada) | Condiciones del Plan Scrum cumplidas en local: HU36 (finalización, también sin conexión), HU37 (cierre por el servidor), acceso restringido de HU38 y retención de HU39-B (30 días, DP22). Decisión: **demostración controlada** hasta que el PO acepte las historias en la Review y el equipo valide la transmisión en un teléfono real (S3-T20); la habilitación para uso real («Liberada», Plan Scrum 3.3) es una decisión expresa del PO. |
+| S4-T17 | HU03 | Verificación por rol de HU05, HU25 y HU34–HU39 | Implementada | `MatrizAutorizacionTests`: 257 casos (51 operaciones × 5 perfiles y las dos comprobaciones globales), todos superados el 16/10/2026; tabla B de [matriz-permisos.md](matriz-permisos.md) con HU05, HU25 y HU34–HU39 verificadas. HU03 sigue sin acreditarse (Sprint 5). |
+| S4-T18 | Transversal | Revisión de registros: sin posiciones fuera del acompañamiento activo ni contraseñas | Implementada | `RevisionRegistrosTests.S4T18_*`: acompañamiento, supervisión, conservación, eliminación por plazo, mapa de casos y desactivación sin coordenadas, finalidades, teléfonos, correos, contraseñas ni tokens en ningún nivel; 2 fugas introducidas a propósito se detectan. Sin posiciones fuera del acompañamiento activo: el servidor rechaza las de una sesión cerrada o vencida y la app solo lee la posición tras la pulsación ([revision-registros.md](revision-registros.md)). |
+| S4-T19 | HU05, HU25, HU34–HU39-B | Integración, despliegue y demostración controlada | Implementada (demostración local); integración y despliegue al fusionar los PR | Guion y capturas en [demo-sprint4.md](demo-sprint4.md). Los PR #27–#35 llevan el sprint; Render lo despliega al fusionarlos en `main` (lo hace el equipo). |
 
 ## Decisiones del Product Owner (16/10/2026)
 
@@ -86,6 +86,7 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 | 6 — Conservación y eliminación de recorridos (HU39-B; DP22) | 16/10/2026 | S4-T14, S4-T15 | `dotnet test`: servidor **737/737** (11 nuevas; sin rutas nuevas: la acción comparte la ruta del detalle, ya en la matriz). Release: 0 advertencias. Migración `ConservacionRecorridos` (una tabla y una columna). 8 mutaciones detectadas: plazo de 300 días, eliminar cualquier sesión cerrada, eliminar las conservadas, sin anotar la eliminación, finalidad en blanco aceptada (sobrevivía porque el formulario ya convierte los espacios en nulo; se detecta con una prueba directa del caso de uso), caso inexistente aceptado, conservar sin posiciones y página abierta a cualquier sesión. De extremo a extremo contra el servidor local: dos sesiones con 3 posiciones cada una, cerradas «hace 31 días» en la base local; en Chrome, conservar sin finalidad se rechaza y con finalidad y el identificador de un SOS queda registrada; al reiniciar el servidor, la tarea elimina las 3 posiciones de la sesión sin conservación («3 posiciones de 1 sesiones eliminadas al cumplirse 30 días», sin coordenadas en el registro) y respeta las de la conservada; los detalles lo muestran. 0 errores de consola. Capturas: [conservar](capturas/panel/hu39b-conservar-recorrido.png), [posiciones eliminadas](capturas/panel/hu39b-posiciones-eliminadas.png), [recorrido conservado](capturas/panel/hu39b-recorrido-conservado.png). |
 | 7 — Transmisión en segundo plano (DP13) | 16/10/2026 | S4-T03, S4-T04 (app) | `dotnet test`: app **225/225** (6 nuevas y una prueba del aviso de CA05 actualizada a DP13); servidor sin cambios (737/737). Release de la app: 0 advertencias. 3 mutaciones detectadas: sin iniciar el segundo plano, sin detenerlo al parar el envío y sin detenerlo cuando la sesión termina en el servidor. Emulador Android 15 contra el servidor local: al iniciar, el servicio queda en primer plano con tipo ubicación y aparece la notificación «Acompañamiento activo» (tras la espera de hasta 10 s que aplica Android); con la app en segundo plano y la pantalla apagada (estado «Dozing») llegaron 5 posiciones en 75 s; con la app cerrada desde recientes, 4 en 60 s; al reabrirla, el inicio mostraba «Quedan 27 min»; al finalizar desaparecieron el servicio y la notificación. Captura: [notificación](capturas/movil/71-acompanamiento-notificacion.png). |
 | 8 — Mapa de casos (HU25) | 16/10/2026 | S4-T08; S4-T17 (parcial) | `dotnet test`: servidor **742/742** (5 nuevas; sin rutas nuevas: el fragmento comparte la ruta de la central, ya en la matriz). Release: 0 advertencias. 6 mutaciones detectadas: sin los casos asignados, con los pendientes duplicados, una referencia con marcador, sin aviso al registrar un reporte, sin aviso al iniciar su revisión y con los descartados. Chrome contra el servidor local: la central dibuja 54 SOS pendientes y 2 reportes admitidos con relleno y 7 casos en curso con borde (5 recibidos o en revisión); la ciudadana registra un reporte con un punto por la API y, sin recargar, aparece su marcador (8 en curso); al elegirlo se ve «Reporte · Recibido», su identificador, la ciudadana y «Ver el caso». 390 px sin desbordamiento; 0 errores de consola. La base local conserva los SOS del ensayo de carga de RNF02, por eso hay tantos marcadores. Captura: [mapa](capturas/panel/hu25-mapa-casos.png). |
+| 9 — Cierre del sprint | 16/10/2026 | S4-T16–S4-T19 | `dotnet test`: servidor **743/743** (1 nueva: revisión de registros del Sprint 4) y app **225/225**. Release: 0 advertencias. Matriz de autorización: 257 casos superados. 2 mutaciones detectadas en la revisión de registros (latitud de una posición del acompañamiento y finalidad de una conservación registradas). Guion de demostración con las verificaciones de los bloques 1–8 en [demo-sprint4.md](demo-sprint4.md). |
 
 ### Decisiones y observaciones del bloque 1
 
@@ -171,3 +172,39 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 - **Sin ubicación (CA04, DP10):** un SOS sin ubicación o un reporte solo con referencia no tienen marcador ni coordenadas inventadas; siguen en el listado de HU26.
 - **Sin recargar (CA05):** la central ya se resincronizaba con los avisos de SOS y de cambios de caso. Faltaban dos avisos: el registro de un reporte y el inicio de su revisión; ahora los dos avisan (sin el aviso sonoro de un SOS, porque un reporte no es urgente: HU10-CA06 sigue cumpliéndose).
 - **Ubicación de un reporte:** es el punto del lugar del hecho que indicó el ciudadano, nunca la ubicación de su dispositivo (HU10).
+
+### Decisiones y observaciones del bloque 9
+
+- **Compuerta de liberación (S4-T16):** las cuatro condiciones técnicas del Plan Scrum (HU36, HU37, acceso restringido de HU38 y retención de HU39-B) están implementadas y verificadas en local. El acompañamiento sigue en **demostración controlada**: habilitarlo para uso real exige que el PO acepte las historias en la Review, una prueba en un teléfono real (S3-T20) y la decisión expresa de liberarlo (Plan Scrum 3.3).
+- **Matriz (S4-T17):** 51 operaciones; el Sprint 4 añadió las cinco rutas del acompañamiento de la app y las tres páginas de supervisión. Las acciones nuevas en páginas existentes (desactivar, atención y cierre de un reporte, conservar un recorrido, fragmento del mapa de casos) comparten su ruta y tienen pruebas por rol en sus propias clases.
+- **Registros (S4-T18):** tercera prueba de la revisión automatizada, con los flujos del sprint. Las posiciones del acompañamiento y la finalidad de una conservación se tratan como datos sensibles.
+- **Demostración (S4-T19):** el guion reúne las verificaciones de extremo a extremo de los bloques 1–8, hechas el mismo día contra el servidor local; no se repitió el recorrido completo. El recorrido en el entorno publicado lo hace el equipo al fusionar los PR.
+
+## Resumen del incremento del Sprint 4
+
+| Indicador | Valor al cierre |
+|---|---|
+| Pruebas del servidor | 743/743 |
+| Pruebas de la app | 225/225 |
+| Casos de la matriz de autorización | 257 |
+| Compilaciones Release (servidor y app Android) | 0 advertencias |
+| Mutaciones de los bloques 1–9 | 78 introducidas: 77 detectadas y 1 equivalente justificada (bloque 4) |
+| Migraciones nuevas | `Acompanamiento`, `AsignacionCancelada`, `UltimoContactoAcompanamiento`, `ConservacionRecorridos` |
+
+**Historias implementadas y verificadas de extremo a extremo (local):** HU05, HU25, HU34, HU35, HU36, HU37, HU38, HU39-A y HU39-B, y los ajustes del Sprint 3 decididos por el PO (descripción del reporte para el sereno; inicio de atención y cierre de un reporte por el operador).
+
+**Defectos encontrados por las pruebas y corregidos:** una carrera entre posiciones y finalización (bloque 2) y un interbloqueo entre envíos simultáneos (bloque 5).
+
+**Interpretaciones que el PO debe confirmar en la Review:**
+
+- **DP03:** al cancelarse la asignación, el caso vuelve a «Pendiente» para asignarlo a otro sereno.
+- **DP20:** «sin conexión» significa más de 60 s sin recibir ningún envío del dispositivo.
+- **HU25:** el mapa muestra los casos en curso; los terminados se consultan en «Casos».
+- **DP22 (decisión del equipo):** el plazo es de 30 días tras el cierre, sin plazo para las posiciones conservadas por un caso.
+- **DP19 (decisión del equipo, Sprint 5):** el caso urgente tiene origen «Acompañamiento» y estado «Pendiente».
+
+**Para el equipo:** S3-T19 (RNF02 en Render), S3-T20 (SPIKE01 en un teléfono real, incluida la transmisión en segundo plano de DP13), S3-T21 (push con la app cerrada), el APK nuevo y el recorrido en el entorno publicado.
+
+## Cierre del Sprint 4
+
+**Estado: pendiente de aceptación.** El incremento está implementado y demostrado de extremo a extremo en local ([demo-sprint4.md](demo-sprint4.md)), en los PR apilados #27–#35. La integración en `main` y el despliegue en Render se hacen al fusionarlos. La aceptación de cada historia la decide el PO en la Sprint Review.
