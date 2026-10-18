@@ -114,7 +114,7 @@ export async function sembrar(navegador, secretos) {
   await operador.goto(`${URL_BASE}/panel/reportes/${reporteAdmitido.id}`);
   await operador.getByRole('button', { name: 'Iniciar la revisión' }).click();
   await operador.waitForLoadState('networkidle');
-  await operador.getByRole('radio', { name: /Admitir para atención/ }).check();
+  await operador.getByLabel('Admitir', { exact: true }).check();
   for (const campo of ['Accion', 'Motivo', 'Destino']) {
     const control = operador.locator(`[name="Decision.${campo}"]`);
     if (await control.count() && await control.isVisible()) await control.fill('Enviar un sereno a verificar la zona (dato ficticio).');

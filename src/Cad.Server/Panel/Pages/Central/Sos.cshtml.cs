@@ -2,6 +2,7 @@ using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Aplicacion;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Consultas;
+using Cad.Server.Panel.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -97,8 +98,8 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         {
             var avances = Sos.Avances ?? [];
             var cancelado = Sos.Estado == "Cancelada";
-            var hechos = new[]
-            {
+            bool[] hechos =
+            [
                 true,
                 Contactado,
                 Sos.Clasificacion is not null,
@@ -106,7 +107,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                 Sos.EnCamino || Sos.EnAtencion || avances.Any(a => a.Descripcion == "En camino") || Sos.Cierre is not null,
                 Sos.EnAtencion || avances.Any(a => a.Descripcion == "En atención") || Sos.Cierre is not null,
                 Sos.Cierre is not null || cancelado,
-            };
+            ];
             string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignado", "En camino", "En atención", cancelado ? "Cancelado" : "Cerrado"];
             var actual = Siguiente switch
             {
@@ -118,12 +119,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                 SiguienteAccion.Cerrar => 6,
                 _ => -1,
             };
-            var ultimoHecho = Array.LastIndexOf(hechos, true);
-            return textos.Select((texto, i) => new PasoCaso(texto,
-                hechos[i] ? EstadoPaso.Hecho
-                : i == actual ? EstadoPaso.Actual
-                : i < Math.Max(actual, ultimoHecho) ? EstadoPaso.Omitido
-                : EstadoPaso.Pendiente)).ToList();
+            return ProgresoCaso.Construir(textos, hechos, actual);
         }
     }
 
@@ -279,10 +275,6 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     }
 
     public enum SiguienteAccion { Contactar, Clasificar, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerCancelacion, NoAsignable }
-
-    public enum EstadoPaso { Hecho, Actual, Omitido, Pendiente }
-
-    public sealed record PasoCaso(string Texto, EstadoPaso Estado);
 
     public sealed class FormularioIntento
     {

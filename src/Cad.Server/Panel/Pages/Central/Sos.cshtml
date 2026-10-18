@@ -2,7 +2,6 @@
 @model Cad.Server.Panel.Pages.Central.SosModel
 @using System.Globalization
 @using Accion = Cad.Server.Panel.Pages.Central.SosModel.SiguienteAccion
-@using Paso = Cad.Server.Panel.Pages.Central.SosModel.EstadoPaso
 @{
     ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "Verificar SOS";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
@@ -41,21 +40,7 @@
     {
         <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
     }
-    <ol class="progreso superficie" aria-label="Progreso del caso">
-        @foreach (var paso in Model.Pasos)
-        {
-            var clase = paso.Estado switch { Paso.Hecho => "progreso__paso--hecho", Paso.Actual => "progreso__paso--actual", Paso.Omitido => "progreso__paso--omitido", _ => "" };
-            <li class="progreso__paso @clase" aria-current="@(paso.Estado == Paso.Actual ? "step" : null)">
-                <span class="progreso__marca">
-                    @if (paso.Estado == Paso.Hecho)
-                    {
-                        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 12 4 4 8-8" /></svg>
-                    }
-                </span>
-                <span>@paso.Texto@(paso.Estado == Paso.Omitido ? " (omitido)" : "")</span>
-            </li>
-        }
-    </ol>
+    <partial name="_ProgresoCaso" model="Model.Pasos" />
 </header>
 
 @if (Model.Mensaje is not null)

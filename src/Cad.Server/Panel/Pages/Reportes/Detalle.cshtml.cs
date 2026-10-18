@@ -63,6 +63,59 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
 
     public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
+    // Rediseño CAD v2: la tarjeta «Siguiente acción» muestra lo único que toca hacer ahora según el estado.
+    public SiguienteAccion Siguiente => Reporte.Estado switch
+    {
+        EstadoCaso.Recibido => SiguienteAccion.IniciarRevision,
+        EstadoCaso.EnRevision => SiguienteAccion.Decidir,
+        EstadoCaso.Derivada or EstadoCaso.Descartada => SiguienteAccion.VerDecision,
+        _ when Seguimiento?.Cierre is not null => SiguienteAccion.VerCierre,
+        _ when Seguimiento is { EnAtencion: true } => SiguienteAccion.Cerrar,
+        _ when Seguimiento is { EnCamino: true } => SiguienteAccion.EsperarAtencion,
+        _ when Seguimiento?.Asignacion is not null => SiguienteAccion.EsperarDesplazamiento,
+        EstadoCaso.Pendiente => SiguienteAccion.Asignar,
+        _ => SiguienteAccion.SinAcciones,
+    };
+
+    // Recibido → En revisión → Admitido → Asignado → En camino → En atención → Cerrado; un reporte derivado o descartado
+    // termina en el tercer paso.
+    public IReadOnlyList<PasoCaso> Pasos
+    {
+        get
+        {
+            if (Reporte.Estado is EstadoCaso.Derivada or EstadoCaso.Descartada)
+                return ProgresoCaso.Construir(
+                    ["Recibido", "En revisión", Reporte.Estado == EstadoCaso.Derivada ? "Derivado" : "Descartado"], [true, true, true], -1);
+
+            var indice = Reporte.Estado switch
+            {
+                EstadoCaso.Recibido => 0,
+                EstadoCaso.EnRevision => 1,
+                EstadoCaso.Pendiente => 2,
+                EstadoCaso.Asignada => 3,
+                EstadoCaso.EnCamino => 4,
+                EstadoCaso.EnAtencion => 5,
+                _ => 6,
+            };
+            var avances = Seguimiento?.Avances ?? [];
+            bool[] hechos =
+            [
+                true,
+                indice >= 1,
+                indice >= 2,
+                indice >= 3,
+                indice == 4 || (indice > 4 && avances.Any(a => a.Descripcion == "En camino")),
+                indice == 5 || (indice > 5 && avances.Any(a => a.Descripcion == "En atención")),
+                indice == 6,
+            ];
+            string[] textos = ["Recibido", "En revisión", "Admitido", "Asignado", "En camino", "En atención",
+                Reporte.Estado == EstadoCaso.Cancelada ? "Cancelado" : "Cerrado"];
+            return ProgresoCaso.Construir(textos, hechos, indice < 6 ? indice + 1 : -1);
+        }
+    }
+
+    public enum SiguienteAccion { IniciarRevision, Decidir, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerDecision, SinAcciones }
+
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct) =>
         await CargarAsync(id, ct) ? Page() : NotFound();
 
@@ -112,9 +165,9 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         switch (resultado)
         {
             case ResultadoDecision.Registrado r:
-                return Hecho(id, "Decisión registrada.", Siguiente(r.Estado));
+                return Hecho(id, "Decisión registrada.", QueSigue(r.Estado));
             case ResultadoDecision.YaRegistrado r:
-                return Hecho(id, "Decisión registrada.", Siguiente(r.Estado));
+                return Hecho(id, "Decisión registrada.", QueSigue(r.Estado));
             case ResultadoDecision.NoEncontrado:
                 return NotFound();
             default:
@@ -183,7 +236,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     }
 
     // El aviso ya muestra el estado; aquí, solo lo que sigue.
-    private static string Siguiente(string estado) => estado == "Pendiente"
+    private static string QueSigue(string estado) => estado == "Pendiente"
         ? "Asígnalo a un sereno disponible desde la central."
         : "Es un estado final.";
 

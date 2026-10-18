@@ -1,5 +1,5 @@
 /*
-  Detalle de un caso guiado por «Siguiente acción» (rediseño CAD v2, fase 3). Lo carga el detalle de SOS.
+  Detalle de un caso guiado por «Siguiente acción» (rediseño CAD v2, fase 3). Lo cargan el detalle de SOS y el de reporte.
   Columna principal: la siguiente acción, otras acciones, el despacho y los intentos. Columna lateral: el contexto.
 */
 
@@ -14,6 +14,24 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--espacio-3);
+}
+
+/* Etiqueta de origen de un reporte: violeta, como su marcador (blanco encima: 7.10:1). */
+.etiqueta-reporte {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  padding: 0.125rem var(--espacio-2);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-reporte);
+}
+
+.etiqueta-reporte .icono {
+  width: 1rem;
+  height: 1rem;
 }
 
 .cabecera-caso .titulo {
@@ -328,4 +346,26 @@
     grid-template-columns: 1fr;
     gap: 2px;
   }
+}
+
+/* ── Decisión de un reporte (HU15–HU17) ────────────────── */
+/* Solo se ve la ayuda de la opción elegida; destino y acción, solo al derivar (sin JS: :has). */
+.decision__ayuda {
+  display: none;
+  margin: var(--espacio-2) 0 0;
+}
+
+.opciones:has(input[value="Admision"]:checked) .decision__ayuda--admision,
+.opciones:has(input[value="Derivacion"]:checked) .decision__ayuda--derivacion,
+.opciones:has(input[value="Descarte"]:checked) .decision__ayuda--descarte {
+  display: block;
+}
+
+.formulario:has(input[name="Decision.Tipo"]:checked:not([value="Derivacion"])) .campo--derivacion {
+  display: none;
+}
+
+/* Lugar del hecho de un reporte: violeta, como su marcador en la central. */
+.marcador-hecho--reporte span {
+  background: var(--color-reporte);
 }

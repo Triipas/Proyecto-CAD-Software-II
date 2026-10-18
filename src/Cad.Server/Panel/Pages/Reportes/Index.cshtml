@@ -4,7 +4,6 @@
 @{
     ViewData["Title"] = "Reportes";
     var inv = CultureInfo.InvariantCulture;
-    string Local(DateTimeOffset momento, string formato = "dd/MM/yyyy HH:mm") => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString(formato, inv);
     static string Fuente(string fuente) => fuente switch
     {
         "Mapa" => "Punto en el mapa",
@@ -12,17 +11,19 @@
         _ => "Referencia textual",
     };
 }
+@section Estilos {
+    <link rel="stylesheet" href="~/css/reportes.css" asp-append-version="true" />
+}
 <div class="pagina__encabezado">
     <div>
-        <p class="sobretitulo">Operador</p>
         <h1 class="titulo">Reportes</h1>
-        <p class="texto-secundario">Reportes de incidencia recibidos y en revisión, los más recientes primero. No son alertas urgentes: los SOS siguen en la central.</p>
+        <p class="texto-secundario">Recibidos y en revisión, los más recientes primero. No son alertas urgentes: los SOS siguen en la central.</p>
     </div>
 </div>
 
 @if (Model.Reportes.Count == 0)
 {
-    <div class="estado-vacio">
+    <div class="superficie estado-vacio reportes__vacio">
         <partial name="_Icono" model="@("exito")" />
         <p class="aviso__titulo">No hay reportes por revisar</p>
         <p>Los reportes que envíen los ciudadanos aparecerán aquí.</p>
@@ -30,9 +31,9 @@
 }
 else
 {
-    <div class="tabla-contenedor">
+    <div class="tabla-contenedor reportes__tabla" tabindex="0" role="region" aria-labelledby="leyenda-reportes">
         <table class="tabla" data-reportes>
-            <caption>@Model.Reportes.Count @(Model.Reportes.Count == 1 ? "reporte" : "reportes")</caption>
+            <caption id="leyenda-reportes">@Model.Reportes.Count @(Model.Reportes.Count == 1 ? "reporte" : "reportes") por revisar</caption>
             <thead>
                 <tr>
                     <th scope="col">Registrado</th>
@@ -41,27 +42,29 @@ else
                     <th scope="col">Ciudadano</th>
                     <th scope="col">Hecho (aprox.)</th>
                     <th scope="col">Ubicación del hecho</th>
-                    <th scope="col">Acciones</th>
+                    <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var reporte in Model.Reportes)
                 {
+                    var registrado = TimeZoneInfo.ConvertTime(reporte.RegistradoEn, Model.ZonaHoraria);
+                    var hecho = TimeZoneInfo.ConvertTime(reporte.OcurridoAproximadamenteEn, Model.ZonaHoraria);
                     <tr data-reporte="@reporte.Id">
-                        <th scope="row"><time datetime="@reporte.RegistradoEn.ToString("O", inv)">@Local(reporte.RegistradoEn)</time></th>
-                        <td>
-                            <span class="estado @(reporte.Estado == "Recibido" ? "estado--activa" : "estado--contactado")" data-estado>
-                                <partial name="_Icono" model="@(reporte.Estado == "Recibido" ? "informacion" : "exito")" />@reporte.Estado
-                            </span>
-                        </td>
-                        <td>@reporte.Categoria</td>
+                        <th scope="row"><time class="reportes__fecha" datetime="@reporte.RegistradoEn.ToString("O", inv)"><b>@registrado.ToString("HH:mm", inv)</b> <span>@registrado.ToString("dd/MM/yyyy", inv)</span></time></th>
+                        <td data-estado><partial name="_ChipEstado" model="@((reporte.Estado, false))" /></td>
+                        <td class="reportes__categoria">@reporte.Categoria</td>
                         <td>@reporte.Ciudadano</td>
-                        <td>@Local(reporte.OcurridoAproximadamenteEn)</td>
+                        <td class="reportes__hecho">@hecho.ToString("dd/MM/yyyy HH:mm", inv)</td>
                         <td>@Fuente(reporte.FuenteUbicacion)</td>
-                        <td><a href="/panel/reportes/@reporte.Id">Abrir<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></a></td>
+                        <td><a href="/panel/reportes/@reporte.Id" data-abrir-caso>Revisar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></a></td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
+}
+
+@section Scripts {
+    <script src="~/js/casos.js" asp-append-version="true"></script>
 }
