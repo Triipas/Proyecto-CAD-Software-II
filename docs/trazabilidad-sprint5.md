@@ -31,9 +31,9 @@ IDs de tarea y resultados verificables tomados del Plan Scrum (apartado 3.2). Es
 | S5-T12 | HU33 | Consulta de solo lectura de las evaluaciones con control de acceso | Implementada | Sección «Evaluación del ciudadano» en el historial del caso (`/panel/casos/{id}/historial`, solo Operador: DP04): puntuación y comentario, o «Sin comentario.» (CA01); sin evaluación, «El ciudadano no ha evaluado este caso», sin ninguna puntuación (CA02). Un administrador, un sereno o un ciudadano no la obtienen, tampoco con una solicitud directa; el ciudadano solo ve la suya (CA03). [Captura](capturas/panel/hu33-evaluacion-historial.png). |
 | S5-T13 | HU29 | Mapa de concentración con filtros, exclusiones y diferenciación de origen | Implementada | `/panel/mapa-concentracion` (solo Operador; «Mapa de concentración» en la navegación). Selección de periodo por fecha de registro (DP17) y origen (CA01). Incluye solo casos con ubicación válida del periodo y el origen elegidos: la del dispositivo en un SOS y el punto del hecho en un reporte (DP10), sin referencias en texto (CA02). Excluye «Cancelada» y «Descartada» (CA03). SOS en cuadros rojos y reportes en círculos violetas, con totales por origen (CA04). Solo usa casos, nunca posiciones de acompañamientos ni de serenos (CA05). El servidor agrupa los casos en celdas de unos 550 m: el mapa no expone el punto exacto ni datos de ningún caso. `MapaConcentracionTests` (15). [Captura](capturas/panel/hu29-mapa-concentracion.png). |
 | S5-T14 | HU17, HU29 | Verificación de HU17-CA04 con el mapa de HU29 | Implementada (verificada) | Un reporte «Descartada» no es asignable (rechazo de `AsignarCaso`) ni aparece en el mapa de concentración (`MapaConcentracionTests.S5T14_HU17_CA04_*` y `CA03_S5T14_*`). Con esto, HU17 queda sin cláusulas pendientes. |
-| S5-T15 | HU03 | Verificación por rol de CA04 sobre HU04–HU43 | Pendiente | — |
-| S5-T16 | Transversal | Revisión de registros del sprint | Pendiente | — |
-| S5-T17 | HU09–HU43 | Integración, despliegue y demostración; lista consolidada de pendientes | Pendiente | — |
+| S5-T15 | HU03 | Verificación por rol de CA04 sobre HU04–HU43 | Implementada | `MatrizAutorizacionTests`: 292 casos (58 operaciones × 5 perfiles y las dos comprobaciones globales), todos superados el 17/10/2026. La tabla B de [matriz-permisos.md](matriz-permisos.md) tiene verificadas las 40 historias HU04–HU43. HU03-CA04 queda completa: HU03 se puede acreditar en la Sprint Review. |
+| S5-T16 | Transversal | Revisión de registros del sprint | Implementada | `RevisionRegistrosTests.S5T16_*` recorre la cancelación con motivo, la evaluación con comentario, la confirmación de bienestar con «Necesito ayuda» y ubicación, los avisos y su atención con un caso urgente, la búsqueda con tiempos y el mapa de concentración. No encuentra coordenadas, motivos, comentarios, justificaciones, teléfonos, correos, contraseñas ni tokens en ningún nivel. Registrar a propósito el motivo de una cancelación o la justificación de un caso urgente la hace fallar ([revision-registros.md](revision-registros.md)). |
+| S5-T17 | HU09–HU43 | Integración, despliegue y demostración; lista consolidada de pendientes | Implementada (demostración local); integración y despliegue al fusionar los PR | Guion y capturas en [demo-sprint5.md](demo-sprint5.md). Lista consolidada de pendientes al final de este documento. Los PR #36–#42 llevan el sprint; Render lo despliega al fusionarlos en `main` (lo hace el equipo). |
 
 ## Decisiones del Product Owner (16/10/2026)
 
@@ -90,3 +90,42 @@ Mismo método que en los sprints anteriores: cada bloque con pruebas automatizad
 | 4 — Mapa de concentración (HU29) y HU17-CA04 | 17/10/2026 | S5-T13, S5-T14 | `dotnet test`: servidor **832/832** (17 nuevas: 15 de HU29 y 2 casos de la matriz, que llega a 272). Release: 0 advertencias. 11 mutaciones: 10 detectadas y 1 equivalente (tomar la ubicación del dispositivo en un reporte: un reporte nunca la guarda, HU10). En Chrome con el servidor local, la selección inicial muestra 56 SOS y 11 reportes con ubicación y 71 sin ubicación, igual que la consulta directa a la base de datos (4 casos cancelados o descartados excluidos). Una marca dice cuántos casos agrupa, y «Solo reportes» deja únicamente círculos, con la selección en la dirección. Sin errores de consola. A 390 px, la navegación del operador (ahora con cinco enlaces) desbordaba la página: se corrigió para que pase a su propia línea, y se comprobó que ninguna página del operador se desborda. |
 | 5 — Confirmación de bienestar (HU40 y HU41) | 17/10/2026 | S5-T04–S5-T06 | `dotnet test`: servidor **872/872** (40 nuevas: 25 de HU40/HU41 y 15 casos de la matriz, que llega a 287) y app **263/263** (11 nuevas). Release: 0 advertencias. 15 mutaciones: 14 detectadas y 1 equivalente (sin la comprobación previa de «otra pendiente», el índice único rechaza igual). De extremo a extremo (servidor local, emulador y Chrome): el operador pide una confirmación y la app la muestra en el siguiente envío; el panel ve «mostrada al ciudadano» y, tras «Estoy bien», la respuesta, con la sesión todavía activa. Con la app en segundo plano llega la notificación «La central pregunta cómo estás» y la presentación no se registra hasta abrir la pantalla. Esta verificación encontró que se registraba en segundo plano; se corrigió y se añadió una prueba. «Necesito ayuda» se vinculó con el SOS «En atención» que ya tenía la ciudadana, sin crear otro. Con una ciudadana ficticia sin SOS, 3 envíos simultáneos de «Necesito ayuda» crearon un solo SOS con su ubicación, que apareció en la sección urgente de la central. Los registros del servidor no contienen las coordenadas. |
 | 6 — Avisos del acompañamiento (HU42) y su atención (HU43) | 17/10/2026 | S5-T07–S5-T09 | `dotnet test`: servidor **894/894** (22 nuevas: 17 de HU42/HU43 y 5 casos de la matriz, que llega a 292) y app **263/263** (sin cambios en la app). Release: 0 advertencias. 18 mutaciones: 16 detectadas (2 tras añadir pruebas) y 2 equivalentes (sin la comprobación previa de la condición o de la actuación repetida, los índices únicos dan el mismo resultado). De extremo a extremo (servidor local, emulador y Chrome): con un acompañamiento activo, el operador pidió una confirmación y la ciudadana la vio sin responder; con el modo avión, la tarea del servidor generó por sí sola «Ubicación desactualizada» 61 s después de la última posición y «Confirmación sin respuesta» 2 min 8 s después de la presentación. Tras más de 3 minutos con las dos condiciones activas no hubo avisos repetidos, y ninguno apareció en la sección urgente. En Chrome: revisión, una actuación, «Crear caso urgente» rechazado sin justificación y creado con ella; el caso apareció en la central como «Caso urgente · Acompañamiento», pendiente y sin asignar. Después se resolvió el aviso; el segundo aviso se vinculó con ese caso y también se resolvió. Los registros no contienen coordenadas. |
+| 7 — Cierre del sprint | 17/10/2026 | S5-T15–S5-T17 | `dotnet test`: servidor **895/895** (1 nueva: revisión de registros del Sprint 5) y app **263/263**. Release: 0 advertencias. Matriz de autorización: 292 casos superados, con HU04–HU43 verificadas. 2 mutaciones detectadas en la revisión de registros (motivo de una cancelación y justificación de un caso urgente registrados). Guion de demostración con las verificaciones de los bloques 1–6 en [demo-sprint5.md](demo-sprint5.md). |
+
+## Resumen del incremento del Sprint 5
+
+| Indicador | Valor al cierre |
+|---|---|
+| Pruebas del servidor | 895/895 |
+| Pruebas de la app | 263/263 |
+| Casos de la matriz de autorización | 292 (58 operaciones) |
+| Compilaciones Release (servidor y app Android) | 0 advertencias |
+| Mutaciones de los bloques 1–7 | 83 introducidas: 78 detectadas y 5 equivalentes justificadas (bloques 3, 4, 5 y 6) |
+| Migraciones nuevas | `CancelacionSos`, `EvaluacionCaso`, `ConfirmacionBienestar`, `AvisosAcompanamiento` |
+
+**Historias implementadas y verificadas de extremo a extremo (local):** HU09, HU28, HU29, HU32, HU33, HU40, HU41, HU42 y HU43, y las cláusulas pendientes de sprints anteriores: HU27-CA02 (con HU09) y HU17-CA04 (con HU29). HU03-CA04 queda completa: las 40 historias HU04–HU43 tienen su verificación por rol.
+
+**Defectos encontrados por las verificaciones y corregidos:**
+- La navegación del operador desbordaba la página a 390 px (bloque 4).
+- La presentación de una confirmación se registraba con la app en segundo plano (bloque 5).
+
+**Interpretaciones que el PO debe confirmar en la Review:** las de la sección «Interpretaciones para el PO», en particular los vínculos de S5-T03, el estado público «Cancelado», que la evaluación no se pueda modificar, la medición de los tiempos desde el registro y el caso urgente de DP19 (decisión del equipo).
+
+## Lista consolidada de pendientes (al cierre del Sprint 5)
+
+**Para el Product Owner (en la Sprint Review de los Sprints 3, 4 y 5):**
+- Aceptar o rechazar cada historia de los tres sprints; los incrementos están demostrados en local ([demo-sprint3.md](demo-sprint3.md), [demo-sprint4.md](demo-sprint4.md) y [demo-sprint5.md](demo-sprint5.md)).
+- Acreditar HU03: su CA04 (verificación por rol de HU04–HU43) está completa ([matriz-permisos.md](matriz-permisos.md)).
+- Confirmar las interpretaciones registradas en las trazabilidades de los Sprints 4 y 5; en concreto, los vínculos de S5-T03, cuya relación con HU09 el Plan Scrum pide confirmar con las HU originales.
+- Decidir la liberación del acompañamiento para uso real («Liberada», Plan Scrum 3.3). Las condiciones técnicas se cumplen en local; falta la prueba en un teléfono real.
+
+**Para el equipo:**
+- Fusionar los PR apilados en orden (#26–#35 de los Sprints 3 y 4 y #36–#42 del Sprint 5), reapuntando cada uno a `main` y con «Create a merge commit». Render los despliega y aplica las migraciones al arrancar.
+- S3-T19: medición de RNF02 en Render.
+- S3-T20: SPIKE01 en un teléfono real, incluida la transmisión en segundo plano (DP13) y la notificación de la confirmación de bienestar.
+- S3-T21: notificación push con la app cerrada.
+- Generar y repartir el APK nuevo y hacer el recorrido de las demostraciones en el entorno publicado.
+
+## Cierre del Sprint 5
+
+**Estado: pendiente de aceptación.** El incremento está implementado y demostrado de extremo a extremo en local ([demo-sprint5.md](demo-sprint5.md)), en los PR apilados #36–#42. La integración en `main` y el despliegue en Render se hacen al fusionarlos. La aceptación de cada historia la decide el PO en la Sprint Review.

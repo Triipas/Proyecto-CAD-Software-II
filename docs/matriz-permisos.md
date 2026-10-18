@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 292 casos tras HU09, HU32, HU29, HU41 y HU43 en el Sprint 5: 58 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 292 casos al cierre del Sprint 5: 58 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -113,6 +113,8 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU43 | Revisar avisos y registrar su atención | Operador | **Verificada (17/10/2026, S5-T08, S5-T09):** `/panel/avisos/{id}` y sus acciones solo para Operador; un administrador con token antifalsificación válido es enviado a «acceso denegado» sin cambiar el aviso (`AvisosTests.HU43_UnAdministrador_*`), y la app de un ciudadano o un sereno no obtiene la página (matriz). |
 
 **Cierre del Sprint 3 (S3-T16, 16/10/2026):** las operaciones de HU10, HU14–HU17, HU20-CA07, HU26, HU27, HU30 y HU31 están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones de los Sprints 4 y 5.
+
+**Cierre del Sprint 5 (S5-T15, 17/10/2026):** las operaciones de HU09, HU28, HU29, HU32, HU33 y HU40–HU43 están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. Con ellas, las 40 historias HU04–HU43 de la tabla B están verificadas por rol: **HU03-CA04 queda completa** y HU03 se puede acreditar en la Sprint Review.
 
 **Cierre del Sprint 4 (S4-T17, 16/10/2026):** las operaciones de HU05, HU25 y HU34–HU39 (incluidas las acciones añadidas por las decisiones del PO del 16/10/2026) están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones del Sprint 5.
 

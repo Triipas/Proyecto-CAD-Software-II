@@ -55,6 +55,19 @@ Después busca cada valor sensible en **todas** las entradas capturadas, en **to
 
 **Sin posiciones fuera del acompañamiento activo:** el servidor no incorpora posiciones de una sesión cerrada o vencida, ni antes de que exista (`AcompanamientoTests.HU35_CA02_*`, `HU36_CA04_*`, `HU37_CA04_*`), y la app solo lee la posición después de que la ciudadana pulse «Iniciar» con la finalidad aceptada (`Cad.Movil.Tests/AcompanamientoTests.HU34_CA04_*`). En el emulador, los registros del teléfono y del servidor no contenían coordenadas.
 
+### Sprint 5 (S5-T16, 17/10/2026)
+
+**Resultado:** sin datos sensibles. La prueba `S5T16_CancelacionEvaluacionBienestarAvisosYMapas_*` recorre:
+
+- la cancelación de un SOS con ubicación y un motivo personal;
+- un acompañamiento con posiciones precisas, una confirmación de bienestar presentada y respondida con «Necesito ayuda» (con ubicación);
+- los avisos generados por el servidor, su revisión, una actuación con datos personales, un caso urgente con justificación y su resolución;
+- la evaluación con comentario de un caso cerrado, el historial, la búsqueda de casos con tiempos y el mapa de concentración.
+
+Se buscaron las coordenadas, el motivo, la actuación, la justificación, el comentario, el teléfono, los correos, las contraseñas, los tokens, las cookies y el sello de seguridad: 0 hallazgos. Los registros del sprint solo llevan identificadores de caso, sesión, confirmación y aviso, la regla de un aviso y la respuesta de una confirmación.
+
+**La prueba detecta fugas reales:** registrar el motivo de una cancelación (Information) o la justificación de un caso urgente (Debug) la hace fallar.
+
 ## Otras comprobaciones del sprint
 
 - **Contenedor de producción** (bloque 9): registros 100 % JSON, sin contraseña de la base de datos, contraseña del administrador, cadenas de conexión ni correos.
