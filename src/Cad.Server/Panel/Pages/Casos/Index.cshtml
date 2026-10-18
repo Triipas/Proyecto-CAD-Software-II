@@ -6,71 +6,101 @@
 @{
     ViewData["Title"] = "Casos";
     var inv = CultureInfo.InvariantCulture;
-    string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv);
     var r = Model.Resultado;
+    var activos = Model.FiltrosActivos;
+    // Rediseño CAD v2 (fase 3): los filtros se pliegan y se abren solos si hay que corregir algo.
+    var abrirFiltros = Model.Errores.Count > 0;
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/css/casos.css" asp-append-version="true" />
 }
 <div class="pagina__encabezado">
     <div>
-        <p class="sobretitulo">Operador</p>
         <h1 class="titulo">Casos</h1>
-        <p class="texto-secundario">SOS y reportes. Los filtros se combinan; sin filtros, los casos más recientes primero, de @Cad.Server.Modulos.Consultas.ConsultarCasos.TamanoPagina en @Cad.Server.Modulos.Consultas.ConsultarCasos.TamanoPagina.</p>
+        <p class="texto-secundario">SOS y reportes, los más recientes primero. Los filtros se combinan.</p>
     </div>
 </div>
 
 @* HU26-CA01 — filtros combinables. Formulario GET: la búsqueda queda en la dirección. *@
 <form method="get" action="/panel/casos" class="superficie formulario filtros" aria-labelledby="titulo-filtros" data-filtros novalidate>
-    <h2 id="titulo-filtros" class="central__titulo">Filtros</h2>
-    <div class="filtros__campos">
-        @{
-            async Task Selector(string id, string etiqueta, string? valor, IEnumerable<(string Valor, string Texto)> opciones, string vacia)
-            {
-                var error = Model.ErrorDe(id);
-                <div class="campo">
-                    <label class="campo__etiqueta" for="@id">@etiqueta</label>
-                    <select class="campo__control campo__control--seleccion" id="@id" name="@id"
-                            aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? null : $"{id}-error")">
-                        <option value="">@vacia</option>
-                        @foreach (var (v, t) in opciones)
+    <h2 id="titulo-filtros" class="visualmente-oculto">Filtros</h2>
+    <details class="filtros__panel" open="@abrirFiltros" data-panel-filtros>
+        <summary class="filtros__resumen">
+            <span class="filtros__abrir"><partial name="_Icono" model="@("filtro")" />Filtros@(activos.Count > 0 ? $" · {activos.Count}" : "")</span>
+        </summary>
+        <div class="filtros__campos">
+            @{
+                async Task Selector(string id, string etiqueta, string? valor, IEnumerable<(string Valor, string Texto)> opciones, string vacia)
+                {
+                    var error = Model.ErrorDe(id);
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                        <select class="campo__control campo__control--seleccion" id="@id" name="@id"
+                                aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? null : $"{id}-error")">
+                            <option value="">@vacia</option>
+                            @foreach (var (v, t) in opciones)
+                            {
+                                <option value="@v" selected="@(valor == v)">@t</option>
+                            }
+                        </select>
+                        @if (error is not null)
                         {
-                            <option value="@v" selected="@(valor == v)">@t</option>
+                            <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
                         }
-                    </select>
-                    @if (error is not null)
-                    {
-                        <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-                    }
-                </div>
-                await Task.CompletedTask;
+                    </div>
+                    await Task.CompletedTask;
+                }
+                async Task CampoFecha(string id, string etiqueta, string? valor)
+                {
+                    var error = Model.ErrorDe(id);
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                        <input class="campo__control" type="date" id="@id" name="@id" value="@valor"
+                               aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda")" />
+                        <p id="@id-ayuda" class="campo__ayuda">Fecha de registro del caso.</p>
+                        @if (error is not null)
+                        {
+                            <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                        }
+                    </div>
+                    await Task.CompletedTask;
+                }
             }
-            async Task CampoFecha(string id, string etiqueta, string? valor)
-            {
-                var error = Model.ErrorDe(id);
-                <div class="campo">
-                    <label class="campo__etiqueta" for="@id">@etiqueta</label>
-                    <input class="campo__control" type="date" id="@id" name="@id" value="@valor"
-                           aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda")" />
-                    <p id="@id-ayuda" class="campo__ayuda">Fecha de registro del caso.</p>
-                    @if (error is not null)
-                    {
-                        <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-                    }
-                </div>
-                await Task.CompletedTask;
-            }
+            @{ await CampoFecha("desde", "Desde", Model.Desde); }
+            @{ await CampoFecha("hasta", "Hasta", Model.Hasta); }
+            @{ await Selector("origen", "Origen", Model.Origen, [("Sos", "SOS"), ("Reporte", "Reporte"), ("Acompanamiento", "Acompañamiento")], "Todos"); }
+            @{ await Selector("tipo", "Tipo de incidencia", Model.Tipo,
+                   Model.Categorias.Select(c => (c.Id.ToString(), c.Nombre)).Append((Cad.Server.Panel.Pages.Casos.IndexModel.ValorSinTipo, Cad.Server.Modulos.Consultas.CasoEncontrado.TipoPorDeterminar)), "Todos"); }
+            @{ await Selector("estado", "Estado", Model.Estado,
+                   Cad.Server.Panel.Pages.Casos.IndexModel.EstadosFiltrables.Select(e => (e.ToString(), EstadosCaso.Texto(e))), "Todos"); }
+            @{ await Selector("sereno", "Sereno asignado", Model.Sereno, Model.Serenos.Select(s => (s.Id.ToString(), s.Nombre)), "Todos"); }
+        </div>
+        <div class="acciones filtros__acciones">
+            <button type="submit" class="boton boton--principal">Buscar</button>
+        </div>
+    </details>
+    <div class="filtros__activos">
+        @if (activos.Count > 0)
+        {
+            <ul class="filtros__chips" aria-label="Filtros aplicados">
+                @foreach (var f in activos)
+                {
+                    <li class="filtro-activo">
+                        @f.Etiqueta: @f.Valor
+                        <a class="filtro-activo__quitar" href="@f.RutaSinEste"><partial name="_Icono" model="@("error")" /><span class="visualmente-oculto">Quitar el filtro @f.Etiqueta</span></a>
+                    </li>
+                }
+            </ul>
         }
-        @{ await CampoFecha("desde", "Desde", Model.Desde); }
-        @{ await CampoFecha("hasta", "Hasta", Model.Hasta); }
-        @{ await Selector("origen", "Origen", Model.Origen, [("Sos", "SOS"), ("Reporte", "Reporte"), ("Acompanamiento", "Acompañamiento")], "Todos"); }
-        @{ await Selector("tipo", "Tipo de incidencia", Model.Tipo,
-               Model.Categorias.Select(c => (c.Id.ToString(), c.Nombre)).Append((Cad.Server.Panel.Pages.Casos.IndexModel.ValorSinTipo, Cad.Server.Modulos.Consultas.CasoEncontrado.TipoPorDeterminar)), "Todos"); }
-        @{ await Selector("estado", "Estado", Model.Estado,
-               Cad.Server.Panel.Pages.Casos.IndexModel.EstadosFiltrables.Select(e => (e.ToString(), EstadosCaso.Texto(e))), "Todos"); }
-        @{ await Selector("sereno", "Sereno asignado", Model.Sereno, Model.Serenos.Select(s => (s.Id.ToString(), s.Nombre)), "Todos"); }
-    </div>
-    <div class="acciones">
-        @* HU26-CA03: limpiar retira todos los filtros. *@
-        <a class="boton boton--secundario" href="/panel/casos" data-limpiar>Limpiar filtros</a>
-        <button type="submit" class="boton boton--principal">Buscar</button>
+        else
+        {
+            <p class="texto-secundario filtros__sin-filtros">Sin filtros: se muestran los más recientes, de @Cad.Server.Modulos.Consultas.ConsultarCasos.TamanoPagina en @Cad.Server.Modulos.Consultas.ConsultarCasos.TamanoPagina.</p>
+        }
+        @* HU26-CA03: limpiar retira todos los filtros (solo tiene sentido si hay alguno). *@
+        @if (Model.HayFiltros)
+        {
+            <a class="boton boton--secundario" href="/panel/casos" data-limpiar>Limpiar filtros</a>
+        }
     </div>
 </form>
 
@@ -87,50 +117,62 @@
 else if (r.Total == 0)
 {
     @* HU26-CA04 *@
-    <div class="estado-vacio" role="status" data-sin-coincidencias>
-        <partial name="_Icono" model="@("informacion")" />
+    <div class="superficie estado-vacio casos__vacio" role="status" data-sin-coincidencias>
+        <partial name="_Icono" model="@("lupa")" />
         <p class="aviso__titulo">No existen casos que coincidan con los filtros</p>
-        <p>Cambia o limpia los filtros para ver más casos.</p>
+        <p>Cambia o <a href="/panel/casos">limpia los filtros</a> para ver más casos.</p>
     </div>
 }
 else
 {
-    <div class="tabla-contenedor">
+    <div class="tabla-contenedor casos__tabla" tabindex="0" role="region" aria-labelledby="leyenda-casos">
         <table class="tabla" data-casos data-total="@r.Total">
-            <caption>@r.Total @(r.Total == 1 ? "caso" : "casos")@(Model.HayFiltros ? " con los filtros aplicados" : "") · página @r.Pagina de @r.Paginas</caption>
+            <caption id="leyenda-casos">@r.Total @(r.Total == 1 ? "caso" : "casos")@(Model.HayFiltros ? " con los filtros aplicados" : "") · página @r.Pagina de @r.Paginas</caption>
             <thead>
                 <tr>
                     <th scope="col">Registrado</th>
                     <th scope="col">Origen</th>
                     <th scope="col">Estado</th>
                     <th scope="col">Tipo</th>
-                    <th scope="col">Ciudadano</th>
-                    <th scope="col">Sereno asignado</th>
+                    <th scope="col">Ciudadano y sereno</th>
                     <th scope="col">Ubicación</th>
                     @* HU28 (DP18): tiempos por caso, desde el registro. *@
-                    <th scope="col">Hasta la decisión <span class="texto-secundario">(reportes)</span></th>
-                    <th scope="col">Hasta el inicio de atención <span class="texto-secundario">(en un SOS, tiempo de respuesta)</span></th>
-                    <th scope="col">Acciones</th>
+                    <th scope="col" class="tabla__numero"><abbr title="Desde el registro hasta la decisión de la revisión (solo reportes)">Hasta la decisión</abbr></th>
+                    <th scope="col" class="tabla__numero"><abbr title="Desde el registro hasta el inicio de la atención; en un SOS es el tiempo de respuesta">Hasta la atención</abbr></th>
+                    <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var caso in r.Casos)
                 {
+                    var local = TimeZoneInfo.ConvertTime(caso.RegistradoEn, Model.ZonaHoraria);
                     <tr data-caso="@caso.Id">
-                        <th scope="row"><time datetime="@caso.RegistradoEn.ToString("O", inv)">@Local(caso.RegistradoEn)</time></th>
-                        <td>@caso.TextoOrigen</td>
-                        <td data-estado>@caso.Estado</td>
+                        <th scope="row"><time class="casos__fecha" datetime="@caso.RegistradoEn.ToString("O", inv)"><b>@local.ToString("HH:mm", inv)</b>@local.ToString("dd/MM/yyyy", inv)</time></th>
+                        <td>
+                            @switch (caso.Origen)
+                            {
+                                case OrigenCaso.Sos:
+                                    <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@caso.TextoOrigen</span>
+                                    break;
+                                case OrigenCaso.Reporte:
+                                    <span class="casos__origen casos__origen--reporte"><partial name="_Icono" model="@("documento")" />@caso.TextoOrigen</span>
+                                    break;
+                                default:
+                                    <span class="casos__origen casos__origen--acompanamiento"><partial name="_Icono" model="@("ruta")" />@caso.TextoOrigen</span>
+                                    break;
+                            }
+                        </td>
+                        <td data-estado><partial name="_ChipEstado" model="@((caso.Estado, caso.Origen != OrigenCaso.Reporte))" /></td>
                         @* HU26-CA02 *@
                         <td class="@(caso.Tipo is null ? "texto-secundario" : null)" data-tipo>@caso.TextoTipo</td>
-                        <td>@caso.Ciudadano</td>
-                        <td>@(caso.Sereno ?? "—")</td>
+                        <td><span class="casos__personas">@caso.Ciudadano<small>@(caso.Sereno ?? "Sin sereno")</small></span></td>
                         @* HU26-CA05: sin coordenadas inventadas. *@
                         <td data-ubicacion>@(caso.ConUbicacion ? (caso.Origen switch { OrigenCaso.Sos => "Del dispositivo", OrigenCaso.Reporte => "Lugar del hecho", _ => "Última posición del acompañamiento" }) : "Sin ubicación")</td>
-                        <td data-tiempo-decision class="@(Tiempos.SinValor(caso.Tiempos.HastaDecision) ? "texto-secundario" : null)">@caso.Tiempos.HastaDecision</td>
-                        <td data-tiempo-atencion class="@(Tiempos.SinValor(caso.Tiempos.HastaInicioAtencion) ? "texto-secundario" : null)">@caso.Tiempos.HastaInicioAtencion</td>
-                        <td>
-                            <a href="@Cad.Server.Panel.Pages.Casos.IndexModel.Detalle(caso)">Detalle<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
-                            · <a href="/panel/casos/@caso.Id/historial">Historial<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
+                        <td data-tiempo-decision class="tabla__numero@(Tiempos.SinValor(caso.Tiempos.HastaDecision) ? " texto-secundario" : "")">@caso.Tiempos.HastaDecision</td>
+                        <td data-tiempo-atencion class="tabla__numero@(Tiempos.SinValor(caso.Tiempos.HastaInicioAtencion) ? " texto-secundario" : "")">@caso.Tiempos.HastaInicioAtencion</td>
+                        <td class="casos__acciones">
+                            <a href="@Cad.Server.Panel.Pages.Casos.IndexModel.Detalle(caso)" data-abrir-caso>Detalle<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
+                            <a href="/panel/casos/@caso.Id/historial">Historial<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
                         </td>
                     </tr>
                 }
@@ -151,4 +193,8 @@ else
             }
         </nav>
     }
+}
+
+@section Scripts {
+    <script src="~/js/casos.js" asp-append-version="true"></script>
 }

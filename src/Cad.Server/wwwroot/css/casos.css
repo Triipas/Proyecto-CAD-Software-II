@@ -1,0 +1,336 @@
+/*
+  Búsqueda de casos (HU26) en el rediseño CAD v2, fase 3. Solo la carga /panel/casos.
+  Filtros plegables con los aplicados como chips, y una tabla escaneable: chips de estado, origen con icono,
+  ciudadano y sereno en una celda, tiempos alineados a la derecha y fila pulsable.
+*/
+
+/* ── Filtros ───────────────────────────────────────────── */
+.filtros {
+  gap: 0;
+  padding: 0;
+}
+
+.filtros__panel {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.filtros__resumen {
+  display: flex;
+  align-items: center;
+  min-height: 3.25rem;
+  padding: 0 var(--espacio-5);
+  list-style: none;
+  cursor: pointer;
+}
+
+.filtros__resumen::-webkit-details-marker {
+  display: none;
+}
+
+.filtros__abrir {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+}
+
+.filtros__abrir .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.filtros__panel[open] .filtros__resumen {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.filtros__panel > .filtros__campos {
+  padding: var(--espacio-5);
+}
+
+.filtros__acciones {
+  justify-content: flex-end;
+  padding: 0 var(--espacio-5) var(--espacio-5);
+}
+
+.filtros__activos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-5);
+}
+
+.filtros__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filtros__sin-filtros {
+  font-size: var(--texto-sm);
+}
+
+.filtros__activos [data-limpiar] {
+  margin-left: auto;
+}
+
+.filtro-activo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: 2rem;
+  padding: 0 var(--espacio-1) 0 var(--espacio-3);
+  border-radius: 999px;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-informacion);
+  background: var(--color-tenue);
+}
+
+.filtro-activo__quitar {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: inherit;
+}
+
+.filtro-activo__quitar .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filtro-activo__quitar:hover {
+    background: var(--color-tenue-fuerte);
+  }
+}
+
+/* ── Tabla ─────────────────────────────────────────────── */
+.casos__tabla .tabla thead th {
+  white-space: nowrap;
+}
+
+.casos__tabla .tabla abbr {
+  text-decoration: none;
+  cursor: help;
+}
+
+.casos__tabla tbody tr {
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .casos__tabla tbody tr:hover {
+    background: var(--color-tenue);
+  }
+}
+
+.casos__fecha {
+  display: grid;
+  line-height: 1.3;
+  font-weight: var(--peso-normal);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+}
+
+.casos__fecha b {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
+.casos__origen {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  white-space: nowrap;
+}
+
+.casos__origen .icono,
+.casos__tabla .etiqueta-urgente .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.casos__origen--reporte { color: var(--color-reporte); }
+.casos__origen--acompanamiento { color: var(--color-acompanamiento); }
+
+.casos__tabla .etiqueta-urgente {
+  font-size: var(--texto-xs);
+}
+
+.casos__personas {
+  display: grid;
+  line-height: 1.35;
+}
+
+.casos__personas small {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.tabla__numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.casos__acciones {
+  white-space: nowrap;
+}
+
+.casos__acciones a + a {
+  margin-left: var(--espacio-3);
+}
+
+.casos__vacio {
+  padding: var(--espacio-10) var(--espacio-4);
+}
+
+.casos__vacio .icono {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--color-texto-secundario);
+}
+
+/* ── Pantallas estrechas: cada caso es una tarjeta ─────────
+   Se conserva la tabla en el HTML (semántica y pruebas) y solo cambia cómo se dibuja: cada fila pasa a ser
+   una rejilla con el origen, el estado y la hora arriba, y los datos debajo con su etiqueta. */
+@media (max-width: 47.5rem) {
+  .casos__tabla {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .casos__tabla .tabla,
+  .casos__tabla .tabla tbody {
+    display: block;
+  }
+
+  .casos__tabla .tabla caption {
+    display: block;
+    padding: 0 0 var(--espacio-3);
+  }
+
+  /* Los encabezados de columna se leen como etiquetas dentro de cada tarjeta. */
+  .casos__tabla .tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .casos__tabla .tabla tbody {
+    display: grid;
+    gap: var(--espacio-3);
+  }
+
+  .casos__tabla .tabla tbody tr {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas:
+      "origen estado fecha"
+      "tipo tipo tipo"
+      "personas personas personas"
+      "ubicacion ubicacion ubicacion"
+      "decision decision decision"
+      "atencion atencion atencion"
+      "acciones acciones acciones";
+    align-items: center;
+    gap: var(--espacio-2) var(--espacio-2);
+    padding: var(--espacio-4);
+    border: var(--grosor-borde) solid var(--color-borde);
+    border-radius: var(--radio-superficie);
+    background: var(--color-superficie);
+    box-shadow: var(--sombra-1);
+  }
+
+  .casos__tabla .tabla tbody th,
+  .casos__tabla .tabla tbody td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .casos__tabla tbody > tr > :nth-child(1) { grid-area: fecha; justify-self: end; text-align: right; }
+  .casos__tabla tbody > tr > :nth-child(2) { grid-area: origen; }
+  .casos__tabla tbody > tr > :nth-child(3) { grid-area: estado; }
+  .casos__tabla tbody > tr > :nth-child(4) { grid-area: tipo; font-size: var(--texto-md); font-weight: var(--peso-medio); }
+  .casos__tabla tbody > tr > :nth-child(5) { grid-area: personas; }
+  .casos__tabla tbody > tr > :nth-child(6) { grid-area: ubicacion; }
+  .casos__tabla tbody > tr > :nth-child(7) { grid-area: decision; }
+  .casos__tabla tbody > tr > :nth-child(8) { grid-area: atencion; }
+  .casos__tabla tbody > tr > :nth-child(9) {
+    grid-area: acciones;
+    display: flex;
+    gap: var(--espacio-4);
+    padding-top: var(--espacio-2);
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .casos__tabla tbody > tr > :nth-child(4).texto-secundario {
+    font-weight: var(--peso-normal);
+  }
+
+  .casos__fecha {
+    justify-items: end;
+  }
+
+  .casos__personas {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--espacio-2);
+    align-items: baseline;
+  }
+
+  .casos__personas small::before {
+    content: "· ";
+  }
+
+  /* Etiquetas de los datos que no se explican solos. */
+  .casos__tabla tbody > tr > :nth-child(6)::before,
+  .casos__tabla tbody > tr > :nth-child(7)::before,
+  .casos__tabla tbody > tr > :nth-child(8)::before {
+    display: inline-block;
+    min-width: 8.5rem;
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-normal);
+    color: var(--color-texto-secundario);
+  }
+
+  .casos__tabla tbody > tr > :nth-child(6)::before { content: "Ubicación"; }
+  .casos__tabla tbody > tr > :nth-child(7)::before { content: "Hasta la decisión"; }
+  .casos__tabla tbody > tr > :nth-child(8)::before { content: "Hasta la atención"; }
+
+  .casos__tabla .tabla__numero {
+    text-align: left;
+  }
+
+  .casos__acciones a + a {
+    margin-left: 0;
+  }
+
+  .casos__acciones a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+  }
+
+  .filtros__activos [data-limpiar] {
+    margin-left: 0;
+  }
+}

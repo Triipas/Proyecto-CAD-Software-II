@@ -1337,3 +1337,29 @@ a.boton {
 .marcador-caso--revision {
   border-style: dashed;
 }
+
+/* ===== Chips de estado (rediseño CAD v2): tono + icono + texto literal del estado ===== */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  padding: 0.125rem 0.625rem 0.125rem 0.5rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  line-height: 1.125rem;
+  white-space: nowrap;
+}
+
+.chip .icono {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.chip--informacion { color: var(--color-informacion); background: var(--color-informacion-fondo); border-color: var(--color-informacion-borde); }
+.chip--progreso { color: var(--color-progreso); background: var(--color-progreso-fondo); border-color: var(--color-progreso-borde); }
+.chip--exito { color: var(--color-exito); background: var(--color-exito-fondo); border-color: var(--color-exito-borde); }
+.chip--advertencia { color: var(--color-advertencia); background: var(--color-advertencia-fondo); border-color: var(--color-advertencia-borde); }
+.chip--neutro { color: var(--color-neutro); background: var(--color-neutro-fondo); border-color: var(--color-neutro-borde); }
+.chip--urgente { color: var(--color-urgente); background: var(--color-urgente-fondo); border-color: var(--color-urgente-borde); }
