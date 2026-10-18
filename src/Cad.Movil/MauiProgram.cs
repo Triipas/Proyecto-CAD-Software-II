@@ -13,11 +13,29 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<App>();
 
+        // Public Sans (licencia OFL), la misma tipografía del panel web (rediseño, fase 1).
+        builder.ConfigureFonts(fuentes =>
+        {
+            fuentes.AddFont("PublicSans-Regular.ttf", "PublicSans");
+            fuentes.AddFont("PublicSans-Medium.ttf", "PublicSansMedium");
+            fuentes.AddFont("PublicSans-SemiBold.ttf", "PublicSansSemiBold");
+            fuentes.AddFont("PublicSans-Bold.ttf", "PublicSansBold");
+        });
+
 #if ANDROID
-        // El campo ya tiene marco propio (estilo MarcoCampo): sin el subrayado nativo de Android.
+        // Los campos ya tienen marco propio (estilo MarcoCampo): sin el subrayado nativo de Android.
+        // Antes solo se quitaba en Entry; el selector, las fechas y el editor mostraban doble borde.
+        var sinSubrayado = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
         Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("SinSubrayado", (manejador, _) =>
-            manejador.PlatformView.BackgroundTintList =
-                Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent));
+            manejador.PlatformView.BackgroundTintList = sinSubrayado);
+        Microsoft.Maui.Handlers.EditorHandler.Mapper.AppendToMapping("SinSubrayado", (manejador, _) =>
+            manejador.PlatformView.BackgroundTintList = sinSubrayado);
+        Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping("SinSubrayado", (manejador, _) =>
+            manejador.PlatformView.BackgroundTintList = sinSubrayado);
+        Microsoft.Maui.Handlers.DatePickerHandler.Mapper.AppendToMapping("SinSubrayado", (manejador, _) =>
+            manejador.PlatformView.BackgroundTintList = sinSubrayado);
+        Microsoft.Maui.Handlers.TimePickerHandler.Mapper.AppendToMapping("SinSubrayado", (manejador, _) =>
+            manejador.PlatformView.BackgroundTintList = sinSubrayado);
 #endif
 
         // Servicios de la plataforma.

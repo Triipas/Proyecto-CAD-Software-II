@@ -1,0 +1,17 @@
+{
+  "name": "cad-visual",
+  "private": true,
+  "description": "Revisión visual automatizada del panel web: regresión de capturas, accesibilidad (axe-core) y reglas del sistema de diseño CAD v2.",
+  "type": "module",
+  "scripts": {
+    "revisar": "playwright test",
+    "aprobar": "playwright test --update-snapshots",
+    "informe": "playwright show-report informe",
+    "detectar": "node detectar.js"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "pg": "8.23.1"
+  }
+}

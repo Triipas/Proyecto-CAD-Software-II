@@ -1,29 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
-<!-- Estilos de CAD Móvil. Fuente del sistema (Roboto en Android), como el panel web. -->
+<!-- Estilos de CAD Móvil v2 (rediseño, fase 1). Public Sans, como el panel web.
+     Los pesos se eligen por familia (PublicSansSemiBold, PublicSansBold), no con FontAttributes,
+     para no sintetizar negritas. Radios: 8 controles, 12 superficies, 999 chips. -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
+    <!-- ── Página ──────────────────────────────────────────────────────── -->
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{StaticResource ColorFondo}" />
         <Setter Property="Shell.NavBarIsVisible" Value="False" />
     </Style>
 
+    <!-- ── Texto ───────────────────────────────────────────────────────── -->
     <Style TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
+        <Setter Property="FontFamily" Value="PublicSans" />
         <Setter Property="FontSize" Value="16" />
     </Style>
 
     <Style x:Key="Titulo" TargetType="Label">
-        <Setter Property="FontSize" Value="26" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontFamily" Value="PublicSansBold" />
+        <Setter Property="CharacterSpacing" Value="-0.4" />
         <Setter Property="TextColor" Value="{StaticResource ColorMarino}" />
         <Setter Property="SemanticProperties.HeadingLevel" Value="Level1" />
     </Style>
 
+    <Style x:Key="TituloSeccion" TargetType="Label">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
+        <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
+    </Style>
+
+    <!-- Obsoleto en v2: la etiqueta sobre el título se elimina en la fase 4 (el rol va en la navegación).
+         Se conserva solo para no romper las vistas actuales. -->
     <Style x:Key="Sobretitulo" TargetType="Label">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
         <Setter Property="TextColor" Value="{StaticResource ColorPrimario}" />
         <Setter Property="TextTransform" Value="Uppercase" />
     </Style>
@@ -35,7 +50,15 @@
 
     <Style x:Key="Etiqueta" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
+    </Style>
+
+    <!-- Cifras protagonistas: cronómetro, horas, contadores. -->
+    <Style x:Key="Cifra" TargetType="Label">
+        <Setter Property="FontSize" Value="36" />
+        <Setter Property="FontFamily" Value="PublicSansBold" />
+        <Setter Property="CharacterSpacing" Value="-0.5" />
+        <Setter Property="TextColor" Value="{StaticResource ColorMarino}" />
     </Style>
 
     <Style x:Key="ErrorCampo" TargetType="Label">
@@ -43,37 +66,82 @@
         <Setter Property="TextColor" Value="{StaticResource ColorError}" />
     </Style>
 
-    <!-- Campos: borde de control con contraste ≥ 3:1 sobre la superficie. -->
+    <!-- ── Campos ──────────────────────────────────────────────────────── -->
+    <!-- Borde de control con contraste ≥ 3:1 sobre la superficie. El subrayado nativo
+         se quita en MauiProgram para Entry, Editor, Picker, DatePicker y TimePicker. -->
     <Style x:Key="MarcoCampo" TargetType="Border">
         <Setter Property="Stroke" Value="{StaticResource ColorBordeControl}" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 6" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
         <Setter Property="BackgroundColor" Value="{StaticResource ColorSuperficie}" />
         <Setter Property="Padding" Value="12,0" />
     </Style>
 
     <Style TargetType="Entry">
         <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
-        <Setter Property="PlaceholderColor" Value="{StaticResource ColorTextoSecundario}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource ColorTextoTerciario}" />
+        <Setter Property="FontFamily" Value="PublicSans" />
         <Setter Property="FontSize" Value="16" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <Style TargetType="Editor">
+        <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource ColorTextoTerciario}" />
+        <Setter Property="FontFamily" Value="PublicSans" />
+        <Setter Property="FontSize" Value="16" />
+    </Style>
+
+    <Style TargetType="Picker">
+        <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
+        <Setter Property="TitleColor" Value="{StaticResource ColorTextoTerciario}" />
+        <Setter Property="FontFamily" Value="PublicSans" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
+        <Setter Property="FontFamily" Value="PublicSans" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <Style TargetType="TimePicker">
+        <Setter Property="TextColor" Value="{StaticResource ColorTexto}" />
+        <Setter Property="FontFamily" Value="PublicSans" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <!-- ── Botones ─────────────────────────────────────────────────────── -->
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="48" />
     </Style>
 
     <Style x:Key="BotonPrincipal" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource ColorPrimario}" />
-        <Setter Property="TextColor" Value="White" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource ColorSobrePrimario}" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="MinimumHeightRequest" Value="52" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource ColorPrimarioActivo}" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor" Value="{StaticResource ColorPrimarioHover}" />
-                            <Setter Property="TextColor" Value="White" />
+                            <Setter Property="TextColor" Value="{StaticResource ColorSobrePrimario}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -86,14 +154,20 @@
         <Setter Property="TextColor" Value="{StaticResource ColorMarino}" />
         <Setter Property="BorderColor" Value="{StaticResource ColorBordeControl}" />
         <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="FontFamily" Value="PublicSansMedium" />
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="48" />
         <!-- Deshabilitado: texto y borde atenuados (el estado no depende solo del color: hay un texto que lo explica). -->
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource ColorTenue}" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="TextColor" Value="{StaticResource ColorTextoSecundario}" />
@@ -106,11 +180,95 @@
         </Setter>
     </Style>
 
+    <!-- Acción discreta (Salir, Detalles): sin borde, texto en azul de acción. -->
+    <Style x:Key="BotonTerciario" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource ColorPrimario}" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <!-- SOS y acciones urgentes: siempre con el texto «SOS» o un verbo explícito. -->
+    <Style x:Key="BotonUrgente" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorUrgente}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontFamily" Value="PublicSansBold" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="MinimumHeightRequest" Value="52" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource ColorUrgenteActivo}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- ── Superficies ─────────────────────────────────────────────────── -->
     <Style x:Key="Superficie" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource ColorSuperficie}" />
         <Setter Property="Stroke" Value="{StaticResource ColorBorde}" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
         <Setter Property="Padding" Value="16" />
+        <Setter Property="Shadow">
+            <Shadow Brush="#0B1F44" Offset="0,2" Radius="6" Opacity="0.08" />
+        </Setter>
+    </Style>
+
+    <!-- Entrada a un flujo (Reportar, Acompañamiento): toda la superficie es pulsable. -->
+    <Style x:Key="Mosaico" TargetType="Border" BasedOn="{StaticResource Superficie}">
+        <Setter Property="Padding" Value="16,14" />
+        <Setter Property="MinimumHeightRequest" Value="72" />
+    </Style>
+
+    <!-- Encabezado de borde a borde en azul marino. -->
+    <Style x:Key="EncabezadoMarino" TargetType="Grid">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorMarino}" />
+        <Setter Property="Padding" Value="20,16,20,20" />
+    </Style>
+
+    <!-- ── Chips de estado: color + icono + texto ──────────────────────── -->
+    <Style x:Key="Chip" TargetType="Border">
+        <Setter Property="StrokeShape" Value="RoundRectangle 999" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+    </Style>
+    <Style x:Key="ChipInformacion" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorInformacionFondo}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorInformacionBorde}" />
+    </Style>
+    <Style x:Key="ChipExito" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorExitoFondo}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorExitoBorde}" />
+    </Style>
+    <Style x:Key="ChipAdvertencia" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorAdvertenciaFondo}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorAdvertenciaBorde}" />
+    </Style>
+    <Style x:Key="ChipUrgente" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorUrgenteFondo}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorUrgenteBorde}" />
+    </Style>
+    <Style x:Key="ChipProgreso" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorProgresoFondo}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorProgresoBorde}" />
+    </Style>
+    <Style x:Key="ChipNeutro" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ColorNeutroFondo}" />
+        <Setter Property="Stroke" Value="{StaticResource ColorNeutroBorde}" />
+    </Style>
+    <Style x:Key="TextoChip" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
     </Style>
 </ResourceDictionary>

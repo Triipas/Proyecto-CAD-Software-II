@@ -27,6 +27,7 @@ CadMovil.slnx                solución de la app móvil (Contratos + app + prueb
 src/Cad.Movil/               app .NET MAUI (Android): ciudadano y sereno
 tests/Cad.Movil.Tests/       pruebas de la lógica de la app (xUnit, sin emulador)
 tests/Cad.Server.Tests/      pruebas (xUnit + WebApplicationFactory + PostgreSQL real)
+tests/Cad.Visual/            revisión visual del panel (Playwright + axe-core, base desechable cad_visual)
 docs/                        trazabilidad y documentación técnica
 docker-compose.yml           PostgreSQL 17 local
 ```
