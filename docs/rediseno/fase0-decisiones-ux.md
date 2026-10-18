@@ -9,11 +9,15 @@ Regla general: los principios no cambian entre web y móvil; cambia el **medio**
 ## Operador de central (escritorio)
 
 ### D1 · Navegación lateral en lugar de barra superior
+> **Sustituida en la fase 2** (18/10/2026): con la dirección «Mapa protagonista», el panel usa una barra superior marino con secciones e indicadores en vivo. Se mantiene la idea de los contadores como indicador de estado. Ver el [plan](../plan-rediseno.md).
+
 - **Principios:** reconocimiento en vez de recuerdo, ley de Jakob (los paneles de operación usan barra lateral), visibilidad del estado del sistema.
 - **Tensión:** la barra superior ocupa menos ancho; la lateral consume ~240 px que el mapa querría.
 - **Decisión:** barra lateral **colapsable** (240 px ↔ 72 px solo iconos) con contadores en vivo junto a cada sección (SOS pendientes, avisos sin resolver). Los contadores convierten la navegación en un indicador de estado: el operador sabe dónde hay trabajo sin entrar. En ≤ 1024 px pasa a cajón con botón de menú.
 
 ### D2 · Central en tres zonas sin scroll
+> **Ajustada en la fase 2**: las tres zonas se mantienen, pero el mapa ocupa toda la pantalla y la cola y los serenos flotan encima como paneles plegables.
+
 - **Principios:** jerarquía visual, región común (Gestalt), ley de Fitts (distancia entre caso y sereno), densidad alta aceptable en escritorio.
 - **Tensión:** el mapa necesita superficie; la cola y los serenos necesitan estar visibles a la vez.
 - **Decisión:** franja de indicadores arriba + **cola de trabajo** (izquierda, ~380 px) + **mapa** (centro, flexible) + **serenos** (derecha, ~300 px). A 1366 × 768 todo cabe sin scroll de página; cada columna hace scroll interno. Por debajo de 1280 px, los serenos pasan a una pestaña dentro de la cola.

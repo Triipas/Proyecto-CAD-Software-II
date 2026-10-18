@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ingresar · Prototipo CAD v2</title>
+  <link rel="stylesheet" href="../../../src/Cad.Server/wwwroot/css/tokens.css" />
+  <link rel="stylesheet" href="prototipo.css" />
+  <style>
+    body { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(420px, 1fr); }
+    .marca-panel { position: relative; overflow: hidden; background: var(--color-marino); color: var(--color-texto-sobre-marino); padding: var(--espacio-10); display: flex; flex-direction: column; justify-content: space-between; }
+    .marca-panel svg.trama { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .marca-panel > * { position: relative; }
+    .marca-fila { display: flex; align-items: center; gap: var(--espacio-3); color: #fff; font-weight: var(--peso-fuerte); font-size: var(--texto-lg); }
+    .marca-fila span { width: 44px; height: 44px; border-radius: var(--radio-superficie); display: grid; place-items: center; background: var(--color-marino-elevado); color: var(--color-acento); }
+    .lema { max-width: 30rem; display: grid; gap: var(--espacio-4); }
+    .lema h1 { font-size: var(--texto-3xl); line-height: 1.1; letter-spacing: -0.02em; color: #fff; text-wrap: balance; }
+    .lema p { color: var(--color-texto-sobre-marino-secundario); font-size: var(--texto-md); }
+    .aviso-mvp { font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); border-top: 1px solid var(--color-borde-sobre-marino); padding-top: var(--espacio-4); }
+    .formulario-lado { display: grid; place-items: center; padding: var(--espacio-8) var(--espacio-6); background: var(--color-fondo); }
+    .tarjeta { width: min(400px, 100%); display: grid; gap: var(--espacio-5); }
+    .tarjeta h2 { font-size: var(--texto-2xl); letter-spacing: var(--tracking-titulo); color: var(--color-marino); }
+    .tarjeta form { display: grid; gap: var(--espacio-4); }
+    .nota { display: flex; gap: var(--espacio-2); font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+    .boton[aria-busy="true"] { opacity: 0.85; }
+    .girar { animation: girar 0.9s linear infinite; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    @media (max-width: 860px) { body { grid-template-columns: 1fr; } .marca-panel { padding: var(--espacio-6); min-height: 220px; } .lema h1 { font-size: var(--texto-2xl); } }
+  </style>
+</head>
+<body>
+  <section class="marca-panel" aria-label="Central CAD">
+    <svg class="trama" aria-hidden="true" id="trama"></svg>
+    <div class="marca-fila"><span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 19.5 5.5v6c0 4.8-3.2 8.8-7.5 10-4.3-1.2-7.5-5.2-7.5-10v-6z"/><path d="m8.75 12 2.25 2.25 4.25-4.5"/></svg></span>Central CAD</div>
+    <div class="lema">
+      <h1>Panel de la central de seguridad ciudadana</h1>
+      <p>Recepción de SOS y reportes, despacho de serenos y seguimiento de cada caso hasta su cierre.</p>
+    </div>
+    <p class="aviso-mvp">MVP académico · datos simulados · no es un canal oficial de emergencias.</p>
+  </section>
+
+  <main class="formulario-lado">
+    <div class="tarjeta">
+      <div><h2>Ingresar</h2><p class="secundario" style="font-size:var(--texto-sm)">Para operadores de central y administradores.</p></div>
+      <div id="mensaje" aria-live="assertive"></div>
+      <form novalidate>
+        <div class="campo"><label class="campo__etiqueta" for="correo">Correo electrónico</label><input class="campo__control" id="correo" type="email" autocomplete="username" placeholder="nombre@municipalidad.test" aria-describedby="error-correo" /><span class="campo__error" id="error-correo" hidden></span></div>
+        <div class="campo"><label class="campo__etiqueta" for="clave">Contraseña</label><input class="campo__control" id="clave" type="password" autocomplete="current-password" aria-describedby="error-clave" /><span class="campo__error" id="error-clave" hidden></span></div>
+        <button class="boton boton--principal boton--bloque" type="submit">Ingresar</button>
+      </form>
+      <p class="nota"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.75h.01"/></svg>Ciudadanos y serenos ingresan desde la app CAD Móvil.</p>
+    </div>
+  </main>
+
+  <div class="controles-prototipo" role="group" aria-label="Controles del prototipo">
+    <b>Prototipo</b><span style="color:#9ca3af">Prueba: vacío, «error@cad.test» o cualquier otro correo</span><a href="index.html">Índice</a>
+  </div>
+
+  <script type="module">
+    import { icono } from './prototipo.js';
+    // Trama: rejilla de puntos de la portada del sistema, en celeste sobre marino.
+    const trama = document.getElementById('trama');
+    let puntos = '';
+    for (let x = 24; x < 1400; x += 32) for (let y = 24; y < 1200; y += 32) puntos += `<circle cx="${x}" cy="${y}" r="1.6"/>`;
+    trama.innerHTML = `<g fill="var(--color-acento)" opacity="0.18">${puntos}</g>`;
+
+    const form = document.querySelector('form');
+    const marcar = (campo, texto) => {
+      const control = document.getElementById(campo); const error = document.getElementById(`error-${campo}`);
+      control.setAttribute('aria-invalid', String(Boolean(texto)));
+      error.hidden = !texto; error.innerHTML = texto ? `${icono('error', 'icono icono--sm')}${texto}` : '';
+    };
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const correo = form.correo.value.trim(); const clave = form.clave.value;
+      document.getElementById('mensaje').innerHTML = '';
+      marcar('correo', correo ? '' : 'Escribe tu correo electrónico.');
+      marcar('clave', clave ? '' : 'Escribe tu contraseña.');
+      if (!correo || !clave) { (correo ? form.clave : form.correo).focus(); return; }
+      const boton = form.querySelector('button');
+      boton.setAttribute('aria-busy', 'true'); boton.innerHTML = `<svg class="icono icono--sm girar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>Ingresando…`;
+      setTimeout(() => {
+        boton.removeAttribute('aria-busy'); boton.textContent = 'Ingresar';
+        if (correo === 'error@cad.test') {
+          document.getElementById('mensaje').innerHTML = `<div class="aviso aviso--error">${icono('error')}<span><span class="aviso__titulo">No pudimos iniciar sesión.</span>Revisa el correo y la contraseña.</span></div>`;
+        } else location.href = 'central.html';
+      }, 900);
+    });
+  </script>
+</body>
+</html>

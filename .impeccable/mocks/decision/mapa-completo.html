@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Central · Mapa protagonista</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--m9:#0b1f44;--m8:#132c5c;--m7:#1d3b78;--az:#1d4ed8;--az1:#e6eefd;--ce:#5cc8ff;--fo:#f3f6fb;--su:#fff;--hu:#edf2f9;--tx:#0d1b33;--t2:#475a75;--bo:#d9e2ee;--ur:#b42318;--urf:#fef3f2;--urb:#f4c7c3;--rep:#6d28d9;--repf:#f4effe;--aco:#0d9488;--acof:#e8f6f4;--ex:#05603a;--exf:#ecfdf3;--neu:#3f4e63;--neuf:#eef2f7;--sm:#d5e0f0;--sm2:#9db1d0}
+*{box-sizing:border-box;margin:0}body{width:1440px;height:900px;overflow:hidden;font-family:"Public Sans",system-ui,sans-serif;color:var(--tx);background:#dde5ee;font-variant-numeric:tabular-nums;position:relative}
+header{position:absolute;inset:0 0 auto 0;height:60px;background:var(--m9);color:var(--sm);display:flex;align-items:center;gap:28px;padding:0 20px;z-index:2}
+header b{color:#fff;font-size:15px}.tabs{display:flex;gap:4px;font-size:14px;font-weight:500}.tabs span{padding:8px 12px;border-radius:8px}.tabs .on{background:var(--m8);color:#fff}
+.kp{margin-left:auto;display:flex;gap:18px;font-size:13px}.kp b{font-size:18px;margin-left:4px}.kp .u b{color:#ff8b7e}
+.us{font-size:13px;border-left:1px solid #d5e0f033;padding-left:18px}
+svg.mapa{position:absolute;inset:60px 0 0 0;width:1440px;height:840px}
+.panel{position:absolute;background:var(--su);border-radius:16px;box-shadow:0 16px 40px -8px #0b1f4433,0 6px 12px -6px #0b1f441f;padding:16px;display:flex;flex-direction:column;gap:10px}
+.cola{left:20px;top:80px;width:372px;bottom:20px}.ser{right:20px;top:80px;width:300px}
+h2{font-size:16px;display:flex;justify-content:space-between;align-items:center}h2 span{font-size:12px;font-weight:600;color:var(--t2)}
+.pest{display:flex;background:var(--hu);border-radius:8px;padding:3px;font-size:13px;font-weight:600}.pest span{flex:1;text-align:center;padding:6px;border-radius:6px;color:var(--t2)}.pest .on{background:#fff;color:var(--tx);box-shadow:0 1px 2px #0b1f4414}
+.it{border:1px solid var(--bo);border-radius:12px;padding:12px;display:grid;gap:5px;font-size:14px}.it.u{background:var(--urf);border-color:var(--urb)}.it.sel{box-shadow:0 0 0 2px var(--az)}
+.f{display:flex;gap:8px;align-items:center}.h{margin-left:auto;font-size:13px;color:var(--t2)}
+.sos{background:var(--ur);color:#fff;font-weight:700;font-size:12px;padding:2px 8px;border-radius:6px}
+.ch{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid}.cu{color:var(--ur);background:#fff;border-color:var(--urb)}.cr{color:var(--rep);background:var(--repf);border-color:#dccdfb}.cp{color:var(--az);background:var(--az1);border-color:#cfddfb}.ce{color:var(--ex);background:var(--exf);border-color:#abefc6}.cn{color:var(--neu);background:var(--neuf);border-color:#d3dce8}
+.bts{display:flex;gap:6px;margin-top:4px}.bt{padding:7px 12px;border-radius:8px;font-weight:600;font-size:13px;border:1px solid var(--bo);background:#fff;color:var(--m9)}.bt.p{background:var(--az);color:#fff;border-color:var(--az)}
+.sr{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;font-size:14px;padding:8px 0;border-top:1px solid var(--bo)}.sr small{grid-column:2/4;color:var(--t2);font-size:12px}
+.av{width:30px;height:30px;border-radius:999px;background:var(--m7);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;grid-row:span 2}.av.no{background:#8291a7}
+.ley{position:absolute;left:412px;bottom:20px;background:var(--su);border-radius:999px;padding:6px 8px;display:flex;gap:6px;box-shadow:0 4px 12px -2px #0b1f441a;font-size:13px;font-weight:600}
+.ley span{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--hu)}.ley i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.tip{position:absolute;left:700px;top:330px;background:var(--m9);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;box-shadow:0 4px 10px -2px rgba(0,0,0,.25)}
+.tip small{display:block;color:var(--sm2);font-weight:500}
+</style></head><body>
+<header><b>Central CAD</b><div class="tabs"><span class="on">Central</span><span>Reportes</span><span>Casos</span><span>Acompañamientos</span><span>Concentración</span></div>
+ <div class="kp"><span class="u">SOS<b>3</b></span><span>Por asignar<b>2</b></span><span>Serenos libres<b>2/5</b></span><span>Acompañamientos<b>4</b></span></div><span class="us">Olga Operadora Ficticia</span></header>
+<svg class="mapa" viewBox="0 0 1440 840" preserveAspectRatio="none">
+ <g stroke="#fff" stroke-width="16" fill="none"><path d="M0 220 L1440 300"/><path d="M0 610 L1440 540"/><path d="M560 0 L620 840"/><path d="M980 0 L930 840"/></g>
+ <g stroke="#fff" stroke-width="6" fill="none" opacity=".85"><path d="M0 420 L1440 410"/><path d="M780 0 L800 840"/><path d="M400 0 L470 840"/><path d="M1180 0 L1150 840"/><path d="M0 120 L1440 90"/></g>
+ <path d="M690 380 L842 262" stroke="#1d4ed8" stroke-width="3" stroke-dasharray="8 7"/>
+ <circle cx="690" cy="380" r="40" fill="#b4231822"/><circle cx="690" cy="380" r="24" fill="#b4231833"/>
+ <rect x="672" y="364" width="36" height="32" rx="7" fill="#b42318" stroke="#fff" stroke-width="3"/>
+ <rect x="1020" y="500" width="30" height="26" rx="6" fill="#b42318" stroke="#fff" stroke-width="3"/>
+ <rect x="512" y="664" width="30" height="26" rx="6" fill="#fff" stroke="#b42318" stroke-width="4"/>
+ <circle cx="880" cy="640" r="13" fill="#6d28d9" stroke="#fff" stroke-width="3"/><circle cx="1080" cy="180" r="13" fill="#6d28d9" stroke="#fff" stroke-width="3"/>
+ <path d="M600 520 l22 -10 l20 14 l24 -6" stroke="#0d9488" stroke-width="4" fill="none"/><circle cx="666" cy="518" r="11" fill="#0d9488" stroke="#fff" stroke-width="3"/>
+ <path d="M842 248 l16 7v9c0 8-7 14-16 16-9-2-16-8-16-16v-9z" fill="#1d3b78" stroke="#fff" stroke-width="3"/>
+ <path d="M1110 380 l16 7v9c0 8-7 14-16 16-9-2-16-8-16-16v-9z" fill="#1d3b78" stroke="#fff" stroke-width="3"/>
+ <path d="M760 720 l16 7v9c0 8-7 14-16 16-9-2-16-8-16-16v-9z" fill="#8291a7" stroke="#fff" stroke-width="3"/>
+</svg>
+<div class="tip">Sara Serena Ficticia · 450 m<small>Sereno disponible más cercano</small></div>
+<section class="panel cola">
+ <h2>Cola de trabajo <span>5 casos</span></h2>
+ <div class="pest"><span class="on">Todo</span><span>SOS · 3</span><span>Reportes · 2</span><span>Acompañ. · 4</span></div>
+ <div class="it u sel"><div class="f"><span class="sos">SOS</span><span class="ch cu">Pendiente</span><span class="h">hace 42 s</span></div><b>Ana Ficticia</b><span style="color:var(--t2)">Jr. Lampa 545 · ± 5 m</span><div class="bts"><span class="bt p">Verificar y contactar</span><span class="bt">Asignar a Sara</span></div></div>
+ <div class="it u"><div class="f"><span class="sos">SOS</span><span class="ch cu">Pendiente</span><span class="h">hace 57 s</span></div><b>Beto Ficticio</b><span style="color:var(--t2)">Desde un acompañamiento · «Necesito ayuda»</span></div>
+ <div class="it u"><div class="f"><span class="sos">SOS</span><span class="ch cp">Contactado</span><span class="h">hace 3 min</span></div><b>Carla Ficticia</b><span style="color:var(--t2)">Falta clasificar</span></div>
+ <div class="it"><div class="f"><span class="ch cr">Reporte</span><span class="ch" style="color:#93370d;background:#fff8eb;border-color:#f5d9a8">Por asignar</span><span class="h">23:31</span></div><b>Robo de celular</b><span style="color:var(--t2)">Av. Abancay · lugar del hecho</span></div>
+</section>
+<section class="panel ser">
+ <h2>Serenos <span>2 disponibles · 5 en turno</span></h2>
+ <div class="sr"><span class="av">SS</span><b>Sara Serena</b><span class="ch ce">Disponible</span><small>Última posición hace 12 s · 450 m del SOS</small></div>
+ <div class="sr"><span class="av">LF</span><b>Luis Ficticio</b><span class="ch ce">Disponible</span><small>Hace 20 s · 1,2 km</small></div>
+ <div class="sr"><span class="av">MF</span><b>Marta Ficticia</b><span class="ch cp">En atención</span><small>Reporte · Av. Abancay</small></div>
+ <div class="sr"><span class="av no">PS</span><b>Pedro Suplente</b><span class="ch cn">No operativo</span><small>Sin posición</small></div>
+</section>
+<div class="ley"><span><i style="background:#b42318"></i>SOS</span><span><i style="background:#6d28d9;border-radius:9px"></i>Reporte</span><span><i style="background:#0d9488;border-radius:9px"></i>Acompañamiento</span><span><i style="background:#1d3b78"></i>Sereno</span><span style="background:none;color:#475a75">Relleno: sin asignar · Borde: en atención</span></div>
+</body></html>
+<!-- boceto de la primera vista, 1440 x 900 -->

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prototipos CAD v2</title>
+  <link rel="stylesheet" href="../../../src/Cad.Server/wwwroot/css/tokens.css" />
+  <link rel="stylesheet" href="prototipo.css" />
+  <style>
+    .cabecera { background: var(--color-marino); color: var(--color-texto-sobre-marino); }
+    .cabecera__interior { max-width: 1120px; margin: 0 auto; padding: var(--espacio-12) var(--espacio-6) var(--espacio-10); display: grid; gap: var(--espacio-3); }
+    .cabecera h1 { font-size: var(--texto-3xl); letter-spacing: -0.02em; color: #fff; }
+    .cabecera p { max-width: 44rem; color: var(--color-texto-sobre-marino-secundario); }
+    .contenido { max-width: 1120px; margin: 0 auto; padding: var(--espacio-8) var(--espacio-6) var(--espacio-16); display: grid; gap: var(--espacio-8); }
+    .grupo { display: grid; gap: var(--espacio-4); }
+    .grupo h2 { font-size: var(--texto-xl); color: var(--color-marino); }
+    .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--espacio-4); }
+    .enlace { display: grid; gap: var(--espacio-2); padding: var(--espacio-5); border: 1px solid var(--color-borde); border-radius: var(--radio-superficie); background: var(--color-superficie); color: inherit; text-decoration: none; box-shadow: var(--sombra-1); transition: box-shadow var(--duracion-rapida) var(--curva-estandar), border-color var(--duracion-rapida) var(--curva-estandar); }
+    .enlace:hover { box-shadow: var(--sombra-2); border-color: var(--color-borde-fuerte); }
+    .enlace b { font-size: var(--texto-lg); color: var(--color-marino); }
+    .enlace span { font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+    .enlace small { font-size: var(--texto-xs); font-weight: var(--peso-medio); color: var(--color-primario); }
+    .nota { font-size: var(--texto-sm); color: var(--color-texto-secundario); border-top: 1px solid var(--color-borde); padding-top: var(--espacio-4); }
+  </style>
+</head>
+<body>
+  <header class="cabecera"><div class="cabecera__interior">
+    <h1>Prototipos del rediseño CAD v2</h1>
+    <p>Pantallas clave del panel web y de la app, navegables y con datos ficticios, construidas sobre los tokens reales del sistema. La central sigue la dirección «Mapa protagonista», elegida el 18/10/2026.</p>
+  </div></header>
+  <main class="contenido">
+    <section class="grupo" aria-labelledby="g-web">
+      <h2 id="g-web">Panel web</h2>
+      <div class="rejilla">
+        <a class="enlace" href="ingreso.html"><small>Operador y administrador</small><b>Ingreso</b><span>Marca a la izquierda, formulario a la derecha; errores en línea y estado de envío.</span></a>
+        <a class="enlace" href="central.html"><small>Operador</small><b>Central de monitoreo</b><span>Mapa a pantalla completa con la cola y los serenos encima. Estados tranquilo, normal y saturado; SOS nuevo en vivo; asignación con confirmación.</span></a>
+        <a class="enlace" href="sos.html"><small>Operador</small><b>Detalle de SOS</b><span>Línea de progreso y una sola «Siguiente acción»: contactar, clasificar y asignar.</span></a>
+        <a class="enlace" href="casos.html"><small>Operador</small><b>Casos</b><span>Tabla con chips de estado, filtros plegables con filtros activos y estado sin resultados.</span></a>
+      </div>
+    </section>
+    <section class="grupo" aria-labelledby="g-movil">
+      <h2 id="g-movil">App CAD Móvil</h2>
+      <div class="rejilla">
+        <a class="enlace" href="movil-ciudadano.html"><small>Ciudadano</small><b>Inicio, SOS y mis casos</b><span>SOS de un toque, confirmación con línea de tiempo y barra inferior de cuatro pestañas.</span></a>
+        <a class="enlace" href="movil-acompanamiento.html"><small>Ciudadano</small><b>Acompañamiento</b><span>Anillo de tiempo restante y confirmación de bienestar en una hoja inferior.</span></a>
+        <a class="enlace" href="movil-sereno.html"><small>Sereno</small><b>Estado operativo y despacho</b><span>Interruptor de estado y una sola acción fija abajo que avanza con el caso.</span></a>
+      </div>
+    </section>
+    <p class="nota">MVP académico · datos simulados · no es un canal oficial de emergencias. Los controles oscuros de «Prototipo» no forman parte del producto: sirven para cambiar de estado y simular eventos.</p>
+  </main>
+</body>
+</html>

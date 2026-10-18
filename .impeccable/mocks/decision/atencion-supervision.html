@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Central · Atención y supervisión</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--m9:#0b1f44;--m8:#132c5c;--m7:#1d3b78;--az:#1d4ed8;--az1:#e6eefd;--ce:#5cc8ff;--fo:#f3f6fb;--su:#fff;--hu:#edf2f9;--tx:#0d1b33;--t2:#475a75;--t3:#5c6e88;--bo:#d9e2ee;--ur:#b42318;--urf:#fef3f2;--urb:#f4c7c3;--rep:#6d28d9;--repf:#f4effe;--aco:#0f766e;--acof:#e8f6f4;--ex:#05603a;--exf:#ecfdf3;--neu:#3f4e63;--neuf:#eef2f7;--sm:#d5e0f0;--sm2:#9db1d0}
+*{box-sizing:border-box;margin:0}body{width:1440px;height:900px;overflow:hidden;font-family:"Public Sans",system-ui,sans-serif;color:var(--tx);background:var(--fo);display:grid;grid-template-columns:232px 1fr;font-variant-numeric:tabular-nums}
+nav{background:var(--m9);color:var(--sm);padding:20px 12px;display:flex;flex-direction:column;gap:4px}
+.marca{display:flex;gap:10px;align-items:center;padding:0 8px 18px}.escudo{width:34px;height:34px;border-radius:8px;background:var(--m8);display:grid;place-items:center;color:var(--ce);font-weight:700}
+.marca b{color:#fff;font-size:15px;display:block}.marca small{font-size:11px;color:var(--sm2)}
+.en{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:8px;font-size:14px;font-weight:500}.en.act{background:var(--m8);color:#fff}
+.cnt{font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--m8)}.cnt.u{background:var(--ur);color:#fff}
+.pie{margin-top:auto;border-top:1px solid #d5e0f024;padding:14px 10px 0;font-size:13px}.pie b{color:#fff;display:block}
+main{display:grid;grid-template-rows:auto auto 1fr;gap:16px;padding:20px 24px;min-width:0}
+.cab{display:flex;align-items:center;gap:16px}.cab h1{font-size:26px;letter-spacing:-.015em;color:var(--m9)}
+.modo{display:flex;background:var(--hu);border-radius:999px;padding:3px;font-size:13px;font-weight:600}.modo span{padding:6px 14px;border-radius:999px;color:var(--t2)}.modo .on{background:var(--ur);color:#fff}
+.vivo{margin-left:auto;font-size:13px;color:var(--ex);background:var(--exf);border:1px solid #abefc6;padding:5px 12px;border-radius:999px;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.kpi{background:var(--su);border:1px solid var(--bo);border-radius:12px;padding:12px 16px}.kpi small{font-size:12px;color:var(--t2);font-weight:600}.kpi b{display:block;font-size:28px;letter-spacing:-.02em}.kpi.u{border-color:var(--urb);background:var(--urf)}.kpi.u b{color:var(--ur)}
+.zona{display:grid;grid-template-columns:1fr 360px;gap:16px;min-height:0}
+.foco{background:var(--su);border:1px solid var(--urb);border-radius:16px;box-shadow:0 16px 40px -8px #0b1f4422;display:grid;grid-template-columns:1.1fr 1fr;overflow:hidden}
+.foco .dat{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.sos{display:inline-flex;gap:6px;align-items:center;background:var(--ur);color:#fff;font-weight:700;font-size:13px;padding:3px 9px;border-radius:6px;box-shadow:0 0 0 6px #b4231822}
+.fila{display:flex;gap:10px;align-items:center}.hora{margin-left:auto;color:var(--t2);font-size:14px}
+.foco h2{font-size:30px;letter-spacing:-.02em}.meta{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px}.meta dt{color:var(--t2)}
+.paso{display:flex;gap:6px;font-size:12px;font-weight:600;color:var(--t3)}.paso i{flex:1;height:4px;border-radius:4px;background:var(--bo)}.paso i.h{background:var(--az)}
+.sig{background:var(--hu);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}.sig small{font-size:12px;font-weight:700;color:var(--az);letter-spacing:.02em}
+.sig p{font-size:15px}.bts{display:flex;gap:8px}.bt{padding:11px 18px;border-radius:8px;font-weight:600;font-size:15px;border:1px solid var(--bo);background:#fff;color:var(--m9)}.bt.p{background:var(--az);color:#fff;border-color:var(--az)}
+.mapa{background:#dfe6ef;position:relative}
+.cola{display:flex;flex-direction:column;gap:10px;min-height:0}
+.cola h3{font-size:15px;display:flex;justify-content:space-between}.cola h3 span{color:var(--t2);font-weight:500;font-size:13px}
+.it{background:var(--su);border:1px solid var(--bo);border-radius:12px;padding:12px 14px;display:grid;gap:4px;font-size:14px}
+.it.nu{border-color:var(--urb);background:var(--urf);box-shadow:0 0 0 2px #b4231840}.it b{font-size:15px}
+.ch{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid}.ch.u{color:var(--ur);background:var(--urf);border-color:var(--urb)}.ch.r{color:var(--rep);background:var(--repf);border-color:#dccdfb}.ch.a{color:var(--aco);background:var(--acof);border-color:#b4e2dc}
+.it .fila{gap:8px}.it .hora{font-size:13px}
+</style></head><body>
+<nav>
+ <div class="marca"><span class="escudo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 19.5 5.5v6c0 4.8-3.2 8.8-7.5 10-4.3-1.2-7.5-5.2-7.5-10v-6z"/><path d="m8.75 12 2.25 2.25 4.25-4.5"/></svg></span><div><b>Central CAD</b><small>MVP académico · datos simulados</small></div></div>
+ <div class="en act">Central <span class="cnt u">3</span></div><div class="en">Reportes <span class="cnt">2</span></div><div class="en">Casos</div><div class="en">Acompañamientos <span class="cnt">4</span></div><div class="en">Mapa de concentración</div>
+ <div class="pie"><b>Olga Operadora Ficticia</b>Operador · turno noche</div>
+</nav>
+<main>
+ <div class="cab"><h1>Central de monitoreo</h1><div class="modo"><span class="on">Atención · 3 SOS</span><span>Supervisión</span></div><span class="vivo"><svg width="8" height="8" style="vertical-align:1px;margin-right:6px"><circle cx="4" cy="4" r="4" fill="#05603a"/></svg>Conectado en tiempo real</span></div>
+ <div class="kpis"><div class="kpi u"><small>SOS pendientes</small><b>3</b></div><div class="kpi"><small>Reportes por asignar</small><b>2</b></div><div class="kpi"><small>Serenos disponibles</small><b>2 de 5</b></div><div class="kpi"><small>Acompañamientos activos</small><b>4</b></div><div class="kpi"><small>Respuesta media hoy</small><b>4 min 10 s</b></div></div>
+ <div class="zona">
+  <section class="foco">
+   <div class="dat">
+    <div class="fila"><span class="sos">SOS</span><span class="ch u">Pendiente</span><span class="hora">hace 42 s · 23:43:06</span></div>
+    <h2>Ana Ficticia</h2>
+    <div class="paso"><i class="h"></i><i></i><i></i><i></i><i></i></div>
+    <dl class="meta"><dt>Teléfono</dt><dd>900 000 001</dd><dt>Ubicación</dt><dd>Del dispositivo · ± 5 m · Jr. Lampa 545</dd><dt>Tipo</dt><dd>Por determinar</dd></dl>
+    <div class="sig"><small>SIGUIENTE ACCIÓN</small><p>Llama a la ciudadana y registra el resultado del contacto.</p><div class="bts"><span class="bt p">Registrar contacto</span><span class="bt">Asignar sin verificar</span></div></div>
+    <p style="font-size:13px;color:var(--t2)">Sereno más cercano: <b style="color:var(--tx)">Sara Serena Ficticia</b> · 450 m · disponible</p>
+   </div>
+   <div class="mapa"><svg width="100%" height="100%" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid slice"><g stroke="#fff" stroke-width="10" fill="none"><path d="M0 120 L400 160"/><path d="M0 330 L400 300"/><path d="M120 0 L160 480"/><path d="M290 0 L260 480"/></g><g stroke="#fff" stroke-width="4" fill="none" opacity=".8"><path d="M0 230 L400 225"/><path d="M200 0 L215 480"/></g><path d="M212 228 L272 158" stroke="#1d4ed8" stroke-width="3" stroke-dasharray="6 6"/><circle cx="212" cy="228" r="26" fill="#b4231826"/><rect x="196" y="214" width="32" height="28" rx="6" fill="#b42318" stroke="#fff" stroke-width="3"/><path d="M272 146 l14 6v8c0 7-6 12-14 14-8-2-14-7-14-14v-8z" fill="#1d3b78" stroke="#fff" stroke-width="3"/></svg></div>
+  </section>
+  <aside class="cola">
+   <h3>Cola de trabajo <span>más recientes arriba</span></h3>
+   <div class="it nu"><div class="fila"><span class="sos">SOS</span><span class="hora">23:43:06</span></div><b>Ana Ficticia</b><span style="color:var(--t2)">En atención en el panel</span></div>
+   <div class="it nu"><div class="fila"><span class="sos">SOS</span><span class="ch a">Acompañamiento</span><span class="hora">23:42:51</span></div><b>Beto Ficticio</b><span style="color:var(--t2)">«Necesito ayuda» · sin verificar</span></div>
+   <div class="it"><div class="fila"><span class="sos">SOS</span><span class="hora">23:40:12</span></div><b>Carla Ficticia</b><span style="color:var(--t2)">Contactada · falta clasificar</span></div>
+   <div class="it"><div class="fila"><span class="ch r">Reporte</span><span class="ch u" style="color:#93370d;background:#fff8eb;border-color:#f5d9a8">Por asignar</span><span class="hora">23:31</span></div><b>Robo de celular</b><span style="color:var(--t2)">Lugar del hecho · Av. Abancay</span></div>
+   <div class="it"><div class="fila"><span class="ch r">Reporte</span><span class="hora">23:18</span></div><b>Luminaria apagada</b><span style="color:var(--t2)">Referencia textual</span></div>
+  </aside>
+ </div>
+</main>
+</body></html>
+<!-- boceto de la primera vista, 1440 x 900 -->

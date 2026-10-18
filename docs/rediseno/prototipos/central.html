@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Central de monitoreo · Prototipo CAD v2</title>
+  <link rel="stylesheet" href="../../../src/Cad.Server/wwwroot/css/tokens.css" />
+  <link rel="stylesheet" href="prototipo.css" />
+</head>
+<body>
+  <div id="barra"></div>
+
+  <main class="central" aria-label="Central de monitoreo">
+    <h1 class="visualmente-oculto">Central de monitoreo</h1>
+    <div class="mapa" id="mapa"></div>
+
+    <section class="panel cola" id="panel-cola" aria-labelledby="titulo-cola">
+      <div class="panel__cabecera">
+        <h2 class="panel__titulo" id="titulo-cola">Cola de trabajo</h2>
+        <span class="panel__dato" id="dato-cola"></span>
+        <button class="panel__plegar" type="button" data-plegar="panel-cola" aria-expanded="true" aria-label="Plegar la cola de trabajo"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      </div>
+      <div class="pestanas" role="tablist" aria-label="Filtrar la cola">
+        <button class="pestana" role="tab" aria-selected="true" data-pestana="todo">Todo</button>
+        <button class="pestana" role="tab" aria-selected="false" data-pestana="sos">SOS · <b>0</b></button>
+        <button class="pestana" role="tab" aria-selected="false" data-pestana="reportes">Reportes · <b>0</b></button>
+        <button class="pestana" role="tab" aria-selected="false" data-pestana="acompanamientos" title="Abre la sección Acompañamientos">Acompañ. · <b>0</b></button>
+      </div>
+      <div class="panel__cuerpo">
+        <div class="aviso aviso--advertencia" id="aviso-conexion" hidden><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.2 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4M12 17h.01"/></svg><span><span class="aviso__titulo">Reconectando con el servidor.</span>La cola puede no estar al día. Se recuperará sola.</span></div>
+        <ul class="cola__lista" id="lista-casos" style="display:grid;gap:var(--espacio-2)"></ul>
+      </div>
+    </section>
+
+    <section class="panel serenos" id="panel-serenos" aria-labelledby="titulo-serenos">
+      <div class="panel__cabecera">
+        <h2 class="panel__titulo" id="titulo-serenos">Serenos</h2>
+        <span class="panel__dato" id="dato-serenos"></span>
+        <button class="panel__plegar" type="button" data-plegar="panel-serenos" aria-expanded="true" aria-label="Plegar la lista de serenos"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+      <ul class="panel__cuerpo" id="lista-serenos"></ul>
+    </section>
+
+    <div class="leyenda" role="group" aria-label="Capas del mapa">
+      <button type="button" data-capa="sos" aria-pressed="true"><i style="background:var(--mapa-sos)"></i>SOS</button>
+      <button type="button" data-capa="reporte" aria-pressed="true"><i style="background:var(--mapa-reporte);border-radius:99px"></i>Reportes</button>
+      <button type="button" data-capa="acompanamiento" aria-pressed="true"><i style="background:var(--mapa-acompanamiento);border-radius:99px"></i>Acompañamientos</button>
+      <button type="button" data-capa="sereno" aria-pressed="true"><i style="background:var(--mapa-sereno);clip-path:polygon(50% 0,100% 25%,100% 60%,50% 100%,0 60%,0 25%)"></i>Serenos</button>
+      <small>Relleno: sin asignar · Borde: en curso</small>
+    </div>
+  </main>
+
+  <div class="velo" id="dialogo-asignar" hidden>
+    <section class="dialogo" role="dialog" aria-modal="true" aria-labelledby="titulo-asignar">
+      <h2 class="dialogo__titulo" id="titulo-asignar"></h2>
+      <div class="dialogo__resumen" data-resumen></div>
+      <div class="dialogo__acciones">
+        <button class="boton boton--secundario" type="button" data-cancelar>Cancelar</button>
+        <button class="boton boton--principal" type="button" data-confirmar>Asignar</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="controles-prototipo arriba" role="group" aria-label="Controles del prototipo">
+    <b>Prototipo</b>
+    <button type="button" data-escenario="tranquilo" aria-pressed="false">Tranquilo</button>
+    <button type="button" data-escenario="normal" aria-pressed="true">Normal</button>
+    <button type="button" data-escenario="saturado" aria-pressed="false">Saturado</button>
+    <button type="button" data-simular>Simular SOS nuevo</button>
+    <button type="button" data-conexion-prueba aria-pressed="false">Perder conexión</button>
+    <a href="index.html">Índice</a>
+  </div>
+
+  <script type="module" src="central.js"></script>
+</body>
+</html>

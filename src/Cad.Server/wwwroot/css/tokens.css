@@ -115,9 +115,11 @@
   --color-reporte: #6D28D9;          /* blanco encima: 7.10:1; 6.30:1 sobre su fondo */
   --color-reporte-fondo: #F4EFFE;
   --color-reporte-borde: #DCCDFB;
+  --color-reporte-borde: #DCCDFB;
   /* Acompañamientos (HU38): verde azulado, coherente con la paleta fría. */
   --color-acompanamiento: #0F766E;   /* blanco encima: 5.47:1; 4.93:1 sobre su fondo */
   --color-acompanamiento-fondo: #E8F6F4;
+  --color-acompanamiento-borde: #B4E2DC;
   --color-acompanamiento-borde: #B4E2DC;
 
   /* ── Capas del mapa (validadas: CVD ΔE ≥ 14, contraste ≥ 3:1) ─────────── */

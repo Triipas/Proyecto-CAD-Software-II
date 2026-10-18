@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAD Móvil · Ciudadano · Prototipo CAD v2</title>
+  <link rel="stylesheet" href="../../../src/Cad.Server/wwwroot/css/tokens.css" />
+  <link rel="stylesheet" href="prototipo.css" />
+  <link rel="stylesheet" href="movil.css" />
+</head>
+<body class="escena">
+  <div class="telefono" aria-label="Pantalla del teléfono">
+    <div class="estado-sistema" id="estado-sistema"><span>23:43</span><span>5G · 82 %</span></div>
+
+    <div style="position:relative;overflow:hidden;display:grid">
+      <!-- Inicio -->
+      <section class="vista" data-vista="inicio" aria-labelledby="t-inicio">
+        <header class="cabecera-app">
+          <div class="fila"><h1 id="t-inicio">Hola, Ana</h1></div>
+          <span class="chip-ubicacion"><i></i>Ubicación lista · solo se envía con un SOS</span>
+        </header>
+        <div class="zona-sos">
+          <button class="boton-sos" type="button" data-sos aria-describedby="ayuda-sos">SOS<small>Pedir ayuda</small></button>
+          <p id="ayuda-sos">Un toque envía tu ubicación a la central. Podrás cancelarlo después.</p>
+        </div>
+        <div class="cuerpo">
+          <button class="mosaico" type="button" data-ir="reporte"><span class="mosaico__icono" style="background:var(--color-reporte-fondo);color:var(--color-reporte)" data-i="documento"></span><span><b>Reportar una incidencia</b><small>No es urgente. La central la revisará.</small></span><span data-i="derecha"></span></button>
+          <a class="mosaico" href="movil-acompanamiento.html" style="text-decoration:none;color:inherit"><span class="mosaico__icono" style="background:var(--color-acompanamiento-fondo);color:var(--color-acompanamiento)" data-i="ruta"></span><span><b>Acompañamiento</b><small>Comparte tu trayecto hasta 30 minutos.</small></span><span data-i="derecha"></span></a>
+          <p class="secundario" style="font-size:var(--texto-xs);text-align:center">MVP académico con datos simulados. No es un canal oficial de emergencias.</p>
+        </div>
+      </section>
+
+      <!-- SOS enviado -->
+      <section class="vista" data-vista="enviado" hidden aria-labelledby="t-enviado">
+        <div class="confirmacion">
+          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span>
+          <h2 id="t-enviado" tabindex="-1">Tu SOS llegó a la central</h2>
+          <p class="secundario">Registrado a las 23:43:06 con tu ubicación (± 5 m). Una operadora te llamará al 900 000 001.</p>
+        </div>
+        <div class="cuerpo">
+          <ol class="tiempo-linea" style="padding:var(--espacio-2) 0">
+            <li class="hito"><span class="hito__punto" data-i="hecho"></span><div><b>Recibido</b><small>23:43:06</small></div></li>
+            <li class="hito"><span class="hito__punto hito__punto--actual"></span><div><b>La central te contactará</b><small>Mantén el teléfono a mano</small></div></li>
+            <li class="hito"><span class="hito__punto hito__punto--futuro"></span><div><b>Un sereno va en camino</b><small>Te avisaremos</small></div></li>
+          </ol>
+          <button class="boton boton--principal boton--bloque" type="button" data-ir="caso">Ver mi caso</button>
+          <button class="boton boton--terciario" type="button" data-cancelar-sos style="color:var(--color-urgente)">Cancelar el SOS</button>
+        </div>
+      </section>
+
+      <!-- Mis casos -->
+      <section class="vista" data-vista="casos" hidden aria-labelledby="t-casos">
+        <h1 class="titulo-vista" id="t-casos">Mis casos</h1>
+        <div class="cuerpo" id="lista-mis-casos"></div>
+      </section>
+
+      <!-- Detalle de caso -->
+      <section class="vista" data-vista="caso" hidden aria-labelledby="t-caso">
+        <div class="cuerpo" style="padding-top:var(--espacio-2)">
+          <button class="volver" type="button" data-ir="casos" style="border:0;background:none;padding:0;color:var(--color-primario);cursor:pointer"><span data-i="izquierda"></span>Mis casos</button>
+          <div style="display:flex;gap:8px;align-items:center"><span class="etiqueta-sos">SOS</span><span class="chip chip--progreso" data-i-chip="camino">En camino</span></div>
+          <h1 class="titulo-pagina" id="t-caso" style="font-size:var(--texto-xl)">Sara va hacia tu ubicación</h1>
+          <ol class="tiempo-linea" style="padding:var(--espacio-2) 0">
+            <li class="hito"><span class="hito__punto" data-i="hecho"></span><div><b>Recibido</b><small>23:43:06</small></div></li>
+            <li class="hito"><span class="hito__punto" data-i="hecho"></span><div><b>La central te contactó</b><small>23:43:49 · Olga Operadora</small></div></li>
+            <li class="hito"><span class="hito__punto hito__punto--actual"></span><div><b>En camino</b><small>23:46:52 · Sara Serena Ficticia</small></div></li>
+            <li class="hito"><span class="hito__punto hito__punto--futuro"></span><div><b>En atención</b><small>Pendiente</small></div></li>
+            <li class="hito"><span class="hito__punto hito__punto--futuro"></span><div><b>Cerrado</b><small>Podrás evaluar la atención</small></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Avisos -->
+      <section class="vista" data-vista="avisos" hidden aria-labelledby="t-avisos">
+        <h1 class="titulo-vista" id="t-avisos">Avisos</h1>
+        <div class="cuerpo">
+          <button class="tarjeta-caso" type="button" data-ir="caso"><b>Tu SOS está en camino</b><span data-i="derecha"></span><small>Sara Serena Ficticia va hacia tu ubicación · hace 1 min</small></button>
+          <button class="tarjeta-caso" type="button"><b>Tu reporte fue derivado</b><span data-i="derecha"></span><small>Comisaría del sector (ficticia) · ayer</small></button>
+        </div>
+      </section>
+
+      <!-- Cuenta -->
+      <section class="vista" data-vista="cuenta" hidden aria-labelledby="t-cuenta">
+        <h1 class="titulo-vista" id="t-cuenta">Cuenta</h1>
+        <div class="cuerpo">
+          <div style="padding:var(--espacio-2) 0"><dl class="datos"><dt>Nombre</dt><dd>Ana Ficticia</dd><dt>Teléfono</dt><dd>900 000 001</dd><dt>Correo</dt><dd>ana.ficticia@correo.test</dd></dl></div>
+          <button class="boton boton--secundario boton--bloque" type="button">Salir</button>
+        </div>
+      </section>
+    </div>
+
+    <nav class="pestanas-app" aria-label="Secciones">
+      <button class="pestana-app" type="button" data-ir="inicio" aria-current="page"><span data-i="escudo"></span>Inicio</button>
+      <button class="pestana-app" type="button" data-ir="casos"><span data-i="documento"></span>Mis casos</button>
+      <button class="pestana-app" type="button" data-ir="avisos"><span data-i="bandeja"></span>Avisos<span class="insignia" id="insignia" hidden>1</span></button>
+      <button class="pestana-app" type="button" data-ir="cuenta"><span data-i="asignado"></span>Cuenta</button>
+    </nav>
+  </div>
+  <p class="leyenda-escena">Ciudadana: inicio con SOS de un toque, confirmación, mis casos con línea de tiempo y avisos.</p>
+
+  <div class="controles-prototipo abajo" role="group" aria-label="Controles del prototipo"><b>Prototipo</b><button type="button" data-ir="inicio">Reiniciar</button><a href="movil-acompanamiento.html">Acompañamiento</a><a href="movil-sereno.html">Sereno</a><a href="index.html">Índice</a></div>
+
+  <script type="module">
+    import { icono, anunciar } from './prototipo.js';
+    const iconos = () => {
+      document.querySelectorAll('[data-i]').forEach((el) => { if (!el.dataset.listo) { el.innerHTML = icono(el.dataset.i, 'icono', el.dataset.i === 'hecho' ? 3 : 2); el.dataset.listo = '1'; } });
+      document.querySelectorAll('[data-i-chip]').forEach((el) => { if (!el.dataset.listo) { el.insertAdjacentHTML('afterbegin', icono(el.dataset.iChip)); el.dataset.listo = '1'; } });
+    };
+    const CASOS = [
+      { titulo: 'SOS · En camino', chip: ['progreso', 'camino', 'En camino'], dato: 'Hoy 23:43 · Sara Serena Ficticia', destino: 'caso', sos: true },
+      { titulo: 'Reporte · Robo de celular', chip: ['exito', 'exito', 'Cerrado'], dato: 'Ayer 23:53 · Se recuperó el celular', destino: 'caso' },
+      { titulo: 'Reporte · Luminaria apagada', chip: ['neutro', 'derivar', 'Derivado'], dato: 'Ayer 23:54 · Comisaría del sector (ficticia)', destino: 'caso' },
+      { titulo: 'SOS · Cancelado', chip: ['neutro', 'cancelar', 'Cancelado'], dato: '16/10 18:20 · Lo cancelaste: fue un error', destino: 'caso' },
+    ];
+    document.getElementById('lista-mis-casos').innerHTML = CASOS.map((c) => `
+      <button class="tarjeta-caso" type="button" data-ir="${c.destino}"><span style="display:flex;gap:8px;align-items:center">${c.sos ? '<span class="etiqueta-sos">SOS</span>' : '<span class="chip chip--reporte">Reporte</span>'}<span class="chip chip--${c.chip[0]}">${icono(c.chip[1])}${c.chip[2]}</span></span>${icono('derecha')}<b>${c.titulo.split(' · ')[1]}</b><small>${c.dato}</small></button>`).join('');
+    iconos();
+
+    function ir(vista) {
+      document.querySelectorAll('[data-vista]').forEach((v) => { const activa = v.dataset.vista === vista; v.hidden = !activa; v.classList.toggle('vista--entrar', activa); });
+      const pestana = { inicio: 'inicio', enviado: 'inicio', casos: 'casos', caso: 'casos', avisos: 'avisos', cuenta: 'cuenta' }[vista];
+      document.querySelectorAll('.pestana-app').forEach((p) => p.toggleAttribute('aria-current', p.dataset.ir === pestana) || p.removeAttribute('aria-current'));
+      document.querySelectorAll('.pestana-app').forEach((p) => { if (p.dataset.ir === pestana) p.setAttribute('aria-current', 'page'); });
+      document.getElementById('estado-sistema').classList.toggle('estado-sistema--claro', vista !== 'inicio');
+      if (vista === 'avisos') document.getElementById('insignia').hidden = true;
+    }
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[data-sos]')) {
+        navigator.vibrate?.(60);
+        ir('enviado'); document.getElementById('insignia').hidden = false;
+        document.getElementById('t-enviado').focus(); anunciar('Tu SOS llegó a la central.', 'assertive');
+        return;
+      }
+      if (e.target.closest('[data-cancelar-sos]')) { ir('inicio'); return; }
+      const destino = e.target.closest('[data-ir]'); if (destino) ir(destino.dataset.ir);
+    });
+  </script>
+</body>
+</html>

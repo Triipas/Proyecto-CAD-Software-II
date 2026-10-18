@@ -11,7 +11,8 @@ Base de partida: las 84 capturas web y 67 móviles de [capturas/](capturas/READM
 | 0 · Auditoría | ✅ 18/10/2026 | [Crítica](rediseno/fase0-critica.md) · [Decisiones de UX por rol](rediseno/fase0-decisiones-ux.md) · [PRODUCT.md](../PRODUCT.md) |
 | 1 · Sistema de diseño | ✅ 18/10/2026 | `tokens.css` v2 · `Colors.xaml` y `Styles.xaml` v2 · Public Sans en web y app · [Textos](rediseno/fase1-textos.md) · guía «Sistema CAD v2» publicada como página |
 | Revisión visual (adelantada de la fase 5) | ✅ 18/10/2026 | [tests/Cad.Visual](../tests/Cad.Visual/README.md): Playwright + axe-core sobre la base desechable `cad_visual`; 18 pantallas × 3 anchos con referencia aprobada; deudas conocidas en `pruebas/deudas.js` |
-| 2 · Prototipos | Pendiente | — |
+| 2 · Dirección y prototipos | ✅ 18/10/2026 | Ronda de dirección de la central: elegida «Mapa protagonista» (contrato en `.impeccable/surfaces/`) · [prototipos navegables](rediseno/prototipos/index.html) de ingreso, central (tres cargas), detalle de SOS, casos y la app (ciudadano, acompañamiento, sereno), también publicados como página privada |
+| 3 · Implementación web | Pendiente | — |
 
 Ajustes respecto al plan inicial, decididos en las fases 0 y 1:
 
@@ -19,7 +20,11 @@ Ajustes respecto al plan inicial, decididos en las fases 0 y 1:
 - **Serenos en el mapa** en `--mapa-sereno` (marino) con forma de escudo: el azul de acción y el violeta de reportes eran indistinguibles para deuteranopía (ΔE 0.3).
 - **Se elimina la etiqueta sobre el título** («OPERADOR», «CIUDADANO»): el rol pasa a la navegación. El estilo `Sobretitulo` queda marcado como obsoleto hasta la fase 4.
 - **«Recibido» pasa de verde a azul informativo**: es un estado inicial, no un logro. Se añade el tono `progreso` para Asignada, En camino y En atención.
-- **Fase 2 con `impeccable`**: antes de prototipar, su ronda de dirección (`concept-seed`) propone el «movimiento distintivo» de la central dentro de la paleta ya fijada.
+- **Fase 2 con `impeccable`**: la ronda de dirección (`concept-seed`) presentó tres organizaciones de la central y se eligió **«Mapa protagonista»**. Esto ajusta dos decisiones de la fase 0:
+  - **D1:** la navegación del panel pasa a una **barra superior** marino con secciones e indicadores en vivo (menú desplegable por debajo de 1100 px), en lugar de la barra lateral.
+  - **D2:** la central deja de tener tres columnas fijas: el **mapa ocupa toda la pantalla** y la cola (izquierda) y los serenos (derecha) flotan encima como paneles plegables; por debajo de 760 px se apilan bajo el mapa.
+  - El movimiento distintivo es la **línea de despacho**: al elegir un caso, une el marcador con el sereno disponible más cercano y muestra la distancia.
+- **Cierre de la dirección**: el contrato de `impeccable` exige, al terminar la implementación (fase 3), la revisión final del *finish reviewer* y el `DESIGN.md` generado a partir de lo construido.
 
 ---
 

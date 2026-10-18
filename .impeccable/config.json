@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mapa-completo.html"
+        ],
+        "createdAt": "2026-10-18T21:24:49.004Z",
+        "reason": "Claude, fase 1 del rediseño: sombra de elevación teñida de marino (token sombra-3) con desplazamiento y desenfoque sobre un mapa claro; no es un halo de color"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "docs/rediseno/prototipos/*.html"
+        ],
+        "createdAt": "2026-10-18T21:42:02.303Z",
+        "reason": "Claude: el análisis estático no resuelve tokens.css y toma la página por oscura; las sombras son los tokens sombra-1/2/3 teñidos de marino sobre fondo claro. La revisión del HTML con estilos resueltos no marca esta regla."
+      }
+    ]
+  }
+}
