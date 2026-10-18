@@ -1,29 +1,62 @@
 @page "/panel/central/sos/{id:guid}"
 @model Cad.Server.Panel.Pages.Central.SosModel
 @using System.Globalization
+@using Accion = Cad.Server.Panel.Pages.Central.SosModel.SiguienteAccion
+@using Paso = Cad.Server.Panel.Pages.Central.SosModel.EstadoPaso
 @{
     ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "Verificar SOS";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
     var inv = CultureInfo.InvariantCulture;
     var sos = Model.Sos;
+    var siguiente = Model.Siguiente;
     string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
-    var errorResultado = Model.ErrorDe("resultado");
-    var errorInformacion = Model.ErrorDe("informacionHecho");
-    var errorReferencia = Model.ErrorDe("referenciaUbicacion");
-    var errorSolicitud = Model.ErrorDe("idSolicitud");
+    var primerNombre = sos.Ciudadano.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? sos.Ciudadano;
+
+    // «Otras acciones»: lo que también se puede hacer ahora, además de la siguiente acción.
+    var intentoComoOtra = siguiente != Accion.Contactar && siguiente is not (Accion.VerCierre or Accion.VerCancelacion);
+    var clasificarComoOtra = siguiente != Accion.Clasificar && sos.Clasificacion is null && siguiente != Accion.VerCancelacion;
+    var asignarComoOtra = siguiente is Accion.Contactar or Accion.Clasificar;
+    var hayOtras = intentoComoOtra || clasificarComoOtra || asignarComoOtra;
+    var abrirOtras = (intentoComoOtra && Model.Errores.Count > 0) || (clasificarComoOtra && Model.ErrorCategoria is not null);
 }
+@section Estilos {
+    @if (sos.UbicacionDisponible)
+    {
+        <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+    }
+    <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
+}
+
 <p><a class="enlace-volver" href="/panel/central">← Central de monitoreo</a></p>
-<div class="pagina__encabezado">
-    <div>
-        <p class="sobretitulo">Operador · @sos.Origen @sos.Estado</p>
-        <h1 class="titulo">@(sos.EsCasoUrgente ? "Caso urgente del acompañamiento" : "Verificar SOS")</h1>
-        @if (sos.EsCasoUrgente)
-        {
-            <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
-        }
-        <p class="texto-secundario">Registrado el @Local(sos.RegistradoEn). <a href="/panel/casos/@sos.Id/historial">Ver el historial del caso</a></p>
+
+<header class="cabecera-caso">
+    <div class="cabecera-caso__fila">
+        <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@(sos.EsCasoUrgente ? "Caso urgente" : "SOS")</span>
+        <h1 class="titulo">@sos.Ciudadano</h1>
     </div>
-</div>
+    <p class="cabecera-caso__resumen">
+        <strong>@sos.Origen @sos.Estado</strong> · Registrado el @Local(sos.RegistradoEn) · <a href="/panel/casos/@sos.Id/historial">Ver el historial del caso</a>
+    </p>
+    @if (sos.EsCasoUrgente)
+    {
+        <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
+    }
+    <ol class="progreso superficie" aria-label="Progreso del caso">
+        @foreach (var paso in Model.Pasos)
+        {
+            var clase = paso.Estado switch { Paso.Hecho => "progreso__paso--hecho", Paso.Actual => "progreso__paso--actual", Paso.Omitido => "progreso__paso--omitido", _ => "" };
+            <li class="progreso__paso @clase" aria-current="@(paso.Estado == Paso.Actual ? "step" : null)">
+                <span class="progreso__marca">
+                    @if (paso.Estado == Paso.Hecho)
+                    {
+                        <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 12 4 4 8-8" /></svg>
+                    }
+                </span>
+                <span>@paso.Texto@(paso.Estado == Paso.Omitido ? " (omitido)" : "")</span>
+            </li>
+        }
+    </ol>
+</header>
 
 @if (Model.Mensaje is not null)
 {
@@ -36,126 +69,174 @@
     </div>
 }
 
-<div class="verificacion">
-    <div class="pila">
-        <section class="superficie" aria-labelledby="titulo-ciudadano">
-            <h2 id="titulo-ciudadano" class="central__titulo">Ciudadano</h2>
-            <dl class="datos">
-                <div><dt>Nombre</dt><dd>@sos.Ciudadano</dd></div>
-                <div>
-                    <dt>Teléfono registrado</dt>
-                    <dd>
-                        @if (sos.Telefono is { Length: > 0 } telefono)
-                        {
-                            <a class="datos__telefono" href="tel:@telefono">@telefono</a>
-                        }
-                        else
-                        {
-                            <span>No registrado</span>
-                        }
-                    </dd>
-                </div>
-            </dl>
-        </section>
+@* Errores de las acciones: se muestran arriba aunque el formulario ya no esté disponible (p. ej., el caso dejó de estar pendiente). *@
+@foreach (var (titulo, error) in new[] {
+    ("No se pudo clasificar el SOS", Model.ErrorClasificacion),
+    ("No se pudo asignar el caso", Model.ErrorAsignacion),
+    ("No se pudo registrar el inicio de atención", Model.ErrorAvance),
+    ("No se pudo cerrar el caso", Model.ErrorCierre) })
+{
+    if (error is null) continue;
+    <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("error")" />
+        <div>
+            <p class="aviso__titulo">@titulo</p>
+            <p class="aviso__texto">@error</p>
+        </div>
+    </div>
+}
 
-        <section class="superficie" aria-labelledby="titulo-ubicacion">
-            <h2 id="titulo-ubicacion" class="central__titulo">Ubicación del dispositivo</h2>
-            @if (sos.UbicacionDisponible)
+<div class="detalle-caso">
+    <div class="detalle-caso__principal">
+        <section class="superficie siguiente" aria-labelledby="titulo-siguiente">
+            @switch (siguiente)
             {
-                <dl class="datos">
-                    <div><dt>Coordenadas</dt><dd>@sos.Latitud?.ToString("0.00000", inv), @sos.Longitud?.ToString("0.00000", inv)</dd></div>
-                    <div><dt>Precisión</dt><dd>± @sos.PrecisionMetros?.ToString("0", inv) m</dd></div>
-                    @if (sos.UbicacionObtenidaEn is { } obtenida)
-                    {
-                        <div><dt>Obtenida</dt><dd>@Local(obtenida)</dd></div>
-                    }
-                </dl>
-            }
-            else
-            {
-                <p class="sos__ubicacion sos__ubicacion--no">
-                    <partial name="_Icono" model="@("advertencia")" />
-                    <span>Ubicación no disponible</span>
-                </p>
-            }
-            <p class="texto-secundario">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
-        </section>
-
-        @* HU13 — clasificación posterior al registro. No es necesaria para asignar (CA02). *@
-        <section class="superficie" aria-labelledby="titulo-clasificacion">
-            <h2 id="titulo-clasificacion" class="central__titulo">Clasificación</h2>
-            @if (Model.ErrorClasificacion is not null)
-            {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo clasificar el SOS</p>
-                        <p class="aviso__texto">@Model.ErrorClasificacion</p>
+                case Accion.Contactar:
+                    <div class="siguiente__cabecera">
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Llama a @primerNombre y registra el resultado del contacto</h2>
+                        <span class="siguiente__paso">Paso 1 de 3</span>
                     </div>
-                </div>
-            }
-            @if (sos.Clasificacion is { } clasificacion)
-            {
-                <dl class="datos">
-                    <div><dt>Tipo</dt><dd data-tipo>@clasificacion.Categoria</dd></div>
-                    <div><dt>Clasificado por</dt><dd>@clasificacion.Operador</dd></div>
-                    <div><dt>Fecha y hora</dt><dd>@Local(clasificacion.ClasificadoEn)</dd></div>
-                </dl>
-            }
-            else
-            {
-                <dl class="datos">
-                    <div><dt>Tipo</dt><dd class="texto-secundario" data-tipo>@Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar</dd></div>
-                </dl>
-                <form method="post" asp-page-handler="Clasificar" class="formulario" data-formulario novalidate>
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="Clasificacion_CategoriaId">Categoría</label>
-                        <select class="campo__control campo__control--seleccion" id="Clasificacion_CategoriaId" name="Clasificacion.CategoriaId" required
-                                aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
-                                aria-describedby="@(Model.ErrorCategoria is null ? null : "Clasificacion_CategoriaId-error")">
-                            <option value="">Elige una categoría</option>
-                            @foreach (var categoria in Model.Categorias)
+                    <partial name="_SosIntento" model="Model" />
+                    break;
+                case Accion.Clasificar:
+                    <div class="siguiente__cabecera">
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Clasifica el SOS según lo que contó @primerNombre</h2>
+                        <span class="siguiente__paso">Paso 2 de 3</span>
+                    </div>
+                    <partial name="_SosClasificar" model="Model" />
+                    break;
+                case Accion.Asignar:
+                    <div class="siguiente__cabecera">
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Elige al sereno que atenderá el caso</h2>
+                        <span class="siguiente__paso">Paso 3 de 3</span>
+                    </div>
+                    <partial name="_SosAsignar" model="Model" />
+                    break;
+                case Accion.EsperarDesplazamiento:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">@sos.Asignacion!.Sereno recibió el despacho</h2>
+                    <p class="texto-secundario">Verás aquí cuando confirme que va en camino y cuando inicie la atención.</p>
+                    break;
+                case Accion.EsperarAtencion:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">@sos.Asignacion!.Sereno va en camino</h2>
+                    <form method="post" asp-page-handler="IniciarAtencion" class="formulario" data-formulario>
+                        <p class="texto-secundario">Si el sereno no puede registrarlo, puedes registrar el inicio de atención; quedarás como responsable.</p>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--secundario" data-texto-carga="Registrando…">Registrar inicio de atención</button>
+                        </div>
+                    </form>
+                    break;
+                case Accion.Cerrar:
+                    var errorCategoria = Model.ErrorCierreDe("categoriaId");
+                    var errorResultado = Model.ErrorCierreDe("resultadoPublico");
+                    var errorNotas = Model.ErrorCierreDe("notasInternas");
+                    @* HU24 — cierre con tipificación final y resultado (CA01, CA05). *@
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Cierra el caso con su tipificación y resultado</h2>
+                    <form method="post" asp-page-handler="Cerrar" class="formulario" data-formulario novalidate>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_CategoriaId">Tipificación final</label>
+                            <select class="campo__control campo__control--seleccion" id="Cierre_CategoriaId" name="Cierre.CategoriaId" required
+                                    aria-invalid="@(errorCategoria is null ? null : "true")"
+                                    aria-describedby="@(errorCategoria is null ? null : "Cierre_CategoriaId-error")">
+                                <option value="">Elige una categoría</option>
+                                @foreach (var categoria in Model.Categorias)
+                                {
+                                    <option value="@categoria.Id" selected="@(Model.Cierre.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                                }
+                            </select>
+                            @if (errorCategoria is not null)
                             {
-                                <option value="@categoria.Id" selected="@(Model.Clasificacion.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                                <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
                             }
-                        </select>
-                        @if (Model.ErrorCategoria is not null)
-                        {
-                            <p id="Clasificacion_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
-                        }
-                    </div>
-                    <div class="acciones">
-                        <button type="submit" class="boton boton--principal" data-texto-carga="Clasificando…">Clasificar el SOS</button>
-                    </div>
-                </form>
+                        </div>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                            <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
+                                      maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoResultado"
+                                      aria-invalid="@(errorResultado is null ? null : "true")"
+                                      aria-describedby="Cierre_ResultadoPublico-ayuda@(errorResultado is null ? "" : " Cierre_ResultadoPublico-error")">@Model.Cierre.ResultadoPublico</textarea>
+                            <p id="Cierre_ResultadoPublico-ayuda" class="campo__ayuda">Es el resultado público: el ciudadano podrá verlo.</p>
+                            @if (errorResultado is not null)
+                            {
+                                <p id="Cierre_ResultadoPublico-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado</span></p>
+                            }
+                        </div>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_NotasInternas">Notas internas (opcional)</label>
+                            <textarea class="campo__control campo__control--texto" id="Cierre_NotasInternas" name="Cierre.NotasInternas" rows="3"
+                                      maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoNotas"
+                                      aria-invalid="@(errorNotas is null ? null : "true")"
+                                      aria-describedby="Cierre_NotasInternas-ayuda@(errorNotas is null ? "" : " Cierre_NotasInternas-error")">@Model.Cierre.NotasInternas</textarea>
+                            <p id="Cierre_NotasInternas-ayuda" class="campo__ayuda">Solo para el personal autorizado; el ciudadano no las verá.</p>
+                            @if (errorNotas is not null)
+                            {
+                                <p id="Cierre_NotasInternas-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorNotas</span></p>
+                            }
+                        </div>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--principal" data-texto-carga="Cerrando…">Cerrar el caso</button>
+                        </div>
+                    </form>
+                    break;
+                case Accion.VerCierre:
+                    var cierre = sos.Cierre!;
+                    @* HU24-CA04: el resultado público y las notas internas se muestran diferenciados. *@
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Atención cerrada</h2>
+                    <dl class="datos" data-cierre>
+                        <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                        <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
+                        <div>
+                            <dt>Notas internas (solo personal autorizado)</dt>
+                            <dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd>
+                        </div>
+                        <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
+                        <div><dt>Fecha y hora</dt><dd>@Local(cierre.CerradoEn)</dd></div>
+                    </dl>
+                    break;
+                case Accion.VerCancelacion:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">SOS cancelado</h2>
+                    <p class="texto-secundario">El ciudadano canceló este SOS: no se puede asignar. El motivo está en el historial.</p>
+                    break;
+                default:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Sin acciones pendientes</h2>
+                    <p class="texto-secundario">El caso no está pendiente: no se puede asignar.</p>
+                    break;
             }
         </section>
 
-        @* HU20 — asignación a un sereno disponible. También se puede hacer desde el mapa de la central. *@
-        <section class="superficie" aria-labelledby="titulo-asignacion">
-            <h2 id="titulo-asignacion" class="central__titulo">Asignación</h2>
-            @if (Model.ErrorAsignacion is not null)
-            {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo asignar el caso</p>
-                        <p class="aviso__texto">@Model.ErrorAsignacion</p>
-                    </div>
+        @if (hayOtras)
+        {
+            <details class="superficie otras-acciones" open="@abrirOtras">
+                <summary>Otras acciones</summary>
+                <div class="otras-acciones__cuerpo">
+                    @if (asignarComoOtra)
+                    {
+                        <section aria-labelledby="titulo-asignar-directo">
+                            <h3 id="titulo-asignar-directo" class="otras-acciones__titulo">Asignar sin @(siguiente == Accion.Contactar ? "verificar" : "clasificar")</h3>
+                            <partial name="_SosAsignar" model="Model" />
+                        </section>
+                    }
+                    @if (clasificarComoOtra)
+                    {
+                        <section aria-labelledby="titulo-clasificar-otra">
+                            <h3 id="titulo-clasificar-otra" class="otras-acciones__titulo">Clasificar</h3>
+                            <partial name="_SosClasificar" model="Model" />
+                        </section>
+                    }
+                    @if (intentoComoOtra)
+                    {
+                        <section aria-labelledby="titulo-intento-otro">
+                            <h3 id="titulo-intento-otro" class="otras-acciones__titulo">Registrar otro intento de contacto</h3>
+                            <partial name="_SosIntento" model="Model" />
+                        </section>
+                    }
                 </div>
-            }
-            @if (Model.ErrorAvance is not null)
-            {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo registrar el inicio de atención</p>
-                        <p class="aviso__texto">@Model.ErrorAvance</p>
-                    </div>
-                </div>
-            }
-            @if (sos.Asignacion is { } vigente)
-            {
+            </details>
+        }
+
+        @if (sos.Asignacion is { } vigente)
+        {
+            <section class="superficie seccion-caso" aria-labelledby="titulo-asignacion">
+                <h2 id="titulo-asignacion" class="seccion-caso__titulo">Despacho</h2>
                 <p class="estado estado--activa">
                     <partial name="_Icono" model="@("exito")" />Asignado a @vigente.Sereno a las @Local(vigente.AsignadaEn)
                 </p>
@@ -179,211 +260,11 @@
                         }
                     </ol>
                 }
-                @if (sos.EnCamino)
-                {
-                    <form method="post" asp-page-handler="IniciarAtencion" class="formulario" data-formulario>
-                        <p class="texto-secundario">Si el sereno no puede registrarlo, puedes registrar el inicio de atención; quedarás como responsable.</p>
-                        <div class="acciones">
-                            <button type="submit" class="boton boton--secundario" data-texto-carga="Registrando…">Registrar inicio de atención</button>
-                        </div>
-                    </form>
-                }
-            }
-            else if (sos.Estado == "Cancelada")
-            {
-                <p class="texto-secundario">El ciudadano canceló este SOS: no se puede asignar. El motivo está en el historial.</p>
-            }
-            else if (sos.Estado != "Pendiente")
-            {
-                <p class="texto-secundario">El caso no está pendiente: no se puede asignar.</p>
-            }
-            else
-            {
-                @if (Model.SerenosDisponibles.Count == 0)
-                {
-                    <p class="texto-secundario">No hay serenos disponibles en este momento (operativos y sin asignación vigente).</p>
-                }
-                else
-                {
-                    <form method="post" asp-page-handler="Asignar" class="formulario" data-formulario novalidate>
-                        <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.Asignacion.IdSolicitud" />
-                        <fieldset class="opciones">
-                            <legend class="campo__etiqueta">Sereno disponible</legend>
-                            @foreach (var sereno in Model.SerenosDisponibles)
-                            {
-                                var idOpcion = $"Asignacion_Sereno_{sereno.Id:N}";
-                                <label class="opcion" for="@idOpcion">
-                                    <input type="radio" id="@idOpcion" name="Asignacion.SerenoId" value="@sereno.Id" required />
-                                    <span>
-                                        @sereno.Nombre
-                                        <span class="texto-secundario">
-                                            · @(sereno.UltimaPosicionEn is { } h ? $"última ubicación a las {Local(h)}" : "ubicación no disponible")
-                                        </span>
-                                    </span>
-                                </label>
-                            }
-                        </fieldset>
-                        <div class="acciones">
-                            <button type="submit" class="boton boton--principal" data-texto-carga="Asignando…">Asignar el caso</button>
-                        </div>
-                    </form>
-                }
-            }
-        </section>
-
-        @* HU24 — cierre con tipificación final y resultado (CA01, CA05). El resultado público y las notas
-           internas se muestran diferenciados (CA04). *@
-        <section class="superficie" aria-labelledby="titulo-cierre">
-            <h2 id="titulo-cierre" class="central__titulo">Cierre</h2>
-            @if (Model.ErrorCierre is not null)
-            {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo cerrar el caso</p>
-                        <p class="aviso__texto">@Model.ErrorCierre</p>
-                    </div>
-                </div>
-            }
-            @if (sos.Cierre is { } cierre)
-            {
-                <dl class="datos" data-cierre>
-                    <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
-                    <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
-                    <div>
-                        <dt>Notas internas (solo personal autorizado)</dt>
-                        <dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd>
-                    </div>
-                    <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
-                    <div><dt>Fecha y hora</dt><dd>@Local(cierre.CerradoEn)</dd></div>
-                </dl>
-            }
-            else if (sos.EnAtencion)
-            {
-                var errorCategoria = Model.ErrorCierreDe("categoriaId");
-                var errorResultado2 = Model.ErrorCierreDe("resultadoPublico");
-                var errorNotas = Model.ErrorCierreDe("notasInternas");
-                <form method="post" asp-page-handler="Cerrar" class="formulario" data-formulario novalidate>
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="Cierre_CategoriaId">Tipificación final</label>
-                        <select class="campo__control campo__control--seleccion" id="Cierre_CategoriaId" name="Cierre.CategoriaId" required
-                                aria-invalid="@(errorCategoria is null ? null : "true")"
-                                aria-describedby="@(errorCategoria is null ? null : "Cierre_CategoriaId-error")">
-                            <option value="">Elige una categoría</option>
-                            @foreach (var categoria in Model.Categorias)
-                            {
-                                <option value="@categoria.Id" selected="@(Model.Cierre.CategoriaId == categoria.Id)">@categoria.Nombre</option>
-                            }
-                        </select>
-                        @if (errorCategoria is not null)
-                        {
-                            <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
-                        }
-                    </div>
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
-                        <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
-                                  maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoResultado"
-                                  aria-invalid="@(errorResultado2 is null ? null : "true")"
-                                  aria-describedby="Cierre_ResultadoPublico-ayuda@(errorResultado2 is null ? "" : " Cierre_ResultadoPublico-error")">@Model.Cierre.ResultadoPublico</textarea>
-                        <p id="Cierre_ResultadoPublico-ayuda" class="campo__ayuda">Es el resultado público: el ciudadano podrá verlo.</p>
-                        @if (errorResultado2 is not null)
-                        {
-                            <p id="Cierre_ResultadoPublico-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado2</span></p>
-                        }
-                    </div>
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="Cierre_NotasInternas">Notas internas (opcional)</label>
-                        <textarea class="campo__control campo__control--texto" id="Cierre_NotasInternas" name="Cierre.NotasInternas" rows="3"
-                                  maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoNotas"
-                                  aria-invalid="@(errorNotas is null ? null : "true")"
-                                  aria-describedby="Cierre_NotasInternas-ayuda@(errorNotas is null ? "" : " Cierre_NotasInternas-error")">@Model.Cierre.NotasInternas</textarea>
-                        <p id="Cierre_NotasInternas-ayuda" class="campo__ayuda">Solo para el personal autorizado; el ciudadano no las verá.</p>
-                        @if (errorNotas is not null)
-                        {
-                            <p id="Cierre_NotasInternas-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorNotas</span></p>
-                        }
-                    </div>
-                    <div class="acciones">
-                        <button type="submit" class="boton boton--principal" data-texto-carga="Cerrando…">Cerrar el caso</button>
-                    </div>
-                </form>
-            }
-            else
-            {
-                <p class="texto-secundario">El caso se podrá cerrar cuando esté «En atención».</p>
-            }
-        </section>
-
-        @if (Model.Tiempos is { } tiempos)
-        {
-            <partial name="_TiemposCaso" model="tiempos" />
+            </section>
         }
-    </div>
 
-    <div class="pila">
-        <section class="superficie" aria-labelledby="titulo-intento">
-            <h2 id="titulo-intento" class="central__titulo">Registrar intento de contacto</h2>
-            <form method="post" class="formulario" data-formulario novalidate>
-                <partial name="_ResumenErrores" model="@Model.Errores.Count" />
-                <input type="hidden" name="Formulario.IdSolicitud" value="@Model.Formulario.IdSolicitud" />
-                @if (errorSolicitud is not null)
-                {
-                    <p class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorSolicitud</span></p>
-                }
-
-                <fieldset class="opciones" aria-invalid="@(errorResultado is null ? null : "true")"
-                          aria-describedby="@(errorResultado is null ? null : "Formulario_Resultado-error")">
-                    <legend class="campo__etiqueta">Resultado del intento</legend>
-                    @foreach (var (valor, texto) in SosModel.Resultados)
-                    {
-                        var idOpcion = $"Formulario_Resultado_{valor}";
-                        <label class="opcion" for="@idOpcion">
-                            <input type="radio" id="@idOpcion" name="Formulario.Resultado" value="@valor" required
-                                   checked="@(Model.Formulario.Resultado == valor.ToString())" />
-                            <span>@texto</span>
-                        </label>
-                    }
-                    @if (errorResultado is not null)
-                    {
-                        <p id="Formulario_Resultado-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado</span></p>
-                    }
-                </fieldset>
-
-                <div class="campo">
-                    <label class="campo__etiqueta" for="Formulario_InformacionHecho">Información del hecho (opcional)</label>
-                    <textarea class="campo__control campo__control--texto" id="Formulario_InformacionHecho" name="Formulario.InformacionHecho"
-                              rows="4" maxlength="@Cad.Server.Modulos.Casos.Dominio.IntentoContacto.MaximoInformacion"
-                              aria-invalid="@(errorInformacion is null ? null : "true")"
-                              aria-describedby="@(errorInformacion is null ? null : "Formulario_InformacionHecho-error")">@Model.Formulario.InformacionHecho</textarea>
-                    @if (errorInformacion is not null)
-                    {
-                        <p id="Formulario_InformacionHecho-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorInformacion</span></p>
-                    }
-                </div>
-
-                <div class="campo">
-                    <label class="campo__etiqueta" for="Formulario_ReferenciaUbicacion">Referencia de ubicación indicada por el ciudadano (opcional)</label>
-                    <input class="campo__control" id="Formulario_ReferenciaUbicacion" name="Formulario.ReferenciaUbicacion" type="text"
-                           value="@Model.Formulario.ReferenciaUbicacion" autocomplete="off"
-                           maxlength="@Cad.Server.Modulos.Casos.Dominio.IntentoContacto.MaximoReferencia"
-                           aria-invalid="@(errorReferencia is null ? null : "true")"
-                           aria-describedby="Formulario_ReferenciaUbicacion-ayuda@(errorReferencia is null ? "" : " Formulario_ReferenciaUbicacion-error")" />
-                    <p id="Formulario_ReferenciaUbicacion-ayuda" class="campo__ayuda">Por ejemplo, «frente al mercado». Se guarda como texto y no sustituye la ubicación del dispositivo.</p>
-                    @if (errorReferencia is not null)
-                    {
-                        <p id="Formulario_ReferenciaUbicacion-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorReferencia</span></p>
-                    }
-                </div>
-
-                <div class="acciones">
-                    <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar intento</button>
-                </div>
-            </form>
-        </section>
-
-        <section class="superficie" aria-labelledby="titulo-historial">
-            <h2 id="titulo-historial" class="central__titulo">Intentos registrados · @sos.Intentos.Count</h2>
+        <section class="superficie seccion-caso" aria-labelledby="titulo-historial">
+            <h2 id="titulo-historial" class="seccion-caso__titulo">Intentos registrados · @sos.Intentos.Count</h2>
             @if (sos.Intentos.Count == 0)
             {
                 <p class="texto-secundario">Todavía no hay intentos de contacto.</p>
@@ -397,7 +278,7 @@
                             <p class="historial__cabecera">
                                 @{ var contactado = intento.Resultado == Cad.Server.Modulos.Casos.Dominio.ResultadoContacto.Contactado; }
                                 <span class="estado estado--@(contactado ? "contactado" : "sin-contacto")">
-                                    <partial name="_Icono" model="@(contactado ? "exito" : "advertencia")" />@SosModel.Texto(intento.Resultado)
+                                    <partial name="_Icono" model="@(contactado ? "exito" : "advertencia")" />@Cad.Server.Panel.Pages.Central.SosModel.Texto(intento.Resultado)
                                 </span>
                                 <time datetime="@intento.RegistradoEn.ToString("O", inv)">@Local(intento.RegistradoEn)</time>
                                 <span class="texto-secundario">· @intento.Operador</span>
@@ -416,4 +297,83 @@
             }
         </section>
     </div>
+
+    <aside class="detalle-caso__contexto" aria-label="Contexto del caso">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-ciudadano">
+            <h2 id="titulo-ciudadano" class="seccion-caso__titulo">Ciudadano</h2>
+            <dl class="datos datos--en-linea">
+                <div><dt>Nombre</dt><dd>@sos.Ciudadano</dd></div>
+                <div>
+                    <dt>Teléfono registrado</dt>
+                    <dd>
+                        @if (sos.Telefono is { Length: > 0 } telefono)
+                        {
+                            <a class="datos__telefono" href="tel:@telefono">@telefono</a>
+                        }
+                        else
+                        {
+                            <span>No registrado</span>
+                        }
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="superficie seccion-caso" aria-labelledby="titulo-ubicacion">
+            <h2 id="titulo-ubicacion" class="seccion-caso__titulo">Ubicación del dispositivo</h2>
+            @if (sos.UbicacionDisponible)
+            {
+                <div id="mapa-hecho" class="mapa mapa--detalle" role="region" aria-label="Mapa con la ubicación del dispositivo"
+                     data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)" data-teselas="@Model.UrlTeselas"
+                     data-titulo="Ubicación del dispositivo"></div>
+                <dl class="datos datos--en-linea">
+                    <div><dt>Coordenadas</dt><dd>@sos.Latitud?.ToString("0.00000", inv), @sos.Longitud?.ToString("0.00000", inv)</dd></div>
+                    <div><dt>Precisión</dt><dd>± @sos.PrecisionMetros?.ToString("0", inv) m</dd></div>
+                    @if (sos.UbicacionObtenidaEn is { } obtenida)
+                    {
+                        <div><dt>Obtenida</dt><dd>@Local(obtenida)</dd></div>
+                    }
+                </dl>
+            }
+            else
+            {
+                <p class="sos__ubicacion sos__ubicacion--no">
+                    <partial name="_Icono" model="@("advertencia")" />
+                    <span>Ubicación no disponible</span>
+                </p>
+            }
+            <p class="texto-secundario detalle-caso__nota">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
+        </section>
+
+        <section class="superficie seccion-caso" aria-labelledby="titulo-clasificacion">
+            <h2 id="titulo-clasificacion" class="seccion-caso__titulo">Clasificación</h2>
+            @if (sos.Clasificacion is { } clasificacion)
+            {
+                <dl class="datos datos--en-linea">
+                    <div><dt>Tipo</dt><dd data-tipo>@clasificacion.Categoria</dd></div>
+                    <div><dt>Clasificado por</dt><dd>@clasificacion.Operador</dd></div>
+                    <div><dt>Fecha y hora</dt><dd>@Local(clasificacion.ClasificadoEn)</dd></div>
+                </dl>
+            }
+            else
+            {
+                <dl class="datos datos--en-linea">
+                    <div><dt>Tipo</dt><dd class="texto-secundario" data-tipo>@Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar</dd></div>
+                </dl>
+            }
+        </section>
+
+        @if (Model.Tiempos is { } tiempos)
+        {
+            <partial name="_TiemposCaso" model="tiempos" />
+        }
+    </aside>
 </div>
+
+@section Scripts {
+    @if (sos.UbicacionDisponible)
+    {
+        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+        <script src="~/js/mapa-hecho.js" asp-append-version="true"></script>
+    }
+}

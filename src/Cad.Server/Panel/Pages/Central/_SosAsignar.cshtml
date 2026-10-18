@@ -1,0 +1,33 @@
+@model Cad.Server.Panel.Pages.Central.SosModel
+@using System.Globalization
+@* HU20 — asignación a un sereno disponible. También se puede hacer desde el mapa de la central. *@
+@if (Model.SerenosDisponibles.Count == 0)
+{
+    <p class="texto-secundario">No hay serenos disponibles en este momento (operativos y sin asignación vigente).</p>
+}
+else
+{
+    <form method="post" asp-page-handler="Asignar" class="formulario" data-formulario novalidate>
+        <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.Asignacion.IdSolicitud" />
+        <fieldset class="opciones">
+            <legend class="campo__etiqueta">Sereno disponible</legend>
+            @foreach (var sereno in Model.SerenosDisponibles)
+            {
+                var idOpcion = $"Asignacion_Sereno_{sereno.Id:N}";
+                var ultima = sereno.UltimaPosicionEn is { } h
+                    ? $"última ubicación a las {TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}"
+                    : "ubicación no disponible";
+                <label class="opcion" for="@idOpcion">
+                    <input type="radio" id="@idOpcion" name="Asignacion.SerenoId" value="@sereno.Id" required />
+                    <span>
+                        @sereno.Nombre
+                        <span class="texto-secundario">· @ultima</span>
+                    </span>
+                </label>
+            }
+        </fieldset>
+        <div class="acciones">
+            <button type="submit" class="boton boton--principal" data-texto-carga="Asignando…">Asignar el caso</button>
+        </div>
+    </form>
+}

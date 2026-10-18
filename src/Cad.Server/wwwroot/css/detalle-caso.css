@@ -1,0 +1,331 @@
+/*
+  Detalle de un caso guiado por «Siguiente acción» (rediseño CAD v2, fase 3). Lo carga el detalle de SOS.
+  Columna principal: la siguiente acción, otras acciones, el despacho y los intentos. Columna lateral: el contexto.
+*/
+
+/* ── Cabecera ──────────────────────────────────────────── */
+.cabecera-caso {
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+.cabecera-caso__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.cabecera-caso .titulo {
+  margin: 0;
+}
+
+.cabecera-caso__resumen {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.cabecera-caso__resumen strong {
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
+/* ── Línea de progreso ─────────────────────────────────── */
+.progreso {
+  margin: 0;
+  padding: var(--espacio-4) var(--espacio-2);
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.progreso__paso {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+}
+
+.progreso__paso::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  left: -50%;
+  right: 50%;
+  height: 2px;
+  background: var(--color-borde-fuerte);
+}
+
+.progreso__paso:first-child::before {
+  display: none;
+}
+
+.progreso__marca {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  background: var(--color-superficie);
+}
+
+.progreso__marca .icono {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.progreso__paso--hecho,
+.progreso__paso--actual {
+  color: var(--color-texto);
+}
+
+.progreso__paso--hecho::before,
+.progreso__paso--actual::before,
+.progreso__paso--omitido::before {
+  background: var(--color-primario);
+}
+
+.progreso__paso--hecho .progreso__marca {
+  border-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+}
+
+.progreso__paso--actual {
+  font-weight: var(--peso-fuerte);
+  color: var(--color-primario);
+}
+
+.progreso__paso--actual .progreso__marca {
+  border-color: var(--color-primario);
+  outline: 4px solid var(--color-tenue);
+}
+
+.progreso__paso--actual .progreso__marca::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-primario);
+}
+
+/* Un paso opcional que se saltó (verificar o clasificar): marca discontinua, sin relleno. */
+.progreso__paso--omitido .progreso__marca {
+  border-style: dashed;
+  border-color: var(--color-borde-control);
+}
+
+/* ── Rejilla del detalle ───────────────────────────────── */
+.detalle-caso {
+  display: grid;
+  gap: var(--espacio-5);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .detalle-caso {
+    grid-template-columns: minmax(0, 1.55fr) minmax(20rem, 1fr);
+  }
+}
+
+.detalle-caso__principal,
+.detalle-caso__contexto {
+  display: grid;
+  gap: var(--espacio-5);
+  min-width: 0;
+}
+
+.seccion-caso,
+.detalle-caso__contexto > .superficie {
+  display: grid;
+  gap: var(--espacio-3);
+  padding: var(--espacio-5);
+}
+
+.seccion-caso__titulo,
+.detalle-caso__contexto .central__titulo {
+  margin: 0;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}
+
+.detalle-caso__nota {
+  font-size: var(--texto-xs);
+}
+
+/* Pares dato-valor en dos columnas dentro del contexto. */
+.datos--en-linea > div {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: var(--espacio-3);
+}
+
+.datos--en-linea dt {
+  color: var(--color-texto-secundario);
+}
+
+.datos--en-linea dd {
+  margin: 0;
+  font-weight: var(--peso-medio);
+  overflow-wrap: anywhere;
+}
+
+.mapa--detalle {
+  min-height: 0;
+  height: 11rem;
+  border-radius: var(--radio-control);
+}
+
+/* ── Siguiente acción ──────────────────────────────────── */
+.siguiente {
+  display: grid;
+  gap: var(--espacio-4);
+  padding: var(--espacio-6);
+  border-color: var(--color-primario);
+  box-shadow: var(--sombra-2);
+}
+
+.siguiente__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+}
+
+.siguiente__titulo {
+  margin: 0;
+  font-size: var(--texto-xl);
+  line-height: var(--interlineado-titulo);
+  letter-spacing: -0.01em;
+  color: var(--color-marino);
+  text-wrap: balance;
+}
+
+.siguiente__paso {
+  flex: none;
+  padding: 0 var(--espacio-3);
+  border: 1px solid var(--color-progreso-borde);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  line-height: 1.625rem;
+  color: var(--color-progreso);
+  background: var(--color-progreso-fondo);
+}
+
+/* Resultado del intento como selector segmentado: las tres opciones a la vista. */
+.opciones--segmentadas {
+  display: grid;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.opciones__segmentos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espacio-1);
+  padding: var(--espacio-1);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie-hundida);
+}
+
+.opciones--segmentadas .opcion {
+  position: relative;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: var(--espacio-1) var(--espacio-2);
+  border: 0;
+  border-radius: 6px;
+  font-weight: var(--peso-medio);
+  text-align: center;
+  color: var(--color-texto-secundario);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) ease, color var(--duracion-rapida) ease;
+}
+
+/* El círculo nativo no se ve; la opción entera es el control y lleva el foco visible. */
+.opciones--segmentadas .opcion input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.opciones--segmentadas .opcion:has(input:checked) {
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.opciones--segmentadas .opcion:has(input:focus-visible) {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.opciones--segmentadas[aria-invalid="true"] .opciones__segmentos {
+  outline: 1px solid var(--color-error);
+}
+
+/* ── Otras acciones (plegables) ────────────────────────── */
+.otras-acciones {
+  padding: 0;
+}
+
+.otras-acciones summary {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0 var(--espacio-5);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  cursor: pointer;
+}
+
+.otras-acciones__cuerpo {
+  display: grid;
+  gap: var(--espacio-5);
+  padding: 0 var(--espacio-5) var(--espacio-5);
+}
+
+.otras-acciones__titulo {
+  margin: 0 0 var(--espacio-3);
+  font-size: var(--texto-md);
+  color: var(--color-texto);
+}
+
+@media (max-width: 47.5rem) {
+  .progreso__paso {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .progreso__paso--actual {
+    gap: 6px;
+    font-size: var(--texto-xs);
+    white-space: nowrap;
+  }
+
+  .opciones__segmentos {
+    grid-template-columns: 1fr;
+  }
+
+  .datos--en-linea > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

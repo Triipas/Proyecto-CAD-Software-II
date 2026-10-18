@@ -1,0 +1,66 @@
+@model Cad.Server.Panel.Pages.Central.SosModel
+@* HU12 — registrar un intento de contacto. Se usa como «Siguiente acción» o dentro de «Otras acciones». *@
+@{
+    var errorResultado = Model.ErrorDe("resultado");
+    var errorInformacion = Model.ErrorDe("informacionHecho");
+    var errorReferencia = Model.ErrorDe("referenciaUbicacion");
+    var errorSolicitud = Model.ErrorDe("idSolicitud");
+}
+<form method="post" class="formulario" data-formulario novalidate>
+    <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+    <input type="hidden" name="Formulario.IdSolicitud" value="@Model.Formulario.IdSolicitud" />
+    @if (errorSolicitud is not null)
+    {
+        <p class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorSolicitud</span></p>
+    }
+
+    <fieldset class="opciones opciones--segmentadas" aria-invalid="@(errorResultado is null ? null : "true")"
+              aria-describedby="@(errorResultado is null ? null : "Formulario_Resultado-error")">
+        <legend class="campo__etiqueta">Resultado del intento</legend>
+        <div class="opciones__segmentos">
+        @foreach (var (valor, texto) in Cad.Server.Panel.Pages.Central.SosModel.Resultados)
+        {
+            var idOpcion = $"Formulario_Resultado_{valor}";
+            <label class="opcion" for="@idOpcion">
+                <input type="radio" id="@idOpcion" name="Formulario.Resultado" value="@valor" required
+                       checked="@(Model.Formulario.Resultado == valor.ToString())" />
+                <span>@texto</span>
+            </label>
+        }
+        </div>
+        @if (errorResultado is not null)
+        {
+            <p id="Formulario_Resultado-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado</span></p>
+        }
+    </fieldset>
+
+    <div class="campo">
+        <label class="campo__etiqueta" for="Formulario_InformacionHecho">Información del hecho (opcional)</label>
+        <textarea class="campo__control campo__control--texto" id="Formulario_InformacionHecho" name="Formulario.InformacionHecho"
+                  rows="3" maxlength="@Cad.Server.Modulos.Casos.Dominio.IntentoContacto.MaximoInformacion"
+                  aria-invalid="@(errorInformacion is null ? null : "true")"
+                  aria-describedby="@(errorInformacion is null ? null : "Formulario_InformacionHecho-error")">@Model.Formulario.InformacionHecho</textarea>
+        @if (errorInformacion is not null)
+        {
+            <p id="Formulario_InformacionHecho-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorInformacion</span></p>
+        }
+    </div>
+
+    <div class="campo">
+        <label class="campo__etiqueta" for="Formulario_ReferenciaUbicacion">Referencia de ubicación indicada por el ciudadano (opcional)</label>
+        <input class="campo__control" id="Formulario_ReferenciaUbicacion" name="Formulario.ReferenciaUbicacion" type="text"
+               value="@Model.Formulario.ReferenciaUbicacion" autocomplete="off"
+               maxlength="@Cad.Server.Modulos.Casos.Dominio.IntentoContacto.MaximoReferencia"
+               aria-invalid="@(errorReferencia is null ? null : "true")"
+               aria-describedby="Formulario_ReferenciaUbicacion-ayuda@(errorReferencia is null ? "" : " Formulario_ReferenciaUbicacion-error")" />
+        <p id="Formulario_ReferenciaUbicacion-ayuda" class="campo__ayuda">Por ejemplo, «frente al mercado». Se guarda como texto y no sustituye la ubicación del dispositivo.</p>
+        @if (errorReferencia is not null)
+        {
+            <p id="Formulario_ReferenciaUbicacion-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorReferencia</span></p>
+        }
+    </div>
+
+    <div class="acciones">
+        <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar intento</button>
+    </div>
+</form>

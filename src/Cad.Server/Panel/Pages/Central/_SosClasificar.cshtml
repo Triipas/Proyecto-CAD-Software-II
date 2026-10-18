@@ -1,0 +1,23 @@
+@model Cad.Server.Panel.Pages.Central.SosModel
+@* HU13 — clasificación posterior al registro. No es necesaria para asignar (CA02). *@
+<form method="post" asp-page-handler="Clasificar" class="formulario" data-formulario novalidate>
+    <div class="campo">
+        <label class="campo__etiqueta" for="Clasificacion_CategoriaId">Categoría</label>
+        <select class="campo__control campo__control--seleccion" id="Clasificacion_CategoriaId" name="Clasificacion.CategoriaId" required
+                aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
+                aria-describedby="@(Model.ErrorCategoria is null ? null : "Clasificacion_CategoriaId-error")">
+            <option value="">Elige una categoría</option>
+            @foreach (var categoria in Model.Categorias)
+            {
+                <option value="@categoria.Id" selected="@(Model.Clasificacion.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+            }
+        </select>
+        @if (Model.ErrorCategoria is not null)
+        {
+            <p id="Clasificacion_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
+        }
+    </div>
+    <div class="acciones">
+        <button type="submit" class="boton boton--principal" data-texto-carga="Clasificando…">Clasificar el SOS</button>
+    </div>
+</form>

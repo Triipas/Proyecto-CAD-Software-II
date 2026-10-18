@@ -72,6 +72,61 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
 
     public static string Texto(ResultadoContacto resultado) => Resultados.Single(r => r.Valor == resultado).Texto;
 
+    public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+    // Rediseño CAD v2 (fase 3): el detalle se guía por una sola «Siguiente acción» y una línea de progreso.
+    // Verificar y clasificar son opcionales para asignar (HU13-CA02): si se saltan, quedan como omitidos.
+    public bool Contactado => Sos.Intentos.Any(i => i.Resultado == ResultadoContacto.Contactado);
+
+    public SiguienteAccion Siguiente => Sos.Estado switch
+    {
+        "Cancelada" => SiguienteAccion.VerCancelacion,
+        "Cerrada" => SiguienteAccion.VerCierre,
+        _ when Sos.EnAtencion => SiguienteAccion.Cerrar,
+        _ when Sos.EnCamino => SiguienteAccion.EsperarAtencion,
+        _ when Sos.Asignacion is not null => SiguienteAccion.EsperarDesplazamiento,
+        "Pendiente" when !Contactado => SiguienteAccion.Contactar,
+        "Pendiente" when Sos.Clasificacion is null => SiguienteAccion.Clasificar,
+        "Pendiente" => SiguienteAccion.Asignar,
+        _ => SiguienteAccion.NoAsignable,
+    };
+
+    public IReadOnlyList<PasoCaso> Pasos
+    {
+        get
+        {
+            var avances = Sos.Avances ?? [];
+            var cancelado = Sos.Estado == "Cancelada";
+            var hechos = new[]
+            {
+                true,
+                Contactado,
+                Sos.Clasificacion is not null,
+                Sos.Asignacion is not null,
+                Sos.EnCamino || Sos.EnAtencion || avances.Any(a => a.Descripcion == "En camino") || Sos.Cierre is not null,
+                Sos.EnAtencion || avances.Any(a => a.Descripcion == "En atención") || Sos.Cierre is not null,
+                Sos.Cierre is not null || cancelado,
+            };
+            string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignado", "En camino", "En atención", cancelado ? "Cancelado" : "Cerrado"];
+            var actual = Siguiente switch
+            {
+                SiguienteAccion.Contactar => 1,
+                SiguienteAccion.Clasificar => 2,
+                SiguienteAccion.Asignar => 3,
+                SiguienteAccion.EsperarDesplazamiento => 4,
+                SiguienteAccion.EsperarAtencion => 5,
+                SiguienteAccion.Cerrar => 6,
+                _ => -1,
+            };
+            var ultimoHecho = Array.LastIndexOf(hechos, true);
+            return textos.Select((texto, i) => new PasoCaso(texto,
+                hechos[i] ? EstadoPaso.Hecho
+                : i == actual ? EstadoPaso.Actual
+                : i < Math.Max(actual, ultimoHecho) ? EstadoPaso.Omitido
+                : EstadoPaso.Pendiente)).ToList();
+        }
+    }
+
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct)
     {
         if (!await CargarAsync(id, ct))
@@ -222,6 +277,12 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
         return true;
     }
+
+    public enum SiguienteAccion { Contactar, Clasificar, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerCancelacion, NoAsignable }
+
+    public enum EstadoPaso { Hecho, Actual, Omitido, Pendiente }
+
+    public sealed record PasoCaso(string Texto, EstadoPaso Estado);
 
     public sealed class FormularioIntento
     {
