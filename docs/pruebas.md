@@ -27,7 +27,7 @@ La instrumentación está **apagada por defecto** (`Medicion:Rnf02:Habilitada=fa
 
 La herramienta crea cuentas de ciudadano ficticias (`carga.<ejecución>.<n>@correo.test`), emite los SOS de forma concurrente (la mitad sin ubicación, coordenadas aleatorias en Lima), espera los acuses y escribe el informe en `docs/mediciones/` (Markdown y JSON). Código de salida: 0 si cumple, 1 si no.
 
-**Efectos en el entorno:** los SOS generados quedan como pendientes en la base de datos (la cancelación es HU09, Sprint 5). Son datos ficticios.
+**Efectos en el entorno:** los SOS generados quedan como pendientes en la base de datos (la herramienta no los cancela; HU09 permite cancelarlos a cada ciudadano). Son datos ficticios.
 
 ### Resultados registrados
 

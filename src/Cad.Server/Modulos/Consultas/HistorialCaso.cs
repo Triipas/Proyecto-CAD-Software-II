@@ -15,7 +15,12 @@ public sealed record HistorialCaso(
     ResultadoFinal? Resultado,
     IReadOnlyList<EntradaHistorial> Entradas,
     // HU10: fecha y hora aproximadas del hecho que indicó el ciudadano (solo reportes).
-    DateTimeOffset? HechoOcurridoEn = null);
+    DateTimeOffset? HechoOcurridoEn = null,
+    // HU33: la evaluación del ciudadano, si la registró (CA02: sin evaluación no hay puntuación).
+    EvaluacionCiudadano? Evaluacion = null);
+
+// HU33-CA01: puntuación de 1 a 5 y comentario, si existe.
+public sealed record EvaluacionCiudadano(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn);
 
 // CA02: un caso finalizado queda identificado con su resultado.
 public sealed record ResultadoFinal(string Estado, string Descripcion, DateTimeOffset En);
@@ -50,6 +55,17 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Add(new(caso.RegistradoEn, $"Reporte registrado como «{await CategoriaAsync(detalle.CategoriaOriginalId, ct)}»",
                 await NombreAsync(caso.CiudadanoId), Unir(TextoFuente(detalle.FuenteUbicacion), detalle.ReferenciaHecho is { } r ? $"Referencia: {r}" : null)));
         }
+        else if (caso.Origen == OrigenCaso.Acompanamiento)
+        {
+            // DP19: caso urgente creado por un operador desde un aviso del acompañamiento, con su justificación.
+            var origen = await (from aviso in db.AvisosAcompanamiento.AsNoTracking()
+                                where aviso.CasoId == casoId && aviso.CasoCreado
+                                select new { aviso.VinculadoPor, aviso.JustificacionCaso, aviso.Regla }).SingleOrDefaultAsync(ct);
+            entradas.Add(new(caso.RegistradoEn, "Caso urgente creado desde un aviso del acompañamiento",
+                origen?.VinculadoPor is { } operador ? await NombreAsync(operador) : "Cuenta no disponible",
+                Unir(origen is null ? null : $"Justificación: {origen.JustificacionCaso}",
+                    caso.UbicacionDisponible ? "Ubicación: última posición conocida de la sesión" : "Sin posiciones en la sesión")));
+        }
         else
             entradas.Add(new(caso.RegistradoEn, "SOS emitido", await NombreAsync(caso.CiudadanoId),
                 caso.UbicacionDisponible ? "Con ubicación del dispositivo" : "Ubicación no disponible"));
@@ -61,7 +77,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
 
         // HU13: clasificación de un SOS. En un reporte, la categoría del ciudadano figura en su registro y los cambios en
         // las correcciones (HU14).
-        if (caso.Origen == OrigenCaso.Sos && caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
+        if (caso.Origen != OrigenCaso.Reporte && caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
             entradas.Add(new(clasificadoEn, $"Clasificado como «{await CategoriaAsync(categoria, ct)}»", await NombreAsync(clasificador), null));
 
         // HU14: inicio de la revisión y correcciones de categoría (anterior → nueva).
@@ -96,13 +112,27 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             }
         }
 
+        // HU09: cancelación por el titular, con su motivo; «Cancelada» es un resultado final identificable (HU27-CA02).
+        if (await db.CancelacionesSos.AsNoTracking().SingleOrDefaultAsync(c => c.CasoId == casoId, ct) is { } cancelacion)
+        {
+            entradas.Add(new(cancelacion.CanceladaEn, "SOS cancelado por el ciudadano", await NombreAsync(cancelacion.CiudadanoId), $"Motivo: {cancelacion.Motivo}"));
+            resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cancelada), $"Cancelado por el ciudadano. Motivo: {cancelacion.Motivo}", cancelacion.CanceladaEn);
+        }
+
         // HU20: asignaciones (y su fin, al cerrar el caso).
         foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))
         {
             entradas.Add(new(asignacion.AsignadaEn, $"Asignado al sereno {await NombreAsync(asignacion.SerenoId)}", await NombreAsync(asignacion.OperadorId), null));
-            if (asignacion.FinalizadaEn is { } fin)
+            // DP03: una asignación cancelada por desactivar la cuenta del sereno aparece con su propio evento.
+            if (asignacion.FinalizadaEn is { } fin && !asignacion.Cancelada)
                 entradas.Add(new(fin, "Asignación finalizada", await NombreAsync(asignacion.SerenoId), "El sereno queda libre para otro caso."));
         }
+
+        // DP03 (16/10/2026): asignación cancelada al desactivar la cuenta del sereno; el responsable es el administrador.
+        foreach (var evento in await db.EventosCaso.AsNoTracking()
+                     .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.AsignacionCancelada).ToListAsync(ct))
+            entradas.Add(new(evento.OcurridoEn, "Asignación cancelada: la cuenta del sereno se desactivó", await NombreAsync(evento.ActorId),
+                "El caso vuelve a «Pendiente» para asignarlo a otro sereno."));
 
         // HU22 y HU23: avances registrados como eventos.
         foreach (var evento in await db.EventosCaso.AsNoTracking()
@@ -122,10 +152,13 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);
         }
 
-        return new HistorialCaso(caso.Id, caso.Origen == OrigenCaso.Sos ? "SOS" : "Reporte", EstadosCaso.Texto(caso.Estado),
+        return new HistorialCaso(caso.Id, OrigenesCaso.Texto(caso.Origen), EstadosCaso.Texto(caso.Estado),
             caso.RegistradoEn, resultado,
             // Orden temporal; a igual momento, el orden en que se añadieron (registro, cierre antes que sus notas).
-            entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn);
+            entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn,
+            // HU33: solo lectura, en la misma página restringida a operadores (CA03).
+            await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
+                .Select(e => new EvaluacionCiudadano(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct));
     }
 
     private async Task<string> CategoriaAsync(Guid id, CancellationToken ct) =>

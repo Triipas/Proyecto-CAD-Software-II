@@ -1,12 +1,29 @@
 namespace Cad.Server.Modulos.Casos.Dominio;
 
-// Caso común a SOS y reportes (Plan de Arquitectura, 9.1). El Sprint 3 añade el origen «Reporte» (HU10).
-public enum OrigenCaso { Sos, Reporte }
+// Caso común a SOS y reportes (Plan de Arquitectura, 9.1). El Sprint 3 añade el origen «Reporte» (HU10). El Sprint 5 añade
+// «Acompañamiento»: el caso urgente que crea un operador desde un aviso del acompañamiento (HU43-CA05, DP19).
+public enum OrigenCaso { Sos, Reporte, Acompanamiento }
+
+public static class OrigenesCaso
+{
+    public static string Texto(OrigenCaso origen) => origen switch
+    {
+        OrigenCaso.Sos => "SOS",
+        OrigenCaso.Reporte => "Reporte",
+        OrigenCaso.Acompanamiento => "Acompañamiento",
+        _ => origen.ToString(),
+    };
+
+    // DP19: un caso urgente creado desde un aviso se atiende como un SOS (verificación, clasificación, asignación con HU20).
+    // En las consultas se escribe «Origen != OrigenCaso.Reporte» para que EF Core lo traduzca.
+    public static bool SeAtiendeComoSos(OrigenCaso origen) => origen != OrigenCaso.Reporte;
+}
 
 // Estados del caso (Plan de Arquitectura, máquina de estados). El Sprint 2 añade «Asignada» (HU20), «En camino»
 // (HU22), «En atención» (HU23) y «Cerrada» (HU24). El Sprint 3 añade «Recibido» (HU10), el estado inicial de un reporte,
-// «En revisión» (HU14), «Derivada» (HU16) y «Descartada» (HU17). Un reporte admitido pasa a «Pendiente» (HU15).
-public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision, Derivada, Descartada }
+// «En revisión» (HU14), «Derivada» (HU16) y «Descartada» (HU17). Un reporte admitido pasa a «Pendiente» (HU15). El Sprint 5
+// añade «Cancelada» (HU09), un estado final: no es asignable (HU20).
+public enum EstadoCaso { Pendiente, Asignada, EnCamino, EnAtencion, Cerrada, Recibido, EnRevision, Derivada, Descartada, Cancelada }
 
 public static class EstadosCaso
 {
@@ -22,6 +39,7 @@ public static class EstadosCaso
         EstadoCaso.EnRevision => "En revisión",
         EstadoCaso.Derivada => "Derivada",
         EstadoCaso.Descartada => "Descartada",
+        EstadoCaso.Cancelada => "Cancelada",
         _ => estado.ToString(),
     };
 }
@@ -75,6 +93,25 @@ public sealed class Caso
         if (Estado != EstadoCaso.EnCamino)
             throw new InvalidOperationException("Solo un caso en camino puede pasar a «En atención».");
         Estado = EstadoCaso.EnAtencion;
+    }
+
+    // DP03 (16/10/2026): si se desactiva la cuenta del sereno asignado, la asignación se cancela y el caso vuelve a
+    // «Pendiente» para asignarlo a otro sereno (HU20). Solo desde un estado con asignación vigente y sin cerrar.
+    public void LiberarPorCancelacion()
+    {
+        if (Estado is not (EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion))
+            throw new InvalidOperationException("Solo un caso asignado y sin cerrar vuelve a «Pendiente».");
+        Estado = EstadoCaso.Pendiente;
+    }
+
+    // HU09-CA01/CA03: el titular solo cancela un SOS «Pendiente»; asignado o en un estado posterior, ya no.
+    public bool PuedeCancelarse => Origen == OrigenCaso.Sos && Estado == EstadoCaso.Pendiente;
+
+    public void Cancelar()
+    {
+        if (!PuedeCancelarse)
+            throw new InvalidOperationException("Solo un SOS pendiente puede cancelarse.");
+        Estado = EstadoCaso.Cancelada;
     }
 
     // HU24-CA01/CA03: solo un caso «En atención» se cierra.
@@ -154,6 +191,26 @@ public sealed class Caso
         ClasificadoPor = ciudadanoId,
         ClasificadoEn = ahora,
     };
+
+    // HU43-CA05 y DP19 (decisión del equipo): el caso urgente creado por el operador desde un aviso. Origen «Acompañamiento»,
+    // estado «Pendiente» (se asigna con HU20, sin despacho automático: CA06), el ciudadano de la sesión como titular y la
+    // última posición conocida como ubicación, con su hora real de obtención (no se presenta como actual).
+    public static Caso CrearDesdeAviso(Guid ciudadanoId, Guid idSolicitud, (double Latitud, double Longitud, double PrecisionMetros, DateTimeOffset ObtenidaEn)? ultimaPosicion,
+        DateTimeOffset ahora)
+    {
+        var caso = new Caso
+        {
+            Id = Guid.CreateVersion7(),
+            Origen = OrigenCaso.Acompanamiento,
+            Estado = EstadoCaso.Pendiente,
+            CiudadanoId = ciudadanoId,
+            IdSolicitud = idSolicitud,
+            RegistradoEn = ahora,
+        };
+        if (ultimaPosicion is { } p)
+            (caso.Latitud, caso.Longitud, caso.PrecisionMetros, caso.UbicacionObtenidaEn) = (p.Latitud, p.Longitud, p.PrecisionMetros, p.ObtenidaEn);
+        return caso;
+    }
 
     public static Caso EmitirSos(Guid ciudadanoId, Guid idSolicitud, Posicion? ubicacionActual, DateTimeOffset ahora)
     {

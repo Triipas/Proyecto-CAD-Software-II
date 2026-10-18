@@ -1,0 +1,21 @@
+@model (string Estado, bool Urgente)
+@* Chip de estado del rediseño CAD v2: tono + icono + texto literal del estado (docs/rediseno/fase1-textos.md).
+   El tono dice en qué punto del flujo está el caso; «Pendiente» es urgente solo en un SOS. *@
+@{
+    var (tono, icono) = Model.Estado switch
+    {
+        "Pendiente" => (Model.Urgente ? "urgente" : "advertencia", "reloj"),
+        "Recibido" => ("informacion", "bandeja"),
+        "En revisión" => ("informacion", "lupa"),
+        "Admitido" => ("informacion", "exito"),
+        "Asignada" or "Asignado" => ("progreso", "asignado"),
+        "En camino" => ("progreso", "camino"),
+        "En atención" => ("progreso", "escudo"),
+        "Cerrada" or "Cerrado" => ("exito", "exito"),
+        "Derivada" or "Derivado" => ("neutro", "derivar"),
+        "Descartada" or "Descartado" => ("neutro", "error"),
+        "Cancelada" or "Cancelado" => ("neutro", "cancelar"),
+        _ => ("neutro", "informacion"),
+    };
+}
+<span class="chip chip--@tono"><partial name="_Icono" model="@icono" />@Model.Estado</span>

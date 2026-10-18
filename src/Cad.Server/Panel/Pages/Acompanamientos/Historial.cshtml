@@ -1,0 +1,73 @@
+@page "/panel/acompanamientos/historial"
+@model Cad.Server.Panel.Pages.Acompanamientos.HistorialModel
+@using Cad.Server.Panel.Pages.Acompanamientos
+@using Cad.Server.Modulos.Acompanamiento.Dominio
+@using Cad.Server.Modulos.Acompanamiento.Consultas
+@{
+    ViewData["Title"] = "Historial de acompañamientos";
+    var r = Model.Resultado;
+    var zona = Model.ZonaHoraria;
+    string Fecha(DateTimeOffset momento) => Formato.Hora(momento, zona, "dd/MM/yyyy HH:mm:ss");
+}
+<p><a class="enlace-volver" href="/panel/acompanamientos">← Acompañamientos activos</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador autorizado</p>
+        <h1 class="titulo">Historial de sesiones de acompañamiento</h1>
+        <p class="texto-secundario">Sesiones terminadas, de la más reciente a la más antigua, de @ConsultarAcompanamientos.TamanoPagina en @ConsultarAcompanamientos.TamanoPagina. Es distinto del historial de SOS y reportes.</p>
+    </div>
+</div>
+
+@if (r.Total == 0)
+{
+    <section class="superficie estado-vacio" data-sin-sesiones>
+        <p class="aviso__titulo">Aún no hay sesiones terminadas</p>
+    </section>
+}
+else
+{
+    <div class="tabla-contenedor">
+        <table class="tabla" data-historial-sesiones>
+            <caption>@r.Total @(r.Total == 1 ? "sesión" : "sesiones") · página @r.Pagina de @r.TotalPaginas</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Ciudadano</th>
+                    <th scope="col">Cómo terminó</th>
+                    <th scope="col">Inicio</th>
+                    <th scope="col">Vencimiento</th>
+                    <th scope="col">Cierre</th>
+                    <th scope="col">Posiciones</th>
+                    <th scope="col">Recorrido</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in r.Sesiones)
+                {
+                    <tr data-sesion="@s.Id">
+                        <th scope="row">@s.Ciudadano</th>
+                        <td>@(s.Estado == EstadoSesion.Finalizada ? "Finalizada por el ciudadano" : "Vencida a los 30 minutos")</td>
+                        <td>@Fecha(s.IniciadaEn)</td>
+                        <td>@Fecha(s.VenceEn)</td>
+                        <td>@Fecha(s.CerradaEn)</td>
+                        <td>@(s.CasoConservado is not null ? $"{s.Posiciones} · conservadas (caso vinculado)" : s.PosicionesEliminadasEn is not null ? "Eliminadas por plazo" : s.Posiciones.ToString())</td>
+                        <td><a href="/panel/acompanamientos/@s.Id" aria-label="Ver el recorrido de la sesión de @s.Ciudadano iniciada a las @Fecha(s.IniciadaEn)">Ver</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (r.TotalPaginas > 1)
+    {
+        <nav class="paginacion" aria-label="Páginas del historial">
+            @if (r.Pagina > 1)
+            {
+                <a class="boton boton--secundario" href="/panel/acompanamientos/historial?pagina=@(r.Pagina - 1)">Anterior</a>
+            }
+            <span>Página @r.Pagina de @r.TotalPaginas</span>
+            @if (r.Pagina < r.TotalPaginas)
+            {
+                <a class="boton boton--secundario" href="/panel/acompanamientos/historial?pagina=@(r.Pagina + 1)">Siguiente</a>
+            }
+        </nav>
+    }
+}

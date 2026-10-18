@@ -9,11 +9,16 @@
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
-	<!-- Ubicación solo con la app en uso (HU06, HU08). Sin ubicación en segundo plano: fuera del alcance (RNF11). -->
+	<!-- Ubicación con la app en uso (HU06, HU08). El acompañamiento (DP13) sigue con la app fuera de la pantalla mediante un
+	     servicio en primer plano de tipo ubicación que inicia el ciudadano: no se pide ubicación en segundo plano. -->
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 	<!-- HU21 (ADR-07): aviso del despacho al sereno. En Android 13+ se pide con una explicación previa. -->
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+	<!-- DP13: servicio en primer plano del acompañamiento y CPU despierta con la pantalla apagada mientras dura. -->
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
 	<uses-feature android:name="android.hardware.location" android:required="false" />
 	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>

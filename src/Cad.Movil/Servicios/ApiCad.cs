@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Cad.Contratos.Acompanamiento;
 using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
@@ -43,11 +44,43 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct) =>
         EnviarAsync<MiCasoDetalle>(HttpMethod.Get, $"api/casos/mios/{casoId}", null, token, ct);
 
+    public Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct) =>
+        EnviarAsync<MiCasoDetalle>(HttpMethod.Post, $"api/casos/mios/{casoId}/cancelacion", solicitud, token, ct);
+
+    public Task<ResultadoApi<MiEvaluacion>> EvaluarCasoAsync(string token, Guid casoId, SolicitudEvaluacionCaso solicitud, CancellationToken ct) =>
+        EnviarAsync<MiEvaluacion>(HttpMethod.Post, $"api/casos/mios/{casoId}/evaluacion", solicitud, token, ct);
+
     public Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct) =>
         EnviarAsync<BandejaNotificaciones>(HttpMethod.Get, "api/notificaciones", null, token, ct);
 
     public Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct) =>
         EnviarAsync<SinContenido>(HttpMethod.Post, $"api/notificaciones/{notificacionId}/leida", null, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> IniciarAcompanamientoAsync(string token, SolicitudInicioAcompanamiento solicitud, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Post, "api/acompanamiento", solicitud, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista?>> ConsultarAcompanamientoActualAsync(string token, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista?>(HttpMethod.Get, "api/acompanamiento/actual", null, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Get, $"api/acompanamiento/{sesionId}", null, token, ct);
+
+    public Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct) =>
+        EnviarAsync<SinContenido>(HttpMethod.Post, $"api/acompanamiento/{sesionId}/posiciones", posicion, token, ct);
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
+        EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Post, $"api/acompanamiento/{sesionId}/finalizacion", null, token, ct);
+
+    // 204 (sin confirmación pendiente) llega como Correcto(null).
+    public Task<ResultadoApi<ConfirmacionBienestarVista?>> ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct) =>
+        EnviarAsync<ConfirmacionBienestarVista?>(HttpMethod.Get, $"api/acompanamiento/{sesionId}/confirmacion", null, token, ct);
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct) =>
+        EnviarAsync<ConfirmacionBienestarVista>(HttpMethod.Post, $"api/acompanamiento/confirmaciones/{confirmacionId}/presentacion", null, token, ct);
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
+        CancellationToken ct) =>
+        EnviarAsync<ConfirmacionBienestarVista>(HttpMethod.Post, $"api/acompanamiento/confirmaciones/{confirmacionId}/respuesta", respuesta, token, ct);
 
     public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
         EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Get, "api/sereno/estado", null, token, ct);

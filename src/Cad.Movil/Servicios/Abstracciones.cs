@@ -1,3 +1,4 @@
+using Cad.Contratos.Acompanamiento;
 using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
@@ -34,10 +35,26 @@ public interface IApiCad
     // HU30 — mis casos (solo datos públicos, DP05). El caso de otro ciudadano responde 404 (CA04).
     Task<ResultadoApi<List<MiCasoResumen>>> ConsultarMisCasosAsync(string token, CancellationToken ct);
     Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct);
+    // HU09: cancela un SOS propio pendiente; devuelve el caso actualizado.
+    Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct);
+    // HU32: evalúa un caso propio cerrado; devuelve la evaluación registrada.
+    Task<ResultadoApi<MiEvaluacion>> EvaluarCasoAsync(string token, Guid casoId, SolicitudEvaluacionCaso solicitud, CancellationToken ct);
 
     // HU31 — bandeja de notificaciones del ciudadano.
     Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct);
     Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct);
+
+    // HU34–HU37 — acompañamiento temporal. ConsultarActual: Correcto(null) si no hay sesión activa (204).
+    Task<ResultadoApi<SesionAcompanamientoVista>> IniciarAcompanamientoAsync(string token, SolicitudInicioAcompanamiento solicitud, CancellationToken ct);
+    Task<ResultadoApi<SesionAcompanamientoVista?>> ConsultarAcompanamientoActualAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct);
+    Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct);
+    Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct);
+    // HU41: confirmación de bienestar pendiente (null si no hay), su presentación y la respuesta.
+    Task<ResultadoApi<ConfirmacionBienestarVista?>> ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct);
+    Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct);
+    Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
+        CancellationToken ct);
 
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);
@@ -74,6 +91,23 @@ public interface IServicioPush
     Task<string?> ObtenerTokenAsync(CancellationToken ct);
     // FCM renovó el token: hay que volver a registrarlo en el servidor.
     event Action<string>? TokenRenovado;
+}
+
+// DP13 (16/10/2026): mantiene la transmisión del acompañamiento con la app fuera de la pantalla (en Android, un servicio en
+// primer plano con notificación). En las pruebas y fuera de Android no hace nada.
+public interface IServicioSegundoPlano
+{
+    void Iniciar(DateTimeOffset venceEn);
+    void Detener();
+    // HU41: avisa en el teléfono de que la central pide una confirmación (útil con la app en segundo plano).
+    void AvisarConfirmacion();
+}
+
+public sealed class SegundoPlanoNoDisponible : IServicioSegundoPlano
+{
+    public void Iniciar(DateTimeOffset venceEn) { }
+    public void Detener() { }
+    public void AvisarConfirmacion() { }
 }
 
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).

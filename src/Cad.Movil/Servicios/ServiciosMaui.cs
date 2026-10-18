@@ -64,6 +64,14 @@ public sealed class ServicioUbicacionMaui : IServicioUbicacion
 }
 
 // JWT en SecureStorage (Android Keystore), nunca en preferencias en texto plano (Plan de Arquitectura, Tabla 21).
+// HU36-CA03: el cierre pendiente del acompañamiento sobrevive a un cierre de la app (solo el identificador de la sesión).
+public sealed class AlmacenLocalMaui : IAlmacenLocal
+{
+    public string? Leer(string clave) => Preferences.Default.Get<string?>(clave, null);
+    public void Guardar(string clave, string valor) => Preferences.Default.Set(clave, valor);
+    public void Borrar(string clave) => Preferences.Default.Remove(clave);
+}
+
 public sealed class AlmacenSesionSeguro : IAlmacenSesion
 {
     private const string Clave = "cad.sesion";

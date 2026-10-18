@@ -11,7 +11,7 @@
     <h1 class="titulo">Modificar cuenta institucional</h1>
     <p class="texto-secundario">
         @Model.Cuenta.Rol · @(Model.Cuenta.Activa ? "Activa" : "Desactivada").
-        El rol se fija al crear la cuenta; la desactivación corresponde a HU05.
+        El rol se fija al crear la cuenta.
     </p>
 </div>
 
@@ -32,4 +32,28 @@
             <button type="submit" class="boton boton--principal" data-texto-carga="Guardando…">Guardar cambios</button>
         </div>
     </form>
+</section>
+
+@* HU05: desactivar la cuenta. Se pide una confirmación explícita antes de enviar. *@
+<section class="superficie pila" aria-labelledby="titulo-desactivacion" data-desactivacion>
+    <h2 id="titulo-desactivacion" class="central__titulo">Estado de la cuenta</h2>
+    @if (Model.Cuenta.Activa)
+    {
+        <p>La cuenta está activa. Al desactivarla, ya no podrá iniciar sesión en @(Model.Cuenta.Rol == "Sereno" ? "la aplicación" : "el panel"). Sus registros (actuaciones, asignaciones, cierres) se conservan y siguen apareciendo en los historiales.</p>
+        <p class="texto-secundario">Su sesión abierta se cierra en el acto y, si tiene un caso asignado, la asignación se cancela y el caso vuelve a «Pendiente» para asignarlo a otro sereno (DP03).</p>
+        <details class="confirmacion">
+            <summary class="boton boton--secundario">Desactivar la cuenta…</summary>
+            <form method="post" asp-page-handler="Desactivar" class="pila confirmacion__contenido" data-formulario>
+                <p class="aviso__titulo">¿Desactivar la cuenta de @Model.Cuenta.Nombres @Model.Cuenta.Apellidos?</p>
+                <div class="acciones">
+                    <a class="boton boton--secundario" href="/panel/admin/cuentas/@Model.Cuenta.Id/editar">Cancelar</a>
+                    <button type="submit" class="boton boton--peligro" data-texto-carga="Desactivando…">Confirmar la desactivación</button>
+                </div>
+            </form>
+        </details>
+    }
+    else
+    {
+        <p><span class="estado estado--inactiva"><partial name="_Icono" model="@("advertencia")" />Desactivada</span> La cuenta no puede iniciar sesión. Sus registros se conservan.</p>
+    }
 </section>

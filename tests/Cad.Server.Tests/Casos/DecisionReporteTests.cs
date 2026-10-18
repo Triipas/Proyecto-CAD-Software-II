@@ -136,13 +136,14 @@ public class DecisionReporteTests(FabricaCad fabrica)
         Assert.Equal("/panel/central", respuesta.Headers.Location!.OriginalString);
         Assert.Equal(EstadoCaso.Asignada, (await CasoAsync(id)).Estado);
         Assert.DoesNotContain($"id=\"sos-{id}\"", await operador.GetStringAsync("/panel/central?handler=Reportes"));
-        // El sereno ve el lugar del hecho, no una ubicación del dispositivo (HU21-CA02, CA03) y sin datos del ciudadano (DP06).
+        // El sereno ve el lugar del hecho, no una ubicación del dispositivo (HU21-CA02, CA03), y la descripción del reporte
+        // (DP06 ampliada por el PO el 16/10/2026), sin los datos personales del ciudadano.
         var json = await serenoApp.GetStringAsync("/api/sereno/despacho");
         var despacho = System.Text.Json.JsonSerializer.Deserialize<DespachoSereno>(json, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))!;
         Assert.Equal("REPORTE", despacho.Origen);
         Assert.Null(despacho.Ubicacion);
         Assert.Equal(new LugarHechoDespacho(-12.0589, -77.0461, null, "Frente a la plaza"), despacho.LugarHecho);
-        Assert.DoesNotContain("Hecho ficticio", json);
+        Assert.Equal("Hecho ficticio", despacho.DescripcionReporte);
         Assert.DoesNotContain("Prueba Ciudadano", json);
         // En la lista de serenos de la central, «Ver el caso» lleva al detalle del reporte.
         Assert.Contains($"href=\"/panel/reportes/{id}\"", await operador.GetStringAsync("/panel/central?handler=Serenos"));
@@ -433,6 +434,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
     {
         public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) => Task.CompletedTask;
         public Task CasoActualizadoAsync(Guid casoId, CancellationToken ct) => Task.CompletedTask;
+        public Task SosCanceladoAsync(Guid casoId, CancellationToken ct) => Task.CompletedTask;
         public Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;

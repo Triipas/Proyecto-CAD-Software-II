@@ -2,6 +2,7 @@ using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Aplicacion;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Consultas;
+using Cad.Server.Panel.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -16,7 +17,7 @@ namespace Cad.Server.Panel.Pages.Central;
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
     ClasificarCaso clasificar, AvanzarCaso avanzar, CerrarCaso cerrar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
-    IConfiguration configuracion) : PageModel
+    ConsultarTiemposCaso consultarTiempos, IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioIntento Formulario { get; set; } = new();
@@ -31,6 +32,9 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public FormularioCierre Cierre { get; set; } = new();
 
     public DetalleSos Sos { get; private set; } = null!;
+
+    // HU28: tiempo de respuesta del SOS.
+    public TiemposCaso? Tiempos { get; private set; }
 
     // HU20: serenos que pueden recibir el caso (operativos y sin asignación vigente).
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
@@ -68,6 +72,56 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     ];
 
     public static string Texto(ResultadoContacto resultado) => Resultados.Single(r => r.Valor == resultado).Texto;
+
+    public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+    // Rediseño CAD v2 (fase 3): el detalle se guía por una sola «Siguiente acción» y una línea de progreso.
+    // Verificar y clasificar son opcionales para asignar (HU13-CA02): si se saltan, quedan como omitidos.
+    public bool Contactado => Sos.Intentos.Any(i => i.Resultado == ResultadoContacto.Contactado);
+
+    public SiguienteAccion Siguiente => Sos.Estado switch
+    {
+        "Cancelada" => SiguienteAccion.VerCancelacion,
+        "Cerrada" => SiguienteAccion.VerCierre,
+        _ when Sos.EnAtencion => SiguienteAccion.Cerrar,
+        _ when Sos.EnCamino => SiguienteAccion.EsperarAtencion,
+        _ when Sos.Asignacion is not null => SiguienteAccion.EsperarDesplazamiento,
+        "Pendiente" when !Contactado => SiguienteAccion.Contactar,
+        "Pendiente" when Sos.Clasificacion is null => SiguienteAccion.Clasificar,
+        "Pendiente" => SiguienteAccion.Asignar,
+        _ => SiguienteAccion.NoAsignable,
+    };
+
+    public IReadOnlyList<PasoCaso> Pasos
+    {
+        get
+        {
+            var avances = Sos.Avances ?? [];
+            var cancelado = Sos.Estado == "Cancelada";
+            bool[] hechos =
+            [
+                true,
+                Contactado,
+                Sos.Clasificacion is not null,
+                Sos.Asignacion is not null,
+                Sos.EnCamino || Sos.EnAtencion || avances.Any(a => a.Descripcion == "En camino") || Sos.Cierre is not null,
+                Sos.EnAtencion || avances.Any(a => a.Descripcion == "En atención") || Sos.Cierre is not null,
+                Sos.Cierre is not null || cancelado,
+            ];
+            string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignado", "En camino", "En atención", cancelado ? "Cancelado" : "Cerrado"];
+            var actual = Siguiente switch
+            {
+                SiguienteAccion.Contactar => 1,
+                SiguienteAccion.Clasificar => 2,
+                SiguienteAccion.Asignar => 3,
+                SiguienteAccion.EsperarDesplazamiento => 4,
+                SiguienteAccion.EsperarAtencion => 5,
+                SiguienteAccion.Cerrar => 6,
+                _ => -1,
+            };
+            return ProgresoCaso.Construir(textos, hechos, actual);
+        }
+    }
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct)
     {
@@ -216,8 +270,11 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         Sos = sos;
         SerenosDisponibles = (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList();
         Categorias = await consultarCategorias.EjecutarAsync(ct);
+        Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
         return true;
     }
+
+    public enum SiguienteAccion { Contactar, Clasificar, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerCancelacion, NoAsignable }
 
     public sealed class FormularioIntento
     {

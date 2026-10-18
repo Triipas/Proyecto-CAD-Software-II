@@ -1,0 +1,5 @@
+node_modules/
+# Estado de cada ejecución: credenciales generadas, sesiones e identificadores. Nunca se sube.
+.estado/
+informe/
+resultados/

@@ -1,0 +1,142 @@
+/*
+  Bandeja de reportes (HU14) en el rediseño CAD v2, fase 3. Solo la carga /panel/reportes.
+  Chips de estado, fila pulsable y, por debajo de 760 px, cada reporte como tarjeta (solo CSS).
+*/
+
+.reportes__tabla tbody tr {
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reportes__tabla tbody tr:hover {
+    background: var(--color-tenue);
+  }
+}
+
+.reportes__fecha {
+  display: grid;
+  line-height: 1.3;
+  font-weight: var(--peso-normal);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+}
+
+.reportes__fecha b {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
+.reportes__categoria {
+  font-weight: var(--peso-medio);
+}
+
+.reportes__hecho {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reportes__vacio {
+  padding: var(--espacio-10) var(--espacio-4);
+}
+
+@media (max-width: 47.5rem) {
+  .reportes__tabla {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .reportes__tabla .tabla,
+  .reportes__tabla .tabla tbody {
+    display: block;
+  }
+
+  .reportes__tabla .tabla caption {
+    display: block;
+    padding: 0 0 var(--espacio-3);
+  }
+
+  .reportes__tabla .tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .reportes__tabla .tabla tbody {
+    display: grid;
+    gap: var(--espacio-3);
+  }
+
+  .reportes__tabla .tabla tbody tr {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "estado fecha"
+      "categoria categoria"
+      "ciudadano ciudadano"
+      "hecho hecho"
+      "ubicacion ubicacion"
+      "acciones acciones";
+    align-items: center;
+    gap: var(--espacio-2);
+    padding: var(--espacio-4);
+    border: var(--grosor-borde) solid var(--color-borde);
+    border-radius: var(--radio-superficie);
+    background: var(--color-superficie);
+    box-shadow: var(--sombra-1);
+  }
+
+  .reportes__tabla .tabla tbody th,
+  .reportes__tabla .tabla tbody td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .reportes__tabla tbody > tr > :nth-child(1) { grid-area: fecha; justify-self: end; }
+  .reportes__tabla tbody > tr > :nth-child(2) { grid-area: estado; }
+  .reportes__tabla tbody > tr > :nth-child(3) { grid-area: categoria; font-size: var(--texto-md); }
+  .reportes__tabla tbody > tr > :nth-child(4) { grid-area: ciudadano; }
+  .reportes__tabla tbody > tr > :nth-child(5) { grid-area: hecho; }
+  .reportes__tabla tbody > tr > :nth-child(6) { grid-area: ubicacion; }
+  .reportes__tabla tbody > tr > :nth-child(7) {
+    grid-area: acciones;
+    padding-top: var(--espacio-2);
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .reportes__fecha {
+    justify-items: end;
+  }
+
+  .reportes__tabla .tabla tbody > tr > :nth-child(5),
+  .reportes__tabla .tabla tbody > tr > :nth-child(6) {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: var(--espacio-2);
+    align-items: baseline;
+  }
+
+  .reportes__tabla tbody > tr > :nth-child(5)::before,
+  .reportes__tabla tbody > tr > :nth-child(6)::before {
+    font-size: var(--texto-xs);
+    font-weight: var(--peso-normal);
+    color: var(--color-texto-secundario);
+  }
+
+  .reportes__tabla tbody > tr > :nth-child(5)::before { content: "Hecho (aprox.)"; }
+  .reportes__tabla tbody > tr > :nth-child(6)::before { content: "Ubicación"; }
+
+  .reportes__tabla tbody > tr > :nth-child(7) a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+  }
+}

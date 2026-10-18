@@ -20,6 +20,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
+    public DbSet<CancelacionSos> CancelacionesSos => Set<CancelacionSos>();
+    public DbSet<EvaluacionCaso> EvaluacionesCaso => Set<EvaluacionCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
     public DbSet<DecisionReporte> DecisionesReporte => Set<DecisionReporte>();
@@ -27,11 +29,17 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
+    public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
+    public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
+    public DbSet<Modulos.Acompanamiento.Dominio.ConservacionRecorrido> ConservacionesRecorrido => Set<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>();
+    public DbSet<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar> ConfirmacionesBienestar => Set<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar>();
+    public DbSet<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento> AvisosAcompanamiento => Set<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento>();
+    public DbSet<Modulos.Acompanamiento.Dominio.ActuacionAviso> ActuacionesAviso => Set<Modulos.Acompanamiento.Dominio.ActuacionAviso>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
     // su titular; un cambio interno que no cambia el estado público (en camino, inicio de la atención) no la genera.
-    // Registrar un caso no notifica: es el propio ciudadano quien lo crea.
+    // Registrar un caso no notifica: es el propio ciudadano quien lo crea; tampoco cancelarlo (HU09).
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         NotificarCambiosPublicos();
@@ -55,7 +63,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             var caso = entrada.Entity;
             var antes = EstadoPublicoCaso.De(caso.Origen, estado.OriginalValue);
             var despues = EstadoPublicoCaso.De(caso.Origen, estado.CurrentValue);
-            if (antes != despues)
+            if (antes != despues && despues != Cad.Contratos.Casos.EstadosPublicos.Cancelado)
                 NotificacionesCiudadano.Add(NotificacionCiudadano.PorCambioDeEstado(caso, despues, ahora));
         }
     }
@@ -85,6 +93,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             caso.Property(c => c.Estado).HasConversion<string>().HasMaxLength(20);
             caso.Ignore(c => c.UbicacionDisponible);
             caso.Ignore(c => c.PuedeAsignarse);
+            caso.Ignore(c => c.PuedeCancelarse);
             caso.Ignore(c => c.Clasificado);
             // Npgsql asocia un uint marcado como versión a la columna del sistema xmin (sin columna nueva).
             caso.Property(c => c.Version).IsRowVersion();
@@ -157,6 +166,28 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cierre.HasOne<Caso>().WithOne().HasForeignKey<CierreCaso>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
             cierre.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaId).OnDelete(DeleteBehavior.Restrict);
             cierre.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ResponsableId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU09: una cancelación por caso (CA08), con el motivo obligatorio (CA01, CA04) también garantizado por la base de datos.
+        builder.Entity<CancelacionSos>(cancelacion =>
+        {
+            cancelacion.ToTable("CancelacionesSos", tabla =>
+                tabla.HasCheckConstraint("CK_CancelacionesSos_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0"));
+            cancelacion.HasKey(c => c.CasoId);
+            cancelacion.Property(c => c.Motivo).HasMaxLength(CancelacionSos.MaximoMotivo);
+            cancelacion.HasOne<Caso>().WithOne().HasForeignKey<CancelacionSos>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+            cancelacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU32: una evaluación por caso (CA03), con la puntuación de 1 a 5 (CA02) también garantizada por la base de datos.
+        builder.Entity<EvaluacionCaso>(evaluacion =>
+        {
+            evaluacion.ToTable("EvaluacionesCaso", tabla =>
+                tabla.HasCheckConstraint("CK_EvaluacionesCaso_Puntuacion", "\"Puntuacion\" IS NOT NULL AND \"Puntuacion\" BETWEEN 1 AND 5"));
+            evaluacion.HasKey(e => e.CasoId);
+            evaluacion.Property(e => e.Comentario).HasMaxLength(EvaluacionCaso.MaximoComentario);
+            evaluacion.HasOne<Caso>().WithOne().HasForeignKey<EvaluacionCaso>(e => e.CasoId).OnDelete(DeleteBehavior.Restrict);
+            evaluacion.HasOne<Usuario>().WithMany().HasForeignKey(e => e.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU10: datos del reporte, uno por caso. La base de datos garantiza los campos obligatorios (CA02) y que la
@@ -277,6 +308,124 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             // Un reenvío de la misma posición no la duplica; también sirve para leer la última posición (HU19).
             posicion.HasIndex(p => new { p.SerenoId, p.ObtenidaEn }).IsUnique();
             posicion.HasOne<Usuario>().WithMany().HasForeignKey(p => p.SerenoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU34–HU37: sesiones de acompañamiento. Una sola activa por ciudadano (HU34-CA06, índice único parcial) y una por
+        // pulsación (IdSolicitud). La base de datos exige que una sesión cerrada tenga su hora de cierre y una activa no.
+        builder.Entity<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>(sesion =>
+        {
+            sesion.ToTable("SesionesAcompanamiento", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_SesionesAcompanamiento_Vencimiento", "\"VenceEn\" > \"IniciadaEn\"");
+                // IS NOT NULL explícito: un CHECK con NULL se acepta.
+                tabla.HasCheckConstraint("CK_SesionesAcompanamiento_Cierre",
+                    "(\"Estado\" = 'Activa' AND \"CerradaEn\" IS NULL) OR " +
+                    "(\"Estado\" IN ('Finalizada', 'Vencida') AND \"CerradaEn\" IS NOT NULL AND \"CerradaEn\" >= \"IniciadaEn\")");
+            });
+            sesion.HasKey(s => s.Id);
+            sesion.Property(s => s.Estado).HasConversion<string>().HasMaxLength(20);
+            sesion.Property(s => s.Version).IsRowVersion();
+            sesion.HasIndex(s => new { s.CiudadanoId, s.IdSolicitud }).IsUnique();
+            sesion.HasIndex(s => s.CiudadanoId).IsUnique().HasFilter("\"Estado\" = 'Activa'").HasDatabaseName("IX_SesionesAcompanamiento_Activa");
+            sesion.HasIndex(s => new { s.Estado, s.VenceEn });
+            sesion.HasOne<Usuario>().WithMany().HasForeignKey(s => s.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU35: posiciones del acompañamiento (solo inserción). Un reenvío de la misma posición no la duplica.
+        builder.Entity<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>(posicion =>
+        {
+            posicion.ToTable("PosicionesAcompanamiento", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_PosicionesAcompanamiento_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
+                tabla.HasCheckConstraint("CK_PosicionesAcompanamiento_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
+                tabla.HasCheckConstraint("CK_PosicionesAcompanamiento_Precision", "\"PrecisionMetros\" > 0");
+            });
+            posicion.HasKey(p => p.Id);
+            posicion.HasIndex(p => new { p.SesionId, p.ObtenidaEn }).IsUnique();
+            posicion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(p => p.SesionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU40 y HU41: confirmaciones de bienestar. DP20 (decisión del PO del 16/10/2026): una sola pendiente por sesión, también
+        // garantizado por la base de datos. Una respuesta guarda siempre su momento, y solo «Necesito ayuda» lleva un SOS.
+        builder.Entity<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar>(confirmacion =>
+        {
+            confirmacion.ToTable("ConfirmacionesBienestar", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_ConfirmacionesBienestar_Respuesta",
+                    "(\"Respuesta\" IS NULL AND \"RespondidaEn\" IS NULL AND \"CasoId\" IS NULL) OR " +
+                    "(\"Respuesta\" = 'EstoyBien' AND \"RespondidaEn\" IS NOT NULL AND \"CasoId\" IS NULL) OR " +
+                    "(\"Respuesta\" = 'NecesitoAyuda' AND \"RespondidaEn\" IS NOT NULL AND \"CasoId\" IS NOT NULL)");
+            });
+            confirmacion.HasKey(c => c.Id);
+            confirmacion.Property(c => c.Respuesta).HasConversion<string>().HasMaxLength(20);
+            confirmacion.Property(c => c.Version).IsRowVersion();
+            confirmacion.Ignore(c => c.Pendiente);
+            confirmacion.HasIndex(c => new { c.OperadorId, c.IdSolicitud }).IsUnique();
+            confirmacion.HasIndex(c => c.SesionId).IsUnique().HasFilter("\"Respuesta\" IS NULL").HasDatabaseName("IX_ConfirmacionesBienestar_Pendiente");
+            confirmacion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(c => c.SesionId).OnDelete(DeleteBehavior.Restrict);
+            confirmacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+            confirmacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
+            confirmacion.HasOne<Caso>().WithMany().HasForeignKey(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU42: avisos del acompañamiento. CA03: un aviso por condición (sesión, regla y clave), también en la base de datos. HU43:
+        // los estados guardan siempre su responsable y su momento, y un caso creado lleva su justificación.
+        builder.Entity<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento>(aviso =>
+        {
+            aviso.ToTable("AvisosAcompanamiento", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_AvisosAcompanamiento_Estado",
+                    "(\"Estado\" = 'Generado' AND \"ResponsableId\" IS NULL AND \"ResueltoEn\" IS NULL) OR " +
+                    "(\"Estado\" = 'EnRevision' AND \"ResponsableId\" IS NOT NULL AND \"RevisionIniciadaEn\" IS NOT NULL AND \"ResueltoEn\" IS NULL) OR " +
+                    "(\"Estado\" = 'Resuelto' AND \"ResponsableId\" IS NOT NULL AND \"ResueltoPor\" IS NOT NULL AND \"ResueltoEn\" IS NOT NULL)");
+                tabla.HasCheckConstraint("CK_AvisosAcompanamiento_Caso",
+                    "(\"CasoId\" IS NULL AND \"VinculadoPor\" IS NULL AND \"CasoCreado\" = FALSE AND \"JustificacionCaso\" IS NULL) OR " +
+                    "(\"CasoId\" IS NOT NULL AND \"VinculadoPor\" IS NOT NULL AND \"VinculadoEn\" IS NOT NULL AND " +
+                    "(\"CasoCreado\" = FALSE OR (\"JustificacionCaso\" IS NOT NULL AND length(btrim(\"JustificacionCaso\")) > 0)))");
+            });
+            aviso.HasKey(a => a.Id);
+            aviso.Property(a => a.Regla).HasConversion<string>().HasMaxLength(30);
+            aviso.Property(a => a.Estado).HasConversion<string>().HasMaxLength(20);
+            aviso.Property(a => a.Clave).HasMaxLength(80);
+            aviso.Property(a => a.JustificacionCaso).HasMaxLength(Modulos.Acompanamiento.Dominio.AvisoAcompanamiento.MaximoJustificacion);
+            aviso.Property(a => a.Version).IsRowVersion();
+            aviso.HasIndex(a => new { a.SesionId, a.Regla, a.Clave }).IsUnique();
+            aviso.HasIndex(a => new { a.Estado, a.GeneradoEn });
+            aviso.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(a => a.SesionId).OnDelete(DeleteBehavior.Restrict);
+            aviso.HasOne<Usuario>().WithMany().HasForeignKey(a => a.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+            aviso.HasOne<Usuario>().WithMany().HasForeignKey(a => a.ResponsableId).OnDelete(DeleteBehavior.Restrict);
+            aviso.HasOne<Usuario>().WithMany().HasForeignKey(a => a.ResueltoPor).OnDelete(DeleteBehavior.Restrict);
+            aviso.HasOne<Usuario>().WithMany().HasForeignKey(a => a.VinculadoPor).OnDelete(DeleteBehavior.Restrict);
+            aviso.HasOne<Caso>().WithMany().HasForeignKey(a => a.CasoId).OnDelete(DeleteBehavior.Restrict);
+            aviso.HasOne<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar>().WithMany().HasForeignKey(a => a.ConfirmacionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU43-CA02: actuaciones de un aviso, solo inserción, con responsable y momento.
+        builder.Entity<Modulos.Acompanamiento.Dominio.ActuacionAviso>(actuacion =>
+        {
+            actuacion.ToTable("ActuacionesAviso", tabla =>
+                tabla.HasCheckConstraint("CK_ActuacionesAviso_Descripcion", "\"Descripcion\" IS NOT NULL AND length(btrim(\"Descripcion\")) > 0"));
+            actuacion.HasKey(a => a.Id);
+            actuacion.Property(a => a.Tipo).HasConversion<string>().HasMaxLength(20);
+            actuacion.Property(a => a.Descripcion).HasMaxLength(Modulos.Acompanamiento.Dominio.ActuacionAviso.MaximoDescripcion);
+            actuacion.HasIndex(a => new { a.OperadorId, a.IdSolicitud }).IsUnique();
+            actuacion.HasIndex(a => new { a.AvisoId, a.RegistradaEn });
+            actuacion.HasOne<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento>().WithMany().HasForeignKey(a => a.AvisoId).OnDelete(DeleteBehavior.Restrict);
+            actuacion.HasOne<Usuario>().WithMany().HasForeignKey(a => a.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU39-B (CA05): conservación excepcional de un recorrido, una por sesión, con su caso, su finalidad y su responsable.
+        builder.Entity<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>(conservacion =>
+        {
+            conservacion.ToTable("ConservacionesRecorrido", tabla =>
+                // IS NOT NULL explícito: un CHECK con NULL se acepta.
+                tabla.HasCheckConstraint("CK_ConservacionesRecorrido_Finalidad", "\"Finalidad\" IS NOT NULL AND length(btrim(\"Finalidad\")) > 0"));
+            conservacion.HasKey(c => c.SesionId);
+            conservacion.Property(c => c.Finalidad).HasMaxLength(Modulos.Acompanamiento.Dominio.ConservacionRecorrido.MaximoFinalidad);
+            conservacion.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithOne()
+                .HasForeignKey<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>(c => c.SesionId).OnDelete(DeleteBehavior.Restrict);
+            conservacion.HasOne<Caso>().WithMany().HasForeignKey(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+            conservacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Usuario>(usuario =>

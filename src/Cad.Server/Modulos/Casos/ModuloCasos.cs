@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
@@ -26,10 +27,15 @@ public static class ModuloCasos
         services.AddScoped<ClasificarCaso>();
         services.AddScoped<AvanzarCaso>();
         services.AddScoped<CerrarCaso>();
+        services.AddScoped<CancelarSos>();
+        services.AddScoped<EvaluarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
+        services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();
         services.AddScoped<Modulos.Consultas.ConsultarHistorialCaso>();
+        services.AddScoped<Modulos.Consultas.ConsultarTiemposCaso>();
+        services.AddScoped<Modulos.Consultas.ConsultarConcentracion>();
         return services;
     }
 
@@ -72,6 +78,37 @@ public static class ModuloCasos
                 await consultar.DetalleAsync(contexto.User.IdUsuario(), id, ct) is { } detalle ? Results.Ok(detalle) : Results.NotFound())
             .RequireAuthorization(Politicas.Ciudadano);
 
+        // HU09 — cancelar un SOS propio pendiente, con motivo: 200 con el caso actualizado (también ante un reenvío, sin cambiar
+        // el motivo ni el momento ya registrados: CA08); 400 sin motivo (CA04); 409 si ya no está pendiente (CA03); 404 si no es
+        // suyo o no existe, sin distinguirlos (CA05).
+        app.MapPost("/api/casos/mios/{id:guid}/cancelacion", async (Guid id, SolicitudCancelacionSos solicitud, HttpContext contexto, CancelarSos cancelar,
+                Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
+            {
+                var ciudadano = contexto.User.IdUsuario();
+                return await cancelar.EjecutarAsync(ciudadano, id, solicitud.Motivo, ct) switch
+                {
+                    ResultadoCancelacion.Cancelado or ResultadoCancelacion.YaCancelado => Results.Ok(await consultar.DetalleAsync(ciudadano, id, ct)),
+                    ResultadoCancelacion.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
+                    ResultadoCancelacion.Invalido i => Results.ValidationProblem(i.Errores, title: "No se canceló el SOS."),
+                    _ => Results.NotFound(),
+                };
+            })
+            .RequireAuthorization(Politicas.Ciudadano);
+
+        // HU32 — evaluar un caso propio cerrado: 201 la primera vez; 200 con la misma evaluación ante un reenvío técnico; 400 sin
+        // puntuación válida (CA02); 409 si ya está evaluado (CA03) o no está cerrado (CA04); 404 si no es suyo o no existe (CA05).
+        app.MapPost("/api/casos/mios/{id:guid}/evaluacion", async (Guid id, SolicitudEvaluacionCaso solicitud, HttpContext contexto, EvaluarCaso evaluar,
+                CancellationToken ct) =>
+            await evaluar.EjecutarAsync(contexto.User.IdUsuario(), id, solicitud, ct) switch
+            {
+                ResultadoEvaluacion.Registrada r => Results.Json(Vista(r.Evaluacion), statusCode: StatusCodes.Status201Created),
+                ResultadoEvaluacion.YaRegistrada r => Results.Ok(Vista(r.Evaluacion)),
+                ResultadoEvaluacion.Rechazada r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
+                ResultadoEvaluacion.Invalida i => Results.ValidationProblem(i.Errores, title: "No se registró la evaluación."),
+                _ => Results.NotFound(),
+            })
+            .RequireAuthorization(Politicas.Ciudadano);
+
         // HU31 — bandeja de notificaciones: solo las del ciudadano que consulta (CA04).
         app.MapGet("/api/notificaciones", async (HttpContext contexto, Modulos.Consultas.BandejaCiudadano bandeja, CancellationToken ct) =>
                 Results.Ok(await bandeja.ConsultarAsync(contexto.User.IdUsuario(), ct)))
@@ -85,6 +122,8 @@ public static class ModuloCasos
 
     private static RespuestaSos Respuesta(Caso caso) =>
         new(caso.Id, caso.Estado.ToString(), caso.RegistradoEn, caso.UbicacionDisponible);
+
+    private static MiEvaluacion Vista(EvaluacionCaso e) => new(e.Puntuacion, e.Comentario, e.EvaluadaEn);
 
     private static RespuestaReporte RespuestaDeReporte(Caso caso) =>
         new(caso.Id, EstadosCaso.Texto(caso.Estado), caso.RegistradoEn);

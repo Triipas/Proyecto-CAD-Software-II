@@ -22,10 +22,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Icono y pantalla de inicio con el azul marino de los tokens (#102A43). -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#102A43" />
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#102A43" BaseSize="128,128" />
+		<!-- Icono y pantalla de inicio con el azul marino de los tokens v2 (#0B1F44). -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0B1F44" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0B1F44" BaseSize="128,128" />
 		<MauiImage Include="Resources\Images\*" />
+		<!-- Public Sans (OFL; licencia en Resources/Fonts/OFL-PublicSans.txt). -->
+		<MauiFont Include="Resources\Fonts\*.ttf" />
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 

@@ -17,6 +17,7 @@ public static class EstadoPublicoCaso
         EstadoCaso.Cerrada => EstadosPublicos.Cerrado,
         EstadoCaso.Derivada => EstadosPublicos.Derivado,
         EstadoCaso.Descartada => EstadosPublicos.Descartado,
+        EstadoCaso.Cancelada => EstadosPublicos.Cancelado,
         _ => throw new ArgumentOutOfRangeException(nameof(estado)),
     };
 }

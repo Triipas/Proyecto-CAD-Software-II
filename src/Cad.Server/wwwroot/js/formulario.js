@@ -3,6 +3,13 @@
   // Tras un envío rechazado, el foco va al primer aviso o error marcado con data-enfocar.
   document.querySelector("[data-enfocar]")?.focus();
 
+  // Barra superior: en pantallas estrechas las secciones se abren desde el botón de menú.
+  const menu = document.querySelector("[data-menu]");
+  menu?.addEventListener("click", () => {
+    const abierta = menu.closest("[data-barra]").classList.toggle("barra--abierta");
+    menu.setAttribute("aria-expanded", String(abierta));
+  });
+
   // Estado de carga: evita un segundo envío mientras el servidor responde.
   for (const formulario of document.querySelectorAll("form[data-formulario]")) {
     const boton = formulario.querySelector("button[type=submit][data-texto-carga]");

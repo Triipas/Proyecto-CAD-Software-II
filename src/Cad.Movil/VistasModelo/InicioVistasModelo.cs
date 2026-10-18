@@ -3,7 +3,8 @@ using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
 
-// Pantalla principal del ciudadano: preparación de la ubicación (HU06), control SOS (HU07, HU08) y acceso al reporte (HU10).
+// Pantalla principal del ciudadano: preparación de la ubicación (HU06), control SOS (HU07, HU08), acceso al reporte (HU10) y
+// acompañamiento (HU34–HU37: control independiente; su estado y su tiempo restante siguen visibles en el inicio, CA08).
 public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
 {
     private readonly EmisorSos emisor;
@@ -12,24 +13,51 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     private readonly INavegacion navegacion;
     private readonly Action abrirAjustes;
     private readonly ServicioBandeja? bandeja;
+    private readonly ServicioAcompanamiento? acompanamiento;
     private ResultadoPreparacion? estadoUbicacion;
     private int? noLeidas;
     private bool preparada;
 
     public InicioCiudadanoVistaModelo(EmisorSos emisor, PreparacionUbicacion preparacion, IAlmacenSesion sesiones,
-        INavegacion navegacion, Action abrirAjustes, ServicioBandeja? bandeja = null)
+        INavegacion navegacion, Action abrirAjustes, ServicioBandeja? bandeja = null, ServicioAcompanamiento? acompanamiento = null)
     {
         this.bandeja = bandeja;
+        this.acompanamiento = acompanamiento;
         (this.emisor, this.preparacion, this.sesiones, this.navegacion, this.abrirAjustes) = (emisor, preparacion, sesiones, navegacion, abrirAjustes);
         EmitirSos = new ComandoAsincrono(() => emisor.ActivarAsync(), () => !SosEnCurso);
         Reintentar = new ComandoAsincrono(() => emisor.ReintentarAsync(), () => emisor.PuedeReintentar);
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
-        Salir = new ComandoAsincrono(SalirAsync);
+        Salir = new ComandoAsincrono(SalirAsync, () => !AcompanamientoEnCurso);
+        Acompanar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Acompanamiento));
         Reportar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Reporte));
         VerMisCasos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisCasos));
         VerNotificaciones = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Notificaciones));
         emisor.Cambio += _ => ActualizarSos();
+        if (acompanamiento is not null)
+            acompanamiento.Cambio += () => _ = HiloPrincipal(ActualizarAcompanamiento);
+    }
+
+    public Func<Action, Task> HiloPrincipal { get; init; } = accion => MainThread.InvokeOnMainThreadAsync(accion);
+
+    public ComandoAsincrono Acompanar { get; }
+
+    // HU34-CA08: con un acompañamiento activo, el inicio lo muestra con su tiempo restante. Mientras esté activo, o con su
+    // cierre pendiente de enviar, no se puede salir de la sesión: primero se finaliza (como el estado operativo del sereno).
+    public bool AcompanamientoEnCurso => acompanamiento?.Estado is EstadoAcompanamiento.Activo or EstadoAcompanamiento.CierrePendiente
+        or EstadoAcompanamiento.Finalizando;
+    public string TextoAcompanamiento => acompanamiento switch
+    {
+        { Estado: EstadoAcompanamiento.CierrePendiente } => "Dejaste de compartir tu ubicación; el cierre del acompañamiento se enviará al recuperar la conexión.",
+        { Restante: { } r } => $"Acompañamiento activo: tu ubicación se comparte con la central. Quedan {Math.Ceiling(r.TotalMinutes):0} min.",
+        _ => "",
+    };
+
+    private void ActualizarAcompanamiento()
+    {
+        Notificar(nameof(AcompanamientoEnCurso));
+        Notificar(nameof(TextoAcompanamiento));
+        Salir.ActualizarDisponibilidad();
     }
 
     public ComandoAsincrono EmitirSos { get; }
@@ -58,9 +86,9 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     {
         null => "Comprobando el permiso de ubicación…",
         ResultadoPreparacion.NecesitaExplicacion =>
-            "Tu ubicación ayuda a la central a encontrarte si emites un SOS. Solo se envía en ese momento; " +
+            "Tu ubicación ayuda a la central a encontrarte si emites un SOS. Solo se envía en ese momento o si activas un acompañamiento; " +
             "abrir la aplicación no la comparte.",
-        ResultadoPreparacion.Disponible => "Ubicación disponible. Solo se enviará si emites un SOS.",
+        ResultadoPreparacion.Disponible => "Ubicación disponible. Solo se enviará si emites un SOS o activas un acompañamiento.",
         ResultadoPreparacion.SinPosicion =>
             "No se pudo obtener tu ubicación. Activa la ubicación del teléfono. Si emites un SOS, se enviará igualmente.",
         _ => "Sin permiso de ubicación. Puedes concederlo en los ajustes del teléfono. " +
@@ -76,6 +104,11 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
             noLeidas = await bandeja.ContarNoLeidasAsync();
             Notificar(nameof(TextoNotificaciones));
             Notificar(nameof(HayNoLeidas));
+        }
+        if (acompanamiento is not null)
+        {
+            await acompanamiento.CargarAsync();
+            ActualizarAcompanamiento();
         }
         if (preparada) return;
         preparada = true;
@@ -127,6 +160,8 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
 
     private async Task SalirAsync()
     {
+        if (acompanamiento is not null)
+            await acompanamiento.ReiniciarAsync();
         sesiones.Cerrar();
         await navegacion.IrAAsync(Rutas.Ingreso);
     }

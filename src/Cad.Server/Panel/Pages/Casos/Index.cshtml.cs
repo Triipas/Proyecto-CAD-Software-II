@@ -33,7 +33,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     public static readonly IReadOnlyList<EstadoCaso> EstadosFiltrables =
     [
         EstadoCaso.Recibido, EstadoCaso.EnRevision, EstadoCaso.Pendiente, EstadoCaso.Asignada, EstadoCaso.EnCamino,
-        EstadoCaso.EnAtencion, EstadoCaso.Cerrada, EstadoCaso.Derivada, EstadoCaso.Descartada,
+        EstadoCaso.EnAtencion, EstadoCaso.Cerrada, EstadoCaso.Derivada, EstadoCaso.Descartada, EstadoCaso.Cancelada,
     ];
 
     public TimeZoneInfo ZonaHoraria =>
@@ -61,6 +61,46 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
             parametros.Where(p => !string.IsNullOrEmpty(p.Value)).ToDictionary(p => p.Key, p => p.Value));
     }
 
+    // Rediseño CAD v2 (fase 3): los filtros aplicados se muestran como chips; cada uno se quita con un enlace
+    // que conserva los demás y vuelve a la primera página.
+    public sealed record FiltroActivo(string Etiqueta, string Valor, string RutaSinEste);
+
+    public IReadOnlyList<FiltroActivo> FiltrosActivos
+    {
+        get
+        {
+            var valores = new (string Clave, string Etiqueta, string? Valor, Func<string, string?> Texto)[]
+            {
+                ("desde", "Desde", Desde, FechaLegible),
+                ("hasta", "Hasta", Hasta, FechaLegible),
+                ("origen", "Origen", Origen, v => v switch { "Sos" => "SOS", "Reporte" => "Reporte", "Acompanamiento" => "Acompañamiento", _ => null }),
+                ("tipo", "Tipo", Tipo, v => v == ValorSinTipo ? CasoEncontrado.TipoPorDeterminar
+                    : Categorias.FirstOrDefault(c => c.Id.ToString() == v)?.Nombre),
+                ("estado", "Estado", Estado, v => Enum.TryParse<EstadoCaso>(v, out var e) ? EstadosCaso.Texto(e) : null),
+                ("sereno", "Sereno", Sereno, v => Serenos.FirstOrDefault(s => s.Id.ToString() == v)?.Nombre),
+            };
+            return valores
+                .Where(f => !string.IsNullOrEmpty(f.Valor) && f.Texto(f.Valor!) is not null)
+                .Select(f => new FiltroActivo(f.Etiqueta, f.Texto(f.Valor!)!, RutaSin(f.Clave)))
+                .ToList();
+        }
+    }
+
+    private static string? FechaLegible(string valor) =>
+        DateOnly.TryParseExact(valor, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var f)
+            ? f.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) : null;
+
+    private string RutaSin(string clave)
+    {
+        var parametros = new Dictionary<string, string?>
+        {
+            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno,
+        };
+        parametros.Remove(clave);
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("/panel/casos",
+            parametros.Where(p => !string.IsNullOrEmpty(p.Value)).ToDictionary(p => p.Key, p => p.Value));
+    }
+
     private FiltroCasos Interpretar()
     {
         // DP17: días completos en la hora local del panel (desde las 00:00 del primer día hasta el final del último).
@@ -74,6 +114,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
             null or "" => null,
             "Sos" => OrigenCaso.Sos,
             "Reporte" => OrigenCaso.Reporte,
+            "Acompanamiento" => OrigenCaso.Acompanamiento,
             _ => Invalido<OrigenCaso>("origen", "Elige un origen de la lista."),
         };
 
@@ -136,5 +177,5 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     public string? ErrorDe(string campo) => Errores.TryGetValue(campo, out var mensaje) ? mensaje : null;
 
     public static string Detalle(CasoEncontrado caso) =>
-        caso.Origen == OrigenCaso.Sos ? $"/panel/central/sos/{caso.Id}" : $"/panel/reportes/{caso.Id}";
+        caso.Origen != OrigenCaso.Reporte ? $"/panel/central/sos/{caso.Id}" : $"/panel/reportes/{caso.Id}";
 }

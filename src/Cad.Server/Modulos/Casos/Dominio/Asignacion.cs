@@ -19,6 +19,15 @@ public sealed class Asignacion
     // HU24-CA07: al cerrar el caso la asignación deja de ser vigente y el sereno queda libre.
     public DateTimeOffset? FinalizadaEn { get; private set; }
 
+    // DP03 (16/10/2026): la cuenta del sereno se desactivó con la asignación vigente; el caso vuelve a «Pendiente».
+    public bool Cancelada { get; private set; }
+
+    public void Cancelar(DateTimeOffset ahora)
+    {
+        Finalizar(ahora);
+        Cancelada = true;
+    }
+
     public void Finalizar(DateTimeOffset ahora)
     {
         if (!Vigente)

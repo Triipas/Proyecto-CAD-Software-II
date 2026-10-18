@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- HU30 — un caso propio: estado actual, avances públicos y resultado público (DP05). Sin responsables ni notas internas. -->
+<!-- HU30 — un caso propio: estado actual, avances públicos y resultado público (DP05). Sin responsables ni notas internas.
+     HU09 — cancelación de un SOS pendiente. HU32 — evaluación de un caso cerrado. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -20,11 +21,71 @@
                 <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
                 <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
 
+                <v:Aviso Tipo="exito" Texto="{Binding Confirmacion}" IsVisible="{Binding HayConfirmacion}" />
+
+                <!-- HU09 — cancelar un SOS pendiente, con motivo obligatorio. No finaliza un acompañamiento activo. -->
+                <Button Text="Cancelar este SOS" Style="{StaticResource BotonSecundario}" Command="{Binding MostrarCancelacion}"
+                        IsVisible="{Binding OfrecerCancelacion}" SemanticProperties.Hint="Muestra el formulario para cancelar el SOS" />
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding FormularioCancelacion}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Cancelar este SOS" FontAttributes="Bold" />
+                        <Label Text="Solo se puede cancelar mientras la central no lo haya asignado. Si tienes un acompañamiento activo, sigue activo."
+                               Style="{StaticResource TextoSecundario}" />
+                        <Label Text="Motivo" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Editor Text="{Binding MotivoCancelacion}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoMotivo}"
+                                    Placeholder="Por qué ya no necesitas ayuda" AutoSize="Disabled" SemanticProperties.Description="Motivo de la cancelación" />
+                        </Border>
+                        <Label Text="{Binding ContadorMotivo}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
+                        <Label Text="{Binding ErrorMotivo}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorMotivo}" />
+                        <Button Text="Confirmar la cancelación" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCancelacion}" />
+                        <Button Text="No cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding OcultarCancelacion}" />
+                        <ActivityIndicator IsRunning="{Binding Cancelando}" IsVisible="{Binding Cancelando}" />
+                    </VerticalStackLayout>
+                </Border>
+
                 <!-- CA03 -->
                 <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayResultado}">
                     <VerticalStackLayout Spacing="4">
                         <Label Text="Resultado" FontAttributes="Bold" />
                         <Label Text="{Binding Resultado}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- HU32 — evaluación voluntaria de un caso cerrado (una por caso). -->
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayEvaluacion}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding TextoEvaluacion}" FontAttributes="Bold" />
+                        <Label Text="{Binding ComentarioRegistrado}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding PuedeEvaluar}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Evaluar la atención (opcional)" FontAttributes="Bold" />
+                        <Label Text="Elige una puntuación de 1 (muy mala) a 5 (muy buena). Solo puedes evaluar una vez." Style="{StaticResource TextoSecundario}" />
+                        <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Opciones}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:OpcionPuntuacion">
+                                    <Button Text="{Binding Texto}" Command="{Binding Elegir}" WidthRequest="56" HeightRequest="56" Padding="0"
+                                            Style="{StaticResource BotonSecundario}" SemanticProperties.Description="{Binding Descripcion}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding Elegida}" Value="True">
+                                                <Setter Property="Style" Value="{StaticResource BotonPrincipal}" />
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                        <Label Text="Comentario (opcional)" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Editor Text="{Binding Comentario}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoComentario}"
+                                    Placeholder="Cuéntanos cómo fue la atención" AutoSize="Disabled" SemanticProperties.Description="Comentario de la evaluación" />
+                        </Border>
+                        <Label Text="{Binding ContadorComentario}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
+                        <Label Text="{Binding ErrorEvaluacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorEvaluacion}" />
+                        <Button Text="Enviar evaluación" Style="{StaticResource BotonPrincipal}" Command="{Binding EnviarEvaluacion}" />
+                        <ActivityIndicator IsRunning="{Binding Evaluando}" IsVisible="{Binding Evaluando}" />
                     </VerticalStackLayout>
                 </Border>
 

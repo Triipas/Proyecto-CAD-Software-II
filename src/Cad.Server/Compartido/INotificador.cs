@@ -14,6 +14,9 @@ public interface INotificador
     // HU20 (y siguientes transiciones): cambió el estado de un caso; la central resincroniza sus listas.
     Task CasoActualizadoAsync(Guid casoId, CancellationToken ct);
 
+    // HU09-CA02: el titular canceló un SOS pendiente; la central lo retira de la sección urgente y lo anuncia.
+    Task SosCanceladoAsync(Guid casoId, CancellationToken ct);
+
     // HU21-CA01: el sereno tiene un despacho nuevo. Solo a ese sereno y sin datos del caso (ADR-07).
     Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct);
 

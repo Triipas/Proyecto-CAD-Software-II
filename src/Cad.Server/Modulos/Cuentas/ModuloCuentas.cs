@@ -33,6 +33,7 @@ public static class ModuloCuentas
         services.AddScoped<SembrarAdministrador>();
         services.AddScoped<CrearCuentaInstitucional>();
         services.AddScoped<ModificarCuentaInstitucional>();
+        services.AddScoped<DesactivarCuentaInstitucional>();
         services.AddScoped<ConsultarCuentasInstitucionales>();
         services.AddSingleton<EmisorTokens>();
         return services;

@@ -234,7 +234,7 @@ public class RevisionReporteTests(FabricaCad fabrica)
     // ----- CA05: revisión simultánea -----
 
     // Simula que otro operador inicia la revisión (o corrige) entre la lectura y el guardado de este operador.
-    private sealed class OtroOperador(string conexion, Func<RevisarReporte, Task> accion) : SaveChangesInterceptor
+    private sealed class OtroOperador(string conexion, Func<RevisarReporte, Task> accion, Cad.Server.Compartido.INotificador notificador) : SaveChangesInterceptor
     {
         private bool hecho;
 
@@ -245,7 +245,7 @@ public class RevisionReporteTests(FabricaCad fabrica)
             {
                 hecho = true;
                 await using var otro = new CadDbContext(new DbContextOptionsBuilder<CadDbContext>().UseNpgsql(conexion).Options);
-                await accion(new RevisarReporte(otro, TimeProvider.System, NullLogger<RevisarReporte>.Instance));
+                await accion(new RevisarReporte(otro, TimeProvider.System, notificador, NullLogger<RevisarReporte>.Instance));
             }
             return resultado;
         }
@@ -255,8 +255,8 @@ public class RevisionReporteTests(FabricaCad fabrica)
     {
         var conexion = await fabrica.ConBaseDatosAsync(db => Task.FromResult(db.Database.GetConnectionString()!));
         await using var db = new CadDbContext(new DbContextOptionsBuilder<CadDbContext>().UseNpgsql(conexion)
-            .AddInterceptors(new OtroOperador(conexion, otro)).Options);
-        return await propio(new RevisarReporte(db, TimeProvider.System, NullLogger<RevisarReporte>.Instance));
+            .AddInterceptors(new OtroOperador(conexion, otro, fabrica.Services.GetRequiredService<Cad.Server.Compartido.INotificador>())).Options);
+        return await propio(new RevisarReporte(db, TimeProvider.System, fabrica.Services.GetRequiredService<Cad.Server.Compartido.INotificador>(), NullLogger<RevisarReporte>.Instance));
     }
 
     [Fact]

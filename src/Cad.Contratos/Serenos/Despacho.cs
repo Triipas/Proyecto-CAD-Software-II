@@ -16,7 +16,9 @@ public sealed record DespachoSereno(
     DateTimeOffset? EnAtencionEn = null,
     // HU20-CA07 y HU21-CA02: en un reporte admitido, el lugar del hecho que indicó el ciudadano (punto o referencia).
     // Es distinto de la ubicación del dispositivo (Ubicacion), que un reporte no tiene.
-    LugarHechoDespacho? LugarHecho = null)
+    LugarHechoDespacho? LugarHecho = null,
+    // DP06 ampliada por el PO el 16/10/2026: la descripción que escribió el ciudadano en su reporte (sin sus datos personales).
+    string? DescripcionReporte = null)
 {
     // Textos de estado que envía el servidor (HU22, HU23).
     public const string EstadoAsignada = "Asignada";

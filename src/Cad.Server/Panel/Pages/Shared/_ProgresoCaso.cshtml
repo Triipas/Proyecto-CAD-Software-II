@@ -1,0 +1,24 @@
+@model IReadOnlyList<Cad.Server.Panel.Pages.PasoCaso>
+@using Cad.Server.Panel.Pages
+@* Línea de progreso del caso (rediseño CAD v2). Estilos en detalle-caso.css. *@
+<ol class="progreso superficie" aria-label="Progreso del caso">
+    @foreach (var paso in Model)
+    {
+        var clase = paso.Estado switch
+        {
+            EstadoPaso.Hecho => "progreso__paso--hecho",
+            EstadoPaso.Actual => "progreso__paso--actual",
+            EstadoPaso.Omitido => "progreso__paso--omitido",
+            _ => "",
+        };
+        <li class="progreso__paso @clase" aria-current="@(paso.Estado == EstadoPaso.Actual ? "step" : null)">
+            <span class="progreso__marca">
+                @if (paso.Estado == EstadoPaso.Hecho)
+                {
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 12 4 4 8-8" /></svg>
+                }
+            </span>
+            <span>@paso.Texto@(paso.Estado == EstadoPaso.Omitido ? " (omitido)" : "")</span>
+        </li>
+    }
+</ol>

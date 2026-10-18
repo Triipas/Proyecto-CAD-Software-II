@@ -105,18 +105,48 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 ## Reporte admitido en el despacho (HU20-CA07, Sprint 3)
 
 - Un reporte admitido y asignado llega al sereno con `LugarHecho`: el punto del hecho, su precisión si el ciudadano usó su posición, y la referencia. No trae ubicación del dispositivo. La pantalla lo muestra como «Lugar del hecho (indicado por el ciudadano)» y oculta la sección «Ubicación del dispositivo». El resto del flujo (en camino, inicio de atención y cierre) es el de un SOS.
-- Siguiendo DP06, el sereno no recibe la descripción del ciudadano ni sus datos personales.
+- Siguiendo DP06, el sereno no recibe los datos personales del ciudadano. Desde la decisión del PO del 16/10/2026 sí recibe la descripción del reporte, que la app muestra como «Descripción del ciudadano» ([captura](capturas/movil/69-sereno-despacho-con-descripcion.png)).
+- DP03 (16/10/2026): si el administrador desactiva la cuenta del sereno, su sesión deja de valer y la app muestra «Tu sesión terminó» en la siguiente acción ([captura](capturas/movil/70-sereno-desactivado-sesion-cerrada.png)).
 
 ## Mis casos (HU30, Sprint 3)
 
 - `Vistas/MisCasosPagina.xaml` y `Vistas/MiCasoPagina.xaml` con `VistasModelo/MisCasosVistaModelo.cs`: la lista de SOS y reportes propios (origen, estado público, fecha y resultado) y el detalle con los avances públicos. Se abre desde «Mis casos» en el inicio del ciudadano.
 - Solo datos públicos (DP05): nunca operador, sereno, notas internas ni intentos de contacto. Se vuelve a consultar al abrir cada pantalla y al deslizar hacia abajo.
 
+## Cancelar un SOS pendiente (HU09, Sprint 5)
+
+- En el detalle de «Mis casos», un SOS propio en estado «Recibido» (pendiente para la central) muestra «Cancelar este SOS». El formulario pide el motivo (obligatorio, hasta 500 caracteres) y se confirma con «Confirmar la cancelación»; «No cancelar» lo cierra sin enviar.
+- Con la respuesta del servidor, el caso pasa a «Cancelado» con el motivo como resultado y el aviso «Cancelaste el SOS. La central fue avisada.». Si la central ya lo asignó, se muestra el rechazo y el estado actual (CA03). Sin respuesta, el motivo se conserva para reintentar; el servidor registra una sola cancelación (CA08). No afecta a un acompañamiento activo (CA07).
+- Capturas: [SOS pendiente](capturas/movil/72-hu09-sos-pendiente.png), [sin motivo](capturas/movil/73-hu09-sin-motivo.png), [con motivo](capturas/movil/74-hu09-motivo.png) y [cancelado](capturas/movil/75-hu09-cancelado.png); en la central, [aviso](capturas/panel/hu09-central-cancelacion.png) e [historial](capturas/panel/hu09-historial-cancelada.png).
+
+## Evaluar un caso cerrado (HU32, Sprint 5)
+
+- En el detalle de «Mis casos», un caso propio «Cerrado» sin evaluar muestra «Evaluar la atención (opcional)»: cinco botones de puntuación (1 a 5, con su descripción para lectores de pantalla), un comentario opcional de hasta 2000 caracteres y «Enviar evaluación». Sin puntuación no se envía (CA02).
+- Registrada la evaluación, el detalle muestra «Tu evaluación: N de 5» con el comentario y ya no ofrece otra (CA03). Si el caso ya estaba evaluado (por ejemplo, desde otro dispositivo), se muestra el rechazo y la evaluación registrada. Un reintento técnico usa el mismo identificador de solicitud. No evaluar no restringe ninguna función (CA06).
+- Capturas: [caso cerrado](capturas/movil/76-hu32-evaluar.png), [sin puntuación](capturas/movil/77-hu32-sin-puntuacion.png), [formulario](capturas/movil/78-hu32-formulario.png) y [evaluado](capturas/movil/79-hu32-evaluado.png); en el panel, [historial con la evaluación](capturas/panel/hu33-evaluacion-historial.png) (HU33).
+
 ## Notificaciones del ciudadano (HU31, Sprint 3)
 
 - `Servicios/Bandeja.cs` (`ServicioBandeja`), `Vistas/NotificacionesPagina.xaml` y `VistasModelo/NotificacionesVistaModelo.cs`: la bandeja de avisos por cambios de estado público de los casos propios. Las genera el servidor y persisten.
 - El inicio muestra «Notificaciones (N sin leer)», actualizado cada vez que aparece. Tocar una notificación la marca como leída y abre el caso en «Mis casos».
 - Sin push al ciudadano (E4): la bandeja se consulta al abrir la app y al volver al inicio.
+
+## Acompañamiento temporal (HU34–HU37, Sprint 4)
+
+- `Servicios/Acompanamiento.cs` (`ServicioAcompanamiento`, único en la app), `Vistas/AcompanamientoPagina.xaml` y `VistasModelo/AcompanamientoVistaModelo.cs`. Se abre con el botón «Acompañamiento» del inicio, separado del SOS y del reporte: no emite ninguno de los dos (HU34-CA05).
+- **Inicio (HU34):** exige marcar «Acepto compartir mi ubicación con la central durante el trayecto» (CA02), el permiso de ubicación (si no está decidido, se explica y se pide; si se denegó, se orienta a los ajustes) y una posición actual leída tras la pulsación (CA03). Sin cualquiera de ellos no se llama al servidor. La sesión solo se muestra activa, y solo se transmite, con la respuesta del servidor (CA07). Sin respuesta, «Reintentar el inicio» reutiliza el mismo `IdSolicitud`.
+- **Estado (CA01, CA08):** tiempo restante (con la hora del servidor, no la del teléfono), hora de fin y «Finalizar acompañamiento». El inicio muestra «Acompañamiento activo… Quedan N min.» y no deja salir de la sesión hasta finalizarlo. Al volver a abrir la app se consulta la sesión activa y se reanuda el envío.
+- **Transmisión (HU35):** cada 15 s (lo indica el servidor) se lee la posición actual (como máximo 10 s); si no hay una nueva, se reenvía la última disponible con su hora de obtención original y se avisa «Sin posiciones nuevas» (CA01, CA03). Se muestra la condición real: sin conexión, sin permiso o sin posición (CA04). **DP13 (16/10/2026):** la transmisión sigue con la app en segundo plano, con la pantalla apagada o cerrada desde recientes, gracias a un servicio en primer plano de tipo ubicación (`Platforms/Android/SegundoPlano.cs`) con la notificación permanente «Acompañamiento activo» ([captura](capturas/movil/71-acompanamiento-notificacion.png)); se detiene al finalizar, al vencer o al salir de la sesión. Basta el permiso de ubicación «mientras se usa la app», porque el servicio lo inicia el ciudadano con la app abierta. Sin conexión no se acumulan posiciones (CA05: el aviso fijo lo dice).
+- **Finalización (HU36):** el envío se detiene antes de llamar al servidor (CA01). Sin conexión, el cierre queda guardado (`Preferences`, solo el identificador de la sesión) y se reenvía cada 15 s y al volver a abrir la app (CA03). Mientras tanto el servidor la sigue viendo activa: es el efecto pendiente de DP20.
+- **Vencimiento (HU37):** al cumplirse los 30 minutos la app deja de transmitir y consulta cómo terminó (CA02). Si el servidor ya la cerró, la respuesta 409 a una posición tiene el mismo efecto. Al reconectar se muestra «terminó a los 30 minutos» (CA06).
+- **Verificación en el emulador (16/10/2026)** contra el servidor local: [antes de iniciar](capturas/movil/61-acompanamiento-antes-de-iniciar.png), [sin la finalidad aceptada](capturas/movil/62-acompanamiento-sin-finalidad.png), [activo](capturas/movil/63-acompanamiento-activo.png), [inicio con el acompañamiento activo](capturas/movil/64-inicio-acompanamiento-activo.png), [sin conexión](capturas/movil/65-acompanamiento-sin-conexion.png), [cierre pendiente](capturas/movil/66-acompanamiento-cierre-pendiente.png), [finalizado](capturas/movil/67-acompanamiento-finalizado.png) y [vencido](capturas/movil/68-acompanamiento-vencido.png).
+
+## Confirmación de bienestar (HU41, Sprint 5)
+
+- Durante un acompañamiento, la app consulta en cada envío de posición (cada 15 s) si la central pidió una confirmación. La pantalla «Acompañamiento» la muestra arriba como «¿Cómo estás?», con «Estoy bien» y «Necesito ayuda». La presentación se registra cuando la pantalla está a la vista; con la app en segundo plano no, aunque la página siga abierta: se escuchan la pausa y la reanudación de la ventana.
+- Con la app en segundo plano, una notificación del canal «Confirmación de bienestar» (prioridad alta) avisa «La central pregunta cómo estás». Al tocarla se abre la app (`Platforms/Android/SegundoPlano.cs`).
+- «Necesito ayuda» prepara el SOS como el botón SOS: activación, ubicación actual de hasta 10 s y descarte de una posición anterior (HU08, DP11). Se envía con la respuesta y la app solo lo confirma con la respuesta del servidor. Sin respuesta lo indica claramente y el reintento reenvía el mismo SOS (mismo identificador), así que el servidor no lo duplica.
+- Capturas: [confirmación](capturas/movil/80-hu41-confirmacion.png), [«Estoy bien»](capturas/movil/81-hu41-estoy-bien.png), [notificación en segundo plano](capturas/movil/82-hu41-notificacion.png) y [«Necesito ayuda»](capturas/movil/83-hu41-necesito-ayuda.png); en el panel, [la solicitud](capturas/panel/hu40-solicitada.png) y [la respuesta con su SOS](capturas/panel/hu41-necesito-ayuda-central.png).
 
 ## Integración continua
 

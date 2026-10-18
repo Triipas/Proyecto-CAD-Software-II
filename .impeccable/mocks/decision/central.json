@@ -1,0 +1,71 @@
+{
+  "title": "Central de monitoreo: elige la organización",
+  "question": "La paleta, la tipografía y los componentes ya están fijados (sistema CAD v2). Aquí se elige cómo se reparte la pantalla de la central. Las tres propuestas incorporan la misma regla: un caso que cambia se mueve en su sitio y queda resaltado hasta que alguien lo atiende.",
+  "options": [
+    {
+      "id": "atencion-supervision",
+      "kind": "assigned",
+      "label": "Atención y supervisión",
+      "kicker": "THE ROLL",
+      "lineage": "Estructura 6 de 7: la pantalla cambia según la carga",
+      "thesis": "Cuando hay SOS, el más reciente ocupa el centro con su siguiente acción; sin SOS, mandan el mapa y los indicadores.",
+      "palette": ["#0b1f44", "#1d4ed8", "#b42318", "#f3f6fb", "#5cc8ff"],
+      "materials": ["barra lateral marino", "tarjeta de foco con minimapa", "cola a la derecha"],
+      "viewport": "Barra lateral con contadores, franja de cinco indicadores, el SOS en foco con su línea de progreso, «Siguiente acción» y el sereno más cercano, y la cola de trabajo a la derecha.",
+      "risk": "El cambio de modo debe anunciarse con claridad, o el operador puede sentir que la pantalla se mueve sola.",
+      "raised": [
+        { "from": "challenger-tablero", "raise": "Las filas de la cola se reordenan en su sitio y el SOS nuevo queda resaltado hasta que alguien lo abre, como una puerta de embarque que cambia en el tablero." }
+      ],
+      "html": ".impeccable/mocks/decision/atencion-supervision.html"
+    },
+    {
+      "id": "mapa-completo",
+      "kind": "dealt",
+      "label": "Mapa protagonista",
+      "lineage": "Estructura 2 de 7: el mapa a pantalla completa",
+      "thesis": "El mapa ocupa toda la pantalla y la cola y los serenos flotan encima como paneles plegables.",
+      "palette": ["#0b1f44", "#1d4ed8", "#b42318", "#6d28d9", "#0d9488"],
+      "materials": ["barra superior marino", "paneles flotantes con sombra-3", "línea de despacho punteada"],
+      "viewport": "Barra superior con secciones e indicadores, el mapa de borde a borde, la cola con pestañas a la izquierda, los serenos a la derecha y la leyenda en chips abajo; al elegir un SOS, una línea punteada lo une al sereno disponible más cercano.",
+      "risk": "Con muchos casos, los paneles tapan el mapa y la cola queda estrecha para leer.",
+      "raised": [
+        { "from": "challenger-tablero", "raise": "Las filas de la cola se reordenan en su sitio y el marcador nuevo pulsa hasta que alguien lo abre." }
+      ],
+      "html": ".impeccable/mocks/decision/mapa-completo.html"
+    },
+    {
+      "id": "carriles",
+      "kind": "dealt",
+      "label": "Carriles por estado",
+      "lineage": "Estructura 4 de 7: el flujo del caso como columnas",
+      "thesis": "Cada caso avanza de carril en carril (Pendientes, Asignados, En camino, En atención, Cerrados hoy) y el mapa acompaña abajo.",
+      "palette": ["#0b1f44", "#1d4ed8", "#b42318", "#edf2f9", "#05603a"],
+      "materials": ["riel de iconos marino", "carriles en superficie hundida", "barra de avance por tarjeta"],
+      "viewport": "Riel de iconos con contadores, filtros por origen, cinco carriles de tarjetas con el responsable y una barra de avance, y debajo el mapa y la lista de serenos.",
+      "risk": "Asignar a un sereno queda a un paso más de distancia, y el mapa pierde altura útil a 1366 × 768.",
+      "raised": [
+        { "from": "challenger-tablero", "raise": "Una tarjeta que cambia de estado se desliza al carril siguiente y queda resaltada hasta que alguien la mira." }
+      ],
+      "html": ".impeccable/mocks/decision/carriles.html"
+    },
+    {
+      "id": "challenger-tablero",
+      "kind": "challenger",
+      "catalogId": "vernacular-ephemera-boarding-pass-and-gate-board",
+      "label": "Tablero de embarque",
+      "verdict": "declined",
+      "lineage": "Pase de abordar y tablero de salidas",
+      "thesis": "La cola como un tablero de salidas que se reordena por urgencia y hora.",
+      "palette": ["#0b1f44", "#ffffff", "#b42318"],
+      "materials": ["columnas fijas", "cifras tabulares"],
+      "viewport": "Una tabla de casos en columnas fijas, ordenada por urgencia.",
+      "case": "Pierde en identificación: un operador de seguridad no se reconoce en un aeropuerto, y la tabla sola esconde el mapa.",
+      "kept": "Lo que cambia se mueve en su sitio y queda resaltado hasta que alguien lo atiende.",
+      "risk": "Convertir la central en una tabla quita el contexto espacial del despacho.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board-hero.webp"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "buildPath": { "value": "code" }
+}

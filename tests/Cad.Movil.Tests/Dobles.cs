@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Cad.Contratos.Acompanamiento;
 using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
@@ -188,6 +189,28 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaMiCaso(casoId));
     }
 
+    // ----- HU09: cancelar un SOS pendiente -----
+    public Func<Guid, SolicitudCancelacionSos, ResultadoApi<MiCasoDetalle>> RespuestaCancelacion { get; set; } =
+        (_, _) => new ResultadoApi<MiCasoDetalle>.Rechazado(404, "No encontrado", new Dictionary<string, string[]>());
+    public ConcurrentQueue<(Guid CasoId, string? Motivo)> Cancelaciones { get; } = new();
+
+    public Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct)
+    {
+        Cancelaciones.Enqueue((casoId, solicitud.Motivo));
+        return Task.FromResult(RespuestaCancelacion(casoId, solicitud));
+    }
+
+    // ----- HU32: evaluar un caso cerrado -----
+    public Func<Guid, SolicitudEvaluacionCaso, ResultadoApi<MiEvaluacion>> RespuestaEvaluacion { get; set; } =
+        (_, s) => new ResultadoApi<MiEvaluacion>.Correcto(new MiEvaluacion(s.Puntuacion ?? 0, s.Comentario, DateTimeOffset.UnixEpoch));
+    public ConcurrentQueue<(Guid CasoId, SolicitudEvaluacionCaso Solicitud)> Evaluaciones { get; } = new();
+
+    public Task<ResultadoApi<MiEvaluacion>> EvaluarCasoAsync(string token, Guid casoId, SolicitudEvaluacionCaso solicitud, CancellationToken ct)
+    {
+        Evaluaciones.Enqueue((casoId, solicitud));
+        return Task.FromResult(RespuestaEvaluacion(casoId, solicitud));
+    }
+
     // ----- HU31: bandeja -----
     public Func<ResultadoApi<BandejaNotificaciones>> RespuestaBandeja { get; set; } =
         () => new ResultadoApi<BandejaNotificaciones>.Correcto(new BandejaNotificaciones(0, []));
@@ -206,12 +229,105 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult<ResultadoApi<SinContenido>>(new ResultadoApi<SinContenido>.Correcto(new SinContenido()));
     }
 
+    // ----- HU34–HU37: acompañamiento -----
+    // inicio: hora de inicio de la sesión; ahoraServidor: hora del servidor en la respuesta (por defecto, la del inicio).
+    public static SesionAcompanamientoVista SesionActiva(DateTimeOffset inicio, int intervalo = 15, Guid? id = null, DateTimeOffset? ahoraServidor = null) =>
+        new(id ?? Guid.NewGuid(), EstadosAcompanamiento.Activa, inicio, inicio.AddMinutes(30), null, ahoraServidor ?? inicio, intervalo);
+    public Func<SolicitudInicioAcompanamiento, ResultadoApi<SesionAcompanamientoVista>> RespuestaInicioAcompanamiento { get; set; } =
+        s => new ResultadoApi<SesionAcompanamientoVista>.Correcto(SesionActiva(DateTimeOffset.UtcNow));
+    public Func<ResultadoApi<SesionAcompanamientoVista?>> RespuestaAcompanamientoActual { get; set; } =
+        () => new ResultadoApi<SesionAcompanamientoVista?>.Correcto(null);
+    public Func<Guid, ResultadoApi<SesionAcompanamientoVista>> RespuestaAcompanamiento { get; set; } =
+        _ => new ResultadoApi<SesionAcompanamientoVista>.Rechazado(404, "No encontrado", new Dictionary<string, string[]>());
+    public Func<PosicionAcompanamientoEnviada, ResultadoApi<SinContenido>> RespuestaPosicionAcompanamiento { get; set; } =
+        _ => new ResultadoApi<SinContenido>.Correcto(new SinContenido());
+    public Func<Guid, ResultadoApi<SesionAcompanamientoVista>>? RespuestaFinalizacion { get; set; }
+    public ConcurrentQueue<SolicitudInicioAcompanamiento> IniciosAcompanamiento { get; } = new();
+    public ConcurrentQueue<PosicionAcompanamientoEnviada> PosicionesAcompanamiento { get; } = new();
+    public ConcurrentQueue<Guid> Finalizaciones { get; } = new();
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> IniciarAcompanamientoAsync(string token, SolicitudInicioAcompanamiento solicitud, CancellationToken ct)
+    {
+        IniciosAcompanamiento.Enqueue(solicitud);
+        return Task.FromResult(RespuestaInicioAcompanamiento(solicitud));
+    }
+
+    public Task<ResultadoApi<SesionAcompanamientoVista?>> ConsultarAcompanamientoActualAsync(string token, CancellationToken ct) =>
+        Task.FromResult(RespuestaAcompanamientoActual());
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
+        Task.FromResult(RespuestaAcompanamiento(sesionId));
+
+    public Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct)
+    {
+        PosicionesAcompanamiento.Enqueue(posicion);
+        return Task.FromResult(RespuestaPosicionAcompanamiento(posicion));
+    }
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct)
+    {
+        Finalizaciones.Enqueue(sesionId);
+        return Task.FromResult(RespuestaFinalizacion?.Invoke(sesionId) ?? new ResultadoApi<SesionAcompanamientoVista>.Correcto(
+            new SesionAcompanamientoVista(sesionId, EstadosAcompanamiento.Finalizada, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMinutes(30),
+                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 15)));
+    }
+
+    // ----- HU41: confirmación de bienestar -----
+    public Func<Guid, ResultadoApi<ConfirmacionBienestarVista?>> RespuestaConsultaConfirmacion { get; set; } =
+        _ => new ResultadoApi<ConfirmacionBienestarVista?>.Correcto(null);
+    public Func<Guid, SolicitudRespuestaBienestar, ResultadoApi<ConfirmacionBienestarVista>>? RespuestaConfirmacion { get; set; }
+    public ConcurrentQueue<Guid> ConsultasConfirmacion { get; } = new();
+    public ConcurrentQueue<Guid> Presentaciones { get; } = new();
+    public ConcurrentQueue<(Guid Id, SolicitudRespuestaBienestar Respuesta)> RespuestasBienestar { get; } = new();
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista?>> ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct)
+    {
+        ConsultasConfirmacion.Enqueue(sesionId);
+        return Task.FromResult(RespuestaConsultaConfirmacion(sesionId));
+    }
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct)
+    {
+        Presentaciones.Enqueue(confirmacionId);
+        return Task.FromResult<ResultadoApi<ConfirmacionBienestarVista>>(new ResultadoApi<ConfirmacionBienestarVista>.Correcto(
+            new ConfirmacionBienestarVista(confirmacionId, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null, null, null)));
+    }
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
+        CancellationToken ct)
+    {
+        RespuestasBienestar.Enqueue((confirmacionId, respuesta));
+        return Task.FromResult(RespuestaConfirmacion?.Invoke(confirmacionId, respuesta) ?? new ResultadoApi<ConfirmacionBienestarVista>.Correcto(
+            new ConfirmacionBienestarVista(confirmacionId, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, respuesta.Respuesta, DateTimeOffset.UtcNow,
+                respuesta.Respuesta == Cad.Contratos.Acompanamiento.RespuestasBienestar.NecesitoAyuda ? Guid.NewGuid() : null)));
+    }
+
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
         SosEnviados.Enqueue(solicitud);
         var respuesta = RespuestasSos.Count > 1 ? RespuestasSos.Dequeue() : RespuestasSos.TryPeek(out var ultima) ? ultima : s => Task.FromResult(Registrado(s));
         return respuesta(solicitud);
     }
+}
+
+// DP13: registra cuándo se pide mantener la transmisión en segundo plano y cuándo se detiene.
+public sealed class SegundoPlanoFalso : IServicioSegundoPlano
+{
+    public bool Activo { get; private set; }
+    public List<DateTimeOffset> Inicios { get; } = [];
+    public int Detenciones { get; private set; }
+    public void Iniciar(DateTimeOffset venceEn) { Activo = true; Inicios.Add(venceEn); }
+    public void Detener() { Activo = false; Detenciones++; }
+    public int AvisosConfirmacion { get; private set; }
+    public void AvisarConfirmacion() => AvisosConfirmacion++;
+}
+
+public sealed class AlmacenLocalFalso : IAlmacenLocal
+{
+    public Dictionary<string, string> Valores { get; } = [];
+    public string? Leer(string clave) => Valores.GetValueOrDefault(clave);
+    public void Guardar(string clave, string valor) => Valores[clave] = valor;
+    public void Borrar(string clave) => Valores.Remove(clave);
 }
 
 public sealed class SesionesFalsas : IAlmacenSesion

@@ -5,7 +5,10 @@ namespace Cad.Contratos.Casos;
 public sealed record MiCasoResumen(Guid Id, string Origen, DateTimeOffset RegistradoEn, string Estado, string? Resultado);
 
 public sealed record MiCasoDetalle(Guid Id, string Origen, DateTimeOffset RegistradoEn, string Estado, string? Resultado,
-    IReadOnlyList<AvancePublico> Avances);
+    IReadOnlyList<AvancePublico> Avances, MiEvaluacion? Evaluacion = null);
+
+// HU32: la evaluación que el titular registró de un caso cerrado (null si no lo evaluó).
+public sealed record MiEvaluacion(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn);
 
 // Un cambio de estado público, con su momento y, cuando DP05 lo permite, un detalle (destino o motivo del descarte).
 public sealed record AvancePublico(DateTimeOffset En, string Estado, string? Detalle);
@@ -20,4 +23,13 @@ public static class EstadosPublicos
     public const string Cerrado = "Cerrado";
     public const string Derivado = "Derivado";
     public const string Descartado = "Descartado";
+    // HU09: SOS cancelado por su titular.
+    public const string Cancelado = "Cancelado";
 }
+
+// HU09 — cancelación de un SOS propio pendiente: el motivo es obligatorio (CA01, CA04).
+public sealed record SolicitudCancelacionSos(string? Motivo);
+
+// HU32 — evaluación voluntaria de un caso propio cerrado: puntuación de 1 a 5 (CA02) y comentario opcional (CA01).
+// IdSolicitud: lo genera la app por evaluación y lo reutiliza en cada reintento técnico.
+public sealed record SolicitudEvaluacionCaso(Guid IdSolicitud, int? Puntuacion, string? Comentario);

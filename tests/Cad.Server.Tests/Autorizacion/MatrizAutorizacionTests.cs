@@ -38,10 +38,36 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/api/casos/mios", "HU30", Acceso.SoloRol, Roles.Ciudadano),
         new("GET", "/api/casos/mios/{id:guid}", "HU30", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000"),
+        // HU09 — cancelar un SOS propio pendiente. Sin cuerpo válido (o con un SOS inexistente o ajeno) el ciudadano llega al caso de
+        // uso (400 o 404); el resto es rechazado antes, sin cancelar nada.
+        new("POST", "/api/casos/mios/{id:guid}/cancelacion", "HU09", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/cancelacion"),
+        // HU32 — evaluar un caso propio cerrado. Sin cuerpo válido (o con un caso inexistente o ajeno) el ciudadano llega al caso de
+        // uso (400 o 404); el resto es rechazado antes, sin registrar evaluaciones.
+        new("POST", "/api/casos/mios/{id:guid}/evaluacion", "HU32", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/evaluacion"),
         // HU31 — bandeja de notificaciones. Con una notificación inexistente (o ajena) el ciudadano recibe 404.
         new("GET", "/api/notificaciones", "HU31", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/notificaciones/{id:guid}/leida", "HU31", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/notificaciones/00000000-0000-0000-0000-000000000000/leida"),
+        // HU34–HU37 — acompañamiento temporal (solo el ciudadano titular). Sin cuerpo válido el ciudadano llega al caso de uso
+        // (400 o 404 con una sesión inexistente); el resto es rechazado antes, sin crear sesiones ni posiciones.
+        new("POST", "/api/acompanamiento", "HU34", Acceso.SoloRol, Roles.Ciudadano),
+        new("GET", "/api/acompanamiento/actual", "HU34", Acceso.SoloRol, Roles.Ciudadano),
+        new("GET", "/api/acompanamiento/{id:guid}", "HU37", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000"),
+        new("POST", "/api/acompanamiento/{id:guid}/posiciones", "HU35", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/posiciones"),
+        new("POST", "/api/acompanamiento/{id:guid}/finalizacion", "HU36", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/finalizacion"),
+        // HU41 — confirmación de bienestar del titular. Con una sesión o confirmación inexistente (o ajena) el ciudadano recibe 404
+        // (o 400 sin cuerpo válido); el resto es rechazado antes.
+        new("GET", "/api/acompanamiento/{id:guid}/confirmacion", "HU41", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/confirmacion"),
+        new("POST", "/api/acompanamiento/confirmaciones/{id:guid}/presentacion", "HU41", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/confirmaciones/00000000-0000-0000-0000-000000000000/presentacion"),
+        new("POST", "/api/acompanamiento/confirmaciones/{id:guid}/respuesta", "HU41", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/confirmaciones/00000000-0000-0000-0000-000000000000/respuesta"),
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),
@@ -65,8 +91,19 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
         new("POST", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
+        // HU38 y HU39-A — acompañamientos activos, recorrido de una sesión e historial de sesiones: solo el operador
+        // autorizado (DP04). Con una sesión inexistente el operador llega a la página (404); el resto, rechazado antes.
+        new("GET", "/panel/acompanamientos", "HU38", Acceso.SoloRol, Roles.Operador, "Acompañamientos activos"),
+        new("GET", "/panel/acompanamientos/{id:guid}", "HU38", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/acompanamientos/00000000-0000-0000-0000-000000000000"),
+        new("GET", "/panel/acompanamientos/historial", "HU39", Acceso.SoloRol, Roles.Operador, "Historial de sesiones de acompañamiento"),
+        // HU42/HU43 — un aviso del acompañamiento (con uno inexistente, el operador recibe 404).
+        new("GET", "/panel/avisos/{id:guid}", "HU43", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/avisos/00000000-0000-0000-0000-000000000000"),
         // HU26 — búsqueda de casos con filtros (solo operador, CA06).
         new("GET", "/panel/casos", "HU26", Acceso.SoloRol, Roles.Operador),
+        // HU29 — mapa de concentración (solo operadores).
+        new("GET", "/panel/mapa-concentracion", "HU29", Acceso.SoloRol, Roles.Operador, Contenido: "data-seleccion"),
         // HU27 — historial de un caso. Con un caso inexistente el operador llega a la página (404); el resto, rechazado antes.
         new("GET", "/panel/casos/{id:guid}/historial", "HU27", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/casos/00000000-0000-0000-0000-000000000000/historial"),

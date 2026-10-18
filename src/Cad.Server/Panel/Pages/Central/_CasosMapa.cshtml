@@ -1,0 +1,13 @@
+@model IReadOnlyList<Cad.Server.Modulos.Consultas.CasoEnMapa>
+@using System.Globalization
+@* HU25 — casos en curso con ubicación para el mapa operativo (los pendientes de asignación están en las listas). Solo datos
+   para dibujar los marcadores; el panel lo vuelve a pedir con cada aviso «CasoActualizado». *@
+<ul class="visualmente-oculto" data-casos-mapa data-total="@Model.Count">
+    @foreach (var c in Model)
+    {
+        <li data-caso-mapa="@c.Id" data-origen="@c.TextoOrigen" data-estado="@c.TextoEstado" data-detalle="@c.Detalle"
+            data-ciudadano="@c.Ciudadano" data-lat="@c.Latitud.ToString(CultureInfo.InvariantCulture)" data-lon="@c.Longitud.ToString(CultureInfo.InvariantCulture)">
+            @c.TextoOrigen · @c.TextoEstado · @c.Id
+        </li>
+    }
+</ul>

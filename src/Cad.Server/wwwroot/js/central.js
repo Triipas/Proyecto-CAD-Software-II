@@ -14,17 +14,28 @@
   const regionReportes = document.querySelector("[data-region-reportes]");
   const contadorReportes = document.querySelector("[data-contador-reportes]");
   const casos = () => [...region.querySelectorAll("[data-sos]"), ...(regionReportes?.querySelectorAll("[data-sos]") ?? [])];
+  // HU25: casos en curso con ubicación (no asignables), con su origen y su estado.
+  const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
+  const marcadoresEnCurso = [];
   const tituloBase = document.title;
+  const avisoCancelacion = document.querySelector("[data-aviso-cancelacion]");
   let sinVer = 0;
+  // SOS llegados en vivo que nadie ha abierto todavía: su tarjeta y su marcador quedan marcados (pulso).
+  const nuevos = new Set();
+  const reducido = matchMedia("(prefers-reduced-motion: reduce)");
+  const SIRENA = '<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 18v-5a6 6 0 0 1 12 0v5"/><path d="M4 18h16v3H4zM12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/></svg>';
+  const escudo = (disponible) => `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path d="M16 2 30 8v9c0 9-6 15-14 17C8 32 2 26 2 17V8z" fill="${disponible ? "var(--mapa-sereno)" : "var(--mapa-sereno-no-disponible)"}" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`;
 
   // ---------- Mapa base mínimo (Leaflet + OpenStreetMap) ----------
-  const mapa = L.map(contenedorMapa, { zoomControl: true }).setView(
+  // El zoom va abajo a la derecha: arriba a la izquierda lo taparía la cola de trabajo.
+  const mapa = L.map(contenedorMapa, { zoomControl: false }).setView(
     [Number(contenedorMapa.dataset.centroLat), Number(contenedorMapa.dataset.centroLon)],
     Number(contenedorMapa.dataset.zoom));
   L.tileLayer(contenedorMapa.dataset.teselas, {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
   }).addTo(mapa);
+  L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
   const marcadores = new Map();
 
   function dibujarMarcadores() {
@@ -36,24 +47,24 @@
       if (item.dataset.origen === "Reporte") {
         const texto = `Reporte admitido de ${item.dataset.ciudadano}`;
         const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-          icon: L.divIcon({ className: "marcador-reporte", html: "<span>R</span>", iconSize: [30, 30], iconAnchor: [15, 15] }),
+          icon: L.divIcon({ className: "marcador-reporte", html: "", iconSize: [26, 26], iconAnchor: [13, 13] }),
           title: texto,
           alt: texto,
           keyboard: true,
         })
-          .bindPopup(`<strong>Reporte · Pendiente</strong><br>${escapar(item.dataset.ciudadano)}<br>Tipo: ${escapar(item.dataset.categoria)}<br>Lugar del hecho indicado por el ciudadano`)
+          .bindPopup(`<strong>Reporte · Pendiente</strong><br>Identificador: ${escapar(id)}<br>${escapar(item.dataset.ciudadano)}<br>Tipo: ${escapar(item.dataset.categoria)}<br>Lugar del hecho indicado por el ciudadano`)
           .on("click", () => seleccionar(id, { desdeMapa: true }))
           .addTo(mapa);
         marcadores.set(id, marcador);
         continue;
       }
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: "marcador-sos", html: "<span>SOS</span>", iconSize: [44, 28], iconAnchor: [22, 28] }),
+        icon: L.divIcon({ className: `marcador-sos${nuevos.has(id) ? " marcador-sos--pulso" : ""}`, html: SIRENA, iconSize: [36, 32], iconAnchor: [18, 16] }),
         title: `SOS de ${item.dataset.ciudadano}`,
         alt: `SOS de ${item.dataset.ciudadano}`,
         keyboard: true,
       })
-        .bindPopup(`<strong>SOS · Pendiente</strong><br>${escapar(item.dataset.ciudadano)}<br>Precisión ± ${escapar(item.dataset.precision)} m`)
+        .bindPopup(`<strong>SOS · Pendiente</strong><br>Identificador: ${escapar(id)}<br>${escapar(item.dataset.ciudadano)}<br>Precisión ± ${escapar(item.dataset.precision)} m`)
         .on("click", () => seleccionar(id, { desdeMapa: true }))
         .addTo(mapa);
       marcadores.set(id, marcador);
@@ -66,6 +77,7 @@
     sosSeleccionado = id;
     for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
     const item = document.getElementById(`sos-${id}`);
+    if (nuevos.delete(id)) marcadores.get(id)?.getElement()?.classList.remove("marcador-sos--pulso");
     if (item) {
       item.classList.add("sos--seleccionado");
       item.classList.remove("sos--nuevo");
@@ -81,6 +93,56 @@
     }
     marcarComoVisto();
     actualizarAsignacion();
+    dibujarDespacho();
+  }
+
+  // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
+  // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
+  let lineaDespacho = null;
+  function dibujarDespacho() {
+    lineaDespacho?.remove();
+    lineaDespacho = null;
+    for (const el of regionSerenos.querySelectorAll(".sereno--sugerido")) el.classList.remove("sereno--sugerido");
+    for (const el of regionSerenos.querySelectorAll("[data-distancia]")) el.remove();
+    const caso = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
+    if (!caso?.dataset.lat) return;
+    const origen = L.latLng(Number(caso.dataset.lat), Number(caso.dataset.lon));
+    let cercano = null;
+    for (const s of regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]')) {
+      if (!s.dataset.lat) continue;
+      const destino = L.latLng(Number(s.dataset.lat), Number(s.dataset.lon));
+      const metros = origen.distanceTo(destino);
+      if (!cercano || metros < cercano.metros) cercano = { s, destino, metros };
+    }
+    if (!cercano) return;
+    const texto = cercano.metros < 1000 ? `${Math.round(cercano.metros)} m` : `${(cercano.metros / 1000).toFixed(1).replace(".", ",")} km`;
+    const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
+    lineaDespacho = L.polyline([origen, cercano.destino], { color, weight: 3, dashArray: "8 7", interactive: false })
+      .bindTooltip(texto, { permanent: true, direction: "center", className: "etiqueta-despacho" })
+      .addTo(mapa);
+    cercano.s.classList.add("sereno--sugerido");
+    cercano.s.querySelector(".sereno__cabecera")?.insertAdjacentHTML("afterend",
+      `<p class="sereno__distancia" data-distancia>Más cercano al caso elegido · ${texto}</p>`);
+  }
+
+  // HU25-CA01/CA02/CA03: un marcador por caso en curso, distinto por origen (color) y por estado (con borde; reporte en
+  // revisión con borde discontinuo). Al elegirlo se ven su identificador, origen y estado, con un enlace a su detalle.
+  function dibujarCasosEnCurso() {
+    for (const m of marcadoresEnCurso.splice(0)) m.remove();
+    for (const item of regionCasosMapa?.querySelectorAll("[data-caso-mapa]") ?? []) {
+      const reporte = item.dataset.origen === "Reporte";
+      const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
+      const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
+      const texto = `${item.dataset.origen} · ${item.dataset.estado} · ${item.dataset.ciudadano}`;
+      marcadoresEnCurso.push(L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
+        icon: L.divIcon({ className: clase, html: reporte ? "" : SIRENA, iconSize: reporte ? [26, 26] : [36, 32], iconAnchor: reporte ? [13, 13] : [18, 16] }),
+        title: texto,
+        alt: texto,
+        keyboard: true,
+      })
+        .bindPopup(`<strong>${escapar(item.dataset.origen)} · ${escapar(item.dataset.estado)}</strong><br>Identificador: ${escapar(item.dataset.casoMapa)}<br>${escapar(item.dataset.ciudadano)}<br><a href="${escapar(item.dataset.detalle)}">Ver el caso</a>`)
+        .addTo(mapa));
+    }
   }
 
   function alHacerClicEnLista(evento) {
@@ -90,6 +152,7 @@
     const elegir = evento.target.closest("[data-seleccionar-sos]");
     if (elegir) {
       seleccionar(elegir.closest("[data-sos]").dataset.sos);
+      desplegar(document.getElementById("panel-serenos"));
       const primero = regionSerenos.querySelector("[data-asignar-sereno]:not([hidden])");
       (primero ?? regionSerenos).scrollIntoView({ block: "center" });
       primero?.focus();
@@ -113,7 +176,7 @@
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
         icon: L.divIcon({
           className: `marcador-sereno${disponible ? "" : " marcador-sereno--no-disponible"}`,
-          html: "<span>S</span>", iconSize: [30, 30], iconAnchor: [15, 15],
+          html: escudo(disponible), iconSize: [30, 34], iconAnchor: [15, 17],
         }),
         title: texto,
         alt: texto,
@@ -176,13 +239,49 @@
     confirmacion.querySelector("[data-campo-solicitud]").value = crypto.randomUUID();
     const hora = sos.querySelector("time")?.textContent ?? "";
     textoConfirmacion.textContent = `¿Asignar el ${esReporte ? "reporte" : "SOS"} de ${sos.dataset.ciudadano} (${hora}) a ${itemSereno.dataset.nombre}?`;
+    origenDialogo = document.activeElement;
     confirmacion.hidden = false;
     confirmacion.querySelector("button[type=submit]").focus();
   }
 
-  confirmacion.querySelector("[data-cancelar-asignacion]").addEventListener("click", () => {
+  let origenDialogo = null;
+  function cerrarConfirmacion() {
     confirmacion.hidden = true;
+    origenDialogo?.focus?.();
+  }
+  confirmacion.querySelector("[data-cancelar-asignacion]").addEventListener("click", cerrarConfirmacion);
+  confirmacion.addEventListener("click", (evento) => { if (evento.target === confirmacion) cerrarConfirmacion(); });
+  confirmacion.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") { evento.preventDefault(); cerrarConfirmacion(); return; }
+    if (evento.key !== "Tab") return;
+    const enfocables = [...confirmacion.querySelectorAll("button")];
+    const primero = enfocables[0];
+    const ultimo = enfocables.at(-1);
+    if (evento.shiftKey && document.activeElement === primero) { evento.preventDefault(); ultimo.focus(); }
+    else if (!evento.shiftKey && document.activeElement === ultimo) { evento.preventDefault(); primero.focus(); }
   });
+
+  // ---------- Paneles plegables y capas del mapa ----------
+  function desplegar(panel) {
+    if (!panel?.classList.contains("panel-flotante--plegado")) return;
+    panel.classList.remove("panel-flotante--plegado");
+    panel.querySelector("[data-plegar]").setAttribute("aria-expanded", "true");
+  }
+  for (const boton of document.querySelectorAll("[data-plegar]")) {
+    boton.addEventListener("click", () => {
+      const plegado = boton.closest("[data-panel]").classList.toggle("panel-flotante--plegado");
+      boton.setAttribute("aria-expanded", String(!plegado));
+    });
+  }
+  const central = document.querySelector(".central");
+  for (const boton of document.querySelectorAll("[data-capa]")) {
+    boton.addEventListener("click", () => {
+      const visible = boton.getAttribute("aria-pressed") !== "true";
+      boton.setAttribute("aria-pressed", String(visible));
+      central.classList.toggle(`central--sin-${boton.dataset.capa}`, !visible);
+      if (boton.dataset.capa === "sereno") lineaDespacho?.getElement()?.classList.toggle("visualmente-oculto", !visible);
+    });
+  }
 
   // HU19-CA03: se vuelve a pedir el fragmento al servidor (fuente de verdad); se conserva la selección.
   async function refrescarSerenos() {
@@ -193,6 +292,7 @@
     dibujarSerenos();
     if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
     actualizarAsignacion();
+    dibujarDespacho();
     return true;
   }
 
@@ -230,12 +330,30 @@
   function avisar(id) {
     const item = document.getElementById(`sos-${id}`);
     if (!item) return;
+    nuevos.add(id);
     item.classList.add("sos--nuevo");
+    marcadores.get(id)?.getElement()?.classList.add("marcador-sos--pulso");
     sinVer += 1;
     document.title = `(${sinVer}) ${tituloBase}`;
     const ubicacion = item.dataset.lat ? "con ubicación" : "sin ubicación disponible";
     anuncio.textContent = `Nuevo SOS de ${item.dataset.ciudadano}, ${ubicacion}.`;
     if (tono([880, 660, 880], 0.18))
+      seccion.dataset.avisosSonoros = String(Number(seccion.dataset.avisosSonoros) + 1);
+  }
+
+  // HU09-CA02: el titular canceló un SOS pendiente. Sale de la lista (resincronización) y se anuncia con un aviso visible
+  // y, si los avisos sonoros están activados, un tono distinto del de un SOS nuevo.
+  async function avisarCancelacion(id) {
+    const ciudadano = document.getElementById(`sos-${id}`)?.dataset.ciudadano;
+    // Si estaba seleccionado, la resincronización cierra su confirmación de asignación (actualizarAsignacion).
+    if (!(await refrescar())) return;
+    const texto = ciudadano ? `${ciudadano} canceló su SOS. Ya no está pendiente.` : "Un ciudadano canceló su SOS. Ya no está pendiente.";
+    avisoCancelacion.querySelector("[data-texto]").textContent = texto;
+    avisoCancelacion.querySelector("a").href = `/panel/casos/${id}/historial`;
+    avisoCancelacion.hidden = false;
+    avisoCancelacion.dataset.casoId = id;
+    anuncio.textContent = texto;
+    if (tono([440, 330], 0.2))
       seccion.dataset.avisosSonoros = String(Number(seccion.dataset.avisosSonoros) + 1);
   }
 
@@ -252,7 +370,10 @@
       estadoConexion("desconectado", "La sesión terminó o no hay acceso. Vuelve a ingresar para recibir SOS.");
       return false;
     }
+    const antes = posiciones(region);
     region.innerHTML = await respuesta.text();
+    for (const id of nuevos) document.getElementById(`sos-${id}`)?.classList.add("sos--nuevo");
+    moverEnSuSitio(region, antes);
     contador.textContent = region.querySelector("[data-lista-sos]").dataset.total;
     if (regionReportes) {
       const reportes = await fetch("/panel/central?handler=Reportes", { headers: { Accept: "text/html" }, credentials: "same-origin" });
@@ -261,10 +382,31 @@
         contadorReportes.textContent = regionReportes.querySelector("[data-lista-reportes]").dataset.total;
       }
     }
+    if (regionCasosMapa) {
+      const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
+      if (enCurso.ok && !enCurso.redirected) regionCasosMapa.innerHTML = await enCurso.text();
+    }
     dibujarMarcadores();
+    dibujarCasosEnCurso();
     if (sosSeleccionado) document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
     actualizarAsignacion();
     return true;
+  }
+
+  // Lo que cambia se mueve en su sitio: cada tarjeta que sigue en la lista se desliza desde su posición anterior.
+  function posiciones(contenedor) {
+    return new Map([...contenedor.querySelectorAll("[data-sos]")].map((el) => [el.dataset.sos, el.getBoundingClientRect().top]));
+  }
+  function moverEnSuSitio(contenedor, antes) {
+    if (reducido.matches) return;
+    for (const el of contenedor.querySelectorAll("[data-sos]")) {
+      const previo = antes.get(el.dataset.sos);
+      if (previo === undefined) continue;
+      const desplazamiento = previo - el.getBoundingClientRect().top;
+      if (Math.abs(desplazamiento) < 1) continue;
+      el.animate([{ transform: `translateY(${desplazamiento}px)` }, { transform: "none" }],
+        { duration: 240, easing: "cubic-bezier(0.77, 0, 0.175, 1)" });
+    }
   }
 
   // ---------- Conexión en tiempo real ----------
@@ -287,6 +429,7 @@
       conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
   });
   conexion.on("SerenoActualizado", () => refrescarSerenos());
+  conexion.on("SosCancelado", ({ id }) => avisarCancelacion(id));
   // HU20: un caso cambió de estado (p. ej., asignado por otro operador): deja la sección urgente.
   conexion.on("CasoActualizado", () => refrescar());
   conexion.onreconnecting(() => estadoConexion("reconectando", "Reconectando… La lista puede no estar actualizada."));
@@ -316,6 +459,7 @@
   }
 
   dibujarMarcadores();
+  dibujarCasosEnCurso();
   dibujarSerenos();
   iniciar();
 

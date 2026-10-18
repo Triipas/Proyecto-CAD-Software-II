@@ -1,0 +1,125 @@
+/* Prototipos de CAD Móvil (ciudadano y sereno). Marco de 390 × 844, misma identidad que el panel. */
+body.escena { min-height: 100vh; display: grid; place-items: center; gap: var(--espacio-4); padding: var(--espacio-8) var(--espacio-4) 96px; background: #dfe5ee; }
+.telefono {
+  position: relative; width: 390px; height: 844px; max-width: 100%; border-radius: 44px; overflow: hidden;
+  background: var(--color-fondo); box-shadow: 0 0 0 10px #101828, 0 30px 60px -20px rgba(0, 0, 0, 0.45);
+  display: grid; grid-template-rows: auto 1fr auto; isolation: isolate;
+}
+.estado-sistema { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 10px 26px; font-size: 14px; font-weight: 600; color: #fff; background: var(--color-marino); }
+.estado-sistema--claro { color: var(--color-texto); background: var(--color-fondo); }
+.vista { overflow-y: auto; display: grid; align-content: start; gap: var(--espacio-4); padding-bottom: var(--espacio-6); }
+.vista[hidden] { display: none; }
+.vista--entrar { animation: vista-entra var(--duracion-lenta) var(--curva-salida) both; }
+@keyframes vista-entra { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+/* Encabezado marino de borde a borde */
+.cabecera-app { background: var(--color-marino); color: var(--color-texto-sobre-marino); padding: var(--espacio-2) var(--espacio-5) var(--espacio-6); display: grid; gap: var(--espacio-3); border-radius: 0 0 var(--radio-dialogo) var(--radio-dialogo); }
+.cabecera-app h1 { font-size: var(--texto-2xl); line-height: 1.15; letter-spacing: -0.02em; color: #fff; }
+.cabecera-app p { font-size: var(--texto-sm); color: var(--color-texto-sobre-marino-secundario); }
+.cabecera-app .fila { display: flex; align-items: center; gap: var(--espacio-3); }
+.chip-ubicacion { display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 6px 12px; border-radius: var(--radio-pildora); background: var(--color-marino-elevado); color: #fff; font-size: var(--texto-xs); font-weight: var(--peso-medio); }
+.chip-ubicacion i { width: 8px; height: 8px; border-radius: 99px; background: #4ade80; }
+.cuerpo { display: grid; gap: var(--espacio-4); padding: 0 var(--espacio-5); }
+.titulo-vista { font-size: var(--texto-2xl); letter-spacing: -0.02em; color: var(--color-marino); padding: var(--espacio-2) var(--espacio-5) 0; }
+
+/* Botón SOS con anillo que respira */
+.zona-sos { display: grid; justify-items: center; gap: var(--espacio-8); padding: var(--espacio-8) 0 var(--espacio-2); }
+.boton-sos {
+  position: relative; width: 208px; height: 208px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--color-urgente); color: #fff; display: grid; place-items: center; align-content: center; gap: 2px;
+  font: var(--peso-fuerte) 3rem/1 var(--fuente); letter-spacing: 0.04em;
+  box-shadow: 0 14px 30px -10px rgb(145 32 24 / 0.55);
+  transition: transform var(--duracion-instantanea) var(--curva-estandar), background-color var(--duracion-instantanea) var(--curva-estandar);
+}
+.boton-sos small { font-size: var(--texto-sm); font-weight: var(--peso-medio); letter-spacing: 0; opacity: 0.9; }
+.boton-sos::before, .boton-sos::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 2px solid var(--color-urgente); opacity: 0.25; animation: respirar 3.2s var(--curva-estandar) infinite; }
+.boton-sos::after { inset: -28px; opacity: 0.12; animation-delay: 0.4s; }
+.boton-sos:active { transform: scale(0.96); background: var(--color-urgente-activo); }
+.boton-sos:focus-visible { outline: 4px solid var(--color-foco); outline-offset: 34px; }
+@keyframes respirar { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.zona-sos p { font-size: var(--texto-sm); color: var(--color-texto-secundario); text-align: center; max-width: 18rem; }
+
+/* Mosaicos de flujo */
+.mosaico { display: grid; grid-template-columns: auto 1fr auto; gap: var(--espacio-3); align-items: center; padding: var(--espacio-4); border: 1px solid var(--color-borde); border-radius: var(--radio-superficie); background: var(--color-superficie); box-shadow: var(--sombra-1); text-align: left; cursor: pointer; width: 100%; transition: transform var(--duracion-instantanea) var(--curva-estandar); }
+.mosaico:active { transform: scale(0.98); }
+.mosaico__icono { width: 44px; height: 44px; border-radius: var(--radio-superficie); display: grid; place-items: center; }
+.mosaico b { display: block; font-size: var(--texto-md); }
+.mosaico small { color: var(--color-texto-secundario); font-size: var(--texto-sm); }
+.mosaico > .icono { color: var(--color-texto-terciario); }
+
+/* Barra inferior */
+.pestanas-app { display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 8px 22px; background: var(--color-superficie); border-top: 1px solid var(--color-borde); }
+.pestana-app { position: relative; display: grid; justify-items: center; gap: 2px; min-height: 52px; padding-top: 6px; border: 0; background: transparent; color: var(--color-texto-secundario); font-size: 12px; font-weight: var(--peso-medio); cursor: pointer; }
+.pestana-app .icono { width: 24px; height: 24px; }
+.pestana-app[aria-current="page"] { color: var(--color-primario); }
+.pestana-app[aria-current="page"]::before { content: ""; position: absolute; top: 0; width: 32px; height: 3px; border-radius: 0 0 3px 3px; background: var(--color-primario); }
+.insignia { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 18px; padding: 0 5px; border-radius: 99px; background: var(--color-urgente); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; }
+
+/* Tarjetas de caso y línea de tiempo */
+.tarjeta-caso { display: grid; grid-template-columns: 1fr auto; gap: 6px var(--espacio-3); align-items: center; padding: var(--espacio-4); border: 1px solid var(--color-borde); border-radius: var(--radio-superficie); background: var(--color-superficie); box-shadow: var(--sombra-1); text-align: left; cursor: pointer; width: 100%; }
+.tarjeta-caso .icono { grid-row: span 3; color: var(--color-texto-terciario); }
+.tarjeta-caso b { font-size: var(--texto-md); }
+.tarjeta-caso small { color: var(--color-texto-secundario); font-size: var(--texto-xs); }
+.tiempo-linea { display: grid; }
+.hito { display: grid; grid-template-columns: 24px 1fr; gap: var(--espacio-3); padding-bottom: var(--espacio-4); position: relative; }
+.hito::before { content: ""; position: absolute; left: 11px; top: 26px; bottom: 0; width: 2px; background: var(--color-borde); }
+.hito:last-child::before { display: none; }
+.hito__punto { width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center; background: var(--color-primario); color: #fff; }
+.hito__punto--futuro { background: var(--color-superficie); border: 2px solid var(--color-borde-fuerte); }
+.hito__punto--actual { background: var(--color-superficie); border: 2px solid var(--color-primario); outline: 4px solid var(--color-tenue); }
+.hito b { font-size: var(--texto-md); display: block; }
+.hito small { color: var(--color-texto-secundario); font-size: var(--texto-xs); }
+
+/* Hoja inferior */
+.hoja-velo { position: absolute; inset: 0; z-index: 20; background: var(--velo-dialogo); display: grid; align-items: end; animation: aparecer-velo var(--duracion-base) var(--curva-estandar) both; }
+.hoja { background: var(--color-superficie); border-radius: var(--radio-dialogo) var(--radio-dialogo) 0 0; padding: var(--espacio-3) var(--espacio-5) var(--espacio-8); display: grid; gap: var(--espacio-4); animation: hoja-sube var(--duracion-lenta) var(--curva-salida) both; }
+.hoja::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 4px; background: var(--color-borde-fuerte); }
+.hoja h2 { font-size: var(--texto-xl); letter-spacing: -0.01em; color: var(--color-marino); }
+@keyframes hoja-sube { from { transform: translateY(100%); } to { transform: none; } }
+
+/* Acción fija abajo (sereno) */
+.accion-fija { padding: var(--espacio-3) var(--espacio-5) 26px; background: var(--color-superficie); border-top: 1px solid var(--color-borde); display: grid; gap: var(--espacio-2); }
+.accion-fija p { font-size: var(--texto-xs); color: var(--color-texto-secundario); text-align: center; }
+.boton-grande { min-height: 56px; font-size: var(--texto-lg); }
+
+/* Interruptor */
+.interruptor { display: flex; align-items: center; gap: var(--espacio-3); padding: var(--espacio-3) var(--espacio-4); border-radius: var(--radio-superficie); background: var(--color-marino-elevado); cursor: pointer; border: 0; color: #fff; width: 100%; text-align: left; }
+.interruptor__pista { width: 52px; height: 30px; border-radius: 99px; background: #5c6e88; position: relative; transition: background-color var(--duracion-base) var(--curva-estandar); flex: none; }
+.interruptor__pista::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 99px; background: #fff; transition: transform var(--duracion-base) var(--curva-salida); }
+.interruptor[aria-checked="true"] .interruptor__pista { background: #22c55e; }
+.interruptor[aria-checked="true"] .interruptor__pista::after { transform: translateX(22px); }
+.interruptor b { display: block; font-size: var(--texto-md); }
+.interruptor small { color: var(--color-texto-sobre-marino-secundario); font-size: var(--texto-xs); }
+
+/* Anillo del acompañamiento */
+.anillo { position: relative; width: 240px; height: 240px; justify-self: center; }
+.anillo svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.anillo__pista { fill: none; stroke: var(--color-superficie-hundida); stroke-width: 14; }
+.anillo__progreso { fill: none; stroke: var(--color-acompanamiento); stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.anillo__centro { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 2px; text-align: center; }
+.anillo__centro b { font-size: 3.25rem; letter-spacing: -0.03em; color: var(--color-marino); line-height: 1; }
+.anillo__centro small { font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+.enviando { display: inline-flex; align-items: center; gap: 8px; justify-self: center; padding: 6px 12px; border-radius: 99px; background: var(--color-acompanamiento-fondo); color: var(--color-acompanamiento); font-size: var(--texto-sm); font-weight: var(--peso-medio); }
+.enviando i { width: 8px; height: 8px; border-radius: 99px; background: var(--color-acompanamiento); }
+.enviando i.enviado { animation: latido 900ms var(--curva-estandar) 1; }
+@keyframes latido { 0% { transform: scale(1); } 40% { transform: scale(1.8); } 100% { transform: scale(1); } }
+
+/* Confirmación con check */
+.confirmacion { display: grid; justify-items: center; gap: var(--espacio-3); text-align: center; padding: var(--espacio-8) var(--espacio-5) 0; }
+.check { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--color-exito-fondo); color: var(--color-exito); }
+.check svg { width: 52px; height: 52px; stroke-dasharray: 30; stroke-dashoffset: 30; animation: trazar 600ms var(--curva-salida) 150ms forwards; }
+@keyframes trazar { to { stroke-dashoffset: 0; } }
+.confirmacion h2 { font-size: var(--texto-2xl); letter-spacing: -0.02em; color: var(--color-marino); }
+
+.leyenda-escena { max-width: 390px; text-align: center; font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+.controles-prototipo.abajo { position: static; transform: none; }
+@media (max-width: 430px) {
+  body.escena { padding: 0 0 var(--espacio-4); gap: var(--espacio-3); }
+  .telefono { width: 100%; height: 100vh; border-radius: 0; box-shadow: none; }
+  .leyenda-escena { padding: 0 var(--espacio-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton-sos::before, .boton-sos::after, .enviando i { animation: none; }
+  .check svg { stroke-dashoffset: 0; }
+}

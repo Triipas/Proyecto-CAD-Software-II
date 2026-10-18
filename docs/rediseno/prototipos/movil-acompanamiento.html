@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAD Móvil · Acompañamiento · Prototipo CAD v2</title>
+  <link rel="stylesheet" href="../../../src/Cad.Server/wwwroot/css/tokens.css" />
+  <link rel="stylesheet" href="prototipo.css" />
+  <link rel="stylesheet" href="movil.css" />
+</head>
+<body class="escena">
+  <div class="telefono" aria-label="Pantalla del teléfono">
+    <div class="estado-sistema estado-sistema--claro"><span>05:03</span><span>4G · 64 %</span></div>
+    <section class="vista" aria-labelledby="t-aco" style="padding-top:var(--espacio-2)">
+      <div class="cuerpo">
+        <a class="volver" href="movil-ciudadano.html"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Inicio</a>
+        <div><h1 class="titulo-pagina" id="t-aco" style="font-size:var(--texto-2xl)">Acompañamiento activo</h1><p class="secundario" style="font-size:var(--texto-sm)">La central ve tu recorrido hasta las 05:33. No es un SOS.</p></div>
+        <div class="anillo" role="timer" aria-label="Tiempo restante del acompañamiento">
+          <svg viewBox="0 0 240 240" aria-hidden="true"><circle class="anillo__pista" cx="120" cy="120" r="106"/><circle class="anillo__progreso" id="progreso" cx="120" cy="120" r="106"/></svg>
+          <div class="anillo__centro"><b id="restante">29:52</b><small>tiempo restante</small></div>
+        </div>
+        <span class="enviando"><i></i><span id="ultima">Última posición enviada a las 05:03:52</span></span>
+        <div class="aviso aviso--informacion"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.75h.01"/></svg><span>Tu ubicación se sigue enviando aunque cierres la app o apagues la pantalla, mientras veas la notificación «Acompañamiento activo».</span></div>
+        <button class="boton boton--urgente boton--bloque" type="button" data-sos>Necesito ayuda: enviar SOS</button>
+        <button class="boton boton--secundario boton--bloque" type="button" data-finalizar>Finalizar acompañamiento</button>
+      </div>
+    </section>
+    <div></div>
+    <div class="hoja-velo" id="hoja" hidden>
+      <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="t-hoja">
+        <h2 id="t-hoja">La central pregunta cómo estás</h2>
+        <p class="secundario" style="font-size:var(--texto-sm)">Responde con un toque. «Necesito ayuda» envía un SOS con tu ubicación.</p>
+        <button class="boton boton--principal boton--bloque boton-grande" type="button" data-bien>Estoy bien</button>
+        <button class="boton boton--urgente boton--bloque boton-grande" type="button" data-sos>Necesito ayuda</button>
+      </section>
+    </div>
+  </div>
+  <p class="leyenda-escena">Ciudadana: acompañamiento de 30 minutos con anillo de tiempo y confirmación de bienestar en una hoja inferior.</p>
+  <div class="controles-prototipo abajo" role="group" aria-label="Controles del prototipo"><b>Prototipo</b><button type="button" data-preguntar>La central pregunta</button><a href="movil-ciudadano.html">Ciudadano</a><a href="movil-sereno.html">Sereno</a><a href="index.html">Índice</a></div>
+
+  <script type="module">
+    import { toast, anunciar } from './prototipo.js';
+    const total = 30 * 60; let restante = 29 * 60 + 52;
+    const circ = 2 * Math.PI * 106;
+    const anillo = document.getElementById('progreso');
+    anillo.style.strokeDasharray = circ;
+    const pintar = () => {
+      document.getElementById('restante').textContent = `${String(Math.floor(restante / 60)).padStart(2, '0')}:${String(restante % 60).padStart(2, '0')}`;
+      anillo.style.strokeDashoffset = circ * (1 - restante / total);
+    };
+    pintar();
+    setInterval(() => { restante = Math.max(0, restante - 1); pintar(); }, 1000);
+    // Cada 15 s se envía una posición: el punto late una vez por envío, no de forma continua.
+    setInterval(() => {
+      const punto = document.querySelector('.enviando i'); punto.classList.remove('enviado'); void punto.offsetWidth; punto.classList.add('enviado');
+      document.getElementById('ultima').textContent = 'Última posición enviada a las ' + new Date().toLocaleTimeString('es-PE', { hour12: false });
+    }, 15000);
+    const hoja = document.getElementById('hoja');
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[data-preguntar]')) { hoja.hidden = false; hoja.querySelector('[data-bien]').focus(); anunciar('La central pregunta cómo estás.', 'assertive'); }
+      if (e.target.closest('[data-bien]')) { hoja.hidden = true; toast('<strong>Gracias.</strong> La central sabe que estás bien.'); }
+      if (e.target.closest('[data-sos]')) { hoja.hidden = true; location.href = 'movil-ciudadano.html'; }
+      if (e.target.closest('[data-finalizar]')) toast('<strong>Acompañamiento finalizado.</strong> Ya no se comparte tu ubicación.');
+      if (e.target === hoja) hoja.hidden = true;
+    });
+  </script>
+</body>
+</html>

@@ -1,10 +1,14 @@
 @page "/panel/reportes/{id:guid}"
 @model Cad.Server.Panel.Pages.Reportes.DetalleModel
 @using System.Globalization
+@using Cad.Server.Modulos.Casos.Dominio
+@using Accion = Cad.Server.Panel.Pages.Reportes.DetalleModel.SiguienteAccion
 @{
     ViewData["Title"] = "Reporte";
     var inv = CultureInfo.InvariantCulture;
     var r = Model.Reporte;
+    var s = Model.Seguimiento;
+    var siguiente = Model.Siguiente;
     string Local(DateTimeOffset momento, string formato = "dd/MM/yyyy HH:mm:ss") => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString(formato, inv);
     var fuente = r.FuenteUbicacion switch
     {
@@ -12,21 +16,46 @@
         "PosicionActual" => "Posición del ciudadano al reportar (la eligió él)",
         _ => "Referencia textual (sin punto)",
     };
+    // «Otras acciones»: corregir la categoría, solo mientras el reporte está «En revisión» (HU14-CA04).
+    var abrirOtras = Model.ErrorCategoria is not null || Model.ErrorCorreccion is not null;
+
+    // HU15–HU17: la decisión registrada, en la tarjeta (derivado o descartado) o en el contexto (admitido).
+    void DatosDecision(Cad.Server.Modulos.Consultas.DecisionVista d)
+    {
+        <dl class="datos datos--en-linea" data-decision="@d.Tipo">
+            <div><dt>Decisión</dt><dd>@d.Texto</dd></div>
+            @if (d.Destino is { } destino)
+            {
+                <div><dt>Destino</dt><dd data-destino>@destino</dd></div>
+                <div><dt>Acción realizada</dt><dd class="datos__texto">@d.Accion</dd></div>
+            }
+            <div><dt>Motivo</dt><dd class="datos__texto" data-motivo>@d.Motivo</dd></div>
+            <div><dt>Decidido por</dt><dd>@d.Operador</dd></div>
+            <div><dt>Fecha y hora</dt><dd>@Local(d.En)</dd></div>
+        </dl>
+    }
 }
 @section Estilos {
     @if (r.ConPunto)
     {
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
+    <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
 }
+
 <p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
-<div class="pagina__encabezado">
-    <div>
-        <p class="sobretitulo">Operador · Reporte <span data-estado>@r.TextoEstado</span></p>
-        <h1 class="titulo">Reporte de incidencia</h1>
-        <p class="texto-secundario">Registrado el @Local(r.RegistradoEn). <a href="/panel/casos/@r.Id/historial">Ver el historial del caso</a></p>
+
+<header class="cabecera-caso">
+    <div class="cabecera-caso__fila">
+        <span class="etiqueta-reporte"><partial name="_Icono" model="@("documento")" />Reporte</span>
+        <h1 class="titulo">@r.CategoriaActual</h1>
+        <span data-estado><partial name="_ChipEstado" model="@((r.TextoEstado, false))" /></span>
     </div>
-</div>
+    <p class="cabecera-caso__resumen">
+        Reporte de incidencia de <strong>@r.Ciudadano</strong> · Registrado el @Local(r.RegistradoEn) · <a href="/panel/casos/@r.Id/historial">Ver el historial del caso</a>
+    </p>
+    <partial name="_ProgresoCaso" model="Model.Pasos" />
+</header>
 
 @if (Model.Mensaje is not null)
 {
@@ -39,10 +68,260 @@
     </div>
 }
 
-<div class="verificacion">
-    <div class="pila">
-        <section class="superficie" aria-labelledby="titulo-hecho">
-            <h2 id="titulo-hecho" class="central__titulo">Hecho reportado</h2>
+@* Errores de las acciones: se muestran arriba aunque el formulario ya no esté disponible (p. ej., otro operador decidió antes). *@
+@foreach (var (titulo, error) in new[] {
+    ("No se pudo iniciar la revisión", Model.ErrorRevision),
+    ("No se pudo corregir la categoría", Model.ErrorCorreccion),
+    ("No se pudo registrar la decisión", Model.ErrorDecision),
+    ("No se registró el inicio de atención", Model.ErrorAtencion),
+    ("No se pudo cerrar el reporte", Model.ErrorCierre) })
+{
+    if (error is null) continue;
+    <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("error")" />
+        <div>
+            <p class="aviso__titulo">@titulo</p>
+            <p class="aviso__texto">@error</p>
+        </div>
+    </div>
+}
+
+<div class="detalle-caso">
+    <div class="detalle-caso__principal">
+        <section class="superficie siguiente" aria-labelledby="titulo-siguiente">
+            @switch (siguiente)
+            {
+                case Accion.IniciarRevision:
+                    @* HU14-CA01/CA02/CA05 — inicio de la revisión. *@
+                    <div class="siguiente__cabecera">
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Revisa el reporte de @r.Ciudadano</h2>
+                        <span class="siguiente__paso">Paso 1 de 3</span>
+                    </div>
+                    <form method="post" asp-page-handler="IniciarRevision" class="formulario" data-formulario>
+                        <p class="texto-secundario">El reporte pasará a «En revisión» y quedarás como responsable. Después podrás corregir la categoría y decidir.</p>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--principal" data-texto-carga="Iniciando…">Iniciar la revisión</button>
+                        </div>
+                    </form>
+                    break;
+                case Accion.Decidir:
+                    @* HU15–HU17 — admitir, derivar o descartar, solo desde «En revisión». *@
+                    <div class="siguiente__cabecera">
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Decide qué hacer con el reporte</h2>
+                        <span class="siguiente__paso">Paso 2 de 3</span>
+                    </div>
+                    <form method="post" asp-page-handler="Decidir" class="formulario" data-formulario novalidate>
+                        <fieldset class="opciones opciones--segmentadas">
+                            <legend class="campo__etiqueta">Decisión</legend>
+                            <div class="opciones__segmentos">
+                                <label class="opcion"><input type="radio" name="Decision.Tipo" value="Admision" checked="@(Model.Decision.Tipo == TipoDecisionReporte.Admision)" aria-describedby="ayuda-admision" />Admitir</label>
+                                <label class="opcion"><input type="radio" name="Decision.Tipo" value="Derivacion" checked="@(Model.Decision.Tipo == TipoDecisionReporte.Derivacion)" aria-describedby="ayuda-derivacion" />Derivar</label>
+                                <label class="opcion"><input type="radio" name="Decision.Tipo" value="Descarte" checked="@(Model.Decision.Tipo == TipoDecisionReporte.Descarte)" aria-describedby="ayuda-descarte" />Descartar</label>
+                            </div>
+                            <p id="ayuda-admision" class="campo__ayuda decision__ayuda decision__ayuda--admision">Admitir para atención: pasa a «Pendiente» para asignarlo a un sereno desde la central.</p>
+                            <p id="ayuda-derivacion" class="campo__ayuda decision__ayuda decision__ayuda--derivacion">Derivar a otra entidad: es solo un registro, el sistema no envía nada.</p>
+                            <p id="ayuda-descarte" class="campo__ayuda decision__ayuda decision__ayuda--descarte">Descartar: el reporte no se atiende y queda en el historial.</p>
+                        </fieldset>
+                        @foreach (var (campo, etiqueta, ayuda, valor, multilinea, maximo) in new[]
+                        {
+                            ("Motivo", "Motivo", "Obligatorio en las tres decisiones. En un descarte es la justificación.", Model.Decision.Motivo, true, DecisionReporte.MaximoMotivo),
+                            ("Destino", "Destino (solo para derivar)", "Entidad o área a la que se deriva. Obligatorio al derivar.", Model.Decision.Destino, false, DecisionReporte.MaximoDestino),
+                            ("Accion", "Acción realizada (solo para derivar)", "Por ejemplo, cómo se comunicó el caso. Obligatoria al derivar.", Model.Decision.Accion, true, DecisionReporte.MaximoAccion),
+                        })
+                        {
+                            var id = $"Decision_{campo}";
+                            var error = Model.ErrorDecisionDe(campo.ToLowerInvariant());
+                            var descrito = error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda";
+                            <div class="campo@(campo == "Motivo" ? "" : " campo--derivacion")">
+                                <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                                @if (multilinea)
+                                {
+                                    <textarea class="campo__control campo__control--texto" id="@id" name="Decision.@campo" rows="3" maxlength="@maximo"
+                                              aria-invalid="@(error is null ? null : "true")" aria-describedby="@descrito">@valor</textarea>
+                                }
+                                else
+                                {
+                                    <input class="campo__control" id="@id" name="Decision.@campo" type="text" value="@valor" maxlength="@maximo"
+                                           aria-invalid="@(error is null ? null : "true")" aria-describedby="@descrito" />
+                                }
+                                <p id="@id-ayuda" class="campo__ayuda">@ayuda</p>
+                                @if (error is not null)
+                                {
+                                    <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                                }
+                            </div>
+                        }
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar la decisión</button>
+                        </div>
+                    </form>
+                    break;
+                case Accion.Asignar:
+                    <div class="siguiente__cabecera">
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Asigna el reporte a un sereno disponible</h2>
+                        <span class="siguiente__paso">Paso 3 de 3</span>
+                    </div>
+                    <p data-pendiente-asignacion>Pendiente de asignación. Asígnalo a un sereno disponible desde la central, como un SOS.</p>
+                    <div class="acciones">
+                        <a class="boton boton--principal" href="/panel/central#titulo-reportes">Ir a la central</a>
+                    </div>
+                    break;
+                case Accion.EsperarDesplazamiento:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">@s!.Asignacion!.Sereno recibió el despacho</h2>
+                    <p class="texto-secundario">Verás aquí cuando confirme que va en camino y cuando inicie la atención.</p>
+                    break;
+                case Accion.EsperarAtencion:
+                    @* HU23-CA02: el operador registra el inicio de atención si el sereno no puede. *@
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">@s!.Asignacion!.Sereno va en camino</h2>
+                    <form method="post" asp-page-handler="IniciarAtencion" class="formulario" data-formulario>
+                        <p class="texto-secundario">Si el sereno no puede registrarlo, puedes registrar el inicio de atención; quedarás como responsable.</p>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--secundario" data-texto-carga="Registrando…">Registrar inicio de atención</button>
+                        </div>
+                    </form>
+                    break;
+                case Accion.Cerrar:
+                    var errorCategoria = Model.ErrorCierreDe("categoriaId");
+                    var errorResultado = Model.ErrorCierreDe("resultadoPublico");
+                    var errorNotas = Model.ErrorCierreDe("notasInternas");
+                    @* HU24-CA05: el operador cierra el reporte en atención con su tipificación y resultado. *@
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Cierra el reporte con su tipificación y resultado</h2>
+                    <form method="post" asp-page-handler="Cerrar" class="formulario" data-formulario novalidate>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_CategoriaId">Tipificación final</label>
+                            <select class="campo__control campo__control--seleccion" id="Cierre_CategoriaId" name="Cierre.CategoriaId" required
+                                    aria-invalid="@(errorCategoria is null ? null : "true")"
+                                    aria-describedby="@(errorCategoria is null ? null : "Cierre_CategoriaId-error")">
+                                <option value="">Elige una categoría</option>
+                                @foreach (var categoria in Model.Categorias)
+                                {
+                                    <option value="@categoria.Id" selected="@(Model.Cierre.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                                }
+                            </select>
+                            @if (errorCategoria is not null)
+                            {
+                                <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
+                            }
+                        </div>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                            <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
+                                      maxlength="@CierreCaso.MaximoResultado"
+                                      aria-invalid="@(errorResultado is null ? null : "true")"
+                                      aria-describedby="Cierre_ResultadoPublico-ayuda@(errorResultado is null ? "" : " Cierre_ResultadoPublico-error")">@Model.Cierre.ResultadoPublico</textarea>
+                            <p id="Cierre_ResultadoPublico-ayuda" class="campo__ayuda">Es el resultado público: el ciudadano podrá verlo.</p>
+                            @if (errorResultado is not null)
+                            {
+                                <p id="Cierre_ResultadoPublico-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorResultado</span></p>
+                            }
+                        </div>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="Cierre_NotasInternas">Notas internas (opcional)</label>
+                            <textarea class="campo__control campo__control--texto" id="Cierre_NotasInternas" name="Cierre.NotasInternas" rows="3"
+                                      maxlength="@CierreCaso.MaximoNotas"
+                                      aria-invalid="@(errorNotas is null ? null : "true")"
+                                      aria-describedby="Cierre_NotasInternas-ayuda@(errorNotas is null ? "" : " Cierre_NotasInternas-error")">@Model.Cierre.NotasInternas</textarea>
+                            <p id="Cierre_NotasInternas-ayuda" class="campo__ayuda">Solo para el personal autorizado; el ciudadano no las verá.</p>
+                            @if (errorNotas is not null)
+                            {
+                                <p id="Cierre_NotasInternas-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorNotas</span></p>
+                            }
+                        </div>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--principal" data-texto-carga="Cerrando…">Cerrar el reporte</button>
+                        </div>
+                    </form>
+                    break;
+                case Accion.VerCierre:
+                    var cierre = s!.Cierre!;
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Atención cerrada</h2>
+                    <dl class="datos" data-cierre>
+                        <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                        <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
+                        <div><dt>Notas internas (solo personal autorizado)</dt><dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd></div>
+                        <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
+                        <div><dt>Fecha y hora</dt><dd>@Local(cierre.CerradoEn)</dd></div>
+                    </dl>
+                    break;
+                case Accion.VerDecision:
+                    var final = r.Decision!;
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">@(final.Destino is { } destinoFinal ? $"Reporte derivado a {destinoFinal}" : "Reporte descartado")</h2>
+                    DatosDecision(final);
+                    @if (final.Tipo == TipoDecisionReporte.Derivacion)
+                    {
+                        <p class="texto-secundario">La derivación es solo un registro: el sistema no envía información a la entidad de destino.</p>
+                    }
+                    break;
+                default:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Sin acciones pendientes</h2>
+                    <p class="texto-secundario">El reporte no admite más acciones en el estado «@r.TextoEstado».</p>
+                    break;
+            }
+        </section>
+
+        @if (r.PuedeCorregirCategoria)
+        {
+            @* HU14-CA03/CA04 — la categoría solo se corrige mientras el reporte está «En revisión». *@
+            <details class="superficie otras-acciones" open="@abrirOtras">
+                <summary>Otras acciones</summary>
+                <div class="otras-acciones__cuerpo">
+                    <section aria-labelledby="titulo-corregir">
+                        <h3 id="titulo-corregir" class="otras-acciones__titulo">Corregir la categoría elegida por el ciudadano</h3>
+                        <form method="post" asp-page-handler="Corregir" class="formulario" data-formulario novalidate>
+                            <div class="campo">
+                                <label class="campo__etiqueta" for="CategoriaId">Corregir a</label>
+                                <select class="campo__control campo__control--seleccion" id="CategoriaId" name="CategoriaId" required
+                                        aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
+                                        aria-describedby="@(Model.ErrorCategoria is null ? null : "CategoriaId-error")">
+                                    @foreach (var categoria in Model.Categorias)
+                                    {
+                                        <option value="@categoria.Id" selected="@(Model.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                                    }
+                                </select>
+                                @if (Model.ErrorCategoria is not null)
+                                {
+                                    <p id="CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
+                                }
+                            </div>
+                            <div class="acciones">
+                                <button type="submit" class="boton boton--secundario" data-texto-carga="Guardando…">Corregir la categoría</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </details>
+        }
+
+        @* Decisión del PO del 16/10/2026: atención de un reporte admitido, con las mismas reglas que en un SOS. *@
+        @if (s?.Asignacion is { } asignacion)
+        {
+            <section class="superficie seccion-caso" aria-labelledby="titulo-atencion" data-atencion>
+                <h2 id="titulo-atencion" class="seccion-caso__titulo">Despacho</h2>
+                <p class="estado estado--activa">
+                    <partial name="_Icono" model="@("exito")" />Asignado a @asignacion.Sereno a las @Local(asignacion.AsignadaEn)
+                </p>
+                @if (s.Avances is { Count: > 0 } avances)
+                {
+                    <ol class="historial" data-avances>
+                        @foreach (var avance in avances)
+                        {
+                            <li class="historial__elemento">
+                                <p class="historial__cabecera">
+                                    <span class="estado estado--activa">@avance.Descripcion</span>
+                                    <time datetime="@avance.En.ToString("O", inv)">@Local(avance.En)</time>
+                                    <span class="texto-secundario">· @avance.Responsable</span>
+                                </p>
+                            </li>
+                        }
+                    </ol>
+                }
+            </section>
+        }
+    </div>
+
+    <aside class="detalle-caso__contexto" aria-label="Contexto del reporte">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-hecho">
+            <h2 id="titulo-hecho" class="seccion-caso__titulo">Hecho reportado</h2>
             <dl class="datos">
                 <div><dt>Ciudadano</dt><dd>@r.Ciudadano</dd></div>
                 <div><dt>Ocurrió aproximadamente</dt><dd>@Local(r.OcurridoAproximadamenteEn, "dd/MM/yyyy HH:mm")</dd></div>
@@ -50,9 +329,15 @@
             </dl>
         </section>
 
-        <section class="superficie" aria-labelledby="titulo-lugar">
-            <h2 id="titulo-lugar" class="central__titulo">Ubicación del hecho</h2>
-            <dl class="datos">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-lugar">
+            <h2 id="titulo-lugar" class="seccion-caso__titulo">Ubicación del hecho</h2>
+            @if (r.ConPunto)
+            {
+                <div id="mapa-hecho" class="mapa mapa--detalle" role="region" aria-label="Mapa con el lugar del hecho"
+                     data-lat="@r.LatitudHecho?.ToString(inv)" data-lon="@r.LongitudHecho?.ToString(inv)" data-teselas="@Model.UrlTeselas"
+                     data-clase-marcador="marcador-hecho marcador-hecho--reporte" data-titulo="Lugar del hecho"></div>
+            }
+            <dl class="datos datos--en-linea">
                 <div><dt>Indicada como</dt><dd data-fuente>@fuente</dd></div>
                 @if (r.ConPunto)
                 {
@@ -67,61 +352,12 @@
                     <div><dt>Referencia</dt><dd data-referencia>@referencia</dd></div>
                 }
             </dl>
-            @if (r.ConPunto)
-            {
-                <div id="mapa-hecho" class="mapa mapa--hecho" role="region" aria-label="Mapa con el lugar del hecho"
-                     data-lat="@r.LatitudHecho?.ToString(inv)" data-lon="@r.LongitudHecho?.ToString(inv)" data-teselas="@Model.UrlTeselas"></div>
-            }
-            <p class="texto-secundario">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
-        </section>
-    </div>
-
-    <div class="pila">
-        @* HU14-CA01/CA02/CA05 — inicio de la revisión. *@
-        <section class="superficie" aria-labelledby="titulo-revision">
-            <h2 id="titulo-revision" class="central__titulo">Revisión</h2>
-            @if (Model.ErrorRevision is not null)
-            {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo iniciar la revisión</p>
-                        <p class="aviso__texto">@Model.ErrorRevision</p>
-                    </div>
-                </div>
-            }
-            @if (r.RevisionIniciadaPor is { } responsable && r.RevisionIniciadaEn is { } iniciada)
-            {
-                <dl class="datos" data-revision>
-                    <div><dt>Responsable</dt><dd>@responsable</dd></div>
-                    <div><dt>Iniciada</dt><dd>@Local(iniciada)</dd></div>
-                </dl>
-            }
-            @if (r.PuedeIniciarRevision)
-            {
-                <form method="post" asp-page-handler="IniciarRevision" class="formulario" data-formulario>
-                    <p class="texto-secundario">El reporte pasará a «En revisión» y quedarás como responsable.</p>
-                    <div class="acciones">
-                        <button type="submit" class="boton boton--principal" data-texto-carga="Iniciando…">Iniciar la revisión</button>
-                    </div>
-                </form>
-            }
+            <p class="texto-secundario detalle-caso__nota">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
         </section>
 
-        @* HU14-CA03/CA04 — categoría original y corrección, solo en revisión. *@
-        <section class="superficie" aria-labelledby="titulo-categoria">
-            <h2 id="titulo-categoria" class="central__titulo">Categoría</h2>
-            @if (Model.ErrorCorreccion is not null)
-            {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo corregir la categoría</p>
-                        <p class="aviso__texto">@Model.ErrorCorreccion</p>
-                    </div>
-                </div>
-            }
-            <dl class="datos">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-categoria">
+            <h2 id="titulo-categoria" class="seccion-caso__titulo">Categoría</h2>
+            <dl class="datos datos--en-linea">
                 <div><dt>Original (elegida por el ciudadano)</dt><dd data-categoria-original>@r.CategoriaOriginal</dd></div>
                 <div><dt>Vigente</dt><dd data-categoria-vigente>@r.CategoriaActual</dd></div>
             </dl>
@@ -140,129 +376,36 @@
                     }
                 </ol>
             }
-            @if (r.PuedeCorregirCategoria)
+            @if (r.PuedeIniciarRevision)
             {
-                <form method="post" asp-page-handler="Corregir" class="formulario" data-formulario novalidate>
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="CategoriaId">Corregir a</label>
-                        <select class="campo__control campo__control--seleccion" id="CategoriaId" name="CategoriaId" required
-                                aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
-                                aria-describedby="@(Model.ErrorCategoria is null ? null : "CategoriaId-error")">
-                            @foreach (var categoria in Model.Categorias)
-                            {
-                                <option value="@categoria.Id" selected="@(Model.CategoriaId == categoria.Id)">@categoria.Nombre</option>
-                            }
-                        </select>
-                        @if (Model.ErrorCategoria is not null)
-                        {
-                            <p id="CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
-                        }
-                    </div>
-                    <div class="acciones">
-                        <button type="submit" class="boton boton--principal" data-texto-carga="Guardando…">Corregir la categoría</button>
-                    </div>
-                </form>
-            }
-            else if (!r.PuedeIniciarRevision)
-            {
-                <p class="texto-secundario">La categoría solo se corrige mientras el reporte está «En revisión».</p>
-            }
-            else
-            {
-                <p class="texto-secundario">Inicia la revisión para poder corregir la categoría.</p>
+                <p class="texto-secundario detalle-caso__nota">Podrás corregirla cuando inicies la revisión.</p>
             }
         </section>
 
-        @* HU15–HU17 — admitir, derivar o descartar, solo desde «En revisión». *@
-        <section class="superficie" aria-labelledby="titulo-decision">
-            <h2 id="titulo-decision" class="central__titulo">Decisión</h2>
-            @if (Model.ErrorDecision is not null)
+        <section class="superficie seccion-caso" aria-labelledby="titulo-revision">
+            <h2 id="titulo-revision" class="seccion-caso__titulo">@(r.Decision is not null && siguiente != Accion.VerDecision ? "Revisión y decisión" : "Revisión")</h2>
+            @if (r.RevisionIniciadaPor is { } responsable && r.RevisionIniciadaEn is { } iniciada)
             {
-                <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo registrar la decisión</p>
-                        <p class="aviso__texto">@Model.ErrorDecision</p>
-                    </div>
-                </div>
-            }
-            @if (r.Decision is { } decision)
-            {
-                <dl class="datos" data-decision="@decision.Tipo">
-                    <div><dt>Decisión</dt><dd>@decision.Texto</dd></div>
-                    @if (decision.Destino is { } destino)
-                    {
-                        <div><dt>Destino</dt><dd data-destino>@destino</dd></div>
-                        <div><dt>Acción realizada</dt><dd class="datos__texto">@decision.Accion</dd></div>
-                    }
-                    <div><dt>Motivo</dt><dd class="datos__texto" data-motivo>@decision.Motivo</dd></div>
-                    <div><dt>Responsable</dt><dd>@decision.Operador</dd></div>
-                    <div><dt>Fecha y hora</dt><dd>@Local(decision.En)</dd></div>
+                <dl class="datos datos--en-linea" data-revision>
+                    <div><dt>Responsable</dt><dd>@responsable</dd></div>
+                    <div><dt>Iniciada</dt><dd>@Local(iniciada)</dd></div>
                 </dl>
-                @if (decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Derivacion)
-                {
-                    <p class="texto-secundario">La derivación es solo un registro: el sistema no envía información a la entidad de destino.</p>
-                }
-                @if (r.Estado == Cad.Server.Modulos.Casos.Dominio.EstadoCaso.Pendiente)
-                {
-                    <p data-pendiente-asignacion>Pendiente de asignación. Asígnalo a un sereno disponible desde la <a href="/panel/central#titulo-reportes">central</a>, como un SOS.</p>
-                }
-                else if (r.EnAtencionOperativa)
-                {
-                    <p>En atención por un sereno: estado «@r.TextoEstado». El seguimiento está en la central y en el historial.</p>
-                }
-            }
-            else if (r.PuedeDecidir)
-            {
-                <form method="post" asp-page-handler="Decidir" class="formulario" data-formulario novalidate>
-                    <fieldset class="campo">
-                        <legend class="campo__etiqueta">Decisión</legend>
-                        <div class="opciones">
-                            <label class="opcion"><input type="radio" name="Decision.Tipo" value="Admision" checked="@(Model.Decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Admision)" /> Admitir para atención (pasa a «Pendiente» para asignarlo)</label>
-                            <label class="opcion"><input type="radio" name="Decision.Tipo" value="Derivacion" checked="@(Model.Decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Derivacion)" /> Derivar a otra entidad (solo registro)</label>
-                            <label class="opcion"><input type="radio" name="Decision.Tipo" value="Descarte" checked="@(Model.Decision.Tipo == Cad.Server.Modulos.Casos.Dominio.TipoDecisionReporte.Descarte)" /> Descartar</label>
-                        </div>
-                    </fieldset>
-                    @foreach (var (campo, etiqueta, ayuda, valor, multilinea, maximo) in new[]
-                    {
-                        ("Motivo", "Motivo", "Obligatorio en las tres decisiones. En un descarte es la justificación.", Model.Decision.Motivo, true, Cad.Server.Modulos.Casos.Dominio.DecisionReporte.MaximoMotivo),
-                        ("Destino", "Destino (solo para derivar)", "Entidad o área a la que se deriva. Obligatorio al derivar.", Model.Decision.Destino, false, Cad.Server.Modulos.Casos.Dominio.DecisionReporte.MaximoDestino),
-                        ("Accion", "Acción realizada (solo para derivar)", "Por ejemplo, cómo se comunicó el caso. Obligatoria al derivar.", Model.Decision.Accion, true, Cad.Server.Modulos.Casos.Dominio.DecisionReporte.MaximoAccion),
-                    })
-                    {
-                        var id = $"Decision_{campo}";
-                        var error = Model.ErrorDecisionDe(campo.ToLowerInvariant());
-                        var descrito = error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda";
-                        <div class="campo">
-                            <label class="campo__etiqueta" for="@id">@etiqueta</label>
-                            @if (multilinea)
-                            {
-                                <textarea class="campo__control campo__control--texto" id="@id" name="Decision.@campo" rows="3" maxlength="@maximo"
-                                          aria-invalid="@(error is null ? null : "true")" aria-describedby="@descrito">@valor</textarea>
-                            }
-                            else
-                            {
-                                <input class="campo__control" id="@id" name="Decision.@campo" type="text" value="@valor" maxlength="@maximo"
-                                       aria-invalid="@(error is null ? null : "true")" aria-describedby="@descrito" />
-                            }
-                            <p id="@id-ayuda" class="campo__ayuda">@ayuda</p>
-                            @if (error is not null)
-                            {
-                                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-                            }
-                        </div>
-                    }
-                    <div class="acciones">
-                        <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar la decisión</button>
-                    </div>
-                </form>
             }
             else
             {
-                <p class="texto-secundario">Se decide sobre el reporte cuando está «En revisión».</p>
+                <p class="texto-secundario">Nadie ha iniciado la revisión todavía.</p>
+            }
+            @if (r.Decision is { } decision && siguiente != Accion.VerDecision)
+            {
+                DatosDecision(decision);
             }
         </section>
-    </div>
+
+        @if (Model.Tiempos is { } tiempos)
+        {
+            <partial name="_TiemposCaso" model="tiempos" />
+        }
+    </aside>
 </div>
 
 @section Scripts {

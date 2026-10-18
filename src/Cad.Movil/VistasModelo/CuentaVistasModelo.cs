@@ -14,6 +14,7 @@ public static class Rutas
     public const string MisCasos = "mis-casos"; // HU30
     public const string MiCaso = "mi-caso"; // HU30, con ?id=
     public const string Notificaciones = "notificaciones"; // HU31
+    public const string Acompanamiento = "acompanamiento"; // HU34–HU37
 
     // Cada rol entra en su modo; el servidor solo emite tokens de la app a ciudadano y sereno (HU02).
     public static string InicioDe(string rol) => rol == "Sereno" ? Sereno : Ciudadano;

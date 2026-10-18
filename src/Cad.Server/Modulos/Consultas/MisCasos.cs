@@ -12,7 +12,7 @@ public sealed class ConsultarMisCasos(CadDbContext db)
     // DP05: el estado que ve el titular (definido en el dominio; lo comparten HU30 y HU31).
     public static string EstadoPublico(OrigenCaso origen, EstadoCaso estado) => EstadoPublicoCaso.De(origen, estado);
 
-    private static string TextoOrigen(OrigenCaso origen) => origen == OrigenCaso.Sos ? "SOS" : "Reporte";
+    private static string TextoOrigen(OrigenCaso origen) => OrigenesCaso.Texto(origen);
 
     // CA01: los casos propios, los más recientes primero.
     public async Task<IReadOnlyList<MiCasoResumen>> ListarAsync(Guid ciudadanoId, CancellationToken ct)
@@ -23,6 +23,8 @@ public sealed class ConsultarMisCasos(CadDbContext db)
                            from cierre in cierres.DefaultIfEmpty()
                            join decision in db.DecisionesReporte.AsNoTracking() on caso.Id equals decision.CasoId into decisiones
                            from decision in decisiones.DefaultIfEmpty()
+                           join cancelacion in db.CancelacionesSos.AsNoTracking() on caso.Id equals cancelacion.CasoId into cancelaciones
+                           from cancelacion in cancelaciones.DefaultIfEmpty()
                            orderby caso.RegistradoEn descending
                            select new
                            {
@@ -31,10 +33,11 @@ public sealed class ConsultarMisCasos(CadDbContext db)
                                DecisionTipo = decision == null ? (TipoDecisionReporte?)null : decision.Tipo,
                                Destino = decision == null ? null : decision.Destino,
                                Motivo = decision == null ? null : decision.Motivo,
+                               MotivoCancelacion = cancelacion == null ? null : cancelacion.Motivo,
                            })
                           .ToListAsync(ct);
         return filas.Select(f => new MiCasoResumen(f.Id, TextoOrigen(f.Origen), f.RegistradoEn, EstadoPublico(f.Origen, f.Estado),
-                Resultado(f.Estado, f.ResultadoPublico, f.DecisionTipo, f.Destino, f.Motivo)))
+                Resultado(f.Estado, f.ResultadoPublico, f.DecisionTipo, f.Destino, f.Motivo, f.MotivoCancelacion)))
             .ToList();
     }
 
@@ -49,6 +52,10 @@ public sealed class ConsultarMisCasos(CadDbContext db)
             .Select(c => new { c.CerradoEn, c.ResultadoPublico }).SingleOrDefaultAsync(ct);
         var decision = await db.DecisionesReporte.AsNoTracking().Where(d => d.CasoId == casoId)
             .Select(d => new { d.Tipo, d.DecididaEn, d.Destino, d.Motivo }).SingleOrDefaultAsync(ct);
+        var cancelacion = await db.CancelacionesSos.AsNoTracking().Where(c => c.CasoId == casoId)
+            .Select(c => new { c.CanceladaEn, c.Motivo }).SingleOrDefaultAsync(ct);
+        var evaluacion = await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
+            .Select(e => new MiEvaluacion(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct);
         var revision = await db.EventosCaso.AsNoTracking()
             .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.RevisionIniciada)
             .Select(e => (DateTimeOffset?)e.OcurridoEn).FirstOrDefaultAsync(ct);
@@ -71,19 +78,23 @@ public sealed class ConsultarMisCasos(CadDbContext db)
             avances.Add(new(asignada, EstadosPublicos.EnAtencion, null));
         if (cierre is not null)
             avances.Add(new(cierre.CerradoEn, EstadosPublicos.Cerrado, cierre.ResultadoPublico));
+        if (cancelacion is not null)
+            avances.Add(new(cancelacion.CanceladaEn, EstadosPublicos.Cancelado, $"Motivo: {cancelacion.Motivo}"));
 
         return new MiCasoDetalle(caso.Id, TextoOrigen(caso.Origen), caso.RegistradoEn, EstadoPublico(caso.Origen, caso.Estado),
-            Resultado(caso.Estado, cierre?.ResultadoPublico, decision?.Tipo, decision?.Destino, decision?.Motivo),
-            avances.OrderBy(a => a.En).ToList());
+            Resultado(caso.Estado, cierre?.ResultadoPublico, decision?.Tipo, decision?.Destino, decision?.Motivo, cancelacion?.Motivo),
+            avances.OrderBy(a => a.En).ToList(), evaluacion);
     }
 
-    // CA03 y DP05: el resultado público de un caso finalizado (cerrado, derivado o descartado).
-    private static string? Resultado(EstadoCaso estado, string? resultadoPublico, TipoDecisionReporte? decision, string? destino, string? motivo) =>
+    // CA03 y DP05: el resultado público de un caso finalizado (cerrado, derivado, descartado o cancelado por el titular).
+    private static string? Resultado(EstadoCaso estado, string? resultadoPublico, TipoDecisionReporte? decision, string? destino, string? motivo,
+        string? motivoCancelacion) =>
         estado switch
         {
             EstadoCaso.Cerrada => resultadoPublico,
             EstadoCaso.Derivada when decision == TipoDecisionReporte.Derivacion => $"Derivado a {destino}",
             EstadoCaso.Descartada when decision == TipoDecisionReporte.Descarte => $"Descartado. Motivo: {motivo}",
+            EstadoCaso.Cancelada when motivoCancelacion is not null => $"Cancelado por ti. Motivo: {motivoCancelacion}",
             _ => null,
         };
 }

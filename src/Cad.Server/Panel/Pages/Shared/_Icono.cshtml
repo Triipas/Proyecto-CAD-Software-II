@@ -32,5 +32,45 @@
             <circle cx="12" cy="12" r="9" />
             <path d="m8 12.25 2.75 2.75 5.25-5.5" />
             break;
+        @* Estados de un caso (rediseño CAD v2): se usan en los chips junto al texto del estado. *@
+        case "reloj":
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+            break;
+        case "bandeja":
+            <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+            <path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z" />
+            break;
+        case "lupa":
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+            break;
+        case "asignado":
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="m16 11 2 2 4-4" />
+            break;
+        case "camino":
+            <path d="m3 11 19-9-9 19-2-8-8-2z" />
+            break;
+        case "derivar":
+            <path d="M7 17 17 7M7 7h10v10" />
+            break;
+        case "cancelar":
+            <circle cx="12" cy="12" r="9" />
+            <path d="m4.9 4.9 14.2 14.2" />
+            break;
+        case "documento":
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <path d="M14 2v6h6" />
+            break;
+        case "ruta":
+            <circle cx="6" cy="19" r="3" />
+            <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+            <circle cx="18" cy="5" r="3" />
+            break;
+        case "filtro":
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54z" />
+            break;
     }
 </svg>

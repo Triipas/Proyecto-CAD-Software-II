@@ -1,0 +1,228 @@
+@page "/panel/acompanamientos/{id:guid}"
+@model Cad.Server.Panel.Pages.Acompanamientos.DetalleModel
+@using Cad.Server.Panel.Pages.Acompanamientos
+@using Cad.Server.Modulos.Acompanamiento.Dominio
+@{
+    ViewData["Title"] = "Acompañamiento";
+    var s = Model.Sesion;
+    var zona = Model.ZonaHoraria;
+    var estado = s.Estado switch
+    {
+        EstadoSesion.Activa => s.SinConexion ? "Activa · sin conexión" : "Activa",
+        EstadoSesion.Finalizada => "Finalizada por el ciudadano",
+        _ => "Vencida a los 30 minutos",
+    };
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+}
+<p><a class="enlace-volver" href="@(s.Activa ? "/panel/acompanamientos" : "/panel/acompanamientos/historial")">← @(s.Activa ? "Acompañamientos activos" : "Historial de sesiones")</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <p class="sobretitulo">Operador autorizado · Acompañamiento</p>
+        <h1 class="titulo">@s.Ciudadano</h1>
+        <p class="texto-secundario" data-estado-sesion>@estado</p>
+    </div>
+</div>
+
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <div><p class="aviso__titulo">@Model.Mensaje</p></div>
+    </div>
+}
+
+<div class="central">
+    <section class="superficie" aria-labelledby="titulo-datos">
+        <h2 id="titulo-datos" class="central__titulo">Datos de la sesión</h2>
+        <dl class="datos">
+            <div><dt>Ciudadano</dt><dd>@s.Ciudadano</dd></div>
+            <div><dt>Teléfono</dt><dd>@(s.Telefono ?? "No registrado")</dd></div>
+            <div><dt>Inicio</dt><dd data-inicio>@Formato.Hora(s.IniciadaEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+            <div><dt>Vencimiento</dt><dd data-vencimiento>@Formato.Hora(s.VenceEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+            <div><dt>Cierre</dt><dd data-cierre>@(s.CerradaEn is { } c ? $"{Formato.Hora(c, zona, "dd/MM/yyyy HH:mm:ss")} · {estado}" : "Sin cerrar (activa)")</dd></div>
+            <div><dt>Último envío recibido</dt><dd>@(s.UltimoContactoEn is { } u ? Formato.Hora(u, zona, "dd/MM/yyyy HH:mm:ss") : "—")</dd></div>
+        </dl>
+        @if (s.SinConexion)
+        {
+            <p class="aviso aviso--advertencia" data-sin-conexion-aviso>
+                <partial name="_Icono" model="@("advertencia")" />
+                <span>Sin conexión: no llega ningún envío del dispositivo desde hace más de @((int)Model.Umbral.TotalSeconds) s.</span>
+            </p>
+        }
+    </section>
+
+    <section class="superficie central__mapa" aria-labelledby="titulo-recorrido">
+        <h2 id="titulo-recorrido" class="central__titulo">Recorrido</h2>
+        @if (s.PosicionesEliminadasEn is { } eliminadas)
+        {
+            <p class="aviso aviso--informacion" data-posiciones-eliminadas>
+                <partial name="_Icono" model="@("informacion")" />
+                <span>Las posiciones se eliminaron el @Formato.Hora(eliminadas, zona, "dd/MM/yyyy HH:mm") al cumplirse el plazo de conservación (@Model.ConservacionDias días, DP22). Se conservan los datos de la sesión.</span>
+            </p>
+        }
+        else if (s.Posiciones.Count == 0)
+        {
+            <p class="texto-secundario" data-sin-posiciones>Sin posiciones registradas.</p>
+        }
+        else
+        {
+            <div id="mapa-recorrido" class="mapa mapa--recorrido" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"
+                 data-puntos="@string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}"))"
+                 data-actual="@(s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
+            <div class="tabla-contenedor">
+                <table class="tabla" data-posiciones>
+                    <caption>@s.Posiciones.Count @(s.Posiciones.Count == 1 ? "posición" : "posiciones"), de la más reciente a la más antigua</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Obtenida</th>
+                            <th scope="col">Precisión</th>
+                            <th scope="col">Recibida</th>
+                            <th scope="col">Antigüedad</th>
+                            <th scope="col">Coordenadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < s.Posiciones.Count; i++)
+                        {
+                            var p = s.Posiciones[i];
+                            var actual = i == 0 && s.Activa && !p.Desactualizada && !s.SinConexion;
+                            <tr data-posicion data-desactualizada="@(p.Desactualizada ? "true" : "false")">
+                                <td>@Formato.Hora(p.ObtenidaEn, zona) @(actual ? "· actual" : "")</td>
+                                <td>± @Formato.Numero(p.PrecisionMetros, "0") m</td>
+                                <td>@Formato.Hora(p.RecibidaEn, zona)</td>
+                                <td>@(s.Activa ? Formato.Antiguedad(p.Antiguedad) : "—")@(s.Activa && p.Desactualizada ? " · desactualizada" : "")</td>
+                                <td>@Formato.Numero(p.Latitud, "0.00000"), @Formato.Numero(p.Longitud, "0.00000")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    @* HU40 y HU41 — confirmación de bienestar: se pide durante una sesión activa, sin crear un SOS ni un despacho. *@
+    <section class="superficie" aria-labelledby="titulo-bienestar" data-bienestar>
+        <h2 id="titulo-bienestar" class="central__titulo">Confirmación de bienestar</h2>
+        @if (Model.ErrorConfirmacion is { } errorConfirmacion)
+        {
+            <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar data-error-confirmacion>
+                <partial name="_Icono" model="@("error")" />
+                <p class="aviso__texto">@errorConfirmacion</p>
+            </div>
+        }
+        @if (s.Activa && !s.ConfirmacionPendiente)
+        {
+            <p class="texto-secundario">Pide al ciudadano que confirme cómo se encuentra. Verá «Estoy bien» y «Necesito ayuda»; solo «Necesito ayuda» emite un SOS (o se vincula con el que ya tenga).</p>
+            <form method="post" asp-page-handler="SolicitarConfirmacion" class="formulario" data-formulario>
+                <input type="hidden" name="IdSolicitudConfirmacion" value="@Model.IdSolicitudConfirmacion" />
+                <div class="acciones">
+                    <button type="submit" class="boton boton--secundario" data-texto-carga="Solicitando…">Solicitar confirmación</button>
+                </div>
+            </form>
+        }
+        else if (s.Activa)
+        {
+            <p class="texto-secundario" data-confirmacion-en-espera>Hay una confirmación esperando respuesta: no se puede pedir otra hasta que el ciudadano responda (DP20).</p>
+        }
+        @if (s.Confirmaciones is { Count: > 0 } confirmaciones)
+        {
+            <ol class="historial" data-confirmaciones>
+                @foreach (var conf in confirmaciones)
+                {
+                    <li class="historial__elemento" data-confirmacion="@conf.Id" data-respuesta="@(conf.Respuesta?.ToString() ?? "Pendiente")">
+                        <p class="historial__cabecera">
+                            <span class="estado @(conf.Respuesta == RespuestaBienestar.NecesitoAyuda ? "estado--sin-contacto" : conf.Pendiente ? "estado--inactiva" : "estado--activa")">@conf.TextoRespuesta</span>
+                            <span class="texto-secundario">Solicitada a las @Formato.Hora(conf.SolicitadaEn, zona) por @conf.Operador</span>
+                        </p>
+                        <p class="historial__texto">
+                            @(conf.PresentadaEn is { } presentada ? $"Mostrada al ciudadano a las {Formato.Hora(presentada, zona)}." : "Aún no se mostró al ciudadano.")
+                            @if (conf.RespondidaEn is { } respondida)
+                            {
+                                <span>Respondida a las @Formato.Hora(respondida, zona).</span>
+                            }
+                            @if (conf.CasoId is { } caso)
+                            {
+                                <a href="/panel/central/sos/@caso">Ver el SOS</a>
+                            }
+                        </p>
+                    </li>
+                }
+            </ol>
+        }
+        else if (!s.Activa)
+        {
+            <p class="texto-secundario">No se pidieron confirmaciones en esta sesión.</p>
+        }
+    </section>
+
+    @* HU42 y HU43 — avisos de esta sesión. *@
+    <section class="superficie" aria-labelledby="titulo-avisos" data-avisos-sesion="@Model.Avisos.Count">
+        <h2 id="titulo-avisos" class="central__titulo">Avisos de la sesión</h2>
+        @if (Model.Avisos.Count == 0)
+        {
+            <p class="texto-secundario">Sin avisos.</p>
+        }
+        else
+        {
+            <ul class="lista-acompanamientos">
+                @foreach (var aviso in Model.Avisos)
+                {
+                    <li data-aviso="@aviso.Id" data-estado-aviso="@aviso.Estado">
+                        <strong>@aviso.TextoRegla</strong> · @Formato.Hora(aviso.GeneradoEn, zona) · @aviso.TextoEstado
+                        · <a href="/panel/avisos/@aviso.Id">Ver el aviso</a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    @* HU39-B: conservación del recorrido (DP22: 30 días tras el cierre; conservación excepcional vinculada con un caso). *@
+    <section class="superficie" aria-labelledby="titulo-conservacion" data-conservacion>
+        <h2 id="titulo-conservacion" class="central__titulo">Conservación del recorrido</h2>
+        @if (s.Conservacion is { } conservada)
+        {
+            <dl class="datos" data-conservacion-registrada>
+                <div><dt>Vinculado con el caso</dt><dd><a href="/panel/casos/@conservada.CasoId/historial">@conservada.CasoId</a></dd></div>
+                <div><dt>Finalidad</dt><dd>@conservada.Finalidad</dd></div>
+                <div><dt>Registrada por</dt><dd>@conservada.Operador</dd></div>
+                <div><dt>Fecha y hora</dt><dd>@Formato.Hora(conservada.RegistradaEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+            </dl>
+            <p class="texto-secundario">Conservación excepcional: estas posiciones no se eliminan al cumplirse el plazo.</p>
+        }
+        else if (s.PosicionesEliminadasEn is null)
+        {
+            <p class="texto-secundario">@(s.Activa ? "Cuando la sesión termine, sus" : "Sus") posiciones se eliminarán @Model.ConservacionDias días después del cierre. Para conservarlas, vincúlalas con un caso e indica la finalidad.</p>
+            <form method="post" asp-page-handler="Conservar" class="formulario" data-formulario novalidate>
+                <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+                <partial name="_Campo" model="@(new Cad.Server.Panel.Pages.CampoFormulario("Conservacion_CasoId", "Conservacion.CasoId", "Identificador del caso", Valor: Model.Conservacion.CasoId?.ToString(), Error: Model.ErrorDe("casoId"), Ayuda: "El SOS o reporte relacionado (lo encuentras en «Casos»).", Autocompletar: "off"))" />
+                <div class="campo">
+                    <label class="campo__etiqueta" for="Conservacion_Finalidad">Finalidad</label>
+                    <textarea class="campo__control campo__control--texto" id="Conservacion_Finalidad" name="Conservacion.Finalidad" rows="3" required
+                              maxlength="@ConservacionRecorrido.MaximoFinalidad" aria-invalid="@(Model.ErrorDe("finalidad") is null ? null : "true")"
+                              aria-describedby="@(Model.ErrorDe("finalidad") is null ? null : "Conservacion_Finalidad-error")">@Model.Conservacion.Finalidad</textarea>
+                    @if (Model.ErrorDe("finalidad") is { } error)
+                    {
+                        <p id="Conservacion_Finalidad-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                    }
+                </div>
+                <div class="acciones">
+                    <button type="submit" class="boton boton--secundario" data-texto-carga="Guardando…">Conservar el recorrido</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <p class="texto-secundario">Ya no hay posiciones que conservar.</p>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    @if (s.Posiciones.Count > 0)
+    {
+        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+        <script src="~/js/recorrido.js" asp-append-version="true"></script>
+    }
+}

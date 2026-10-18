@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Cad.Server.Panel.Pages.Admin.Cuentas;
 
-// HU04-CA02, CA05, CA07: modificación de los datos permitidos de una cuenta institucional.
+// HU04-CA02, CA05, CA07: modificación de los datos permitidos de una cuenta institucional. HU05: desactivación.
 [Authorize(Policy = Politicas.Administrador)]
-public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCuentaInstitucional modificar) : PageModel
+public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCuentaInstitucional modificar,
+    DesactivarCuentaInstitucional desactivar) : PageModel
 {
     [BindProperty]
     public FormularioModificacion Formulario { get; set; } = new();
@@ -57,6 +58,18 @@ public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCue
                 Errores = new() { ["correo"] = ["Ya existe otra cuenta con ese correo electrónico."] };
                 return Page();
         }
+    }
+
+    // HU05-CA01: la cuenta pasa a «Desactivada». CA05: solo el administrador (política de la página).
+    public async Task<IActionResult> OnPostDesactivarAsync(Guid id, CancellationToken ct)
+    {
+        if (await desactivar.EjecutarAsync(id, User.IdUsuario(), ct) is not ResultadoCuentaInstitucional.Correcto
+            || await consultar.ObtenerAsync(id, ct) is not { } cuenta)
+            return NotFound();
+
+        TempData[nameof(IndexModel.Mensaje)] =
+            $"Se desactivó la cuenta de {cuenta.Nombres} {cuenta.Apellidos}: su sesión abierta se cerró y ya no puede iniciar sesión. Si tenía un caso asignado, volvió a «Pendiente». Sus registros se conservan.";
+        return RedirectToPage("/Admin/Cuentas/Index");
     }
 
     public sealed class FormularioModificacion
