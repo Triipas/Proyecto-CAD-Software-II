@@ -24,33 +24,41 @@
     @await RenderSectionAsync("Estilos", required: false)
 </head>
 <body>
-    <header class="encabezado">
-        <div class="encabezado__contenido">
-            <div class="marca">
-                <partial name="_Icono" model="@("escudo")" />
-                <div>
-                    <p class="marca__nombre">Central CAD</p>
-                    <p class="marca__aviso">MVP académico · datos simulados</p>
-                </div>
-            </div>
-            @if (enlaces.Length > 0)
-            {
-                <nav class="encabezado__navegacion" aria-label="Secciones del panel">
+    @* Barra superior del rediseño CAD v2 (dirección «Mapa protagonista»): marca, secciones y sesión.
+       Por debajo de 1100 px las secciones pasan a un menú desplegable (data-menu, formulario.js). *@
+    <header class="barra" data-barra>
+        @if (enlaces.Length > 0)
+        {
+            <button type="button" class="barra__menu" aria-expanded="false" aria-controls="secciones-panel" data-menu>
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                <span class="visualmente-oculto">Secciones del panel</span>
+            </button>
+        }
+        <div class="barra__marca">
+            <span class="barra__escudo"><partial name="_Icono" model="@("escudo")" /></span>
+            <span class="barra__nombre"><b>Central CAD</b><small>MVP académico · datos simulados</small></span>
+        </div>
+        @if (enlaces.Length > 0)
+        {
+            <nav class="barra__navegacion" id="secciones-panel" aria-label="Secciones del panel">
+                <ul class="barra__secciones">
                     @foreach (var (href, texto) in enlaces)
                     {
-                        <a href="@href" aria-current="@(ruta.StartsWith(href) ? "page" : null)">@texto</a>
+                        <li><a class="barra__seccion" href="@href" aria-current="@(ruta.StartsWith(href) ? "page" : null)">@texto</a></li>
                     }
-                </nav>
-            }
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <form method="post" asp-page="/Salir" class="encabezado__sesion">
-                    <span>@User.FindFirstValue(Autenticacion.ReclamoNombre)</span>
-                    <span class="etiqueta-rol">@rol</span>
-                    <button type="submit" class="boton boton--sobre-marino">Salir</button>
-                </form>
-            }
-        </div>
+                </ul>
+            </nav>
+        }
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            var nombre = User.FindFirstValue(Autenticacion.ReclamoNombre) ?? "";
+            var iniciales = string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+            <form method="post" asp-page="/Salir" class="barra__sesion">
+                <span class="barra__avatar" aria-hidden="true">@iniciales</span>
+                <span class="barra__persona"><b>@nombre</b><span>@rol</span></span>
+                <button type="submit" class="boton boton--sobre-marino boton--compacto">Salir</button>
+            </form>
+        }
     </header>
     <main class="pagina @ViewData["ClasePagina"]">
         @RenderBody()

@@ -1,0 +1,614 @@
+/*
+  Central de monitoreo «Mapa protagonista» (rediseño CAD v2, fase 3). Solo la carga /panel/central.
+  El mapa ocupa toda la pantalla bajo la barra; la cola (izquierda) y los serenos (derecha) flotan encima.
+  Por debajo de 760 px los paneles se apilan bajo el mapa.
+*/
+
+.pagina--central {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.central {
+  position: relative;
+  height: calc(100vh - var(--alto-barra));
+  min-height: 38rem;
+  overflow: hidden;
+}
+
+.mapa--central {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  min-height: 0;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+/* ── Paneles flotantes ─────────────────────────────────── */
+.panel-flotante {
+  position: absolute;
+  z-index: 500; /* sobre las capas del mapa, bajo sus controles de zoom (1000) */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+  transition: transform var(--duracion-base) var(--curva-movimiento);
+}
+
+.cola {
+  top: var(--espacio-4);
+  bottom: var(--espacio-4);
+  left: var(--espacio-4);
+  width: 23.5rem;
+}
+
+.serenos-flotante {
+  top: var(--espacio-4);
+  right: var(--espacio-4);
+  width: 19.5rem;
+  max-height: calc(100% - 6rem);
+}
+
+.panel-flotante__cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-3) var(--espacio-2) var(--espacio-4);
+}
+
+.panel-flotante__titulo {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--color-marino);
+}
+
+.panel-flotante__plegar {
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radio-control);
+  color: var(--color-texto-secundario);
+  background: transparent;
+  cursor: pointer;
+}
+
+.panel-flotante__plegar .icono {
+  transition: transform var(--duracion-base) var(--curva-movimiento);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel-flotante__plegar:hover {
+    color: var(--color-texto);
+    background: var(--color-superficie-hundida);
+  }
+}
+
+.panel-flotante__cuerpo {
+  display: grid;
+  align-content: start;
+  gap: var(--espacio-4);
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--espacio-3) var(--espacio-4) var(--espacio-4);
+  transition: opacity var(--duracion-rapida) ease;
+}
+
+/* Plegado: el panel se desliza hacia su borde y deja visible el botón para volver a abrirlo. */
+.cola.panel-flotante--plegado {
+  transform: translateX(calc(-100% + 3.25rem));
+}
+
+.serenos-flotante.panel-flotante--plegado {
+  transform: translateX(calc(100% - 3.25rem));
+}
+
+.panel-flotante--plegado .panel-flotante__cuerpo {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.panel-flotante--plegado .panel-flotante__plegar .icono {
+  transform: rotate(180deg);
+}
+
+/* ── Contenido de la cola ──────────────────────────────── */
+.central__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.central .conexion {
+  padding: var(--espacio-1) var(--espacio-3);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+}
+
+.central .conexion .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.central__urgente,
+.central__reportes {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
+.central__titulo {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-texto);
+}
+
+.central__contador {
+  min-width: 1.5rem;
+  padding: 0 var(--espacio-2);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  line-height: 1.5rem;
+  text-align: center;
+  color: var(--color-sobre-primario);
+  background: var(--color-urgente);
+}
+
+.central__contador--reportes {
+  background: var(--color-reporte);
+}
+
+.central__ayuda {
+  margin: 0;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.central__avisos {
+  position: absolute;
+  z-index: 600;
+  top: var(--espacio-4);
+  left: 50%;
+  width: min(30rem, calc(100% - 2rem));
+  transform: translateX(-50%);
+  display: grid;
+  gap: var(--espacio-2);
+}
+
+.central__avisos .aviso {
+  box-shadow: var(--sombra-2);
+}
+
+/* Tarjetas de caso */
+.central .sos {
+  gap: var(--espacio-1);
+  padding: var(--espacio-3);
+  border-radius: var(--radio-superficie);
+  transition: border-color var(--duracion-rapida) ease, box-shadow var(--duracion-rapida) ease;
+}
+
+.central .sos:not(.sos--reporte) {
+  border-color: var(--color-urgente-borde);
+  background: var(--color-urgente-fondo);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .central .sos:hover {
+    box-shadow: var(--sombra-2);
+  }
+}
+
+.central .sos--seleccionado {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: inset 0 0 0 1px var(--color-primario), var(--sombra-2);
+}
+
+/* SOS nuevo: entra con un desplazamiento corto y queda marcado hasta que alguien lo mira. */
+.central .sos--nuevo {
+  animation: sos-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+.central .sos--nuevo .sos__cabecera::after {
+  content: "Nuevo";
+  margin-left: 0;
+  padding: 0 var(--espacio-2);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--color-sobre-primario);
+  background: var(--color-urgente);
+}
+
+.central .sos__cabecera {
+  gap: var(--espacio-2);
+}
+
+.central .sos__estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--espacio-2);
+  border: 1px solid var(--color-urgente-borde);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  line-height: 1.375rem;
+  color: var(--color-urgente);
+  background: var(--color-superficie);
+}
+
+.central .sos--reporte .sos__estado {
+  border-color: var(--color-advertencia-borde);
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
+}
+
+.central .sos__hora {
+  margin-left: auto;
+  font-size: var(--texto-xs);
+}
+
+.central .etiqueta-urgente,
+.central .etiqueta-reporte {
+  font-size: var(--texto-xs);
+  letter-spacing: 0.02em;
+}
+
+.central .sos__ciudadano {
+  font-size: var(--texto-md);
+}
+
+.central .sos__tipo,
+.central .sos__ubicacion {
+  font-size: var(--texto-xs);
+}
+
+.central .sos__ubicacion {
+  min-height: 1.75rem;
+}
+
+.central .sos__acciones {
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-1);
+}
+
+/* Acciones como botones compactos: el enlace (verificar o abrir) es la acción principal. */
+.central .sos__detalle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 var(--espacio-3);
+  border: 1px solid var(--color-borde-control);
+  border-radius: var(--radio-control);
+  font: var(--peso-medio) var(--texto-sm)/1 var(--fuente);
+  text-decoration: none;
+  color: var(--color-marino);
+  background: var(--color-superficie);
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) ease;
+}
+
+.central a.sos__detalle {
+  border-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .central a.sos__detalle:hover {
+    background: var(--color-primario-hover);
+  }
+
+  .central button.sos__detalle:hover {
+    background: var(--color-tenue);
+  }
+}
+
+.central .estado-vacio {
+  padding: var(--espacio-4) var(--espacio-2);
+}
+
+/* Serenos */
+.central .lista-serenos {
+  gap: var(--espacio-1);
+}
+
+.central .sereno {
+  gap: 2px;
+  padding: var(--espacio-2);
+  border-color: transparent;
+  border-radius: var(--radio-control);
+}
+
+.central .sereno--seleccionado,
+.central .sereno--sugerido {
+  outline: none;
+  background: var(--color-tenue);
+}
+
+.central .sereno__nombre {
+  font-size: var(--texto-sm);
+}
+
+.central .sereno .estado,
+.central .sereno__disponibilidad,
+.central .sereno__caso {
+  font-size: var(--texto-xs);
+}
+
+.central .sereno .estado .icono {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.central .sereno__distancia {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+}
+
+/* ── Leyenda del mapa: cada capa se activa o se oculta ─── */
+.leyenda-mapa {
+  position: absolute;
+  z-index: 500;
+  left: 28.5rem;
+  bottom: var(--espacio-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-1);
+  padding: var(--espacio-1);
+  border-radius: 999px;
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-2);
+  font-size: var(--texto-xs);
+}
+
+.leyenda-mapa button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 2rem;
+  padding: 0 var(--espacio-3);
+  border: 0;
+  border-radius: 999px;
+  font: var(--peso-medio) var(--texto-xs)/1 var(--fuente);
+  color: var(--color-texto);
+  background: var(--color-superficie-hundida);
+  cursor: pointer;
+}
+
+.leyenda-mapa button[aria-pressed="false"] {
+  color: var(--color-texto-terciario);
+  background: transparent;
+  text-decoration: line-through;
+}
+
+.leyenda-mapa span {
+  padding: 0 var(--espacio-2);
+  color: var(--color-texto-secundario);
+}
+
+.leyenda-mapa__muestra {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 3px;
+}
+
+.leyenda-mapa__muestra--sos { background: var(--mapa-sos); }
+.leyenda-mapa__muestra--reporte { background: var(--mapa-reporte); border-radius: 999px; }
+.leyenda-mapa__muestra--sereno { background: var(--mapa-sereno); clip-path: polygon(50% 0, 100% 22%, 100% 60%, 50% 100%, 0 60%, 0 22%); }
+
+/* Capas ocultas desde la leyenda. */
+.central--sin-sos .marcador-sos,
+.central--sin-reporte .marcador-reporte,
+.central--sin-sereno .marcador-sereno {
+  display: none;
+}
+
+/* ── Marcadores: la forma distingue la entidad; el color, su estado ── */
+.marcador-sos {
+  position: relative;
+  border-radius: var(--radio-control);
+  background: var(--mapa-sos);
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(13, 27, 51, 0.35);
+  color: #FFFFFF;
+}
+
+.marcador-sos .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Pulso del SOS pendiente sin abrir: la única animación persistente de la central. */
+.marcador-sos--pulso::before {
+  content: "";
+  position: absolute;
+  inset: -0.5rem;
+  border: 2px solid var(--mapa-sos);
+  border-radius: 0.75rem;
+  animation: pulso-marcador var(--pulso-sos) var(--curva-salida) infinite;
+  pointer-events: none;
+}
+
+.marcador-reporte {
+  border-radius: 999px;
+  background: var(--mapa-reporte);
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(13, 27, 51, 0.35);
+}
+
+.marcador-caso--en-curso.marcador-sos .icono {
+  color: var(--mapa-sos);
+}
+
+.marcador-sereno,
+.marcador-sereno--no-disponible {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 2px 3px rgba(13, 27, 51, 0.35));
+}
+
+.marcador-sereno svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.etiqueta-despacho {
+  padding: 0.125rem var(--espacio-2);
+  border: 0;
+  border-radius: 999px;
+  font: var(--peso-medio) var(--texto-xs)/1.5 var(--fuente);
+  color: #FFFFFF;
+  background: var(--color-marino);
+  box-shadow: none;
+}
+
+.etiqueta-despacho::before {
+  display: none;
+}
+
+/* ── Diálogo modal de asignación (HU20) ────────────────── */
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: var(--espacio-4);
+  background: var(--velo-dialogo);
+  animation: velo-entra var(--duracion-base) ease both;
+}
+
+.dialogo {
+  width: min(30rem, 100%);
+  display: grid;
+  gap: var(--espacio-4);
+  padding: var(--espacio-6);
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+  animation: dialogo-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+.dialogo__titulo {
+  margin: 0;
+  font-size: var(--texto-xl);
+  line-height: var(--interlineado-titulo);
+  letter-spacing: -0.01em;
+  color: var(--color-marino);
+  text-wrap: balance;
+}
+
+.dialogo__texto {
+  color: var(--color-texto-secundario);
+}
+
+.dialogo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+}
+
+@keyframes sos-entra {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pulso-marcador {
+  from { opacity: 0.7; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.6); }
+}
+
+@keyframes velo-entra {
+  from { opacity: 0; }
+}
+
+@keyframes dialogo-entra {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Pantallas estrechas: el mapa arriba y los paneles apilados debajo ── */
+@media (max-width: 47.5rem) {
+  .central {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: grid;
+    gap: var(--espacio-3);
+    padding-bottom: var(--espacio-6);
+  }
+
+  .mapa--central {
+    position: relative;
+    height: 46vh;
+  }
+
+  .panel-flotante {
+    position: relative;
+    inset: auto;
+    width: auto;
+    max-height: none;
+    margin: 0 var(--espacio-3);
+  }
+
+  .cola.panel-flotante--plegado,
+  .serenos-flotante.panel-flotante--plegado {
+    transform: none;
+  }
+
+  .panel-flotante__plegar {
+    display: none;
+  }
+
+  .leyenda-mapa {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    margin: 0 var(--espacio-3);
+    border-radius: var(--radio-superficie);
+  }
+
+  .central__avisos {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: auto;
+    margin: 0 var(--espacio-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .central .sos--nuevo,
+  .velo,
+  .dialogo {
+    animation: none;
+  }
+
+  /* Sin pulso: un anillo fijo marca el SOS sin abrir. */
+  .marcador-sos--pulso::before {
+    animation: none;
+    opacity: 1;
+  }
+}

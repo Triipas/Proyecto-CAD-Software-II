@@ -2,116 +2,146 @@
 @model Cad.Server.Panel.Pages.Central.IndexModel
 @{
     ViewData["Title"] = "Central";
+    // Dirección «Mapa protagonista» (rediseño CAD v2, fase 3): el mapa ocupa la pantalla y el trabajo flota encima.
+    ViewData["ClasePagina"] = "pagina--central";
 }
 @section Estilos {
     <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/central.css" asp-append-version="true" />
 }
-<div class="pagina__encabezado">
-    <div>
-        <p class="sobretitulo">Operador</p>
-        <h1 class="titulo">Central de monitoreo</h1>
+<h1 class="visualmente-oculto titulo">Central de monitoreo</h1>
+
+<div class="central">
+    <div id="mapa" class="mapa mapa--central" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+         data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de casos y serenos con ubicación"></div>
+
+    @if (Model.Mensaje is not null || Model.ErrorAccion is not null)
+    {
+        <div class="central__avisos">
+            @if (Model.Mensaje is not null)
+            {
+                <div class="aviso aviso--exito central__aviso" role="status" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("exito")" />
+                    <div>
+                        <p class="aviso__titulo">@Model.Mensaje</p>
+                        <p class="aviso__texto">@Model.DetalleMensaje</p>
+                    </div>
+                </div>
+            }
+            @if (Model.ErrorAccion is not null)
+            {
+                <div class="aviso aviso--error central__aviso" role="alert" tabindex="-1" data-enfocar>
+                    <partial name="_Icono" model="@("error")" />
+                    <div>
+                        <p class="aviso__titulo">No se pudo asignar el caso</p>
+                        <p class="aviso__texto">@Model.ErrorAccion</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Cola de trabajo: SOS (siempre arriba) y reportes admitidos, en un panel flotante plegable. *@
+    <section class="panel-flotante cola" id="panel-cola" aria-labelledby="titulo-cola" data-panel>
+        <div class="panel-flotante__cabecera">
+            <h2 class="panel-flotante__titulo" id="titulo-cola">Cola de trabajo</h2>
+            <button type="button" class="panel-flotante__plegar" aria-expanded="true" aria-controls="cuerpo-cola" data-plegar>
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+                <span class="visualmente-oculto">Plegar la cola de trabajo</span>
+            </button>
+        </div>
+        <div class="panel-flotante__cuerpo" id="cuerpo-cola">
+            <div class="central__controles">
+                @* Estado del canal en tiempo real: icono + texto + color (nunca solo color). *@
+                <p class="conexion conexion--conectando" role="status" data-conexion data-estado="conectando">
+                    <span data-icono="conectando"><partial name="_Icono" model="@("informacion")" /></span>
+                    <span data-icono="conectado"><partial name="_Icono" model="@("exito")" /></span>
+                    <span data-icono="reconectando"><partial name="_Icono" model="@("advertencia")" /></span>
+                    <span data-icono="desconectado"><partial name="_Icono" model="@("error")" /></span>
+                    <span data-texto>Conectando al tiempo real…</span>
+                </p>
+                <button type="button" class="boton boton--secundario boton--compacto" aria-pressed="false" data-activar-sonido>
+                    Activar avisos sonoros
+                </button>
+            </div>
+
+            <section class="central__urgente" aria-labelledby="titulo-urgente" data-avisos-sonoros="0"
+                     data-medicion="@(Model.MedicionActiva ? "true" : "false")">
+                <h3 id="titulo-urgente" class="central__titulo">
+                    Atención urgente · SOS <span class="central__contador" data-contador>@Model.Pendientes.Count</span>
+                </h3>
+                <p class="central__ayuda">Del más reciente al más antiguo.</p>
+                @* HU09-CA02 — aviso de un SOS cancelado por su titular (lo muestra central.js al recibirlo). *@
+                <div class="aviso aviso--advertencia central__aviso" role="status" data-aviso-cancelacion hidden>
+                    <partial name="_Icono" model="@("advertencia")" />
+                    <p class="aviso__texto"><span data-texto></span> <a href="#">Ver historial</a></p>
+                </div>
+                <div data-region-lista>
+                    <partial name="_ListaSos" model="@Model.Lista" />
+                </div>
+                <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
+            </section>
+
+            @* HU15-CA02 y HU20-CA07 — reportes admitidos, separados de los SOS (no son urgentes) y asignables igual. *@
+            <section class="central__reportes" aria-labelledby="titulo-reportes">
+                <h3 id="titulo-reportes" class="central__titulo">
+                    Reportes admitidos <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
+                </h3>
+                <p class="central__ayuda">Revisados y pendientes de asignar. No son urgentes.</p>
+                <div data-region-reportes>
+                    <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
+                </div>
+            </section>
+        </div>
+    </section>
+
+    @* HU19 — estado y disponibilidad de los serenos, actualizados sin recargar. *@
+    <section class="panel-flotante serenos-flotante" id="panel-serenos" aria-labelledby="titulo-serenos" data-panel>
+        <div class="panel-flotante__cabecera">
+            <h2 class="panel-flotante__titulo" id="titulo-serenos">Serenos</h2>
+            <button type="button" class="panel-flotante__plegar" aria-expanded="true" aria-controls="cuerpo-serenos" data-plegar>
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+                <span class="visualmente-oculto">Plegar la lista de serenos</span>
+            </button>
+        </div>
+        <div class="panel-flotante__cuerpo" id="cuerpo-serenos">
+            <p class="central__ayuda">Disponible: operativo y sin caso asignado.</p>
+            <div data-region-serenos>
+                <partial name="_ListaSerenos" model="@Model.ListaDeSerenos" />
+            </div>
+        </div>
+    </section>
+
+    @* Leyenda del mapa: cada capa se puede ocultar. Relleno = sin asignar; borde = en curso. *@
+    <div class="leyenda-mapa" role="group" aria-label="Capas del mapa">
+        <button type="button" aria-pressed="true" data-capa="sos"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--sos"></i>SOS</button>
+        <button type="button" aria-pressed="true" data-capa="reporte"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--reporte"></i>Reportes</button>
+        <button type="button" aria-pressed="true" data-capa="sereno"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--sereno"></i>Serenos</button>
+        <span>Relleno: sin asignar · Borde: en curso</span>
     </div>
-    <div class="central__controles">
-        @* Estado del canal en tiempo real: icono + texto + color (nunca solo color). *@
-        <p class="conexion conexion--conectando" role="status" data-conexion data-estado="conectando">
-            <span data-icono="conectando"><partial name="_Icono" model="@("informacion")" /></span>
-            <span data-icono="conectado"><partial name="_Icono" model="@("exito")" /></span>
-            <span data-icono="reconectando"><partial name="_Icono" model="@("advertencia")" /></span>
-            <span data-icono="desconectado"><partial name="_Icono" model="@("error")" /></span>
-            <span data-texto>Conectando al tiempo real…</span>
-        </p>
-        <button type="button" class="boton boton--secundario" aria-pressed="false" data-activar-sonido>
-            Activar avisos sonoros
-        </button>
+
+    <div data-region-casos-mapa>
+        <partial name="_CasosMapa" model="@Model.CasosEnMapa" />
     </div>
+    <noscript><p class="central__sin-js">El mapa y los avisos en tiempo real necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
 </div>
 
-@if (Model.Mensaje is not null)
-{
-    <div class="aviso aviso--exito central__aviso" role="status" tabindex="-1" data-enfocar>
-        <partial name="_Icono" model="@("exito")" />
-        <div>
-            <p class="aviso__titulo">@Model.Mensaje</p>
-            <p class="aviso__texto">@Model.DetalleMensaje</p>
-        </div>
-    </div>
-}
-@if (Model.ErrorAccion is not null)
-{
-    <div class="aviso aviso--error central__aviso" role="alert" tabindex="-1" data-enfocar>
-        <partial name="_Icono" model="@("error")" />
-        <div>
-            <p class="aviso__titulo">No se pudo asignar el caso</p>
-            <p class="aviso__texto">@Model.ErrorAccion</p>
-        </div>
-    </div>
-}
-
-@* HU20 — confirmación de la asignación desde el mapa: el panel la muestra al elegir «Asignar al caso
-   seleccionado» en un sereno disponible (un SOS o un reporte admitido). Es un formulario normal (PRG) con token antifalsificación. *@
-<form method="post" class="aviso aviso--informacion central__confirmacion" data-confirmar-asignacion data-formulario hidden novalidate>
+@* HU20 — confirmación de la asignación: diálogo modal que abre «Asignar al caso seleccionado» en un sereno disponible
+   (un SOS o un reporte admitido). Es un formulario normal (PRG) con token antifalsificación. *@
+<form method="post" class="velo" data-confirmar-asignacion data-formulario hidden novalidate>
     @Html.AntiForgeryToken()
     <input type="hidden" name="Asignacion.SerenoId" data-campo-sereno />
     <input type="hidden" name="Asignacion.IdSolicitud" data-campo-solicitud />
     <input type="hidden" name="Asignacion.Volver" value="central" />
-    <partial name="_Icono" model="@("informacion")" />
-    <div class="pila">
-        <p class="aviso__titulo" data-texto-confirmacion></p>
-        <div class="acciones">
+    <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="titulo-asignacion">
+        <h2 class="dialogo__titulo" id="titulo-asignacion" data-texto-confirmacion></h2>
+        <p class="dialogo__texto">El sereno recibirá el despacho en su teléfono.</p>
+        <div class="dialogo__acciones">
             <button type="button" class="boton boton--secundario" data-cancelar-asignacion>Cancelar</button>
             <button type="submit" class="boton boton--principal" data-texto-carga="Asignando…">Confirmar asignación</button>
         </div>
     </div>
 </form>
-
-<div class="central">
-    <section class="superficie central__urgente" aria-labelledby="titulo-urgente" data-avisos-sonoros="0"
-             data-medicion="@(Model.MedicionActiva ? "true" : "false")">
-        <h2 id="titulo-urgente" class="central__titulo">
-            Atención urgente · SOS <span class="central__contador" data-contador>@Model.Pendientes.Count</span>
-        </h2>
-        <p class="texto-secundario">SOS pendientes, del más reciente al más antiguo. Se separan de reportes y acompañamientos.</p>
-        @* HU09-CA02 — aviso de un SOS cancelado por su titular (lo muestra central.js al recibirlo). *@
-        <div class="aviso aviso--advertencia central__aviso" role="status" data-aviso-cancelacion hidden>
-            <p class="aviso__texto"><span data-texto></span> <a href="#">Ver historial</a></p>
-        </div>
-        <div data-region-lista>
-            <partial name="_ListaSos" model="@Model.Lista" />
-        </div>
-        <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
-    </section>
-
-    @* HU15-CA02 y HU20-CA07 — reportes admitidos, separados de los SOS (no son urgentes) y asignables igual. *@
-    <section class="superficie central__reportes" aria-labelledby="titulo-reportes">
-        <h2 id="titulo-reportes" class="central__titulo">
-            Reportes admitidos <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
-        </h2>
-        <p class="texto-secundario">Pendientes de asignación tras su revisión. No son alertas urgentes. Su ubicación es el lugar del hecho que indicó el ciudadano.</p>
-        <div data-region-reportes>
-            <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
-        </div>
-    </section>
-
-    @* HU19 — estado y disponibilidad de los serenos, actualizados sin recargar. *@
-    <section class="superficie central__serenos" aria-labelledby="titulo-serenos">
-        <h2 id="titulo-serenos" class="central__titulo">Serenos</h2>
-        <p class="texto-secundario">Disponible: operativo y sin asignación vigente. La ubicación solo se comparte mientras el sereno está operativo.</p>
-        <div data-region-serenos>
-            <partial name="_ListaSerenos" model="@Model.ListaDeSerenos" />
-        </div>
-    </section>
-
-    <section class="superficie central__mapa" aria-labelledby="titulo-mapa">
-        <h2 id="titulo-mapa" class="central__titulo">Mapa operativo</h2>
-        <p class="texto-secundario">Casos con ubicación: SOS (rojo) y reportes en el lugar del hecho (violeta). Relleno: pendiente de asignación; con borde: en revisión o en atención (asignado, en camino o en atención). Serenos operativos en azul (gris si no están disponibles). Elige un marcador para ver el caso; uno pendiente se asigna desde aquí.</p>
-        <div id="mapa" class="mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de casos y serenos con ubicación"></div>
-        <div data-region-casos-mapa>
-            <partial name="_CasosMapa" model="@Model.CasosEnMapa" />
-        </div>
-        <noscript><p class="texto-secundario">El mapa y los avisos en tiempo real necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
-    </section>
-</div>
 
 @section Scripts {
     <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>

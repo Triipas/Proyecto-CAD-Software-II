@@ -331,90 +331,199 @@ a.boton {
   text-decoration: none;
 }
 
-/* Encabezado: alto fijo, marca a la izquierda y sesión a la derecha */
-.encabezado {
-  color: #FFFFFF;
+/* Barra superior (rediseño CAD v2): marca, secciones y sesión sobre marino. */
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 1100; /* por encima de las capas de Leaflet (hasta 1000) */
+  min-height: var(--alto-barra);
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-4);
+  padding: 0 var(--espacio-4);
+  color: var(--color-texto-sobre-marino);
   background: var(--color-marino);
 }
 
-.encabezado :focus-visible {
+.barra :focus-visible {
   outline-color: var(--color-foco-sobre-marino);
 }
 
-.encabezado__contenido {
-  max-width: 80rem;
-  min-height: 3.5rem;
-  margin: 0 auto;
-  padding: var(--espacio-2) var(--espacio-6);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--espacio-4) var(--espacio-8);
-}
-
-.encabezado .marca__nombre {
-  font-size: var(--texto-md);
-  color: #FFFFFF;
-}
-
-.encabezado .marca__aviso {
-  color: var(--color-texto-sobre-marino);
-}
-
-/* En pantallas estrechas la navegación ocupa su propia línea y sus enlaces pasan a la siguiente si no caben. */
-.encabezado__navegacion {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espacio-1) var(--espacio-4);
-  flex: 1 1 100%;
-}
-
-@media (min-width: 64rem) {
-  .encabezado__navegacion {
-    flex-basis: 0;
-  }
-}
-
-.encabezado__navegacion a {
-  padding: var(--espacio-1) 0;
-  color: #FFFFFF;
-  font-weight: var(--peso-medio);
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-}
-
-.encabezado__navegacion a:hover,
-.encabezado__navegacion a[aria-current="page"] {
-  border-bottom-color: var(--color-foco-sobre-marino);
-}
-
-.encabezado__sesion {
+.barra__marca {
   display: flex;
   align-items: center;
   gap: var(--espacio-3);
-  margin: 0;
-  font-size: var(--texto-sm);
+  color: #FFFFFF;
 }
 
-.etiqueta-rol {
-  padding: 0.125rem var(--espacio-2);
+.barra__escudo {
+  width: 2.125rem;
+  height: 2.125rem;
+  display: grid;
+  place-items: center;
   border-radius: var(--radio-control);
-  font-size: var(--texto-xs);
+  color: var(--color-acento);
+  background: var(--color-marino-elevado);
+}
+
+.barra__nombre {
+  display: grid;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.barra__nombre b {
+  font-size: 0.9375rem;
+}
+
+.barra__nombre small {
+  font-size: 0.6875rem;
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.barra__secciones {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barra__seccion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 0.625rem;
+  border-radius: var(--radio-control);
+  color: var(--color-texto-sobre-marino);
+  font-size: var(--texto-sm);
   font-weight: var(--peso-medio);
-  color: #1E40AF;          /* 7.15:1 sobre #DBEAFE */
-  background: #DBEAFE;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--duracion-rapida) ease;
+}
+
+.barra__seccion[aria-current="page"] {
+  color: #FFFFFF;
+  background: var(--color-marino-elevado);
+}
+
+.barra__seccion[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: -0.625rem;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--color-acento);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .barra__seccion:hover {
+    background: var(--color-marino-elevado);
+  }
+}
+
+.barra__sesion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  margin: 0 0 0 auto;
+  padding-left: var(--espacio-4);
+  border-left: 1px solid var(--color-borde-sobre-marino);
+}
+
+.barra__avatar {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-marino-elevado);
+}
+
+.barra__persona {
+  display: grid;
+  line-height: 1.2;
+  font-size: var(--texto-xs);
+  white-space: nowrap;
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.barra__persona b {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: #FFFFFF;
+}
+
+.barra__menu {
+  display: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radio-control);
+  color: #FFFFFF;
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (max-width: 68.75rem) {
+  .barra__menu {
+    display: grid;
+  }
+
+  .barra__navegacion {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: none;
+    padding: var(--espacio-2) var(--espacio-4) var(--espacio-4);
+    border-top: 1px solid var(--color-borde-sobre-marino);
+    background: var(--color-marino);
+  }
+
+  .barra--abierta .barra__navegacion {
+    display: block;
+  }
+
+  .barra__secciones {
+    flex-direction: column;
+  }
+
+  .barra__seccion[aria-current="page"]::after {
+    display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .barra__nombre small,
+  .barra__persona {
+    display: none;
+  }
 }
 
 .boton--sobre-marino {
-  min-height: 2.25rem;
-  padding: var(--espacio-1) var(--espacio-4);
-  color: #FFFFFF;
-  border-color: var(--color-texto-sobre-marino);
+  color: var(--color-texto-sobre-marino);
+  border-color: var(--color-borde-sobre-marino);
   background: transparent;
 }
 
 .boton--sobre-marino:hover {
-  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  background: var(--color-marino-elevado);
+}
+
+.boton--compacto {
+  min-height: 2.25rem;
+  padding: 0 var(--espacio-3);
+  font-size: var(--texto-sm);
 }
 
 /* Contenedor de página */
@@ -575,63 +684,6 @@ a.boton {
   white-space: nowrap;
 }
 
-.central {
-  display: grid;
-  gap: var(--espacio-6);
-  align-items: start;
-}
-
-@media (min-width: 64rem) {
-  .central {
-    grid-template-columns: minmax(22rem, 2fr) 3fr;
-  }
-
-  /* El mapa ocupa la columna derecha junto a la sección urgente y la de serenos (HU19), y se queda
-     visible al desplazar la columna izquierda: «Ver en el mapa» funciona aunque la lista sea larga. */
-  .central__mapa {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    position: sticky;
-    top: var(--espacio-4);
-    align-self: start;
-  }
-}
-
-.central__controles {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--espacio-3);
-}
-
-.central__urgente,
-.central__reportes,
-.central__serenos,
-.central__mapa {
-  display: grid;
-  gap: var(--espacio-3);
-  padding: var(--espacio-6);
-}
-
-.central__titulo {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2);
-  font-size: var(--texto-lg);
-  color: var(--color-marino);
-}
-
-.central__contador {
-  min-width: 1.75rem;
-  padding: 0 var(--espacio-2);
-  border-radius: 999px;
-  font-size: var(--texto-sm);
-  text-align: center;
-  color: #FFFFFF;
-  background: var(--color-urgente);
-}
-
 /* Estado de la conexión en tiempo real: icono + texto + color */
 .conexion {
   display: inline-flex;
@@ -675,14 +727,12 @@ a.boton {
   gap: var(--espacio-2);
   padding: var(--espacio-3) var(--espacio-4);
   border: var(--grosor-borde) solid var(--color-borde);
-  border-left: 4px solid var(--color-urgente);
   border-radius: var(--radio-control);
   background: var(--color-superficie);
 }
 
 .sos--nuevo {
   border-color: var(--color-urgente-borde);
-  border-left-color: var(--color-urgente);
   background: var(--color-urgente-fondo);
 }
 
@@ -1018,14 +1068,10 @@ a.boton {
   gap: var(--espacio-1);
   padding: var(--espacio-3) var(--espacio-4);
   border: var(--grosor-borde) solid var(--color-borde);
-  border-left: 4px solid var(--color-borde-control);
   border-radius: var(--radio-control);
   background: var(--color-superficie);
 }
 
-.sereno--disponible {
-  border-left-color: var(--color-primario);
-}
 
 .sereno--seleccionado {
   outline: var(--grosor-foco) solid var(--color-foco);
@@ -1073,20 +1119,6 @@ a.boton {
   display: none !important;
 }
 
-/* ===== Asignación desde la central (HU20) ===== */
-
-.central__aviso,
-.central__confirmacion {
-  margin-bottom: var(--espacio-4);
-}
-
-.central__confirmacion {
-  position: sticky;
-  top: var(--espacio-2);
-  z-index: 1000; /* por encima del mapa (Leaflet usa índices de hasta 1000 en sus capas) */
-  box-shadow: 0 4px 16px rgba(16, 42, 67, 0.18);
-}
-
 .sereno__asignar {
   justify-self: start;
   min-height: 2.25rem;
@@ -1098,14 +1130,6 @@ a.boton {
   display: flex;
   flex-wrap: wrap;
   gap: var(--espacio-2) var(--espacio-4);
-}
-
-.sos__elegir {
-  border: 0;
-  padding: 0;
-  background: none;
-  text-decoration: underline;
-  cursor: pointer;
 }
 
 /* HU23-CA03: estado del caso asignado a cada sereno. */
@@ -1139,10 +1163,6 @@ a.boton {
 }
 
 /* ===== Reportes admitidos en la central (HU15-CA02, HU20-CA07) ===== */
-
-.sos--reporte {
-  border-left-color: var(--color-reporte);
-}
 
 .etiqueta-reporte {
   display: inline-flex;
