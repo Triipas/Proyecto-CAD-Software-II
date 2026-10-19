@@ -24,7 +24,7 @@
             <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarInicio}">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Antes de empezar" FontAttributes="Bold" />
-                    <Label Text="Mientras el acompañamiento esté activo, la aplicación enviará tu ubicación a la central cada 15 segundos. Termina cuando tú lo decidas o, como máximo, a los 30 minutos." />
+                    <Label Text="Mientras el acompañamiento esté activo, la aplicación enviará tu ubicación a la central cada 15 segundos, también con la aplicación cerrada. Termina cuando tú lo decidas o, como máximo, a los 30 minutos." />
                     <v:Aviso Tipo="advertencia" Texto="{x:Static vm:AcompanamientoVistaModelo.TextoEntorno}" />
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                         <CheckBox IsChecked="{Binding FinalidadAceptada}" VerticalOptions="Start"
