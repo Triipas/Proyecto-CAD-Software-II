@@ -38,6 +38,87 @@
   L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
   const marcadores = new Map();
 
+  // ---------- Vuelo al caso: el mapa viaja al punto, casi al zoom máximo, y lo marca al llegar ----------
+  // Propósito: continuidad espacial (de la tarjeta al lugar). Con movimiento reducido el salto es inmediato.
+  const ZOOM_CERCANO = 18;
+  const DURACION_VUELO = 0.9; // segundos (Leaflet)
+
+  // Franja horizontal del mapa que no tapan los paneles flotantes abiertos (en píxeles del contenedor).
+  function franjaLibre() {
+    const ancho = contenedorMapa.clientWidth;
+    let izquierda = 0;
+    let derecha = ancho;
+    for (const panel of document.querySelectorAll("[data-panel]:not(.panel-flotante--plegado)")) {
+      if (getComputedStyle(panel).position !== "absolute") continue; // por debajo de 760 px van bajo el mapa
+      if (panel.offsetLeft + panel.offsetWidth / 2 < ancho / 2) izquierda = Math.max(izquierda, panel.offsetLeft + panel.offsetWidth);
+      else derecha = Math.min(derecha, panel.offsetLeft);
+    }
+    return derecha - izquierda < 200 ? { izquierda: 0, derecha: ancho, ancho } : { izquierda, derecha, ancho };
+  }
+
+  // En pantallas estrechas el mapa queda encima de la lista: primero se trae a la vista.
+  function traerMapaALaVista() {
+    const caja = contenedorMapa.getBoundingClientRect();
+    if (caja.top < 0 || caja.bottom > innerHeight)
+      contenedorMapa.scrollIntoView({ block: "start", behavior: reducido.matches ? "auto" : "smooth" });
+  }
+
+  function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
+    const punto = marcador.getLatLng();
+    const { izquierda, derecha, ancho } = franjaLibre();
+    const desfase = (izquierda + derecha) / 2 - ancho / 2;
+    const destino = mapa.unproject(mapa.project(punto, zoom).subtract([desfase, 0]), zoom);
+    const llegar = () => { marcador.openPopup(); marcarLlegada(punto, clase); };
+    traerMapaALaVista();
+    if (reducido.matches) {
+      mapa.setView(destino, zoom, { animate: false });
+      llegar();
+      return;
+    }
+    mapa.once("moveend", llegar);
+    mapa.flyTo(destino, zoom, { duration: DURACION_VUELO, easeLinearity: 0.2 });
+  }
+
+  // El caso y el sereno sugerido en el mismo encuadre, sin quedar bajo los paneles.
+  function encuadrar(limites, marcador, clase) {
+    const { izquierda, derecha, ancho } = franjaLibre();
+    const opciones = { paddingTopLeft: [izquierda + 48, 72], paddingBottomRight: [ancho - derecha + 48, 72], maxZoom: 17 };
+    const llegar = () => { marcador?.openPopup(); if (marcador) marcarLlegada(marcador.getLatLng(), clase); };
+    traerMapaALaVista();
+    if (reducido.matches) {
+      mapa.fitBounds(limites, { ...opciones, animate: false });
+      llegar();
+      return;
+    }
+    mapa.once("moveend", llegar);
+    mapa.flyToBounds(limites, { ...opciones, duration: DURACION_VUELO, easeLinearity: 0.2 });
+  }
+
+  // Dos anillos que se abren desde el punto al aterrizar; se retiran solos.
+  let llegada = null;
+  function marcarLlegada(punto, clase) {
+    if (reducido.matches) return;
+    llegada?.remove();
+    const anillo = L.marker(punto, {
+      icon: L.divIcon({ className: `llegada ${clase}`, html: "<span></span><span></span>", iconSize: [96, 96], iconAnchor: [48, 48] }),
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: -1000,
+    }).addTo(mapa);
+    llegada = anillo;
+    setTimeout(() => { anillo.remove(); if (llegada === anillo) llegada = null; }, 1300);
+  }
+
+  // El marcador elegido queda «fijado»: un anillo se cierra sobre él y pasa por encima de los demás.
+  function resaltar(conjunto, id) {
+    for (const [clave, marcador] of conjunto) {
+      const elegido = clave === id;
+      marcador.getElement()?.classList.toggle("marcador--elegido", elegido);
+      marcador.setZIndexOffset(elegido ? 1000 : 0);
+    }
+  }
+  const claseLlegada = (id) => document.getElementById(`sos-${id}`)?.dataset.origen === "Reporte" ? "llegada--reporte" : "";
+
   function dibujarMarcadores() {
     for (const marcador of marcadores.values()) marcador.remove();
     marcadores.clear();
@@ -47,7 +128,7 @@
       if (item.dataset.origen === "Reporte") {
         const texto = `Reporte admitido de ${item.dataset.ciudadano}`;
         const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-          icon: L.divIcon({ className: "marcador-reporte", html: "", iconSize: [26, 26], iconAnchor: [13, 13] }),
+          icon: L.divIcon({ className: "marcador-reporte", html: "", iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -18] }),
           title: texto,
           alt: texto,
           keyboard: true,
@@ -59,7 +140,7 @@
         continue;
       }
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: `marcador-sos${nuevos.has(id) ? " marcador-sos--pulso" : ""}`, html: SIRENA, iconSize: [36, 32], iconAnchor: [18, 16] }),
+        icon: L.divIcon({ className: `marcador-sos${nuevos.has(id) ? " marcador-sos--pulso" : ""}`, html: SIRENA, iconSize: [36, 32], iconAnchor: [18, 16], popupAnchor: [0, -22] }),
         title: `SOS de ${item.dataset.ciudadano}`,
         alt: `SOS de ${item.dataset.ciudadano}`,
         keyboard: true,
@@ -73,7 +154,7 @@
 
   let sosSeleccionado = null;
 
-  function seleccionar(id, { desdeMapa = false } = {}) {
+  function seleccionar(id, { desdeMapa = false, conSereno = false } = {}) {
     sosSeleccionado = id;
     for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
     const item = document.getElementById(`sos-${id}`);
@@ -87,13 +168,14 @@
       }
     }
     const marcador = marcadores.get(id);
-    if (marcador && !desdeMapa) {
-      mapa.setView(marcador.getLatLng(), Math.max(mapa.getZoom(), 15));
-      marcador.openPopup();
-    }
+    resaltar(marcadores, id);
     marcarComoVisto();
     actualizarAsignacion();
     dibujarDespacho();
+    if (!marcador || desdeMapa) return;
+    // Al elegir sereno se encuadran el caso y el sereno más cercano; al «Ver en el mapa», se vuela al caso.
+    if (conSereno && lineaDespacho) encuadrar(lineaDespacho.getBounds(), marcador, claseLlegada(id));
+    else volarA(marcador, { clase: claseLlegada(id) });
   }
 
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
@@ -117,7 +199,7 @@
     if (!cercano) return;
     const texto = cercano.metros < 1000 ? `${Math.round(cercano.metros)} m` : `${(cercano.metros / 1000).toFixed(1).replace(".", ",")} km`;
     const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
-    lineaDespacho = L.polyline([origen, cercano.destino], { color, weight: 3, dashArray: "8 7", interactive: false })
+    lineaDespacho = L.polyline([origen, cercano.destino], { color, weight: 3, dashArray: "8 7", interactive: false, className: "linea-despacho" })
       .bindTooltip(texto, { permanent: true, direction: "center", className: "etiqueta-despacho" })
       .addTo(mapa);
     cercano.s.classList.add("sereno--sugerido");
@@ -135,7 +217,7 @@
       const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
       const texto = `${item.dataset.origen} · ${item.dataset.estado} · ${item.dataset.ciudadano}`;
       marcadoresEnCurso.push(L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: clase, html: reporte ? "" : SIRENA, iconSize: reporte ? [26, 26] : [36, 32], iconAnchor: reporte ? [13, 13] : [18, 16] }),
+        icon: L.divIcon({ className: clase, html: reporte ? "" : SIRENA, iconSize: reporte ? [26, 26] : [36, 32], iconAnchor: reporte ? [13, 13] : [18, 16], popupAnchor: [0, reporte ? -18 : -22] }),
         title: texto,
         alt: texto,
         keyboard: true,
@@ -151,8 +233,8 @@
     // HU20: elegir sereno para un SOS (también sin ubicación): se selecciona y se va a los serenos.
     const elegir = evento.target.closest("[data-seleccionar-sos]");
     if (elegir) {
-      seleccionar(elegir.closest("[data-sos]").dataset.sos);
       desplegar(document.getElementById("panel-serenos"));
+      seleccionar(elegir.closest("[data-sos]").dataset.sos, { conSereno: true });
       const primero = regionSerenos.querySelector("[data-asignar-sereno]:not([hidden])");
       (primero ?? regionSerenos).scrollIntoView({ block: "center" });
       primero?.focus();
@@ -176,7 +258,7 @@
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
         icon: L.divIcon({
           className: `marcador-sereno${disponible ? "" : " marcador-sereno--no-disponible"}`,
-          html: escudo(disponible), iconSize: [30, 34], iconAnchor: [15, 17],
+          html: escudo(disponible), iconSize: [30, 34], iconAnchor: [15, 17], popupAnchor: [0, -22],
         }),
         title: texto,
         alt: texto,
@@ -200,10 +282,8 @@
       }
     }
     const marcador = marcadoresSerenos.get(id);
-    if (marcador && !desdeMapa) {
-      mapa.setView(marcador.getLatLng(), Math.max(mapa.getZoom(), 15));
-      marcador.openPopup();
-    }
+    resaltar(marcadoresSerenos, id);
+    if (marcador && !desdeMapa) volarA(marcador, { zoom: 17, clase: "llegada--sereno" });
   }
 
   regionSerenos.addEventListener("click", (evento) => {
@@ -290,7 +370,10 @@
     const seleccionado = regionSerenos.querySelector(".sereno--seleccionado")?.dataset.sereno;
     regionSerenos.innerHTML = await respuesta.text();
     dibujarSerenos();
-    if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+    if (seleccionado) {
+      document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+      resaltar(marcadoresSerenos, seleccionado);
+    }
     actualizarAsignacion();
     dibujarDespacho();
     return true;
@@ -388,7 +471,10 @@
     }
     dibujarMarcadores();
     dibujarCasosEnCurso();
-    if (sosSeleccionado) document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
+    if (sosSeleccionado) {
+      document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
+      resaltar(marcadores, sosSeleccionado);
+    }
     actualizarAsignacion();
     return true;
   }
@@ -463,6 +549,6 @@
   dibujarSerenos();
   iniciar();
 
-  // Acceso para la verificación automatizada (estado de la conexión, sin datos).
-  window.cadCentral = { conexion, refrescar, refrescarSerenos };
+  // Acceso para la verificación automatizada (estado de la conexión y vista del mapa, sin datos).
+  window.cadCentral = { conexion, refrescar, refrescarSerenos, mapa };
 })();
