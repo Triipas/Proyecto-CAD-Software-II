@@ -19,6 +19,12 @@ public sealed class OpcionesAcompanamiento
     // DP12 (16/10/2026): una posición con más de 60 s es desactualizada. DP20: sin ningún envío durante ese mismo tiempo,
     // la sesión se muestra «Sin conexión».
     public int UmbralDesactualizadaSegundos { get; set; } = 60;
+
+    // DP22 (decisión del equipo de desarrollo, 16/10/2026): las posiciones de una sesión terminada se conservan 30 días.
+    public int ConservacionDias { get; set; } = 30;
+
+    // Plan de Arquitectura 9.9: la eliminación por plazo se revisa al arrancar y cada hora.
+    public int IntervaloEliminacionMinutos { get; set; } = 60;
 }
 
 public abstract record ResultadoInicioAcompanamiento

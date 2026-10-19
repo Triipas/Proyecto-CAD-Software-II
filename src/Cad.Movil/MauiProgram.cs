@@ -39,6 +39,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<IngresoVistaModelo>();
         builder.Services.AddTransient<RegistroVistaModelo>();
+#if ANDROID
+        builder.Services.AddSingleton<IServicioSegundoPlano, Platforms.Android.SegundoPlanoAndroid>(); // DP13
+#else
+        builder.Services.AddSingleton<IServicioSegundoPlano, SegundoPlanoNoDisponible>();
+#endif
         builder.Services.AddSingleton<ServicioAcompanamiento>(); // la sesión y la transmisión sobreviven al cambio de pantalla
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),

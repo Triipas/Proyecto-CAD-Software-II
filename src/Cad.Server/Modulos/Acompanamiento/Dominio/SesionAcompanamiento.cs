@@ -26,6 +26,9 @@ public sealed class SesionAcompanamiento
     // más del umbral (DP12, 60 s), la central muestra la sesión «Sin conexión».
     public DateTimeOffset? UltimoContactoEn { get; private set; }
 
+    // HU39-B (DP22): cuándo se eliminaron sus posiciones al cumplirse el plazo de conservación (null si se conservan).
+    public DateTimeOffset? PosicionesEliminadasEn { get; private set; }
+
     // Token de concurrencia optimista (columna del sistema xmin), como en los casos.
     public uint Version { get; private set; }
 

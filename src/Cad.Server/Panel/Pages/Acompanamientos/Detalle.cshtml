@@ -25,6 +25,14 @@
     </div>
 </div>
 
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <div><p class="aviso__titulo">@Model.Mensaje</p></div>
+    </div>
+}
+
 <div class="central">
     <section class="superficie" aria-labelledby="titulo-datos">
         <h2 id="titulo-datos" class="central__titulo">Datos de la sesión</h2>
@@ -47,7 +55,14 @@
 
     <section class="superficie central__mapa" aria-labelledby="titulo-recorrido">
         <h2 id="titulo-recorrido" class="central__titulo">Recorrido</h2>
-        @if (s.Posiciones.Count == 0)
+        @if (s.PosicionesEliminadasEn is { } eliminadas)
+        {
+            <p class="aviso aviso--informacion" data-posiciones-eliminadas>
+                <partial name="_Icono" model="@("informacion")" />
+                <span>Las posiciones se eliminaron el @Formato.Hora(eliminadas, zona, "dd/MM/yyyy HH:mm") al cumplirse el plazo de conservación (@Model.ConservacionDias días, DP22). Se conservan los datos de la sesión.</span>
+            </p>
+        }
+        else if (s.Posiciones.Count == 0)
         {
             <p class="texto-secundario" data-sin-posiciones>Sin posiciones registradas.</p>
         }
@@ -84,6 +99,46 @@
                     </tbody>
                 </table>
             </div>
+        }
+    </section>
+
+    @* HU39-B: conservación del recorrido (DP22: 30 días tras el cierre; conservación excepcional vinculada con un caso). *@
+    <section class="superficie" aria-labelledby="titulo-conservacion" data-conservacion>
+        <h2 id="titulo-conservacion" class="central__titulo">Conservación del recorrido</h2>
+        @if (s.Conservacion is { } conservada)
+        {
+            <dl class="datos" data-conservacion-registrada>
+                <div><dt>Vinculado con el caso</dt><dd><a href="/panel/casos/@conservada.CasoId/historial">@conservada.CasoId</a></dd></div>
+                <div><dt>Finalidad</dt><dd>@conservada.Finalidad</dd></div>
+                <div><dt>Registrada por</dt><dd>@conservada.Operador</dd></div>
+                <div><dt>Fecha y hora</dt><dd>@Formato.Hora(conservada.RegistradaEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
+            </dl>
+            <p class="texto-secundario">Conservación excepcional: estas posiciones no se eliminan al cumplirse el plazo.</p>
+        }
+        else if (s.PosicionesEliminadasEn is null)
+        {
+            <p class="texto-secundario">@(s.Activa ? "Cuando la sesión termine, sus" : "Sus") posiciones se eliminarán @Model.ConservacionDias días después del cierre. Para conservarlas, vincúlalas con un caso e indica la finalidad.</p>
+            <form method="post" asp-page-handler="Conservar" class="formulario" data-formulario novalidate>
+                <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+                <partial name="_Campo" model="@(new Cad.Server.Panel.Pages.CampoFormulario("Conservacion_CasoId", "Conservacion.CasoId", "Identificador del caso", Valor: Model.Conservacion.CasoId?.ToString(), Error: Model.ErrorDe("casoId"), Ayuda: "El SOS o reporte relacionado (lo encuentras en «Casos»).", Autocompletar: "off"))" />
+                <div class="campo">
+                    <label class="campo__etiqueta" for="Conservacion_Finalidad">Finalidad</label>
+                    <textarea class="campo__control campo__control--texto" id="Conservacion_Finalidad" name="Conservacion.Finalidad" rows="3" required
+                              maxlength="@ConservacionRecorrido.MaximoFinalidad" aria-invalid="@(Model.ErrorDe("finalidad") is null ? null : "true")"
+                              aria-describedby="@(Model.ErrorDe("finalidad") is null ? null : "Conservacion_Finalidad-error")">@Model.Conservacion.Finalidad</textarea>
+                    @if (Model.ErrorDe("finalidad") is { } error)
+                    {
+                        <p id="Conservacion_Finalidad-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                    }
+                </div>
+                <div class="acciones">
+                    <button type="submit" class="boton boton--secundario" data-texto-carga="Guardando…">Conservar el recorrido</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <p class="texto-secundario">Ya no hay posiciones que conservar.</p>
         }
     </section>
 </div>

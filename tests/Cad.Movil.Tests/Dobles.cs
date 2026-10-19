@@ -258,6 +258,16 @@ public sealed class ApiFalsa : IApiCad
     }
 }
 
+// DP13: registra cuándo se pide mantener la transmisión en segundo plano y cuándo se detiene.
+public sealed class SegundoPlanoFalso : IServicioSegundoPlano
+{
+    public bool Activo { get; private set; }
+    public List<DateTimeOffset> Inicios { get; } = [];
+    public int Detenciones { get; private set; }
+    public void Iniciar(DateTimeOffset venceEn) { Activo = true; Inicios.Add(venceEn); }
+    public void Detener() { Activo = false; Detenciones++; }
+}
+
 public sealed class AlmacenLocalFalso : IAlmacenLocal
 {
     public Dictionary<string, string> Valores { get; } = [];
