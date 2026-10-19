@@ -60,7 +60,7 @@
         }
         @{ await CampoFecha("desde", "Desde", Model.Desde); }
         @{ await CampoFecha("hasta", "Hasta", Model.Hasta); }
-        @{ await Selector("origen", "Origen", Model.Origen, [("Sos", "SOS"), ("Reporte", "Reporte")], "Todos"); }
+        @{ await Selector("origen", "Origen", Model.Origen, [("Sos", "SOS"), ("Reporte", "Reporte"), ("Acompanamiento", "Acompañamiento")], "Todos"); }
         @{ await Selector("tipo", "Tipo de incidencia", Model.Tipo,
                Model.Categorias.Select(c => (c.Id.ToString(), c.Nombre)).Append((Cad.Server.Panel.Pages.Casos.IndexModel.ValorSinTipo, Cad.Server.Modulos.Consultas.CasoEncontrado.TipoPorDeterminar)), "Todos"); }
         @{ await Selector("estado", "Estado", Model.Estado,
@@ -125,7 +125,7 @@ else
                         <td>@caso.Ciudadano</td>
                         <td>@(caso.Sereno ?? "—")</td>
                         @* HU26-CA05: sin coordenadas inventadas. *@
-                        <td data-ubicacion>@(caso.ConUbicacion ? (caso.Origen == OrigenCaso.Sos ? "Del dispositivo" : "Lugar del hecho") : "Sin ubicación")</td>
+                        <td data-ubicacion>@(caso.ConUbicacion ? (caso.Origen switch { OrigenCaso.Sos => "Del dispositivo", OrigenCaso.Reporte => "Lugar del hecho", _ => "Última posición del acompañamiento" }) : "Sin ubicación")</td>
                         <td data-tiempo-decision class="@(Tiempos.SinValor(caso.Tiempos.HastaDecision) ? "texto-secundario" : null)">@caso.Tiempos.HastaDecision</td>
                         <td data-tiempo-atencion class="@(Tiempos.SinValor(caso.Tiempos.HastaInicioAtencion) ? "texto-secundario" : null)">@caso.Tiempos.HastaInicioAtencion</td>
                         <td>

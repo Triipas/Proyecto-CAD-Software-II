@@ -19,7 +19,8 @@ public sealed record TiemposCaso(
     public const string NoDisponible = "No disponible";
     public const string NoCorresponde = "No corresponde";
 
-    public bool EsSos => Origen == OrigenCaso.Sos;
+    // Un caso urgente creado desde un aviso (DP19) se atiende como un SOS: su tiempo es el de respuesta.
+    public bool EsSos => OrigenesCaso.SeAtiendeComoSos(Origen);
 
     // CA01 y CA04: SOS, del registro al inicio de la atención; no es el tiempo de presentación en la central de RNF02.
     public string Respuesta => EsSos ? Desde(AtencionIniciadaEn) : NoCorresponde;

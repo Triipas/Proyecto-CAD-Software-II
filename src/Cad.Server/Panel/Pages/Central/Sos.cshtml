@@ -2,7 +2,7 @@
 @model Cad.Server.Panel.Pages.Central.SosModel
 @using System.Globalization
 @{
-    ViewData["Title"] = "Verificar SOS";
+    ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "Verificar SOS";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
     var inv = CultureInfo.InvariantCulture;
     var sos = Model.Sos;
@@ -15,8 +15,12 @@
 <p><a class="enlace-volver" href="/panel/central">← Central de monitoreo</a></p>
 <div class="pagina__encabezado">
     <div>
-        <p class="sobretitulo">Operador · SOS @sos.Estado</p>
-        <h1 class="titulo">Verificar SOS</h1>
+        <p class="sobretitulo">Operador · @sos.Origen @sos.Estado</p>
+        <h1 class="titulo">@(sos.EsCasoUrgente ? "Caso urgente del acompañamiento" : "Verificar SOS")</h1>
+        @if (sos.EsCasoUrgente)
+        {
+            <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
+        }
         <p class="texto-secundario">Registrado el @Local(sos.RegistradoEn). <a href="/panel/casos/@sos.Id/historial">Ver el historial del caso</a></p>
     </div>
 </div>

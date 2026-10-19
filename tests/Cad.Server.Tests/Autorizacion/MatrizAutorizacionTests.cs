@@ -97,6 +97,9 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/panel/acompanamientos/{id:guid}", "HU38", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/acompanamientos/00000000-0000-0000-0000-000000000000"),
         new("GET", "/panel/acompanamientos/historial", "HU39", Acceso.SoloRol, Roles.Operador, "Historial de sesiones de acompañamiento"),
+        // HU42/HU43 — un aviso del acompañamiento (con uno inexistente, el operador recibe 404).
+        new("GET", "/panel/avisos/{id:guid}", "HU43", Acceso.SoloRol, Roles.Operador,
+            Ejemplo: "/panel/avisos/00000000-0000-0000-0000-000000000000"),
         // HU26 — búsqueda de casos con filtros (solo operador, CA06).
         new("GET", "/panel/casos", "HU26", Acceso.SoloRol, Roles.Operador),
         // HU29 — mapa de concentración (solo operadores).

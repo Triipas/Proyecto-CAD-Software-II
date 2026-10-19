@@ -30,9 +30,10 @@ public sealed class ConsultarSosPendientes(CadDbContext db)
                join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
                join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id into categorias
                from categoria in categorias.DefaultIfEmpty()
-               where caso.Origen == OrigenCaso.Sos && caso.Estado == EstadoCaso.Pendiente
+               // DP19: también el caso urgente creado desde un aviso del acompañamiento, con su propio origen.
+               where caso.Origen != OrigenCaso.Reporte && caso.Estado == EstadoCaso.Pendiente
                orderby caso.RegistradoEn descending
-               select new SosPendiente(caso.Id, "SOS", "Pendiente", caso.RegistradoEn,
+               select new SosPendiente(caso.Id, caso.Origen == OrigenCaso.Sos ? "SOS" : "Caso urgente · Acompañamiento", "Pendiente", caso.RegistradoEn,
                    ciudadano.Nombres + " " + ciudadano.Apellidos,
                    caso.Latitud, caso.Longitud, caso.PrecisionMetros,
                    categoria == null ? null : categoria.Nombre))

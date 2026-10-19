@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 287 casos tras HU09, HU32, HU29 y HU41 en el Sprint 5: 57 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 292 casos al cierre del Sprint 5: 58 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -50,6 +50,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/acompanamientos` (y su fragmento `?handler=Lista`), `/panel/acompanamientos/{id}` y `/panel/acompanamientos/historial` (acompañamientos activos, recorridos e historial de sesiones) | HU38, HU39 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/avisos/{id}` y sus acciones (revisar, actuación, resolver, vincular y crear caso urgente) | HU42, HU43 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos` (búsqueda de casos con filtros) | HU26 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/mapa-concentracion` (mapa de concentración de casos) | HU29 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos/{id}/historial` (historial del caso, con notas internas rotuladas y la evaluación del ciudadano) | HU27, HU33 | ✘ | ✘ | ✔ | ✘ | ✘ |
@@ -108,10 +109,12 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU39 | Consultar el historial de sesiones de acompañamiento | Operador (autorizado, DP04) | **HU39-A verificada (16/10/2026):** `/panel/acompanamientos/historial` y los recorridos solo para Operador; los demás perfiles son rechazados también ante una solicitud directa (`SupervisionAcompanamientoTests.HU38_CA05_HU39_CA03_*`). HU39-B (16/10/2026): la acción `Conservar` del detalle de la sesión solo para Operador; un administrador con token antifalsificación válido es enviado a «acceso denegado» sin registrar nada (`ConservacionRecorridosTests.HU39_CA03_*`). La eliminación por plazo la hace el servidor, sin ninguna ruta. |
 | HU40 | Solicitar una confirmación de bienestar | Operador | **Verificada (17/10/2026, S5-T04):** la acción «Solicitar confirmación» de `/panel/acompanamientos/{id}` solo para Operador; un administrador es redirigido a «acceso denegado» sin registrar nada (`BienestarTests.HU40_OtroPerfilDelPanel_*`), y la app de un ciudadano o un sereno no obtiene la página (matriz). |
 | HU41 | Responder una confirmación de bienestar | Ciudadano | **Verificada (17/10/2026, S5-T05):** las tres rutas solo para Ciudadano y solo sobre sus sesiones y confirmaciones. Otro ciudadano recibe 404 sin ver, presentar ni responder nada (`BienestarTests.HU41_CA01_OtroCiudadano_*`), y los demás perfiles son rechazados (matriz). |
-| HU42 | Recibir avisos técnicos y de verificación del acompañamiento | Operador | Pendiente (Sprint 5) |
-| HU43 | Revisar avisos y registrar su atención | Operador | Pendiente (Sprint 5; DP19) |
+| HU42 | Recibir avisos técnicos y de verificación del acompañamiento | Operador | **Verificada (17/10/2026, S5-T07):** los avisos solo se presentan en páginas de Operador (`/panel/acompanamientos`, su fragmento y `/panel/avisos/{id}`); los demás perfiles son rechazados (matriz). Los genera el servidor, sin ninguna ruta. |
+| HU43 | Revisar avisos y registrar su atención | Operador | **Verificada (17/10/2026, S5-T08, S5-T09):** `/panel/avisos/{id}` y sus acciones solo para Operador; un administrador con token antifalsificación válido es enviado a «acceso denegado» sin cambiar el aviso (`AvisosTests.HU43_UnAdministrador_*`), y la app de un ciudadano o un sereno no obtiene la página (matriz). |
 
 **Cierre del Sprint 3 (S3-T16, 16/10/2026):** las operaciones de HU10, HU14–HU17, HU20-CA07, HU26, HU27, HU30 y HU31 están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones de los Sprints 4 y 5.
+
+**Cierre del Sprint 5 (S5-T15, 17/10/2026):** las operaciones de HU09, HU28, HU29, HU32, HU33 y HU40–HU43 están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. Con ellas, las 40 historias HU04–HU43 de la tabla B están verificadas por rol: **HU03-CA04 queda completa** y HU03 se puede acreditar en la Sprint Review.
 
 **Cierre del Sprint 4 (S4-T17, 16/10/2026):** las operaciones de HU05, HU25 y HU34–HU39 (incluidas las acciones añadidas por las decisiones del PO del 16/10/2026) están en la matriz ejecutable y se rechazan con los demás perfiles, también ante solicitudes directas. HU03 sigue sin acreditarse: faltan las operaciones del Sprint 5.
 

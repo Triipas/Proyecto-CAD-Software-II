@@ -55,6 +55,17 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Add(new(caso.RegistradoEn, $"Reporte registrado como «{await CategoriaAsync(detalle.CategoriaOriginalId, ct)}»",
                 await NombreAsync(caso.CiudadanoId), Unir(TextoFuente(detalle.FuenteUbicacion), detalle.ReferenciaHecho is { } r ? $"Referencia: {r}" : null)));
         }
+        else if (caso.Origen == OrigenCaso.Acompanamiento)
+        {
+            // DP19: caso urgente creado por un operador desde un aviso del acompañamiento, con su justificación.
+            var origen = await (from aviso in db.AvisosAcompanamiento.AsNoTracking()
+                                where aviso.CasoId == casoId && aviso.CasoCreado
+                                select new { aviso.VinculadoPor, aviso.JustificacionCaso, aviso.Regla }).SingleOrDefaultAsync(ct);
+            entradas.Add(new(caso.RegistradoEn, "Caso urgente creado desde un aviso del acompañamiento",
+                origen?.VinculadoPor is { } operador ? await NombreAsync(operador) : "Cuenta no disponible",
+                Unir(origen is null ? null : $"Justificación: {origen.JustificacionCaso}",
+                    caso.UbicacionDisponible ? "Ubicación: última posición conocida de la sesión" : "Sin posiciones en la sesión")));
+        }
         else
             entradas.Add(new(caso.RegistradoEn, "SOS emitido", await NombreAsync(caso.CiudadanoId),
                 caso.UbicacionDisponible ? "Con ubicación del dispositivo" : "Ubicación no disponible"));
@@ -66,7 +77,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
 
         // HU13: clasificación de un SOS. En un reporte, la categoría del ciudadano figura en su registro y los cambios en
         // las correcciones (HU14).
-        if (caso.Origen == OrigenCaso.Sos && caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
+        if (caso.Origen != OrigenCaso.Reporte && caso.CategoriaId is { } categoria && caso.ClasificadoPor is { } clasificador && caso.ClasificadoEn is { } clasificadoEn)
             entradas.Add(new(clasificadoEn, $"Clasificado como «{await CategoriaAsync(categoria, ct)}»", await NombreAsync(clasificador), null));
 
         // HU14: inicio de la revisión y correcciones de categoría (anterior → nueva).
@@ -141,7 +152,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);
         }
 
-        return new HistorialCaso(caso.Id, caso.Origen == OrigenCaso.Sos ? "SOS" : "Reporte", EstadosCaso.Texto(caso.Estado),
+        return new HistorialCaso(caso.Id, OrigenesCaso.Texto(caso.Origen), EstadosCaso.Texto(caso.Estado),
             caso.RegistradoEn, resultado,
             // Orden temporal; a igual momento, el orden en que se añadieron (registro, cierre antes que sus notas).
             entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn,

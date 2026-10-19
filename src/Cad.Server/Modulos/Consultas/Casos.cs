@@ -37,7 +37,7 @@ public sealed record CasoEncontrado(
 {
     public const string TipoPorDeterminar = "Tipo por determinar";
     public bool ConUbicacion => Latitud is not null && Longitud is not null;
-    public string TextoOrigen => Origen == OrigenCaso.Sos ? "SOS" : "Reporte";
+    public string TextoOrigen => OrigenesCaso.Texto(Origen);
     public string TextoTipo => Tipo ?? TipoPorDeterminar;
 }
 
@@ -93,8 +93,8 @@ public sealed class ConsultarCasos(CadDbContext db)
                                Ciudadano = ciudadano.Nombres + " " + ciudadano.Apellidos,
                                Tipo = categoria == null ? null : categoria.Nombre,
                                Sereno = ultimoSereno,
-                               Latitud = caso.Origen == OrigenCaso.Sos ? caso.Latitud : (detalle == null ? null : detalle.LatitudHecho),
-                               Longitud = caso.Origen == OrigenCaso.Sos ? caso.Longitud : (detalle == null ? null : detalle.LongitudHecho),
+                               Latitud = caso.Origen != OrigenCaso.Reporte ? caso.Latitud : (detalle == null ? null : detalle.LatitudHecho),
+                               Longitud = caso.Origen != OrigenCaso.Reporte ? caso.Longitud : (detalle == null ? null : detalle.LongitudHecho),
                                DecididoEn = db.DecisionesReporte.Where(d => d.CasoId == caso.Id).Select(d => (DateTimeOffset?)d.DecididaEn).FirstOrDefault(),
                                Decision = db.DecisionesReporte.Where(d => d.CasoId == caso.Id).Select(d => (TipoDecisionReporte?)d.Tipo).FirstOrDefault(),
                                AtencionIniciadaEn = db.EventosCaso.Where(e => e.CasoId == caso.Id && e.Tipo == TipoEventoCaso.AtencionIniciada)
