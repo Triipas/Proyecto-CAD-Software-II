@@ -1,41 +1,59 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- HU31 — bandeja de notificaciones: cambios del estado público de los casos propios, sin detalles del hecho. -->
+<!-- HU31 — bandeja de notificaciones: cambios del estado público de los casos propios, sin detalles del hecho.
+     Rediseño CAD v2 (fase 4): pestaña «Avisos»; lo nuevo lleva un punto azul y la etiqueta «Nueva». -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
              x:Class="Cad.Movil.Vistas.NotificacionesPagina"
              x:DataType="vm:NotificacionesVistaModelo"
-             Title="Notificaciones">
-    <RefreshView IsRefreshing="{Binding Cargando}" Command="{Binding Actualizar}">
+             Title="Avisos">
+    <RefreshView IsRefreshing="{Binding Cargando}" Command="{Binding Actualizar}" RefreshColor="{StaticResource ColorPrimario}">
         <ScrollView>
-            <VerticalStackLayout Padding="16,24" Spacing="12" MaximumWidthRequest="480">
-                <VerticalStackLayout>
-                    <Label Text="Ciudadano" Style="{StaticResource Sobretitulo}" />
-                    <Label Text="Notificaciones" Style="{StaticResource Titulo}" />
-                    <Label Text="{Binding Resumen}" Style="{StaticResource TextoSecundario}" />
-                </VerticalStackLayout>
+            <VerticalStackLayout Spacing="0">
+                <v:EncabezadoPagina Titulo="Avisos" MostrarVolver="False" Ayuda="{Binding Resumen}" />
 
-                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
-                <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
-                <v:Aviso Tipo="informacion" Texto="Aún no tienes notificaciones. Te avisaremos aquí cuando cambie el estado de tus casos." IsVisible="{Binding SinNotificaciones}" />
+                <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
+                    <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                    <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
 
-                <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Notificaciones}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ElementoNotificacion">
-                            <Border Style="{StaticResource Superficie}" Padding="16" SemanticProperties.Description="{Binding Descripcion}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Abrir}" />
-                                </Border.GestureRecognizers>
-                                <VerticalStackLayout Spacing="4">
-                                    <Label Text="{Binding Estado}" Style="{StaticResource Sobretitulo}" />
-                                    <Label Text="{Binding Texto}" FontAttributes="Bold" />
-                                    <Label Text="{Binding Fecha}" Style="{StaticResource TextoSecundario}" FontSize="13" />
-                                    <Button Text="Ver el caso" Style="{StaticResource BotonSecundario}" Command="{Binding Abrir}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                    <VerticalStackLayout Spacing="8" Padding="16,32" IsVisible="{Binding SinNotificaciones}" HorizontalOptions="Center">
+                        <v:Icono Nombre="campana" Color="{StaticResource ColorTextoSecundario}" Tamano="40" HorizontalOptions="Center" />
+                        <Label Text="Aún no tienes notificaciones." Style="{StaticResource TituloMosaico}" HorizontalTextAlignment="Center" />
+                        <Label Text="Te avisaremos aquí cuando cambie el estado de tus casos." Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Notificaciones}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ElementoNotificacion">
+                                <Grid>
+                                    <Border Style="{StaticResource Superficie}" Padding="16">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="4">
+                                            <Grid Grid.RowSpan="2" WidthRequest="36" HeightRequest="36" VerticalOptions="Start">
+                                                <Ellipse Fill="{StaticResource ColorInformacionFondo}" />
+                                                <v:Icono Nombre="campana" Color="{StaticResource ColorInformacion}" Tamano="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                <Ellipse Fill="{StaticResource ColorPrimario}" Stroke="White" StrokeThickness="2" WidthRequest="12" HeightRequest="12"
+                                                         HorizontalOptions="End" VerticalOptions="Start" IsVisible="{Binding NoLeida}" />
+                                            </Grid>
+                                            <Label Grid.Column="1" Text="{Binding Texto}" Style="{StaticResource TituloMosaico}" FontSize="15" />
+                                            <Label Grid.Column="1" Grid.Row="1" Style="{StaticResource TextoSecundario}" FontSize="13">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="{Binding Estado}" FontFamily="PublicSansSemiBold" />
+                                                        <Span Text=" · " />
+                                                        <Span Text="{Binding Fecha}" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                            <v:Icono Grid.Column="2" Grid.RowSpan="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+                                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Abrir}"
+                                            SemanticProperties.Description="{Binding Descripcion}" SemanticProperties.Hint="Abre el caso" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>

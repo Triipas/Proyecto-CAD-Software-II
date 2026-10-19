@@ -9,6 +9,15 @@
     <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/central.css" asp-append-version="true" />
 }
+@section IndicadoresBarra {
+    @* Lo primero que ve el operador: cuántos SOS hay, cuánto queda por asignar y con cuántos serenos cuenta. central.js los mantiene al día. *@
+    <ul class="barra__indicadores" aria-label="Situación de la central">
+        <li class="indicador indicador--sos@(Model.Pendientes.Count > 0 ? " indicador--activo" : "")" data-indicador="sos"><b data-valor>@Model.Pendientes.Count</b> SOS</li>
+        <li class="indicador" data-indicador="por-asignar"><b data-valor>@Model.PorAsignar</b> por asignar</li>
+        <li class="indicador" data-indicador="serenos-libres"><b data-valor>@Model.SerenosLibres</b> <span data-etiqueta>@(Model.SerenosLibres == 1 ? "sereno libre" : "serenos libres")</span></li>
+        <li class="indicador"><a href="/panel/acompanamientos"><b>@Model.AcompanamientosActivos</b> @(Model.AcompanamientosActivos == 1 ? "acompañamiento" : "acompañamientos")</a></li>
+    </ul>
+}
 <h1 class="visualmente-oculto titulo">Central de monitoreo</h1>
 
 <div class="central">
@@ -51,6 +60,12 @@
             </button>
         </div>
         <div class="panel-flotante__cuerpo" id="cuerpo-cola">
+            @* Filtro de la cola: todo, solo SOS o solo reportes. Los acompañamientos tienen su propia sección: no se asignan. *@
+            <div class="cola__filtro" role="group" aria-label="Mostrar en la cola">
+                <button type="button" aria-pressed="true" data-filtro-cola="todo">Todo</button>
+                <button type="button" aria-pressed="false" data-filtro-cola="sos">SOS <span data-filtro-total="sos">@Model.Pendientes.Count</span></button>
+                <button type="button" aria-pressed="false" data-filtro-cola="reportes">Reportes <span data-filtro-total="reportes">@Model.ReportesAdmitidos.Count</span></button>
+            </div>
             <div class="central__controles">
                 @* Estado del canal en tiempo real: icono + texto + color (nunca solo color). *@
                 <p class="conexion conexion--conectando" role="status" data-conexion data-estado="conectando">

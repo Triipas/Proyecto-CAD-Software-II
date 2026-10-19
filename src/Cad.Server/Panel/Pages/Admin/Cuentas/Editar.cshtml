@@ -6,13 +6,15 @@
     var f = Model.Formulario;
 }
 <p><a class="enlace-volver" href="/panel/admin/cuentas">← Cuentas institucionales</a></p>
-<div>
-    <p class="sobretitulo">Administrador</p>
-    <h1 class="titulo">Modificar cuenta institucional</h1>
-    <p class="texto-secundario">
-        @Model.Cuenta.Rol · @(Model.Cuenta.Activa ? "Activa" : "Desactivada").
-        El rol se fija al crear la cuenta.
-    </p>
+<div class="pagina__encabezado">
+    <div>
+        <h1 class="titulo">Modificar cuenta institucional</h1>
+        <p class="cuenta__estado">
+            <span class="chip @(Model.Cuenta.Rol == "Sereno" ? "chip--progreso" : "chip--informacion")">@Model.Cuenta.Rol</span>
+            <span class="chip @(Model.Cuenta.Activa ? "chip--exito" : "chip--neutro")">@(Model.Cuenta.Activa ? "Activa" : "Desactivada")</span>
+            <span class="texto-secundario">El rol se fija al crear la cuenta.</span>
+        </p>
+    </div>
 </div>
 
 <section class="superficie">

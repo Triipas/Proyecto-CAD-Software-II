@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- HU30 — «Mis casos»: SOS y reportes propios con origen, fecha y estado público (DP05). -->
+<!-- HU30 — «Mis casos»: SOS y reportes propios con origen, fecha y estado público (DP05).
+     Rediseño CAD v2 (fase 4): pestaña de la barra inferior; cada caso es una tarjeta pulsable con su origen y un chip de estado. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -8,36 +9,51 @@
              x:DataType="vm:MisCasosVistaModelo"
              Title="Mis casos">
     <!-- CA02: deslizar hacia abajo vuelve a consultar el estado actual. -->
-    <RefreshView IsRefreshing="{Binding Cargando}" Command="{Binding Actualizar}">
+    <RefreshView IsRefreshing="{Binding Cargando}" Command="{Binding Actualizar}" RefreshColor="{StaticResource ColorPrimario}">
         <ScrollView>
-            <VerticalStackLayout Padding="16,24" Spacing="12" MaximumWidthRequest="480">
-                <VerticalStackLayout>
-                    <Label Text="Ciudadano" Style="{StaticResource Sobretitulo}" />
-                    <Label Text="Mis casos" Style="{StaticResource Titulo}" />
-                    <Label Text="Tus SOS y reportes, los más recientes primero. Desliza hacia abajo para actualizar." Style="{StaticResource TextoSecundario}" />
-                </VerticalStackLayout>
+            <VerticalStackLayout Spacing="0">
+                <v:EncabezadoPagina Titulo="Mis casos" MostrarVolver="False"
+                                    Ayuda="Tus SOS y reportes, los más recientes primero. Desliza hacia abajo para actualizar." />
 
-                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
-                <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
-                <v:Aviso Tipo="informacion" Texto="Aún no tienes SOS ni reportes." IsVisible="{Binding SinCasos}" />
+                <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
+                    <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                    <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
 
-                <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Casos}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ElementoMiCaso">
-                            <Border Style="{StaticResource Superficie}" Padding="16" SemanticProperties.Description="{Binding Descripcion}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Abrir}" />
-                                </Border.GestureRecognizers>
-                                <VerticalStackLayout Spacing="4">
-                                    <Label Text="{Binding Titulo}" FontAttributes="Bold" />
-                                    <Label Text="{Binding Fecha, StringFormat='Registrado el {0}'}" Style="{StaticResource TextoSecundario}" />
-                                    <!-- CA03: resultado público de un caso finalizado. -->
-                                    <Label Text="{Binding Resultado}" IsVisible="{Binding HayResultado}" />
-                                    <Button Text="Ver avances" Style="{StaticResource BotonSecundario}" Command="{Binding Abrir}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                    <!-- Estado vacío: qué es esta lista y cómo se llena. -->
+                    <VerticalStackLayout Spacing="8" Padding="16,32" IsVisible="{Binding SinCasos}" HorizontalOptions="Center">
+                        <v:Icono Nombre="documento" Color="{StaticResource ColorTextoSecundario}" Tamano="40" HorizontalOptions="Center" />
+                        <Label Text="Aún no tienes SOS ni reportes." Style="{StaticResource TituloMosaico}" HorizontalTextAlignment="Center" />
+                        <Label Text="Cuando pidas ayuda o reportes una incidencia, verás aquí su estado y sus avances."
+                               Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Casos}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ElementoMiCaso">
+                                <Grid>
+                                    <Border Style="{StaticResource Superficie}" Padding="16">
+                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                            <HorizontalStackLayout Spacing="8">
+                                                <Border StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,3" BackgroundColor="{StaticResource ColorUrgente}" IsVisible="{Binding EsSos}">
+                                                    <Label Text="SOS" TextColor="White" FontFamily="PublicSansBold" FontSize="13" />
+                                                </Border>
+                                                <Border StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,3" BackgroundColor="{StaticResource ColorReporte}" IsVisible="{Binding EsReporte}">
+                                                    <Label Text="Reporte" TextColor="White" FontFamily="PublicSansBold" FontSize="13" />
+                                                </Border>
+                                                <v:ChipEstado Estado="{Binding Estado}" Urgente="{Binding EsSos}" />
+                                            </HorizontalStackLayout>
+                                            <v:Icono Grid.Column="1" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
+                                            <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Fecha, StringFormat='Registrado el {0}'}" Style="{StaticResource TextoSecundario}" />
+                                            <!-- CA03: resultado público de un caso finalizado. -->
+                                            <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Resultado}" IsVisible="{Binding HayResultado}" />
+                                        </Grid>
+                                    </Border>
+                                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Abrir}"
+                                            SemanticProperties.Description="{Binding Descripcion}" SemanticProperties.Hint="Muestra los avances del caso" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>

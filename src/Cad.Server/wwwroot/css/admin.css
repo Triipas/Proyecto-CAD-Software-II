@@ -1,0 +1,141 @@
+/*
+  Administración (HU04, HU05) en el rediseño CAD v2, fase 3: inicio con el resumen de cuentas y listado de cuentas.
+*/
+
+/* ── Inicio: resumen en una línea ──────────────────────── */
+.resumen-cuentas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0 0 var(--espacio-4);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.resumen-cuentas strong {
+  font-size: var(--texto-md);
+  color: var(--color-marino);
+}
+
+.resumen-cuentas span + span::before {
+  content: "·";
+  margin-right: var(--espacio-2);
+  color: var(--color-borde-fuerte);
+}
+
+.resumen-cuentas__aviso {
+  font-weight: var(--peso-medio);
+  color: var(--color-neutro);
+}
+
+.resumen-cuentas a {
+  margin-left: auto;
+  font-weight: var(--peso-medio);
+}
+
+/* ── Listado de cuentas ────────────────────────────────── */
+.cuenta__persona {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.cuenta__inicial {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-primario);
+}
+
+.cuenta__inicial--sereno {
+  background: var(--mapa-sereno);
+}
+
+.cuenta__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: var(--espacio-2) 0 0;
+}
+
+/* Por debajo de 760 px, cada cuenta como tarjeta (solo CSS; la tabla se conserva para lectores de pantalla). */
+@media (max-width: 47.5rem) {
+  .cuentas__tabla {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .cuentas__tabla .tabla,
+  .cuentas__tabla .tabla tbody,
+  .cuentas__tabla .tabla caption {
+    display: block;
+  }
+
+  .cuentas__tabla .tabla caption {
+    padding: 0 0 var(--espacio-3);
+  }
+
+  .cuentas__tabla .tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .cuentas__tabla .tabla tbody {
+    display: grid;
+    gap: var(--espacio-3);
+  }
+
+  .cuentas__tabla .tabla tbody tr {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas:
+      "persona persona persona"
+      "correo correo correo"
+      "telefono telefono telefono"
+      "rol estado ."
+      "acciones acciones acciones";
+    gap: var(--espacio-2);
+    padding: var(--espacio-4);
+    border: var(--grosor-borde) solid var(--color-borde);
+    border-radius: var(--radio-superficie);
+    background: var(--color-superficie);
+    box-shadow: var(--sombra-1);
+  }
+
+  .cuentas__tabla .tabla tbody th,
+  .cuentas__tabla .tabla tbody td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .cuentas__tabla tbody > tr > :nth-child(1) { grid-area: persona; }
+  .cuentas__tabla tbody > tr > :nth-child(2) { grid-area: correo; overflow-wrap: anywhere; }
+  .cuentas__tabla tbody > tr > :nth-child(3) { grid-area: telefono; }
+  .cuentas__tabla tbody > tr > :nth-child(4) { grid-area: rol; }
+  .cuentas__tabla tbody > tr > :nth-child(5) { grid-area: estado; }
+  .cuentas__tabla tbody > tr > :nth-child(6) {
+    grid-area: acciones;
+    padding-top: var(--espacio-2);
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .cuentas__tabla tbody > tr > :nth-child(6) a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+  }
+}
+

@@ -10,8 +10,8 @@
     <Grid RowDefinitions="Auto,*" Padding="16,24" RowSpacing="12" MaximumWidthRequest="560">
         <VerticalStackLayout Spacing="12">
             <VerticalStackLayout Spacing="2">
-                <Label Text="SPIKE01 · solo desarrollo" Style="{StaticResource Sobretitulo}" />
                 <Label Text="Diagnóstico de ubicación" Style="{StaticResource Titulo}" />
+                <Label Text="SPIKE01 · solo para desarrollo" Style="{StaticResource TextoSecundario}" />
             </VerticalStackLayout>
             <v:Aviso Tipo="informacion"
                      Texto="Cada 5 s intenta obtener la posición actual y comprueba el servidor (GET /salud). No envía coordenadas. Sigue activa en segundo plano mientras Android lo permita." />

@@ -93,6 +93,10 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public bool HayDespacho => despacho.Actual is not null;
     public bool SinDespacho => despacho.Actual is null && despacho.Consultado;
     public string TextoDespacho => despacho.Actual is { } d ? $"{d.Origen} · {d.Estado}" : "";
+    // Rediseño CAD v2: la tarjeta del despacho muestra el origen como etiqueta y el estado como chip.
+    public string EstadoDespacho => despacho.Actual?.Estado ?? "";
+    public bool DespachoEsSos => despacho.Actual is { } d && d.Origen != "Reporte";
+    public bool DespachoEsReporte => despacho.Actual is { Origen: "Reporte" };
     public string TextoAsignado => despacho.Actual is { } d
         ? $"Asignado a las {Hora(d.AsignadoEn)}. Registrado a las {Hora(d.RegistradoEn)}." : "";
     public string TextoIdentificador => despacho.Actual is { } d ? $"Identificador del caso: {d.CasoId}" : "";
@@ -236,7 +240,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
 
     private void ActualizarDespacho()
     {
-        foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(TextoAsignado), nameof(TextoIdentificador),
+        foreach (var p in new[] { nameof(HayDespacho), nameof(SinDespacho), nameof(TextoDespacho), nameof(EstadoDespacho), nameof(DespachoEsSos),
+                     nameof(DespachoEsReporte), nameof(TextoAsignado), nameof(TextoIdentificador),
                      nameof(HayUbicacionDespacho), nameof(SinUbicacionDespacho), nameof(TextoUbicacionDespacho), nameof(InformacionDespacho),
                      nameof(EsReporteDespacho), nameof(MostrarUbicacionDispositivo), nameof(HayPuntoLugarHecho), nameof(TextoLugarHecho),
                      nameof(HayReferenciaLugarHecho), nameof(TextoReferenciaLugarHecho), nameof(HayDescripcionReporte), nameof(TextoDescripcionReporte),

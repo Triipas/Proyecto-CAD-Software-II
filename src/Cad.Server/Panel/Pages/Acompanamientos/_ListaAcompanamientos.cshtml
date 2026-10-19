@@ -2,22 +2,23 @@
 @using Cad.Server.Panel.Pages.Acompanamientos
 @{
     var umbral = (int)Model.Umbral.TotalSeconds;
+    static string Iniciales(string nombre) => string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
 }
 @* HU42-CA04: los avisos técnicos y de verificación, en su propia lista: no son SOS ni generan despacho. *@
 @if (Model.Avisos is { Count: > 0 } avisos)
 {
     <section class="avisos-acompanamiento" aria-label="Avisos del acompañamiento sin resolver" data-avisos="@avisos.Count">
-        <h3 class="central__titulo">Avisos sin resolver · @avisos.Count</h3>
+        <h3 class="acompanamientos__subtitulo"><partial name="_Icono" model="@("advertencia")" />Avisos sin resolver · @avisos.Count</h3>
         <ul class="lista-acompanamientos">
             @foreach (var aviso in avisos)
             {
                 <li class="aviso-acompanamiento" data-aviso="@aviso.Id" data-regla="@aviso.Regla" data-estado-aviso="@aviso.Estado">
-                    <p class="acompanamiento__cabecera">
+                    <p class="acompanamiento__meta">
                         <span class="etiqueta-acompanamiento">@aviso.TextoTipo</span>
                         <strong>@aviso.TextoRegla</strong>
-                        <span class="texto-secundario">· @Formato.Hora(aviso.GeneradoEn, Model.ZonaHoraria) · @aviso.TextoEstado@(aviso.Responsable is { } responsable ? $" ({responsable})" : "")</span>
                     </p>
-                    <p>@aviso.Ciudadano · <a href="/panel/avisos/@aviso.Id">Revisar el aviso<span class="visualmente-oculto"> de @aviso.Ciudadano</span></a></p>
+                    <p class="acompanamiento__dato texto-secundario">@aviso.Ciudadano · @Formato.Hora(aviso.GeneradoEn, Model.ZonaHoraria) · @aviso.TextoEstado@(aviso.Responsable is { } responsable ? $" ({responsable})" : "")</p>
+                    <p class="acompanamiento__dato"><a href="/panel/avisos/@aviso.Id">Revisar el aviso<span class="visualmente-oculto"> de @aviso.Ciudadano</span></a></p>
                 </li>
             }
         </ul>
@@ -25,7 +26,11 @@
 }
 @if (Model.Sesiones.Count == 0)
 {
-    <p class="texto-secundario" data-sin-acompanamientos>No hay acompañamientos activos.</p>
+    <div class="estado-vacio acompanamientos__vacio" data-sin-acompanamientos>
+        <partial name="_Icono" model="@("ruta")" />
+        <p class="aviso__titulo">No hay acompañamientos activos.</p>
+        <p>Cuando un ciudadano comparta su trayecto, aparecerá aquí y en el mapa.</p>
+    </div>
 }
 else
 {
@@ -33,28 +38,34 @@ else
         @foreach (var s in Model.Sesiones)
         {
             var p = s.Ultima;
+            var gris = s.SinConexion || p is { Desactualizada: true };
             <li class="acompanamiento @(s.SinConexion ? "acompanamiento--sin-conexion" : "")" data-acompanamiento="@s.Id"
                 data-ciudadano="@s.Ciudadano" data-sin-conexion="@(s.SinConexion ? "true" : "false")"
                 data-lat="@(p is null ? null : Formato.Numero(p.Latitud))" data-lon="@(p is null ? null : Formato.Numero(p.Longitud))"
                 data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")">
-                <p class="acompanamiento__cabecera">
-                    <span class="etiqueta-acompanamiento">Acompañamiento</span>
+                <div class="acompanamiento__cabecera">
+                    <span class="acompanamiento__inicial@(gris ? " acompanamiento__inicial--gris" : "")" aria-hidden="true">@Iniciales(s.Ciudadano)</span>
+                    <div class="acompanamiento__quien">
+                        <p class="acompanamiento__ciudadano">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")</p>
+                        <p class="acompanamiento__meta">
+                            <span class="etiqueta-acompanamiento">Acompañamiento</span>
+                            <span class="texto-secundario">hasta las @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
+                        </p>
+                    </div>
                     @* DP20: sin envíos del dispositivo durante más del umbral, la sesión se muestra «Sin conexión». *@
                     @if (s.SinConexion)
                     {
-                        <span class="estado estado--sin-contacto" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
+                        <span class="chip chip--advertencia" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
                     }
                     else
                     {
-                        <span class="estado estado--activa" data-estado-sesion><partial name="_Icono" model="@("exito")" />Activa</span>
+                        <span class="chip chip--acompanamiento" data-estado-sesion><partial name="_Icono" model="@("exito")" />Activa</span>
                     }
-                    <span class="texto-secundario">hasta las @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
-                </p>
-                <p class="acompanamiento__ciudadano">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")</p>
+                </div>
                 @* HU40/HU41: última confirmación de bienestar de la sesión. *@
                 @if (s.UltimaConfirmacion is { } confirmacion)
                 {
-                    <p class="@(confirmacion.Respuesta == Cad.Server.Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda ? "aviso aviso--error acompanamiento__aviso" : "texto-secundario")" data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")">
+                    <p class="@(confirmacion.Respuesta == Cad.Server.Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda ? "aviso aviso--error acompanamiento__aviso" : "acompanamiento__dato")" data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")">
                         Confirmación de bienestar (@Formato.Hora(confirmacion.SolicitadaEn, Model.ZonaHoraria, "HH:mm")): <strong>@confirmacion.TextoRespuesta</strong>
                         @if (confirmacion.CasoId is { } caso)
                         {
@@ -64,16 +75,19 @@ else
                 }
                 @if (p is null)
                 {
-                    <p class="texto-secundario" data-sin-posicion>Aún no se recibió ninguna posición.</p>
+                    <p class="acompanamiento__dato texto-secundario" data-sin-posicion>Aún no se recibió ninguna posición.</p>
                 }
                 else
                 {
                     @* HU38-CA01/CA02/CA03: hora de obtención, precisión y antigüedad; una posición desactualizada no se presenta como actual. *@
-                    <p data-posicion>
-                        <strong>@(p.Desactualizada || s.SinConexion ? "Última posición conocida" : "Posición actual")</strong>
-                        · obtenida a las <time datetime="@p.ObtenidaEn.ToString("O")">@Formato.Hora(p.ObtenidaEn, Model.ZonaHoraria)</time>
-                        (<span data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")" data-umbral="@umbral">@Formato.Antiguedad(p.Antiguedad)</span>)
-                        · precisión ± @Formato.Numero(p.PrecisionMetros, "0") m
+                    <p class="acompanamiento__dato" data-posicion>
+                        <partial name="_Icono" model="@("ubicacion")" />
+                        <span>
+                            <strong>@(p.Desactualizada || s.SinConexion ? "Última posición conocida" : "Posición actual")</strong>
+                            · obtenida a las <time datetime="@p.ObtenidaEn.ToString("O")">@Formato.Hora(p.ObtenidaEn, Model.ZonaHoraria)</time>
+                            (<span data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")" data-umbral="@umbral">@Formato.Antiguedad(p.Antiguedad)</span>)
+                            · precisión ± @Formato.Numero(p.PrecisionMetros, "0") m
+                        </span>
                     </p>
                     @if (p.Desactualizada)
                     {
@@ -90,7 +104,15 @@ else
                         <span>Sin conexión: no llega ningún envío del dispositivo desde las @(s.UltimoContactoEn is { } u ? Formato.Hora(u, Model.ZonaHoraria) : "—"). Si el ciudadano finalizó sin conexión, el cierre llegará cuando la recupere.</span>
                     </p>
                 }
-                <p><a href="/panel/acompanamientos/@s.Id">Ver el recorrido (@s.Posiciones @(s.Posiciones == 1 ? "posición" : "posiciones"))</a></p>
+                <div class="acompanamiento__acciones">
+                    @if (p is not null)
+                    {
+                        <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa la posición de @s.Ciudadano">
+                            <partial name="_Icono" model="@("ubicacion")" /><span>Ver en el mapa</span>
+                        </button>
+                    }
+                    <a class="acompanamiento__recorrido" href="/panel/acompanamientos/@s.Id">Ver el recorrido (@s.Posiciones @(s.Posiciones == 1 ? "posición" : "posiciones"))</a>
+                </div>
             </li>
         }
     </ul>

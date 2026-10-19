@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cad.Server.Compartido;
+using Cad.Server.Modulos.Acompanamiento.Consultas;
 using Cad.Server.Modulos.Consultas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace Cad.Server.Panel.Pages.Central;
 // muestran aparte, en «Reportes admitidos», y se asignan con las mismas reglas.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consultarSerenos, ConsultarReportesAdmitidos consultarReportes,
-    ConsultarCasosEnMapa consultarCasosEnMapa, IConfiguration configuracion,
+    ConsultarCasosEnMapa consultarCasosEnMapa, ConsultarAcompanamientos consultarAcompanamientos, IConfiguration configuracion,
     Microsoft.Extensions.Options.IOptions<Modulos.Mediciones.OpcionesMedicion> medicion) : PageModel
 {
     // RNF02: con la medición activada, el panel envía el acuse de presentación de cada SOS.
@@ -49,7 +50,13 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
         ReportesAdmitidos = await consultarReportes.EjecutarAsync(ct);
         Serenos = await consultarSerenos.EjecutarAsync(ct);
         CasosEnMapa = await consultarCasosEnMapa.EjecutarAsync(ct);
+        AcompanamientosActivos = (await consultarAcompanamientos.ActivasAsync(ct)).Count;
     }
+
+    // Indicadores de la barra (rediseño CAD v2, contrato «Mapa protagonista»): lo que el operador ve primero.
+    public int AcompanamientosActivos { get; private set; }
+    public int PorAsignar => Pendientes.Count + ReportesAdmitidos.Count;
+    public int SerenosLibres => Serenos.Count(s => s.Disponible);
 
     // HU25-CA05: fragmento de los casos en curso del mapa, que el panel pide al resincronizar.
     public async Task<IActionResult> OnGetCasosMapaAsync(CancellationToken ct) =>

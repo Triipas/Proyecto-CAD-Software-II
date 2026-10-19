@@ -1,6 +1,6 @@
 namespace Cad.Movil.Vistas;
 
-// Aviso reutilizable: símbolo + texto + color (nunca solo color), como el componente .aviso del panel web.
+// Aviso reutilizable: icono dibujado + texto + color (nunca solo color), como el componente .aviso del panel web.
 // Tipos: exito, informacion, advertencia, error.
 public sealed class Aviso : Border
 {
@@ -10,13 +10,13 @@ public sealed class Aviso : Border
     public static readonly BindableProperty TextoProperty =
         BindableProperty.Create(nameof(Texto), typeof(string), typeof(Aviso), "", propertyChanged: (b, _, _) => ((Aviso)b).Actualizar());
 
-    private readonly Label simbolo = new() { FontSize = 18, FontAttributes = FontAttributes.Bold, VerticalOptions = LayoutOptions.Start };
+    private readonly Icono simbolo = new() { Tamano = 20, VerticalOptions = LayoutOptions.Start, Margin = new Thickness(0, 1, 0, 0) };
     private readonly Label texto = new() { FontSize = 15, LineBreakMode = LineBreakMode.WordWrap };
 
     public Aviso()
     {
         StrokeThickness = 1;
-        StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 6 };
+        StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 8 };
         Padding = new Thickness(12, 10);
         var grid = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star) }, ColumnSpacing = 10 };
         grid.Add(simbolo, 0);
@@ -31,19 +31,19 @@ public sealed class Aviso : Border
 
     private void Actualizar()
     {
-        var (color, fondo, marca, prefijo) = Tipo switch
+        var (color, fondo, borde, prefijo) = Tipo switch
         {
-            "exito" => ("ColorExito", "ColorExitoFondo", "✓", "Correcto"),
-            "advertencia" => ("ColorAdvertencia", "ColorAdvertenciaFondo", "!", "Atención"),
-            "error" => ("ColorError", "ColorErrorFondo", "✕", "Error"),
-            _ => ("ColorInformacion", "ColorInformacionFondo", "i", "Información"),
+            "exito" => ("ColorExito", "ColorExitoFondo", "ColorExitoBorde", "Correcto"),
+            "advertencia" => ("ColorAdvertencia", "ColorAdvertenciaFondo", "ColorAdvertenciaBorde", "Atención"),
+            "error" => ("ColorError", "ColorErrorFondo", "ColorErrorBorde", "Error"),
+            _ => ("ColorInformacion", "ColorInformacionFondo", "ColorInformacionBorde", "Información"),
         };
         var recursos = Application.Current?.Resources;
         Color Recurso(string clave) => recursos is not null && recursos.TryGetValue(clave, out var valor) ? (Color)valor : Colors.Black;
-        simbolo.Text = marca;
-        simbolo.TextColor = texto.TextColor = Recurso(color);
+        simbolo.Nombre = Tipo is "exito" or "advertencia" or "error" ? Tipo : "informacion";
+        simbolo.Color = texto.TextColor = Recurso(color);
         BackgroundColor = Recurso(fondo);
-        Stroke = Recurso(color);
+        Stroke = Recurso(borde);
         texto.Text = Texto;
         // El lector de pantalla anuncia el tipo además del texto.
         SemanticProperties.SetDescription(this, $"{prefijo}: {Texto}");

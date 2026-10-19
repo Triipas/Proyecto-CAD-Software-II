@@ -8,42 +8,42 @@
              x:DataType="vm:RegistroVistaModelo"
              Title="Crear cuenta">
     <ScrollView>
-        <VerticalStackLayout Padding="16,24" Spacing="10" MaximumWidthRequest="480">
-            <Label Text="Registro ciudadano" Style="{StaticResource Sobretitulo}" />
-            <Label Text="Crea tu cuenta" Style="{StaticResource Titulo}" />
-            <Label Text="Tu correo será tu identificador de acceso. Usa datos ficticios: es un MVP académico." Style="{StaticResource TextoSecundario}" />
+        <VerticalStackLayout Spacing="0">
+            <v:EncabezadoPagina Titulo="Crea tu cuenta" TextoVolver="Ingresar"
+                                Ayuda="Tu correo será tu identificador de acceso. Usa datos ficticios: es un MVP académico." />
+            <VerticalStackLayout Padding="16,20,16,32" Spacing="10" MaximumWidthRequest="480">
+                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
 
-            <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <Label Text="Nombres" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Nombres}" SemanticProperties.Description="Nombres" /></Border>
+                <Label Text="{Binding ErrorNombres}" Style="{StaticResource ErrorCampo}" />
 
-            <Label Text="Nombres" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Nombres}" SemanticProperties.Description="Nombres" /></Border>
-            <Label Text="{Binding ErrorNombres}" Style="{StaticResource ErrorCampo}" />
+                <Label Text="Apellidos" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Apellidos}" SemanticProperties.Description="Apellidos" /></Border>
+                <Label Text="{Binding ErrorApellidos}" Style="{StaticResource ErrorCampo}" />
 
-            <Label Text="Apellidos" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Apellidos}" SemanticProperties.Description="Apellidos" /></Border>
-            <Label Text="{Binding ErrorApellidos}" Style="{StaticResource ErrorCampo}" />
+                <Label Text="Correo electrónico" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}">
+                    <Entry Text="{Binding Correo}" Keyboard="Email" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" SemanticProperties.Description="Correo electrónico" />
+                </Border>
+                <Label Text="{Binding ErrorCorreo}" Style="{StaticResource ErrorCampo}" />
 
-            <Label Text="Correo electrónico" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}">
-                <Entry Text="{Binding Correo}" Keyboard="Email" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" SemanticProperties.Description="Correo electrónico" />
-            </Border>
-            <Label Text="{Binding ErrorCorreo}" Style="{StaticResource ErrorCampo}" />
+                <Label Text="Teléfono móvil" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Telefono}" Keyboard="Telephone" Placeholder="9 dígitos, empieza por 9" SemanticProperties.Description="Teléfono móvil" /></Border>
+                <Label Text="{Binding ErrorTelefono}" Style="{StaticResource ErrorCampo}" />
 
-            <Label Text="Teléfono móvil" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Telefono}" Keyboard="Telephone" Placeholder="9 dígitos, empieza por 9" SemanticProperties.Description="Teléfono móvil" /></Border>
-            <Label Text="{Binding ErrorTelefono}" Style="{StaticResource ErrorCampo}" />
+                <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Contrasena}" IsPassword="True" Placeholder="Tu contraseña" /></Border>
+                <Label Text="Entre 8 y 128 caracteres, con al menos una letra y un número." Style="{StaticResource TextoSecundario}" FontSize="13" />
+                <Label Text="{Binding ErrorContrasena}" Style="{StaticResource ErrorCampo}" />
 
-            <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding Contrasena}" IsPassword="True" Placeholder="Tu contraseña" /></Border>
-            <Label Text="Entre 8 y 128 caracteres, con al menos una letra y un número." Style="{StaticResource TextoSecundario}" FontSize="13" />
-            <Label Text="{Binding ErrorContrasena}" Style="{StaticResource ErrorCampo}" />
+                <Label Text="Repite la contraseña" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding ConfirmacionContrasena}" IsPassword="True" Placeholder="Repite tu contraseña" /></Border>
+                <Label Text="{Binding ErrorConfirmacion}" Style="{StaticResource ErrorCampo}" />
 
-            <Label Text="Repite la contraseña" Style="{StaticResource Etiqueta}" />
-            <Border Style="{StaticResource MarcoCampo}"><Entry Text="{Binding ConfirmacionContrasena}" IsPassword="True" Placeholder="Repite tu contraseña" /></Border>
-            <Label Text="{Binding ErrorConfirmacion}" Style="{StaticResource ErrorCampo}" />
-
-            <Button Text="Crear mi cuenta" Style="{StaticResource BotonPrincipal}" Command="{Binding Registrar}" />
-            <Button Text="Ya tengo cuenta" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
+                <Button Text="Crear mi cuenta" Style="{StaticResource BotonPrincipal}" Command="{Binding Registrar}" />
+                <Button Text="Ya tengo cuenta" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

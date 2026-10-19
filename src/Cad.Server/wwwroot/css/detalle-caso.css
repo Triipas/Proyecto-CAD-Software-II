@@ -153,6 +153,10 @@
   .detalle-caso {
     grid-template-columns: minmax(0, 1.55fr) minmax(20rem, 1fr);
   }
+
+  .detalle-caso--una-columna {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .detalle-caso__principal,
@@ -396,4 +400,61 @@
   .progreso__marca {
     animation: none;
   }
+}
+
+/* ── Historial como línea de tiempo (HU27) ─────────────── */
+.historial--linea {
+  gap: 0;
+}
+
+.historial--linea .historial__elemento {
+  position: relative;
+  padding: 0 0 var(--espacio-5) var(--espacio-8);
+  border-bottom: 0;
+}
+
+/* El trazo une los nodos; el último no lo continúa. */
+.historial--linea .historial__elemento::before {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  bottom: 0;
+  left: 0.6875rem;
+  width: 2px;
+  background: var(--color-borde-fuerte);
+}
+
+.historial--linea .historial__elemento:last-child::before {
+  display: none;
+}
+
+.historial--linea .historial__elemento::after {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  left: 0.3125rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 3px solid var(--color-primario);
+  border-radius: 999px;
+  background: var(--color-superficie);
+}
+
+.historial--linea .historial__elemento:last-child:not(.historial__elemento--interna)::after {
+  background: var(--color-primario);
+}
+
+.historial__actuacion {
+  font-weight: var(--peso-fuerte);
+  color: var(--color-texto);
+}
+
+/* Lo interno (notas del cierre) va en gris: solo lo ve el personal autorizado. */
+.historial--linea .historial__elemento--interna::after {
+  border-color: var(--color-texto-secundario);
+  border-style: dashed;
+}
+
+.historial--linea .historial__elemento--interna .historial__actuacion {
+  color: var(--color-texto-secundario);
 }

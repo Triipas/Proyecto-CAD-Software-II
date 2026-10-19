@@ -394,7 +394,7 @@ public class RevisionReporteTests(FabricaCad fabrica)
         Assert.Contains("Revisión iniciada", html);
         Assert.Contains("Categoría corregida de «Robo» a «Otros»", html);
         Assert.DoesNotContain("Clasificado como", html);
-        Assert.Contains("Operador · Reporte En revisión", html);
+        Assert.Contains("data-origen-estado=\"Reporte En revisión\"", html);
     }
 
     [Fact]

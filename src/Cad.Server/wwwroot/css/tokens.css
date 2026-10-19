@@ -131,6 +131,8 @@
   --mapa-sereno: var(--marino-700);
   --mapa-sereno-no-disponible: #8291A7;
   --mapa-anillo: #FFFFFF;
+  /* Teselas apagadas en azul grisáceo: el mapa es fondo y los casos resaltan encima (contrato de dirección). */
+  --mapa-filtro-teselas: grayscale(1) sepia(0.2) hue-rotate(180deg) saturate(1.5) brightness(1.03) contrast(0.92);
 
   /* ── Tipografía ───────────────────────────────────────────────────────── */
   --fuente: "Public Sans", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;

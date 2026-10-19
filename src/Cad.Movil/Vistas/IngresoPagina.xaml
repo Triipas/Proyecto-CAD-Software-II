@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- HU02 — Iniciar sesión (ciudadano y sereno). -->
+<!-- HU02 — Iniciar sesión (ciudadano y sereno). Rediseño CAD v2 (fase 4): la marca en el encabezado marino y el formulario
+     en una superficie que sube sobre él. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -8,45 +9,57 @@
              x:DataType="vm:IngresoVistaModelo"
              Title="Ingresar">
     <ScrollView>
-        <VerticalStackLayout Padding="16,32" Spacing="16" MaximumWidthRequest="480">
-            <VerticalStackLayout Spacing="2">
-                <Label Text="CAD Móvil" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource ColorMarino}" />
-                <Label Text="MVP académico · datos simulados · no es un canal oficial de emergencias" Style="{StaticResource TextoSecundario}" FontSize="13" />
-            </VerticalStackLayout>
-
-            <Border Style="{StaticResource Superficie}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Ciudadanos y serenos" Style="{StaticResource Sobretitulo}" />
-                    <Label Text="Ingresar" Style="{StaticResource Titulo}" />
-
-                    <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
-
-                    <Label Text="Correo electrónico" Style="{StaticResource Etiqueta}" />
-                    <Border Style="{StaticResource MarcoCampo}">
-                        <Entry Text="{Binding Correo}" Keyboard="Email" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False"
-                               SemanticProperties.Description="Correo electrónico" />
-                    </Border>
-
-                    <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
-                    <Border Style="{StaticResource MarcoCampo}">
-                        <Entry Text="{Binding Contrasena}" IsPassword="True" Placeholder="Tu contraseña" />
-                    </Border>
-
-                    <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" />
-                    <Button Text="Crear una cuenta de ciudadano" Style="{StaticResource BotonSecundario}" Command="{Binding IrARegistro}" />
-                    <Button Text="Diagnóstico de ubicación (SPIKE01)" Style="{StaticResource BotonSecundario}"
-                            Command="{Binding IrADiagnostico}" IsVisible="{Binding MostrarDiagnostico}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <VerticalStackLayout Spacing="6">
-                <Label Text="Dirección del servidor" Style="{StaticResource Etiqueta}" />
-                <Border Style="{StaticResource MarcoCampo}">
-                    <Entry Text="{Binding DireccionServidor}" Keyboard="Url" IsSpellCheckEnabled="False"
-                           SemanticProperties.Description="Dirección del servidor" />
+        <VerticalStackLayout Spacing="0">
+            <Grid Style="{StaticResource EncabezadoMarino}" Padding="24,40,24,64" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                <Border WidthRequest="56" HeightRequest="56" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource ColorMarinoElevado}" HorizontalOptions="Start">
+                    <v:Icono Nombre="escudo" Color="{StaticResource ColorAcento}" Tamano="30" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
-                <Label Text="Debe usar https:// (canal cifrado). Servidor local: http://10.0.2.2:5220/ en el emulador o http://localhost:5220/ en un teléfono por USB."
-                       Style="{StaticResource TextoSecundario}" FontSize="13" />
+                <Label Grid.Row="1" Text="CAD Móvil" Style="{StaticResource TituloSobreMarino}" FontSize="30" />
+                <Label Grid.Row="2" Text="Ayuda urgente, reportes y acompañamiento para ciudadanos; despachos para serenos."
+                       Style="{StaticResource TextoSobreMarino}" />
+            </Grid>
+
+            <VerticalStackLayout Padding="16,0,16,32" Spacing="16" MaximumWidthRequest="480" Margin="0,-40,0,0">
+                <Border Style="{StaticResource Superficie}" Padding="20">
+                    <Border.Shadow>
+                        <Shadow Brush="#0B1F44" Offset="0,10" Radius="24" Opacity="0.16" />
+                    </Border.Shadow>
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Ingresar" Style="{StaticResource Titulo}" FontSize="24" />
+
+                        <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+
+                        <Label Text="Correo electrónico" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Entry Text="{Binding Correo}" Keyboard="Email" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False"
+                                   Placeholder="nombre@correo.com" SemanticProperties.Description="Correo electrónico" />
+                        </Border>
+
+                        <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Entry Text="{Binding Contrasena}" IsPassword="True" Placeholder="Tu contraseña" />
+                        </Border>
+
+                        <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" Margin="0,4,0,0" />
+                        <Button Text="Crear una cuenta de ciudadano" Style="{StaticResource BotonSecundario}" Command="{Binding IrARegistro}" />
+                        <Button Text="Diagnóstico de ubicación (SPIKE01)" Style="{StaticResource BotonTerciario}"
+                                Command="{Binding IrADiagnostico}" IsVisible="{Binding MostrarDiagnostico}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Dirección del servidor" Style="{StaticResource Etiqueta}" />
+                    <Border Style="{StaticResource MarcoCampo}">
+                        <Entry Text="{Binding DireccionServidor}" Keyboard="Url" IsSpellCheckEnabled="False"
+                               SemanticProperties.Description="Dirección del servidor" />
+                    </Border>
+                    <Label Text="Debe usar https:// (canal cifrado). Servidor local: http://10.0.2.2:5220/ en el emulador o http://localhost:5220/ en un teléfono por USB."
+                           Style="{StaticResource TextoSecundario}" FontSize="13" />
+                </VerticalStackLayout>
+
+                <Label Text="MVP académico · datos simulados · no es un canal oficial de emergencias"
+                       Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

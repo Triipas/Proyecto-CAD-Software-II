@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Rediseño CAD v2 (fase 4): el ciudadano navega con una barra inferior (Inicio · Mis casos · Avisos); el sereno tiene una sola
+     pantalla con la acción que toca en cada momento. Colores literales (ColorSuperficie, ColorPrimario, ColorTextoSecundario):
+     el Shell se construye antes de que App cargue sus recursos. -->
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:v="clr-namespace:Cad.Movil.Vistas"
        x:Class="Cad.Movil.AppShell"
        Shell.FlyoutBehavior="Disabled"
+       Shell.TabBarBackgroundColor="#FFFFFF"
+       Shell.TabBarForegroundColor="#1D4ED8"
+       Shell.TabBarTitleColor="#1D4ED8"
+       Shell.TabBarUnselectedColor="#475A75"
        Title="CAD Móvil">
     <ShellContent Route="ingreso" ContentTemplate="{DataTemplate v:IngresoPagina}" />
-    <ShellContent Route="ciudadano" ContentTemplate="{DataTemplate v:InicioCiudadanoPagina}" />
+    <TabBar Route="ciudadano">
+        <Tab Title="Inicio" Icon="tab_inicio.png" Route="inicio">
+            <ShellContent ContentTemplate="{DataTemplate v:InicioCiudadanoPagina}" />
+        </Tab>
+        <Tab Title="Mis casos" Icon="tab_casos.png" Route="mis-casos">
+            <ShellContent ContentTemplate="{DataTemplate v:MisCasosPagina}" />
+        </Tab>
+        <Tab Title="Avisos" Icon="tab_avisos.png" Route="notificaciones">
+            <ShellContent ContentTemplate="{DataTemplate v:NotificacionesPagina}" />
+        </Tab>
+    </TabBar>
     <ShellContent Route="sereno" ContentTemplate="{DataTemplate v:InicioSerenoPagina}" />
 </Shell>

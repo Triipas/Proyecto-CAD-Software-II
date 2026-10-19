@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T05:41:01.778Z",
+  "title": "Design System: Sistema Integrado CAD",
+  "extensions": {
+    "colorMeta": {
+      "marino-noche": {
+        "role": "primary",
+        "displayName": "Marino noche",
+        "canonical": "#0B1F44",
+        "tonalRamp": [
+          "#06142E",
+          "#0B1F44",
+          "#132C5C",
+          "#1D3B78",
+          "#3D5A93",
+          "#7487A2",
+          "#C3CFDF",
+          "#EDF2F9"
+        ]
+      },
+      "azul-accion": {
+        "role": "primary",
+        "displayName": "Azul de acción",
+        "canonical": "#1D4ED8",
+        "tonalRamp": [
+          "#16348F",
+          "#1A3FB0",
+          "#1D4ED8",
+          "#3D68E0",
+          "#6E8FE9",
+          "#A4BCF3",
+          "#CFDDFB",
+          "#E6EEFD"
+        ]
+      },
+      "celeste-senal": {
+        "role": "secondary",
+        "displayName": "Celeste señal",
+        "canonical": "#5CC8FF"
+      },
+      "rojo-sos": {
+        "role": "tertiary",
+        "displayName": "Rojo SOS",
+        "canonical": "#B42318",
+        "tonalRamp": [
+          "#7A1710",
+          "#912018",
+          "#B42318",
+          "#D2453A",
+          "#E8857D",
+          "#F4C7C3",
+          "#FBE3E1",
+          "#FEF3F2"
+        ]
+      },
+      "violeta-reporte": {
+        "role": "tertiary",
+        "displayName": "Violeta reporte",
+        "canonical": "#6D28D9",
+        "tonalRamp": [
+          "#4A1A99",
+          "#5B21B6",
+          "#6D28D9",
+          "#8B55E5",
+          "#AE88EE",
+          "#DCCDFB",
+          "#EBE2FD",
+          "#F4EFFE"
+        ]
+      },
+      "verde-azulado-acompanamiento": {
+        "role": "tertiary",
+        "displayName": "Verde azulado acompañamiento",
+        "canonical": "#0F766E",
+        "tonalRamp": [
+          "#0A4F4A",
+          "#0D635C",
+          "#0F766E",
+          "#0D9488",
+          "#4DB6AA",
+          "#B4E2DC",
+          "#D4F0EC",
+          "#E8F6F4"
+        ]
+      },
+      "fondo-niebla": {
+        "role": "neutral",
+        "displayName": "Fondo niebla",
+        "canonical": "#F3F6FB"
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#0D1B33"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Cifra protagonista",
+        "purpose": "Cronómetro de la app y totales; figuras tabulares."
+      },
+      "headline": {
+        "displayName": "Título de página",
+        "purpose": "Un título por página, en marino."
+      },
+      "title": {
+        "displayName": "Título de sección",
+        "purpose": "Secciones, paneles flotantes y tarjeta «Siguiente acción»."
+      },
+      "body": {
+        "displayName": "Cuerpo",
+        "purpose": "Texto corriente; medida de lectura 68ch."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Chips, etiquetas de campo y metadatos; 13 px es el mínimo."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sombra-1",
+        "value": "0 1px 2px rgb(11 31 68 / 0.06), 0 1px 1px rgb(11 31 68 / 0.04)",
+        "purpose": "Reposo: tarjetas de lista y leyendas."
+      },
+      {
+        "name": "sombra-2",
+        "value": "0 4px 12px -2px rgb(11 31 68 / 0.10), 0 2px 4px -2px rgb(11 31 68 / 0.06)",
+        "purpose": "Atención: tarjeta «Siguiente acción» y hover."
+      },
+      {
+        "name": "sombra-3",
+        "value": "0 16px 40px -8px rgb(11 31 68 / 0.22), 0 6px 12px -6px rgb(11 31 68 / 0.12)",
+        "purpose": "Flotante: paneles de la central y diálogos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duracion-instantanea",
+        "value": "100ms",
+        "purpose": "Presionado y cambios de color."
+      },
+      {
+        "name": "duracion-rapida",
+        "value": "160ms",
+        "purpose": "Hover, chips, pestañas."
+      },
+      {
+        "name": "duracion-base",
+        "value": "220ms",
+        "purpose": "Entrada de tarjetas, avisos y desplegables."
+      },
+      {
+        "name": "duracion-lenta",
+        "value": "360ms",
+        "purpose": "Diálogos, trazo del progreso, anillo de fijado."
+      },
+      {
+        "name": "curva-salida",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entradas."
+      },
+      {
+        "name": "curva-movimiento",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "Reordenar en el sitio y plegar paneles."
+      },
+      {
+        "name": "vuelo-al-caso",
+        "value": "Leaflet flyTo, 0.9s, easeLinearity 0.2, zoom 18",
+        "purpose": "Movimiento de cámara de «Ver en el mapa»."
+      },
+      {
+        "name": "pulso-sos",
+        "value": "1.6s",
+        "purpose": "Única animación persistente: SOS nuevo sin abrir."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "apilado",
+        "value": "760px"
+      },
+      {
+        "name": "detalle-dos-columnas",
+        "value": "1024px"
+      },
+      {
+        "name": "menu",
+        "value": "1100px"
+      },
+      {
+        "name": "indicadores-completos",
+        "value": "1400px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Una sola acción principal por vista.",
+      "html": "<button class=\"ds-boton\">Registrar la decisión</button>",
+      "css": ".ds-boton{display:inline-flex;align-items:center;min-height:44px;padding:8px 24px;border:0;border-radius:8px;font:600 1rem/1.2 \"Public Sans\", system-ui, sans-serif;color:#fff;background:#1D4ED8;cursor:pointer;transition:background-color 120ms ease,transform 100ms cubic-bezier(0.16,1,0.3,1)}.ds-boton:hover{background:#1A3FB0}.ds-boton:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}.ds-boton:active{transform:scale(0.97)}"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acciones complementarias y cancelar.",
+      "html": "<button class=\"ds-boton-sec\">Historial de sesiones</button>",
+      "css": ".ds-boton-sec{min-height:44px;padding:8px 24px;border:1px solid #7487A2;border-radius:8px;font:600 1rem/1.2 \"Public Sans\", system-ui, sans-serif;color:#0B1F44;background:#fff;cursor:pointer;transition:background-color 120ms ease}.ds-boton-sec:hover{background:#E6EEFD}.ds-boton-sec:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de texto con etiqueta visible.",
+      "html": "<label class=\"ds-campo\"><span>Motivo</span><input placeholder=\"Escribe el motivo\"></label>",
+      "css": ".ds-campo{display:grid;gap:6px;font:600 0.875rem \"Public Sans\", system-ui, sans-serif;color:#0D1B33}.ds-campo input{min-height:44px;padding:8px 12px;border:1px solid #7487A2;border-radius:8px;font:400 1rem \"Public Sans\", system-ui, sans-serif}.ds-campo input:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Chip de estado",
+      "kind": "chip",
+      "refersTo": "chip-progreso",
+      "description": "Tono, icono y texto literal del estado.",
+      "html": "<span class=\"ds-chip ds-chip--progreso\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg>En camino</span> <span class=\"ds-chip ds-chip--urgente\">Pendiente</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 10px 2px 8px;border:1px solid;border-radius:999px;font:600 0.8125rem/1.125rem \"Public Sans\", system-ui, sans-serif}.ds-chip--progreso{color:#1D4ED8;background:#E6EEFD;border-color:#CFDDFB}.ds-chip--urgente{color:#B42318;background:#FEF3F2;border-color:#F4C7C3}"
+    },
+    {
+      "name": "Barra superior",
+      "kind": "nav",
+      "refersTo": "top-bar",
+      "description": "Marino, secciones, indicadores en vivo y persona.",
+      "html": "<nav class=\"ds-barra\"><b>Central CAD</b><a aria-current=\"page\">Central</a><a>Reportes</a><span class=\"ds-ind ds-ind--sos\"><b>1</b> SOS</span><span class=\"ds-ind\"><b>2</b> por asignar</span></nav>",
+      "css": ".ds-barra{display:flex;align-items:center;gap:8px;min-height:60px;padding:0 16px;background:#0B1F44;color:#D5E0F0;font:600 0.875rem \"Public Sans\", system-ui, sans-serif}.ds-barra>b{color:#fff;margin-right:16px}.ds-barra a{padding:8px 10px;border-radius:8px}.ds-barra a[aria-current]{color:#fff;background:#132C5C;box-shadow:inset 0 -3px 0 #5CC8FF}.ds-ind{margin-left:8px;padding:4px 10px;border-radius:999px;background:rgb(255 255 255 / .08);font-size:.8125rem}.ds-ind b{color:#fff;font-size:1rem;font-variant-numeric:tabular-nums}.ds-ind--sos{background:#B42318;color:#fff}"
+    },
+    {
+      "name": "Siguiente acción",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Lo único que toca hacer ahora en un detalle de caso.",
+      "html": "<section class=\"ds-siguiente\"><header><h3>Decide qué hacer con el reporte</h3><span>Paso 2 de 3</span></header><p>Admitir, derivar o descartar, con su motivo.</p><button>Registrar la decisión</button></section>",
+      "css": ".ds-siguiente{display:grid;gap:16px;padding:24px;border:1px solid #1D4ED8;border-radius:12px;background:#fff;box-shadow:0 4px 12px -2px rgb(11 31 68 / .10),0 2px 4px -2px rgb(11 31 68 / .06);font-family:\"Public Sans\", system-ui, sans-serif}.ds-siguiente header{display:flex;justify-content:space-between;gap:12px}.ds-siguiente h3{margin:0;font-size:1.375rem;color:#0B1F44}.ds-siguiente header span{padding:2px 10px;border-radius:999px;background:#E6EEFD;color:#1D46B8;font-size:.8125rem;font-weight:600}.ds-siguiente p{margin:0;color:#475A75}.ds-siguiente button{justify-self:end;min-height:44px;padding:8px 24px;border:0;border-radius:8px;background:#1D4ED8;color:#fff;font-weight:600}.ds-siguiente button:hover{background:#1A3FB0}"
+    },
+    {
+      "name": "Etiqueta SOS",
+      "kind": "custom",
+      "refersTo": "chip-urgente",
+      "description": "Origen urgente: rojo, sirena y la palabra SOS.",
+      "html": "<span class=\"ds-sos\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\"><path d=\"M6 18v-5a6 6 0 0 1 12 0v5\"/><path d=\"M4 18h16v3H4zM12 2v2\"/></svg>SOS</span>",
+      "css": ".ds-sos{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;background:#B42318;color:#fff;font:700 .875rem \"Public Sans\", system-ui, sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "El tablero de embarque",
+    "overview": "El sistema sirve a una central de seguridad ciudadana: un operador en turnos largos, bajo presión cuando entra un SOS, y un administrador que mantiene las cuentas. Como en el tablero de un aeropuerto, lo que cambia se mueve en su sitio y queda resaltado hasta que alguien lo atiende; lo demás guarda silencio. La estructura es azul marino, la acción es un azul limpio y el resto es papel frío. El color de estado aparece solo donde hay un caso: rojo para el SOS, violeta para el reporte, verde azulado para el acompañamiento.\n\nLa central es el mapa. La ciudad, en azul grisáceo apagado, ocupa la pantalla y el trabajo flota encima en paneles blancos. Las pantallas de detalle siguen un mismo patrón: una línea de progreso del caso, una sola «Siguiente acción» destacada, las demás acciones plegadas y una columna de contexto. Es un sistema denso pero legible: cifras tabulares, chips con icono y texto, y nunca un color sin palabra.\n\nRechazos confirmados: el tablero de tarjetas apiladas donde el mapa es un recuadro más; los rótulos sobre el título; las franjas de color laterales; las tarjetas de cifras sueltas como plantilla de inicio.",
+    "keyCharacteristics": [
+      "Barra superior marino de 60 px con secciones, indicadores en vivo y la persona.",
+      "Mapa a sangre con teselas apagadas; marcadores con forma por entidad.",
+      "Detalle guiado por «Siguiente acción» con línea de progreso.",
+      "Chips de estado con tono, icono y texto literal del estado.",
+      "Movimiento con propósito: vuelo al caso, anillos de llegada, pulso solo en el SOS sin abrir."
+    ],
+    "rules": [
+      {
+        "name": "The Red Means SOS Rule",
+        "body": "El rojo solo marca un SOS o un caso urgente. Un error de formulario usa el mismo tono, pero siempre con icono de error y texto; nada decorativo es rojo.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Color Alone Rule",
+        "body": "Todo estado lleva tono, icono y texto. Un chip sin palabra, o un marcador distinguible solo por color, es un defecto.",
+        "section": "colors"
+      },
+      {
+        "name": "The Muted City Rule",
+        "body": "Las teselas del mapa se apagan a azul grisáceo (`--mapa-filtro-teselas`) para que los casos resalten. Nunca se muestra el mapa a todo color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Toda cifra que se compara o cambia (horas, distancias, totales, contadores) usa `font-variant-numeric: tabular-nums`.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Halo Rule",
+        "body": "Ninguna sombra de desplazamiento cero ni halo de color; la profundidad viene del desplazamiento y del desenfoque.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** usar el azul de acción (#1D4ED8) para una sola acción principal por vista.",
+      "**Do** acompañar cada estado con icono y texto literal (`_ChipEstado`).",
+      "**Do** apagar las teselas con `--mapa-filtro-teselas` en todo mapa del panel.",
+      "**Do** animar solo `transform` y `opacity`, con las curvas y duraciones de los tokens, y anular todo con `prefers-reduced-motion`.",
+      "**Do** dar a cada contenedor desplazable `tabindex=\"0\"`, `role=\"region\"` y un nombre."
+    ],
+    "donts": [
+      "**Don't** usar rótulos (kickers) sobre los títulos.",
+      "**Don't** usar franjas de color de más de 1 px en el borde izquierdo o derecho de tarjetas, listas o avisos.",
+      "**Don't** usar el rojo fuera de un SOS, un caso urgente o un error con icono.",
+      "**Don't** montar inicios con tarjetas de cifras sueltas más tarjetas de icono y texto; el resumen va en una línea o en una franja dividida.",
+      "**Don't** añadir animaciones persistentes: la única es el pulso del SOS sin abrir."
+    ]
+  }
+}

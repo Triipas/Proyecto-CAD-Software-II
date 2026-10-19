@@ -13,14 +13,19 @@
             : $"Más de {Model.UmbralSegundos} s sin una posición nueva. Última posición obtenida a las {Formato.Hora(a.ReferenciaEn, zona, "dd/MM/yyyy HH:mm:ss")}.")
         : $"Confirmación de bienestar mostrada al ciudadano a las {Formato.Hora(a.ReferenciaEn, zona, "dd/MM/yyyy HH:mm:ss")}, sin respuesta durante {Model.PlazoConfirmacionSegundos / 60} minutos.";
 }
+@section Estilos {
+    <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/acompanamientos.css" asp-append-version="true" />
+}
 <p><a class="enlace-volver" href="/panel/acompanamientos">← Acompañamientos</a></p>
-<div class="pagina__encabezado">
-    <div>
-        <p class="sobretitulo">Operador autorizado · @a.TextoTipo · no es un SOS</p>
+<header class="cabecera-caso">
+    <div class="cabecera-caso__fila">
+        <span class="etiqueta-acompanamiento etiqueta-acompanamiento--grande"><partial name="_Icono" model="@("advertencia")" />@a.TextoTipo</span>
         <h1 class="titulo">@a.TextoRegla</h1>
-        <p class="texto-secundario" data-estado-aviso="@a.Estado">@a.TextoEstado@(d.Responsable is { } r ? $" · responsable: {r}" : "")</p>
+        <span class="chip @(a.Estado == EstadoAviso.Generado ? "chip--advertencia" : a.Estado == EstadoAviso.EnRevision ? "chip--informacion" : "chip--exito")" data-estado-aviso="@a.Estado">@a.TextoEstado@(d.Responsable is { } r ? $" · responsable: {r}" : "")</span>
     </div>
-</div>
+    <p class="cabecera-caso__resumen">Aviso del acompañamiento de <strong>@a.Ciudadano</strong>: no es un SOS ni genera despacho.</p>
+</header>
 
 @if (Model.Mensaje is not null)
 {
@@ -37,12 +42,12 @@
     </div>
 }
 
-<div class="central">
-    <div class="pila">
+<div class="detalle-caso">
+    <div class="detalle-caso__principal">
         @* HU42-CA01/CA02: regla, fecha, hora y datos de origen. *@
-        <section class="superficie" aria-labelledby="titulo-origen" data-datos-aviso>
-            <h2 id="titulo-origen" class="central__titulo">Datos del aviso</h2>
-            <dl class="datos">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-origen" data-datos-aviso>
+            <h2 id="titulo-origen" class="seccion-caso__titulo">Datos del aviso</h2>
+            <dl class="datos datos--en-linea">
                 <div><dt>Regla</dt><dd>@a.TextoRegla</dd></div>
                 <div><dt>Generado</dt><dd>@Formato.Hora(a.GeneradoEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
                 <div><dt>Datos de origen</dt><dd data-origen-aviso>@origen</dd></div>
@@ -73,8 +78,8 @@
         </section>
 
         @* HU43-CA04/CA05 — vínculo con un caso existente o creación de un caso urgente (DP19). *@
-        <section class="superficie" aria-labelledby="titulo-caso" data-caso-aviso>
-            <h2 id="titulo-caso" class="central__titulo">Caso</h2>
+        <section class="superficie seccion-caso" aria-labelledby="titulo-caso" data-caso-aviso>
+            <h2 id="titulo-caso" class="seccion-caso__titulo">Caso</h2>
             @if (a.CasoId is { } caso)
             {
                 <dl class="datos" data-caso-vinculado="@caso">
@@ -113,20 +118,20 @@
     </div>
 
     @* HU43-CA02 — contactos, acciones y resultados con responsable, fecha y hora. *@
-    <section class="superficie" aria-labelledby="titulo-actuaciones" data-actuaciones>
-        <h2 id="titulo-actuaciones" class="central__titulo">Actuaciones · @d.Actuaciones.Count</h2>
+    <section class="superficie seccion-caso" aria-labelledby="titulo-actuaciones" data-actuaciones>
+        <h2 id="titulo-actuaciones" class="seccion-caso__titulo">Actuaciones · @d.Actuaciones.Count</h2>
         @if (d.Actuaciones.Count == 0)
         {
             <p class="texto-secundario">Sin actuaciones registradas.</p>
         }
         else
         {
-            <ol class="historial">
+            <ol class="historial historial--linea">
                 @foreach (var actuacion in d.Actuaciones)
                 {
                     <li class="historial__elemento" data-actuacion="@actuacion.Tipo">
                         <p class="historial__cabecera">
-                            <span class="estado estado--activa">@actuacion.TextoTipo</span>
+                            <span class="historial__actuacion">@actuacion.TextoTipo</span>
                             <time>@Formato.Hora(actuacion.RegistradaEn, zona, "dd/MM/yyyy HH:mm:ss")</time>
                             <span class="texto-secundario">· @actuacion.Operador</span>
                         </p>

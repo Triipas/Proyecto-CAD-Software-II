@@ -34,15 +34,6 @@
         <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
     </Style>
 
-    <!-- Obsoleto en v2: la etiqueta sobre el título se elimina en la fase 4 (el rol va en la navegación).
-         Se conserva solo para no romper las vistas actuales. -->
-    <Style x:Key="Sobretitulo" TargetType="Label">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
-        <Setter Property="TextColor" Value="{StaticResource ColorPrimario}" />
-        <Setter Property="TextTransform" Value="Uppercase" />
-    </Style>
-
     <Style x:Key="TextoSecundario" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="TextColor" Value="{StaticResource ColorTextoSecundario}" />
@@ -230,10 +221,63 @@
         <Setter Property="MinimumHeightRequest" Value="72" />
     </Style>
 
-    <!-- Encabezado de borde a borde en azul marino. -->
+    <!-- Encabezado de borde a borde en azul marino (fase 4): título blanco, ayuda en celeste grisáceo y acciones a la derecha. -->
     <Style x:Key="EncabezadoMarino" TargetType="Grid">
         <Setter Property="BackgroundColor" Value="{StaticResource ColorMarino}" />
-        <Setter Property="Padding" Value="20,16,20,20" />
+        <Setter Property="Padding" Value="20,20,20,24" />
+        <Setter Property="RowSpacing" Value="6" />
+        <Setter Property="ColumnSpacing" Value="12" />
+    </Style>
+
+    <Style x:Key="TituloSobreMarino" TargetType="Label">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontFamily" Value="PublicSansBold" />
+        <Setter Property="CharacterSpacing" Value="-0.4" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="SemanticProperties.HeadingLevel" Value="Level1" />
+    </Style>
+
+    <Style x:Key="TextoSobreMarino" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextColor" Value="{StaticResource ColorTextoSobreMarino}" />
+    </Style>
+
+    <!-- Acción discreta sobre el encabezado marino (Salir): borde translúcido, texto claro. -->
+    <Style x:Key="BotonSobreMarino" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="BorderColor" Value="#3D5A93" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- Píldora de estado sobre el marino (ubicación lista, operativo): fondo translúcido y texto claro. -->
+    <Style x:Key="PildoraSobreMarino" TargetType="Border">
+        <Setter Property="StrokeShape" Value="RoundRectangle 999" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="#1A3366" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+    </Style>
+
+    <!-- Título y ayuda de un mosaico o de una tarjeta de lista. -->
+    <Style x:Key="TituloMosaico" TargetType="Label">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="PublicSansSemiBold" />
+        <Setter Property="TextColor" Value="{StaticResource ColorMarino}" />
+    </Style>
+
+    <!-- Fondo del icono de un mosaico: un cuadro suave del tono de su flujo. -->
+    <Style x:Key="FondoIcono" TargetType="Border">
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="WidthRequest" Value="44" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
     <!-- ── Chips de estado: color + icono + texto ──────────────────────── -->
