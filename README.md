@@ -92,6 +92,11 @@ Con el servidor en marcha, `http://localhost:5220/salud` responde `Healthy`. Est
 | `GET /api/casos/mios/{id}` | Ciudadano | HU30 | 200 detalle con avances públicos · 404 caso inexistente o de otro ciudadano |
 | `GET /api/notificaciones` | Ciudadano | HU31 | 200 bandeja: total sin leer y las 100 notificaciones más recientes (vista previa sin detalles del hecho) |
 | `POST /api/notificaciones/{id}/leida` | Ciudadano | HU31 | 204 marcada como leída · 404 inexistente o de otro ciudadano |
+| `POST /api/acompanamiento` | Ciudadano | HU34 | 201 sesión «Activa» con inicio y vencimiento (30 min) del servidor · 200 misma sesión ante un reintento con el mismo `idSolicitud` · 400 sin finalidad aceptada o sin ubicación disponible · 409 ya hay otra activa |
+| `GET /api/acompanamiento/actual` | Ciudadano | HU34 | 200 sesión activa con la hora del servidor y el intervalo de envío (15 s) · 204 sin sesión activa |
+| `GET /api/acompanamiento/{id}` | Ciudadano | HU37 | 200 sesión propia (también finalizada o vencida) · 404 inexistente o de otro ciudadano |
+| `POST /api/acompanamiento/{id}/posiciones` | Ciudadano | HU35 | 201 registrada (hora de obtención y precisión) · 200 reenvío de la misma · 409 sesión finalizada o vencida (no se incorpora) · 400 posición inválida · 404 ajena |
+| `POST /api/acompanamiento/{id}/finalizacion` | Ciudadano | HU36 | 200 sesión cerrada («Finalizada», o «Vencida» si ya había vencido), también ante un reenvío · 404 ajena |
 | `GET /api/sereno/estado` | Sereno | HU18 | 200 estado operativo, hora del último cambio e intervalo de envío de posiciones (DP15: 30 s, `Serenos:IntervaloPosicionesSegundos`) |
 | `PUT /api/sereno/estado` | Sereno | HU18 | 200 estado actualizado · 400 activación sin permiso de ubicación declarado (DP16-a); desactivarse siempre está permitido (DP16-b) |
 | `POST /api/sereno/posiciones` | Sereno | HU18 | 201 posición registrada · 200 reenvío de la misma posición · 409 sereno no operativo (no se registra) · 400 posición inválida |

@@ -30,6 +30,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /api/reportes` y `GET /api/reportes/categorias` | HU10 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET /api/casos/mios` y `GET /api/casos/mios/{id}` (solo los casos propios) | HU30 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` (solo las propias) | HU31 | ✘ | ✔ | ✘ | ✘ | ✘ |
+| `POST /api/acompanamiento`, `GET /api/acompanamiento/actual` y `/{id}`, `POST /api/acompanamiento/{id}/posiciones` y `/finalizacion` (solo las sesiones propias) | HU34–HU37 | ✘ | ✔ | ✘ | ✘ | ✘ |
 | `GET` y `PUT /api/sereno/estado`, `POST /api/sereno/posiciones` (estado operativo y posiciones del sereno) | HU18 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET /api/mediciones/presentacion` (resultados de RNF02; 404 si la medición está apagada) | RNF02 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/ingresar` | HU02 | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -94,10 +95,10 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU31 | Recibir notificaciones de avances de mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` solo para Ciudadano y solo sus notificaciones; otro ciudadano no las ve ni puede marcarlas (404); un anónimo, un sereno o un operador reciben 401/403 (`NotificacionesCiudadanoTests.CA04_*`, matriz). |
 | HU32 | Evaluar la atención de un caso cerrado | Ciudadano | Pendiente (Sprint 5; titularidad) |
 | HU33 | Consultar las evaluaciones de atención | Operador (autorizado, DP04) | Pendiente (Sprint 5) |
-| HU34 | Activar el acompañamiento temporal | Ciudadano | Pendiente (Sprint 4) |
-| HU35 | Compartir mi posición durante el acompañamiento | Ciudadano | Pendiente (Sprint 4) |
-| HU36 | Finalizar el acompañamiento cuando yo decida | Ciudadano | Pendiente (Sprint 4) |
-| HU37 | Cierre automático del acompañamiento a los 30 minutos | Ciudadano (lo ejecuta el temporizador del sistema) | Pendiente (Sprint 4) |
+| HU34 | Activar el acompañamiento temporal | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento` y `GET /api/acompanamiento/actual` solo para Ciudadano; un operador o un sereno reciben 403 sin crear sesiones (`AcompanamientoTests.HU34_OtrosPerfiles_*`, matriz). Otro ciudadano no ve ni usa la sesión (404). |
+| HU35 | Compartir mi posición durante el acompañamiento | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento/{id}/posiciones` solo para el ciudadano titular; otros perfiles 403, otro ciudadano 404, sin registrar posiciones. |
+| HU36 | Finalizar el acompañamiento cuando yo decida | Ciudadano | **Verificada en el servidor (16/10/2026):** `POST /api/acompanamiento/{id}/finalizacion` solo para el ciudadano titular; otros perfiles 403, otro ciudadano 404, sin cerrar la sesión. |
+| HU37 | Cierre automático del acompañamiento a los 30 minutos | Ciudadano (lo ejecuta el temporizador del sistema) | **Verificada en el servidor (16/10/2026):** el cierre lo hace el temporizador, sin ninguna ruta; `GET /api/acompanamiento/{id}` solo para el ciudadano titular (otro ciudadano 404). |
 | HU38 | Consultar los acompañamientos activos y sus posiciones | Operador (autorizado, DP04) | Pendiente (Sprint 4) |
 | HU39 | Consultar el historial de sesiones de acompañamiento | Operador (autorizado, DP04) | Pendiente (Sprint 4; HU39-B bloqueada por DP22) |
 | HU40 | Solicitar una confirmación de bienestar | Operador | Pendiente (Sprint 5) |
