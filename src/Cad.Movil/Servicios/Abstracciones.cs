@@ -1,3 +1,4 @@
+using Cad.Contratos.Acompanamiento;
 using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
@@ -38,6 +39,13 @@ public interface IApiCad
     // HU31 — bandeja de notificaciones del ciudadano.
     Task<ResultadoApi<BandejaNotificaciones>> ConsultarNotificacionesAsync(string token, CancellationToken ct);
     Task<ResultadoApi<SinContenido>> MarcarNotificacionLeidaAsync(string token, Guid notificacionId, CancellationToken ct);
+
+    // HU34–HU37 — acompañamiento temporal. ConsultarActual: Correcto(null) si no hay sesión activa (204).
+    Task<ResultadoApi<SesionAcompanamientoVista>> IniciarAcompanamientoAsync(string token, SolicitudInicioAcompanamiento solicitud, CancellationToken ct);
+    Task<ResultadoApi<SesionAcompanamientoVista?>> ConsultarAcompanamientoActualAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct);
+    Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct);
+    Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct);
 
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);

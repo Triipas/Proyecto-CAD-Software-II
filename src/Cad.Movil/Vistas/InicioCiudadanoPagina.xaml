@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir), HU07/HU08 (SOS con una única activación) y acceso al reporte (HU10). -->
+<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir), HU07/HU08 (SOS con una única activación), acceso al reporte (HU10) y al acompañamiento (HU34). -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -16,6 +16,10 @@
                 </VerticalStackLayout>
                 <Button Grid.Column="1" Text="Salir" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" VerticalOptions="Center" />
             </Grid>
+            <Label Text="Finaliza tu acompañamiento antes de salir." Style="{StaticResource TextoSecundario}" IsVisible="{Binding AcompanamientoEnCurso}" />
+
+            <!-- HU34-CA08: el acompañamiento activo y su tiempo restante siguen visibles. -->
+            <v:Aviso Tipo="informacion" Texto="{Binding TextoAcompanamiento}" IsVisible="{Binding AcompanamientoEnCurso}" />
 
             <!-- HU06: estado del permiso de ubicación (sin transmitir nada). -->
             <v:Aviso Tipo="{Binding TipoAvisoUbicacion}" Texto="{Binding TextoUbicacion}" />
@@ -68,6 +72,16 @@
                     <Label Text="Reporta una incidencia con su tipo, descripción, lugar y hora. La central la revisará." Style="{StaticResource TextoSecundario}" />
                     <Button Text="Reportar una incidencia" Style="{StaticResource BotonSecundario}" Command="{Binding Reportar}"
                             SemanticProperties.Hint="Abre el formulario de reporte; no es una alerta urgente" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- HU34: control independiente del SOS y del reporte (CA05). -->
+            <Border Style="{StaticResource Superficie}" Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="¿Vas a hacer un trayecto?" FontAttributes="Bold" />
+                    <Label Text="Comparte tu ubicación con la central hasta 30 minutos. No emite un SOS." Style="{StaticResource TextoSecundario}" />
+                    <Button Text="Acompañamiento" Style="{StaticResource BotonSecundario}" Command="{Binding Acompanar}"
+                            SemanticProperties.Hint="Abre el acompañamiento temporal; no emite un SOS ni registra un reporte" />
                 </VerticalStackLayout>
             </Border>
 

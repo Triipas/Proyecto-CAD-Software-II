@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Cad.Contratos.Acompanamiento;
 using Cad.Contratos.Casos;
 using Cad.Contratos.Cuentas;
 using Cad.Contratos.Reportes;
@@ -206,12 +207,63 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult<ResultadoApi<SinContenido>>(new ResultadoApi<SinContenido>.Correcto(new SinContenido()));
     }
 
+    // ----- HU34–HU37: acompañamiento -----
+    // inicio: hora de inicio de la sesión; ahoraServidor: hora del servidor en la respuesta (por defecto, la del inicio).
+    public static SesionAcompanamientoVista SesionActiva(DateTimeOffset inicio, int intervalo = 15, Guid? id = null, DateTimeOffset? ahoraServidor = null) =>
+        new(id ?? Guid.NewGuid(), EstadosAcompanamiento.Activa, inicio, inicio.AddMinutes(30), null, ahoraServidor ?? inicio, intervalo);
+    public Func<SolicitudInicioAcompanamiento, ResultadoApi<SesionAcompanamientoVista>> RespuestaInicioAcompanamiento { get; set; } =
+        s => new ResultadoApi<SesionAcompanamientoVista>.Correcto(SesionActiva(DateTimeOffset.UtcNow));
+    public Func<ResultadoApi<SesionAcompanamientoVista?>> RespuestaAcompanamientoActual { get; set; } =
+        () => new ResultadoApi<SesionAcompanamientoVista?>.Correcto(null);
+    public Func<Guid, ResultadoApi<SesionAcompanamientoVista>> RespuestaAcompanamiento { get; set; } =
+        _ => new ResultadoApi<SesionAcompanamientoVista>.Rechazado(404, "No encontrado", new Dictionary<string, string[]>());
+    public Func<PosicionAcompanamientoEnviada, ResultadoApi<SinContenido>> RespuestaPosicionAcompanamiento { get; set; } =
+        _ => new ResultadoApi<SinContenido>.Correcto(new SinContenido());
+    public Func<Guid, ResultadoApi<SesionAcompanamientoVista>>? RespuestaFinalizacion { get; set; }
+    public ConcurrentQueue<SolicitudInicioAcompanamiento> IniciosAcompanamiento { get; } = new();
+    public ConcurrentQueue<PosicionAcompanamientoEnviada> PosicionesAcompanamiento { get; } = new();
+    public ConcurrentQueue<Guid> Finalizaciones { get; } = new();
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> IniciarAcompanamientoAsync(string token, SolicitudInicioAcompanamiento solicitud, CancellationToken ct)
+    {
+        IniciosAcompanamiento.Enqueue(solicitud);
+        return Task.FromResult(RespuestaInicioAcompanamiento(solicitud));
+    }
+
+    public Task<ResultadoApi<SesionAcompanamientoVista?>> ConsultarAcompanamientoActualAsync(string token, CancellationToken ct) =>
+        Task.FromResult(RespuestaAcompanamientoActual());
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> ConsultarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
+        Task.FromResult(RespuestaAcompanamiento(sesionId));
+
+    public Task<ResultadoApi<SinContenido>> EnviarPosicionAcompanamientoAsync(string token, Guid sesionId, PosicionAcompanamientoEnviada posicion, CancellationToken ct)
+    {
+        PosicionesAcompanamiento.Enqueue(posicion);
+        return Task.FromResult(RespuestaPosicionAcompanamiento(posicion));
+    }
+
+    public Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct)
+    {
+        Finalizaciones.Enqueue(sesionId);
+        return Task.FromResult(RespuestaFinalizacion?.Invoke(sesionId) ?? new ResultadoApi<SesionAcompanamientoVista>.Correcto(
+            new SesionAcompanamientoVista(sesionId, EstadosAcompanamiento.Finalizada, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMinutes(30),
+                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 15)));
+    }
+
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
         SosEnviados.Enqueue(solicitud);
         var respuesta = RespuestasSos.Count > 1 ? RespuestasSos.Dequeue() : RespuestasSos.TryPeek(out var ultima) ? ultima : s => Task.FromResult(Registrado(s));
         return respuesta(solicitud);
     }
+}
+
+public sealed class AlmacenLocalFalso : IAlmacenLocal
+{
+    public Dictionary<string, string> Valores { get; } = [];
+    public string? Leer(string clave) => Valores.GetValueOrDefault(clave);
+    public void Guardar(string clave, string valor) => Valores[clave] = valor;
+    public void Borrar(string clave) => Valores.Remove(clave);
 }
 
 public sealed class SesionesFalsas : IAlmacenSesion
