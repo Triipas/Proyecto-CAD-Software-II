@@ -9,10 +9,12 @@
     var zona = Model.ZonaHoraria;
     string Fecha(DateTimeOffset momento) => Formato.Hora(momento, zona, "dd/MM/yyyy HH:mm:ss");
 }
+@section Estilos {
+    <link rel="stylesheet" href="~/css/acompanamientos.css" asp-append-version="true" />
+}
 <p><a class="enlace-volver" href="/panel/acompanamientos">← Acompañamientos activos</a></p>
 <div class="pagina__encabezado">
     <div>
-        <p class="sobretitulo">Operador autorizado</p>
         <h1 class="titulo">Historial de sesiones de acompañamiento</h1>
         <p class="texto-secundario">Sesiones terminadas, de la más reciente a la más antigua, de @ConsultarAcompanamientos.TamanoPagina en @ConsultarAcompanamientos.TamanoPagina. Es distinto del historial de SOS y reportes.</p>
     </div>
@@ -21,14 +23,16 @@
 @if (r.Total == 0)
 {
     <section class="superficie estado-vacio" data-sin-sesiones>
+        <partial name="_Icono" model="@("ruta")" />
         <p class="aviso__titulo">Aún no hay sesiones terminadas</p>
+        <p>Las sesiones aparecen aquí cuando el ciudadano las finaliza o vencen.</p>
     </section>
 }
 else
 {
-    <div class="tabla-contenedor">
+    <div class="tabla-contenedor historial-sesiones" tabindex="0" role="region" aria-labelledby="leyenda-sesiones">
         <table class="tabla" data-historial-sesiones>
-            <caption>@r.Total @(r.Total == 1 ? "sesión" : "sesiones") · página @r.Pagina de @r.TotalPaginas</caption>
+            <caption id="leyenda-sesiones">@r.Total @(r.Total == 1 ? "sesión" : "sesiones") · página @r.Pagina de @r.TotalPaginas</caption>
             <thead>
                 <tr>
                     <th scope="col">Ciudadano</th>
@@ -45,12 +49,12 @@ else
                 {
                     <tr data-sesion="@s.Id">
                         <th scope="row">@s.Ciudadano</th>
-                        <td>@(s.Estado == EstadoSesion.Finalizada ? "Finalizada por el ciudadano" : "Vencida a los 30 minutos")</td>
+                        <td><span class="chip @(s.Estado == EstadoSesion.Finalizada ? "chip--acompanamiento" : "chip--neutro")"><partial name="_Icono" model="@(s.Estado == EstadoSesion.Finalizada ? "exito" : "reloj")" />@(s.Estado == EstadoSesion.Finalizada ? "Finalizada por el ciudadano" : "Vencida a los 30 minutos")</span></td>
                         <td>@Fecha(s.IniciadaEn)</td>
                         <td>@Fecha(s.VenceEn)</td>
                         <td>@Fecha(s.CerradaEn)</td>
                         <td>@(s.CasoConservado is not null ? $"{s.Posiciones} · conservadas (caso vinculado)" : s.PosicionesEliminadasEn is not null ? "Eliminadas por plazo" : s.Posiciones.ToString())</td>
-                        <td><a href="/panel/acompanamientos/@s.Id" aria-label="Ver el recorrido de la sesión de @s.Ciudadano iniciada a las @Fecha(s.IniciadaEn)">Ver</a></td>
+                        <td><a href="/panel/acompanamientos/@s.Id" aria-label="Ver el recorrido de la sesión de @s.Ciudadano iniciada a las @Fecha(s.IniciadaEn)">Ver el recorrido</a></td>
                     </tr>
                 }
             </tbody>

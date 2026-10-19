@@ -5,76 +5,98 @@
     ViewData["Title"] = "Historial del caso";
     var inv = CultureInfo.InvariantCulture;
     var h = Model.Historial;
+    // Resultado y evaluación van al costado; un caso en curso usa una sola columna.
+    var conContexto = h.Resultado is not null || h.Estado == "Cerrada" || h.Evaluacion is not null;
     string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
 }
-<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : $"/panel/reportes/{h.Id}")">← Volver al caso</a></p>
-<div class="pagina__encabezado">
-    <div>
-        <p class="sobretitulo">Operador · @h.Origen @h.Estado</p>
-        <h1 class="titulo">Historial del caso</h1>
-        <p class="texto-secundario">Registrado el @Local(h.RegistradoEn). Identificador: @h.Id</p>
-        @if (h.HechoOcurridoEn is { } hecho)
-        {
-            <p class="texto-secundario" data-hecho>Hecho ocurrido aproximadamente el @TimeZoneInfo.ConvertTime(hecho, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv), según el ciudadano.</p>
-        }
-    </div>
-</div>
-
-@* HU27-CA02: un caso finalizado queda identificado con su resultado. *@
-@if (h.Resultado is { } resultado)
-{
-    <div class="aviso aviso--exito" data-resultado-final>
-        <partial name="_Icono" model="@("exito")" />
-        <div>
-            <p class="aviso__titulo">@resultado.Estado el @Local(resultado.En)</p>
-            <p class="aviso__texto">@resultado.Descripcion</p>
-        </div>
-    </div>
+@section Estilos {
+    <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
 }
-
-@* HU33 — evaluación del ciudadano (solo lectura). CA02: un caso sin evaluación no muestra ninguna puntuación. *@
-@if (h.Estado == "Cerrada" || h.Evaluacion is not null)
-{
-    <section class="superficie" aria-labelledby="titulo-evaluacion" data-evaluacion>
-        <h2 id="titulo-evaluacion" class="central__titulo">Evaluación del ciudadano</h2>
-        @if (h.Evaluacion is { } evaluacion)
+<p><a class="enlace-volver" href="@(h.Origen == "SOS" ? $"/panel/central/sos/{h.Id}" : $"/panel/reportes/{h.Id}")">← Volver al caso</a></p>
+<header class="cabecera-caso" data-origen-estado="@h.Origen @h.Estado">
+    <div class="cabecera-caso__fila">
+        @if (h.Origen == "SOS")
         {
-            <p class="evaluacion__puntuacion" data-puntuacion="@evaluacion.Puntuacion">
-                <span aria-hidden="true">@(new string('★', evaluacion.Puntuacion))@(new string('☆', 5 - evaluacion.Puntuacion))</span>
-                <strong>@evaluacion.Puntuacion de 5</strong> · <span class="texto-secundario">@Local(evaluacion.EvaluadaEn)</span>
-            </p>
-            <p class="historial__texto">@(evaluacion.Comentario is { } comentario ? $"Comentario: {comentario}" : "Sin comentario.")</p>
+            <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />SOS</span>
         }
         else
         {
-            <p class="texto-secundario" data-sin-evaluacion>El ciudadano no ha evaluado este caso. Evaluar es voluntario.</p>
+            <span class="etiqueta-reporte"><partial name="_Icono" model="@("documento")" />Reporte</span>
         }
-    </section>
-}
+        <h1 class="titulo">Historial del caso</h1>
+        <partial name="_ChipEstado" model="@((h.Estado, h.Origen == "SOS"))" />
+    </div>
+    <p class="cabecera-caso__resumen">Registrado el @Local(h.RegistradoEn) · Identificador: @h.Id</p>
+    @if (h.HechoOcurridoEn is { } hecho)
+    {
+        <p class="cabecera-caso__resumen" data-hecho>Hecho ocurrido aproximadamente el @TimeZoneInfo.ConvertTime(hecho, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv), según el ciudadano.</p>
+    }
+</header>
 
-<section class="superficie" aria-labelledby="titulo-secuencia">
-    <h2 id="titulo-secuencia" class="central__titulo">Secuencia de atención · @h.Entradas.Count @(h.Entradas.Count == 1 ? "actuación" : "actuaciones")</h2>
-    @* HU27-CA01/CA03: actuaciones en orden, con responsable y marca de tiempo. CA05: sin acompañamiento. *@
-    <ol class="historial" data-historial>
-        @foreach (var entrada in h.Entradas)
-        {
-            <li class="historial__elemento" data-actuacion>
-                <p class="historial__cabecera">
-                    <span class="estado @(entrada.Interna ? "estado--inactiva" : "estado--activa")">@entrada.Actuacion</span>
-                    <time datetime="@entrada.En.ToString("O", inv)">@Local(entrada.En)</time>
-                    <span class="texto-secundario">· @entrada.Responsable</span>
-                </p>
-                @if (entrada.Detalle is not null)
+<div class="detalle-caso@(conContexto ? "" : " detalle-caso--una-columna")">
+    <div class="detalle-caso__principal">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-secuencia">
+            <h2 id="titulo-secuencia" class="seccion-caso__titulo">Secuencia de atención · @h.Entradas.Count @(h.Entradas.Count == 1 ? "actuación" : "actuaciones")</h2>
+            @* HU27-CA01/CA03: actuaciones en orden, con responsable y marca de tiempo. CA05: sin acompañamiento. *@
+            <ol class="historial historial--linea" data-historial>
+                @foreach (var entrada in h.Entradas)
                 {
-                    <p class="historial__texto">
-                        @if (entrada.Interna)
+                    <li class="historial__elemento@(entrada.Interna ? " historial__elemento--interna" : "")" data-actuacion>
+                        <p class="historial__cabecera">
+                            <span class="historial__actuacion">@entrada.Actuacion</span>
+                            <time datetime="@entrada.En.ToString("O", inv)">@Local(entrada.En)</time>
+                            <span class="texto-secundario">· @entrada.Responsable</span>
+                        </p>
+                        @if (entrada.Detalle is not null)
                         {
-                            <strong>Solo personal autorizado:</strong>
+                            <p class="historial__texto">
+                                @if (entrada.Interna)
+                                {
+                                    <strong>Solo personal autorizado:</strong>
+                                }
+                                @entrada.Detalle
+                            </p>
                         }
-                        @entrada.Detalle
-                    </p>
+                    </li>
                 }
-            </li>
-        }
-    </ol>
-</section>
+            </ol>
+        </section>
+    </div>
+
+    @if (conContexto)
+    {
+        <aside class="detalle-caso__contexto" aria-label="Resultado y evaluación">
+            @* HU27-CA02: un caso finalizado queda identificado con su resultado. *@
+            @if (h.Resultado is { } resultado)
+            {
+                <div class="aviso aviso--exito" data-resultado-final>
+                    <partial name="_Icono" model="@("exito")" />
+                    <div>
+                        <p class="aviso__titulo">@resultado.Estado el @Local(resultado.En)</p>
+                        <p class="aviso__texto">@resultado.Descripcion</p>
+                    </div>
+                </div>
+            }
+
+            @* HU33 — evaluación del ciudadano (solo lectura). CA02: un caso sin evaluación no muestra ninguna puntuación. *@
+            @if (h.Estado == "Cerrada" || h.Evaluacion is not null)
+            {
+                <section class="superficie seccion-caso" aria-labelledby="titulo-evaluacion" data-evaluacion>
+                    <h2 id="titulo-evaluacion" class="seccion-caso__titulo">Evaluación del ciudadano</h2>
+                    @if (h.Evaluacion is { } evaluacion)
+                    {
+                        <p class="evaluacion__puntuacion" data-puntuacion="@evaluacion.Puntuacion">
+                            <span aria-hidden="true">@(new string('★', evaluacion.Puntuacion))@(new string('☆', 5 - evaluacion.Puntuacion))</span>
+                            <strong>@evaluacion.Puntuacion de 5</strong> · <span class="texto-secundario">@Local(evaluacion.EvaluadaEn)</span>
+                        </p>
+                        <p class="historial__texto">@(evaluacion.Comentario is { } comentario ? $"Comentario: {comentario}" : "Sin comentario.")</p>
+                    }
+                    else
+                    {
+                        <p class="texto-secundario" data-sin-evaluacion>El ciudadano no ha evaluado este caso. Evaluar es voluntario.</p>
+                    }
+                </section>
+            }
+        </aside>
+    }
+</div>

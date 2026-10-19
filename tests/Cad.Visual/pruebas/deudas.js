@@ -8,11 +8,6 @@ export const deudas = {
     axe: ['target-size'],
     objetivos: [],
   },
-  'acompanamiento-detalle': {
-    motivo: 'A 390 px la tabla de posiciones se desplaza en horizontal sin poder enfocarse con el teclado (falta tabindex y nombre en .tabla-contenedor). Fase 3.',
-    axe: ['scrollable-region-focusable'],
-    objetivos: [],
-  },
 };
 
 export const deudaDe = (pantalla) => deudas[pantalla] ?? { axe: [], objetivos: [] };

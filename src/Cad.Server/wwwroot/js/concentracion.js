@@ -6,11 +6,12 @@
   if (!contenedor || typeof L === "undefined") return;
   const celdas = JSON.parse(document.getElementById("celdas-concentracion").textContent);
   const maximo = Math.max(1, Number(contenedor.dataset.maximo));
-  const mapa = L.map(contenedor).setView([Number(contenedor.dataset.centroLat), Number(contenedor.dataset.centroLon)], Number(contenedor.dataset.zoom));
+  const mapa = L.map(contenedor, { zoomControl: false }).setView([Number(contenedor.dataset.centroLat), Number(contenedor.dataset.centroLon)], Number(contenedor.dataset.zoom));
   L.tileLayer(contenedor.dataset.teselas, {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
   }).addTo(mapa);
+  L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
 
   const zonas = new Set();
   const marcas = [];
@@ -26,7 +27,8 @@
     const marca = L.marker(centro, {
       icon: L.divIcon({
         className: `celda-concentracion celda-concentracion--${sos ? "sos" : "reporte"}`,
-        html: `<span style="--intensidad:${(0.35 + 0.6 * proporcion).toFixed(2)}">${celda.casos}</span>`,
+        // --i escalona la aparición de las marcas (rediseño CAD v2).
+        html: `<span style="--intensidad:${(0.35 + 0.6 * proporcion).toFixed(2)};--i:${Math.min(marcas.length, 12)}">${celda.casos}</span>`,
         iconSize: [lado, lado],
         // La segunda marca de una misma zona se desplaza para que las dos se vean.
         iconAnchor: [compartida ? -2 : lado / 2, lado / 2],

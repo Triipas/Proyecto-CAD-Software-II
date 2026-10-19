@@ -599,17 +599,6 @@
   }
 }
 
-/* Marcador elegido: un anillo marino se cierra sobre él, como al fijar un objetivo. */
-.marcador--elegido::after {
-  content: "";
-  position: absolute;
-  inset: -9px;
-  border: 3px solid var(--color-marino);
-  border-radius: 999px;
-  pointer-events: none;
-  animation: elegido-entra var(--duracion-lenta) var(--curva-salida) both;
-}
-
 .marcador-sos.marcador--elegido::after {
   border-radius: 0.875rem;
 }
@@ -627,17 +616,48 @@
   animation: despacho-entra var(--duracion-base) var(--curva-salida) 160ms both;
 }
 
-@keyframes elegido-entra {
-  from { opacity: 0; transform: scale(1.8); }
-  to { opacity: 1; transform: none; }
-}
-
 @keyframes despacho-entra {
   from { opacity: 0; }
 }
 
+/* Filtro de la cola: segmentado, como el resto de selectores del sistema. */
+.cola__filtro {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-bottom: var(--espacio-3);
+  padding: 3px;
+  border-radius: var(--radio-control);
+  background: var(--color-tenue);
+}
+
+.cola__filtro button {
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: 6px;
+  font: var(--peso-medio) var(--texto-sm)/1 var(--fuente);
+  color: var(--color-texto-secundario);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) ease, color var(--duracion-rapida) ease;
+}
+
+.cola__filtro button span {
+  font-variant-numeric: tabular-nums;
+}
+
+.cola__filtro button[aria-pressed="true"] {
+  color: var(--color-marino);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.cola--solo-sos .central__reportes,
+.cola--solo-reportes .central__urgente {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .marcador--elegido::after,
   .linea-despacho,
   .etiqueta-despacho,
   .central .sos--nuevo,

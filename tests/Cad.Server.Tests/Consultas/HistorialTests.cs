@@ -71,7 +71,7 @@ public partial class HistorialTests(FabricaCad fabrica)
     private static List<string> Actuaciones(string html) =>
         ActuacionRegex().Matches(html).Select(m => System.Net.WebUtility.HtmlDecode(m.Groups[1].Value)).ToList();
 
-    [GeneratedRegex("<li class=\"historial__elemento\" data-actuacion>\\s*<p class=\"historial__cabecera\">\\s*<span class=\"estado[^\"]*\">([^<]+)</span>")]
+    [GeneratedRegex("<li class=\"historial__elemento[^\"]*\" data-actuacion>\\s*<p class=\"historial__cabecera\">\\s*<span class=\"historial__actuacion\">([^<]+)</span>")]
     private static partial Regex ActuacionRegex();
 
     [Fact]
@@ -107,7 +107,7 @@ public partial class HistorialTests(FabricaCad fabrica)
 
         // La categoría del ciudadano figura en el registro, no como una clasificación aparte.
         Assert.Equal(["Reporte registrado como «Robo»"], Actuaciones(html));
-        Assert.Contains("Operador · Reporte Recibido", html);
+        Assert.Contains("data-origen-estado=\"Reporte Recibido\"", html);
         Assert.Contains("Ubicación del hecho: referencia textual · Referencia: Esquina del mercado", html);
         Assert.Contains("Hecho ocurrido aproximadamente el 14/10/2026 18:40", html);
         Assert.Contains("· Prueba Ciudadano", html);
@@ -123,7 +123,7 @@ public partial class HistorialTests(FabricaCad fabrica)
 
         Assert.Contains("data-resultado-final", html);
         Assert.Contains("Robo: Se resolvió en el lugar", html);
-        Assert.Contains("Operador · SOS Cerrada", html);
+        Assert.Contains("data-origen-estado=\"SOS Cerrada\"", html);
     }
 
     [Fact]

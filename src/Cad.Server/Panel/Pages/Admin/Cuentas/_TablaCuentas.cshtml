@@ -1,0 +1,49 @@
+@model IReadOnlyList<Cad.Server.Modulos.Cuentas.Aplicacion.CuentaInstitucional>
+@* HU04-CA04: cuentas institucionales con su rol y su estado. La usan el inicio del administrador y el listado de cuentas. *@
+@{
+    static string Iniciales(string nombres, string apellidos) => $"{nombres.Trim()[..1]}{apellidos.Trim()[..1]}".ToUpperInvariant();
+}
+<div class="tabla-contenedor cuentas__tabla" tabindex="0" role="region" aria-labelledby="leyenda-cuentas">
+    <table class="tabla">
+        <caption id="leyenda-cuentas">@Model.Count @(Model.Count == 1 ? "cuenta" : "cuentas")</caption>
+        <thead>
+            <tr>
+                <th scope="col">Apellidos y nombres</th>
+                <th scope="col">Correo electrónico</th>
+                <th scope="col">Teléfono</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Estado</th>
+                <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cuenta in Model)
+            {
+                <tr data-cuenta="@cuenta.Id">
+                    <th scope="row">
+                        <span class="cuenta__persona">
+                            <span class="cuenta__inicial cuenta__inicial--@(cuenta.Rol == "Sereno" ? "sereno" : "operador")" aria-hidden="true">@Iniciales(cuenta.Nombres, cuenta.Apellidos)</span>
+                            <span>@cuenta.Apellidos, @cuenta.Nombres</span>
+                        </span>
+                    </th>
+                    <td>@cuenta.Correo</td>
+                    <td>@(cuenta.Telefono ?? "—")</td>
+                    <td data-rol="@cuenta.Rol"><span class="chip @(cuenta.Rol == "Sereno" ? "chip--progreso" : "chip--informacion")"><partial name="_Icono" model="@(cuenta.Rol == "Sereno" ? "escudo" : "bandeja")" />@cuenta.Rol</span></td>
+                    <td>
+                        @if (cuenta.Activa)
+                        {
+                            <span class="chip chip--exito"><partial name="_Icono" model="@("exito")" />Activa</span>
+                        }
+                        else
+                        {
+                            <span class="chip chip--neutro"><partial name="_Icono" model="@("cancelar")" />Desactivada</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="/panel/admin/cuentas/@cuenta.Id/editar" aria-label="Modificar la cuenta de @cuenta.Nombres @cuenta.Apellidos">Modificar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,15 +1,37 @@
 @page "/panel/admin"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = Cad.Server.Compartido.Politicas.Administrador)]
+@model Cad.Server.Panel.Pages.Admin.IndexModel
 @{
     ViewData["Title"] = "Administración";
+    static string Plural(int n, string uno, string varios) => $"{n} {(n == 1 ? uno : varios)}";
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 }
 <div class="pagina__encabezado">
     <div>
-        <p class="sobretitulo">Administrador</p>
         <h1 class="titulo">Administración</h1>
+        <p class="texto-secundario">Interfaz del administrador: gestión de las cuentas de operadores y serenos.</p>
     </div>
+    <a class="boton boton--principal" href="/panel/admin/cuentas/nueva"><partial name="_Icono" model="@("asignado")" />Nueva cuenta</a>
 </div>
-<section class="superficie pila">
-    <p class="texto-secundario">Interfaz del administrador: gestión de las cuentas de operadores y serenos.</p>
-    <p><a class="boton boton--principal" href="/panel/admin/cuentas">Ver cuentas institucionales</a></p>
-</section>
+
+@if (Model.Cuentas.Count == 0)
+{
+    <section class="superficie estado-vacio">
+        <partial name="_Icono" model="@("escudo")" />
+        <p class="aviso__titulo">Aún no hay cuentas institucionales</p>
+        <p>Crea la primera cuenta de operador o de sereno.</p>
+    </section>
+}
+else
+{
+    @* Resumen en una línea: lo que el administrador necesita saber antes de recorrer la lista. *@
+    <p class="resumen-cuentas" data-resumen-cuentas>
+        <span><strong>@Plural(Model.Activas, "cuenta activa", "cuentas activas")</strong></span>
+        <span>@Plural(Model.Operadores, "operador de central", "operadores de central")</span>
+        <span>@Plural(Model.Serenos, "sereno", "serenos")</span>
+        <span class="@(Model.Desactivadas > 0 ? "resumen-cuentas__aviso" : "")">@Plural(Model.Desactivadas, "desactivada", "desactivadas")</span>
+        <a href="/panel/admin/cuentas">Ir al listado completo</a>
+    </p>
+    <partial name="~/Panel/Pages/Admin/Cuentas/_TablaCuentas.cshtml" model="Model.Cuentas" />
+}

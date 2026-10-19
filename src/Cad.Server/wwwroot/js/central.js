@@ -376,7 +376,44 @@
     }
     actualizarAsignacion();
     dibujarDespacho();
+    actualizarIndicadores();
     return true;
+  }
+
+  // ---------- Indicadores de la barra y filtro de la cola (rediseño CAD v2) ----------
+  // Lo que cambia se nota: la cifra late una vez al cambiar (solo escala, sin movimiento si se pide reducirlo).
+  function fijarIndicador(nombre, valor, etiqueta) {
+    const indicador = document.querySelector(`[data-indicador="${nombre}"]`);
+    const cifra = indicador?.querySelector("[data-valor]");
+    if (!cifra) return;
+    if (etiqueta) indicador.querySelector("[data-etiqueta]").textContent = etiqueta;
+    if (cifra.textContent === String(valor)) return;
+    cifra.textContent = valor;
+    if (!reducido.matches)
+      cifra.animate([{ transform: "scale(1.35)" }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+  }
+
+  function actualizarIndicadores() {
+    const sos = Number(contador.textContent) || 0;
+    const reportes = Number(contadorReportes?.textContent) || 0;
+    const libres = regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]').length;
+    fijarIndicador("sos", sos);
+    document.querySelector('[data-indicador="sos"]')?.classList.toggle("indicador--activo", sos > 0);
+    fijarIndicador("por-asignar", sos + reportes);
+    fijarIndicador("serenos-libres", libres, libres === 1 ? "sereno libre" : "serenos libres");
+    for (const [clave, valor] of [["sos", sos], ["reportes", reportes]]) {
+      const total = document.querySelector(`[data-filtro-total="${clave}"]`);
+      if (total) total.textContent = valor;
+    }
+  }
+
+  const cola = document.getElementById("panel-cola");
+  for (const boton of document.querySelectorAll("[data-filtro-cola]")) {
+    boton.addEventListener("click", () => {
+      for (const otro of document.querySelectorAll("[data-filtro-cola]")) otro.setAttribute("aria-pressed", String(otro === boton));
+      cola.classList.toggle("cola--solo-sos", boton.dataset.filtroCola === "sos");
+      cola.classList.toggle("cola--solo-reportes", boton.dataset.filtroCola === "reportes");
+    });
   }
 
   // ---------- Aviso visual y sonoro ----------
@@ -476,6 +513,7 @@
       resaltar(marcadores, sosSeleccionado);
     }
     actualizarAsignacion();
+    actualizarIndicadores();
     return true;
   }
 

@@ -159,10 +159,10 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
 
         var filaOperador = FilaDe(html, operador.Id);
         Assert.Contains(operador.Correo, filaOperador);
-        Assert.Contains("<td>Operador</td>", filaOperador);
+        Assert.Contains("data-rol=\"Operador\"", filaOperador);
         Assert.Contains("Activa", filaOperador);
         var filaSereno = FilaDe(html, sereno.Id);
-        Assert.Contains("<td>Sereno</td>", filaSereno);
+        Assert.Contains("data-rol=\"Sereno\"", filaSereno);
         Assert.Contains("Desactivada", filaSereno);
         Assert.DoesNotContain(ciudadano.Correo, html);
         Assert.DoesNotContain(fabrica.AdminCorreo, html);

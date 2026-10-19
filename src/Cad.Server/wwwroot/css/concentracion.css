@@ -1,0 +1,187 @@
+/*
+  Mapa de concentración (HU29) en el rediseño CAD v2, fase 3. Solo la carga /panel/mapa-concentracion.
+  Una barra de selección compacta, las cifras de la selección y el mapa como protagonista.
+*/
+
+/* ── Barra de selección ────────────────────────────────── */
+.barra-seleccion {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: var(--espacio-3) var(--espacio-4);
+  padding: var(--espacio-4) var(--espacio-5);
+}
+
+.barra-seleccion .campo {
+  margin: 0;
+}
+
+.barra-seleccion__enviar {
+  align-self: end;
+}
+
+.barra-seleccion__ayuda {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* ── Cifras de la selección ────────────────────────────── */
+.concentracion {
+  display: grid;
+  gap: var(--espacio-4);
+  margin-top: var(--espacio-6);
+}
+
+.concentracion__titulo {
+  margin: 0;
+  font-size: var(--texto-xl);
+  color: var(--color-marino);
+}
+
+/* Una sola franja dividida: el resumen de la selección se lee de corrido, sin tarjetas de cifras sueltas. */
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+}
+
+.cifra {
+  flex: 1 1 11rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: baseline;
+  gap: var(--espacio-1) var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4);
+}
+
+.cifra + .cifra {
+  border-left: var(--grosor-borde) solid var(--color-borde);
+}
+
+.cifra dt {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.cifra dd {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.cifra dd strong {
+  margin-right: var(--espacio-1);
+  font-size: var(--texto-xl);
+  font-weight: var(--peso-fuerte);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-marino);
+}
+
+.cifra__muestra {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: var(--mapa-sos);
+}
+
+.cifra--reporte .cifra__muestra {
+  border-radius: 999px;
+  background: var(--mapa-reporte);
+}
+
+.cifra--secundaria dd strong {
+  color: var(--color-texto-secundario);
+}
+
+/* ── Mapa protagonista ─────────────────────────────────── */
+.concentracion__mapa {
+  position: relative;
+}
+
+.concentracion__mapa .mapa {
+  height: max(28rem, calc(100vh - var(--alto-barra) - 12rem));
+  border-radius: var(--radio-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.leyenda-concentracion {
+  position: absolute;
+  left: var(--espacio-3);
+  bottom: var(--espacio-3);
+  z-index: 500;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-3);
+  max-width: calc(100% - 7rem);
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-2);
+}
+
+/* Las marcas aparecen escalonadas al generar el mapa (una vez, solo opacidad y escala). */
+.celda-concentracion span {
+  animation: celda-entra var(--duracion-lenta) var(--curva-salida) calc(var(--i, 0) * 40ms) both;
+}
+
+@keyframes celda-entra {
+  from { opacity: 0; transform: scale(0.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celda-concentracion span {
+    animation: none;
+  }
+}
+
+/* ── Pantallas estrechas ───────────────────────────────── */
+@media (max-width: 60rem) {
+  .barra-seleccion {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .barra-seleccion__enviar {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 47.5rem) {
+  .barra-seleccion {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--espacio-4);
+  }
+
+  .barra-seleccion__enviar {
+    justify-self: stretch;
+  }
+
+  .cifra + .cifra {
+    border-left: 0;
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .concentracion__mapa .mapa {
+    height: 60vh;
+  }
+
+  .leyenda-concentracion {
+    position: static;
+    max-width: none;
+    margin-top: var(--espacio-2);
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+  }
+}

@@ -49,6 +49,7 @@
                 </ul>
             </nav>
         }
+        @await RenderSectionAsync("IndicadoresBarra", required: false)
         @if (User.Identity?.IsAuthenticated == true)
         {
             var nombre = User.FindFirstValue(Autenticacion.ReclamoNombre) ?? "";
