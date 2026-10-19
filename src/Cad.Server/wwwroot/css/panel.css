@@ -361,10 +361,18 @@ a.boton {
   color: var(--color-texto-sobre-marino);
 }
 
+/* En pantallas estrechas la navegación ocupa su propia línea y sus enlaces pasan a la siguiente si no caben. */
 .encabezado__navegacion {
   display: flex;
-  gap: var(--espacio-4);
-  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--espacio-1) var(--espacio-4);
+  flex: 1 1 100%;
+}
+
+@media (min-width: 64rem) {
+  .encabezado__navegacion {
+    flex-basis: 0;
+  }
 }
 
 .encabezado__navegacion a {
@@ -921,6 +929,48 @@ a.boton {
 .historial__texto {
   font-size: var(--texto-sm);
   overflow-wrap: anywhere;
+}
+
+/* HU29 — leyenda del mapa de concentración: el color acompaña al texto, que dice también la forma. */
+.leyenda {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  margin-right: var(--espacio-3);
+}
+
+.leyenda::before {
+  content: "";
+  width: 0.875rem;
+  height: 0.875rem;
+  background: var(--color-urgente);
+}
+
+.leyenda--reporte::before {
+  background: var(--color-reporte);
+  border-radius: 50%;
+}
+
+.celda-concentracion span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #FFFFFF;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.celda-concentracion--sos span {
+  background: rgb(180 35 24 / var(--intensidad));
+  border-radius: 4px;
+}
+
+.celda-concentracion--reporte span {
+  background: rgb(109 40 217 / var(--intensidad));
+  border-radius: 50%;
 }
 
 /* HU33 — evaluación del ciudadano en el historial. */

@@ -18,7 +18,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 
 ## A. Operaciones existentes verificadas
 
-✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 267 casos tras HU09 y HU32 en el Sprint 5: 53 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
+✔ = disponible, ✘ = rechazada (401, 403 o redirección al ingreso o a «acceso denegado»), sin devolver el contenido protegido. Verificado el 16/10/2026 contra PostgreSQL 17 (`MatrizAutorizacionTests`, 272 casos tras HU09, HU32 y HU29 en el Sprint 5: 54 operaciones con los cinco perfiles, más la comprobación de que todas las rutas están declaradas y la de denegación por defecto).
 
 | Operación | HU | Anónimo | Ciudadano | Operador | Sereno | Administrador |
 |---|---|---|---|---|---|---|
@@ -50,6 +50,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/acompanamientos` (y su fragmento `?handler=Lista`), `/panel/acompanamientos/{id}` y `/panel/acompanamientos/historial` (acompañamientos activos, recorridos e historial de sesiones) | HU38, HU39 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos` (búsqueda de casos con filtros) | HU26 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/mapa-concentracion` (mapa de concentración de casos) | HU29 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos/{id}/historial` (historial del caso, con notas internas rotuladas y la evaluación del ciudadano) | HU27, HU33 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/admin` (página base de HU04) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
 | `GET /panel/admin/cuentas` (listado) | HU04 | ✘ | ✘ | ✘ | ✘ | ✔ |
@@ -93,7 +94,7 @@ Roles tomados del campo «Rol principal» y «Roles habilitados adicionales» de
 | HU26 | Buscar y filtrar casos | Operador | **Verificada (15/10/2026):** `/panel/casos` solo para Operador; un administrador es enviado a «acceso denegado» y la app de un ciudadano o un sereno no obtiene la página (`BusquedaCasosTests.CA06_*`, matriz). |
 | HU27 | Consultar el historial de un caso | Operador | **Verificada (14/10/2026 para los SOS; 16/10/2026 para los reportes, S3-T16):** `/panel/casos/{id}/historial` solo para Operador, con el mismo control para los SOS y los reportes (revisión, corrección, decisión, derivación y descarte incluidos); un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no lo obtiene ni ve las notas internas (`HistorialTests.CA04_CA06_*`, `CA06_*`, matriz). La cláusula «Cancelada» (CA02) se verificó con HU09 el 16/10/2026 (`CancelacionSosTests.S5T03_HU27_CA02_*`). |
 | HU28 | Consultar los tiempos de respuesta y de atención | Operador | **Verificada (17/10/2026, S5-T10):** los tiempos solo se muestran en páginas de Operador ya protegidas en la matriz (`/panel/casos`, `/panel/central/sos/{id}` y `/panel/reportes/{id}`); un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no las obtiene. Sin rutas nuevas. |
-| HU29 | Consultar el mapa de concentración de incidencias | Operador | Pendiente (Sprint 5) |
+| HU29 | Consultar el mapa de concentración de incidencias | Operador | **Verificada (17/10/2026, S5-T13):** `/panel/mapa-concentracion` solo para Operador; un administrador es redirigido a «acceso denegado» y la app de un ciudadano o un sereno no obtiene la página, también con una solicitud directa (matriz). La página no expone identificadores, nombres ni el punto exacto de ningún caso (`MapaConcentracionTests.CA04_Pagina_*`). |
 | HU30 | Consultar mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/casos/mios` y `/api/casos/mios/{id}` solo para Ciudadano y solo sus casos; el caso de otro ciudadano responde 404 aunque se conozca su identificador; un anónimo, un sereno o un operador reciben 401/403 (`MisCasosTests.CA04_*`, matriz). Sin notas internas, intentos de contacto, operador ni sereno (`MisCasosTests.CA05_*`). |
 | HU31 | Recibir notificaciones de avances de mis casos | Ciudadano | **Verificada (16/10/2026):** `GET /api/notificaciones` y `POST /api/notificaciones/{id}/leida` solo para Ciudadano y solo sus notificaciones; otro ciudadano no las ve ni puede marcarlas (404); un anónimo, un sereno o un operador reciben 401/403 (`NotificacionesCiudadanoTests.CA04_*`, matriz). |
 | HU32 | Evaluar la atención de un caso cerrado | Ciudadano | **Verificada (17/10/2026, S5-T11):** `POST /api/casos/mios/{id}/evaluacion` solo para Ciudadano y solo sobre sus casos; el caso de otro ciudadano responde 404 sin registrar nada (`EvaluacionCasoTests.HU32_CA05_*`); un sereno recibe 403 y un operador, un administrador o un anónimo son rechazados (matriz). |
