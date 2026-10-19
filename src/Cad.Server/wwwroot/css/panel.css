@@ -197,6 +197,37 @@ a {
   width: 100%;
 }
 
+/* Acción irreversible para la cuenta (HU05): rojo con blanco encima, 6.57:1. */
+.boton--peligro {
+  color: #FFFFFF;
+  background: var(--color-urgente);
+}
+
+.boton--peligro:hover {
+  background: #912018;
+}
+
+/* Confirmación en dos pasos sin JavaScript: el resumen abre el formulario de confirmación. */
+.confirmacion > summary {
+  list-style: none;
+  width: fit-content;
+}
+
+.confirmacion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.confirmacion[open] > summary {
+  display: none;
+}
+
+.confirmacion__contenido {
+  padding: var(--espacio-4);
+  border: var(--grosor-borde) solid var(--color-error-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-error-fondo);
+}
+
 /* En curso: el texto («Ingresando…») informa del estado, así que conserva contraste completo. */
 .boton:disabled,
 .boton[aria-disabled="true"] {

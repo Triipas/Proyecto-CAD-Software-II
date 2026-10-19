@@ -150,6 +150,42 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
     }
 }
 
+// HU05 — Desactivar una cuenta institucional (S4-T12). Solo cambia el estado: la cuenta, su rol y todos los registros
+// vinculados con ella se conservan (CA03), y el inicio de sesión la rechaza a partir de ese momento (CA02, en IniciarSesion).
+// DP03 (pendiente): qué ocurre con una sesión ya abierta o con una asignación vigente (CA04). Hasta que el PO lo decida
+// no se aplica ninguna regla: la sesión abierta sigue hasta que vence y la asignación vigente no cambia.
+public sealed class DesactivarCuentaInstitucional(UserManager<Usuario> usuarios, ConsultarCuentasInstitucionales consultar,
+    ILogger<DesactivarCuentaInstitucional> registro)
+{
+    public async Task<ResultadoCuentaInstitucional> EjecutarAsync(Guid id, CancellationToken ct)
+    {
+        // Solo cuentas de operador o sereno (RF20): el resto no existe para esta operación.
+        if (await consultar.ObtenerAsync(id, ct) is null)
+            return new ResultadoCuentaInstitucional.NoEncontrada();
+
+        for (var intento = 0; ; intento++)
+        {
+            var usuario = (await usuarios.FindByIdAsync(id.ToString()))!;
+            // Desactivar una cuenta ya desactivada no cambia nada (un reenvío o dos administradores a la vez).
+            if (!usuario.Activo)
+                return new ResultadoCuentaInstitucional.Correcto(id);
+
+            usuario.Activo = false;
+            var actualizacion = await usuarios.UpdateAsync(usuario);
+            if (actualizacion.Succeeded)
+            {
+                registro.LogInformation("Cuenta institucional {UsuarioId} desactivada.", id);
+                return new ResultadoCuentaInstitucional.Correcto(id);
+            }
+            // Otra solicitud modificó la cuenta entre la lectura y la escritura (sello de concurrencia de Identity):
+            // se vuelve a leer y a evaluar.
+            if (intento < 2 && actualizacion.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.ConcurrencyFailure)))
+                continue;
+            throw new InvalidOperationException("No se pudo desactivar la cuenta institucional.");
+        }
+    }
+}
+
 public sealed class ConsultarCuentasInstitucionales(CadDbContext db)
 {
     // CA04: cada cuenta institucional con su rol y su estado.
