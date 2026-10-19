@@ -85,6 +85,9 @@
                             <Label Text="Lugar del hecho (indicado por el ciudadano)" FontAttributes="Bold" />
                             <Label Text="{Binding TextoLugarHecho}" IsVisible="{Binding HayPuntoLugarHecho}" />
                             <Label Text="{Binding TextoReferenciaLugarHecho}" IsVisible="{Binding HayReferenciaLugarHecho}" />
+                            <!-- DP06 (16/10/2026): descripción del ciudadano, sin sus datos personales. -->
+                            <Label Text="Descripción del ciudadano" FontAttributes="Bold" IsVisible="{Binding HayDescripcionReporte}" />
+                            <Label Text="{Binding TextoDescripcionReporte}" IsVisible="{Binding HayDescripcionReporte}" />
                         </VerticalStackLayout>
                         <Label Text="Ubicación del dispositivo" FontAttributes="Bold" IsVisible="{Binding MostrarUbicacionDispositivo}" />
                         <Label Text="{Binding TextoUbicacionDespacho}" IsVisible="{Binding HayUbicacionDespacho}" />
