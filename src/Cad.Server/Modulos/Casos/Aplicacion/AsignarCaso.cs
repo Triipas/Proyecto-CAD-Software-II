@@ -24,6 +24,7 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
     Notificaciones.ColaAvisosDespacho avisosDespacho, ILogger<AsignarCaso> registro)
 {
     public const string MotivoNoPendiente = "El caso ya no está pendiente: no se puede asignar.";
+    public const string MotivoCancelado = "El ciudadano canceló este SOS: no se puede asignar.";
     public const string MotivoSerenoNoDisponible = "El sereno no está disponible (no está operativo o ya tiene una asignación vigente).";
     public const string MotivoCambioConcurrente = "El caso cambió mientras se asignaba. Revisa su estado e inténtalo de nuevo.";
 
@@ -67,7 +68,8 @@ public sealed class AsignarCaso(CadDbContext db, TimeProvider reloj, INotificado
         // Antes de rechazar se vuelve a comprobar la solicitud: la primera petición de un reenvío pudo confirmar
         // justo después de la comprobación inicial (CA08).
         if (!caso.PuedeAsignarse)
-            return await RechazoTrasCarreraAsync(operadorId, idSolicitud, MotivoNoPendiente, ct); // CA02
+            return await RechazoTrasCarreraAsync(operadorId, idSolicitud,
+                caso.Estado == EstadoCaso.Cancelada ? MotivoCancelado : MotivoNoPendiente, ct); // CA02; HU09: cancelado por su titular
 
         // CA03 — regla de disponibilidad del MVP (HU19-CA02): sereno activo, operativo y sin asignación vigente.
         var disponible = await db.Users.AnyAsync(u => u.Id == serenoId && u.Activo

@@ -113,6 +113,12 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - `Vistas/MisCasosPagina.xaml` y `Vistas/MiCasoPagina.xaml` con `VistasModelo/MisCasosVistaModelo.cs`: la lista de SOS y reportes propios (origen, estado público, fecha y resultado) y el detalle con los avances públicos. Se abre desde «Mis casos» en el inicio del ciudadano.
 - Solo datos públicos (DP05): nunca operador, sereno, notas internas ni intentos de contacto. Se vuelve a consultar al abrir cada pantalla y al deslizar hacia abajo.
 
+## Cancelar un SOS pendiente (HU09, Sprint 5)
+
+- En el detalle de «Mis casos», un SOS propio en estado «Recibido» (pendiente para la central) muestra «Cancelar este SOS». El formulario pide el motivo (obligatorio, hasta 500 caracteres) y se confirma con «Confirmar la cancelación»; «No cancelar» lo cierra sin enviar.
+- Con la respuesta del servidor, el caso pasa a «Cancelado» con el motivo como resultado y el aviso «Cancelaste el SOS. La central fue avisada.». Si la central ya lo asignó, se muestra el rechazo y el estado actual (CA03). Sin respuesta, el motivo se conserva para reintentar; el servidor registra una sola cancelación (CA08). No afecta a un acompañamiento activo (CA07).
+- Capturas: [SOS pendiente](capturas/movil/72-hu09-sos-pendiente.png), [sin motivo](capturas/movil/73-hu09-sin-motivo.png), [con motivo](capturas/movil/74-hu09-motivo.png) y [cancelado](capturas/movil/75-hu09-cancelado.png); en la central, [aviso](capturas/panel/hu09-central-cancelacion.png) e [historial](capturas/panel/hu09-historial-cancelada.png).
+
 ## Notificaciones del ciudadano (HU31, Sprint 3)
 
 - `Servicios/Bandeja.cs` (`ServicioBandeja`), `Vistas/NotificacionesPagina.xaml` y `VistasModelo/NotificacionesVistaModelo.cs`: la bandeja de avisos por cambios de estado público de los casos propios. Las genera el servidor y persisten.

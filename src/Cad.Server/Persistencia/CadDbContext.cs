@@ -20,6 +20,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
+    public DbSet<CancelacionSos> CancelacionesSos => Set<CancelacionSos>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
     public DbSet<DecisionReporte> DecisionesReporte => Set<DecisionReporte>();
@@ -34,7 +35,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
     // su titular; un cambio interno que no cambia el estado público (en camino, inicio de la atención) no la genera.
-    // Registrar un caso no notifica: es el propio ciudadano quien lo crea.
+    // Registrar un caso no notifica: es el propio ciudadano quien lo crea; tampoco cancelarlo (HU09).
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         NotificarCambiosPublicos();
@@ -58,7 +59,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             var caso = entrada.Entity;
             var antes = EstadoPublicoCaso.De(caso.Origen, estado.OriginalValue);
             var despues = EstadoPublicoCaso.De(caso.Origen, estado.CurrentValue);
-            if (antes != despues)
+            if (antes != despues && despues != Cad.Contratos.Casos.EstadosPublicos.Cancelado)
                 NotificacionesCiudadano.Add(NotificacionCiudadano.PorCambioDeEstado(caso, despues, ahora));
         }
     }
@@ -88,6 +89,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             caso.Property(c => c.Estado).HasConversion<string>().HasMaxLength(20);
             caso.Ignore(c => c.UbicacionDisponible);
             caso.Ignore(c => c.PuedeAsignarse);
+            caso.Ignore(c => c.PuedeCancelarse);
             caso.Ignore(c => c.Clasificado);
             // Npgsql asocia un uint marcado como versión a la columna del sistema xmin (sin columna nueva).
             caso.Property(c => c.Version).IsRowVersion();
@@ -160,6 +162,17 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cierre.HasOne<Caso>().WithOne().HasForeignKey<CierreCaso>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
             cierre.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaId).OnDelete(DeleteBehavior.Restrict);
             cierre.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ResponsableId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU09: una cancelación por caso (CA08), con el motivo obligatorio (CA01, CA04) también garantizado por la base de datos.
+        builder.Entity<CancelacionSos>(cancelacion =>
+        {
+            cancelacion.ToTable("CancelacionesSos", tabla =>
+                tabla.HasCheckConstraint("CK_CancelacionesSos_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0"));
+            cancelacion.HasKey(c => c.CasoId);
+            cancelacion.Property(c => c.Motivo).HasMaxLength(CancelacionSos.MaximoMotivo);
+            cancelacion.HasOne<Caso>().WithOne().HasForeignKey<CancelacionSos>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+            cancelacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU10: datos del reporte, uno por caso. La base de datos garantiza los campos obligatorios (CA02) y que la

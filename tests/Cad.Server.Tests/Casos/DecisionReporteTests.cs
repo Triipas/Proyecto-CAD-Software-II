@@ -434,6 +434,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
     {
         public Task SosRegistradoAsync(Guid casoId, CancellationToken ct) => Task.CompletedTask;
         public Task CasoActualizadoAsync(Guid casoId, CancellationToken ct) => Task.CompletedTask;
+        public Task SosCanceladoAsync(Guid casoId, CancellationToken ct) => Task.CompletedTask;
         public Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;

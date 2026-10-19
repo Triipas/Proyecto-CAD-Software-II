@@ -18,6 +18,7 @@
   const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
   const marcadoresEnCurso = [];
   const tituloBase = document.title;
+  const avisoCancelacion = document.querySelector("[data-aviso-cancelacion]");
   let sinVer = 0;
 
   // ---------- Mapa base mínimo (Leaflet + OpenStreetMap) ----------
@@ -262,6 +263,22 @@
       seccion.dataset.avisosSonoros = String(Number(seccion.dataset.avisosSonoros) + 1);
   }
 
+  // HU09-CA02: el titular canceló un SOS pendiente. Sale de la lista (resincronización) y se anuncia con un aviso visible
+  // y, si los avisos sonoros están activados, un tono distinto del de un SOS nuevo.
+  async function avisarCancelacion(id) {
+    const ciudadano = document.getElementById(`sos-${id}`)?.dataset.ciudadano;
+    // Si estaba seleccionado, la resincronización cierra su confirmación de asignación (actualizarAsignacion).
+    if (!(await refrescar())) return;
+    const texto = ciudadano ? `${ciudadano} canceló su SOS. Ya no está pendiente.` : "Un ciudadano canceló su SOS. Ya no está pendiente.";
+    avisoCancelacion.querySelector("[data-texto]").textContent = texto;
+    avisoCancelacion.querySelector("a").href = `/panel/casos/${id}/historial`;
+    avisoCancelacion.hidden = false;
+    avisoCancelacion.dataset.casoId = id;
+    anuncio.textContent = texto;
+    if (tono([440, 330], 0.2))
+      seccion.dataset.avisosSonoros = String(Number(seccion.dataset.avisosSonoros) + 1);
+  }
+
   function marcarComoVisto() {
     sinVer = 0;
     document.title = tituloBase;
@@ -315,6 +332,7 @@
       conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
   });
   conexion.on("SerenoActualizado", () => refrescarSerenos());
+  conexion.on("SosCancelado", ({ id }) => avisarCancelacion(id));
   // HU20: un caso cambió de estado (p. ej., asignado por otro operador): deja la sección urgente.
   conexion.on("CasoActualizado", () => refrescar());
   conexion.onreconnecting(() => estadoConexion("reconectando", "Reconectando… La lista puede no estar actualizada."));
