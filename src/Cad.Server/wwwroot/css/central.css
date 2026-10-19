@@ -599,7 +599,47 @@
   }
 }
 
+/* Marcador elegido: un anillo marino se cierra sobre él, como al fijar un objetivo. */
+.marcador--elegido::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border: 3px solid var(--color-marino);
+  border-radius: 999px;
+  pointer-events: none;
+  animation: elegido-entra var(--duracion-lenta) var(--curva-salida) both;
+}
+
+.marcador-sos.marcador--elegido::after {
+  border-radius: 0.875rem;
+}
+
+.marcador-sereno.marcador--elegido::after {
+  inset: -7px;
+}
+
+/* La línea de despacho aparece y su distancia llega justo después. */
+.linea-despacho {
+  animation: despacho-entra var(--duracion-lenta) var(--curva-salida) both;
+}
+
+.etiqueta-despacho {
+  animation: despacho-entra var(--duracion-base) var(--curva-salida) 160ms both;
+}
+
+@keyframes elegido-entra {
+  from { opacity: 0; transform: scale(1.8); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes despacho-entra {
+  from { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .marcador--elegido::after,
+  .linea-despacho,
+  .etiqueta-despacho,
   .central .sos--nuevo,
   .velo,
   .dialogo {

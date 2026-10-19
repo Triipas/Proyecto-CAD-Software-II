@@ -1,9 +1,10 @@
 @model IReadOnlyList<Cad.Server.Panel.Pages.PasoCaso>
 @using Cad.Server.Panel.Pages
-@* Línea de progreso del caso (rediseño CAD v2). Estilos en detalle-caso.css. *@
+@* Línea de progreso del caso (rediseño CAD v2). Estilos en detalle-caso.css; --i escalona el trazo al abrir el detalle. *@
 <ol class="progreso superficie" aria-label="Progreso del caso">
-    @foreach (var paso in Model)
+    @for (var i = 0; i < Model.Count; i++)
     {
+        var paso = Model[i];
         var clase = paso.Estado switch
         {
             EstadoPaso.Hecho => "progreso__paso--hecho",
@@ -11,7 +12,7 @@
             EstadoPaso.Omitido => "progreso__paso--omitido",
             _ => "",
         };
-        <li class="progreso__paso @clase" aria-current="@(paso.Estado == EstadoPaso.Actual ? "step" : null)">
+        <li class="progreso__paso @clase" style="--i: @i" aria-current="@(paso.Estado == EstadoPaso.Actual ? "step" : null)">
             <span class="progreso__marca">
                 @if (paso.Estado == EstadoPaso.Hecho)
                 {

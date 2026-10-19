@@ -171,7 +171,12 @@ a {
   border-radius: var(--radio-control);
   font-weight: var(--peso-medio);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, transform var(--duracion-instantanea) var(--curva-salida);
+}
+
+/* Presionado: el botón cede un poco y confirma el toque antes de la respuesta del servidor. */
+.boton:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(0.97);
 }
 
 .boton--principal {
@@ -1363,3 +1368,86 @@ a.boton {
 .chip--advertencia { color: var(--color-advertencia); background: var(--color-advertencia-fondo); border-color: var(--color-advertencia-borde); }
 .chip--neutro { color: var(--color-neutro); background: var(--color-neutro-fondo); border-color: var(--color-neutro-borde); }
 .chip--urgente { color: var(--color-urgente); background: var(--color-urgente-fondo); border-color: var(--color-urgente-borde); }
+
+/* ── Movimiento con propósito (rediseño CAD v2) ────────── */
+/* Resultado de una acción (éxito o error): baja a su sitio y el icono aparece después, para que se lea primero. */
+.aviso[data-enfocar] {
+  animation: aviso-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+.aviso[data-enfocar] > .icono {
+  animation: icono-entra var(--duracion-lenta) var(--curva-salida) 90ms both;
+}
+
+/* «Ver en el mapa»: el pin salta al pasar el puntero y se hunde al pulsar. */
+button.sos__ubicacion .icono {
+  transition: transform var(--duracion-rapida) var(--curva-salida);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.sos__ubicacion:hover .icono {
+    transform: translateY(-3px);
+  }
+}
+
+button.sos__ubicacion:active .icono {
+  transform: translateY(1px) scale(0.9);
+}
+
+/* Aterrizaje en el mapa: dos anillos se abren desde el punto elegido (central y minimapas). */
+.llegada {
+  color: var(--mapa-sos);
+  pointer-events: none;
+}
+
+.llegada--reporte { color: var(--mapa-reporte); }
+.llegada--sereno { color: var(--mapa-sereno); }
+
+.llegada span {
+  position: absolute;
+  inset: 0;
+  border: 3px solid currentColor;
+  border-radius: 999px;
+  opacity: 0;
+  animation: llegada 900ms var(--curva-salida) both;
+}
+
+.llegada span + span {
+  animation-delay: 200ms;
+}
+
+/* Los globos del mapa crecen desde su punta. */
+.leaflet-popup-content-wrapper {
+  transform-origin: 50% 100%;
+  animation: globo-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+@keyframes aviso-entra {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes icono-entra {
+  from { opacity: 0; transform: scale(0.5); }
+}
+
+@keyframes llegada {
+  from { opacity: 0.9; transform: scale(0.2); }
+  to { opacity: 0; transform: scale(1); }
+}
+
+@keyframes globo-entra {
+  from { opacity: 0; transform: translateY(6px) scale(0.94); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso[data-enfocar],
+  .aviso[data-enfocar] > .icono,
+  .leaflet-popup-content-wrapper,
+  .llegada span {
+    animation: none;
+  }
+
+  .boton:active:not(:disabled) {
+    transform: none;
+  }
+}

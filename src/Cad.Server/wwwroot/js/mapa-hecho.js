@@ -15,4 +15,15 @@
     alt: contenedor.dataset.titulo ?? "Lugar del hecho",
     keyboard: false,
   }).addTo(mapa);
+
+  // Al abrir el detalle, dos anillos se abren una vez desde el punto (sin ellos si se pide reducir el movimiento).
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const reporte = (contenedor.dataset.claseMarcador ?? "").includes("reporte");
+  const anillo = L.marker(punto, {
+    icon: L.divIcon({ className: `llegada${reporte ? " llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [96, 96], iconAnchor: [48, 48] }),
+    interactive: false,
+    keyboard: false,
+    zIndexOffset: -1000,
+  });
+  setTimeout(() => { anillo.addTo(mapa); setTimeout(() => anillo.remove(), 1300); }, 250);
 })();

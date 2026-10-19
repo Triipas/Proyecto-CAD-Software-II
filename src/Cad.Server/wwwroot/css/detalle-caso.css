@@ -369,3 +369,31 @@
 .marcador-hecho--reporte span {
   background: var(--color-reporte);
 }
+
+/* ── Al abrir el detalle: la línea se traza paso a paso y el paso actual se marca ── */
+.progreso__paso--hecho::before,
+.progreso__paso--actual::before,
+.progreso__paso--omitido::before {
+  transform-origin: 0 50%;
+  animation: trazo var(--duracion-lenta) var(--curva-salida) calc(var(--i, 0) * 70ms) both;
+}
+
+.progreso__paso--hecho .progreso__marca,
+.progreso__paso--actual .progreso__marca {
+  animation: marca-entra var(--duracion-lenta) var(--curva-salida) calc(var(--i, 0) * 70ms + 120ms) both;
+}
+
+@keyframes trazo {
+  from { transform: scaleX(0); }
+}
+
+@keyframes marca-entra {
+  from { opacity: 0.4; transform: scale(0.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progreso__paso::before,
+  .progreso__marca {
+    animation: none;
+  }
+}
