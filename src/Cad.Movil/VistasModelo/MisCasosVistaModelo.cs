@@ -9,6 +9,11 @@ public sealed class ElementoMiCaso(MiCasoResumen caso, string fecha, ComandoAsin
 {
     public Guid Id => caso.Id;
     public string Titulo => $"{caso.Origen} · {caso.Estado}";
+    // Rediseño CAD v2: la tarjeta muestra el origen como etiqueta y el estado como chip.
+    public string Origen => caso.Origen;
+    public string Estado => caso.Estado;
+    public bool EsSos => caso.Origen == "SOS";
+    public bool EsReporte => !EsSos;
     public string Fecha => fecha;
     public string? Resultado => caso.Resultado;
     public bool HayResultado => !string.IsNullOrEmpty(caso.Resultado);

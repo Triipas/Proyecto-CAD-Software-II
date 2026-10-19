@@ -6,76 +6,75 @@
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
              x:Class="Cad.Movil.Vistas.AcompanamientoPagina"
              x:DataType="vm:AcompanamientoVistaModelo"
+             Shell.TabBarIsVisible="False"
              Title="Acompañamiento">
     <ScrollView>
-        <VerticalStackLayout Padding="16,24" Spacing="16" MaximumWidthRequest="480">
-            <VerticalStackLayout>
-                <Label Text="Ciudadano" Style="{StaticResource Sobretitulo}" />
-                <Label Text="Acompañamiento" Style="{StaticResource Titulo}" />
-                <Label Text="Comparte tu ubicación con la central durante un trayecto, hasta 30 minutos. No es un SOS: si estás en peligro, vuelve al inicio y pulsa SOS."
-                       Style="{StaticResource TextoSecundario}" />
+        <VerticalStackLayout Spacing="0">
+            <v:EncabezadoPagina Titulo="Acompañamiento" TextoVolver="Inicio"
+                                Ayuda="Comparte tu ubicación con la central durante un trayecto, hasta 30 minutos. No es un SOS: si estás en peligro, vuelve al inicio y pulsa SOS." />
+            <VerticalStackLayout Padding="16,20,16,32" Spacing="16" MaximumWidthRequest="480">
+
+                <!-- Estado general: no confirmado, cierre pendiente, finalizado, vencido o un error. -->
+                <v:Aviso Tipo="{Binding TipoAvisoEstado}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
+                <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
+
+                <!-- HU34: inicio con la finalidad aceptada (CA02), permiso y ubicación (CA03). -->
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarInicio}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Antes de empezar" FontAttributes="Bold" />
+                        <Label Text="Mientras el acompañamiento esté activo, la aplicación enviará tu ubicación a la central cada 15 segundos, también con la aplicación cerrada. Termina cuando tú lo decidas o, como máximo, a los 30 minutos." />
+                        <v:Aviso Tipo="advertencia" Texto="{x:Static vm:AcompanamientoVistaModelo.TextoEntorno}" />
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <CheckBox IsChecked="{Binding FinalidadAceptada}" VerticalOptions="Start"
+                                      SemanticProperties.Description="Acepto compartir mi ubicación con la central durante el trayecto" />
+                            <Label Grid.Column="1" Text="Acepto compartir mi ubicación con la central durante el trayecto." VerticalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="AlTocarFinalidad" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+                        <v:Aviso Tipo="advertencia" Texto="{Binding MensajeInicio}" IsVisible="{Binding HayMensajeInicio}" />
+                        <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}"
+                                Command="{Binding PermitirUbicacion}" IsVisible="{Binding MostrarPermitir}" />
+                        <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}"
+                                Command="{Binding AbrirAjustes}" IsVisible="{Binding MostrarAjustes}" />
+                        <Button Text="{Binding TextoBotonIniciar}" Style="{StaticResource BotonPrincipal}" Command="{Binding Iniciar}"
+                                SemanticProperties.Hint="Inicia el acompañamiento; no emite un SOS ni registra un reporte" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- HU41: confirmación de bienestar que pidió la central. «Necesito ayuda» emite un SOS (o usa el que ya tengas). -->
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayConfirmacion}" Stroke="{StaticResource ColorAdvertencia}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="¿Cómo estás?" FontAttributes="Bold" FontSize="20" />
+                        <Label Text="{Binding TextoConfirmacion}" />
+                        <Button Text="Estoy bien" Style="{StaticResource BotonPrincipal}" Command="{Binding ResponderEstoyBien}"
+                                SemanticProperties.Hint="Avisa a la central de que estás bien. El acompañamiento sigue activo" />
+                        <Button Text="Necesito ayuda" Style="{StaticResource BotonPrincipal}" BackgroundColor="{StaticResource ColorError}"
+                                Command="{Binding ResponderNecesitoAyuda}" SemanticProperties.Hint="Emite un SOS a la central" />
+                        <ActivityIndicator IsRunning="{Binding RespondiendoConfirmacion}" IsVisible="{Binding RespondiendoConfirmacion}" />
+                    </VerticalStackLayout>
+                </Border>
+                <v:Aviso Tipo="{Binding TipoResultadoConfirmacion}" Texto="{Binding ResultadoConfirmacion}" IsVisible="{Binding HayResultadoConfirmacion}" />
+
+                <!-- HU34-CA01/CA08: estado activo, tiempo restante y control de finalización; HU35-CA04: condición real. -->
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarActivo}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Acompañamiento activo" FontAttributes="Bold" />
+                        <Label Text="{Binding TiempoRestante}" FontSize="40" FontAttributes="Bold" HorizontalTextAlignment="Center"
+                               SemanticProperties.Description="Tiempo restante del acompañamiento" />
+                        <Label Text="Tiempo restante" Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
+                        <Label Text="{Binding TextoActivo}" />
+                        <v:Aviso Tipo="{Binding TipoAvisoTransmision}" Texto="{Binding TextoTransmision}" />
+                        <v:Aviso Tipo="advertencia" Texto="{x:Static vm:AcompanamientoVistaModelo.TextoEntorno}" />
+                        <Button Text="Finalizar acompañamiento" Style="{StaticResource BotonPrincipal}" Command="{Binding Finalizar}"
+                                SemanticProperties.Hint="Deja de compartir tu ubicación de inmediato" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Button Text="Volver al inicio" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
+                <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
-
-            <!-- Estado general: no confirmado, cierre pendiente, finalizado, vencido o un error. -->
-            <v:Aviso Tipo="{Binding TipoAvisoEstado}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
-            <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
-
-            <!-- HU34: inicio con la finalidad aceptada (CA02), permiso y ubicación (CA03). -->
-            <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarInicio}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Antes de empezar" FontAttributes="Bold" />
-                    <Label Text="Mientras el acompañamiento esté activo, la aplicación enviará tu ubicación a la central cada 15 segundos, también con la aplicación cerrada. Termina cuando tú lo decidas o, como máximo, a los 30 minutos." />
-                    <v:Aviso Tipo="advertencia" Texto="{x:Static vm:AcompanamientoVistaModelo.TextoEntorno}" />
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                        <CheckBox IsChecked="{Binding FinalidadAceptada}" VerticalOptions="Start"
-                                  SemanticProperties.Description="Acepto compartir mi ubicación con la central durante el trayecto" />
-                        <Label Grid.Column="1" Text="Acepto compartir mi ubicación con la central durante el trayecto." VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="AlTocarFinalidad" />
-                            </Label.GestureRecognizers>
-                        </Label>
-                    </Grid>
-                    <v:Aviso Tipo="advertencia" Texto="{Binding MensajeInicio}" IsVisible="{Binding HayMensajeInicio}" />
-                    <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}"
-                            Command="{Binding PermitirUbicacion}" IsVisible="{Binding MostrarPermitir}" />
-                    <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}"
-                            Command="{Binding AbrirAjustes}" IsVisible="{Binding MostrarAjustes}" />
-                    <Button Text="{Binding TextoBotonIniciar}" Style="{StaticResource BotonPrincipal}" Command="{Binding Iniciar}"
-                            SemanticProperties.Hint="Inicia el acompañamiento; no emite un SOS ni registra un reporte" />
-                </VerticalStackLayout>
-            </Border>
-
-            <!-- HU41: confirmación de bienestar que pidió la central. «Necesito ayuda» emite un SOS (o usa el que ya tengas). -->
-            <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayConfirmacion}" Stroke="{StaticResource ColorAdvertencia}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="¿Cómo estás?" FontAttributes="Bold" FontSize="20" />
-                    <Label Text="{Binding TextoConfirmacion}" />
-                    <Button Text="Estoy bien" Style="{StaticResource BotonPrincipal}" Command="{Binding ResponderEstoyBien}"
-                            SemanticProperties.Hint="Avisa a la central de que estás bien. El acompañamiento sigue activo" />
-                    <Button Text="Necesito ayuda" Style="{StaticResource BotonPrincipal}" BackgroundColor="{StaticResource ColorError}"
-                            Command="{Binding ResponderNecesitoAyuda}" SemanticProperties.Hint="Emite un SOS a la central" />
-                    <ActivityIndicator IsRunning="{Binding RespondiendoConfirmacion}" IsVisible="{Binding RespondiendoConfirmacion}" />
-                </VerticalStackLayout>
-            </Border>
-            <v:Aviso Tipo="{Binding TipoResultadoConfirmacion}" Texto="{Binding ResultadoConfirmacion}" IsVisible="{Binding HayResultadoConfirmacion}" />
-
-            <!-- HU34-CA01/CA08: estado activo, tiempo restante y control de finalización; HU35-CA04: condición real. -->
-            <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarActivo}">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Acompañamiento activo" FontAttributes="Bold" />
-                    <Label Text="{Binding TiempoRestante}" FontSize="40" FontAttributes="Bold" HorizontalTextAlignment="Center"
-                           SemanticProperties.Description="Tiempo restante del acompañamiento" />
-                    <Label Text="Tiempo restante" Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding TextoActivo}" />
-                    <v:Aviso Tipo="{Binding TipoAvisoTransmision}" Texto="{Binding TextoTransmision}" />
-                    <v:Aviso Tipo="advertencia" Texto="{x:Static vm:AcompanamientoVistaModelo.TextoEntorno}" />
-                    <Button Text="Finalizar acompañamiento" Style="{StaticResource BotonPrincipal}" Command="{Binding Finalizar}"
-                            SemanticProperties.Hint="Deja de compartir tu ubicación de inmediato" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Button Text="Volver al inicio" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
-            <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
