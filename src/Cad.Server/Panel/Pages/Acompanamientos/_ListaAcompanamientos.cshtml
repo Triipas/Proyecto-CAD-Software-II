@@ -31,6 +31,17 @@ else
                     <span class="texto-secundario">hasta las @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
                 </p>
                 <p class="acompanamiento__ciudadano">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")</p>
+                @* HU40/HU41: última confirmación de bienestar de la sesión. *@
+                @if (s.UltimaConfirmacion is { } confirmacion)
+                {
+                    <p class="@(confirmacion.Respuesta == Cad.Server.Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda ? "aviso aviso--error acompanamiento__aviso" : "texto-secundario")" data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")">
+                        Confirmación de bienestar (@Formato.Hora(confirmacion.SolicitadaEn, Model.ZonaHoraria, "HH:mm")): <strong>@confirmacion.TextoRespuesta</strong>
+                        @if (confirmacion.CasoId is { } caso)
+                        {
+                            <a href="/panel/central/sos/@caso">Ver el SOS</a>
+                        }
+                    </p>
+                }
                 @if (p is null)
                 {
                     <p class="texto-secundario" data-sin-posicion>Aún no se recibió ninguna posición.</p>

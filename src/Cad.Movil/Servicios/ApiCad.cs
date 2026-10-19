@@ -71,6 +71,17 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<SesionAcompanamientoVista>> FinalizarAcompanamientoAsync(string token, Guid sesionId, CancellationToken ct) =>
         EnviarAsync<SesionAcompanamientoVista>(HttpMethod.Post, $"api/acompanamiento/{sesionId}/finalizacion", null, token, ct);
 
+    // 204 (sin confirmación pendiente) llega como Correcto(null).
+    public Task<ResultadoApi<ConfirmacionBienestarVista?>> ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct) =>
+        EnviarAsync<ConfirmacionBienestarVista?>(HttpMethod.Get, $"api/acompanamiento/{sesionId}/confirmacion", null, token, ct);
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct) =>
+        EnviarAsync<ConfirmacionBienestarVista>(HttpMethod.Post, $"api/acompanamiento/confirmaciones/{confirmacionId}/presentacion", null, token, ct);
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
+        CancellationToken ct) =>
+        EnviarAsync<ConfirmacionBienestarVista>(HttpMethod.Post, $"api/acompanamiento/confirmaciones/{confirmacionId}/respuesta", respuesta, token, ct);
+
     public Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct) =>
         EnviarAsync<RespuestaEstadoOperativo>(HttpMethod.Get, "api/sereno/estado", null, token, ct);
 

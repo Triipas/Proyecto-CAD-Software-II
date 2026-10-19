@@ -272,6 +272,36 @@ public sealed class ApiFalsa : IApiCad
                 DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, 15)));
     }
 
+    // ----- HU41: confirmación de bienestar -----
+    public Func<Guid, ResultadoApi<ConfirmacionBienestarVista?>> RespuestaConsultaConfirmacion { get; set; } =
+        _ => new ResultadoApi<ConfirmacionBienestarVista?>.Correcto(null);
+    public Func<Guid, SolicitudRespuestaBienestar, ResultadoApi<ConfirmacionBienestarVista>>? RespuestaConfirmacion { get; set; }
+    public ConcurrentQueue<Guid> ConsultasConfirmacion { get; } = new();
+    public ConcurrentQueue<Guid> Presentaciones { get; } = new();
+    public ConcurrentQueue<(Guid Id, SolicitudRespuestaBienestar Respuesta)> RespuestasBienestar { get; } = new();
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista?>> ConsultarConfirmacionAsync(string token, Guid sesionId, CancellationToken ct)
+    {
+        ConsultasConfirmacion.Enqueue(sesionId);
+        return Task.FromResult(RespuestaConsultaConfirmacion(sesionId));
+    }
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct)
+    {
+        Presentaciones.Enqueue(confirmacionId);
+        return Task.FromResult<ResultadoApi<ConfirmacionBienestarVista>>(new ResultadoApi<ConfirmacionBienestarVista>.Correcto(
+            new ConfirmacionBienestarVista(confirmacionId, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null, null, null)));
+    }
+
+    public Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
+        CancellationToken ct)
+    {
+        RespuestasBienestar.Enqueue((confirmacionId, respuesta));
+        return Task.FromResult(RespuestaConfirmacion?.Invoke(confirmacionId, respuesta) ?? new ResultadoApi<ConfirmacionBienestarVista>.Correcto(
+            new ConfirmacionBienestarVista(confirmacionId, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, respuesta.Respuesta, DateTimeOffset.UtcNow,
+                respuesta.Respuesta == Cad.Contratos.Acompanamiento.RespuestasBienestar.NecesitoAyuda ? Guid.NewGuid() : null)));
+    }
+
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
         SosEnviados.Enqueue(solicitud);
@@ -288,6 +318,8 @@ public sealed class SegundoPlanoFalso : IServicioSegundoPlano
     public int Detenciones { get; private set; }
     public void Iniciar(DateTimeOffset venceEn) { Activo = true; Inicios.Add(venceEn); }
     public void Detener() { Activo = false; Detenciones++; }
+    public int AvisosConfirmacion { get; private set; }
+    public void AvisarConfirmacion() => AvisosConfirmacion++;
 }
 
 public sealed class AlmacenLocalFalso : IAlmacenLocal

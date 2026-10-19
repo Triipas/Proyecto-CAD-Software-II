@@ -28,3 +28,18 @@ public static class EstadosAcompanamiento
     // HU37: el servidor la cerró a los 30 minutos.
     public const string Vencida = "Vencida";
 }
+
+// HU40 y HU41 — confirmación de bienestar que ve el titular. Respuesta: null mientras está pendiente; CasoId: el SOS creado o
+// vinculado con «Necesito ayuda».
+public sealed record ConfirmacionBienestarVista(Guid Id, DateTimeOffset SolicitadaEn, DateTimeOffset? PresentadaEn, string? Respuesta,
+    DateTimeOffset? RespondidaEn, Guid? CasoId);
+
+// HU41 — respuesta del ciudadano. Con «Necesito ayuda», el SOS que se emite si no tiene uno vigente (HU07, HU08): la app lo
+// prepara como cualquier SOS y reutiliza su IdSolicitud en cada reintento, así que una respuesta repetida no duplica el SOS (CA07).
+public sealed record SolicitudRespuestaBienestar(string? Respuesta, Cad.Contratos.Sos.SolicitudEmisionSos? Sos);
+
+public static class RespuestasBienestar
+{
+    public const string EstoyBien = "EstoyBien";
+    public const string NecesitoAyuda = "NecesitoAyuda";
+}

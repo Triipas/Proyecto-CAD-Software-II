@@ -102,6 +102,61 @@
         }
     </section>
 
+    @* HU40 y HU41 — confirmación de bienestar: se pide durante una sesión activa, sin crear un SOS ni un despacho. *@
+    <section class="superficie" aria-labelledby="titulo-bienestar" data-bienestar>
+        <h2 id="titulo-bienestar" class="central__titulo">Confirmación de bienestar</h2>
+        @if (Model.ErrorConfirmacion is { } errorConfirmacion)
+        {
+            <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar data-error-confirmacion>
+                <partial name="_Icono" model="@("error")" />
+                <p class="aviso__texto">@errorConfirmacion</p>
+            </div>
+        }
+        @if (s.Activa && !s.ConfirmacionPendiente)
+        {
+            <p class="texto-secundario">Pide al ciudadano que confirme cómo se encuentra. Verá «Estoy bien» y «Necesito ayuda»; solo «Necesito ayuda» emite un SOS (o se vincula con el que ya tenga).</p>
+            <form method="post" asp-page-handler="SolicitarConfirmacion" class="formulario" data-formulario>
+                <input type="hidden" name="IdSolicitudConfirmacion" value="@Model.IdSolicitudConfirmacion" />
+                <div class="acciones">
+                    <button type="submit" class="boton boton--secundario" data-texto-carga="Solicitando…">Solicitar confirmación</button>
+                </div>
+            </form>
+        }
+        else if (s.Activa)
+        {
+            <p class="texto-secundario" data-confirmacion-en-espera>Hay una confirmación esperando respuesta: no se puede pedir otra hasta que el ciudadano responda (DP20).</p>
+        }
+        @if (s.Confirmaciones is { Count: > 0 } confirmaciones)
+        {
+            <ol class="historial" data-confirmaciones>
+                @foreach (var conf in confirmaciones)
+                {
+                    <li class="historial__elemento" data-confirmacion="@conf.Id" data-respuesta="@(conf.Respuesta?.ToString() ?? "Pendiente")">
+                        <p class="historial__cabecera">
+                            <span class="estado @(conf.Respuesta == RespuestaBienestar.NecesitoAyuda ? "estado--sin-contacto" : conf.Pendiente ? "estado--inactiva" : "estado--activa")">@conf.TextoRespuesta</span>
+                            <span class="texto-secundario">Solicitada a las @Formato.Hora(conf.SolicitadaEn, zona) por @conf.Operador</span>
+                        </p>
+                        <p class="historial__texto">
+                            @(conf.PresentadaEn is { } presentada ? $"Mostrada al ciudadano a las {Formato.Hora(presentada, zona)}." : "Aún no se mostró al ciudadano.")
+                            @if (conf.RespondidaEn is { } respondida)
+                            {
+                                <span>Respondida a las @Formato.Hora(respondida, zona).</span>
+                            }
+                            @if (conf.CasoId is { } caso)
+                            {
+                                <a href="/panel/central/sos/@caso">Ver el SOS</a>
+                            }
+                        </p>
+                    </li>
+                }
+            </ol>
+        }
+        else if (!s.Activa)
+        {
+            <p class="texto-secundario">No se pidieron confirmaciones en esta sesión.</p>
+        }
+    </section>
+
     @* HU39-B: conservación del recorrido (DP22: 30 días tras el cierre; conservación excepcional vinculada con un caso). *@
     <section class="superficie" aria-labelledby="titulo-conservacion" data-conservacion>
         <h2 id="titulo-conservacion" class="central__titulo">Conservación del recorrido</h2>

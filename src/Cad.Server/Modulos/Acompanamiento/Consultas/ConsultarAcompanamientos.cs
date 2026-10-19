@@ -13,7 +13,20 @@ public sealed record PosicionVista(double Latitud, double Longitud, double Preci
 
 // HU38: una sesión activa con su última posición. SinConexion (DP20): más del umbral sin recibir ningún envío del dispositivo.
 public sealed record AcompanamientoActivo(Guid Id, string Ciudadano, string? Telefono, DateTimeOffset IniciadaEn, DateTimeOffset VenceEn,
-    DateTimeOffset? UltimoContactoEn, bool SinConexion, PosicionVista? Ultima, int Posiciones);
+    DateTimeOffset? UltimoContactoEn, bool SinConexion, PosicionVista? Ultima, int Posiciones, ConfirmacionVista? UltimaConfirmacion = null);
+
+// HU40 y HU41: una confirmación de bienestar con quién la pidió, cuándo se presentó y la respuesta (con su SOS, si pidió ayuda).
+public sealed record ConfirmacionVista(Guid Id, string Operador, DateTimeOffset SolicitadaEn, DateTimeOffset? PresentadaEn,
+    RespuestaBienestar? Respuesta, DateTimeOffset? RespondidaEn, Guid? CasoId)
+{
+    public bool Pendiente => Respuesta is null;
+    public string TextoRespuesta => Respuesta switch
+    {
+        RespuestaBienestar.EstoyBien => "Estoy bien",
+        RespuestaBienestar.NecesitoAyuda => "Necesito ayuda",
+        _ => PresentadaEn is null ? "Pendiente: aún no se mostró al ciudadano" : "Pendiente: mostrada al ciudadano, sin respuesta",
+    };
+}
 
 // HU39-A: una sesión terminada (finalizada por el ciudadano o vencida), con sus datos de inicio, vencimiento y cierre (CA02).
 public sealed record SesionTerminada(Guid Id, string Ciudadano, EstadoSesion Estado, DateTimeOffset IniciadaEn, DateTimeOffset VenceEn,
@@ -27,8 +40,10 @@ public sealed record PaginaSesiones(IReadOnlyList<SesionTerminada> Sesiones, int
 // Recorrido de una sesión (activa o terminada), de la posición más reciente a la más antigua.
 public sealed record DetalleAcompanamiento(Guid Id, string Ciudadano, string? Telefono, EstadoSesion Estado, DateTimeOffset IniciadaEn,
     DateTimeOffset VenceEn, DateTimeOffset? CerradaEn, DateTimeOffset? UltimoContactoEn, bool SinConexion, IReadOnlyList<PosicionVista> Posiciones,
-    DateTimeOffset? PosicionesEliminadasEn = null, ConservacionVista? Conservacion = null)
+    DateTimeOffset? PosicionesEliminadasEn = null, ConservacionVista? Conservacion = null, IReadOnlyList<ConfirmacionVista>? Confirmaciones = null)
 {
+    public bool ConfirmacionPendiente => Confirmaciones?.Any(c => c.Pendiente) == true;
+
     public bool Activa => Estado == EstadoSesion.Activa;
 }
 
@@ -58,8 +73,12 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
                                Posiciones = db.PosicionesAcompanamiento.Count(p => p.SesionId == sesion.Id),
                            })
                           .ToListAsync(ct);
+        var ids = filas.Select(f => f.Id).ToList();
+        var confirmaciones = (await ConfirmacionesAsync(c => ids.Contains(c.SesionId), ct))
+            .GroupBy(c => c.SesionId).ToDictionary(g => g.Key, g => g.First().Vista);
         return filas.Select(f => new AcompanamientoActivo(f.Id, f.Ciudadano, f.PhoneNumber, f.IniciadaEn, f.VenceEn, f.UltimoContactoEn,
-                SinConexion(f.UltimoContactoEn, ahora), f.Ultima is null ? null : Vista(f.Ultima, ahora), f.Posiciones))
+                SinConexion(f.UltimoContactoEn, ahora), f.Ultima is null ? null : Vista(f.Ultima, ahora), f.Posiciones,
+                confirmaciones.GetValueOrDefault(f.Id)))
             .ToList();
     }
 
@@ -87,8 +106,20 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
         var referencia = activa ? ahora : datos.CerradaEn ?? ahora;
         return new DetalleAcompanamiento(datos.Id, sesion.Ciudadano, sesion.PhoneNumber, datos.Estado, datos.IniciadaEn, datos.VenceEn, datos.CerradaEn,
             datos.UltimoContactoEn, activa && SinConexion(datos.UltimoContactoEn, ahora),
-            posiciones.Select(p => Vista(p, referencia, activa)).ToList(), datos.PosicionesEliminadasEn, conservacion);
+            posiciones.Select(p => Vista(p, referencia, activa)).ToList(), datos.PosicionesEliminadasEn, conservacion,
+            (await ConfirmacionesAsync(c => c.SesionId == id, ct)).Select(c => c.Vista).ToList());
     }
+
+    // HU40/HU41: confirmaciones de bienestar, de la más reciente a la más antigua, con el nombre del operador.
+    private async Task<List<(Guid SesionId, ConfirmacionVista Vista)>> ConfirmacionesAsync(
+        System.Linq.Expressions.Expression<Func<ConfirmacionBienestar, bool>> filtro, CancellationToken ct) =>
+        (await (from c in db.ConfirmacionesBienestar.AsNoTracking().Where(filtro)
+                join operador in db.Users.AsNoTracking() on c.OperadorId equals operador.Id
+                orderby c.SolicitadaEn descending
+                select new { c.SesionId, Vista = new ConfirmacionVista(c.Id, operador.Nombres + " " + operador.Apellidos, c.SolicitadaEn, c.PresentadaEn,
+                    c.Respuesta, c.RespondidaEn, c.CasoId) })
+            .ToListAsync(ct))
+        .Select(x => (x.SesionId, x.Vista)).ToList();
 
     // HU39-A: solo las sesiones terminadas, de la más reciente a la más antigua, de 50 en 50 (como la búsqueda de casos).
     public async Task<PaginaSesiones> HistorialAsync(int pagina, CancellationToken ct)

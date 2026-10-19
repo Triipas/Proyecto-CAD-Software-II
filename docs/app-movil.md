@@ -141,6 +141,13 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 - **Vencimiento (HU37):** al cumplirse los 30 minutos la app deja de transmitir y consulta cómo terminó (CA02). Si el servidor ya la cerró, la respuesta 409 a una posición tiene el mismo efecto. Al reconectar se muestra «terminó a los 30 minutos» (CA06).
 - **Verificación en el emulador (16/10/2026)** contra el servidor local: [antes de iniciar](capturas/movil/61-acompanamiento-antes-de-iniciar.png), [sin la finalidad aceptada](capturas/movil/62-acompanamiento-sin-finalidad.png), [activo](capturas/movil/63-acompanamiento-activo.png), [inicio con el acompañamiento activo](capturas/movil/64-inicio-acompanamiento-activo.png), [sin conexión](capturas/movil/65-acompanamiento-sin-conexion.png), [cierre pendiente](capturas/movil/66-acompanamiento-cierre-pendiente.png), [finalizado](capturas/movil/67-acompanamiento-finalizado.png) y [vencido](capturas/movil/68-acompanamiento-vencido.png).
 
+## Confirmación de bienestar (HU41, Sprint 5)
+
+- Durante un acompañamiento, la app consulta en cada envío de posición (cada 15 s) si la central pidió una confirmación. La pantalla «Acompañamiento» la muestra arriba como «¿Cómo estás?», con «Estoy bien» y «Necesito ayuda». La presentación se registra cuando la pantalla está a la vista; con la app en segundo plano no, aunque la página siga abierta: se escuchan la pausa y la reanudación de la ventana.
+- Con la app en segundo plano, una notificación del canal «Confirmación de bienestar» (prioridad alta) avisa «La central pregunta cómo estás». Al tocarla se abre la app (`Platforms/Android/SegundoPlano.cs`).
+- «Necesito ayuda» prepara el SOS como el botón SOS: activación, ubicación actual de hasta 10 s y descarte de una posición anterior (HU08, DP11). Se envía con la respuesta y la app solo lo confirma con la respuesta del servidor. Sin respuesta lo indica claramente y el reintento reenvía el mismo SOS (mismo identificador), así que el servidor no lo duplica.
+- Capturas: [confirmación](capturas/movil/80-hu41-confirmacion.png), [«Estoy bien»](capturas/movil/81-hu41-estoy-bien.png), [notificación en segundo plano](capturas/movil/82-hu41-notificacion.png) y [«Necesito ayuda»](capturas/movil/83-hu41-necesito-ayuda.png); en el panel, [la solicitud](capturas/panel/hu40-solicitada.png) y [la respuesta con su SOS](capturas/panel/hu41-necesito-ayuda-central.png).
+
 ## Integración continua
 
 `.github/workflows/ci-movil.yml` se ejecuta en `windows-latest` solo cuando cambian la app, los contratos, la solución o el propio flujo. Instala `maui-android` y las dependencias de Android, ejecuta `Cad.Movil.Tests` y compila el APK en Release. La CI del servidor (`ci.yml`) sigue en Linux y no compila la app.
