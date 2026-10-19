@@ -47,6 +47,14 @@ Después busca cada valor sensible en **todas** las entradas capturadas, en **to
 
 **Posiciones no elegidas por el ciudadano (S3-T17):** un reporte no guarda la ubicación del dispositivo (las columnas del caso quedan vacías y una referencia con coordenadas se rechaza, también en la base de datos: `ReporteTests`); la posición actual solo se lee cuando la ciudadana elige «Usar mi posición actual» (`Cad.Movil.Tests/ReporteTests`, verificado en el emulador en el bloque 3). El despacho de un reporte lleva el lugar del hecho, nunca la ubicación del dispositivo (bloque 5 y demostración).
 
+### Sprint 4 (S4-T18, 16/10/2026)
+
+**Resultado:** sin datos sensibles. Prueba `S4T18_AcompanamientoSupervisionYDesactivacion_*`: una ciudadana con teléfono inicia un acompañamiento y envía posiciones precisas (también una inválida y un reenvío), lo finaliza; el operador consulta los activos, el recorrido y el historial y conserva el recorrido con una finalidad; una sesión de hace 40 días pierde sus posiciones por plazo; el operador abre el mapa de casos; el administrador desactiva a un sereno con un caso asignado. Se buscaron las coordenadas de todas las posiciones (también la inválida), la finalidad, el teléfono, los correos, las contraseñas, los tokens, las cookies y los sellos de seguridad: 0 hallazgos. Los registros del sprint solo llevan identificadores de sesión, caso y cuenta, el tipo de evento y cuántas posiciones se eliminaron.
+
+**La prueba detecta fugas reales:** registrar la latitud de una posición del acompañamiento (Debug) o la finalidad de una conservación (Information) la hace fallar.
+
+**Sin posiciones fuera del acompañamiento activo:** el servidor no incorpora posiciones de una sesión cerrada o vencida, ni antes de que exista (`AcompanamientoTests.HU35_CA02_*`, `HU36_CA04_*`, `HU37_CA04_*`), y la app solo lee la posición después de que la ciudadana pulse «Iniciar» con la finalidad aceptada (`Cad.Movil.Tests/AcompanamientoTests.HU34_CA04_*`). En el emulador, los registros del teléfono y del servidor no contenían coordenadas.
+
 ## Otras comprobaciones del sprint
 
 - **Contenedor de producción** (bloque 9): registros 100 % JSON, sin contraseña de la base de datos, contraseña del administrador, cadenas de conexión ni correos.

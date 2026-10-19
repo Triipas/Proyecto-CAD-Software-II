@@ -9,6 +9,7 @@ using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Cad.Server.Tests.Infraestructura;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 
 namespace Cad.Server.Tests;
@@ -257,6 +258,97 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         Assert.NotEmpty(bandeja.Notificaciones);
         Assert.Equal(HttpStatusCode.NoContent, (await app.PostAsync($"/api/notificaciones/{bandeja.Notificaciones[0].Id}/leida", null)).StatusCode);
 
+        AfirmarSinDatosSensibles(sensibles);
+    }
+
+    // S4-T18 (Sprint 4: HU05, HU25, HU34–HU39): acompañamiento con posiciones (también un reenvío y una posición inválida),
+    // finalización, supervisión en el panel (activos, recorrido, historial), conservación excepcional con su finalidad,
+    // eliminación por plazo, mapa de casos y desactivación de una cuenta con su asignación cancelada. Las posiciones del
+    // acompañamiento y la finalidad de la conservación son datos sensibles.
+    [Fact]
+    public async Task S4T18_AcompanamientoSupervisionYDesactivacion_NingunDatoSensibleEnLosRegistros()
+    {
+        var sello = Guid.NewGuid().ToString("N")[..10];
+        var sensibles = new Dictionary<string, List<string>>
+        {
+            ["contraseñas"] = [],
+            ["tokens y cookies"] = [],
+            ["datos personales"] = [],
+            ["coordenadas"] = [],
+            ["secretos del servidor"] = [fabrica.ClaveFirmaJwt, fabrica.AdminClave, new NpgsqlConnectionStringBuilder(ConexionPruebas.Obtener()).Password!],
+        };
+        var ciudadana = await fabrica.CrearAsync(Roles.Ciudadano, telefono: $"9{Random.Shared.Next(10_000_000, 99_999_999)}");
+        sensibles["contraseñas"].Add(ciudadana.Clave);
+        sensibles["datos personales"].Add(ciudadana.Correo);
+        var app = await fabrica.CrearClienteAppAsync(ciudadana);
+        sensibles["tokens y cookies"].Add(app.DefaultRequestHeaders.Authorization!.Parameter!);
+
+        // HU34–HU37: una sesión con posiciones precisas, un reenvío, una posición inválida y su finalización.
+        var sesion = (await (await app.PostAsJsonAsync("/api/acompanamiento",
+            new Cad.Contratos.Acompanamiento.SolicitudInicioAcompanamiento(Guid.NewGuid(), true, true)))
+            .Content.ReadFromJsonAsync<Cad.Contratos.Acompanamiento.SesionAcompanamientoVista>())!;
+        var obtenida = DateTimeOffset.UtcNow;
+        for (var i = 0; i < 3; i++)
+        {
+            Coordenadas(sensibles, out var lat, out var lon);
+            await app.PostAsJsonAsync($"/api/acompanamiento/{sesion.Id}/posiciones",
+                new Cad.Contratos.Acompanamiento.PosicionAcompanamientoEnviada(lat, lon, 7.25 + i, obtenida.AddSeconds(-15 * i)));
+        }
+        Coordenadas(sensibles, out var latInvalida, out _);
+        await app.PostAsJsonAsync($"/api/acompanamiento/{sesion.Id}/posiciones",
+            new Cad.Contratos.Acompanamiento.PosicionAcompanamientoEnviada(latInvalida, 500, 5, obtenida));
+        await app.PostAsJsonAsync($"/api/acompanamiento/{sesion.Id}/posiciones",
+            new Cad.Contratos.Acompanamiento.PosicionAcompanamientoEnviada(-12.0, -77.0, 5, obtenida)); // reenvío (misma hora)
+        Assert.Equal(HttpStatusCode.OK, (await app.PostAsync($"/api/acompanamiento/{sesion.Id}/finalizacion", null)).StatusCode);
+
+        // HU38 y HU39-A: el operador consulta activos, recorrido e historial; HU39-B: conserva el recorrido con una finalidad.
+        var operador = await fabrica.CrearAsync(Roles.Operador);
+        var panel = fabrica.CrearNavegador();
+        var ingreso = await panel.IngresarAlPanelAsync(operador.Correo, operador.Clave);
+        sensibles["contraseñas"].Add(operador.Clave);
+        sensibles["tokens y cookies"].Add(ValorCookie(ingreso));
+        await panel.GetStringAsync("/panel/acompanamientos");
+        await panel.GetStringAsync("/panel/acompanamientos?handler=Lista");
+        await panel.GetStringAsync("/panel/acompanamientos/historial");
+        var recorrido = await panel.GetStringAsync($"/panel/acompanamientos/{sesion.Id}");
+        sensibles["datos personales"].Add(ciudadana.Correo);
+        var sos = (await (await app.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), DateTimeOffset.UtcNow, null)))
+            .Content.ReadFromJsonAsync<RespuestaSos>())!.Id;
+        var finalidad = $"Investigación por denuncia del vecino {sello}";
+        sensibles["datos personales"].Add(finalidad);
+        await EnviarAsync(panel, $"/panel/acompanamientos/{sesion.Id}?handler=Conservar",
+            new() { ["Conservacion.CasoId"] = sos.ToString(), ["Conservacion.Finalidad"] = finalidad }, $"/panel/acompanamientos/{sesion.Id}");
+        Assert.Contains(sesion.Id.ToString(), recorrido);
+
+        // HU39-B: una sesión vencida hace más de 30 días pierde sus posiciones (la tarea solo registra cuántas).
+        var vieja = (await (await app.PostAsJsonAsync("/api/acompanamiento",
+            new Cad.Contratos.Acompanamiento.SolicitudInicioAcompanamiento(Guid.NewGuid(), true, true)))
+            .Content.ReadFromJsonAsync<Cad.Contratos.Acompanamiento.SesionAcompanamientoVista>())!;
+        Coordenadas(sensibles, out var latVieja, out var lonVieja);
+        await app.PostAsJsonAsync($"/api/acompanamiento/{vieja.Id}/posiciones",
+            new Cad.Contratos.Acompanamiento.PosicionAcompanamientoEnviada(latVieja, lonVieja, 6, DateTimeOffset.UtcNow));
+        await app.PostAsync($"/api/acompanamiento/{vieja.Id}/finalizacion", null);
+        await fabrica.ConBaseDatosAsync(db => db.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE \"SesionesAcompanamiento\" SET \"IniciadaEn\" = \"IniciadaEn\" - interval '40 days', \"VenceEn\" = \"VenceEn\" - interval '40 days', \"CerradaEn\" = \"CerradaEn\" - interval '40 days' WHERE \"Id\" = {vieja.Id}"));
+        await fabrica.ConServiciosAsync(s => s.GetRequiredService<Cad.Server.Modulos.Acompanamiento.Aplicacion.ConservarRecorridos>().EliminarVencidasAsync(CancellationToken.None));
+
+        // HU25: mapa de casos; HU05 (DP03): desactivación de un sereno con una asignación vigente.
+        await panel.GetStringAsync("/panel/central?handler=CasosMapa");
+        var sereno = await fabrica.CrearAsync(Roles.Sereno);
+        sensibles["contraseñas"].Add(sereno.Clave);
+        sensibles["datos personales"].Add(sereno.Correo);
+        var serenoApp = await fabrica.CrearClienteAppAsync(sereno);
+        await serenoApp.PutAsJsonAsync("/api/sereno/estado", new Cad.Contratos.Serenos.SolicitudCambioEstadoOperativo(true, true));
+        await fabrica.ConServiciosAsync(s => s.GetRequiredService<Cad.Server.Modulos.Casos.Aplicacion.AsignarCaso>()
+            .EjecutarAsync(sos, sereno.Id, operador.Id, Guid.NewGuid(), CancellationToken.None));
+        var admin = fabrica.CrearNavegador();
+        sensibles["tokens y cookies"].Add(ValorCookie(await admin.IngresarAlPanelAsync(fabrica.AdminCorreo, fabrica.AdminClave)));
+        await EnviarAsync(admin, $"/panel/admin/cuentas/{sereno.Id}/editar?handler=Desactivar", [], $"/panel/admin/cuentas/{sereno.Id}/editar");
+        Assert.Equal(HttpStatusCode.Unauthorized, (await serenoApp.GetAsync("/api/sereno/estado")).StatusCode);
+
+        sensibles["datos personales"].Add(await fabrica.ConBaseDatosAsync(db => db.Users.Where(u => u.Id == ciudadana.Id).Select(u => u.PhoneNumber!).SingleAsync()));
+        sensibles["tokens y cookies"].AddRange(await fabrica.ConBaseDatosAsync(db => db.Users
+            .Where(u => u.Id == ciudadana.Id || u.Id == sereno.Id).Select(u => u.SecurityStamp!).ToListAsync()));
         AfirmarSinDatosSensibles(sensibles);
     }
 
