@@ -17,9 +17,23 @@ public abstract record ResultadoRevision
 // HU14 — Iniciar la revisión de un reporte y corregir su categoría (S3-T05). Solo operadores; la autorización la
 // aplica la página. Responsable, fecha y hora quedan en el historial (eventos y correcciones de solo inserción).
 // Un solo cambio aunque lleguen solicitudes a la vez: token xmin del caso y nueva evaluación (CA05).
-public sealed class RevisarReporte(CadDbContext db, TimeProvider reloj, ILogger<RevisarReporte> registro)
+public sealed class RevisarReporte(CadDbContext db, TimeProvider reloj, Compartido.INotificador notificador, ILogger<RevisarReporte> registro)
 {
     public const string MotivoNoRecibido = "El reporte no está «Recibido»: no se puede iniciar su revisión.";
+
+    // HU25-CA05: la central incorpora el marcador sin recargar (sin el aviso sonoro de un SOS: no es urgente). Después de
+    // confirmar; si falla, el caso ya está guardado y aparece al resincronizar.
+    private async Task AvisarAsync(Guid casoId)
+    {
+        try
+        {
+            await notificador.CasoActualizadoAsync(casoId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogError(ex, "No se pudo avisar a la central del reporte en revisión {CasoId}; se mostrará al resincronizar.", casoId);
+        }
+    }
     public const string MotivoNoEnRevision = "El reporte no está «En revisión»: no se puede corregir su categoría.";
     public const string MotivoCategoriaInvalida = "Elige una categoría del catálogo.";
     public const string MotivoCambioConcurrente = "El reporte cambió mientras se registraba. Revisa su estado e inténtalo de nuevo.";
@@ -61,6 +75,7 @@ public sealed class RevisarReporte(CadDbContext db, TimeProvider reloj, ILogger<
             }
 
             registro.LogInformation("Reporte {CasoId}: revisión iniciada.", casoId);
+            await AvisarAsync(casoId);
             return new ResultadoRevision.Registrado("Quedas como responsable de la revisión.");
         }
     }
