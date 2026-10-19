@@ -74,6 +74,11 @@
             }
             <p class="texto-secundario">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
         </section>
+
+        @if (Model.Tiempos is { } tiempos)
+        {
+            <partial name="_TiemposCaso" model="tiempos" />
+        }
     </div>
 
     <div class="pila">
