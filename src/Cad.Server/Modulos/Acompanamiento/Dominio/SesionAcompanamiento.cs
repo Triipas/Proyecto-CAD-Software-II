@@ -22,6 +22,10 @@ public sealed class SesionAcompanamiento
     // Momento del cierre: el de la finalización (HU36) o el del vencimiento (HU37), aunque el servidor lo registre después.
     public DateTimeOffset? CerradaEn { get; private set; }
 
+    // DP20 (16/10/2026): último envío recibido del dispositivo, aunque repita una posición ya registrada. Sin envíos durante
+    // más del umbral (DP12, 60 s), la central muestra la sesión «Sin conexión».
+    public DateTimeOffset? UltimoContactoEn { get; private set; }
+
     // Token de concurrencia optimista (columna del sistema xmin), como en los casos.
     public uint Version { get; private set; }
 
@@ -38,6 +42,7 @@ public sealed class SesionAcompanamiento
             Estado = EstadoSesion.Activa,
             IniciadaEn = inicio,
             VenceEn = inicio + Duracion,
+            UltimoContactoEn = inicio,
         };
     }
 

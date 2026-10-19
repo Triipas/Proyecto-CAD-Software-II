@@ -84,6 +84,9 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<DateTimeOffset>("IniciadaEn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("UltimoContactoEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("VenceEn")
                         .HasColumnType("timestamp with time zone");
 
