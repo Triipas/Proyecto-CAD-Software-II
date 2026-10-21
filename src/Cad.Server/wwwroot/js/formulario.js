@@ -10,6 +10,22 @@
     menu.setAttribute("aria-expanded", String(abierta));
   });
 
+  // Mostrar u ocultar la contraseña: el botón solo aparece cuando hay JavaScript.
+  for (const boton of document.querySelectorAll("[data-alternar-clave]")) {
+    const campo = document.getElementById(boton.dataset.alternarClave);
+    if (!campo) continue;
+    boton.hidden = false;
+    boton.addEventListener("click", () => {
+      const visible = campo.type === "password";
+      campo.type = visible ? "text" : "password";
+      boton.textContent = visible ? "Ocultar" : "Mostrar";
+    });
+    // La contraseña nunca viaja ni se restaura como texto visible.
+    campo.form?.addEventListener("submit", () => {
+      campo.type = "password";
+    });
+  }
+
   // Estado de carga: evita un segundo envío mientras el servidor responde.
   for (const formulario of document.querySelectorAll("form[data-formulario]")) {
     const boton = formulario.querySelector("button[type=submit][data-texto-carga]");

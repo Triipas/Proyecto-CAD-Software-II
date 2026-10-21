@@ -6,7 +6,7 @@
     var aviso = Model.Aviso;
     var camposInvalidos = aviso?.CamposInvalidos == true;
 }
-<section class="superficie" aria-labelledby="titulo-ingreso">
+<section class="superficie acceso__tarjeta" aria-labelledby="titulo-ingreso">
     <div class="acceso__encabezado">
         <h1 id="titulo-ingreso" class="titulo">Ingresar al panel</h1>
         <p class="texto-secundario">Acceso para operadores de central y administradores.</p>
@@ -28,6 +28,7 @@
             <label class="campo__etiqueta" for="Formulario_Correo">Correo electrónico</label>
             <input class="campo__control" id="Formulario_Correo" name="Formulario.Correo" type="email"
                    value="@Model.Formulario.Correo" autocomplete="username" required
+                   spellcheck="false"
                    autofocus="@(aviso is null)"
                    aria-invalid="@(camposInvalidos ? "true" : null)"
                    aria-describedby="@(camposInvalidos ? "aviso-ingreso" : null)" />
@@ -35,20 +36,25 @@
 
         <div class="campo">
             <label class="campo__etiqueta" for="Formulario_Contrasena">Contraseña</label>
-            <input class="campo__control" id="Formulario_Contrasena" name="Formulario.Contrasena" type="password"
-                   autocomplete="current-password" required
-                   aria-invalid="@(camposInvalidos ? "true" : null)"
-                   aria-describedby="@(camposInvalidos ? "aviso-ingreso" : null)" />
+            <div class="campo__grupo">
+                <input class="campo__control campo__control--con-accion" id="Formulario_Contrasena" name="Formulario.Contrasena" type="password"
+                       autocomplete="current-password" required
+                       aria-invalid="@(camposInvalidos ? "true" : null)"
+                       aria-describedby="@(camposInvalidos ? "aviso-ingreso" : null)" />
+                @* Sin JavaScript queda oculto: el campo funciona igual. Sin aria-label: «Contraseña» nombra solo al campo. *@
+                <button type="button" class="campo__accion" data-alternar-clave="Formulario_Contrasena"
+                        aria-controls="Formulario_Contrasena" hidden>Mostrar</button>
+            </div>
         </div>
 
-        <button type="submit" class="boton boton--principal boton--bloque" data-texto-carga="Ingresando…">Ingresar</button>
+        <button type="submit" class="boton boton--principal boton--bloque acceso__enviar" data-texto-carga="Ingresando…">Ingresar</button>
     </form>
-</section>
 
-<p class="nota">
-    <partial name="_Icono" model="@("informacion")" />
-    <span>Las cuentas de ciudadano y sereno ingresan desde la aplicación móvil.</span>
-</p>
+    <p class="nota acceso__nota">
+        <partial name="_Icono" model="@("informacion")" />
+        <span>Las cuentas de ciudadano y sereno ingresan desde la aplicación móvil.</span>
+    </p>
+</section>
 
 @section Scripts {
     <script src="~/js/formulario.js" asp-append-version="true"></script>

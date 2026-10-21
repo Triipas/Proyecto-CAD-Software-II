@@ -312,19 +312,106 @@ html {
   color: var(--color-informacion);
 }
 
-/* Diseño de la pantalla de acceso */
+/* Diseño de la pantalla de acceso: tarjeta blanca sobre marino institucional con plano de calles. */
+.cuerpo-acceso {
+  background: var(--color-marino-hundido);
+}
+
 .acceso {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  place-items: center;
-  padding: var(--espacio-8) var(--espacio-4);
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  gap: var(--espacio-8);
+  padding: var(--espacio-12) var(--espacio-4) var(--espacio-6);
+  background:
+    radial-gradient(90% 70% at 50% 8%, var(--marino-700) 0%, transparent 62%),
+    linear-gradient(180deg, var(--color-marino) 0%, var(--color-marino-hundido) 100%);
+}
+
+/* El plano se desvanece hacia los bordes para que la tarjeta quede en el centro de la ciudad. */
+.acceso__plano {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  color: var(--color-acento);
+  -webkit-mask-image: radial-gradient(ellipse 80% 75% at 50% 45%, #000 25%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 75% at 50% 45%, #000 25%, transparent 100%);
+}
+
+.acceso__manzanas {
+  opacity: 0.07;
+}
+
+.acceso__avenidas {
+  stroke-width: 3;
+  opacity: 0.14;
+}
+
+.acceso__rio {
+  stroke-width: 18;
+  opacity: 0.08;
+}
+
+.acceso__puntos {
+  stroke-width: 1.5;
+  opacity: 0.5;
 }
 
 .acceso__contenido {
   width: 100%;
-  max-width: 28rem; /* 448 px */
+  max-width: 27rem; /* 432 px */
   display: grid;
   gap: var(--espacio-6);
+}
+
+.marca--sobre-marino {
+  justify-content: center;
+}
+
+.marca--sobre-marino .marca__escudo {
+  width: 2.75rem;
+  height: 2.75rem;
+  background: var(--color-primario);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18), 0 6px 16px -6px rgb(3 10 24 / 0.6);
+}
+
+.marca--sobre-marino .marca__nombre {
+  font-size: var(--texto-xl);
+  letter-spacing: var(--tracking-titulo);
+  color: #FFFFFF;
+}
+
+.marca__lema {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.acceso__tarjeta {
+  padding: var(--espacio-10);
+  border-color: transparent;
+  border-radius: var(--radio-dialogo);
+  box-shadow: var(--sombra-sobre-marino);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .acceso__tarjeta {
+    animation: acceso-entrada var(--duracion-lenta) var(--curva-salida) both;
+  }
+}
+
+@keyframes acceso-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
 }
 
 .acceso__encabezado {
@@ -333,7 +420,92 @@ html {
 }
 
 .acceso__formulario {
+  margin-top: var(--espacio-8);
+  gap: var(--espacio-5);
+}
+
+.acceso__enviar {
+  margin-top: var(--espacio-2);
+  min-height: 3rem;
+}
+
+.acceso__nota {
   margin-top: var(--espacio-6);
+  padding-top: var(--espacio-5);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.acceso__aviso {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  max-width: 40rem;
+  font-size: var(--texto-xs);
+  text-align: center;
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.acceso__aviso .icono {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-acento);
+}
+
+@media (max-width: 30rem) {
+  .acceso {
+    padding-top: var(--espacio-8);
+  }
+
+  .acceso__tarjeta {
+    padding: var(--espacio-6);
+  }
+
+  .acceso__aviso {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+/* Campo con una acción dentro (mostrar contraseña). */
+.campo__grupo {
+  position: relative;
+}
+
+.campo__control--con-accion {
+  padding-right: 6rem;
+}
+
+.campo__accion {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  min-width: 5.25rem;
+  padding: 0 var(--espacio-3);
+  border: 0;
+  border-radius: 0 var(--radio-control) var(--radio-control) 0;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.campo__accion:hover {
+  background: var(--color-tenue);
+}
+
+.campo__accion:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Autocompletado del navegador: azul tenue del sistema en lugar del amarillo o celeste por defecto. */
+.campo__control:-webkit-autofill,
+.campo__control:-webkit-autofill:hover,
+.campo__control:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-texto);
+  box-shadow: inset 0 0 0 100px var(--color-tenue);
 }
 
 /* ===== Panel con sesión ===== */
