@@ -17,6 +17,9 @@ public sealed class OpcionesJwt
     // Base64 de al menos 32 bytes (256 bits). Nunca en el repositorio: user-secrets o Jwt__ClaveFirma.
     public string ClaveFirma { get; set; } = "";
     public int DuracionMinutos { get; set; }
+    // ADR-08: sesión larga del ciudadano para que el SOS nunca quede detrás del PIN. Se revoca con el sello de
+    // seguridad (otro teléfono vinculado, PIN restablecido o cuenta desactivada). 0 = la misma que DuracionMinutos.
+    public int DuracionMinutosCiudadano { get; set; }
 
     public SymmetricSecurityKey ObtenerClave()
     {

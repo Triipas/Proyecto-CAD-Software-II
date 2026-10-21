@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- ADR-08 — bienvenida del ciudadano: solo el número de celular. Si el teléfono ya está vinculado, se pide el PIN; si no,
+     un código. El sereno entra por «¿Eres serenazgo?» (DP26). Quien aún no tiene cuenta puede llamar a emergencias. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.BienvenidaPagina"
+             x:DataType="vm:BienvenidaVistaModelo"
+             Title="Bienvenida">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <Grid Style="{StaticResource EncabezadoMarino}" Padding="24,40,24,64" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                <Border WidthRequest="56" HeightRequest="56" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource ColorMarinoElevado}" HorizontalOptions="Start">
+                    <v:Icono Nombre="escudo" Color="{StaticResource ColorAcento}" Tamano="30" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Grid.Row="1" Text="CAD Móvil" Style="{StaticResource TituloSobreMarino}" FontSize="30" SemanticProperties.HeadingLevel="Level1" />
+                <Label Grid.Row="2" Text="Pide ayuda urgente, reporta incidencias y activa un acompañamiento."
+                       Style="{StaticResource TextoSobreMarino}" />
+            </Grid>
+
+            <VerticalStackLayout Padding="16,0,16,32" Spacing="16" MaximumWidthRequest="480" Margin="0,-40,0,0">
+                <Border Style="{StaticResource Superficie}" Padding="20">
+                    <Border.Shadow>
+                        <Shadow Brush="#0B1F44" Offset="0,10" Radius="24" Opacity="0.16" />
+                    </Border.Shadow>
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Ingresa o crea tu cuenta" Style="{StaticResource Titulo}" FontSize="22" SemanticProperties.HeadingLevel="Level2" />
+                        <Label Text="Te enviaremos un código por SMS para verificar tu número." Style="{StaticResource TextoSecundario}" />
+
+                        <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+
+                        <Label Text="Número de celular" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Label Text="+51" Style="{StaticResource TextoSecundario}" FontSize="17" VerticalOptions="Center"
+                                       SemanticProperties.Description="Prefijo de Perú, más 51" />
+                                <Entry x:Name="CampoCelular" Grid.Column="1" Text="{Binding Celular}" Keyboard="Telephone" MaxLength="15" FontSize="17"
+                                       Placeholder="987 654 321" ReturnType="Go" ReturnCommand="{Binding Continuar}"
+                                       SemanticProperties.Description="Número de celular" />
+                            </Grid>
+                        </Border>
+
+                        <Button Text="Continuar" Style="{StaticResource BotonPrincipal}" Command="{Binding Continuar}" Margin="0,4,0,0" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Sin cuenta todavía y en peligro: los números oficiales, a un toque. -->
+                <Border Style="{StaticResource Superficie}" Padding="16" BackgroundColor="{StaticResource ColorUrgenteFondo}"
+                        Stroke="{StaticResource ColorUrgenteBorde}">
+                    <VerticalStackLayout Spacing="10">
+                        <HorizontalStackLayout Spacing="8">
+                            <v:Icono Nombre="urgente" Color="{StaticResource ColorUrgente}" Tamano="20" VerticalOptions="Center" />
+                            <Label Text="¿Emergencia ahora? Llama directamente" FontFamily="PublicSansSemiBold" FontSize="15"
+                                   TextColor="{StaticResource ColorUrgente}" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Button Text="105&#10;PNP" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="105" LineBreakMode="WordWrap" FontSize="15"
+                                    SemanticProperties.Description="Llamar al 105, Policía Nacional" Padding="4" />
+                            <Button Grid.Column="1" Text="116&#10;Bomberos" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="116" LineBreakMode="WordWrap" FontSize="15"
+                                    SemanticProperties.Description="Llamar al 116, Bomberos" Padding="4" />
+                            <Button Grid.Column="2" Text="106&#10;SAMU" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="106" LineBreakMode="WordWrap" FontSize="15"
+                                    SemanticProperties.Description="Llamar al 106, SAMU" Padding="4" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Button Text="¿Eres serenazgo? Ingresa aquí" Style="{StaticResource BotonTerciario}" Command="{Binding IrAIngresoSereno}" />
+
+                <Label Text="MVP académico · datos simulados · no es un canal oficial de emergencias"
+                       Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -19,6 +19,13 @@
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<!-- ADR-08: desde la bienvenida, «¿Emergencia ahora?» abre el marcador con 105, 116 o 106 (sin llamar por su cuenta). -->
+	<queries>
+		<intent>
+			<action android:name="android.intent.action.DIAL" />
+			<data android:scheme="tel" />
+		</intent>
+	</queries>
 	<uses-feature android:name="android.hardware.location" android:required="false" />
 	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>

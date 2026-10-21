@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- ADR-08, fase D — pestaña «Perfil» del ciudadano: quién eres, tus datos (opcionales), seguridad, privacidad, ayuda y cerrar sesión.
+     Cada fila es un botón con icono y texto (nunca un icono solo). -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.PerfilPagina"
+             x:DataType="vm:PerfilVistaModelo"
+             Title="Perfil">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <Grid Style="{StaticResource EncabezadoMarino}" ColumnDefinitions="Auto,*" ColumnSpacing="14" Padding="20,28,20,28">
+                <Border WidthRequest="56" HeightRequest="56" StrokeThickness="0" StrokeShape="RoundRectangle 28"
+                        BackgroundColor="{StaticResource ColorPrimario}" VerticalOptions="Center">
+                    <Label Text="{Binding Iniciales}" FontFamily="PublicSansBold" FontSize="20" TextColor="White"
+                           HorizontalOptions="Center" VerticalOptions="Center" SemanticProperties.Description="" />
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                    <Label Text="{Binding Nombre}" Style="{StaticResource TituloSobreMarino}" FontSize="22" SemanticProperties.HeadingLevel="Level1" />
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="{Binding Celular}" Style="{StaticResource TextoSobreMarino}" VerticalOptions="Center" />
+                        <Border Style="{StaticResource PildoraSobreMarino}" IsVisible="{Binding CelularVerificado}" VerticalOptions="Center">
+                            <HorizontalStackLayout Spacing="4">
+                                <v:Icono Nombre="exito" Color="{StaticResource ColorAcento}" Tamano="14" VerticalOptions="Center" />
+                                <Label Text="Verificado" FontSize="13" TextColor="{StaticResource ColorTextoSobreMarino}" VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
+
+            <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
+                <v:Aviso Tipo="{Binding TipoMensaje}" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+
+                <!-- Mis datos: todo opcional salvo el nombre. -->
+                <Grid>
+                    <Border Style="{StaticResource Mosaico}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border Style="{StaticResource FondoIcono}" BackgroundColor="{StaticResource ColorTenue}">
+                                <v:Icono Nombre="asignado" Color="{StaticResource ColorPrimario}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Mis datos" Style="{StaticResource TituloMosaico}" />
+                                <Label Text="{Binding TextoDatos}" Style="{StaticResource TextoSecundario}" />
+                                <Label Text="DNI, fecha de nacimiento, dirección y contacto de emergencia. Ayudan a la central a atenderte."
+                                       Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding DatosIncompletos}" />
+                            </VerticalStackLayout>
+                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding IrAMisDatos}"
+                            SemanticProperties.Description="{Binding TextoDatos, StringFormat='Mis datos. {0}'}" />
+                </Grid>
+
+                <Label Text="Seguridad" Style="{StaticResource TituloSeccion}" Margin="0,8,0,0" SemanticProperties.HeadingLevel="Level2" />
+                <Grid IsVisible="{Binding TienePin}">
+                    <Border Style="{StaticResource Mosaico}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border Style="{StaticResource FondoIcono}" BackgroundColor="{StaticResource ColorTenue}">
+                                <v:Icono Nombre="escudo" Color="{StaticResource ColorPrimario}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Cambiar mi PIN" Style="{StaticResource TituloMosaico}" />
+                                <Label Text="Te pediremos el PIN actual." Style="{StaticResource TextoSecundario}" />
+                            </VerticalStackLayout>
+                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding CambiarPin}" SemanticProperties.Description="Cambiar mi PIN" />
+                </Grid>
+                <Border Style="{StaticResource Mosaico}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource FondoIcono}" BackgroundColor="{StaticResource ColorExitoFondo}">
+                            <v:Icono Nombre="exito" Color="{StaticResource ColorExito}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Este teléfono está vinculado" Style="{StaticResource TituloMosaico}" />
+                            <Label Text="Tu cuenta solo puede estar abierta en un teléfono. Si ingresas en otro, este cerrará la sesión."
+                                   Style="{StaticResource TextoSecundario}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <Label Text="Privacidad" Style="{StaticResource TituloSeccion}" Margin="0,8,0,0" SemanticProperties.HeadingLevel="Level2" />
+                <Border Style="{StaticResource Superficie}" Padding="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{Binding TextoTerminos}" Style="{StaticResource TextoSecundario}" />
+                        <Label Text="{Binding Terminos}" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="Ayuda" Style="{StaticResource TituloSeccion}" Margin="0,8,0,0" SemanticProperties.HeadingLevel="Level2" />
+                <Border Style="{StaticResource Superficie}" Padding="16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="En una emergencia también puedes llamar directamente:" Style="{StaticResource TextoSecundario}" />
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Button Text="105&#10;PNP" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="105"
+                                    LineBreakMode="WordWrap" FontSize="15" Padding="4" SemanticProperties.Description="Llamar al 105, Policía Nacional" />
+                            <Button Grid.Column="1" Text="116&#10;Bomberos" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="116"
+                                    LineBreakMode="WordWrap" FontSize="15" Padding="4" SemanticProperties.Description="Llamar al 116, Bomberos" />
+                            <Button Grid.Column="2" Text="106&#10;SAMU" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="106"
+                                    LineBreakMode="WordWrap" FontSize="15" Padding="4" SemanticProperties.Description="Llamar al 106, SAMU" />
+                        </Grid>
+                        <Label Text="CAD Móvil es un MVP académico con datos simulados; no es un canal oficial de emergencias."
+                               Style="{StaticResource TextoSecundario}" FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Button Text="Cerrar sesión" Style="{StaticResource BotonSecundario}" Command="{Binding CerrarSesion}" Margin="0,12,0,0"
+                        SemanticProperties.Hint="Para volver a pedir ayuda tendrás que ingresar tu PIN" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -116,13 +116,25 @@ public class ApiCadTests
         var (api, _) = Crear(_ => Json(HttpStatusCode.BadRequest,
             """{"title":"Revisa los datos del formulario.","status":400,"errors":{"Correo":["Ya existe una cuenta con este correo."]}}"""));
 
-        var resultado = await api.RegistrarAsync(
-            new SolicitudRegistroCiudadano("Ana", "Pérez", "ana@ejemplo.test", "999000111", "Clave-ficticia-1"), CancellationToken.None);
+        var resultado = await api.RegistrarConCelularAsync(
+            new SolicitudRegistroCelular("token-ficticio", "Ana", "Pérez", "482915", true), CancellationToken.None);
 
-        var rechazo = Assert.IsType<ResultadoApi<RespuestaRegistroCiudadano>.Rechazado>(resultado);
+        var rechazo = Assert.IsType<ResultadoApi<RespuestaIngresoCelular>.Rechazado>(resultado);
         Assert.Equal(400, rechazo.Estado);
         Assert.Equal("Revisa los datos del formulario.", rechazo.Mensaje);
         Assert.Equal(["Ya existe una cuenta con este correo."], rechazo.Errores["Correo"]);
+    }
+
+    [Fact]
+    public async Task EsperaParaReenviarElCodigo_MuestraElMotivoDelServidor()
+    {
+        var (api, servidor) = Crear(_ => Json(HttpStatusCode.TooManyRequests,
+            """{"title":"Espera 20 s para pedir otro código.","status":429}"""));
+
+        var resultado = await api.EnviarCodigoCelularAsync(new SolicitudCodigoCelular("900001234"), CancellationToken.None);
+
+        Assert.Equal("Espera 20 s para pedir otro código.", Assert.IsType<ResultadoApi<RespuestaCodigoCelular>.SinRespuesta>(resultado).Motivo);
+        Assert.Equal("https://cad.ejemplo.test/api/auth/celular/codigo", Assert.Single(servidor.Recibidas).Peticion.RequestUri!.ToString());
     }
 
     [Theory]

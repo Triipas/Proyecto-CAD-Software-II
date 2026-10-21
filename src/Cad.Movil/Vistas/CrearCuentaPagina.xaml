@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- ADR-08 — crea tu cuenta: solo nombres y apellidos; el celular ya está verificado y no se vuelve a pedir. Los demás datos
+     (DNI, fecha de nacimiento, dirección…) se completan después y son opcionales. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.CrearCuentaPagina"
+             x:DataType="vm:CrearCuentaVistaModelo"
+             Title="Crea tu cuenta">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <v:EncabezadoPagina Titulo="Crea tu cuenta" Ayuda="Solo tu nombre. Los demás datos puedes completarlos después." />
+
+            <VerticalStackLayout Padding="16,24,16,32" Spacing="12" MaximumWidthRequest="480">
+                <Label Text="Celular" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}" BackgroundColor="{StaticResource ColorSuperficieHundida}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Label Text="{Binding Celular, StringFormat='+51 {0}'}" FontSize="17" VerticalOptions="Center"
+                               TextColor="{StaticResource ColorTexto}" />
+                        <Border Grid.Column="1" Style="{StaticResource ChipExito}" VerticalOptions="Center">
+                            <HorizontalStackLayout Spacing="4">
+                                <v:Icono Nombre="exito" Color="{StaticResource ColorExito}" Tamano="14" VerticalOptions="Center" />
+                                <Label Text="Verificado" Style="{StaticResource TextoChip}" TextColor="{StaticResource ColorExito}" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Label Text="Nombres" Style="{StaticResource Etiqueta}" Margin="0,8,0,0" />
+                <Border Style="{StaticResource MarcoCampo}">
+                    <Entry x:Name="CampoNombres" Text="{Binding Nombres}" Keyboard="Text" MaxLength="100" IsTextPredictionEnabled="False"
+                           SemanticProperties.Description="Nombres" />
+                </Border>
+                <Label Text="{Binding ErrorNombres}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNombres}" />
+
+                <Label Text="Apellidos" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}">
+                    <Entry x:Name="CampoApellidos" Text="{Binding Apellidos}" Keyboard="Text" MaxLength="100" IsTextPredictionEnabled="False"
+                           SemanticProperties.Description="Apellidos" />
+                </Border>
+                <Label Text="{Binding ErrorApellidos}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorApellidos}" />
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4" Margin="0,8,0,0">
+                    <CheckBox IsChecked="{Binding AceptaTerminos}" Color="{StaticResource ColorPrimario}" VerticalOptions="Start"
+                              SemanticProperties.Description="Acepto los términos de uso y el tratamiento de mis datos" />
+                    <Label Grid.Column="1" Text="Acepto los términos de uso y el tratamiento de mis datos para atender mis casos."
+                           VerticalOptions="Center" FontSize="15" TextColor="{StaticResource ColorTexto}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="AlTocarAceptacion" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Grid>
+                <Label Text="{Binding ErrorTerminos}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorTerminos}" />
+                <Button Text="Leer los términos" Style="{StaticResource BotonTerciario}" Command="{Binding AlternarTerminos}" HorizontalOptions="Start" />
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarTerminos}">
+                    <Label Text="{Binding Terminos}" Style="{StaticResource TextoSecundario}" />
+                </Border>
+
+                <Button Text="Continuar" Style="{StaticResource BotonPrincipal}" Command="{Binding Continuar}" Margin="0,8,0,0" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

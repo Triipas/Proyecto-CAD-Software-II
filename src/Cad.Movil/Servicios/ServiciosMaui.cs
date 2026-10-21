@@ -88,6 +88,22 @@ public sealed class AlmacenSesionSeguro : IAlmacenSesion
     public void Cerrar() => SecureStorage.Default.Remove(Clave);
 }
 
+public sealed class AlmacenDispositivoSeguro : IAlmacenDispositivo
+{
+    private const string Clave = "cad.dispositivo";
+
+    public Task GuardarAsync(DispositivoVinculado dispositivo) =>
+        SecureStorage.Default.SetAsync(Clave, System.Text.Json.JsonSerializer.Serialize(dispositivo));
+
+    public async Task<DispositivoVinculado?> LeerAsync()
+    {
+        var valor = await SecureStorage.Default.GetAsync(Clave);
+        return valor is null ? null : System.Text.Json.JsonSerializer.Deserialize<DispositivoVinculado>(valor);
+    }
+
+    public void Olvidar() => SecureStorage.Default.Remove(Clave);
+}
+
 public sealed class ConfiguracionServidorMaui : IConfiguracionServidor
 {
     private const string Clave = "cad.servidor";

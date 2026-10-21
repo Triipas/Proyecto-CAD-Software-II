@@ -46,19 +46,91 @@ public sealed class ApiFalsa : IApiCad
     public ConcurrentQueue<SolicitudEmisionSos> SosEnviados { get; } = new();
     public ResultadoApi<RespuestaToken> RespuestaIngreso { get; set; } =
         new ResultadoApi<RespuestaToken>.Correcto(new RespuestaToken("token-ficticio", DateTimeOffset.UtcNow.AddHours(8), "Ciudadano"));
-    public ResultadoApi<RespuestaRegistroCiudadano> RespuestaRegistro { get; set; } =
-        new ResultadoApi<RespuestaRegistroCiudadano>.Correcto(new RespuestaRegistroCiudadano(Guid.NewGuid()));
-    public int Registros { get; private set; }
     public int Ingresos { get; private set; }
+
+    // ----- ADR-08: ciudadano con celular y PIN -----
+    public ResultadoApi<RespuestaCodigoCelular> RespuestaCodigo { get; set; } =
+        new ResultadoApi<RespuestaCodigoCelular>.Correcto(new RespuestaCodigoCelular(30, 600, "135790"));
+    public ResultadoApi<RespuestaVerificacionCelular> RespuestaVerificacion { get; set; } =
+        new ResultadoApi<RespuestaVerificacionCelular>.Correcto(new RespuestaVerificacionCelular("token-verificacion", false, false));
+    public Queue<ResultadoApi<RespuestaIngresoCelular>> RespuestasIngresoCelular { get; } = new();
+    public List<SolicitudCodigoCelular> CodigosPedidos { get; } = [];
+    public List<SolicitudVerificacionCelular> Verificaciones { get; } = [];
+    public List<SolicitudRegistroCelular> RegistrosCelular { get; } = [];
+    public List<SolicitudIngresoCelular> IngresosCelular { get; } = [];
+    public List<SolicitudRestablecerPin> PinesRestablecidos { get; } = [];
+
+    public static ResultadoApi<RespuestaIngresoCelular> SesionCiudadano(string? llave = "llave-ficticia") =>
+        new ResultadoApi<RespuestaIngresoCelular>.Correcto(
+            new RespuestaIngresoCelular("token-ciudadano", DateTimeOffset.UtcNow.AddDays(30), "Ciudadano", llave));
+
+    private ResultadoApi<RespuestaIngresoCelular> SiguienteIngresoCelular() =>
+        RespuestasIngresoCelular.Count > 1 ? RespuestasIngresoCelular.Dequeue()
+        : RespuestasIngresoCelular.Count == 1 ? RespuestasIngresoCelular.Peek()
+        : SesionCiudadano();
+
+    public Task<ResultadoApi<RespuestaCodigoCelular>> EnviarCodigoCelularAsync(SolicitudCodigoCelular solicitud, CancellationToken ct)
+    {
+        CodigosPedidos.Add(solicitud);
+        return Task.FromResult(RespuestaCodigo);
+    }
+
+    public Task<ResultadoApi<RespuestaVerificacionCelular>> VerificarCelularAsync(SolicitudVerificacionCelular solicitud, CancellationToken ct)
+    {
+        Verificaciones.Add(solicitud);
+        return Task.FromResult(RespuestaVerificacion);
+    }
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> RegistrarConCelularAsync(SolicitudRegistroCelular solicitud, CancellationToken ct)
+    {
+        RegistrosCelular.Add(solicitud);
+        return Task.FromResult(SiguienteIngresoCelular());
+    }
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> IngresarConCelularAsync(SolicitudIngresoCelular solicitud, CancellationToken ct)
+    {
+        IngresosCelular.Add(solicitud);
+        return Task.FromResult(SiguienteIngresoCelular());
+    }
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> RestablecerPinAsync(SolicitudRestablecerPin solicitud, CancellationToken ct)
+    {
+        PinesRestablecidos.Add(solicitud);
+        return Task.FromResult(SiguienteIngresoCelular());
+    }
+
+    // ----- ADR-08, fase D: «Mis datos» y cambio de PIN -----
+    public PerfilCiudadanoVista Perfil { get; set; } = new("Rosa", "Ficticia Quispe", "987654321", true, null, null, null, null,
+        null, null, null, "2026-10-20", DateTimeOffset.UtcNow, TienePin: true);
+    public ResultadoApi<PerfilCiudadanoVista>? RespuestaActualizarPerfil { get; set; }
+    public List<SolicitudPerfilCiudadano> PerfilesEnviados { get; } = [];
+    public List<SolicitudCambioPin> CambiosPin { get; } = [];
+
+    public Task<ResultadoApi<PerfilCiudadanoVista>> ConsultarPerfilAsync(string token, CancellationToken ct) =>
+        Task.FromResult<ResultadoApi<PerfilCiudadanoVista>>(new ResultadoApi<PerfilCiudadanoVista>.Correcto(Perfil));
+
+    public Task<ResultadoApi<PerfilCiudadanoVista>> ActualizarPerfilAsync(string token, SolicitudPerfilCiudadano solicitud, CancellationToken ct)
+    {
+        PerfilesEnviados.Add(solicitud);
+        if (RespuestaActualizarPerfil is { } respuesta)
+            return Task.FromResult(respuesta);
+        Perfil = Perfil with
+        {
+            Nombres = solicitud.Nombres, Apellidos = solicitud.Apellidos, TipoDocumento = solicitud.TipoDocumento,
+            NumeroDocumento = solicitud.NumeroDocumento, FechaNacimiento = solicitud.FechaNacimiento, Direccion = solicitud.Direccion,
+            ContactoNombre = solicitud.ContactoNombre, ContactoParentesco = solicitud.ContactoParentesco, ContactoTelefono = solicitud.ContactoTelefono,
+        };
+        return Task.FromResult<ResultadoApi<PerfilCiudadanoVista>>(new ResultadoApi<PerfilCiudadanoVista>.Correcto(Perfil));
+    }
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> CambiarPinAsync(string token, SolicitudCambioPin solicitud, CancellationToken ct)
+    {
+        CambiosPin.Add(solicitud);
+        return Task.FromResult(SiguienteIngresoCelular());
+    }
 
     public static ResultadoApi<RespuestaSos> Registrado(SolicitudEmisionSos s) =>
         new ResultadoApi<RespuestaSos>.Correcto(new RespuestaSos(Guid.NewGuid(), "Pendiente", DateTimeOffset.UtcNow, s.Ubicacion is not null));
-
-    public Task<ResultadoApi<RespuestaRegistroCiudadano>> RegistrarAsync(SolicitudRegistroCiudadano solicitud, CancellationToken ct)
-    {
-        Registros++;
-        return Task.FromResult(RespuestaRegistro);
-    }
 
     public Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct)
     {
@@ -336,6 +408,14 @@ public sealed class SesionesFalsas : IAlmacenSesion
     public Task GuardarAsync(SesionApp sesion) { Sesion = sesion; return Task.CompletedTask; }
     public Task<SesionApp?> LeerAsync() => Task.FromResult(Sesion);
     public void Cerrar() => Sesion = null;
+}
+
+public sealed class DispositivosFalsos : IAlmacenDispositivo
+{
+    public DispositivoVinculado? Dispositivo { get; set; }
+    public Task GuardarAsync(DispositivoVinculado dispositivo) { Dispositivo = dispositivo; return Task.CompletedTask; }
+    public Task<DispositivoVinculado?> LeerAsync() => Task.FromResult(Dispositivo);
+    public void Olvidar() => Dispositivo = null;
 }
 
 public sealed class NavegacionFalsa : INavegacion

@@ -60,7 +60,7 @@ builder.Services.AddAntiforgery(opciones => opciones.Cookie.SecurePolicy =
 // <, >, & y comillas se siguen codificando, así que la protección frente a XSS no cambia.
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(opciones =>
     opciones.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
-builder.Services.AddModuloCuentas();
+builder.Services.AddModuloCuentas(builder.Configuration);
 builder.Services.AddModuloCasos();
 builder.Services.AddModuloMediciones(builder.Configuration);
 builder.Services.AddModuloSerenos(builder.Configuration);
@@ -98,6 +98,8 @@ app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
+// ADR-08: límite por IP de las rutas de ingreso con celular (después de la autenticación, antes de los endpoints).
+app.UseRateLimiter();
 
 app.MapHealthChecks("/salud", new HealthCheckOptions { Predicate = _ => false }).AllowAnonymous();
 app.MapHealthChecks("/salud/lista", new HealthCheckOptions { Predicate = c => c.Tags.Contains("lista") }).AllowAnonymous();

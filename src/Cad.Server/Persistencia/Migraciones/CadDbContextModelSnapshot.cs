@@ -858,6 +858,68 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("NotificacionesCiudadano", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.DispositivoCiudadano", b =>
+                {
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LlaveHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("VinculadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UsuarioId");
+
+                    b.ToTable("DispositivosCiudadano", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.PerfilCiudadano", b =>
+                {
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContactoNombre")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactoParentesco")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ContactoTelefono")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly?>("FechaNacimiento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("NumeroDocumento")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("TipoDocumento")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.HasKey("UsuarioId");
+
+                    b.HasIndex("TipoDocumento", "NumeroDocumento")
+                        .IsUnique()
+                        .HasFilter("\"NumeroDocumento\" IS NOT NULL");
+
+                    b.ToTable("PerfilesCiudadano", (string)null);
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -889,6 +951,9 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("IntentosPinFallidos")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -918,8 +983,18 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PinHash")
+                        .HasColumnType("text");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("TerminosAceptadosEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TerminosVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
@@ -939,6 +1014,57 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.VerificacionCelular", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Celular")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<string>("CodigoHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("CreadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiraEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Simulado")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("TokenExpiraEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("TokenUsadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("VerificadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasFilter("\"TokenHash\" IS NOT NULL");
+
+                    b.HasIndex("Celular", "CreadaEn");
+
+                    b.ToTable("VerificacionesCelular", (string)null);
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Mediciones.MedicionPresentacion", b =>
@@ -1536,6 +1662,24 @@ namespace Cad.Server.Persistencia.Migraciones
                         .WithMany()
                         .HasForeignKey("CiudadanoId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.DispositivoCiudadano", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.PerfilCiudadano", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Cuentas.Dominio.PerfilCiudadano", "UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

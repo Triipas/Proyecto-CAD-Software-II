@@ -36,6 +36,9 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento> AvisosAcompanamiento => Set<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.ActuacionAviso> ActuacionesAviso => Set<Modulos.Acompanamiento.Dominio.ActuacionAviso>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
+    public DbSet<Modulos.Cuentas.Dominio.DispositivoCiudadano> DispositivosCiudadano => Set<Modulos.Cuentas.Dominio.DispositivoCiudadano>();
+    public DbSet<Modulos.Cuentas.Dominio.VerificacionCelular> VerificacionesCelular => Set<Modulos.Cuentas.Dominio.VerificacionCelular>();
+    public DbSet<Modulos.Cuentas.Dominio.PerfilCiudadano> PerfilesCiudadano => Set<Modulos.Cuentas.Dominio.PerfilCiudadano>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
     // su titular; un cambio interno que no cambia el estado público (en camino, inicio de la atención) no la genera.
@@ -433,10 +436,47 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             usuario.Property(u => u.Nombres).HasMaxLength(100);
             usuario.Property(u => u.Apellidos).HasMaxLength(100);
             usuario.Property(u => u.PhoneNumber).HasMaxLength(20);
+            usuario.Property(u => u.TerminosVersion).HasMaxLength(20);
 
             // Identity crea EmailIndex sin unicidad; el correo es el identificador de acceso,
             // así que la base de datos debe impedir duplicados aun con registros simultáneos (HU01-CA05).
             usuario.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex").IsUnique();
+        });
+
+        // ADR-08 (DP24): un solo teléfono vinculado por cuenta de ciudadano; solo el hash de su llave.
+        builder.Entity<Modulos.Cuentas.Dominio.DispositivoCiudadano>(dispositivo =>
+        {
+            dispositivo.ToTable("DispositivosCiudadano");
+            dispositivo.HasKey(d => d.UsuarioId);
+            dispositivo.Property(d => d.LlaveHash).HasMaxLength(64);
+            dispositivo.HasOne<Usuario>().WithMany().HasForeignKey(d => d.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ADR-08: envíos de código al celular y token de verificación de un solo uso (solo hashes).
+        builder.Entity<Modulos.Cuentas.Dominio.VerificacionCelular>(verificacion =>
+        {
+            verificacion.ToTable("VerificacionesCelular");
+            verificacion.HasKey(v => v.Id);
+            verificacion.Property(v => v.Celular).HasMaxLength(9);
+            verificacion.Property(v => v.CodigoHash).HasMaxLength(64);
+            verificacion.Property(v => v.TokenHash).HasMaxLength(64);
+            verificacion.HasIndex(v => new { v.Celular, v.CreadaEn });
+            verificacion.HasIndex(v => v.TokenHash).IsUnique().HasFilter("\"TokenHash\" IS NOT NULL");
+        });
+
+        // ADR-08, fase D: datos opcionales del ciudadano. Un documento pertenece a una sola cuenta.
+        builder.Entity<Modulos.Cuentas.Dominio.PerfilCiudadano>(perfil =>
+        {
+            perfil.ToTable("PerfilesCiudadano");
+            perfil.HasKey(p => p.UsuarioId);
+            perfil.Property(p => p.TipoDocumento).HasMaxLength(12);
+            perfil.Property(p => p.NumeroDocumento).HasMaxLength(12);
+            perfil.Property(p => p.Direccion).HasMaxLength(Cad.Contratos.Cuentas.DatosCiudadano.MaximoDireccion);
+            perfil.Property(p => p.ContactoNombre).HasMaxLength(Cad.Contratos.Cuentas.DatosCiudadano.MaximoNombreContacto);
+            perfil.Property(p => p.ContactoParentesco).HasMaxLength(30);
+            perfil.Property(p => p.ContactoTelefono).HasMaxLength(9);
+            perfil.HasIndex(p => new { p.TipoDocumento, p.NumeroDocumento }).IsUnique().HasFilter("\"NumeroDocumento\" IS NOT NULL");
+            perfil.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Cuentas.Dominio.PerfilCiudadano>(p => p.UsuarioId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Calificado: dentro de IdentityDbContext, «Roles» es el DbSet de roles.

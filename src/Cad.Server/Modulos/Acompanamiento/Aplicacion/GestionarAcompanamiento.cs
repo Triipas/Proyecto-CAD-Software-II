@@ -93,8 +93,12 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
         if (errores.Count > 0)
             return new ResultadoInicioAcompanamiento.Invalido(errores);
 
+        // La sesión activa puede ser la de este mismo inicio, guardada por un reintento simultáneo entre la comprobación
+        // anterior y esta (CA06): entonces es la misma sesión, no otra.
         if (await db.SesionesAcompanamiento.AsNoTracking().AnyAsync(s => s.CiudadanoId == ciudadanoId && s.Estado == EstadoSesion.Activa, ct))
-            return new ResultadoInicioAcompanamiento.OtraSesionActiva();
+            return await PorSolicitudAsync(ciudadanoId, solicitud.IdSolicitud, ct) is { } recienIniciada
+                ? new ResultadoInicioAcompanamiento.YaIniciada(recienIniciada)
+                : new ResultadoInicioAcompanamiento.OtraSesionActiva();
 
         var sesion = SesionAcompanamiento.Iniciar(ciudadanoId, solicitud.IdSolicitud, ahora);
         db.SesionesAcompanamiento.Add(sesion);

@@ -13,7 +13,8 @@ public sealed class EmisorTokens(IOptions<OpcionesJwt> opciones, TimeProvider re
     {
         var jwt = opciones.Value;
         var ahora = reloj.GetUtcNow();
-        var expira = ahora.AddMinutes(jwt.DuracionMinutos);
+        var minutos = rol == Roles.Ciudadano && jwt.DuracionMinutosCiudadano > 0 ? jwt.DuracionMinutosCiudadano : jwt.DuracionMinutos;
+        var expira = ahora.AddMinutes(minutos);
 
         var token = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {

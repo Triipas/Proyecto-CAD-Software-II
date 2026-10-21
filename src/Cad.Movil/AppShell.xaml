@@ -12,7 +12,7 @@
        Shell.TabBarTitleColor="#1D4ED8"
        Shell.TabBarUnselectedColor="#475A75"
        Title="CAD Móvil">
-    <ShellContent Route="ingreso" ContentTemplate="{DataTemplate v:IngresoPagina}" />
+    <ShellContent Route="ingreso" ContentTemplate="{DataTemplate v:BienvenidaPagina}" />
     <TabBar Route="ciudadano">
         <Tab Title="Inicio" Icon="tab_inicio.png" Route="inicio">
             <ShellContent ContentTemplate="{DataTemplate v:InicioCiudadanoPagina}" />
@@ -22,6 +22,10 @@
         </Tab>
         <Tab Title="Avisos" Icon="tab_avisos.png" Route="notificaciones">
             <ShellContent ContentTemplate="{DataTemplate v:NotificacionesPagina}" />
+        </Tab>
+        <!-- ADR-08, fase D: datos, seguridad, privacidad, ayuda y cierre de sesión. -->
+        <Tab Title="Perfil" Icon="tab_perfil.png" Route="perfil">
+            <ShellContent ContentTemplate="{DataTemplate v:PerfilPagina}" />
         </Tab>
     </TabBar>
     <ShellContent Route="sereno" ContentTemplate="{DataTemplate v:InicioSerenoPagina}" />

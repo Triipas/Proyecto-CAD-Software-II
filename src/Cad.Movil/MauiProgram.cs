@@ -56,7 +56,18 @@ public static class MauiProgram
         // Pantallas y modelos de vista.
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<IngresoVistaModelo>();
-        builder.Services.AddTransient<RegistroVistaModelo>();
+        // ADR-08: ingreso del ciudadano con celular verificado y PIN.
+        builder.Services.AddSingleton<IAlmacenDispositivo, AlmacenDispositivoSeguro>();
+        builder.Services.AddSingleton<FlujoIngresoCelular>();
+        builder.Services.AddTransient<BienvenidaVistaModelo>();
+        builder.Services.AddTransient<CodigoVistaModelo>();
+        builder.Services.AddTransient<CrearCuentaVistaModelo>();
+        builder.Services.AddTransient<PinVistaModelo>();
+        // ADR-08, fase D: pestaña «Perfil» y «Mis datos».
+        builder.Services.AddTransient(s => new PerfilVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<FlujoIngresoCelular>(), s.GetRequiredService<ServicioAcompanamiento>(),
+            s.GetRequiredService<EmisorSos>()));
+        builder.Services.AddTransient<MisDatosVistaModelo>();
 #if ANDROID
         builder.Services.AddSingleton<IServicioSegundoPlano, Platforms.Android.SegundoPlanoAndroid>(); // DP13
 #else
@@ -66,7 +77,7 @@ public static class MauiProgram
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
-            s.GetRequiredService<ServicioBandeja>(), s.GetRequiredService<ServicioAcompanamiento>()));
+            s.GetRequiredService<ServicioBandeja>(), s.GetRequiredService<ServicioAcompanamiento>(), s.GetRequiredService<IApiCad>()));
         builder.Services.AddTransient(s => new AcompanamientoVistaModelo(s.GetRequiredService<ServicioAcompanamiento>(),
             s.GetRequiredService<IServicioUbicacion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
             s.GetRequiredService<TimeProvider>()));
@@ -88,7 +99,12 @@ public static class MauiProgram
             s.GetRequiredService<IAlmacenSesion>(),
             s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
         builder.Services.AddTransient<IngresoPagina>();
-        builder.Services.AddTransient<RegistroPagina>();
+        builder.Services.AddTransient<BienvenidaPagina>();
+        builder.Services.AddTransient<CodigoPagina>();
+        builder.Services.AddTransient<CrearCuentaPagina>();
+        builder.Services.AddTransient<PinPagina>();
+        builder.Services.AddTransient<PerfilPagina>();
+        builder.Services.AddTransient<MisDatosPagina>();
         builder.Services.AddTransient<InicioCiudadanoPagina>();
         builder.Services.AddTransient<ReportePagina>();
         builder.Services.AddTransient(s => new MisCasosVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
