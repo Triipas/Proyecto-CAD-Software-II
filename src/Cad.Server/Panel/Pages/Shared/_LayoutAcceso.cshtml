@@ -3,24 +3,57 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0B1F44" />
     <title>@ViewData["Title"] · Central CAD</title>
     <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
 </head>
-@* Pantallas sin sesión: sin encabezado de sesión ni navegación. *@
-<body>
+@* Pantallas sin sesión: sin encabezado de sesión ni navegación, sobre fondo marino institucional. *@
+<body class="cuerpo-acceso">
     <main class="acceso">
+        @* Plano de calles decorativo: eco del mapa de la central, en azul tenue. *@
+        <svg class="acceso__plano" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice"
+             aria-hidden="true" focusable="false">
+            <defs>
+                <pattern id="acceso-manzanas" width="76" height="54" patternUnits="userSpaceOnUse"
+                         patternTransform="rotate(-36)">
+                    <rect x="4" y="4" width="68" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1" />
+                </pattern>
+            </defs>
+            <rect class="acceso__manzanas" width="1440" height="900" fill="url(#acceso-manzanas)" />
+            <g class="acceso__avenidas" fill="none" stroke="currentColor" stroke-linecap="round">
+                <path d="M-60 760 L1500 -370" />
+                <path d="M120 1020 L1680 -110" />
+                <path d="M-80 260 L640 1250" />
+                <path d="M780 -60 L1500 930" />
+                <path d="M-40 520 C 360 470, 720 610, 1480 540" />
+            </g>
+            <path class="acceso__rio" fill="none" stroke="currentColor" stroke-linecap="round"
+                  d="M-40 118 C 180 70, 380 196, 640 132 S 1080 40, 1480 104" />
+            <g class="acceso__puntos" fill="currentColor">
+                <circle cx="236" cy="652" r="4" /><circle cx="236" cy="652" r="13" fill="none" stroke="currentColor" />
+                <circle cx="1188" cy="286" r="4" /><circle cx="1188" cy="286" r="13" fill="none" stroke="currentColor" />
+                <circle cx="1270" cy="716" r="4" /><circle cx="1270" cy="716" r="13" fill="none" stroke="currentColor" />
+                <circle cx="352" cy="232" r="4" /><circle cx="352" cy="232" r="13" fill="none" stroke="currentColor" />
+            </g>
+        </svg>
+
         <div class="acceso__contenido">
-            <div class="marca">
+            <div class="marca marca--sobre-marino">
                 <span class="marca__escudo"><partial name="_Icono" model="@("escudo")" /></span>
                 <div>
                     <p class="marca__nombre">Central CAD</p>
-                    <p class="marca__aviso">MVP académico · datos simulados · no es un canal oficial de emergencias</p>
+                    <p class="marca__lema">Sistema Integrado CAD · Seguridad ciudadana</p>
                 </div>
             </div>
             @RenderBody()
         </div>
+
+        <p class="acceso__aviso">
+            <partial name="_Icono" model="@("informacion")" />
+            <span>MVP académico · datos simulados · no es un canal oficial de emergencias</span>
+        </p>
     </main>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
