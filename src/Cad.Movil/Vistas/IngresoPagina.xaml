@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- HU02 — Iniciar sesión (ciudadano y sereno). Rediseño CAD v2 (fase 4): la marca en el encabezado marino y el formulario
+<!-- HU02 — Ingreso del serenazgo con correo y contraseña (DP26: desde «¿Eres serenazgo?» de la bienvenida). Rediseño CAD v2: la marca en el encabezado marino y el formulario
      en una superficie que sube sobre él. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -7,7 +7,7 @@
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
              x:Class="Cad.Movil.Vistas.IngresoPagina"
              x:DataType="vm:IngresoVistaModelo"
-             Title="Ingresar">
+             Title="Ingreso de serenazgo">
     <ScrollView>
         <VerticalStackLayout Spacing="0">
             <Grid Style="{StaticResource EncabezadoMarino}" Padding="24,40,24,64" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
@@ -15,8 +15,8 @@
                         BackgroundColor="{StaticResource ColorMarinoElevado}" HorizontalOptions="Start">
                     <v:Icono Nombre="escudo" Color="{StaticResource ColorAcento}" Tamano="30" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
-                <Label Grid.Row="1" Text="CAD Móvil" Style="{StaticResource TituloSobreMarino}" FontSize="30" />
-                <Label Grid.Row="2" Text="Ayuda urgente, reportes y acompañamiento para ciudadanos; despachos para serenos."
+                <Label Grid.Row="1" Text="Serenazgo" Style="{StaticResource TituloSobreMarino}" FontSize="30" />
+                <Label Grid.Row="2" Text="Ingresa con la cuenta institucional que te dio el administrador para recibir despachos."
                        Style="{StaticResource TextoSobreMarino}" />
             </Grid>
 
@@ -26,7 +26,7 @@
                         <Shadow Brush="#0B1F44" Offset="0,10" Radius="24" Opacity="0.16" />
                     </Border.Shadow>
                     <VerticalStackLayout Spacing="12">
-                        <Label Text="Ingresar" Style="{StaticResource Titulo}" FontSize="24" />
+                        <Label Text="Ingresar" Style="{StaticResource Titulo}" FontSize="24" SemanticProperties.HeadingLevel="Level1" />
 
                         <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
 
@@ -42,7 +42,7 @@
                         </Border>
 
                         <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" Margin="0,4,0,0" />
-                        <Button Text="Crear una cuenta de ciudadano" Style="{StaticResource BotonSecundario}" Command="{Binding IrARegistro}" />
+                        <Button Text="Volver a la bienvenida" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
                         <Button Text="Diagnóstico de ubicación (SPIKE01)" Style="{StaticResource BotonTerciario}"
                                 Command="{Binding IrADiagnostico}" IsVisible="{Binding MostrarDiagnostico}" />
                     </VerticalStackLayout>

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir), HU07/HU08 (SOS con una única activación), acceso al reporte (HU10) y al acompañamiento (HU34).
-     Rediseño CAD v2 (fase 4): encabezado marino, SOS de un toque como protagonista y los otros flujos como mosaicos. -->
+<!-- Pantalla principal del ciudadano: HU06 (ubicación al abrir), HU07/HU08 (SOS con una única activación), acceso al reporte (HU10) y
+     al acompañamiento (HU34). Diseño A (docs/rediseno/brief-movil-inicio-perfil.md, elegido por el PO el 21/10/2026): el mapa es todo
+     el fondo; arriba flotan el saludo y lo que está en curso; abajo, en la zona del pulgar, Reportar · SOS · Acompañar. No hay panel
+     plegable: el SOS siempre está a la vista. La posición solo se dibuja en el mapa; nunca se envía desde aquí. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -8,45 +10,181 @@
              x:Class="Cad.Movil.Vistas.InicioCiudadanoPagina"
              x:DataType="vm:InicioCiudadanoVistaModelo"
              Title="Inicio">
-    <ScrollView>
-        <VerticalStackLayout Spacing="0">
-            <Grid Style="{StaticResource EncabezadoMarino}" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                <Label Text="Pedir ayuda" Style="{StaticResource TituloSobreMarino}" VerticalOptions="Center" />
-                <Button Grid.Column="1" Text="Salir" Style="{StaticResource BotonSobreMarino}" Command="{Binding Salir}" />
-                <Label Grid.Row="1" Grid.ColumnSpan="2" Text="Un toque envía tu ubicación a la central. Podrás cancelarlo después."
-                       Style="{StaticResource TextoSobreMarino}" />
-            </Grid>
+    <ContentPage.Resources>
+        <!-- Tarjeta blanca que flota sobre el mapa (sombra «flotante» del sistema). -->
+        <Style x:Key="Flotante" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource ColorSuperficie}" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+            <Setter Property="Shadow">
+                <Shadow Brush="#0B1F44" Offset="0,8" Radius="20" Opacity="0.20" />
+            </Setter>
+        </Style>
+    </ContentPage.Resources>
 
-            <VerticalStackLayout Padding="16,20,16,24" Spacing="16" MaximumWidthRequest="480">
-                <Label Text="Finaliza tu acompañamiento antes de salir." Style="{StaticResource TextoSecundario}" IsVisible="{Binding AcompanamientoEnCurso}" />
+    <Grid>
+        <!-- La ciudad y tu posición (solo en este teléfono). -->
+        <WebView x:Name="Mapa" SemanticProperties.Description="Mapa con tu ubicación aproximada" />
+
+        <!-- Arriba: saludo, lo que está en curso y los avisos que piden algo. -->
+        <!-- Las capas no tapan el mapa: sus huecos dejan pasar el toque (InputTransparent sin cascada). -->
+        <VerticalStackLayout VerticalOptions="Start" Padding="12,12,12,8" Spacing="8" InputTransparent="True" CascadeInputTransparent="False">
+                <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 999" Padding="8,8,16,8" HorizontalOptions="Fill">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 18"
+                                BackgroundColor="{StaticResource ColorMarino}" VerticalOptions="Center">
+                            <Label Text="{Binding Iniciales}" TextColor="White" FontFamily="PublicSansBold" FontSize="13"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                            <Label Text="{Binding Saludo}" FontFamily="PublicSansBold" FontSize="16" TextColor="{StaticResource ColorMarino}"
+                                   SemanticProperties.HeadingLevel="Level1" />
+                            <HorizontalStackLayout Spacing="4">
+                                <v:Icono Nombre="escudo" Color="{StaticResource ColorPrimario}" Tamano="13" VerticalOptions="Center" />
+                                <Label Text="Tu ubicación solo se comparte al pedir ayuda" FontSize="13"
+                                       TextColor="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- El caso propio que sigue abierto: tipo, estado con su chip y acceso al detalle. -->
+                <Grid IsVisible="{Binding HayCasoActivo}">
+                    <Border Style="{StaticResource Flotante}" Padding="12,10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border x:Name="Sello" WidthRequest="40" HeightRequest="40" StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                    BackgroundColor="{StaticResource ColorAcompanamiento}" VerticalOptions="Center">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelloCaso}" Value="SOS">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorUrgente}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelloCaso}" Value="REP">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorReporte}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding SelloCaso}" TextColor="White" FontFamily="PublicSansBold" FontSize="12"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                <Label Text="{Binding OrigenCaso, StringFormat='Tu {0} en curso'}" FontSize="13" TextColor="{StaticResource ColorTextoSecundario}" />
+                                <v:ChipEstado Estado="{Binding EstadoCaso}" Urgente="{Binding CasoEsSos}" />
+                            </VerticalStackLayout>
+                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding VerCasoActivo}"
+                            SemanticProperties.Description="{Binding TextoCasoActivo, StringFormat='Tu caso en curso: {0}'}"
+                            SemanticProperties.Hint="Abre el detalle de tu caso" />
+                </Grid>
 
                 <!-- HU34-CA08: el acompañamiento activo y su tiempo restante siguen visibles. -->
-                <v:Aviso Tipo="informacion" Texto="{Binding TextoAcompanamiento}" IsVisible="{Binding AcompanamientoEnCurso}" />
+                <Border Style="{StaticResource Flotante}" Padding="12,10" IsVisible="{Binding AcompanamientoEnCurso}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border WidthRequest="40" HeightRequest="40" StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                BackgroundColor="{StaticResource ColorAcompanamientoFondo}" VerticalOptions="Center">
+                            <v:Icono Nombre="ruta" Color="{StaticResource ColorAcompanamiento}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Label Grid.Column="1" Text="{Binding TextoAcompanamiento}" FontSize="14" TextColor="{StaticResource ColorTexto}" VerticalOptions="Center" />
+                    </Grid>
+                </Border>
 
-                <!-- HU06: estado del permiso de ubicación (sin transmitir nada). -->
-                <v:Aviso Tipo="{Binding TipoAvisoUbicacion}" Texto="{Binding TextoUbicacion}" />
-                <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}"
-                        Command="{Binding PermitirUbicacion}" IsVisible="{Binding MostrarExplicacion}" />
-                <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}"
-                        Command="{Binding AbrirAjustes}" IsVisible="{Binding MostrarAjustes}" />
+                <!-- HU06: solo cuando hay algo que hacer con el permiso de ubicación. -->
+                <Border Style="{StaticResource Flotante}" Padding="12" IsVisible="{Binding MostrarAvisoUbicacion}">
+                    <VerticalStackLayout Spacing="10">
+                        <v:Aviso Tipo="{Binding TipoAvisoUbicacion}" Texto="{Binding TextoUbicacion}" />
+                        <Button Text="Permitir la ubicación" Style="{StaticResource BotonPrincipal}"
+                                Command="{Binding PermitirUbicacion}" IsVisible="{Binding MostrarExplicacion}" />
+                        <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}"
+                                Command="{Binding AbrirAjustes}" IsVisible="{Binding MostrarAjustes}" />
+                    </VerticalStackLayout>
+                </Border>
 
-                <!-- HU07: un toque inicia el SOS, sin formulario ni confirmación. Los anillos marcan el blanco y se abren al pulsar. -->
-                <Grid HorizontalOptions="Center" WidthRequest="244" HeightRequest="244" Margin="0,4,0,0">
-                    <Ellipse x:Name="AnilloExterior" Fill="{StaticResource ColorUrgenteFondo}" WidthRequest="244" HeightRequest="244" />
-                    <Ellipse x:Name="AnilloInterior" Stroke="{StaticResource ColorUrgenteBorde}" StrokeThickness="2" WidthRequest="216" HeightRequest="216" />
+                <!-- HU07/HU08: resultado del SOS, junto a lo demás que está en curso. -->
+                <Border Style="{StaticResource Flotante}" Padding="12" IsVisible="{Binding HayEstadoSos}">
+                    <VerticalStackLayout Spacing="10">
+                        <v:Aviso Tipo="{Binding TipoAvisoSos}" Texto="{Binding TextoSos}" />
+                        <Button Text="Reintentar el mismo SOS" Style="{StaticResource BotonPrincipal}"
+                                Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
+                        <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}"
+                                Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource Flotante}" Padding="12" IsVisible="{Binding HayTextoCentrar}">
+                    <v:Aviso Tipo="advertencia" Texto="{Binding TextoCentrar}" />
+                </Border>
+
+                <!-- HU31: avisos sin leer de los casos propios. -->
+                <Grid IsVisible="{Binding HayNoLeidas}">
+                    <Border Style="{StaticResource Flotante}" Padding="12,10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <v:Icono Nombre="campana" Color="{StaticResource ColorPrimario}" Tamano="20" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding TextoNotificaciones}" FontSize="14" FontFamily="PublicSansSemiBold"
+                                   TextColor="{StaticResource ColorMarino}" VerticalOptions="Center" />
+                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding VerNotificaciones}"
+                            SemanticProperties.Description="{Binding TextoNotificaciones}"
+                            SemanticProperties.Hint="Muestra los avisos de cambios de estado de tus casos" />
+                </Grid>
+        </VerticalStackLayout>
+
+        <!-- Abajo, en la zona del pulgar. -->
+        <VerticalStackLayout VerticalOptions="End" Padding="12,0,12,14" Spacing="12" InputTransparent="True" CascadeInputTransparent="False">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <!-- Aviso obligatorio del MVP, siempre visible. -->
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 999" Padding="10,6" BackgroundColor="#EBFFFFFF"
+                        HorizontalOptions="Start" VerticalOptions="Center">
+                    <Label Text="MVP académico · datos simulados" FontSize="12" FontFamily="PublicSansMedium" TextColor="{StaticResource ColorTextoSecundario}" />
+                </Border>
+                <Grid Grid.Column="1">
+                    <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 999" Padding="14,0" HeightRequest="44">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <v:Icono Nombre="centrar" Color="{StaticResource ColorPrimario}" Tamano="18" VerticalOptions="Center" />
+                            <Label Text="Centrar" FontFamily="PublicSansMedium" FontSize="14" TextColor="{StaticResource ColorMarino}" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Centrar}" SemanticProperties.Description="Centrar"
+                            SemanticProperties.Hint="Muestra tu ubicación actual en el mapa; no la envía a la central" />
+                </Grid>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+                <!-- HU10: lo que no es urgente. -->
+                <Grid VerticalOptions="End">
+                    <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 18" Padding="6,12">
+                        <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                            <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource ColorReporteFondo}" HorizontalOptions="Center">
+                                <v:Icono Nombre="documento" Color="{StaticResource ColorReporte}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <Label Text="Reportar" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Reportar}"
+                            SemanticProperties.Description="Reportar una incidencia"
+                            SemanticProperties.Hint="Abre el formulario de reporte; no es una alerta urgente" />
+                </Grid>
+
+                <!-- HU07: un toque inicia el SOS, sin formulario ni confirmación. -->
+                <Grid Grid.Column="1" WidthRequest="148" HeightRequest="148" VerticalOptions="End">
+                    <Ellipse x:Name="AnilloExterior" Fill="White" WidthRequest="148" HeightRequest="148">
+                        <Ellipse.Shadow>
+                            <Shadow Brush="#912018" Offset="0,10" Radius="22" Opacity="0.35" />
+                        </Ellipse.Shadow>
+                    </Ellipse>
+                    <Ellipse x:Name="AnilloInterior" Stroke="{StaticResource ColorUrgenteBorde}" StrokeThickness="2" WidthRequest="148" HeightRequest="148" />
                     <Button x:Name="BotonSos"
                             Text="{Binding TextoBotonSos}"
                             Command="{Binding EmitirSos}"
                             Pressed="AlPulsarSos"
-                            WidthRequest="188" HeightRequest="188" CornerRadius="94"
+                            WidthRequest="134" HeightRequest="134" CornerRadius="67" Padding="0,0,0,14"
                             HorizontalOptions="Center" VerticalOptions="Center"
                             BackgroundColor="{StaticResource ColorUrgente}" TextColor="White"
-                            FontFamily="PublicSansBold" FontSize="44" CharacterSpacing="1"
+                            FontFamily="PublicSansBold" FontSize="38" CharacterSpacing="1"
                             SemanticProperties.Description="Emitir SOS"
                             SemanticProperties.Hint="Envía una alerta urgente a la central con una sola pulsación, sin confirmación">
-                        <Button.Shadow>
-                            <Shadow Brush="#912018" Offset="0,8" Radius="18" Opacity="0.35" />
-                        </Button.Shadow>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroupList>
                                 <VisualStateGroup x:Name="CommonStates">
@@ -60,69 +198,35 @@
                                         <VisualState.Setters>
                                             <Setter Property="BackgroundColor" Value="{StaticResource ColorUrgenteActivo}" />
                                             <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="FontSize" Value="22" />
+                                            <Setter Property="FontSize" Value="18" />
+                                            <Setter Property="Padding" Value="0" />
                                         </VisualState.Setters>
                                     </VisualState>
                                 </VisualStateGroup>
                             </VisualStateGroupList>
                         </VisualStateManager.VisualStateGroups>
                     </Button>
-                </Grid>
-                <Label Text="Pulsa una vez para pedir ayuda urgente. No se pide confirmación." Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
-
-                <v:Aviso Tipo="{Binding TipoAvisoSos}" Texto="{Binding TextoSos}" IsVisible="{Binding HayEstadoSos}" />
-                <Button Text="Reintentar el mismo SOS" Style="{StaticResource BotonPrincipal}"
-                        Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
-                <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}"
-                        Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
-
-                <!-- HU10: un reporte es para lo que no es urgente; la central lo revisa después.
-                     El botón transparente encima hace pulsable todo el mosaico y lo anuncia como botón. -->
-                <Grid>
-                    <Border Style="{StaticResource Mosaico}">
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                            <Border Style="{StaticResource FondoIcono}" BackgroundColor="{StaticResource ColorReporteFondo}">
-                                <v:Icono Nombre="documento" Color="{StaticResource ColorReporte}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <Label Text="Reportar una incidencia" Style="{StaticResource TituloMosaico}" />
-                                <Label Text="No es urgente. La central la revisará." Style="{StaticResource TextoSecundario}" />
-                            </VerticalStackLayout>
-                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
-                        </Grid>
-                    </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Reportar}"
-                            SemanticProperties.Description="Reportar una incidencia"
-                            SemanticProperties.Hint="Abre el formulario de reporte; no es una alerta urgente" />
+                    <Label Text="Pedir ayuda" TextColor="White" FontFamily="PublicSansSemiBold" FontSize="13" InputTransparent="True"
+                           HorizontalOptions="Center" VerticalOptions="Center" TranslationY="24" IsVisible="{Binding SosListo}"
+                           SemanticProperties.Description="" />
                 </Grid>
 
                 <!-- HU34: control independiente del SOS y del reporte (CA05). -->
-                <Grid>
-                    <Border Style="{StaticResource Mosaico}">
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                            <Border Style="{StaticResource FondoIcono}" BackgroundColor="{StaticResource ColorAcompanamientoFondo}">
+                <Grid Grid.Column="2" VerticalOptions="End">
+                    <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 18" Padding="6,12">
+                        <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                            <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource ColorAcompanamientoFondo}" HorizontalOptions="Center">
                                 <v:Icono Nombre="ruta" Color="{StaticResource ColorAcompanamiento}" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <Label Text="Acompañamiento" Style="{StaticResource TituloMosaico}" />
-                                <Label Text="Comparte tu trayecto con la central hasta 30 minutos. No emite un SOS." Style="{StaticResource TextoSecundario}" />
-                            </VerticalStackLayout>
-                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
-                        </Grid>
+                            <Label Text="Acompañar" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
                     </Border>
                     <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Acompanar}"
                             SemanticProperties.Description="Acompañamiento"
                             SemanticProperties.Hint="Abre el acompañamiento temporal; no emite un SOS ni registra un reporte" />
                 </Grid>
-
-                <!-- HU31: avisos de cambios de estado de los casos propios (pestaña «Avisos»). -->
-                <v:Aviso Tipo="informacion" Texto="Tienes notificaciones nuevas sobre tus casos." IsVisible="{Binding HayNoLeidas}" />
-                <Button Text="{Binding TextoNotificaciones}" Style="{StaticResource BotonTerciario}" Command="{Binding VerNotificaciones}"
-                        IsVisible="{Binding HayNoLeidas}" HorizontalOptions="Start"
-                        SemanticProperties.Hint="Muestra los avisos de cambios de estado de tus casos" />
-
-                <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
-            </VerticalStackLayout>
+            </Grid>
         </VerticalStackLayout>
-    </ScrollView>
+    </Grid>
 </ContentPage>

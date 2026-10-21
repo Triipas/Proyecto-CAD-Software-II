@@ -33,6 +33,13 @@ public sealed class FabricaCad : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Jwt:ClaveFirma", ClaveFirmaJwt);
         builder.UseSetting("Admin:Email", AdminCorreo);
         builder.UseSetting("Admin:ClaveInicial", AdminClave);
+        // ADR-08: códigos simulados (nunca SMS reales) y sin límite por IP, que todas las pruebas comparten.
+        // El re-registro de números queda desactivado, como en la presentación (DP25).
+        builder.UseSetting("Codigos:PermitirSimulado", "true");
+        builder.UseSetting("Codigos:MostrarCodigoSimulado", "true");
+        builder.UseSetting("Codigos:SolicitudesPorMinutoIp", "100000");
+        builder.UseSetting("Codigos:Twilio:AccountSid", "");
+        builder.UseSetting("Cuentas:PermitirReRegistroCelular", "false");
         builder.ConfigureTestServices(servicios => servicios.AddSingleton<Cad.Server.Compartido.IEnviadorPush>(Push));
         builder.ConfigureLogging(registro =>
         {

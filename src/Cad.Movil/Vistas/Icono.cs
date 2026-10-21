@@ -32,6 +32,8 @@ public sealed class Icono : GraphicsView, IDrawable
         ["izquierda"] = ["M15 18 L9 12 L15 6"],
         ["salir"] = ["M9 21 H5 C3.9 21 3 20.1 3 19 V5 C3 3.9 3.9 3 5 3 H9", "M16 17 L21 12 L16 7 M21 12 H9"],
         ["hecho"] = ["M5 12 L10 17 L19 7"],
+        // Inicio (diseño A): centrar el mapa en la posición propia.
+        ["centrar"] = [Circulo(12, 12, 7), Circulo(12, 12, 2.5), "M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22"],
     };
 
     public static readonly BindableProperty NombreProperty =

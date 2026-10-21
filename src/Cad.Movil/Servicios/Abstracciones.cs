@@ -24,8 +24,21 @@ public interface IServicioUbicacion
 
 public interface IApiCad
 {
-    Task<ResultadoApi<RespuestaRegistroCiudadano>> RegistrarAsync(SolicitudRegistroCiudadano solicitud, CancellationToken ct);
+    // Personal (sereno) y cuentas antiguas de ciudadano: correo y contraseña (HU02).
     Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct);
+
+    // ADR-08: ciudadano con celular verificado y PIN.
+    Task<ResultadoApi<RespuestaCodigoCelular>> EnviarCodigoCelularAsync(SolicitudCodigoCelular solicitud, CancellationToken ct);
+    Task<ResultadoApi<RespuestaVerificacionCelular>> VerificarCelularAsync(SolicitudVerificacionCelular solicitud, CancellationToken ct);
+    Task<ResultadoApi<RespuestaIngresoCelular>> RegistrarConCelularAsync(SolicitudRegistroCelular solicitud, CancellationToken ct);
+    Task<ResultadoApi<RespuestaIngresoCelular>> IngresarConCelularAsync(SolicitudIngresoCelular solicitud, CancellationToken ct);
+    Task<ResultadoApi<RespuestaIngresoCelular>> RestablecerPinAsync(SolicitudRestablecerPin solicitud, CancellationToken ct);
+
+    // ADR-08, fase D: «Mis datos» (opcionales) y cambio de PIN.
+    Task<ResultadoApi<PerfilCiudadanoVista>> ConsultarPerfilAsync(string token, CancellationToken ct);
+    Task<ResultadoApi<PerfilCiudadanoVista>> ActualizarPerfilAsync(string token, SolicitudPerfilCiudadano solicitud, CancellationToken ct);
+    Task<ResultadoApi<RespuestaIngresoCelular>> CambiarPinAsync(string token, SolicitudCambioPin solicitud, CancellationToken ct);
+
     Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct);
 
     // HU10 — reporte de incidencia y catálogo de tipos (DP07).
@@ -119,6 +132,17 @@ public interface IAlmacenSesion
     Task<SesionApp?> LeerAsync();
     void Cerrar();
 }
+
+// ADR-08 (DP24): el teléfono vinculado a la cuenta del ciudadano. La llave solo vive en el almacenamiento seguro;
+// sobrevive al cierre de sesión para que volver a entrar solo pida el PIN.
+public interface IAlmacenDispositivo
+{
+    Task GuardarAsync(DispositivoVinculado dispositivo);
+    Task<DispositivoVinculado?> LeerAsync();
+    void Olvidar();
+}
+
+public sealed record DispositivoVinculado(string Celular, string Llave);
 
 public sealed record SesionApp(string Token, string Rol, DateTimeOffset ExpiraEn)
 {

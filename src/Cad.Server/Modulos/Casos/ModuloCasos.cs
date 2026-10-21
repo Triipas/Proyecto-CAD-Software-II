@@ -32,6 +32,7 @@ public static class ModuloCasos
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
+        services.AddScoped<Modulos.Consultas.ConsultarFichaCiudadano>(); // ADR-08, fase D
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();
         services.AddScoped<Modulos.Consultas.ConsultarHistorialCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarTiemposCaso>();

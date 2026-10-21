@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- ADR-08 — código de verificación: el teclado numérico del sistema (permite autocompletar el código del SMS) y validación
+     al escribir el sexto dígito, sin botón. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.CodigoPagina"
+             x:DataType="vm:CodigoVistaModelo"
+             Title="Código">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <v:EncabezadoPagina Titulo="Verifica tu número" Ayuda="{Binding Destino}" TextoVolver="Cambiar número" />
+
+            <VerticalStackLayout Padding="16,24,16,32" Spacing="16" MaximumWidthRequest="480">
+                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <v:Aviso Tipo="informacion" Texto="{Binding CodigoDePrueba}" IsVisible="{Binding HayCodigoDePrueba}" />
+
+                <Label Text="Código de 6 dígitos" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource MarcoCampo}" Padding="16,8">
+                    <Entry x:Name="Campo" Text="{Binding Codigo}" Keyboard="Numeric" MaxLength="6"
+                           FontFamily="PublicSansSemiBold" FontSize="28" CharacterSpacing="14" HorizontalTextAlignment="Center"
+                           Placeholder="······" SemanticProperties.Description="Código de verificación de 6 dígitos" />
+                </Border>
+                <Label Text="Lo validamos en cuanto escribes el último dígito." Style="{StaticResource TextoSecundario}" FontSize="13" />
+
+                <Button Text="{Binding TextoReenviar}" Style="{StaticResource BotonSecundario}" Command="{Binding Reenviar}" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -16,13 +16,16 @@ namespace Cad.Server.Panel.Pages.Reportes;
 // curso, como en un SOS.
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
     ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
-    ConsultarTiemposCaso consultarTiempos, IConfiguration configuracion) : PageModel
+    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
 
     // Asignación, avances y cierre de un reporte admitido (null antes de la admisión).
     public DetalleSos? Seguimiento { get; private set; }
+
+    // ADR-08, fase D: celular verificado y datos opcionales del ciudadano.
+    public FichaCiudadano? Ficha { get; private set; }
     public string? ErrorAtencion { get; private set; }
     public string? ErrorCierre { get; private set; }
     public Dictionary<string, string[]> ErroresCierre { get; private set; } = [];
@@ -252,6 +255,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         if (await consultar.EjecutarAsync(id, ct) is not { } reporte)
             return false;
         Reporte = reporte;
+        Ficha = await consultarFicha.PorCasoAsync(id, ct);
         Categorias = await consultarCategorias.EjecutarAsync(ct);
         Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;

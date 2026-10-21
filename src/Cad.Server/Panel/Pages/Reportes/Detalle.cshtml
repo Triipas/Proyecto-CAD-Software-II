@@ -320,6 +320,11 @@
     </div>
 
     <aside class="detalle-caso__contexto" aria-label="Contexto del reporte">
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
+
         <section class="superficie seccion-caso" aria-labelledby="titulo-hecho">
             <h2 id="titulo-hecho" class="seccion-caso__titulo">Hecho reportado</h2>
             <dl class="datos">

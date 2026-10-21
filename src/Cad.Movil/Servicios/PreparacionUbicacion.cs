@@ -1,3 +1,5 @@
+using Cad.Contratos.Sos;
+
 namespace Cad.Movil.Servicios;
 
 public enum ResultadoPreparacion
@@ -14,10 +16,23 @@ public enum ResultadoPreparacion
 
 // HU06 — Preparar la geolocalización al abrir la aplicación.
 // Esta clase no recibe la API: no puede transmitir coordenadas ni iniciar un acompañamiento (CA04, RNF07).
-// La posición de comprobación se descarta: no se guarda ni se reutiliza en el SOS (HU08-CA03).
+// La posición de comprobación no se envía ni se reutiliza en el SOS (HU08-CA03); solo se muestra en el mapa del inicio
+// del propio teléfono (ADR-08, rediseño del inicio).
 public sealed class PreparacionUbicacion(IServicioUbicacion ubicacion)
 {
     public static readonly TimeSpan EsperaComprobacion = TimeSpan.FromSeconds(10);
+
+    // Última posición comprobada, solo para el mapa del inicio. Nunca se transmite.
+    public UbicacionSos? PosicionParaMapa { get; private set; }
+
+    // «Centrar»: una lectura nueva para el mapa, sin pedir permisos (si no hay permiso, null).
+    public async Task<UbicacionSos?> ActualizarParaMapaAsync(CancellationToken ct = default)
+    {
+        if (await ubicacion.ConsultarPermisoAsync() != EstadoPermisoUbicacion.Concedido)
+            return null;
+        await ComprobarDisponibilidadAsync(ct);
+        return PosicionParaMapa;
+    }
 
     // Al abrir la app: si el permiso está pendiente, primero hay que explicar (CA01); si está concedido,
     // se comprueba la disponibilidad sin volver a pedir el permiso (CA02).
@@ -40,6 +55,7 @@ public sealed class PreparacionUbicacion(IServicioUbicacion ubicacion)
         try
         {
             var posicion = await ubicacion.ObtenerActualAsync(EsperaComprobacion, ct);
+            PosicionParaMapa = posicion ?? PosicionParaMapa;
             return posicion is null ? ResultadoPreparacion.SinPosicion : ResultadoPreparacion.Disponible;
         }
         catch (Exception) when (!ct.IsCancellationRequested)

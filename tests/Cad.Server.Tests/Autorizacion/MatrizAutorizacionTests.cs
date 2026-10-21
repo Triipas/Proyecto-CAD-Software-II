@@ -30,6 +30,18 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // Con cuerpo vacío el propio caso de uso responde 401 por credenciales (no es un rechazo de autorización).
         new("POST", "/api/auth/token", "HU02", Acceso.Publico, Contenido: "Correo o contraseña incorrectos.", EstadoPropio: 401),
         new("GET", "/api/cuentas/yo", "HU02", Acceso.CualquierSesion, Contenido: "\"rol\""),
+        // ADR-08 — registro e ingreso del ciudadano con celular y PIN. Públicas: con cuerpo vacío responde el propio caso de uso
+        // (400, 410 o 428), nunca un rechazo de autorización.
+        new("POST", "/api/auth/celular/codigo", "HU01", Acceso.Publico),
+        new("POST", "/api/auth/celular/verificar", "HU01", Acceso.Publico),
+        new("POST", "/api/auth/celular/registro", "HU01", Acceso.Publico),
+        new("POST", "/api/auth/celular/ingresar", "HU02", Acceso.Publico),
+        new("POST", "/api/auth/celular/pin", "HU02", Acceso.Publico),
+        // ADR-08, fase D — «Mis datos» y cambio de PIN: solo la propia cuenta de ciudadano. Con cuerpo vacío el ciudadano llega
+        // al caso de uso (400); el resto es rechazado antes.
+        new("GET", "/api/cuentas/yo/perfil", "HU01", Acceso.SoloRol, Roles.Ciudadano, Contenido: "\"datosCompletados\""),
+        new("PUT", "/api/cuentas/yo/perfil", "HU01", Acceso.SoloRol, Roles.Ciudadano),
+        new("POST", "/api/cuentas/yo/pin", "HU02", Acceso.SoloRol, Roles.Ciudadano),
         // Con cuerpo vacío el ciudadano llega al caso de uso (400 por falta de IdSolicitud); el resto es rechazado antes.
         new("POST", "/api/sos", "HU07", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/reportes", "HU10", Acceso.SoloRol, Roles.Ciudadano),

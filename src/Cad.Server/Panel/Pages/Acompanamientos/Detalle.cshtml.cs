@@ -11,7 +11,8 @@ namespace Cad.Server.Panel.Pages.Acompanamientos;
 // HU39-B (CA05): la conservación excepcional del recorrido se registra desde esta misma página.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanamiento.Aplicacion.ConservarRecorridos conservar,
-    Modulos.Acompanamiento.Aplicacion.ConfirmarBienestar confirmar, ConsultarAvisos consultarAvisos, IConfiguration configuracion) : PageModel
+    Modulos.Acompanamiento.Aplicacion.ConfirmarBienestar confirmar, ConsultarAvisos consultarAvisos, Modulos.Consultas.ConsultarFichaCiudadano consultarFicha,
+    IConfiguration configuracion) : PageModel
 {
     // HU42: avisos de esta sesión.
     public IReadOnlyList<AvisoVista> Avisos { get; private set; } = [];
@@ -34,6 +35,9 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
     public int ConservacionDias => conservar.ConservacionDias;
 
     public DetalleAcompanamiento Sesion { get; private set; } = null!;
+
+    // ADR-08, fase D: celular verificado y datos opcionales del ciudadano (p. ej., su contacto de emergencia).
+    public Modulos.Consultas.FichaCiudadano? Ficha { get; private set; }
     public TimeZoneInfo ZonaHoraria => Formato.Zona(configuracion);
     public TimeSpan Umbral => consultar.Umbral;
     public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -43,6 +47,7 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
         if (await consultar.DetalleAsync(id, ct) is not { } sesion)
             return NotFound();
         Sesion = sesion;
+        Ficha = await consultarFicha.PorSesionAsync(id, ct);
         Avisos = await consultarAvisos.DeSesionAsync(id, ct);
         IdSolicitudConfirmacion = Guid.NewGuid();
         return Page();

@@ -284,25 +284,10 @@
     </div>
 
     <aside class="detalle-caso__contexto" aria-label="Contexto del caso">
-        <section class="superficie seccion-caso" aria-labelledby="titulo-ciudadano">
-            <h2 id="titulo-ciudadano" class="seccion-caso__titulo">Ciudadano</h2>
-            <dl class="datos datos--en-linea">
-                <div><dt>Nombre</dt><dd>@sos.Ciudadano</dd></div>
-                <div>
-                    <dt>Teléfono registrado</dt>
-                    <dd>
-                        @if (sos.Telefono is { Length: > 0 } telefono)
-                        {
-                            <a class="datos__telefono" href="tel:@telefono">@telefono</a>
-                        }
-                        else
-                        {
-                            <span>No registrado</span>
-                        }
-                    </dd>
-                </div>
-            </dl>
-        </section>
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
 
         <section class="superficie seccion-caso" aria-labelledby="titulo-ubicacion">
             <h2 id="titulo-ubicacion" class="seccion-caso__titulo">Ubicación del dispositivo</h2>

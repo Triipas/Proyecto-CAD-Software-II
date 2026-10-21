@@ -146,6 +146,11 @@
             }
         </section>
 
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
+
         <section class="superficie seccion-caso" aria-labelledby="titulo-datos">
             <h2 id="titulo-datos" class="seccion-caso__titulo">Datos de la sesión</h2>
             <dl class="datos datos--en-linea">

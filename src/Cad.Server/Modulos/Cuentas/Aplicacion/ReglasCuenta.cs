@@ -65,6 +65,36 @@ public static partial class ReglasCuenta
 
     public static string? NormalizarTelefono(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 
+    // ADR-08: el celular del ciudadano se escribe como sea («987 654 321», «+51 987654321») y se guarda con 9 dígitos.
+    public static string NormalizarCelular(string? valor)
+    {
+        var digitos = new string((valor ?? "").Where(char.IsDigit).ToArray());
+        return digitos.Length == 11 && digitos.StartsWith("51") ? digitos[2..] : digitos;
+    }
+
+    public static bool EsCelularValido(string celularNormalizado) => TelefonoMovilPeru().IsMatch(celularNormalizado);
+
+    public const string MensajeCelular = "Escribe un celular peruano de 9 dígitos que empiece por 9.";
+    public const string MensajePin = "El PIN debe tener exactamente 6 dígitos.";
+    public const string MensajePinObvio = "Ese PIN es fácil de adivinar: evita números repetidos o seguidos.";
+
+    // 6 dígitos; se rechazan los repetidos (111111) y las secuencias (123456, 654321), que son los primeros que se prueban.
+    public static void ValidarPin(Dictionary<string, string[]> errores, string campo, string? pin)
+    {
+        if (pin is null || pin.Length != 6 || !pin.All(char.IsAsciiDigit))
+            errores[campo] = [MensajePin];
+        else if (EsPinObvio(pin))
+            errores[campo] = [MensajePinObvio];
+    }
+
+    private static bool EsPinObvio(string pin)
+    {
+        if (pin.Distinct().Count() == 1)
+            return true;
+        var pasos = pin.Zip(pin.Skip(1), (a, b) => b - a).Distinct().ToArray();
+        return pasos is [1] or [-1];
+    }
+
     // Errores de Identity que significan «ese correo ya pertenece a otra cuenta».
     public static bool EsDuplicado(IdentityResult resultado) =>
         resultado.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail");

@@ -23,11 +23,32 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public Task<ResultadoApi<RespuestaRegistroCiudadano>> RegistrarAsync(SolicitudRegistroCiudadano solicitud, CancellationToken ct) =>
-        EnviarAsync<RespuestaRegistroCiudadano>(HttpMethod.Post, "api/cuentas/registro", solicitud, null, ct);
-
     public Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct) =>
         EnviarAsync<RespuestaToken>(HttpMethod.Post, "api/auth/token", solicitud, null, ct);
+
+    public Task<ResultadoApi<RespuestaCodigoCelular>> EnviarCodigoCelularAsync(SolicitudCodigoCelular solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaCodigoCelular>(HttpMethod.Post, "api/auth/celular/codigo", solicitud, null, ct);
+
+    public Task<ResultadoApi<RespuestaVerificacionCelular>> VerificarCelularAsync(SolicitudVerificacionCelular solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaVerificacionCelular>(HttpMethod.Post, "api/auth/celular/verificar", solicitud, null, ct);
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> RegistrarConCelularAsync(SolicitudRegistroCelular solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaIngresoCelular>(HttpMethod.Post, "api/auth/celular/registro", solicitud, null, ct);
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> IngresarConCelularAsync(SolicitudIngresoCelular solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaIngresoCelular>(HttpMethod.Post, "api/auth/celular/ingresar", solicitud, null, ct);
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> RestablecerPinAsync(SolicitudRestablecerPin solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaIngresoCelular>(HttpMethod.Post, "api/auth/celular/pin", solicitud, null, ct);
+
+    public Task<ResultadoApi<PerfilCiudadanoVista>> ConsultarPerfilAsync(string token, CancellationToken ct) =>
+        EnviarAsync<PerfilCiudadanoVista>(HttpMethod.Get, "api/cuentas/yo/perfil", null, token, ct);
+
+    public Task<ResultadoApi<PerfilCiudadanoVista>> ActualizarPerfilAsync(string token, SolicitudPerfilCiudadano solicitud, CancellationToken ct) =>
+        EnviarAsync<PerfilCiudadanoVista>(HttpMethod.Put, "api/cuentas/yo/perfil", solicitud, token, ct);
+
+    public Task<ResultadoApi<RespuestaIngresoCelular>> CambiarPinAsync(string token, SolicitudCambioPin solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaIngresoCelular>(HttpMethod.Post, "api/cuentas/yo/pin", solicitud, token, ct);
 
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct) =>
         EnviarAsync<RespuestaSos>(HttpMethod.Post, "api/sos", solicitud, token, ct);
@@ -135,8 +156,10 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
                         : (await respuesta.Content.ReadFromJsonAsync<T>(Json, ct))!);
 
             // Un error del servidor no registró nada (transacción): se puede reintentar sin duplicar.
+            // Si el servidor explica el motivo (p. ej. «Espera 20 s para pedir otro código»), se muestra tal cual.
             if ((int)respuesta.StatusCode >= 500 || respuesta.StatusCode is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests)
-                return new ResultadoApi<T>.SinRespuesta($"El servidor no pudo atender la solicitud ({(int)respuesta.StatusCode}).");
+                return new ResultadoApi<T>.SinRespuesta((await LeerProblemaAsync(respuesta, ct))?.Title
+                    ?? $"El servidor no pudo atender la solicitud ({(int)respuesta.StatusCode}).");
 
             var problema = await LeerProblemaAsync(respuesta, ct);
             return new ResultadoApi<T>.Rechazado((int)respuesta.StatusCode,
