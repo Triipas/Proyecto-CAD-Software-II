@@ -251,16 +251,17 @@ public sealed class IngresoCelular(
                 return new ResultadoIngresoCelular.DispositivoNoVinculado();
         }
 
-        if (usuario.PinBloqueado)
+        // El intento se cuenta antes de comprobar el PIN, de forma atómica (peticiones simultáneas incluidas).
+        if (!await IntentosPin.ReservarAsync(db, usuario.Id, ct))
             return new ResultadoIngresoCelular.PinBloqueado();
         if (!PinCorrecto(usuario, s.Pin))
         {
-            usuario.IntentosPinFallidos++;
-            await usuarios.UpdateAsync(usuario);
-            return usuario.PinBloqueado
+            var usados = await IntentosPin.UsadosAsync(db, usuario.Id, ct);
+            return usados >= Usuario.MaximoIntentosPin
                 ? new ResultadoIngresoCelular.PinBloqueado()
-                : new ResultadoIngresoCelular.PinIncorrecto(Usuario.MaximoIntentosPin - usuario.IntentosPinFallidos);
+                : new ResultadoIngresoCelular.PinIncorrecto(Usuario.MaximoIntentosPin - usados);
         }
+        await IntentosPin.ReiniciarAsync(db, usuario, ct);
 
         // Como en HU02-CA03: la desactivación solo se informa a quien ya demostró conocer el PIN.
         if (!usuario.Activo)

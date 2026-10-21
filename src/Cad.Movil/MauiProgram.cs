@@ -65,7 +65,8 @@ public static class MauiProgram
         builder.Services.AddTransient<PinVistaModelo>();
         // ADR-08, fase D: pestaña «Perfil» y «Mis datos».
         builder.Services.AddTransient(s => new PerfilVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
-            s.GetRequiredService<INavegacion>(), s.GetRequiredService<FlujoIngresoCelular>(), s.GetRequiredService<ServicioAcompanamiento>()));
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<FlujoIngresoCelular>(), s.GetRequiredService<ServicioAcompanamiento>(),
+            s.GetRequiredService<EmisorSos>()));
         builder.Services.AddTransient<MisDatosVistaModelo>();
 #if ANDROID
         builder.Services.AddSingleton<IServicioSegundoPlano, Platforms.Android.SegundoPlanoAndroid>(); // DP13

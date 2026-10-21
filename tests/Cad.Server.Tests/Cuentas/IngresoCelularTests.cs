@@ -276,6 +276,39 @@ public class IngresoCelularTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task Ingresar_PinesIncorrectosSimultaneos_NoSuperanLosCincoIntentos()
+    {
+        var cliente = fabrica.CreateClient();
+        var celular = NumeroNuevo();
+        var registro = await RegistrarAsync(cliente, celular);
+
+        // Diez intentos a la vez: el contador es atómico, así que solo cinco llegan a comprobar el PIN.
+        var respuestas = await Task.WhenAll(Enumerable.Range(0, 10)
+            .Select(_ => IngresarAsync(fabrica.CreateClient(), celular, "000999", registro.LlaveDispositivo)));
+
+        Assert.InRange(respuestas.Count(r => r.StatusCode == HttpStatusCode.Unauthorized), 0, 4);
+        Assert.All(respuestas, r => Assert.Contains(r.StatusCode, new[] { HttpStatusCode.Unauthorized, HttpStatusCode.Locked }));
+        Assert.Equal(Usuario.MaximoIntentosPin, await fabrica.ConBaseDatosAsync(db =>
+            db.Users.Where(u => u.UserName == celular).Select(u => u.IntentosPinFallidos).SingleAsync()));
+        Assert.Equal(HttpStatusCode.Locked, (await IngresarAsync(cliente, celular, Pin, registro.LlaveDispositivo)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Ingresar_PinCorrecto_ReiniciaLosIntentosFallidos()
+    {
+        var cliente = fabrica.CreateClient();
+        var celular = NumeroNuevo();
+        var registro = await RegistrarAsync(cliente, celular);
+        await IngresarAsync(cliente, celular, "000999", registro.LlaveDispositivo);
+        await IngresarAsync(cliente, celular, "000999", registro.LlaveDispositivo);
+
+        Assert.Equal(HttpStatusCode.OK, (await IngresarAsync(cliente, celular, Pin, registro.LlaveDispositivo)).StatusCode);
+
+        Assert.Equal(0, await fabrica.ConBaseDatosAsync(db =>
+            db.Users.Where(u => u.UserName == celular).Select(u => u.IntentosPinFallidos).SingleAsync()));
+    }
+
+    [Fact]
     public async Task RestablecerPin_ConCodigo_DesbloqueaVinculaElTelefonoYCierraSesionesAnteriores()
     {
         var cliente = fabrica.CreateClient();

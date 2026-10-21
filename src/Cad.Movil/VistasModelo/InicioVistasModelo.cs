@@ -112,8 +112,8 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     {
         if (api is null || await sesiones.LeerAsync() is not { } sesion)
             return;
-        if (nombre.Length == 0
-            && await api.ConsultarPerfilAsync(sesion.Token, CancellationToken.None) is ResultadoApi<Cad.Contratos.Cuentas.PerfilCiudadanoVista>.Correcto perfil)
+        // En cada aparición: el nombre pudo cambiar en «Mis datos», o puede haber otra cuenta tras cerrar sesión.
+        if (await api.ConsultarPerfilAsync(sesion.Token, CancellationToken.None) is ResultadoApi<Cad.Contratos.Cuentas.PerfilCiudadanoVista>.Correcto perfil)
         {
             nombre = perfil.Valor.Nombres.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
             Iniciales = $"{perfil.Valor.Nombres.Trim().FirstOrDefault()}{perfil.Valor.Apellidos.Trim().FirstOrDefault()}".ToUpperInvariant();
@@ -238,6 +238,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     {
         if (acompanamiento is not null)
             await acompanamiento.ReiniciarAsync();
+        await emisor.ReiniciarAsync(); // el SOS pendiente no pasa a la siguiente sesión
         sesiones.Cerrar();
         await navegacion.IrAAsync(Rutas.Ingreso);
     }

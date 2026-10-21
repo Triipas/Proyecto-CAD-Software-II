@@ -34,11 +34,13 @@ public sealed class IngresoVistaModelo : VistaModeloBase
     private readonly IAlmacenSesion sesiones;
     private readonly IConfiguracionServidor servidor;
     private readonly INavegacion navegacion;
+    private readonly EmisorSos? emisor;
     private string correo = "", contrasena = "", direccionServidor, mensaje = "";
 
-    public IngresoVistaModelo(IApiCad api, IAlmacenSesion sesiones, IConfiguracionServidor servidor, INavegacion navegacion)
+    public IngresoVistaModelo(IApiCad api, IAlmacenSesion sesiones, IConfiguracionServidor servidor, INavegacion navegacion, EmisorSos? emisor = null)
     {
         (this.api, this.sesiones, this.servidor, this.navegacion) = (api, sesiones, servidor, navegacion);
+        this.emisor = emisor;
         direccionServidor = servidor.Direccion?.ToString() ?? "";
         Ingresar = new ComandoAsincrono(IngresarAsync);
         Volver = new ComandoAsincrono(() => navegacion.IrAAsync(".."));
@@ -75,6 +77,7 @@ public sealed class IngresoVistaModelo : VistaModeloBase
         switch (resultado)
         {
             case ResultadoApi<RespuestaToken>.Correcto correcto:
+                if (emisor is not null) await emisor.ReiniciarAsync(); // nada del SOS de otra cuenta se reintenta con esta sesión
                 await sesiones.GuardarAsync(new SesionApp(correcto.Valor.Token, correcto.Valor.Rol, correcto.Valor.ExpiraEn));
                 await navegacion.IrAAsync(Rutas.InicioDe(correcto.Valor.Rol));
                 break;

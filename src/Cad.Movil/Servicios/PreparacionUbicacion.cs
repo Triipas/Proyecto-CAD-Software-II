@@ -30,8 +30,18 @@ public sealed class PreparacionUbicacion(IServicioUbicacion ubicacion)
     {
         if (await ubicacion.ConsultarPermisoAsync() != EstadoPermisoUbicacion.Concedido)
             return null;
-        await ComprobarDisponibilidadAsync(ct);
-        return PosicionParaMapa;
+        // Solo la lectura de ahora: si falla, null (el mapa no se recentra en una posición vieja y se avisa).
+        try
+        {
+            var posicion = await ubicacion.ObtenerActualAsync(EsperaComprobacion, ct);
+            if (posicion is not null)
+                PosicionParaMapa = posicion;
+            return posicion;
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return null;
+        }
     }
 
     // Al abrir la app: si el permiso está pendiente, primero hay que explicar (CA01); si está concedido,

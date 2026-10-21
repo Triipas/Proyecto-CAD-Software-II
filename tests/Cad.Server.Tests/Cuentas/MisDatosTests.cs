@@ -171,6 +171,20 @@ public class MisDatosTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task CambiarPin_ActualIncorrectoSimultaneo_NoSuperaLosCincoIntentos()
+    {
+        var c = await CrearCiudadanoAsync();
+
+        var respuestas = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => c.Cliente.PostAsJsonAsync("/api/cuentas/yo/pin", new SolicitudCambioPin("000999", "730591"))));
+
+        Assert.InRange(respuestas.Count(r => r.StatusCode == HttpStatusCode.BadRequest), 0, 4);
+        Assert.All(respuestas, r => Assert.Contains(r.StatusCode, new[] { HttpStatusCode.BadRequest, HttpStatusCode.Locked }));
+        Assert.Equal(HttpStatusCode.Locked,
+            (await c.Cliente.PostAsJsonAsync("/api/cuentas/yo/pin", new SolicitudCambioPin(Pin, "730591"))).StatusCode);
+    }
+
+    [Fact]
     public async Task CambiarPin_NuevoObvioOIgualAlActual_SeRechaza()
     {
         var c = await CrearCiudadanoAsync();

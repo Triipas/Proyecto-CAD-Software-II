@@ -12,13 +12,15 @@ public sealed class PerfilVistaModelo : VistaModeloBase
     private readonly INavegacion navegacion;
     private readonly FlujoIngresoCelular flujo;
     private readonly ServicioAcompanamiento? acompanamiento;
+    private readonly EmisorSos? emisor;
     private PerfilCiudadanoVista? perfil;
     private string mensaje = "", tipoMensaje = "informacion";
 
     public PerfilVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, FlujoIngresoCelular flujo,
-        ServicioAcompanamiento? acompanamiento = null)
+        ServicioAcompanamiento? acompanamiento = null, EmisorSos? emisor = null)
     {
         (this.api, this.sesiones, this.navegacion, this.flujo, this.acompanamiento) = (api, sesiones, navegacion, flujo, acompanamiento);
+        this.emisor = emisor;
         IrAMisDatos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisDatos));
         CambiarPin = new ComandoAsincrono(CambiarPinAsync);
         CerrarSesion = new ComandoAsincrono(CerrarSesionAsync);
@@ -99,6 +101,9 @@ public sealed class PerfilVistaModelo : VistaModeloBase
             return;
         if (acompanamiento is not null)
             await acompanamiento.ReiniciarAsync();
+        // Un SOS pendiente de reintento no puede reenviarse luego con la sesión de otra persona.
+        if (emisor is not null)
+            await emisor.ReiniciarAsync();
         sesiones.Cerrar();
         await navegacion.IrAAsync(Rutas.Ingreso);
     }

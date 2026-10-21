@@ -89,18 +89,19 @@ public sealed partial class MisDatosCiudadano(
         var usuario = (await usuarios.FindByIdAsync(usuarioId.ToString()))!;
         if (usuario.PinHash is null)
             return new ResultadoCambioPin.SinPin();
-        if (usuario.PinBloqueado)
+        // Como al ingresar: el intento se cuenta de forma atómica antes de comprobar el PIN actual.
+        if (!await IntentosPin.ReservarAsync(db, usuarioId, CancellationToken.None))
             return new ResultadoCambioPin.PinBloqueado();
 
         if (string.IsNullOrEmpty(s.PinActual)
             || hasher.VerifyHashedPassword(usuario, usuario.PinHash, s.PinActual) == PasswordVerificationResult.Failed)
         {
-            usuario.IntentosPinFallidos++;
-            await usuarios.UpdateAsync(usuario);
-            return usuario.PinBloqueado
+            var usados = await IntentosPin.UsadosAsync(db, usuarioId, CancellationToken.None);
+            return usados >= Usuario.MaximoIntentosPin
                 ? new ResultadoCambioPin.PinBloqueado()
-                : new ResultadoCambioPin.PinIncorrecto(Usuario.MaximoIntentosPin - usuario.IntentosPinFallidos);
+                : new ResultadoCambioPin.PinIncorrecto(Usuario.MaximoIntentosPin - usados);
         }
+        await IntentosPin.ReiniciarAsync(db, usuario, CancellationToken.None);
 
         var errores = new Dictionary<string, string[]>();
         ReglasCuenta.ValidarPin(errores, "pinNuevo", s.PinNuevo);

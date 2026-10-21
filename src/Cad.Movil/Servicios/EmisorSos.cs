@@ -64,6 +64,22 @@ public sealed class EmisorSos(IApiCad api, IServicioUbicacion ubicacion, IAlmace
 
     public bool PuedeReintentar => Estado is EstadoSos.NoConfirmado && pendiente is not null;
 
+    // Al cerrar sesión o cambiar de cuenta: un SOS pendiente de reintento pertenece a quien lo emitió y no puede
+    // reenviarse con la sesión de otra persona. Espera a que termine un envío en curso.
+    public async Task ReiniciarAsync()
+    {
+        await enCurso.WaitAsync();
+        try
+        {
+            pendiente = null;
+            Publicar(new EstadoSos.Listo());
+        }
+        finally
+        {
+            enCurso.Release();
+        }
+    }
+
     private async Task<SolicitudEmisionSos> PrepararSolicitudAsync(CancellationToken ct)
     {
         var activadoEn = reloj.GetUtcNow();

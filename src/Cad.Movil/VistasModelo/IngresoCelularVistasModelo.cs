@@ -43,7 +43,7 @@ public static class ReglasPin
 
 // Estado del flujo entre pantallas (una sola instancia) y los pasos que comparten: enviar el código y abrir la sesión.
 public sealed class FlujoIngresoCelular(IApiCad api, IAlmacenSesion sesiones, IAlmacenDispositivo dispositivos,
-    INavegacion navegacion, TimeProvider reloj)
+    INavegacion navegacion, TimeProvider reloj, EmisorSos? emisor = null)
 {
     public string Celular { get; private set; } = "";
     public PropositoCodigo Proposito { get; set; }
@@ -92,6 +92,9 @@ public sealed class FlujoIngresoCelular(IApiCad api, IAlmacenSesion sesiones, IA
     // La cuenta quedó abierta en este teléfono: se guardan la sesión y, si es nueva, la llave del dispositivo.
     public async Task CompletarAsync(RespuestaIngresoCelular respuesta)
     {
+        // Sesión nueva (quizá de otra cuenta): nada del SOS anterior se puede reintentar con ella.
+        if (emisor is not null)
+            await emisor.ReiniciarAsync();
         await sesiones.GuardarAsync(new SesionApp(respuesta.Token, respuesta.Rol, respuesta.ExpiraEn));
         if (respuesta.LlaveDispositivo is { } llave)
             await dispositivos.GuardarAsync(new DispositivoVinculado(Celular, llave));

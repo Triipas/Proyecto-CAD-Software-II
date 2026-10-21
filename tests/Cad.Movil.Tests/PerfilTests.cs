@@ -263,6 +263,53 @@ public class PerfilTests
     }
 
     [Fact]
+    public async Task Perfil_CerrarSesion_DescartaElSosPendienteDeReintento()
+    {
+        // Un SOS sin respuesta queda pendiente de reintento; tras cerrar sesión no puede reenviarse con otra cuenta.
+        api.RespuestasSos.Enqueue(_ => Task.FromResult<ResultadoApi<RespuestaSos>>(new ResultadoApi<RespuestaSos>.SinRespuesta("Sin conexión.")));
+        var emisor = new EmisorSos(api, new UbicacionFalsa(), sesiones, reloj) { EsperasEntreIntentos = [] };
+        await emisor.ActivarAsync();
+        Assert.True(emisor.PuedeReintentar);
+        var vistaModelo = new PerfilVistaModelo(api, sesiones, navegacion, flujo, emisor: emisor);
+
+        await vistaModelo.CerrarSesion.EjecutarAsync();
+
+        Assert.False(emisor.PuedeReintentar);
+        Assert.IsType<EstadoSos.Listo>(emisor.Estado);
+        await emisor.ReintentarAsync();
+        Assert.Single(api.SosEnviados); // el reintento ya no envía nada
+    }
+
+    [Fact]
+    public async Task Inicio_ElSaludoSeActualizaAlVolver()
+    {
+        var inicio = Inicio(new UbicacionFalsa());
+        await inicio.AlAparecerAsync();
+        Assert.Equal(("Hola, Rosa", "RF"), (inicio.Saludo, inicio.Iniciales));
+
+        api.Perfil = api.Perfil with { Nombres = "Ana", Apellidos = "Quispe" }; // cambió en «Mis datos» u otra cuenta
+        await inicio.AlAparecerAsync();
+
+        Assert.Equal(("Hola, Ana", "AQ"), (inicio.Saludo, inicio.Iniciales));
+    }
+
+    [Fact]
+    public async Task Inicio_CentrarFallaTrasUnaLecturaPrevia_NoReutilizaLaPosicionVieja()
+    {
+        var lecturas = new Queue<UbicacionSos?>([new UbicacionSos(-12.0453, -77.0365, 8, reloj.GetUtcNow()), null]);
+        var inicio = Inicio(new UbicacionFalsa { Posicion = () => lecturas.Count > 0 ? lecturas.Dequeue() : null });
+        var pintadas = new List<UbicacionSos>();
+        inicio.PosicionParaMapa += pintadas.Add;
+        await inicio.AlAparecerAsync();
+        Assert.Single(pintadas);
+
+        await inicio.Centrar.EjecutarAsync();
+
+        Assert.Single(pintadas); // no se recentra en la posición anterior
+        Assert.True(inicio.HayTextoCentrar);
+    }
+
+    [Fact]
     public async Task Inicio_CentrarSinPosicion_ExplicaQueHacer()
     {
         var inicio = Inicio(new UbicacionFalsa { Posicion = () => null });
