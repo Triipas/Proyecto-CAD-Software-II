@@ -75,6 +75,22 @@ public partial class HistorialTests(FabricaCad fabrica)
     private static partial Regex ActuacionRegex();
 
     [Fact]
+    public async Task ElPersonal_AparecePorSuNombreYSuCodigo()
+    {
+        var casoId = await SosAsync();
+        var (operador, cuenta) = await PanelAsync();
+        var codigo = $"OP-T{Random.Shared.Next(100_000, 999_999)}"; // ficticio y único en la base de pruebas
+        await fabrica.ConBaseDatosAsync(db => Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ExecuteUpdateAsync(
+            db.Users.Where(u => u.Id == cuenta.Id), s => s.SetProperty(u => u.CodigoPersonal, codigo)));
+        await EnviarAsync(operador, casoId, "Clasificar", new() { ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[0].Id.ToString() });
+
+        var html = await operador.GetStringAsync(Ruta(casoId));
+
+        Assert.Contains($"· Prueba Operador ({codigo})", html); // datos del personal, 22/10/2026
+        Assert.DoesNotContain("Prueba Ciudadano (", html); // el ciudadano no tiene código
+    }
+
+    [Fact]
     public async Task CA01_CA03_LaSecuenciaCompleta_EnOrdenConResponsablesYMarcasDeTiempo()
     {
         var (casoId, operador) = await CicloCompletoAsync("Nota interna ficticia");

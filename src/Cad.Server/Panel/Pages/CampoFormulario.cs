@@ -10,4 +10,6 @@ public sealed record CampoFormulario(
     string? Error = null,
     string? Ayuda = null,
     string? Autocompletar = null,
-    bool Requerido = true);
+    bool Requerido = true,
+    // Sin «(opcional)» en la etiqueta: el campo es obligatorio solo en algunos casos, que explica la ayuda.
+    bool MarcarOpcional = true);

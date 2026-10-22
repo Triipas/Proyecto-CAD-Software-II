@@ -8,7 +8,7 @@ namespace Cad.Server.Panel.Pages.Admin.Cuentas;
 
 // HU04-CA01, CA02, CA03: alta de una cuenta de operador o sereno.
 [Authorize(Policy = Politicas.Administrador)]
-public class NuevaModel(CrearCuentaInstitucional crear) : PageModel
+public class NuevaModel(CrearCuentaInstitucional crear, ConsultarCuentasInstitucionales consultar) : PageModel
 {
     [BindProperty]
     public FormularioNuevaCuenta Formulario { get; set; } = new();
@@ -22,14 +22,16 @@ public class NuevaModel(CrearCuentaInstitucional crear) : PageModel
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         var resultado = await crear.EjecutarAsync(new DatosNuevaCuenta(
-            Formulario.Nombres, Formulario.Apellidos, Formulario.Correo, Formulario.Telefono, Formulario.Rol, Formulario.Contrasena), ct);
+            Formulario.Nombres, Formulario.Apellidos, Formulario.Correo, Formulario.Telefono, Formulario.Rol, Formulario.Contrasena, Formulario.Dni), ct);
         Formulario.Contrasena = "";
 
         switch (resultado)
         {
-            case ResultadoCuentaInstitucional.Correcto:
+            case ResultadoCuentaInstitucional.Correcto correcto:
+                var codigo = (await consultar.ObtenerAsync(correcto.Id, ct))?.CodigoPersonal;
                 TempData[nameof(IndexModel.Mensaje)] =
-                    $"Se creó la cuenta de {Formulario.Rol.ToLowerInvariant()} de {Formulario.Nombres.Trim()} {Formulario.Apellidos.Trim()}.";
+                    $"Se creó la cuenta de {Formulario.Rol.ToLowerInvariant()} de {Formulario.Nombres.Trim()} {Formulario.Apellidos.Trim()} con el código {codigo}. " +
+                    "Al ingresar por primera vez deberá cambiar la contraseña inicial.";
                 return RedirectToPage("/Admin/Cuentas/Index");
             case ResultadoCuentaInstitucional.Invalido invalido:
                 Errores = invalido.Errores;
@@ -45,6 +47,7 @@ public class NuevaModel(CrearCuentaInstitucional crear) : PageModel
         public string Nombres { get; set; } = "";
         public string Apellidos { get; set; } = "";
         public string Correo { get; set; } = "";
+        public string? Dni { get; set; }
         public string? Telefono { get; set; }
         public string Rol { get; set; } = "";
         public string Contrasena { get; set; } = "";

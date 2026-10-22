@@ -64,16 +64,18 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         var claveInicial = $"Inicial{sello}2";
         var claveNueva = $"Nueva{sello}3";
         sensibles["contraseñas"].AddRange([claveInicial, claveNueva]);
+        var dniOperador = Random.Shared.Next(10_000_000, 100_000_000).ToString(CultureInfo.InvariantCulture);
         sensibles["datos personales"].Add(correoOperador);
+        sensibles["datos personales"].Add(dniOperador); // el DNI del personal tampoco se registra
         await EnviarAsync(admin, "/panel/admin/cuentas/nueva", new()
         {
-            ["Formulario.Nombres"] = "Carlos", ["Formulario.Apellidos"] = "Mendoza", ["Formulario.Correo"] = correoOperador,
+            ["Formulario.Nombres"] = "Carlos", ["Formulario.Apellidos"] = "Mendoza", ["Formulario.Correo"] = correoOperador, ["Formulario.Dni"] = dniOperador,
             ["Formulario.Rol"] = Roles.Operador, ["Formulario.Contrasena"] = claveInicial,
         });
         var operadorId = await fabrica.ConBaseDatosAsync(db => db.Users.Where(u => u.Email == correoOperador).Select(u => u.Id).SingleAsync());
         await EnviarAsync(admin, $"/panel/admin/cuentas/{operadorId}/editar", new()
         {
-            ["Formulario.Nombres"] = "Carlos", ["Formulario.Apellidos"] = "Mendoza", ["Formulario.Correo"] = correoOperador,
+            ["Formulario.Nombres"] = "Carlos", ["Formulario.Apellidos"] = "Mendoza", ["Formulario.Correo"] = correoOperador, ["Formulario.Dni"] = dniOperador,
             ["Formulario.NuevaContrasena"] = claveNueva,
         });
 

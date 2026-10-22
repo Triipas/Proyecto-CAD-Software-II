@@ -41,7 +41,9 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
         {
             if (!nombres.TryGetValue(usuario, out var nombre))
                 nombres[usuario] = nombre = await db.Users.AsNoTracking().Where(u => u.Id == usuario)
-                    .Select(u => u.Nombres + " " + u.Apellidos).SingleOrDefaultAsync(ct) ?? "Cuenta no disponible";
+                    // Personal: con su código (22/10/2026), que lo identifica sin ambigüedad en la auditoría.
+                    .Select(u => u.CodigoPersonal == null ? u.Nombres + " " + u.Apellidos : u.Nombres + " " + u.Apellidos + " (" + u.CodigoPersonal + ")")
+                    .SingleOrDefaultAsync(ct) ?? "Cuenta no disponible";
             return nombre;
         }
 

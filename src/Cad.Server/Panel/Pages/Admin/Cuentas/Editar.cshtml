@@ -10,10 +10,22 @@
     <div>
         <h1 class="titulo">Modificar cuenta institucional</h1>
         <p class="cuenta__estado">
+            @if (Model.Cuenta.CodigoPersonal is { } codigo)
+            {
+                <span class="chip chip--neutro" data-codigo>@codigo</span>
+            }
             <span class="chip @(Model.Cuenta.Rol == "Sereno" ? "chip--progreso" : "chip--informacion")">@Model.Cuenta.Rol</span>
             <span class="chip @(Model.Cuenta.Activa ? "chip--exito" : "chip--neutro")">@(Model.Cuenta.Activa ? "Activa" : "Desactivada")</span>
             <span class="texto-secundario">El rol se fija al crear la cuenta.</span>
         </p>
+        @if (Model.Cuenta.DatosIncompletos)
+        {
+            <p class="nota" data-datos-incompletos><partial name="_Icono" model="@("advertencia")" /><span>Faltan datos obligatorios de esta cuenta (DNI@(Model.Cuenta.Rol == "Sereno" ? " o teléfono" : "")). Complétalos y guarda los cambios.</span></p>
+        }
+        @if (Model.Cuenta.DebeCambiarContrasena)
+        {
+            <p class="nota" data-contrasena-provisional><partial name="_Icono" model="@("informacion")" /><span>Tiene una contraseña provisional: deberá cambiarla al ingresar.</span></p>
+        }
     </div>
 </div>
 
@@ -23,10 +35,11 @@
 
         <partial name="_Campo" model="@(new CampoFormulario("Formulario_Nombres", "Formulario.Nombres", "Nombres", Valor: f.Nombres, Error: Model.ErrorDe("nombres"), Autocompletar: "off"))" />
         <partial name="_Campo" model="@(new CampoFormulario("Formulario_Apellidos", "Formulario.Apellidos", "Apellidos", Valor: f.Apellidos, Error: Model.ErrorDe("apellidos"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Dni", "Formulario.Dni", "DNI", Valor: f.Dni, Error: Model.ErrorDe("dni"), Ayuda: "8 dígitos. No se puede repetir en otra cuenta.", Autocompletar: "off"))" />
         <partial name="_Campo" model="@(new CampoFormulario("Formulario_Correo", "Formulario.Correo", "Correo electrónico", "email", f.Correo, Model.ErrorDe("correo"), "Es el identificador de acceso de la cuenta.", "off"))" />
-        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Telefono", "Formulario.Telefono", "Teléfono móvil", "tel", f.Telefono, Model.ErrorDe("telefono"), "9 dígitos, empieza por 9.", "off", Requerido: false))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Telefono", "Formulario.Telefono", "Teléfono móvil", "tel", f.Telefono, Model.ErrorDe("telefono"), Model.Cuenta.Rol == "Sereno" ? "9 dígitos, empieza por 9. La central lo llama durante un despacho." : "9 dígitos, empieza por 9.", "off", Requerido: Model.Cuenta.Rol == "Sereno"))" />
         <div class="formulario__completo">
-            <partial name="_Campo" model="@(new CampoFormulario("Formulario_NuevaContrasena", "Formulario.NuevaContrasena", "Nueva contraseña", "password", null, Model.ErrorDe("nuevaContrasena"), "Déjala vacía para mantener la actual. Entre 8 y 128 caracteres, con al menos una letra y un número.", "new-password", Requerido: false))" />
+            <partial name="_Campo" model="@(new CampoFormulario("Formulario_NuevaContrasena", "Formulario.NuevaContrasena", "Nueva contraseña", "password", null, Model.ErrorDe("nuevaContrasena"), "Déjala vacía para mantener la actual. Entre 8 y 128 caracteres, con al menos una letra y un número. Si la cambias, es provisional: deberá cambiarla al ingresar.", "new-password", Requerido: false))" />
         </div>
 
         <div class="acciones formulario__completo">

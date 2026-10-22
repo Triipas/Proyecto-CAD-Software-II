@@ -55,7 +55,11 @@ public static class MauiProgram
 
         // Pantallas y modelos de vista.
         builder.Services.AddSingleton<AppShell>();
-        builder.Services.AddTransient<IngresoVistaModelo>();
+        builder.Services.AddSingleton<IngresoPendiente>(); // contraseña provisional del sereno, solo en memoria
+        builder.Services.AddTransient(s => new IngresoVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
+            s.GetRequiredService<IConfiguracionServidor>(), s.GetRequiredService<INavegacion>(), s.GetService<EmisorSos>(),
+            s.GetRequiredService<IngresoPendiente>()));
+        builder.Services.AddTransient<CambiarContrasenaVistaModelo>();
         // ADR-08: ingreso del ciudadano con celular verificado y PIN.
         builder.Services.AddSingleton<IAlmacenDispositivo, AlmacenDispositivoSeguro>();
         builder.Services.AddSingleton<FlujoIngresoCelular>();
@@ -102,6 +106,7 @@ public static class MauiProgram
             s.GetRequiredService<IAlmacenSesion>(),
             s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
         builder.Services.AddTransient<IngresoPagina>();
+        builder.Services.AddTransient<CambiarContrasenaPagina>();
         builder.Services.AddTransient<BienvenidaPagina>();
         builder.Services.AddTransient<CodigoPagina>();
         builder.Services.AddTransient<CrearCuentaPagina>();

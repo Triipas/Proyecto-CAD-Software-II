@@ -102,6 +102,7 @@
     grid-template-columns: auto auto 1fr;
     grid-template-areas:
       "persona persona persona"
+      "codigo dni ."
       "correo correo correo"
       "telefono telefono telefono"
       "rol estado ."
@@ -121,21 +122,45 @@
     border: 0;
   }
 
-  .cuentas__tabla tbody > tr > :nth-child(1) { grid-area: persona; }
-  .cuentas__tabla tbody > tr > :nth-child(2) { grid-area: correo; overflow-wrap: anywhere; }
-  .cuentas__tabla tbody > tr > :nth-child(3) { grid-area: telefono; }
-  .cuentas__tabla tbody > tr > :nth-child(4) { grid-area: rol; }
-  .cuentas__tabla tbody > tr > :nth-child(5) { grid-area: estado; }
-  .cuentas__tabla tbody > tr > :nth-child(6) {
+  /* Columnas: código, persona, DNI, correo, teléfono, rol, estado y acciones. */
+  .cuentas__tabla tbody > tr > :nth-child(1) { grid-area: codigo; font-weight: var(--peso-medio); }
+  .cuentas__tabla tbody > tr > :nth-child(2) { grid-area: persona; }
+  .cuentas__tabla tbody > tr > :nth-child(3) { grid-area: dni; color: var(--color-texto-secundario); }
+  .cuentas__tabla tbody > tr > :nth-child(4) { grid-area: correo; overflow-wrap: anywhere; }
+  .cuentas__tabla tbody > tr > :nth-child(5) { grid-area: telefono; }
+  .cuentas__tabla tbody > tr > :nth-child(6) { grid-area: rol; }
+  .cuentas__tabla tbody > tr > :nth-child(7) { grid-area: estado; }
+  /* Sin los encabezados de la tabla, el DNI necesita su rótulo. */
+  .cuentas__tabla tbody > tr > :nth-child(3)::before { content: "DNI "; }
+  .cuentas__tabla tbody > tr > :nth-child(8) {
     grid-area: acciones;
     padding-top: var(--espacio-2);
     border-top: var(--grosor-borde) solid var(--color-borde);
   }
 
-  .cuentas__tabla tbody > tr > :nth-child(6) a {
+  .cuentas__tabla tbody > tr > :nth-child(8) a {
     display: inline-flex;
     align-items: center;
     min-height: 2.25rem;
   }
 }
 
+
+/* ── Búsqueda de cuentas ───────────────────────────────── */
+.cuentas__busqueda {
+  display: grid;
+  gap: var(--espacio-4);
+  margin-bottom: var(--espacio-4);
+}
+
+@media (min-width: 48rem) {
+  .cuentas__busqueda {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  /* Alinea los botones con los controles, no con las etiquetas. */
+  .cuentas__busqueda-acciones {
+    margin-top: calc(var(--texto-sm) * 1.5 + var(--espacio-2));
+  }
+}

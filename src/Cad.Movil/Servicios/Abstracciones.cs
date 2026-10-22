@@ -26,6 +26,8 @@ public interface IApiCad
 {
     // Personal (sereno) y cuentas antiguas de ciudadano: correo y contraseña (HU02).
     Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct);
+    // Personal (22/10/2026): el sereno cambia la contraseña provisional del administrador; responde con un token nuevo.
+    Task<ResultadoApi<RespuestaToken>> CambiarContrasenaAsync(string token, SolicitudCambioContrasena solicitud, CancellationToken ct);
 
     // ADR-08: ciudadano con celular verificado y PIN.
     Task<ResultadoApi<RespuestaCodigoCelular>> EnviarCodigoCelularAsync(SolicitudCodigoCelular solicitud, CancellationToken ct);

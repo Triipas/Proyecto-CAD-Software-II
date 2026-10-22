@@ -34,6 +34,7 @@ public static class ModuloCuentas
 
         services.AddScoped<RegistrarCiudadano>();
         services.AddScoped<IniciarSesion>();
+        services.AddScoped<CambiarContrasena>();
         services.AddScoped<SembrarAdministrador>();
         services.AddScoped<CrearCuentaInstitucional>();
         services.AddScoped<ModificarCuentaInstitucional>();
@@ -74,7 +75,7 @@ public static class ModuloCuentas
             if (resultado is ResultadoInicioSesion.Exito exito)
             {
                 var (token, expiraEn) = emisor.Emitir(exito.Usuario, exito.Rol);
-                return Results.Ok(new RespuestaToken(token, expiraEn, exito.Rol));
+                return Results.Ok(new RespuestaToken(token, expiraEn, exito.Rol, exito.Usuario.DebeCambiarContrasena));
             }
 
             var estado = resultado is ResultadoInicioSesion.CredencialesIncorrectas
@@ -82,6 +83,19 @@ public static class ModuloCuentas
                 : StatusCodes.Status403Forbidden;
             return Results.Problem(statusCode: estado, title: Aplicacion.IniciarSesion.Mensaje(resultado));
         }).AllowAnonymous();
+
+        // Cambio de la contraseña propia del sereno, obligatorio si entró con la provisional del administrador. 400 con los
+        // motivos por campo; si es correcto, un token nuevo (el sello cambió y el anterior ya no vale).
+        app.MapPost("/api/cuentas/contrasena", async (SolicitudCambioContrasena solicitud, HttpContext contexto, CambiarContrasena cambiar,
+                EmisorTokens emisor) =>
+            await cambiar.EjecutarAsync(contexto.User.IdUsuario(), solicitud.Actual, solicitud.Nueva, solicitud.Confirmacion) switch
+            {
+                ResultadoCambioContrasena.Correcto c when emisor.Emitir(c.Usuario, c.Rol) is var (token, expiraEn) =>
+                    Results.Ok(new RespuestaToken(token, expiraEn, c.Rol)),
+                ResultadoCambioContrasena.Invalido i => Results.ValidationProblem(i.Errores, title: "No se cambió la contraseña."),
+                _ => Results.StatusCode(StatusCodes.Status500InternalServerError),
+            })
+            .RequireAuthorization(Politicas.Personal);
 
         MapIngresoCelular(app);
 

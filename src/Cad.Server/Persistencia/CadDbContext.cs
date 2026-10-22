@@ -10,6 +10,10 @@ namespace Cad.Server.Persistencia;
 public class CadDbContext(DbContextOptions<CadDbContext> options)
     : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
 {
+    // Índices únicos del personal: su nombre distingue qué dato chocó al crear o modificar una cuenta.
+    public const string IndiceDni = "IX_AspNetUsers_Dni";
+    public const string IndiceCodigoPersonal = "IX_AspNetUsers_CodigoPersonal";
+
     // Claves que protegen las cookies del panel y los tokens antifalsificación. En la base de datos
     // sobreviven a cada despliegue (el sistema de archivos del contenedor es efímero; Plan de Arquitectura, Tabla 21).
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
@@ -443,6 +447,13 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             // Identity crea EmailIndex sin unicidad; el correo es el identificador de acceso,
             // así que la base de datos debe impedir duplicados aun con registros simultáneos (HU01-CA05).
             usuario.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex").IsUnique();
+
+            // Personal: DNI y código únicos (la base de datos los protege aun con altas simultáneas). PostgreSQL admite
+            // varios nulos en un índice único, así que los ciudadanos y las cuentas sin completar no chocan.
+            usuario.Property(u => u.Dni).HasMaxLength(8);
+            usuario.Property(u => u.CodigoPersonal).HasMaxLength(20);
+            usuario.HasIndex(u => u.Dni).HasDatabaseName(IndiceDni).IsUnique();
+            usuario.HasIndex(u => u.CodigoPersonal).HasDatabaseName(IndiceCodigoPersonal).IsUnique();
         });
 
         // ADR-08 (DP24): un solo teléfono vinculado por cuenta de ciudadano; solo el hash de su llave.

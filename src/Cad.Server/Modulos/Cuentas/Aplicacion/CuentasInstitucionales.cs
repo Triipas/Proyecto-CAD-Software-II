@@ -11,14 +11,22 @@ namespace Cad.Server.Modulos.Cuentas.Aplicacion;
 // Datos (criterio de DP01 aplicado al personal, 12/10/2026): nombres, apellidos, correo
 // (identificador) y contraseña inicial obligatorios; teléfono opcional. El rol se fija al crear:
 // ningún criterio pide cambiarlo y hacerlo dejaría sesiones abiertas con el rol anterior (DP03).
+// Datos del personal (PO, 22/10/2026): DNI obligatorio y único; código de personal generado por el sistema; teléfono
+// obligatorio para el sereno (la central lo llama durante un despacho). La contraseña que fija el administrador (alta o
+// restablecimiento) es provisional: la cuenta debe cambiarla al ingresar antes de operar.
 
-public sealed record DatosNuevaCuenta(string Nombres, string Apellidos, string Correo, string? Telefono, string Rol, string Contrasena);
+public sealed record DatosNuevaCuenta(string Nombres, string Apellidos, string Correo, string? Telefono, string Rol, string Contrasena, string? Dni);
 
 // NuevaContrasena vacía = no cambiar la contraseña.
-public sealed record DatosModificacionCuenta(string Nombres, string Apellidos, string Correo, string? Telefono, string? NuevaContrasena);
+public sealed record DatosModificacionCuenta(string Nombres, string Apellidos, string Correo, string? Telefono, string? NuevaContrasena, string? Dni);
 
 public sealed record CuentaInstitucional(
-    Guid Id, string Nombres, string Apellidos, string Correo, string? Telefono, string Rol, bool Activa);
+    Guid Id, string Nombres, string Apellidos, string Correo, string? Telefono, string Rol, bool Activa,
+    string? Dni = null, string? CodigoPersonal = null, bool DebeCambiarContrasena = false)
+{
+    // Cuentas anteriores al 22/10/2026 o sin completar: el administrador las completa desde «Editar».
+    public bool DatosIncompletos => Dni is null || CodigoPersonal is null || (Rol == Roles.Sereno && Telefono is null);
+}
 
 public abstract record ResultadoCuentaInstitucional
 {
@@ -41,7 +49,8 @@ public sealed class CrearCuentaInstitucional(CadDbContext db, UserManager<Usuari
         ReglasCuenta.ValidarNombres(errores, "nombres", "Los nombres", datos.Nombres);
         ReglasCuenta.ValidarNombres(errores, "apellidos", "Los apellidos", datos.Apellidos);
         ReglasCuenta.ValidarCorreo(errores, datos.Correo);
-        ReglasCuenta.ValidarTelefono(errores, datos.Telefono, obligatorio: false);
+        ReglasCuenta.ValidarDni(errores, datos.Dni);
+        ReglasCuenta.ValidarTelefono(errores, datos.Telefono, obligatorio: datos.Rol == Roles.Sereno);
         if (!RolesInstitucionales.Todos.Contains(datos.Rol))
             errores["rol"] = ["Elige el rol: Operador o Sereno."];
         ReglasCuenta.ValidarContrasena(errores, "contrasena", datos.Contrasena, obligatoria: true);
@@ -51,43 +60,76 @@ public sealed class CrearCuentaInstitucional(CadDbContext db, UserManager<Usuari
         var correo = ReglasCuenta.NormalizarCorreo(datos.Correo);
         if (await usuarios.FindByEmailAsync(correo) is not null)
             return new ResultadoCuentaInstitucional.Duplicado();
+        var dni = ReglasCuenta.NormalizarDni(datos.Dni);
+        if (await db.Users.AnyAsync(u => u.Dni == dni, ct))
+            return DniDuplicado();
 
-        var usuario = new Usuario
+        // El código es correlativo por rol; si otra alta simultánea toma el mismo, el índice único lo rechaza y se
+        // vuelve a intentar con el siguiente.
+        for (var intento = 0; ; intento++)
         {
-            Id = Guid.CreateVersion7(),
-            UserName = correo,
-            Email = correo,
-            Nombres = datos.Nombres.Trim(),
-            Apellidos = datos.Apellidos.Trim(),
-            PhoneNumber = ReglasCuenta.NormalizarTelefono(datos.Telefono),
-            Activo = true,
-            CreadoEn = reloj.GetUtcNow(),
-        };
-
-        // Cuenta y rol en una sola transacción (CA03: sin registros parciales).
-        await using var transaccion = await db.Database.BeginTransactionAsync(ct);
-        try
-        {
-            var creacion = await usuarios.CreateAsync(usuario, datos.Contrasena);
-            if (!creacion.Succeeded)
+            var usuario = new Usuario
             {
-                return ReglasCuenta.EsDuplicado(creacion)
-                    ? new ResultadoCuentaInstitucional.Duplicado()
-                    : new ResultadoCuentaInstitucional.Invalido(ReglasCuenta.ErroresDeIdentity(creacion, "contrasena"));
+                Id = Guid.CreateVersion7(),
+                UserName = correo,
+                Email = correo,
+                Nombres = datos.Nombres.Trim(),
+                Apellidos = datos.Apellidos.Trim(),
+                PhoneNumber = ReglasCuenta.NormalizarTelefono(datos.Telefono),
+                Dni = dni,
+                CodigoPersonal = await SiguienteCodigoAsync(datos.Rol, ct),
+                DebeCambiarContrasena = true,
+                Activo = true,
+                CreadoEn = reloj.GetUtcNow(),
+            };
+
+            // Cuenta y rol en una sola transacción (CA03: sin registros parciales).
+            await using var transaccion = await db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var creacion = await usuarios.CreateAsync(usuario, datos.Contrasena);
+                if (!creacion.Succeeded)
+                {
+                    return ReglasCuenta.EsDuplicado(creacion)
+                        ? new ResultadoCuentaInstitucional.Duplicado()
+                        : new ResultadoCuentaInstitucional.Invalido(ReglasCuenta.ErroresDeIdentity(creacion, "contrasena"));
+                }
+
+                var asignacion = await usuarios.AddToRoleAsync(usuario, datos.Rol);
+                if (!asignacion.Succeeded)
+                    throw new InvalidOperationException("No se pudo asignar el rol a la cuenta institucional nueva.");
+
+                await transaccion.CommitAsync(ct);
+                return new ResultadoCuentaInstitucional.Correcto(usuario.Id);
             }
-
-            var asignacion = await usuarios.AddToRoleAsync(usuario, datos.Rol);
-            if (!asignacion.Succeeded)
-                throw new InvalidOperationException("No se pudo asignar el rol a la cuenta institucional nueva.");
-
-            await transaccion.CommitAsync(ct);
-            return new ResultadoCuentaInstitucional.Correcto(usuario.Id);
-        }
-        catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
-        {
-            return new ResultadoCuentaInstitucional.Duplicado();
+            catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
+            {
+                await transaccion.RollbackAsync(ct);
+                db.ChangeTracker.Clear();
+                switch (ex.IndiceViolado())
+                {
+                    case CadDbContext.IndiceCodigoPersonal when intento < 4:
+                        continue;
+                    case CadDbContext.IndiceDni:
+                        return DniDuplicado();
+                    default:
+                        return new ResultadoCuentaInstitucional.Duplicado();
+                }
+            }
         }
     }
+
+    private async Task<string> SiguienteCodigoAsync(string rol, CancellationToken ct)
+    {
+        var prefijo = ReglasCuenta.PrefijoCodigo(rol);
+        var existentes = await db.Users.AsNoTracking()
+            .Where(u => u.CodigoPersonal != null && u.CodigoPersonal.StartsWith(prefijo))
+            .Select(u => u.CodigoPersonal!).ToListAsync(ct);
+        return ReglasCuenta.SiguienteCodigo(prefijo, existentes);
+    }
+
+    internal static ResultadoCuentaInstitucional DniDuplicado() =>
+        new ResultadoCuentaInstitucional.Invalido(new() { ["dni"] = [ReglasCuenta.MensajeDniDuplicado] });
 }
 
 public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Usuario> usuarios, ConsultarCuentasInstitucionales consultar)
@@ -95,14 +137,15 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
     public async Task<ResultadoCuentaInstitucional> EjecutarAsync(Guid id, DatosModificacionCuenta datos, CancellationToken ct)
     {
         // Solo cuentas de operador o sereno: el resto no existe para esta operación.
-        if (await consultar.ObtenerAsync(id, ct) is null)
+        if (await consultar.ObtenerAsync(id, ct) is not { } cuenta)
             return new ResultadoCuentaInstitucional.NoEncontrada();
 
         var errores = new Dictionary<string, string[]>();
         ReglasCuenta.ValidarNombres(errores, "nombres", "Los nombres", datos.Nombres);
         ReglasCuenta.ValidarNombres(errores, "apellidos", "Los apellidos", datos.Apellidos);
         ReglasCuenta.ValidarCorreo(errores, datos.Correo);
-        ReglasCuenta.ValidarTelefono(errores, datos.Telefono, obligatorio: false);
+        ReglasCuenta.ValidarDni(errores, datos.Dni);
+        ReglasCuenta.ValidarTelefono(errores, datos.Telefono, obligatorio: cuenta.Rol == Roles.Sereno);
         ReglasCuenta.ValidarContrasena(errores, "nuevaContrasena", datos.NuevaContrasena, obligatoria: false);
         if (errores.Count > 0)
             return new ResultadoCuentaInstitucional.Invalido(errores);
@@ -111,6 +154,9 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
         var otra = await usuarios.FindByEmailAsync(correo);
         if (otra is not null && otra.Id != id)
             return new ResultadoCuentaInstitucional.Duplicado();
+        var dni = ReglasCuenta.NormalizarDni(datos.Dni);
+        if (await db.Users.AnyAsync(u => u.Dni == dni && u.Id != id, ct))
+            return CrearCuentaInstitucional.DniDuplicado();
 
         var usuario = (await usuarios.FindByIdAsync(id.ToString()))!;
 
@@ -121,8 +167,12 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
             usuario.Nombres = datos.Nombres.Trim();
             usuario.Apellidos = datos.Apellidos.Trim();
             usuario.PhoneNumber = ReglasCuenta.NormalizarTelefono(datos.Telefono);
+            usuario.Dni = dni;
             usuario.Email = correo;
             usuario.UserName = correo;
+            // Una contraseña restablecida por el administrador vuelve a ser provisional.
+            if (!string.IsNullOrEmpty(datos.NuevaContrasena))
+                usuario.DebeCambiarContrasena = true;
 
             var actualizacion = await usuarios.UpdateAsync(usuario);
             if (!actualizacion.Succeeded)
@@ -146,7 +196,9 @@ public sealed class ModificarCuentaInstitucional(CadDbContext db, UserManager<Us
         }
         catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
         {
-            return new ResultadoCuentaInstitucional.Duplicado();
+            return ex.IndiceViolado() == CadDbContext.IndiceDni
+                ? CrearCuentaInstitucional.DniDuplicado()
+                : new ResultadoCuentaInstitucional.Duplicado();
         }
     }
 }
@@ -249,5 +301,6 @@ public sealed class ConsultarCuentasInstitucionales(CadDbContext db)
         select new Fila { Usuario = usuario, Rol = rol.Name! };
 
     private static CuentaInstitucional ACuenta(Fila f) => new(
-        f.Usuario.Id, f.Usuario.Nombres, f.Usuario.Apellidos, f.Usuario.Email!, f.Usuario.PhoneNumber, f.Rol, f.Usuario.Activo);
+        f.Usuario.Id, f.Usuario.Nombres, f.Usuario.Apellidos, f.Usuario.Email!, f.Usuario.PhoneNumber, f.Rol, f.Usuario.Activo,
+        f.Usuario.Dni, f.Usuario.CodigoPersonal, f.Usuario.DebeCambiarContrasena);
 }

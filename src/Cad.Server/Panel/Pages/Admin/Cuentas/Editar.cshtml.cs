@@ -32,6 +32,7 @@ public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCue
             Apellidos = cuenta.Apellidos,
             Correo = cuenta.Correo,
             Telefono = cuenta.Telefono,
+            Dni = cuenta.Dni,
         };
         return Page();
     }
@@ -39,7 +40,7 @@ public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCue
     public async Task<IActionResult> OnPostAsync(Guid id, CancellationToken ct)
     {
         var resultado = await modificar.EjecutarAsync(id, new DatosModificacionCuenta(
-            Formulario.Nombres, Formulario.Apellidos, Formulario.Correo, Formulario.Telefono, Formulario.NuevaContrasena), ct);
+            Formulario.Nombres, Formulario.Apellidos, Formulario.Correo, Formulario.Telefono, Formulario.NuevaContrasena, Formulario.Dni), ct);
         Formulario.NuevaContrasena = null;
 
         if (resultado is ResultadoCuentaInstitucional.NoEncontrada || await consultar.ObtenerAsync(id, ct) is not { } cuenta)
@@ -77,6 +78,7 @@ public class EditarModel(ConsultarCuentasInstitucionales consultar, ModificarCue
         public string Nombres { get; set; } = "";
         public string Apellidos { get; set; } = "";
         public string Correo { get; set; } = "";
+        public string? Dni { get; set; }
         public string? Telefono { get; set; }
         public string? NuevaContrasena { get; set; }
     }

@@ -8,7 +8,9 @@
         <caption id="leyenda-cuentas">@Model.Count @(Model.Count == 1 ? "cuenta" : "cuentas")</caption>
         <thead>
             <tr>
+                <th scope="col">Código</th>
                 <th scope="col">Apellidos y nombres</th>
+                <th scope="col">DNI</th>
                 <th scope="col">Correo electrónico</th>
                 <th scope="col">Teléfono</th>
                 <th scope="col">Rol</th>
@@ -20,12 +22,19 @@
             @foreach (var cuenta in Model)
             {
                 <tr data-cuenta="@cuenta.Id">
+                    <td data-codigo>@(cuenta.CodigoPersonal ?? "—")</td>
                     <th scope="row">
                         <span class="cuenta__persona">
                             <span class="cuenta__inicial cuenta__inicial--@(cuenta.Rol == "Sereno" ? "sereno" : "operador")" aria-hidden="true">@Iniciales(cuenta.Nombres, cuenta.Apellidos)</span>
                             <span>@cuenta.Apellidos, @cuenta.Nombres</span>
+                            @if (cuenta.DatosIncompletos)
+                            {
+                                <span class="chip chip--advertencia" data-datos-incompletos><partial name="_Icono" model="@("advertencia")" />Datos incompletos</span>
+                            }
                         </span>
                     </th>
+                    @* El DNI completo solo en «Modificar»; en la lista, enmascarado. *@
+                    <td data-dni>@Cad.Server.Modulos.Cuentas.Aplicacion.ReglasCuenta.EnmascararDni(cuenta.Dni)</td>
                     <td>@cuenta.Correo</td>
                     <td>@(cuenta.Telefono ?? "—")</td>
                     <td data-rol="@cuenta.Rol"><span class="chip @(cuenta.Rol == "Sereno" ? "chip--progreso" : "chip--informacion")"><partial name="_Icono" model="@(cuenta.Rol == "Sereno" ? "escudo" : "bandeja")" />@cuenta.Rol</span></td>

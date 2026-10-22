@@ -25,13 +25,50 @@
     </div>
 }
 
-@if (Model.Cuentas.Count == 0)
+@if (Model.Total > 0)
+{
+    @* Búsqueda por código, nombre, correo o DNI completo, y filtro por rol (GET: el resultado se puede compartir y recargar). *@
+    <form method="get" action="/panel/admin/cuentas" class="superficie formulario cuentas__busqueda" role="search" aria-label="Buscar cuentas">
+        <div class="campo">
+            <label class="campo__etiqueta" for="Buscar">Buscar</label>
+            <input class="campo__control" id="Buscar" name="Buscar" type="search" value="@Model.Buscar" autocomplete="off"
+                   aria-describedby="Buscar-ayuda" />
+            <p id="Buscar-ayuda" class="campo__ayuda">Código, nombre, correo o DNI completo.</p>
+        </div>
+        <div class="campo">
+            <label class="campo__etiqueta" for="Rol">Rol</label>
+            <select class="campo__control campo__control--seleccion" id="Rol" name="Rol">
+                <option value="">Todos</option>
+                <option value="Operador" selected="@(Model.Rol == "Operador")">Operador</option>
+                <option value="Sereno" selected="@(Model.Rol == "Sereno")">Sereno</option>
+            </select>
+        </div>
+        <div class="acciones cuentas__busqueda-acciones">
+            <button type="submit" class="boton boton--principal"><partial name="_Icono" model="@("lupa")" />Buscar</button>
+            @if (Model.Filtrando)
+            {
+                <a class="boton boton--secundario" href="/panel/admin/cuentas">Limpiar</a>
+            }
+        </div>
+    </form>
+}
+
+@if (Model.Total == 0)
 {
     <section class="superficie estado-vacio">
         <partial name="_Icono" model="@("escudo")" />
         <p class="aviso__titulo">Aún no hay cuentas institucionales</p>
         <p>Crea la primera cuenta de operador o de sereno.</p>
         <a class="boton boton--secundario" href="/panel/admin/cuentas/nueva">Nueva cuenta</a>
+    </section>
+}
+else if (Model.Cuentas.Count == 0)
+{
+    <section class="superficie estado-vacio" data-sin-resultados>
+        <partial name="_Icono" model="@("lupa")" />
+        <p class="aviso__titulo">Ninguna cuenta coincide con la búsqueda</p>
+        <p>Revisa el texto o el rol elegido.</p>
+        <a class="boton boton--secundario" href="/panel/admin/cuentas">Ver todas las cuentas</a>
     </section>
 }
 else

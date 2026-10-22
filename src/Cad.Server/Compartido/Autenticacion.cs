@@ -45,6 +45,9 @@ public static class Autenticacion
     // DP03 (16/10/2026): el sello de seguridad de la cuenta se comprueba en cada solicitud; al desactivar la cuenta (o
     // cambiar su contraseña) cambia el sello y la sesión abierta deja de valer.
     public const string ReclamoSello = "cad:sello";
+    // La sesión se abrió con una contraseña provisional (la fijó el administrador): solo puede cambiarla.
+    public const string ReclamoCambioContrasena = "cad:cambiar-contrasena";
+    public const string RutaCambioContrasena = "/panel/cambiar-contrasena";
 
     public static IServiceCollection AddAutenticacionCad(this IServiceCollection services, IConfiguration configuracion, bool desarrollo)
     {
@@ -111,7 +114,9 @@ public static class Autenticacion
         return services;
     }
 
-    public static ClaimsIdentity CrearIdentidad(Usuario usuario, string rol, string esquema) => new(
+    public static ClaimsIdentity CrearIdentidad(Usuario usuario, string rol, string esquema)
+    {
+        var identidad = new ClaimsIdentity(
         [
             new Claim(ReclamoId, usuario.Id.ToString()),
             new Claim(ReclamoRol, rol),
@@ -119,6 +124,12 @@ public static class Autenticacion
             new Claim(ReclamoSello, usuario.SecurityStamp ?? ""),
         ],
         esquema, ReclamoId, ReclamoRol);
+        if (usuario.DebeCambiarContrasena)
+            identidad.AddClaim(new Claim(ReclamoCambioContrasena, "1"));
+        return identidad;
+    }
+
+    public static bool DebeCambiarContrasena(this ClaimsPrincipal principal) => principal.HasClaim(c => c.Type == ReclamoCambioContrasena);
 
     public static Guid IdUsuario(this ClaimsPrincipal principal) =>
         Guid.Parse(principal.FindFirstValue(ReclamoId) ?? throw new InvalidOperationException("Sesión sin identificador."));
@@ -139,6 +150,9 @@ public static class Autenticacion
     {
         if (contexto.Request.Path.StartsWithSegments("/api") || contexto.Request.Path.StartsWithSegments("/hubs"))
             contexto.Response.StatusCode = estado;
+        // Personal con contraseña provisional: en el panel, a la página para cambiarla en lugar de «Acceso denegado».
+        else if (estado == StatusCodes.Status403Forbidden && contexto.HttpContext.User.DebeCambiarContrasena())
+            contexto.Response.Redirect(RutaCambioContrasena);
         else
             contexto.Response.Redirect(contexto.RedirectUri);
         return Task.CompletedTask;

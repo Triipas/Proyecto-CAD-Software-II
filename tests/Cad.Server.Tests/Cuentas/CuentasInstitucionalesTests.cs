@@ -21,6 +21,9 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
 
     private static string CorreoUnico(string prefijo = "personal") => $"{prefijo}.{Guid.NewGuid():N}@correo.test";
 
+    // DNI ficticio de 8 dígitos; único en la práctica (la base de pruebas se reutiliza entre ejecuciones).
+    private static string DniUnico() => Random.Shared.Next(10_000_000, 100_000_000).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     private async Task<HttpClient> AdministradorAsync()
     {
         var navegador = fabrica.CrearNavegador();
@@ -39,6 +42,7 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
         ["Formulario.Nombres"] = "Carlos",
         ["Formulario.Apellidos"] = "Mendoza Ríos",
         ["Formulario.Correo"] = correo,
+        ["Formulario.Dni"] = DniUnico(),
         ["Formulario.Telefono"] = "912345678",
         ["Formulario.Rol"] = rol,
         ["Formulario.Contrasena"] = clave,
@@ -69,11 +73,19 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
         Assert.True(usuario.Activo);
         Assert.Equal(new[] { rol }, await RolesDeAsync(usuario));
 
-        // S1-T10: la cuenta queda utilizable en su canal (HU02).
+        // Datos del personal (22/10/2026): código generado por rol y contraseña inicial provisional.
+        Assert.Matches(rol == Roles.Sereno ? @"^S-\d{3,}$" : @"^OP-\d{3,}$", usuario.CodigoPersonal);
+        Assert.True(usuario.DebeCambiarContrasena);
+
+        // S1-T10: la cuenta queda utilizable en su canal (HU02), empezando por cambiar la contraseña inicial.
         if (rol == Roles.Operador)
-            Assert.Equal("/panel/central", (await fabrica.CrearNavegador().IngresarAlPanelAsync(correo, "ClaveInicial2026")).Headers.Location?.OriginalString);
+            Assert.Equal("/panel/cambiar-contrasena", (await fabrica.CrearNavegador().IngresarAlPanelAsync(correo, "ClaveInicial2026")).Headers.Location?.OriginalString);
         else
-            Assert.Equal(HttpStatusCode.OK, (await fabrica.CreateClient().PostAsJsonAsync("/api/auth/token", new SolicitudInicioSesion(correo, "ClaveInicial2026"))).StatusCode);
+        {
+            var token = await fabrica.CreateClient().PostAsJsonAsync("/api/auth/token", new SolicitudInicioSesion(correo, "ClaveInicial2026"));
+            Assert.Equal(HttpStatusCode.OK, token.StatusCode);
+            Assert.True((await token.Content.ReadFromJsonAsync<RespuestaToken>())!.DebeCambiarContrasena);
+        }
 
         // Tras crear, el listado confirma la operación.
         var listado = await admin.GetStringAsync(RutaListado);
@@ -113,7 +125,8 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
             ["Formulario.Nombres"] = "Cambiado",
             ["Formulario.Apellidos"] = "Cambiado",
             ["Formulario.Correo"] = otra.Correo,
-            ["Formulario.Telefono"] = "",
+            ["Formulario.Dni"] = DniUnico(),
+            ["Formulario.Telefono"] = "912345678",
         });
 
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
@@ -126,6 +139,9 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
     [InlineData("Formulario.Nombres", "", "Los nombres son obligatorios.")]
     [InlineData("Formulario.Correo", "no-es-un-correo", "El correo electrónico no tiene un formato válido.")]
     [InlineData("Formulario.Telefono", "12345", "El teléfono móvil debe tener 9 dígitos y empezar por 9.")]
+    [InlineData("Formulario.Dni", "", "El DNI es obligatorio.")]
+    [InlineData("Formulario.Dni", "1234567", "El DNI debe tener 8 dígitos.")]
+    [InlineData("Formulario.Dni", "1234567A", "El DNI debe tener 8 dígitos.")]
     [InlineData("Formulario.Contrasena", "corta1", "La contraseña debe tener entre 8 y 128 caracteres")]
     [InlineData("Formulario.Rol", "", "Elige el rol: Operador o Sereno.")]
     [InlineData("Formulario.Rol", "Administrador", "Elige el rol: Operador o Sereno.")]
@@ -180,6 +196,7 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
             ["Formulario.Nombres"] = "Lucía",
             ["Formulario.Apellidos"] = "Paredes Soto",
             ["Formulario.Correo"] = nuevoCorreo,
+            ["Formulario.Dni"] = DniUnico(),
             ["Formulario.Telefono"] = "955111222",
             ["Formulario.NuevaContrasena"] = "",
         });
@@ -212,6 +229,7 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
             ["Formulario.Nombres"] = "Cambiado",
             ["Formulario.Apellidos"] = "Cambiado",
             ["Formulario.Correo"] = otra.Correo,
+            ["Formulario.Dni"] = DniUnico(),
         });
 
         Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
@@ -242,6 +260,7 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
             ["Formulario.Nombres"] = "Intruso",
             ["Formulario.Apellidos"] = "Intruso",
             ["Formulario.Correo"] = objetivo.Correo,
+            ["Formulario.Dni"] = DniUnico(),
             ["Formulario.NuevaContrasena"] = "OtraClave2026",
         });
 
@@ -280,6 +299,7 @@ public class CuentasInstitucionalesTests(FabricaCad fabrica)
             ["Formulario.Nombres"] = creada.Nombres,
             ["Formulario.Apellidos"] = creada.Apellidos,
             ["Formulario.Correo"] = correo,
+            ["Formulario.Dni"] = DniUnico(),
             ["Formulario.NuevaContrasena"] = nueva,
         });
         Assert.Equal(HttpStatusCode.Redirect, modificacion.StatusCode);

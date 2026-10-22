@@ -16,6 +16,9 @@ public static class Politicas
     // con rol Operador. Tiene nombre propio para poder restringirla después sin tocar los endpoints
     // (HU33, HU38 y HU39 la mencionan). El administrador no recibe permisos de operador.
     public const string OperadorAutorizado = "OperadorAutorizado";
+
+    // Operador o sereno, aunque tenga la contraseña provisional pendiente de cambio.
+    public const string Personal = "Personal";
 }
 
 public static class Autorizacion
@@ -24,8 +27,11 @@ public static class Autorizacion
     {
         services.AddAuthorizationBuilder()
             .AddPolicy(Politicas.Ciudadano, p => p.RequireRole(Roles.Ciudadano))
-            .AddPolicy(Politicas.Sereno, p => p.RequireRole(Roles.Sereno))
-            .AddPolicy(Politicas.OperadorAutorizado, p => p.RequireRole(Roles.Operador))
+            // Personal (22/10/2026): con la contraseña provisional del administrador no opera hasta cambiarla.
+            .AddPolicy(Politicas.Sereno, p => p.RequireRole(Roles.Sereno).RequireAssertion(c => !c.User.DebeCambiarContrasena()))
+            .AddPolicy(Politicas.OperadorAutorizado, p => p.RequireRole(Roles.Operador).RequireAssertion(c => !c.User.DebeCambiarContrasena()))
+            // Solo el cambio de la contraseña propia del personal.
+            .AddPolicy(Politicas.Personal, p => p.RequireRole(Roles.Operador, Roles.Sereno))
             .AddPolicy(Politicas.Administrador, p => p.RequireRole(Roles.Administrador))
             // Una ruta nueva sin [Authorize] ni [AllowAnonymous] queda protegida, no abierta.
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
