@@ -6,11 +6,11 @@ using Microsoft.Extensions.Options;
 
 namespace Cad.Server.Modulos.Serenos.Aplicacion;
 
-// DP15 (decidida el 13/10/2026): intervalo inicial de 30 s, configurable.
+// DP15 (decidida el 13/10/2026; el PO la cambió a 15 s el 22/10/2026 para seguir mejor el desplazamiento): configurable.
 public sealed class OpcionesSerenos
 {
     public const string Seccion = "Serenos";
-    public int IntervaloPosicionesSegundos { get; set; } = 30;
+    public int IntervaloPosicionesSegundos { get; set; } = 15;
 }
 
 public abstract record ResultadoCambioEstado

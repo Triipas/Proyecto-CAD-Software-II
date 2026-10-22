@@ -12,14 +12,18 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private readonly ServicioNotificaciones notificaciones;
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
-    private bool mostrarExplicacion, mostrarAjustes, mostrarCierre;
+    private readonly Func<Uri, Task<bool>> abrirEnlace;
+    private bool mostrarExplicacion, mostrarAjustes, mostrarCierre, mostrarInformacion;
     private CategoriaCatalogo? categoriaCierre;
-    private string? resultadoCierre, notasCierre;
+    private string? resultadoCierre, notasCierre, avisoComoLlegar;
 
     public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, ServicioNotificaciones notificaciones,
-        IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes)
+        IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes, Func<Uri, Task<bool>>? abrirEnlace = null)
     {
         (this.turno, this.despacho, this.notificaciones, this.sesiones, this.navegacion) = (turno, despacho, notificaciones, sesiones, navegacion);
+        this.abrirEnlace = abrirEnlace ?? (_ => Task.FromResult(false));
+        ComoLlegar = new ComandoAsincrono(ComoLlegarAsync, () => HayDestino);
+        VerInformacion = new ComandoAsincrono(() => { MostrarInformacion = !MostrarInformacion; return Task.CompletedTask; });
         PermitirNotificaciones = new ComandoAsincrono(() => notificaciones.PermitirAsync());
         Alternar = new ComandoAsincrono(AlternarAsync, () => !turno.SesionTerminada);
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
@@ -49,6 +53,110 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public ComandoAsincrono CancelarCierre { get; }
     public ComandoAsincrono ConfirmarCierre { get; }
     public ComandoAsincrono PermitirNotificaciones { get; }
+    public ComandoAsincrono ComoLlegar { get; }
+    public ComandoAsincrono VerInformacion { get; }
+
+    // ----- Despacho con mapa (diseño C, 22/10/2026) -----
+    // El punto del caso: la ubicación del teléfono del ciudadano (SOS) o el lugar del hecho que marcó (reporte). Null si no hay
+    // punto (SOS sin ubicación, reporte solo con referencia): el mapa muestra solo al sereno y no se inventan coordenadas (CA03).
+    public PuntoMapa? Destino => despacho.Actual switch
+    {
+        { Ubicacion: { } u } => new PuntoMapa(u.Latitud, u.Longitud, u.PrecisionMetros, PuntoMapa.Sos),
+        { LugarHecho: { Latitud: { } lat, Longitud: { } lon } l } => new PuntoMapa(lat, lon, l.PrecisionMetros, PuntoMapa.Reporte),
+        _ => null,
+    };
+    public bool HayDestino => Destino is not null;
+    // Sin despacho, la pantalla del turno; con despacho, el mapa y el panel.
+    public bool SinModoDespacho => !HayDespacho;
+    public bool PuedeActuar => HayDestino || PuedeConfirmarDesplazamiento || PuedeIniciarAtencion || PuedeAbrirCierre;
+    public bool SinPuntoEnMapa => HayDespacho && !HayDestino;
+    // La posición de este teléfono: se lee para enviarla a la central y aquí solo se dibuja.
+    public Contratos.Sos.UbicacionSos? PosicionPropia => turno.UltimaPosicion;
+
+    public string TituloUbicacion => despacho.Actual switch
+    {
+        null => "",
+        { Ubicacion: not null } => "Ubicación del teléfono del ciudadano",
+        { LugarHecho: { Latitud: not null } } => "Lugar del hecho (lo marcó el ciudadano)",
+        { LugarHecho: not null } => "Lugar del hecho: solo una referencia",
+        _ => "Ubicación no disponible",
+    };
+    public string DetalleUbicacion => despacho.Actual switch
+    {
+        { Ubicacion: { } u } => $"± {Metros(u.PrecisionMetros)} m · obtenida a las {HoraCorta(u.ObtenidaEn)}",
+        { LugarHecho: { Referencia.Length: > 0 } l } => $"Referencia: {l.Referencia}",
+        { LugarHecho: { PrecisionMetros: { } p } } => $"± {Metros(p)} m",
+        { LugarHecho: not null } => "Punto marcado en el mapa",
+        null => "",
+        _ => "El ciudadano no compartió su ubicación: guíate por lo que registró la central.",
+    };
+
+    // Distancia en línea recta entre el sereno y el punto del caso; la ruta real la da «Cómo llegar».
+    public string TextoDistancia => Destino is { } d && PosicionPropia is { } p
+        ? FormatoDistancia(DistanciaMetros(p.Latitud, p.Longitud, d.Latitud, d.Longitud)) : "";
+    public bool HayDistancia => TextoDistancia.Length > 0;
+
+    // Etapas del caso con su hora: el sereno ve en qué paso está.
+    public IReadOnlyList<EtapaDespacho> Etapas => despacho.Actual is { } a
+        ?
+        [
+            new("Asignada", HoraCorta(a.AsignadoEn), Hecha: true, Actual: a.Estado == DespachoSereno.EstadoAsignada),
+            new("En camino", a.EnCaminoEn is { } c ? HoraCorta(c) : "", a.EnCaminoEn is not null, a.Estado == DespachoSereno.EstadoEnCamino),
+            new("En atención", a.EnAtencionEn is { } t ? HoraCorta(t) : "", a.EnAtencionEn is not null, a.Estado == DespachoSereno.EstadoEnAtencion && !mostrarCierre),
+            new("Cierre", "", Hecha: false, Actual: MostrarCierre),
+        ]
+        : [];
+
+    // «Lo que registró la central»: resumen de una línea; al tocarlo se despliegan la información, la descripción y los avances.
+    public string ResumenCentral => despacho.Actual switch
+    {
+        { Informacion: [.., { InformacionHecho.Length: > 0 } ultima] } => ultima.InformacionHecho!,
+        { DescripcionReporte.Length: > 0 } d => d.DescripcionReporte!,
+        null => "",
+        _ => "Sin información registrada.",
+    };
+    public bool MostrarInformacion { get => mostrarInformacion; private set { Asignar(ref mostrarInformacion, value); Notificar(nameof(IconoInformacion)); } }
+    public string IconoInformacion => mostrarInformacion ? "arriba" : "abajo";
+
+    public string? AvisoComoLlegar { get => avisoComoLlegar; private set { Asignar(ref avisoComoLlegar, value); Notificar(nameof(HayAvisoComoLlegar)); } }
+    public bool HayAvisoComoLlegar => avisoComoLlegar is not null;
+
+    // Abre Google Maps (la app si está instalada; si no, el navegador) con el destino ya puesto: la ruta giro a giro sin un
+    // servicio de rutas de pago en el CAD. Solo se envía el punto del caso, nunca datos del ciudadano.
+    public static Uri EnlaceComoLlegar(double latitud, double longitud) =>
+        new(string.Create(CultureInfo.InvariantCulture, $"https://www.google.com/maps/dir/?api=1&destination={latitud:0.######},{longitud:0.######}"));
+
+    private async Task ComoLlegarAsync()
+    {
+        AvisoComoLlegar = null;
+        if (Destino is not { } d)
+            return;
+        if (!await abrirEnlace(EnlaceComoLlegar(d.Latitud, d.Longitud)))
+            AvisoComoLlegar = "No se pudo abrir la app de mapas del teléfono.";
+    }
+
+    // Fórmula del haversine (radio medio de la Tierra): suficiente para distancias urbanas.
+    public static double DistanciaMetros(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double Radio = 6_371_000;
+        static double Rad(double grados) => grados * Math.PI / 180;
+        var dLat = Rad(lat2 - lat1);
+        var dLon = Rad(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return 2 * Radio * Math.Asin(Math.Min(1, Math.Sqrt(a)));
+    }
+
+    // Menos de 1 km: en metros redondeados a 10; desde 1 km: en kilómetros con un decimal (formato es-PE: punto decimal).
+    public static string FormatoDistancia(double metros)
+    {
+        var redondeados = Math.Round(metros / 10, MidpointRounding.AwayFromZero) * 10;
+        return redondeados < 1000
+            ? redondeados.ToString("0", CultureInfo.InvariantCulture) + " m"
+            : (metros / 1000).ToString("0.0", CultureInfo.GetCultureInfo("es-PE")) + " km";
+    }
+
+    private static string Metros(double valor) => valor.ToString("0", CultureInfo.InvariantCulture);
+    private static string HoraCorta(DateTimeOffset momento) => momento.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
 
     // ----- HU21 (ADR-07): aviso del despacho por notificación push -----
     // Primero se explica y después se pide el permiso (como la ubicación, HU06); si está denegado, se orienta a los ajustes.
@@ -225,7 +333,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     {
         foreach (var p in new[] { nameof(Operativo), nameof(TextoEstado), nameof(TipoAvisoEstado), nameof(TextoDetalleEstado),
                      nameof(TextoBoton), nameof(TextoUltimoEnvio), nameof(HayUltimoEnvio), nameof(AvisoEnvio), nameof(HayAvisoEnvio),
-                     nameof(Error), nameof(HayError), nameof(SesionTerminada), nameof(PuedeSalir), nameof(TextoAyudaSalir), nameof(HayAyudaSalir) })
+                     nameof(Error), nameof(HayError), nameof(SesionTerminada), nameof(PuedeSalir), nameof(TextoAyudaSalir), nameof(HayAyudaSalir),
+                     nameof(PosicionPropia), nameof(TextoDistancia), nameof(HayDistancia) })
             Notificar(p);
         Alternar.ActualizarDisponibilidad();
         Salir.ActualizarDisponibilidad();
@@ -249,8 +358,11 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
                      nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances),
                      nameof(MostrarCierre), nameof(PuedeAbrirCierre), nameof(CategoriasCierre), nameof(ErrorCategoriaCierre), nameof(HayErrorCategoriaCierre),
                      nameof(ErrorResultadoCierre), nameof(HayErrorResultadoCierre), nameof(ErrorNotasCierre), nameof(HayErrorNotasCierre),
-                     nameof(CierreReciente), nameof(HayCierreReciente) })
+                     nameof(CierreReciente), nameof(HayCierreReciente),
+                     nameof(Destino), nameof(HayDestino), nameof(SinPuntoEnMapa), nameof(TituloUbicacion), nameof(DetalleUbicacion),
+                     nameof(TextoDistancia), nameof(HayDistancia), nameof(Etapas), nameof(ResumenCentral), nameof(SinModoDespacho), nameof(PuedeActuar) })
             Notificar(p);
+        ComoLlegar.ActualizarDisponibilidad();
     }
 }
 
@@ -260,4 +372,18 @@ public sealed record ElementoInformacionDespacho(string Hora, string? Informacio
 {
     public bool HayHecho => InformacionHecho is not null;
     public bool HayReferencia => ReferenciaUbicacion is not null;
+}
+
+// Punto del caso en el mapa del despacho: ubicación del teléfono del ciudadano (SOS) o lugar del hecho (reporte).
+public sealed record PuntoMapa(double Latitud, double Longitud, double? PrecisionMetros, string Tipo)
+{
+    public const string Sos = "sos";
+    public const string Reporte = "reporte";
+}
+
+// Una etapa del despacho en la barra superior: hecha (barra verde) y/o actual (texto destacado).
+public sealed record EtapaDespacho(string Nombre, string Hora, bool Hecha, bool Actual)
+{
+    public bool HayHora => Hora.Length > 0;
+    public string Descripcion => $"{Nombre}{(HayHora ? $", {Hora}" : "")}{(Actual ? ", etapa actual" : Hecha ? ", completada" : ", pendiente")}";
 }

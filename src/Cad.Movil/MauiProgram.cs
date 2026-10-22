@@ -104,7 +104,13 @@ public static class MauiProgram
         builder.Services.AddTransient(s => new InicioSerenoVistaModelo(
             s.GetRequiredService<ServicioTurnoSereno>(), s.GetRequiredService<ServicioDespacho>(), s.GetRequiredService<ServicioNotificaciones>(),
             s.GetRequiredService<IAlmacenSesion>(),
-            s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI));
+            s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
+            // «Cómo llegar»: Google Maps (la app si está instalada; si no, el navegador).
+            async enlace =>
+            {
+                try { return await Launcher.Default.OpenAsync(enlace); }
+                catch (Exception) { return false; } // ninguna app puede abrir el enlace
+            }));
         builder.Services.AddTransient<IngresoPagina>();
         builder.Services.AddTransient<CambiarContrasenaPagina>();
         builder.Services.AddTransient<BienvenidaPagina>();

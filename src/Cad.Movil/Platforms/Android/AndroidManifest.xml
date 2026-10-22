@@ -25,6 +25,12 @@
 			<action android:name="android.intent.action.DIAL" />
 			<data android:scheme="tel" />
 		</intent>
+		<!-- Despacho del sereno: «Cómo llegar» abre Google Maps (o el navegador) con el destino del caso. -->
+		<intent>
+			<action android:name="android.intent.action.VIEW" />
+			<category android:name="android.intent.category.BROWSABLE" />
+			<data android:scheme="https" />
+		</intent>
 		<!-- Reporte: dictado de la descripción con el reconocedor de voz del sistema (la app no pide el micrófono). -->
 		<intent>
 			<action android:name="android.speech.action.RECOGNIZE_SPEECH" />
