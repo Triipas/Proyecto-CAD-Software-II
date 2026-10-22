@@ -83,8 +83,8 @@ public partial class HistorialTests(FabricaCad fabrica)
 
         Assert.Equal(
         [
-            "SOS emitido", "Intento de contacto: Contactado", "Clasificado como «Violencia doméstica»", "Asignado al sereno Prueba Sereno",
-            "En camino", "Inicio de atención", "Asignación finalizada", "Caso cerrado · tipificación «Robo»", "Notas internas del cierre",
+            "SOS emitido", "Intento de contacto: Contactado", "Clasificado como «Violencia familiar»", "Asignado al sereno Prueba Sereno",
+            "En camino", "Inicio de atención", "Asignación finalizada", "Caso cerrado · tipificación «Robo o hurto»", "Notas internas del cierre",
         ], Actuaciones(html));
         Assert.Contains("· Prueba Ciudadano", html);
         Assert.Contains("· Prueba Operador", html);
@@ -106,7 +106,7 @@ public partial class HistorialTests(FabricaCad fabrica)
         var html = await operador.GetStringAsync(Ruta(reporte.Id));
 
         // La categoría del ciudadano figura en el registro, no como una clasificación aparte.
-        Assert.Equal(["Reporte registrado como «Robo»"], Actuaciones(html));
+        Assert.Equal(["Reporte registrado como «Robo o hurto»"], Actuaciones(html));
         Assert.Contains("data-origen-estado=\"Reporte Recibido\"", html);
         Assert.Contains("Ubicación del hecho: referencia textual · Referencia: Esquina del mercado", html);
         Assert.Contains("Hecho ocurrido aproximadamente el 14/10/2026 18:40", html);
@@ -122,7 +122,7 @@ public partial class HistorialTests(FabricaCad fabrica)
         var html = await operador.GetStringAsync(Ruta(casoId));
 
         Assert.Contains("data-resultado-final", html);
-        Assert.Contains("Robo: Se resolvió en el lugar", html);
+        Assert.Contains("Robo o hurto: Se resolvió en el lugar", html);
         Assert.Contains("data-origen-estado=\"SOS Cerrada\"", html);
     }
 

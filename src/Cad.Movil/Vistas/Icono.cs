@@ -34,6 +34,20 @@ public sealed class Icono : GraphicsView, IDrawable
         ["hecho"] = ["M5 12 L10 17 L19 7"],
         // Inicio (diseño A): centrar el mapa en la posición propia.
         ["centrar"] = [Circulo(12, 12, 7), Circulo(12, 12, 2.5), "M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22"],
+        // Catálogo de tipos de incidencia (PO, 22/10/2026): la clave llega del servidor en CategoriaCatalogo.Icono.
+        ["robo"] = ["M19 7 V5 C19 3.9 18.1 3 17 3 H5 C3.9 3 3 3.9 3 5 V19 C3 20.1 3.9 21 5 21 H19 C20.1 21 21 20.1 21 19 V9 C21 7.9 20.1 7 19 7 H3", "M16.5 14 L16.51 14"],
+        ["violencia"] = ["M3 10.5 L12 3 L21 10.5 V19 C21 20.1 20.1 21 19 21 H5 C3.9 21 3 20.1 3 19 Z", "M12 9.5 V13.5 M12 17 L12.01 17"],
+        ["acoso"] = [Circulo(9, 7, 4), "M3 21 V19 C3 16.8 4.8 15 7 15 H11 C13.2 15 15 16.8 15 19 V21", "M19.5 7 V11.5 M19.5 15 L19.51 15"],
+        ["extorsion"] = ["M21 15 C21 16.1 20.1 17 19 17 H7 L3 21 V5 C3 3.9 3.9 3 5 3 H19 C20.1 3 21 3.9 21 5 Z", "M12 6.5 V10.5 M12 13.5 L12.01 13.5"],
+        ["drogas"] = ["M10.5 20.5 L20.5 10.5 C22.4 8.6 22.4 5.4 20.5 3.5 C18.6 1.6 15.4 1.6 13.5 3.5 L3.5 13.5 C1.6 15.4 1.6 18.6 3.5 20.5 C5.4 22.4 8.6 22.4 10.5 20.5 Z", "M8.5 8.5 L15.5 15.5"],
+        ["alcohol"] = ["M10 2 H14 M10.5 2 V7 L8 10 V20 C8 21.1 8.9 22 10 22 H14 C15.1 22 16 21.1 16 20 V10 L13.5 7 V2", "M8 14 H16"],
+        ["pelea"] = ["M13 2 L3 14 H12 L11 22 L21 10 H12 Z"],
+        ["sospechoso"] = ["M2 12 C2 12 5.5 5 12 5 C18.5 5 22 12 22 12 C22 12 18.5 19 12 19 C5.5 19 2 12 2 12 Z", Circulo(12, 12, 3)],
+        ["vandalismo"] = ["M5 3 H19 C20.1 3 21 3.9 21 5 V19 C21 20.1 20.1 21 19 21 H5 C3.9 21 3 20.1 3 19 V5 C3 3.9 3.9 3 5 3 Z", "M11 3 L9.5 9 L14 12 L11.5 21 M14 12 L21 10"],
+        ["accidente"] = ["M5 17 H3 V12 L5.5 6.5 C5.8 5.6 6.6 5 7.5 5 H16.5 C17.4 5 18.2 5.6 18.5 6.5 L21 12 V17 H19", "M3 12 H21 M9 17 H15", Circulo(7, 17, 2), Circulo(17, 17, 2)],
+        ["ruido"] = ["M11 5 L6 9 H2 V15 H6 L11 19 Z", "M15.5 8.5 C17.5 10.5 17.5 13.5 15.5 15.5 M19 5 C22.9 8.9 22.9 15.1 19 19"],
+        ["riesgo"] = [Circulo(12, 12, 9), Circulo(12, 12, 4), "M5.6 5.6 L9.2 9.2 M14.8 9.2 L18.4 5.6 M14.8 14.8 L18.4 18.4 M9.2 14.8 L5.6 18.4"],
+        ["otros"] = [Circulo(12, 12, 9), "M8 12 L8.01 12 M12 12 L12.01 12 M16 12 L16.01 12"],
     };
 
     public static readonly BindableProperty NombreProperty =

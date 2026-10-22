@@ -68,7 +68,7 @@ public static class ModuloCasos
 
         // HU10-CA01 y DP07 — catálogo para elegir el tipo del reporte.
         app.MapGet("/api/reportes/categorias", async (Modulos.Consultas.ConsultarCategorias categorias, CancellationToken ct) =>
-                Results.Ok((await categorias.EjecutarAsync(ct)).Select(c => new CategoriaCatalogo(c.Id, c.Nombre))))
+                Results.Ok((await categorias.EjecutarAsync(ct)).Select(c => new CategoriaCatalogo(c.Id, c.Nombre, c.Ayuda, c.Icono))))
             .RequireAuthorization(Politicas.Ciudadano);
 
         // HU30 — mis casos: solo los del ciudadano que consulta; el de otro responde 404, también con una solicitud directa (CA04).

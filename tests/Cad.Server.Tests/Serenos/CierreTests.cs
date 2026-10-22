@@ -307,7 +307,7 @@ public class CierreTests(FabricaCad fabrica)
 
         var categorias = await sereno.App.GetFromJsonAsync<List<CategoriaCatalogo>>("/api/sereno/categorias");
 
-        Assert.Equal(CategoriaIncidencia.Iniciales.Select(c => c.Nombre), categorias!.Select(c => c.Nombre));
+        Assert.Equal(CategoriaIncidencia.Iniciales.OrderBy(c => c.Orden).Select(c => c.Nombre), categorias!.Select(c => c.Nombre));
     }
 
     [Fact]

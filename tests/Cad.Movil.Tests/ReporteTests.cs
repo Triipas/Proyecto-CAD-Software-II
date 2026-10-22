@@ -229,6 +229,43 @@ public class ReporteTests
     }
 
     [Fact]
+    public async Task DP07_TocarUnaCasilla_EligeElTipoYMuestraSusEjemplos()
+    {
+        api.Categorias = [new(Robo, "Robo o hurto", "Me robaron, intento de robo", "robo"), new(Guid.NewGuid(), "Otros")];
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+        Assert.Null(vm.Categoria); // nada elegido por defecto
+        Assert.False(vm.HayAyudaCategoria);
+
+        await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[0]);
+
+        Assert.Equal(Robo, vm.Categoria!.Id);
+        Assert.Equal([true, false], vm.Opciones.Select(o => o.Seleccionada));
+        Assert.Equal("Robo o hurto, elegido", vm.Opciones[0].DescripcionAccesible);
+        Assert.Equal("Robo o hurto: Me robaron, intento de robo.", vm.AyudaCategoria);
+        Assert.Equal("otros", vm.Opciones[1].Icono); // sin clave de icono, el genérico
+
+        await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[1]);
+
+        Assert.Equal([false, true], vm.Opciones.Select(o => o.Seleccionada));
+        Assert.False(vm.HayAyudaCategoria); // «Otros» sin ejemplos en este doble
+    }
+
+    [Fact]
+    public async Task DP07_RecargarElCatalogo_ConservaElTipoElegido()
+    {
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+        await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[0]);
+
+        api.Categorias = [new(Robo, "Robo o hurto"), new(Guid.NewGuid(), "Otros")];
+        await vm.CargarCategorias.EjecutarAsync();
+
+        Assert.Equal("Robo o hurto", vm.Categoria!.Nombre);
+        Assert.True(vm.Opciones[0].Seleccionada);
+    }
+
+    [Fact]
     public async Task CA01_SinRespuestaAlCargarLosTipos_SeAvisaYSePuedeReintentar()
     {
         api.RespuestaCategoriasReporte = () => new ResultadoApi<List<CategoriaCatalogo>>.SinRespuesta("sin red");

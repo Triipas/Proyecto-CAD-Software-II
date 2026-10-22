@@ -114,8 +114,10 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             categoria.ToTable("CategoriasIncidencia");
             categoria.HasKey(c => c.Id);
             categoria.Property(c => c.Nombre).HasMaxLength(100);
+            categoria.Property(c => c.Ayuda).HasMaxLength(CategoriaIncidencia.MaximoAyuda);
+            categoria.Property(c => c.Icono).HasMaxLength(30);
             categoria.HasIndex(c => c.Nombre).IsUnique();
-            categoria.HasData(CategoriaIncidencia.Iniciales.Select(c => new { c.Id, c.Nombre, c.Orden }));
+            categoria.HasData(CategoriaIncidencia.Iniciales.Select(c => new { c.Id, c.Nombre, c.Orden, c.Ayuda, c.Icono }));
         });
 
         // RNF02: tabla de medición, solo para pruebas (Plan de Arquitectura, 9.1).

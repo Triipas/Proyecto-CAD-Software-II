@@ -427,7 +427,29 @@ public class ReporteTests(FabricaCad fabrica)
 
         var categorias = await app.GetFromJsonAsync<List<CategoriaCatalogo>>($"{Ruta}/categorias");
 
-        Assert.Equal(["Violencia doméstica", "Robo", "Presunta actividad relacionada con drogas", "Otros"], categorias!.Select(c => c.Nombre));
+        // Catálogo ampliado por el PO el 22/10/2026, en orden de presentación; «Otros» siempre al final.
+        Assert.Equal([
+            "Robo o hurto", "Violencia familiar", "Acoso en la vía pública", "Extorsión o amenazas", "Consumo o venta de drogas",
+            "Consumo de alcohol en la vía pública", "Peleas o riñas", "Persona o vehículo sospechoso", "Daños o vandalismo",
+            "Accidente de tránsito", "Ruidos molestos o escándalo", "Persona en riesgo", "Otros",
+        ], categorias!.Select(c => c.Nombre));
+        // Cada categoría trae ejemplos para orientar al ciudadano y la clave de su icono.
+        Assert.All(categorias, c => Assert.False(string.IsNullOrWhiteSpace(c.Ayuda) || string.IsNullOrWhiteSpace(c.Icono)));
+        Assert.Equal(categorias.Count, categorias.Select(c => c.Icono).Distinct().Count());
+    }
+
+    [Fact]
+    public async Task DP07_LasCategoriasOriginalesConservanSuIdentificador()
+    {
+        var (app, _) = await CiudadanoAsync();
+
+        var categorias = await app.GetFromJsonAsync<List<CategoriaCatalogo>>($"{Ruta}/categorias");
+
+        // Los casos anteriores al catálogo ampliado siguen apuntando a la misma categoría, solo cambia su nombre.
+        Assert.Equal("Violencia familiar", categorias!.Single(c => c.Id == CategoriaIncidencia.ViolenciaFamiliar.Id).Nombre);
+        Assert.Equal("Robo o hurto", categorias.Single(c => c.Id == CategoriaIncidencia.RoboOHurto.Id).Nombre);
+        Assert.Equal("Consumo o venta de drogas", categorias.Single(c => c.Id == CategoriaIncidencia.Drogas.Id).Nombre);
+        Assert.Equal("Otros", categorias.Single(c => c.Id == CategoriaIncidencia.Otros.Id).Nombre);
     }
 
     [Theory]

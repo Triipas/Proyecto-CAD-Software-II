@@ -100,7 +100,7 @@ public class ClasificacionTests(FabricaCad fabrica)
 
         var detalle = await operador.GetStringAsync(Detalle(casoId)); // primero: el mensaje se muestra una sola vez
         Assert.Contains("SOS clasificado.", detalle);
-        Assert.Contains("<dd data-tipo>Robo</dd>", detalle);
+        Assert.Contains("<dd data-tipo>Robo o hurto</dd>", detalle);
         Assert.Contains("<dd>Prueba Operador</dd>", detalle);
         Assert.DoesNotContain("Clasificar el SOS", detalle); // ya no se ofrece el formulario
         Assert.True(await CentralDePrueba.EsperarAsync(() => central.AvisosCasos.Contains(casoId)), "No llegó el aviso del caso.");
@@ -189,7 +189,7 @@ public class ClasificacionTests(FabricaCad fabrica)
         var respuesta = await ClasificarAsync(operador, casoId, Violencia.ToString());
 
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
-        Assert.Contains("El SOS ya está clasificado como «Robo»", await respuesta.Content.ReadAsStringAsync());
+        Assert.Contains("El SOS ya está clasificado como «Robo o hurto»", await respuesta.Content.ReadAsStringAsync());
         Assert.Equal(Robo, (await CasoAsync(casoId)).CategoriaId);
         Assert.Equal(1, await EventosClasificacionAsync(casoId));
     }
