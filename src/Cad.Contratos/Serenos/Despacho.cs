@@ -46,5 +46,6 @@ public sealed record SolicitudCierreCaso(Guid? CategoriaId, string? ResultadoPub
 
 public sealed record RespuestaCierreCaso(Guid CasoId, string Estado, DateTimeOffset CerradoEn);
 
-// DP07: una categoría del catálogo, para elegir la tipificación final.
-public sealed record CategoriaCatalogo(Guid Id, string Nombre);
+// DP07: una categoría del catálogo (reporte del ciudadano y tipificación final). Ayuda: ejemplos breves; Icono: clave del
+// icono dibujado de la app. Ambos opcionales para que un cliente anterior siga funcionando.
+public sealed record CategoriaCatalogo(Guid Id, string Nombre, string Ayuda = "", string Icono = "");

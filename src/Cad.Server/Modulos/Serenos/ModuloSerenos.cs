@@ -81,7 +81,7 @@ public static class ModuloSerenos
 
         // DP07 — catálogo para elegir la tipificación final.
         sereno.MapGet("/categorias", async (Consultas.ConsultarCategorias categorias, CancellationToken ct) =>
-            Results.Ok((await categorias.EjecutarAsync(ct)).Select(c => new CategoriaCatalogo(c.Id, c.Nombre))));
+            Results.Ok((await categorias.EjecutarAsync(ct)).Select(c => new CategoriaCatalogo(c.Id, c.Nombre, c.Ayuda, c.Icono))));
 
         // ADR-07 — dispositivo para la notificación push del despacho. 204 en ambos casos.
         sereno.MapPut("/dispositivo", async (SolicitudRegistroDispositivo solicitud, HttpContext contexto,

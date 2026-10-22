@@ -28,6 +28,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     private readonly TimeZoneInfo zona;
 
     private IReadOnlyList<CategoriaCatalogo> categorias = [];
+    private IReadOnlyList<OpcionCategoria> opciones = [];
     private CategoriaCatalogo? categoria;
     private string descripcion = "", referencia = "", mensajeCategorias = "", mensajeUbicacion = "";
     private DateTime? fecha;
@@ -50,6 +51,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         FechaMaxima = ahora.Date;
 
         CargarCategorias = new ComandoAsincrono(CargarCategoriasAsync);
+        ElegirCategoria = new ComandoAsincrono<OpcionCategoria>(o => { if (Editable) Categoria = o.Categoria; return Task.CompletedTask; });
         ElegirMapa = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Mapa, limpiarPunto: modo != ModoUbicacionHecho.Mapa); return Task.CompletedTask; }, () => Editable);
         ElegirReferencia = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
         UsarPosicionActual = new ComandoAsincrono(UsarPosicionActualAsync, () => Editable);
@@ -61,6 +63,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     }
 
     public ComandoAsincrono CargarCategorias { get; }
+    public ComandoAsincrono<OpcionCategoria> ElegirCategoria { get; }
     public ComandoAsincrono ElegirMapa { get; }
     public ComandoAsincrono ElegirReferencia { get; }
     public ComandoAsincrono UsarPosicionActual { get; }
@@ -75,8 +78,39 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     public string TextoAdvertenciaSos => AdvertenciaSos;
 
     // ----- Tipo (CA01, DP07) -----
-    public IReadOnlyList<CategoriaCatalogo> Categorias { get => categorias; private set => Asignar(ref categorias, value); }
-    public CategoriaCatalogo? Categoria { get => categoria; set => Asignar(ref categoria, value); }
+    public IReadOnlyList<CategoriaCatalogo> Categorias
+    {
+        get => categorias;
+        private set
+        {
+            if (!Asignar(ref categorias, value)) return;
+            Opciones = value.Select(c => new OpcionCategoria(c)).ToList();
+            // Al recargar el catálogo se conserva la elección si la categoría sigue existiendo.
+            var elegida = categoria;
+            categoria = null;
+            Categoria = value.FirstOrDefault(c => c.Id == elegida?.Id);
+        }
+    }
+
+    // Catálogo ampliado (PO, 22/10/2026): mosaico de tipos con icono, en vez de una lista desplegable.
+    public IReadOnlyList<OpcionCategoria> Opciones { get => opciones; private set => Asignar(ref opciones, value); }
+
+    public CategoriaCatalogo? Categoria
+    {
+        get => categoria;
+        set
+        {
+            if (!Asignar(ref categoria, value)) return;
+            foreach (var opcion in opciones)
+                opcion.Seleccionada = opcion.Categoria.Id == value?.Id;
+            Notificar(nameof(AyudaCategoria));
+            Notificar(nameof(HayAyudaCategoria));
+        }
+    }
+
+    // Ejemplos de la categoría elegida, para confirmar que es la adecuada.
+    public string AyudaCategoria => categoria is { Ayuda.Length: > 0 } c ? $"{c.Nombre}: {c.Ayuda}." : "";
+    public bool HayAyudaCategoria => AyudaCategoria.Length > 0;
     public string MensajeCategorias { get => mensajeCategorias; private set { Asignar(ref mensajeCategorias, value); Notificar(nameof(HayMensajeCategorias)); } }
     public bool HayMensajeCategorias => mensajeCategorias.Length > 0;
 
@@ -289,4 +323,24 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         foreach (var comando in new[] { ElegirMapa, ElegirReferencia, UsarPosicionActual, Enviar, Reintentar })
             comando.ActualizarDisponibilidad();
     }
+}
+
+// Una casilla del mosaico de tipos. Sin icono conocido (servidor anterior al catálogo ampliado), el genérico.
+public sealed class OpcionCategoria(CategoriaCatalogo categoria) : VistaModeloBase
+{
+    private bool seleccionada;
+
+    public CategoriaCatalogo Categoria { get; } = categoria;
+    public string Nombre => Categoria.Nombre;
+    public string Icono => Categoria.Icono.Length > 0 ? Categoria.Icono : "otros";
+    public string Ayuda => Categoria.Ayuda;
+
+    public bool Seleccionada
+    {
+        get => seleccionada;
+        set { if (Asignar(ref seleccionada, value)) Notificar(nameof(DescripcionAccesible)); }
+    }
+
+    // El lector de pantalla anuncia cuál está elegida; el borde de color no basta.
+    public string DescripcionAccesible => Seleccionada ? $"{Nombre}, elegido" : Nombre;
 }

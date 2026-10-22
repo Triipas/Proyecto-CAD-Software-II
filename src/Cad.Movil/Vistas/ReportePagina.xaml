@@ -4,7 +4,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
-             xmlns:sr="clr-namespace:Cad.Contratos.Serenos;assembly=Cad.Contratos"
              x:Class="Cad.Movil.Vistas.ReportePagina"
              x:DataType="vm:ReporteVistaModelo"
              Shell.TabBarIsVisible="False"
@@ -22,13 +21,37 @@
 
                 <Border Style="{StaticResource Superficie}" Padding="16">
                     <VerticalStackLayout Spacing="8">
-                        <!-- CA01 y DP07: tipo del catálogo compartido. -->
-                        <Label Text="Tipo de incidencia" Style="{StaticResource Etiqueta}" />
-                        <Border Style="{StaticResource MarcoCampo}">
-                            <Picker Title="Elige el tipo" ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}"
-                                    ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" IsEnabled="{Binding Editable}"
-                                    SemanticProperties.Description="Tipo de incidencia" />
-                        </Border>
+                        <!-- CA01 y DP07: tipo del catálogo compartido, en un mosaico de tres columnas con icono (catálogo ampliado, 22/10/2026). -->
+                        <Label Text="Tipo de incidencia" Style="{StaticResource Etiqueta}" SemanticProperties.HeadingLevel="Level2" />
+                        <v:Mosaico Columnas="3" Espacio="8" BindableLayout.ItemsSource="{Binding Opciones}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:OpcionCategoria">
+                                    <Border Padding="6,12" MinimumHeightRequest="104" StrokeThickness="1"
+                                            Stroke="{StaticResource ColorBorde}" BackgroundColor="{StaticResource ColorSuperficie}"
+                                            SemanticProperties.Description="{Binding DescripcionAccesible}" SemanticProperties.Hint="{Binding Ayuda}">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                                                  Command="{Binding ElegirCategoria, Source={RelativeSource AncestorType={x:Type vm:ReporteVistaModelo}}, x:DataType=vm:ReporteVistaModelo}" />
+                                        </Border.GestureRecognizers>
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Seleccionada}" Value="True">
+                                                <Setter Property="Stroke" Value="{StaticResource ColorPrimario}" />
+                                                <Setter Property="StrokeThickness" Value="2" />
+                                                <Setter Property="BackgroundColor" Value="{StaticResource ColorInformacionFondo}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <!-- El mosaico iguala el alto de la fila; el nombre ocupa las líneas que necesite (también con el texto agrandado). -->
+                                        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                                            <v:Icono Nombre="{Binding Icono}" Color="{StaticResource ColorPrimario}" Tamano="26" HorizontalOptions="Center" />
+                                            <Label Grid.Row="1" Text="{Binding Nombre}" FontSize="13" TextColor="{StaticResource ColorTexto}" HorizontalTextAlignment="Center"
+                                                   LineBreakMode="WordWrap" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </v:Mosaico>
+                        <Label Text="{Binding AyudaCategoria}" Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding HayAyudaCategoria}" />
                         <v:Aviso Tipo="error" Texto="{Binding MensajeCategorias}" IsVisible="{Binding HayMensajeCategorias}" />
                         <Button Text="Volver a cargar los tipos" Style="{StaticResource BotonSecundario}" Command="{Binding CargarCategorias}"
                                 IsVisible="{Binding HayMensajeCategorias}" />

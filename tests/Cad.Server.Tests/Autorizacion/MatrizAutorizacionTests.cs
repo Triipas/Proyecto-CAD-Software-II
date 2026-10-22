@@ -45,7 +45,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // Con cuerpo vacío el ciudadano llega al caso de uso (400 por falta de IdSolicitud); el resto es rechazado antes.
         new("POST", "/api/sos", "HU07", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/reportes", "HU10", Acceso.SoloRol, Roles.Ciudadano),
-        new("GET", "/api/reportes/categorias", "HU10", Acceso.SoloRol, Roles.Ciudadano, Contenido: "Violencia doméstica"),
+        new("GET", "/api/reportes/categorias", "HU10", Acceso.SoloRol, Roles.Ciudadano, Contenido: "Violencia familiar"),
         // HU30 — mis casos. Con un caso inexistente (o ajeno) el ciudadano recibe 404; el resto es rechazado antes.
         new("GET", "/api/casos/mios", "HU30", Acceso.SoloRol, Roles.Ciudadano),
         new("GET", "/api/casos/mios/{id:guid}", "HU30", Acceso.SoloRol, Roles.Ciudadano,
@@ -137,7 +137,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // HU24 — cierre por el sereno (404 con un caso que no es suyo) y catálogo para la tipificación final.
         new("POST", "/api/sereno/casos/{id:guid}/cierre", "HU24", Acceso.SoloRol, Roles.Sereno,
             Ejemplo: "/api/sereno/casos/00000000-0000-0000-0000-000000000000/cierre"),
-        new("GET", "/api/sereno/categorias", "HU24", Acceso.SoloRol, Roles.Sereno, Contenido: "Violencia doméstica"),
+        new("GET", "/api/sereno/categorias", "HU24", Acceso.SoloRol, Roles.Sereno, Contenido: "Violencia familiar"),
         new("PUT", "/api/sereno/dispositivo", "HU21", Acceso.SoloRol, Roles.Sereno),
         new("DELETE", "/api/sereno/dispositivo", "HU21", Acceso.SoloRol, Roles.Sereno),
         // Canal en tiempo real del sereno (HU21-CA01): solo serenos, con su JWT.

@@ -156,9 +156,9 @@ public class RevisionReporteTests(FabricaCad fabrica)
         Assert.Equal((Robo, Otros, cuenta.Id), (correccion.CategoriaAnteriorId, correccion.CategoriaNuevaId, correccion.OperadorId));
         Assert.Equal(Robo, (await fabrica.ConBaseDatosAsync(db => db.DetallesReporte.AsNoTracking().SingleAsync(d => d.CasoId == id))).CategoriaOriginalId);
         var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync(Ruta(id)));
-        Assert.Contains("data-categoria-original>Robo<", html);
+        Assert.Contains("data-categoria-original>Robo o hurto<", html);
         Assert.Contains("data-categoria-vigente>Otros<", html);
-        Assert.Contains("«Robo» → «Otros»", html);
+        Assert.Contains("«Robo o hurto» → «Otros»", html);
     }
 
     [Fact]
@@ -390,9 +390,9 @@ public class RevisionReporteTests(FabricaCad fabrica)
 
         var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos/{id}/historial"));
 
-        Assert.Contains("Reporte registrado como «Robo»", html);
+        Assert.Contains("Reporte registrado como «Robo o hurto»", html);
         Assert.Contains("Revisión iniciada", html);
-        Assert.Contains("Categoría corregida de «Robo» a «Otros»", html);
+        Assert.Contains("Categoría corregida de «Robo o hurto» a «Otros»", html);
         Assert.DoesNotContain("Clasificado como", html);
         Assert.Contains("data-origen-estado=\"Reporte En revisión\"", html);
     }

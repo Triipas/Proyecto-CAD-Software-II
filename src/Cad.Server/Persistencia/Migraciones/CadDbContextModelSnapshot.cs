@@ -503,6 +503,16 @@ namespace Cad.Server.Persistencia.Migraciones
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Ayuda")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Icono")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -522,26 +532,106 @@ namespace Cad.Server.Persistencia.Migraciones
                         new
                         {
                             Id = new Guid("0199e2b0-0000-7000-8000-000000000001"),
-                            Nombre = "Violencia doméstica",
-                            Orden = 1
-                        },
-                        new
-                        {
-                            Id = new Guid("0199e2b0-0000-7000-8000-000000000002"),
-                            Nombre = "Robo",
+                            Ayuda = "Agresión, gritos o maltrato en una vivienda",
+                            Icono = "violencia",
+                            Nombre = "Violencia familiar",
                             Orden = 2
                         },
                         new
                         {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000002"),
+                            Ayuda = "Me robaron, intento de robo",
+                            Icono = "robo",
+                            Nombre = "Robo o hurto",
+                            Orden = 1
+                        },
+                        new
+                        {
                             Id = new Guid("0199e2b0-0000-7000-8000-000000000003"),
-                            Nombre = "Presunta actividad relacionada con drogas",
-                            Orden = 3
+                            Ayuda = "Venta o consumo en un punto fijo",
+                            Icono = "drogas",
+                            Nombre = "Consumo o venta de drogas",
+                            Orden = 5
                         },
                         new
                         {
                             Id = new Guid("0199e2b0-0000-7000-8000-000000000004"),
+                            Ayuda = "Solo si nada de lo anterior encaja",
+                            Icono = "otros",
                             Nombre = "Otros",
+                            Orden = 13
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000005"),
+                            Ayuda = "Acoso, tocamientos o persecución",
+                            Icono = "acoso",
+                            Nombre = "Acoso en la vía pública",
+                            Orden = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000006"),
+                            Ayuda = "Cobro de cupos, amenazas",
+                            Icono = "extorsion",
+                            Nombre = "Extorsión o amenazas",
                             Orden = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000007"),
+                            Ayuda = "Grupos bebiendo en la calle o el parque",
+                            Icono = "alcohol",
+                            Nombre = "Consumo de alcohol en la vía pública",
+                            Orden = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000008"),
+                            Ayuda = "Pelea entre personas o grupos",
+                            Icono = "pelea",
+                            Nombre = "Peleas o riñas",
+                            Orden = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000009"),
+                            Ayuda = "Merodeo, vehículo abandonado",
+                            Icono = "sospechoso",
+                            Nombre = "Persona o vehículo sospechoso",
+                            Orden = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000010"),
+                            Ayuda = "Pintas, destrozos, robo de mobiliario público",
+                            Icono = "vandalismo",
+                            Nombre = "Daños o vandalismo",
+                            Orden = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000011"),
+                            Ayuda = "Choque sin heridos graves",
+                            Icono = "accidente",
+                            Nombre = "Accidente de tránsito",
+                            Orden = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000012"),
+                            Ayuda = "Fiestas o escándalo en la vía pública",
+                            Icono = "ruido",
+                            Nombre = "Ruidos molestos o escándalo",
+                            Orden = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("0199e2b0-0000-7000-8000-000000000013"),
+                            Ayuda = "Menor o adulto mayor perdido, persona desorientada",
+                            Icono = "riesgo",
+                            Nombre = "Persona en riesgo",
+                            Orden = 12
                         });
                 });
 
