@@ -15,6 +15,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(Rutas.CrearCuenta, typeof(CrearCuentaPagina));
         Routing.RegisterRoute(Rutas.Pin, typeof(PinPagina));
         Routing.RegisterRoute(Rutas.MisDatos, typeof(MisDatosPagina));
+        Routing.RegisterRoute(Rutas.CambiarContrasena, typeof(CambiarContrasenaPagina)); // personal, 22/10/2026
         Routing.RegisterRoute(Rutas.Reporte, typeof(ReportePagina));
         Routing.RegisterRoute(Rutas.MiCaso, typeof(MiCasoPagina));
         Routing.RegisterRoute(Rutas.Acompanamiento, typeof(AcompanamientoPagina));

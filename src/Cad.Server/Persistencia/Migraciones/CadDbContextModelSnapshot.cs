@@ -1027,12 +1027,23 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("CodigoPersonal")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CreadoEn")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DebeCambiarContrasena")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Dni")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -1094,6 +1105,14 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CodigoPersonal")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AspNetUsers_CodigoPersonal");
+
+                    b.HasIndex("Dni")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AspNetUsers_Dni");
 
                     b.HasIndex("NormalizedEmail")
                         .IsUnique()

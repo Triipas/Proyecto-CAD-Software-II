@@ -5,7 +5,7 @@
     var descrito = string.Join(" ", new[] { Model.Error is null ? null : idError, Model.Ayuda is null ? null : idAyuda }.OfType<string>());
 }
 <div class="campo">
-    <label class="campo__etiqueta" for="@Model.Id">@Model.Etiqueta@(Model.Requerido ? "" : " (opcional)")</label>
+    <label class="campo__etiqueta" for="@Model.Id">@Model.Etiqueta@(Model.Requerido || !Model.MarcarOpcional ? "" : " (opcional)")</label>
     <input class="campo__control" id="@Model.Id" name="@Model.Nombre" type="@Model.Tipo" value="@Model.Valor"
            autocomplete="@Model.Autocompletar" required="@Model.Requerido"
            aria-invalid="@(Model.Error is null ? null : "true")"

@@ -10,7 +10,7 @@
 <div class="pagina__encabezado">
     <div>
         <h1 class="titulo">Nueva cuenta institucional</h1>
-        <p class="texto-secundario">Cuenta de operador de central o de sereno. El correo será su identificador de acceso.</p>
+        <p class="texto-secundario">Cuenta de operador de central o de sereno. El correo será su identificador de acceso y el sistema le asignará un código de personal.</p>
     </div>
 </div>
 
@@ -20,8 +20,9 @@
 
         <partial name="_Campo" model="@(new CampoFormulario("Formulario_Nombres", "Formulario.Nombres", "Nombres", Valor: f.Nombres, Error: Model.ErrorDe("nombres"), Autocompletar: "off"))" />
         <partial name="_Campo" model="@(new CampoFormulario("Formulario_Apellidos", "Formulario.Apellidos", "Apellidos", Valor: f.Apellidos, Error: Model.ErrorDe("apellidos"), Autocompletar: "off"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Dni", "Formulario.Dni", "DNI", Valor: f.Dni, Error: Model.ErrorDe("dni"), Ayuda: "8 dígitos. No se puede repetir en otra cuenta.", Autocompletar: "off"))" />
         <partial name="_Campo" model="@(new CampoFormulario("Formulario_Correo", "Formulario.Correo", "Correo electrónico", "email", f.Correo, Model.ErrorDe("correo"), Autocompletar: "off"))" />
-        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Telefono", "Formulario.Telefono", "Teléfono móvil", "tel", f.Telefono, Model.ErrorDe("telefono"), "9 dígitos, empieza por 9.", "off", Requerido: false))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Telefono", "Formulario.Telefono", "Teléfono móvil", "tel", f.Telefono, Model.ErrorDe("telefono"), "Obligatorio para el sereno (la central lo llama durante un despacho); opcional para el operador. 9 dígitos, empieza por 9.", "off", Requerido: false, MarcarOpcional: false))" />
 
         <div class="campo">
             <label class="campo__etiqueta" for="Formulario_Rol">Rol</label>
@@ -38,7 +39,7 @@
             }
         </div>
 
-        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Contrasena", "Formulario.Contrasena", "Contraseña inicial", "password", null, Model.ErrorDe("contrasena"), "Entre 8 y 128 caracteres, con al menos una letra y un número.", "new-password"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Contrasena", "Formulario.Contrasena", "Contraseña inicial", "password", null, Model.ErrorDe("contrasena"), "Entre 8 y 128 caracteres, con al menos una letra y un número. Es provisional: deberá cambiarla al ingresar.", "new-password"))" />
 
         <div class="acciones formulario__completo">
             <a class="boton boton--secundario" href="/panel/admin/cuentas">Cancelar</a>

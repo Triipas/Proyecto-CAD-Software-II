@@ -138,6 +138,17 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaIngreso);
     }
 
+    // Personal (22/10/2026): cambio de la contraseña provisional del sereno.
+    public List<(string Token, SolicitudCambioContrasena Solicitud)> CambiosContrasena { get; } = [];
+    public ResultadoApi<RespuestaToken> RespuestaCambioContrasena { get; set; } =
+        new ResultadoApi<RespuestaToken>.Correcto(new RespuestaToken("token-nuevo", DateTimeOffset.UtcNow.AddHours(8), "Sereno"));
+
+    public Task<ResultadoApi<RespuestaToken>> CambiarContrasenaAsync(string token, SolicitudCambioContrasena solicitud, CancellationToken ct)
+    {
+        CambiosContrasena.Add((token, solicitud));
+        return Task.FromResult(RespuestaCambioContrasena);
+    }
+
     // ----- HU18: modo sereno -----
     public RespuestaEstadoOperativo EstadoServidor { get; set; } = new(false, null, 30);
     public Func<SolicitudCambioEstadoOperativo, ResultadoApi<RespuestaEstadoOperativo>>? RespuestaCambio { get; set; }

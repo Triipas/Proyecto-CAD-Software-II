@@ -26,6 +26,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<RespuestaToken>> IniciarSesionAsync(SolicitudInicioSesion solicitud, CancellationToken ct) =>
         EnviarAsync<RespuestaToken>(HttpMethod.Post, "api/auth/token", solicitud, null, ct);
 
+    public Task<ResultadoApi<RespuestaToken>> CambiarContrasenaAsync(string token, SolicitudCambioContrasena solicitud, CancellationToken ct) =>
+        EnviarAsync<RespuestaToken>(HttpMethod.Post, "api/cuentas/contrasena", solicitud, token, ct);
+
     public Task<ResultadoApi<RespuestaCodigoCelular>> EnviarCodigoCelularAsync(SolicitudCodigoCelular solicitud, CancellationToken ct) =>
         EnviarAsync<RespuestaCodigoCelular>(HttpMethod.Post, "api/auth/celular/codigo", solicitud, null, ct);
 

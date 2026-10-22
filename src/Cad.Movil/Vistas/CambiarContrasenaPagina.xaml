@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Personal (22/10/2026): el sereno cambia la contraseña provisional que le fijó el administrador antes de operar. -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             x:Class="Cad.Movil.Vistas.CambiarContrasenaPagina"
+             x:DataType="vm:CambiarContrasenaVistaModelo"
+             Shell.NavBarIsVisible="False"
+             Title="Cambia tu contraseña">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <v:EncabezadoPagina Titulo="Cambia tu contraseña" MostrarVolver="False"
+                                Ayuda="Tu contraseña la fijó el administrador. Elige una nueva que solo tú conozcas para empezar a recibir despachos." />
+            <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
+                <Border Style="{StaticResource Superficie}" Padding="20">
+                    <VerticalStackLayout Spacing="8">
+                        <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+
+                        <Label Text="Contraseña actual" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Entry Text="{Binding Actual}" IsPassword="True" SemanticProperties.Description="Contraseña actual" />
+                        </Border>
+                        <Label Text="{Binding ErrorActual}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorActual}" />
+
+                        <Label Text="Contraseña nueva" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Entry Text="{Binding Nueva}" IsPassword="True" SemanticProperties.Description="Contraseña nueva" />
+                        </Border>
+                        <Label Text="Entre 8 y 128 caracteres, con al menos una letra y un número. Distinta de la actual."
+                               Style="{StaticResource TextoSecundario}" FontSize="13" />
+                        <Label Text="{Binding ErrorNueva}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNueva}" />
+
+                        <Label Text="Repite la contraseña nueva" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource MarcoCampo}">
+                            <Entry Text="{Binding Confirmacion}" IsPassword="True" SemanticProperties.Description="Repite la contraseña nueva" />
+                        </Border>
+                        <Label Text="{Binding ErrorConfirmacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorConfirmacion}" />
+
+                        <Button Text="Guardar contraseña" Style="{StaticResource BotonPrincipal}" Command="{Binding Guardar}" Margin="0,8,0,0" />
+                        <Button Text="Salir sin cambiarla" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,37 @@
+@page "/panel/cambiar-contrasena"
+@model CambiarContrasenaModel
+@{
+    ViewData["Title"] = "Cambiar la contraseña";
+    ViewData["TituloResumenErrores"] = "No se cambió la contraseña";
+    Layout = "_LayoutAcceso";
+}
+<section class="superficie acceso__tarjeta" aria-labelledby="titulo-cambio">
+    <div class="acceso__encabezado">
+        <h1 id="titulo-cambio" class="titulo">Cambia tu contraseña</h1>
+        @if (Model.Obligatorio)
+        {
+            <p class="texto-secundario">Tu contraseña la fijó el administrador. Elige una nueva que solo tú conozcas para empezar a usar el panel.</p>
+        }
+        else
+        {
+            <p class="texto-secundario">Elige una contraseña nueva que solo tú conozcas.</p>
+        }
+    </div>
+
+    <form method="post" class="formulario acceso__formulario" data-formulario novalidate>
+        <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Actual", "Formulario.Actual", "Contraseña actual", "password", null, Model.ErrorDe("actual"), Autocompletar: "current-password"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Nueva", "Formulario.Nueva", "Contraseña nueva", "password", null, Model.ErrorDe("nueva"), "Entre 8 y 128 caracteres, con al menos una letra y un número. Distinta de la actual.", "new-password"))" />
+        <partial name="_Campo" model="@(new CampoFormulario("Formulario_Confirmacion", "Formulario.Confirmacion", "Repite la contraseña nueva", "password", null, Model.ErrorDe("confirmacion"), Autocompletar: "new-password"))" />
+
+        <button type="submit" class="boton boton--principal boton--bloque acceso__enviar" data-texto-carga="Guardando…">Guardar contraseña</button>
+    </form>
+
+    <form method="post" asp-page="/Salir">
+        <button type="submit" class="boton boton--secundario boton--bloque">Salir sin cambiarla</button>
+    </form>
+</section>
+
+@section Scripts {
+    <script src="~/js/formulario.js" asp-append-version="true"></script>
+}

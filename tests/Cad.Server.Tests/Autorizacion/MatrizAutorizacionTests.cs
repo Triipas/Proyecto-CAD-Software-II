@@ -16,7 +16,8 @@ namespace Cad.Server.Tests.Autorizacion;
 [Collection(ColeccionServidor.Nombre)]
 public class MatrizAutorizacionTests(FabricaCad fabrica)
 {
-    public enum Acceso { Publico, CualquierSesion, SoloRol }
+    // Personal: operador o sereno (el cambio de su contraseña propia).
+    public enum Acceso { Publico, CualquierSesion, SoloRol, Personal }
 
     // Contenido = texto que solo debe ver quien tiene permiso (CA03: sin información restringida).
     // EstadoPropio: código con el que la operación responde cuando se ejecuta (la página de acceso denegado responde 403).
@@ -83,6 +84,9 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),
+        // Cambio de la contraseña propia del personal (22/10/2026); obligatorio si la fijó el administrador.
+        new("GET", "/panel/cambiar-contrasena", "HU04", Acceso.Personal, Contenido: "Cambia tu contraseña"),
+        new("POST", "/api/cuentas/contrasena", "HU04", Acceso.Personal),
         new("POST", "/panel/salir", "HU02", Acceso.Publico),
         new("GET", "/panel/acceso-denegado", "HU03", Acceso.Publico, Contenido: "Tu rol no tiene permiso", EstadoPropio: 403),
         new("GET", "/panel/central", "HU11", Acceso.SoloRol, Roles.Operador, "Atención urgente · SOS"),
@@ -172,6 +176,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         {
             Acceso.Publico => true,
             Acceso.CualquierSesion => rol is not null,
+            Acceso.Personal => rol is Roles.Operador or Roles.Sereno,
             _ => rol == operacion.Rol,
         };
 

@@ -65,6 +65,35 @@ public static partial class ReglasCuenta
 
     public static string? NormalizarTelefono(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 
+    // Personal (22/10/2026): DNI peruano de 8 dígitos, obligatorio y único.
+    public const string MensajeDni = "El DNI debe tener 8 dígitos.";
+    public const string MensajeDniDuplicado = "Ya existe una cuenta con ese DNI.";
+
+    public static string NormalizarDni(string? valor) => (valor ?? "").Trim();
+
+    public static void ValidarDni(Dictionary<string, string[]> errores, string? valor)
+    {
+        var dni = NormalizarDni(valor);
+        if (dni.Length == 0)
+            errores["dni"] = ["El DNI es obligatorio."];
+        else if (dni.Length != 8 || !dni.All(char.IsAsciiDigit))
+            errores["dni"] = [MensajeDni];
+    }
+
+    // En listados se muestra solo el final del DNI.
+    public static string EnmascararDni(string? dni) => dni is { Length: > 4 } ? $"****{dni[^4..]}" : "—";
+
+    // Código de personal que genera el sistema: prefijo del rol y número correlativo de al menos 3 cifras (OP-001, S-014).
+    public static string PrefijoCodigo(string rol) => rol == Dominio.Roles.Sereno ? "S-" : "OP-";
+
+    public static string SiguienteCodigo(string prefijo, IEnumerable<string> existentes)
+    {
+        var mayor = existentes
+            .Select(c => int.TryParse(c.AsSpan(prefijo.Length), out var n) ? n : 0)
+            .DefaultIfEmpty(0).Max();
+        return $"{prefijo}{mayor + 1:000}";
+    }
+
     // ADR-08: el celular del ciudadano se escribe como sea («987 654 321», «+51 987654321») y se guarda con 9 dígitos.
     public static string NormalizarCelular(string? valor)
     {

@@ -21,6 +21,14 @@ public class Usuario : IdentityUser<Guid>
     public string? TerminosVersion { get; set; }
     public DateTimeOffset? TerminosAceptadosEn { get; set; }
 
+    // Personal (operador y sereno, 22/10/2026): DNI para identificarlo sin ambigüedad en la auditoría y código de personal
+    // que genera el sistema (OP-001, S-001). Nulos en ciudadanos y en cuentas de personal anteriores sin completar.
+    public string? Dni { get; set; }
+    public string? CodigoPersonal { get; set; }
+
+    // La contraseña la fijó el administrador (alta o restablecimiento): hasta cambiarla, la cuenta no puede operar.
+    public bool DebeCambiarContrasena { get; set; }
+
     public const int MaximoIntentosPin = 5;
     public bool PinBloqueado => IntentosPinFallidos >= MaximoIntentosPin;
 }

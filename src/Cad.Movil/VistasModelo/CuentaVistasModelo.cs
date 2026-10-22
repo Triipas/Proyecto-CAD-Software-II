@@ -21,6 +21,7 @@ public static class Rutas
     public const string Acompanamiento = "acompanamiento"; // HU34–HU37
     public const string Perfil = "//ciudadano/perfil"; // ADR-08, fase D
     public const string MisDatos = "mis-datos";
+    public const string CambiarContrasena = "cambiar-contrasena"; // personal, 22/10/2026
 
     // Cada rol entra en su modo; el servidor solo emite tokens de la app a ciudadano y sereno (HU02).
     public static string InicioDe(string rol) => rol == "Sereno" ? Sereno : Ciudadano;
@@ -37,10 +38,14 @@ public sealed class IngresoVistaModelo : VistaModeloBase
     private readonly EmisorSos? emisor;
     private string correo = "", contrasena = "", direccionServidor, mensaje = "";
 
-    public IngresoVistaModelo(IApiCad api, IAlmacenSesion sesiones, IConfiguracionServidor servidor, INavegacion navegacion, EmisorSos? emisor = null)
+    private readonly IngresoPendiente? pendiente;
+
+    public IngresoVistaModelo(IApiCad api, IAlmacenSesion sesiones, IConfiguracionServidor servidor, INavegacion navegacion, EmisorSos? emisor = null,
+        IngresoPendiente? pendiente = null)
     {
         (this.api, this.sesiones, this.servidor, this.navegacion) = (api, sesiones, servidor, navegacion);
         this.emisor = emisor;
+        this.pendiente = pendiente;
         direccionServidor = servidor.Direccion?.ToString() ?? "";
         Ingresar = new ComandoAsincrono(IngresarAsync);
         Volver = new ComandoAsincrono(() => navegacion.IrAAsync(".."));
@@ -77,6 +82,14 @@ public sealed class IngresoVistaModelo : VistaModeloBase
         switch (resultado)
         {
             case ResultadoApi<RespuestaToken>.Correcto correcto:
+                // Contraseña provisional del administrador: primero se cambia. La sesión no se guarda hasta entonces, así que
+                // cerrar la app a mitad obliga a ingresar de nuevo.
+                if (correcto.Valor.DebeCambiarContrasena && pendiente is not null)
+                {
+                    pendiente.Token = correcto.Valor;
+                    await navegacion.IrAAsync(Rutas.CambiarContrasena);
+                    break;
+                }
                 if (emisor is not null) await emisor.ReiniciarAsync(); // nada del SOS de otra cuenta se reintenta con esta sesión
                 await sesiones.GuardarAsync(new SesionApp(correcto.Valor.Token, correcto.Valor.Rol, correcto.Valor.ExpiraEn));
                 await navegacion.IrAAsync(Rutas.InicioDe(correcto.Valor.Rol));

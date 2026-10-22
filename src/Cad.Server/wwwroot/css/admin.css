@@ -139,3 +139,22 @@
   }
 }
 
+
+/* ── Búsqueda de cuentas ───────────────────────────────── */
+.cuentas__busqueda {
+  display: grid;
+  gap: var(--espacio-4);
+  margin-bottom: var(--espacio-4);
+}
+
+@media (min-width: 48rem) {
+  .cuentas__busqueda {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  /* Alinea los botones con los controles, no con las etiquetas. */
+  .cuentas__busqueda-acciones {
+    margin-top: calc(var(--texto-sm) * 1.5 + var(--espacio-2));
+  }
+}
