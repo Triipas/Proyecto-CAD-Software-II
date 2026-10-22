@@ -210,9 +210,10 @@ public sealed class CodigoVistaModelo : VistaModeloBase
     public string Mensaje { get => mensaje; private set { Asignar(ref mensaje, value); Notificar(nameof(HayMensaje)); } }
     public bool HayMensaje => Mensaje.Length > 0;
 
-    // Solo con el proveedor simulado y en la compilación Debug (pruebas en el emulador).
-    public string CodigoDePrueba => $"Código de prueba (solo desarrollo): {flujo.CodigoDePrueba}";
-    public bool HayCodigoDePrueba => Compilacion.EsDepuracion && flujo.CodigoDePrueba is not null;
+    // Solo con el proveedor simulado: el servidor decide si envía el código (Codigos:MostrarCodigoSimulado), así que se
+    // muestra en cualquier compilación (también el APK Release que apunta a un servidor de demostración sin SMS).
+    public string CodigoDePrueba => $"Código de prueba (simulado, sin SMS): {flujo.CodigoDePrueba}";
+    public bool HayCodigoDePrueba => flujo.CodigoDePrueba is not null;
 
     public string TextoReenviar { get => textoReenviar; private set => Asignar(ref textoReenviar, value); }
     public bool PuedeReenviar

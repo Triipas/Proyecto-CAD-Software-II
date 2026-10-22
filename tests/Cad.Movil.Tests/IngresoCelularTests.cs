@@ -92,6 +92,26 @@ public class IngresoCelularTests
     }
 
     [Fact]
+    public async Task Codigo_ConElProveedorSimulado_SeMuestraEnCualquierCompilacion()
+    {
+        // El servidor solo envía el código con Codigos:MostrarCodigoSimulado (también un servidor de demostración sin SMS).
+        var vistaModelo = await PantallaCodigoAsync();
+
+        Assert.True(vistaModelo.HayCodigoDePrueba);
+        Assert.Equal("Código de prueba (simulado, sin SMS): 135790", vistaModelo.CodigoDePrueba);
+    }
+
+    [Fact]
+    public async Task Codigo_ConSmsReal_NoMuestraNingunCodigo()
+    {
+        api.RespuestaCodigo = new ResultadoApi<RespuestaCodigoCelular>.Correcto(new RespuestaCodigoCelular(30, 600, null));
+
+        var vistaModelo = await PantallaCodigoAsync();
+
+        Assert.False(vistaModelo.HayCodigoDePrueba);
+    }
+
+    [Fact]
     public async Task Codigo_AlEscribirElSextoDigito_SeVerificaSolo_YUnNumeroNuevoVaACrearCuenta()
     {
         var vistaModelo = await PantallaCodigoAsync();

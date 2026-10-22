@@ -11,9 +11,10 @@ public sealed class OpcionesCodigos
 {
     public const string Seccion = "Codigos";
 
-    // Proveedor simulado: el servidor genera el código y no envía ningún SMS. Solo en desarrollo y pruebas.
+    // Proveedor simulado: el servidor genera el código y no envía ningún SMS. En desarrollo, pruebas y, si se activa, en un
+    // servidor de demostración sin proveedor de SMS (MVP académico con datos ficticios).
     public bool PermitirSimulado { get; set; }
-    // Con el simulado, la respuesta incluye el código para que la app Debug lo muestre (nunca en el entorno publicado).
+    // Con el simulado, la respuesta incluye el código y la app lo muestra. Nunca con SMS reales: solo para demostraciones.
     public bool MostrarCodigoSimulado { get; set; }
     // Números que siempre usan el simulado aunque Twilio esté configurado (p. ej. «90000» para el emulador).
     public string[] PrefijosSimulados { get; set; } = [];
