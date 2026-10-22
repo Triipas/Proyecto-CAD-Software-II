@@ -269,6 +269,17 @@
                         <Label Text="{Binding TextoUltimoEnvio}" Style="{StaticResource TextoSecundario}" FontSize="12" IsVisible="{Binding HayUltimoEnvio}" />
                         <Button Text="{Binding TextoBoton}" Style="{StaticResource BotonSecundario}" Command="{Binding Alternar}"
                                 SemanticProperties.Hint="Activa o desactiva tu estado operativo" />
+                        <!-- DP16-a también durante un despacho: si se reactiva sin permiso de ubicación, se explica o se lleva a los ajustes. -->
+                        <VerticalStackLayout Spacing="12" IsVisible="{Binding MostrarExplicacion}">
+                            <v:Aviso Tipo="informacion"
+                                     Texto="Para activar tu estado operativo necesitas permitir el acceso a tu ubicación. Solo se comparte con la central mientras estés operativo y con la app abierta." />
+                            <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}" Command="{Binding PermitirUbicacion}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="12" IsVisible="{Binding MostrarAjustes}">
+                            <v:Aviso Tipo="advertencia"
+                                     Texto="Sin permiso de ubicación no puedes activar tu estado operativo. Concédelo en los ajustes del teléfono y vuelve a intentarlo." />
+                            <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}" Command="{Binding AbrirAjustes}" />
+                        </VerticalStackLayout>
                         <v:Aviso Tipo="advertencia" Texto="{Binding AvisoEnvio}" IsVisible="{Binding HayAvisoEnvio}" />
                         <v:Aviso Tipo="error" Texto="{Binding Error}" IsVisible="{Binding HayError}" />
                         <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
