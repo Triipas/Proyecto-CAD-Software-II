@@ -10,107 +10,148 @@
              Title="Reportar una incidencia">
     <ScrollView x:Name="Desplazamiento">
         <VerticalStackLayout Spacing="0">
-            <v:EncabezadoPagina Titulo="Reportar una incidencia" TextoVolver="Inicio"
+            <!-- Flujo en dos pasos (22/10/2026): 1) el tipo, a pantalla completa; 2) el formulario con el tipo a la vista.
+                 «Volver» en el formulario regresa al mosaico sin perder lo escrito. -->
+            <v:EncabezadoPagina Titulo="{Binding TituloPaso}" TextoVolver="{Binding TextoVolverPaso}" ComandoVolver="{Binding Volver}"
                                 Ayuda="Para lo que no es urgente: la central lo revisará y te avisará en «Mis casos»." />
             <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
 
-                <!-- CA05: ante peligro inmediato, SOS. -->
+                <!-- CA05: ante peligro inmediato, SOS (visible en los dos pasos). -->
                 <v:Aviso Tipo="advertencia" Texto="{Binding TextoAdvertenciaSos}" />
-                <Button Text="Ir al SOS" Style="{StaticResource BotonSecundario}" Command="{Binding IrAlSos}"
-                        SemanticProperties.Hint="Vuelve a la pantalla principal, donde está el botón SOS" />
 
-                <Border Style="{StaticResource Superficie}" Padding="16">
-                    <VerticalStackLayout Spacing="8">
-                        <!-- CA01 y DP07: tipo del catálogo compartido, en un mosaico de tres columnas con icono (catálogo ampliado, 22/10/2026). -->
-                        <Label Text="Tipo de incidencia" Style="{StaticResource Etiqueta}" SemanticProperties.HeadingLevel="Level2" />
-                        <FlexLayout Wrap="Wrap" Margin="-4,0" BindableLayout.ItemsSource="{Binding Opciones}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vm:OpcionCategoria">
-                                    <Grid FlexLayout.Basis="33.33%" Padding="4">
-                                        <Border Padding="6,12" HeightRequest="116" StrokeThickness="1"
-                                                Stroke="{StaticResource ColorBorde}" BackgroundColor="{StaticResource ColorSuperficie}"
-                                                SemanticProperties.Description="{Binding DescripcionAccesible}" SemanticProperties.Hint="{Binding Ayuda}">
-                                            <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                                            <Border.GestureRecognizers>
-                                                <TapGestureRecognizer CommandParameter="{Binding .}"
-                                                                      Command="{Binding ElegirCategoria, Source={RelativeSource AncestorType={x:Type vm:ReporteVistaModelo}}, x:DataType=vm:ReporteVistaModelo}" />
-                                            </Border.GestureRecognizers>
-                                            <Border.Triggers>
-                                                <DataTrigger TargetType="Border" Binding="{Binding Seleccionada}" Value="True">
-                                                    <Setter Property="Stroke" Value="{StaticResource ColorPrimario}" />
-                                                    <Setter Property="StrokeThickness" Value="2" />
-                                                    <Setter Property="BackgroundColor" Value="{StaticResource ColorInformacionFondo}" />
-                                                </DataTrigger>
-                                            </Border.Triggers>
-                                            <!-- Alto fijo: el FlexLayout mide el texto en una sola línea; así caben hasta tres y las casillas quedan parejas. -->
-                                            <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                                                <v:Icono Nombre="{Binding Icono}" Color="{StaticResource ColorPrimario}" Tamano="26" HorizontalOptions="Center" />
-                                                <Label Grid.Row="1" Text="{Binding Nombre}" FontSize="13" TextColor="{StaticResource ColorTexto}" HorizontalTextAlignment="Center"
-                                                       LineBreakMode="WordWrap" />
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </FlexLayout>
-                        <Label Text="{Binding AyudaCategoria}" Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding HayAyudaCategoria}" />
-                        <v:Aviso Tipo="error" Texto="{Binding MensajeCategorias}" IsVisible="{Binding HayMensajeCategorias}" />
-                        <Button Text="Volver a cargar los tipos" Style="{StaticResource BotonSecundario}" Command="{Binding CargarCategorias}"
-                                IsVisible="{Binding HayMensajeCategorias}" />
-                        <Label Text="{Binding ErrorCategoria}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoria}" />
+                <!-- Paso 1 — CA01 y DP07: tipo del catálogo compartido, en un mosaico de tres columnas con icono. -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding EligiendoTipo}">
+                    <Button Text="Ir al SOS" Style="{StaticResource BotonSecundario}" Command="{Binding IrAlSos}"
+                            SemanticProperties.Hint="Vuelve a la pantalla principal, donde está el botón SOS" />
+                    <Label Text="Elige el tipo de incidencia" Style="{StaticResource Etiqueta}" SemanticProperties.HeadingLevel="Level2" />
+                    <FlexLayout Wrap="Wrap" Margin="-4,0" BindableLayout.ItemsSource="{Binding Opciones}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:OpcionCategoria">
+                                <Grid FlexLayout.Basis="33.33%" Padding="4">
+                                    <Border Padding="6,12" HeightRequest="112" StrokeThickness="1"
+                                            Stroke="{StaticResource ColorBorde}" BackgroundColor="{StaticResource ColorSuperficie}"
+                                            SemanticProperties.Description="{Binding DescripcionAccesible}" SemanticProperties.Hint="{Binding Ayuda}">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer CommandParameter="{Binding .}"
+                                                                  Command="{Binding ElegirCategoria, Source={RelativeSource AncestorType={x:Type vm:ReporteVistaModelo}}, x:DataType=vm:ReporteVistaModelo}" />
+                                        </Border.GestureRecognizers>
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Seleccionada}" Value="True">
+                                                <Setter Property="Stroke" Value="{StaticResource ColorPrimario}" />
+                                                <Setter Property="StrokeThickness" Value="2" />
+                                                <Setter Property="BackgroundColor" Value="{StaticResource ColorInformacionFondo}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <!-- Alto fijo: el FlexLayout mide el texto en una sola línea; así caben hasta tres y las casillas quedan parejas. -->
+                                        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                                            <v:Icono Nombre="{Binding Icono}" Color="{StaticResource ColorPrimario}" Tamano="26" HorizontalOptions="Center" />
+                                            <Label Grid.Row="1" Text="{Binding Nombre}" FontSize="13" TextColor="{StaticResource ColorTexto}" HorizontalTextAlignment="Center"
+                                                   LineBreakMode="WordWrap" />
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                    <v:Aviso Tipo="error" Texto="{Binding MensajeCategorias}" IsVisible="{Binding HayMensajeCategorias}" />
+                    <Button Text="Volver a cargar los tipos" Style="{StaticResource BotonSecundario}" Command="{Binding CargarCategorias}"
+                            IsVisible="{Binding HayMensajeCategorias}" />
+                </VerticalStackLayout>
 
-                        <!-- DP08: descripción obligatoria, hasta 2000 caracteres. -->
-                        <Label Text="Qué ocurrió" Style="{StaticResource Etiqueta}" />
-                        <Border Style="{StaticResource MarcoCampo}">
-                            <Editor Text="{Binding Descripcion}" HeightRequest="120" MaxLength="{Binding MaximoDescripcion}" IsEnabled="{Binding Editable}"
-                                    Placeholder="Describe lo ocurrido" AutoSize="Disabled" SemanticProperties.Description="Descripción del hecho" />
-                        </Border>
-                        <Label Text="{Binding ContadorDescripcion}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
-                        <Label Text="{Binding ErrorDescripcion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorDescripcion}" />
-
-                        <!-- DP08: fecha y hora aproximadas, no futuras. -->
-                        <Label Text="Cuándo ocurrió (aproximadamente)" Style="{StaticResource Etiqueta}" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <Border Style="{StaticResource MarcoCampo}">
-                                <DatePicker Date="{Binding Fecha}" MaximumDate="{Binding FechaMaxima}" Format="dd/MM/yyyy" IsEnabled="{Binding Editable}"
-                                            SemanticProperties.Description="Fecha del hecho" />
+                <!-- Paso 2 — el formulario. -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding EnFormulario}">
+                    <!-- El tipo elegido, a la vista y con opción de cambiarlo. -->
+                    <Border Style="{StaticResource Superficie}" Padding="16,12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border WidthRequest="44" HeightRequest="44" StrokeThickness="0" BackgroundColor="{StaticResource ColorInformacionFondo}" VerticalOptions="Center">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="22" /></Border.StrokeShape>
+                                <v:Icono Nombre="{Binding IconoCategoria}" Color="{StaticResource ColorPrimario}" Tamano="24" HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
-                            <Border Grid.Column="1" Style="{StaticResource MarcoCampo}">
-                                <TimePicker Time="{Binding Hora}" Format="HH:mm" IsEnabled="{Binding Editable}" SemanticProperties.Description="Hora del hecho" />
-                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Tipo de incidencia" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                <Label Text="{Binding NombreCategoria}" Style="{StaticResource Etiqueta}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="2" Text="Cambiar" Style="{StaticResource BotonSecundario}" Command="{Binding CambiarTipo}" VerticalOptions="Center"
+                                    Padding="14,0" SemanticProperties.Hint="Vuelve a la lista de tipos sin perder lo escrito" />
                         </Grid>
-                        <Label Text="{Binding ErrorFecha}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFecha}" />
+                    </Border>
+                    <Label Text="{Binding ErrorCategoria}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoria}" />
 
-                        <!-- CA03, CA04 y DP10: lugar del hecho por mapa, por la posición actual (solo si se elige) o por referencia. -->
-                        <Label Text="Dónde ocurrió" Style="{StaticResource Etiqueta}" />
-                        <Label Text="{Binding TextoUbicacion}" Style="{StaticResource TextoSecundario}" />
-                        <Button Text="Marcar en el mapa" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirMapa}"
-                                SemanticProperties.Hint="Muestra un mapa para tocar el lugar del hecho" />
-                        <Button Text="Usar mi posición actual" Style="{StaticResource BotonSecundario}" Command="{Binding UsarPosicionActual}"
-                                SemanticProperties.Hint="Usa la posición del teléfono como lugar del hecho; solo se lee si eliges esta opción" />
-                        <Button Text="Escribir una referencia" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirReferencia}"
-                                SemanticProperties.Hint="Describe el lugar con palabras, sin enviar ninguna posición" />
-                        <ActivityIndicator IsRunning="{Binding ObteniendoPosicion}" IsVisible="{Binding ObteniendoPosicion}" HorizontalOptions="Center" />
-                        <v:Aviso Tipo="advertencia" Texto="{Binding MensajeUbicacion}" IsVisible="{Binding HayMensajeUbicacion}" />
-                        <Border x:Name="MarcoMapa" Style="{StaticResource MarcoCampo}" Padding="0" HeightRequest="280" IsVisible="{Binding MostrarMapa}">
-                            <WebView x:Name="Mapa" Navigating="AlNavegarMapa" SemanticProperties.Description="Mapa para marcar el lugar del hecho" />
-                        </Border>
-                        <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarReferencia}">
-                            <Label Text="{Binding EtiquetaReferencia}" Style="{StaticResource Etiqueta}" />
+                    <Border Style="{StaticResource Superficie}" Padding="16">
+                        <VerticalStackLayout Spacing="8">
+                            <!-- DP08: descripción obligatoria, hasta 2000 caracteres. La indicación cambia según el tipo. -->
+                            <Label Text="Qué ocurrió" Style="{StaticResource Etiqueta}" />
                             <Border Style="{StaticResource MarcoCampo}">
-                                <Entry Text="{Binding Referencia}" MaxLength="{Binding MaximoReferencia}" IsEnabled="{Binding Editable}"
-                                       Placeholder="Por ejemplo: esquina del mercado, frente al parque" SemanticProperties.Description="Referencia del lugar del hecho" />
+                                <Editor Text="{Binding Descripcion}" HeightRequest="140" MaxLength="{Binding MaximoDescripcion}" IsEnabled="{Binding Editable}"
+                                        Placeholder="{Binding IndicacionDescripcion}" AutoSize="Disabled" SemanticProperties.Description="Descripción del hecho"
+                                        SemanticProperties.Hint="{Binding IndicacionDescripcion}" />
                             </Border>
-                        </VerticalStackLayout>
-                        <Label Text="{Binding ErrorUbicacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorUbicacion}" />
-                    </VerticalStackLayout>
-                </Border>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                <!-- Dictado: el texto reconocido se añade a lo escrito. Sin reconocedor de voz en el teléfono, no se muestra. -->
+                                <Grid IsVisible="{Binding PuedeDictar}" HeightRequest="44">
+                                    <Border Padding="14,0" StrokeThickness="1" Stroke="{StaticResource ColorBordeControl}" BackgroundColor="{StaticResource ColorSuperficie}">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="22" /></Border.StrokeShape>
+                                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                            <v:Icono Nombre="microfono" Color="{StaticResource ColorPrimario}" Tamano="20" VerticalOptions="Center" />
+                                            <Label Text="Dictar" TextColor="{StaticResource ColorPrimario}" FontFamily="PublicSansSemiBold" FontSize="15" VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Dictar}"
+                                            SemanticProperties.Description="Dictar lo ocurrido"
+                                            SemanticProperties.Hint="Usa el reconocimiento de voz del teléfono; el texto se añade a la descripción" />
+                                </Grid>
+                                <Label Grid.Column="1" Text="{Binding ContadorDescripcion}" Style="{StaticResource TextoSecundario}" FontSize="13"
+                                       HorizontalTextAlignment="End" VerticalOptions="Center" />
+                            </Grid>
+                            <Label Text="Con dos o tres frases basta: qué pasó y quiénes estaban." Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <Label Text="{Binding MensajeDictado}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayMensajeDictado}" />
+                            <Label Text="{Binding ErrorDescripcion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorDescripcion}" />
 
-                <!-- CA08: la confirmación solo llega con la respuesta del servidor; el reintento no duplica el reporte. -->
-                <v:Aviso Tipo="{Binding TipoAviso}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
-                <Button Text="{Binding TextoBotonEnviar}" Style="{StaticResource BotonPrincipal}" Command="{Binding Enviar}" IsVisible="{Binding Editable}" />
-                <Button Text="Reintentar el mismo reporte" Style="{StaticResource BotonPrincipal}" Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
-                <Button Text="Volver al inicio" Style="{StaticResource BotonPrincipal}" Command="{Binding IrAlSos}" IsVisible="{Binding Registrado}" />
+                            <!-- DP08: fecha y hora aproximadas, no futuras. -->
+                            <Label Text="Cuándo ocurrió (aproximadamente)" Style="{StaticResource Etiqueta}" />
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                <Border Style="{StaticResource MarcoCampo}">
+                                    <DatePicker Date="{Binding Fecha}" MaximumDate="{Binding FechaMaxima}" Format="dd/MM/yyyy" IsEnabled="{Binding Editable}"
+                                                SemanticProperties.Description="Fecha del hecho" />
+                                </Border>
+                                <Border Grid.Column="1" Style="{StaticResource MarcoCampo}">
+                                    <TimePicker Time="{Binding Hora}" Format="HH:mm" IsEnabled="{Binding Editable}" SemanticProperties.Description="Hora del hecho" />
+                                </Border>
+                            </Grid>
+                            <Label Text="{Binding ErrorFecha}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFecha}" />
+
+                            <!-- CA03, CA04 y DP10: lugar del hecho por mapa, por la posición actual (solo si se elige) o por referencia. -->
+                            <Label Text="Dónde ocurrió" Style="{StaticResource Etiqueta}" />
+                            <Label Text="{Binding TextoUbicacion}" Style="{StaticResource TextoSecundario}" />
+                            <Button Text="Marcar en el mapa" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirMapa}"
+                                    SemanticProperties.Hint="Muestra un mapa para tocar el lugar del hecho" />
+                            <Button Text="Usar mi posición actual" Style="{StaticResource BotonSecundario}" Command="{Binding UsarPosicionActual}"
+                                    SemanticProperties.Hint="Usa la posición del teléfono como lugar del hecho; solo se lee si eliges esta opción" />
+                            <Button Text="Escribir una referencia" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirReferencia}"
+                                    SemanticProperties.Hint="Describe el lugar con palabras, sin enviar ninguna posición" />
+                            <ActivityIndicator IsRunning="{Binding ObteniendoPosicion}" IsVisible="{Binding ObteniendoPosicion}" HorizontalOptions="Center" />
+                            <v:Aviso Tipo="advertencia" Texto="{Binding MensajeUbicacion}" IsVisible="{Binding HayMensajeUbicacion}" />
+                            <Border x:Name="MarcoMapa" Style="{StaticResource MarcoCampo}" Padding="0" HeightRequest="280" IsVisible="{Binding MostrarMapa}">
+                                <WebView x:Name="Mapa" Navigating="AlNavegarMapa" SemanticProperties.Description="Mapa para marcar el lugar del hecho" />
+                            </Border>
+                            <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarReferencia}">
+                                <Label Text="{Binding EtiquetaReferencia}" Style="{StaticResource Etiqueta}" />
+                                <Border Style="{StaticResource MarcoCampo}">
+                                    <Entry Text="{Binding Referencia}" MaxLength="{Binding MaximoReferencia}" IsEnabled="{Binding Editable}"
+                                           Placeholder="Por ejemplo: esquina del mercado, frente al parque" SemanticProperties.Description="Referencia del lugar del hecho" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <Label Text="{Binding ErrorUbicacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorUbicacion}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- CA08: la confirmación solo llega con la respuesta del servidor; el reintento no duplica el reporte. -->
+                    <v:Aviso Tipo="{Binding TipoAviso}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
+                    <Button Text="{Binding TextoBotonEnviar}" Style="{StaticResource BotonPrincipal}" Command="{Binding Enviar}" IsVisible="{Binding Editable}" />
+                    <Button Text="Reintentar el mismo reporte" Style="{StaticResource BotonPrincipal}" Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
+                    <Button Text="Volver al inicio" Style="{StaticResource BotonPrincipal}" Command="{Binding IrAlSos}" IsVisible="{Binding Registrado}" />
+                </VerticalStackLayout>
                 <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
 
                 <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />

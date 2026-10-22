@@ -34,6 +34,8 @@ public sealed class Icono : GraphicsView, IDrawable
         ["hecho"] = ["M5 12 L10 17 L19 7"],
         // Inicio (diseño A): centrar el mapa en la posición propia.
         ["centrar"] = [Circulo(12, 12, 7), Circulo(12, 12, 2.5), "M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22"],
+        // Reporte: dictar la descripción.
+        ["microfono"] = ["M12 2 C10.3 2 9 3.3 9 5 V12 C9 13.7 10.3 15 12 15 C13.7 15 15 13.7 15 12 V5 C15 3.3 13.7 2 12 2 Z", "M19 10 V12 C19 15.9 15.9 19 12 19 C8.1 19 5 15.9 5 12 V10 M12 19 V22"],
         // Catálogo de tipos de incidencia (PO, 22/10/2026): la clave llega del servidor en CategoriaCatalogo.Icono.
         ["robo"] = ["M19 7 V5 C19 3.9 18.1 3 17 3 H5 C3.9 3 3 3.9 3 5 V19 C3 20.1 3.9 21 5 21 H19 C20.1 21 21 20.1 21 19 V9 C21 7.9 20.1 7 19 7 H3", "M16.5 14 L16.51 14"],
         ["violencia"] = ["M3 10.5 L12 3 L21 10.5 V19 C21 20.1 20.1 21 19 21 H5 C3.9 21 3 20.1 3 19 Z", "M12 9.5 V13.5 M12 17 L12.01 17"],
@@ -47,7 +49,7 @@ public sealed class Icono : GraphicsView, IDrawable
         ["accidente"] = ["M5 17 H3 V12 L5.5 6.5 C5.8 5.6 6.6 5 7.5 5 H16.5 C17.4 5 18.2 5.6 18.5 6.5 L21 12 V17 H19", "M3 12 H21 M9 17 H15", Circulo(7, 17, 2), Circulo(17, 17, 2)],
         ["ruido"] = ["M11 5 L6 9 H2 V15 H6 L11 19 Z", "M15.5 8.5 C17.5 10.5 17.5 13.5 15.5 15.5 M19 5 C22.9 8.9 22.9 15.1 19 19"],
         ["riesgo"] = [Circulo(12, 12, 9), Circulo(12, 12, 4), "M5.6 5.6 L9.2 9.2 M14.8 9.2 L18.4 5.6 M14.8 14.8 L18.4 18.4 M9.2 14.8 L5.6 18.4"],
-        ["otros"] = [Circulo(12, 12, 9), "M8 12 L8.01 12 M12 12 L12.01 12 M16 12 L16.01 12"],
+        ["otros"] =[Circulo(12, 12, 9), "M8 12 L8.01 12 M12 12 L12.01 12 M16 12 L16.01 12"],
     };
 
     public static readonly BindableProperty NombreProperty =

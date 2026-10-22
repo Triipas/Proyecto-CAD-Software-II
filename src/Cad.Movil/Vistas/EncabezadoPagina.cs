@@ -21,6 +21,10 @@ public sealed class EncabezadoPagina : ContentView
     public static readonly BindableProperty TextoVolverProperty =
         BindableProperty.Create(nameof(TextoVolver), typeof(string), typeof(EncabezadoPagina), "Volver", propertyChanged: (b, _, n) => ((EncabezadoPagina)b).textoVolver.Text = (string)n);
 
+    // Opcional: qué hace «Volver» (p. ej., volver al paso anterior de la misma página). Sin comando, vuelve a la pantalla anterior.
+    public static readonly BindableProperty ComandoVolverProperty =
+        BindableProperty.Create(nameof(ComandoVolver), typeof(System.Windows.Input.ICommand), typeof(EncabezadoPagina));
+
     private readonly Label titulo;
     private readonly Label ayuda;
     private readonly Grid volver;
@@ -37,7 +41,11 @@ public sealed class EncabezadoPagina : ContentView
 
         // «Volver»: un botón transparente sobre el icono y el texto, para que TalkBack lo anuncie como botón.
         var boton = new Button { BackgroundColor = Colors.Transparent, BorderWidth = 0 };
-        boton.Clicked += async (_, _) => await Shell.Current.GoToAsync("..");
+        boton.Clicked += async (_, _) =>
+        {
+            if (ComandoVolver is { } comando) { if (comando.CanExecute(null)) comando.Execute(null); }
+            else await Shell.Current.GoToAsync("..");
+        };
         SemanticProperties.SetDescription(boton, "Volver a la pantalla anterior");
         volver = new Grid
         {
@@ -70,4 +78,5 @@ public sealed class EncabezadoPagina : ContentView
     public string Ayuda { get => (string)GetValue(AyudaProperty); set => SetValue(AyudaProperty, value); }
     public bool MostrarVolver { get => (bool)GetValue(MostrarVolverProperty); set => SetValue(MostrarVolverProperty, value); }
     public string TextoVolver { get => (string)GetValue(TextoVolverProperty); set => SetValue(TextoVolverProperty, value); }
+    public System.Windows.Input.ICommand? ComandoVolver { get => (System.Windows.Input.ICommand?)GetValue(ComandoVolverProperty); set => SetValue(ComandoVolverProperty, value); }
 }

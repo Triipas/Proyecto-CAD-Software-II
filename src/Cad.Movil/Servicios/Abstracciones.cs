@@ -123,6 +123,20 @@ public sealed class SegundoPlanoNoDisponible : IServicioSegundoPlano
     public void AvisarConfirmacion() { }
 }
 
+// Reporte (22/10/2026): dictado de la descripción con el reconocedor de voz del teléfono (en Android, el del sistema).
+// La app no graba ni guarda audio: solo recibe el texto reconocido. Null si el ciudadano cancela o no se entendió nada.
+public interface IDictado
+{
+    bool Disponible { get; }
+    Task<string?> DictarAsync();
+}
+
+public sealed class DictadoNoDisponible : IDictado
+{
+    public bool Disponible => false;
+    public Task<string?> DictarAsync() => Task.FromResult<string?>(null);
+}
+
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).
 public sealed record SinContenido;
 

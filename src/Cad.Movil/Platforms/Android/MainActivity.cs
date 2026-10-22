@@ -15,4 +15,11 @@ public class MainActivity : MauiAppCompatActivity
         if (Window is { } ventana && WindowCompat.GetInsetsController(ventana, ventana.DecorView) is { } barras)
             barras.AppearanceLightStatusBars = true;
     }
+
+    // Dictado del reporte: la pantalla de reconocimiento de voz devuelve aquí el texto.
+    protected override void OnActivityResult(int requestCode, Result resultCode, Android.Content.Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+        Platforms.Android.DictadoAndroid.AlResultado(requestCode, resultCode, data);
+    }
 }

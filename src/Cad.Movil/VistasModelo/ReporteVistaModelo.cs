@@ -35,14 +35,17 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     private TimeSpan? hora;
     private ModoUbicacionHecho modo;
     private double? latitud, longitud, precision;
-    private bool obteniendoPosicion, cargandoCategorias;
+    private bool obteniendoPosicion, cargandoCategorias, eligiendoTipo = true;
+    private string mensajeDictado = "";
     private Dictionary<string, string> errores = [];
+    private readonly IDictado dictado;
 
     public ReporteVistaModelo(IApiCad api, RegistradorReporte registrador, IServicioUbicacion ubicacion, IAlmacenSesion sesiones,
-        INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null)
+        INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null, IDictado? dictado = null)
     {
         (this.api, this.registrador, this.ubicacion, this.sesiones, this.navegacion, this.reloj) = (api, registrador, ubicacion, sesiones, navegacion, reloj);
         this.zona = zona ?? TimeZoneInfo.Local;
+        this.dictado = dictado ?? new DictadoNoDisponible();
 
         // Por defecto, el momento actual (el ciudadano lo ajusta si el hecho fue antes).
         var ahora = TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), this.zona);
@@ -51,7 +54,16 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         FechaMaxima = ahora.Date;
 
         CargarCategorias = new ComandoAsincrono(CargarCategoriasAsync);
-        ElegirCategoria = new ComandoAsincrono<OpcionCategoria>(o => { if (Editable) Categoria = o.Categoria; return Task.CompletedTask; });
+        ElegirCategoria = new ComandoAsincrono<OpcionCategoria>(o =>
+        {
+            if (!Editable) return Task.CompletedTask;
+            Categoria = o.Categoria;
+            EligiendoTipo = false; // paso 2: el formulario, con el tipo a la vista
+            return Task.CompletedTask;
+        });
+        CambiarTipo = new ComandoAsincrono(() => { EligiendoTipo = true; return Task.CompletedTask; }, () => Editable);
+        Volver = new ComandoAsincrono(async () => { if (!VolverAlMosaico()) await navegacion.IrAAsync(Rutas.Ciudadano); });
+        Dictar = new ComandoAsincrono(DictarAsync, () => Editable && this.dictado.Disponible);
         ElegirMapa = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Mapa, limpiarPunto: modo != ModoUbicacionHecho.Mapa); return Task.CompletedTask; }, () => Editable);
         ElegirReferencia = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
         UsarPosicionActual = new ComandoAsincrono(UsarPosicionActualAsync, () => Editable);
@@ -64,6 +76,9 @@ public sealed class ReporteVistaModelo : VistaModeloBase
 
     public ComandoAsincrono CargarCategorias { get; }
     public ComandoAsincrono<OpcionCategoria> ElegirCategoria { get; }
+    public ComandoAsincrono CambiarTipo { get; }
+    public ComandoAsincrono Volver { get; }
+    public ComandoAsincrono Dictar { get; }
     public ComandoAsincrono ElegirMapa { get; }
     public ComandoAsincrono ElegirReferencia { get; }
     public ComandoAsincrono UsarPosicionActual { get; }
@@ -103,14 +118,45 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             if (!Asignar(ref categoria, value)) return;
             foreach (var opcion in opciones)
                 opcion.Seleccionada = opcion.Categoria.Id == value?.Id;
-            Notificar(nameof(AyudaCategoria));
-            Notificar(nameof(HayAyudaCategoria));
+            Notificar(nameof(IndicacionDescripcion));
+            Notificar(nameof(NombreCategoria));
+            Notificar(nameof(IconoCategoria));
         }
     }
 
-    // Ejemplos de la categoría elegida, para confirmar que es la adecuada.
-    public string AyudaCategoria => categoria is { Ayuda.Length: > 0 } c ? $"{c.Nombre}: {c.Ayuda}." : "";
-    public bool HayAyudaCategoria => AyudaCategoria.Length > 0;
+    // El tipo elegido, en la cabecera del formulario.
+    public string NombreCategoria => categoria?.Nombre ?? "";
+    public string IconoCategoria => categoria is { Icono.Length: > 0 } c ? c.Icono : "otros";
+
+    // Flujo en dos pasos (22/10/2026): primero el tipo, a pantalla completa; luego el formulario con el tipo a la vista.
+    // Volver desde el formulario regresa al mosaico sin perder lo escrito.
+    public bool EligiendoTipo
+    {
+        get => eligiendoTipo;
+        private set
+        {
+            if (!Asignar(ref eligiendoTipo, value)) return;
+            Notificar(nameof(EnFormulario));
+            Notificar(nameof(TituloPaso));
+            Notificar(nameof(TextoVolverPaso));
+        }
+    }
+    public bool EnFormulario => !eligiendoTipo;
+    public string TituloPaso => eligiendoTipo ? "¿Qué quieres reportar?" : "Cuéntanos qué pasó";
+    public string TextoVolverPaso => eligiendoTipo ? "Inicio" : "Tipo";
+
+    // Volver (botón del sistema o del encabezado): en el formulario, al mosaico; en el mosaico, fuera de la página.
+    public bool VolverAlMosaico()
+    {
+        if (eligiendoTipo || !Editable) return false;
+        EligiendoTipo = true;
+        return true;
+    }
+
+    // Indicación del campo según el tipo: sus ejemplos orientan qué contar. «Otros» no tiene ejemplos que sirvan de guía.
+    public string IndicacionDescripcion => categoria is { Ayuda.Length: > 0 } c && c.Icono != "otros"
+        ? $"Cuéntanos qué pasó. Por ejemplo: {char.ToLower(c.Ayuda[0], CultureInfo.GetCultureInfo("es-PE"))}{c.Ayuda[1..]}…"
+        : "Describe lo ocurrido";
     public string MensajeCategorias { get => mensajeCategorias; private set { Asignar(ref mensajeCategorias, value); Notificar(nameof(HayMensajeCategorias)); } }
     public bool HayMensajeCategorias => mensajeCategorias.Length > 0;
 
@@ -160,6 +206,30 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     public string ContadorDescripcion => $"{descripcion.Length} / {RegistradorReporte.MaximoDescripcion}";
     public int MaximoDescripcion => RegistradorReporte.MaximoDescripcion;
     public int MaximoReferencia => RegistradorReporte.MaximoReferencia;
+
+    // Dictado por voz con el reconocedor del teléfono: el texto se añade a lo escrito y el ciudadano lo revisa antes de enviar.
+    public bool PuedeDictar => dictado.Disponible;
+    public string MensajeDictado { get => mensajeDictado; private set { Asignar(ref mensajeDictado, value); Notificar(nameof(HayMensajeDictado)); } }
+    public bool HayMensajeDictado => mensajeDictado.Length > 0;
+
+    private async Task DictarAsync()
+    {
+        MensajeDictado = "";
+        string? texto;
+        try
+        {
+            texto = await dictado.DictarAsync();
+        }
+        catch (Exception)
+        {
+            MensajeDictado = "No se pudo usar el dictado. Escribe lo ocurrido.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(texto) || !Editable)
+            return;
+        var unido = descripcion.Length == 0 ? texto.Trim() : $"{descripcion.TrimEnd()} {texto.Trim()}";
+        Descripcion = unido.Length > MaximoDescripcion ? unido[..MaximoDescripcion] : unido;
+    }
 
     // ----- Fecha y hora aproximadas (DP08) -----
     public DateTime? Fecha { get => fecha; set => Asignar(ref fecha, value); }
@@ -320,7 +390,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
                      nameof(ErrorCategoria), nameof(ErrorDescripcion), nameof(ErrorFecha), nameof(ErrorUbicacion),
                      nameof(HayErrorCategoria), nameof(HayErrorDescripcion), nameof(HayErrorFecha), nameof(HayErrorUbicacion) })
             Notificar(p);
-        foreach (var comando in new[] { ElegirMapa, ElegirReferencia, UsarPosicionActual, Enviar, Reintentar })
+        foreach (var comando in new[] { ElegirMapa, ElegirReferencia, UsarPosicionActual, Enviar, Reintentar, CambiarTipo, Dictar })
             comando.ActualizarDisponibilidad();
     }
 }

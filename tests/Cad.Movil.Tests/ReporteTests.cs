@@ -35,7 +35,7 @@ public class ReporteTests
     {
         vm ??= VistaModelo();
         await vm.AlAparecerAsync();
-        vm.Categoria = vm.Categorias[0];
+        await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[0]);
         vm.Descripcion = "Robo de una bicicleta";
         await vm.ElegirReferencia.EjecutarAsync();
         vm.Referencia = "Esquina del mercado";
@@ -229,26 +229,117 @@ public class ReporteTests
     }
 
     [Fact]
-    public async Task DP07_TocarUnaCasilla_EligeElTipoYMuestraSusEjemplos()
+    public async Task DP07_TocarUnaCasilla_EligeElTipoYPasaAlFormularioConLaIndicacionDelTipo()
     {
-        api.Categorias = [new(Robo, "Robo o hurto", "Me robaron, intento de robo", "robo"), new(Guid.NewGuid(), "Otros")];
+        api.Categorias = [new(Robo, "Robo o hurto", "Me robaron, intento de robo", "robo"), new(Guid.NewGuid(), "Otros", "Solo si nada de lo anterior encaja", "otros")];
         var vm = VistaModelo();
         await vm.AlAparecerAsync();
         Assert.Null(vm.Categoria); // nada elegido por defecto
-        Assert.False(vm.HayAyudaCategoria);
+        Assert.True(vm.EligiendoTipo); // paso 1: el mosaico
+        Assert.Equal("¿Qué quieres reportar?", vm.TituloPaso);
 
         await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[0]);
 
         Assert.Equal(Robo, vm.Categoria!.Id);
+        Assert.True(vm.EnFormulario); // paso 2, con el tipo a la vista
+        Assert.Equal(("Robo o hurto", "robo"), (vm.NombreCategoria, vm.IconoCategoria));
         Assert.Equal([true, false], vm.Opciones.Select(o => o.Seleccionada));
         Assert.Equal("Robo o hurto, elegido", vm.Opciones[0].DescripcionAccesible);
-        Assert.Equal("Robo o hurto: Me robaron, intento de robo.", vm.AyudaCategoria);
-        Assert.Equal("otros", vm.Opciones[1].Icono); // sin clave de icono, el genérico
+        Assert.Equal("Cuéntanos qué pasó. Por ejemplo: me robaron, intento de robo…", vm.IndicacionDescripcion);
 
+        await vm.CambiarTipo.EjecutarAsync();
         await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[1]);
 
         Assert.Equal([false, true], vm.Opciones.Select(o => o.Seleccionada));
-        Assert.False(vm.HayAyudaCategoria); // «Otros» sin ejemplos en este doble
+        Assert.Equal("Describe lo ocurrido", vm.IndicacionDescripcion); // los ejemplos de «Otros» no orientan
+    }
+
+    [Fact]
+    public async Task VolverDesdeElFormulario_RegresaAlMosaicoSinPerderLoEscrito()
+    {
+        var vm = await FormularioCompletoAsync();
+        Assert.True(vm.EnFormulario);
+
+        Assert.True(vm.VolverAlMosaico()); // botón «atrás» del sistema
+        Assert.True(vm.EligiendoTipo);
+        Assert.Equal("Robo de una bicicleta", vm.Descripcion);
+        Assert.Equal("Esquina del mercado", vm.Referencia);
+        Assert.False(vm.VolverAlMosaico()); // en el mosaico, «atrás» sale de la página
+
+        await vm.Volver.EjecutarAsync();
+        Assert.Equal(Rutas.Ciudadano, Assert.Single(navegacion.Rutas));
+    }
+
+    [Fact]
+    public async Task SinCategoriaDelServidor_SinIcono_UsaElGenerico()
+    {
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+
+        Assert.Equal("otros", vm.Opciones[1].Icono); // cliente anterior al catálogo ampliado: sin clave de icono
+        Assert.Equal("otros", vm.IconoCategoria);
+    }
+
+    // ----- Dictado -----
+
+    [Fact]
+    public async Task Dictar_AnadeElTextoReconocidoALoEscrito()
+    {
+        var dictado = new DictadoFalso { Resultado = () => "  fue frente al mercado  " };
+        var vm = new ReporteVistaModelo(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima, dictado);
+        vm.Descripcion = "Me quitaron el celular.";
+
+        await vm.Dictar.EjecutarAsync();
+
+        Assert.True(vm.PuedeDictar);
+        Assert.Equal("Me quitaron el celular. fue frente al mercado", vm.Descripcion);
+
+        vm.Descripcion = "";
+        dictado.Resultado = () => "Un grupo bebiendo en el parque";
+        await vm.Dictar.EjecutarAsync();
+        Assert.Equal("Un grupo bebiendo en el parque", vm.Descripcion);
+    }
+
+    [Fact]
+    public async Task Dictar_RespetaElMaximoDeLaDescripcion()
+    {
+        var dictado = new DictadoFalso { Resultado = () => new string('b', 50) };
+        var vm = new ReporteVistaModelo(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima, dictado);
+        vm.Descripcion = new string('a', RegistradorReporte.MaximoDescripcion - 10);
+
+        await vm.Dictar.EjecutarAsync();
+
+        Assert.Equal(RegistradorReporte.MaximoDescripcion, vm.Descripcion.Length);
+    }
+
+    [Fact]
+    public async Task Dictar_CanceladoOFallido_NoCambiaLoEscrito()
+    {
+        var dictado = new DictadoFalso { Resultado = () => null };
+        var vm = new ReporteVistaModelo(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima, dictado);
+        vm.Descripcion = "Texto previo";
+
+        await vm.Dictar.EjecutarAsync(); // el ciudadano cerró el dictado
+        Assert.Equal("Texto previo", vm.Descripcion);
+        Assert.False(vm.HayMensajeDictado);
+
+        dictado.Resultado = () => throw new InvalidOperationException("sin reconocedor");
+        await vm.Dictar.EjecutarAsync();
+        Assert.Equal("Texto previo", vm.Descripcion);
+        Assert.Equal("No se pudo usar el dictado. Escribe lo ocurrido.", vm.MensajeDictado);
+    }
+
+    [Fact]
+    public async Task SinReconocedorDeVoz_ElDictadoNoSeOfrece()
+    {
+        var dictado = new DictadoFalso { Disponible = false };
+        var vm = new ReporteVistaModelo(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima, dictado);
+
+        Assert.False(vm.PuedeDictar);
+        Assert.False(vm.Dictar.CanExecute(null));
+        await vm.Dictar.EjecutarAsync();
+        Assert.Equal(0, dictado.Llamadas);
+        Assert.False(VistaModelo().PuedeDictar); // sin servicio de dictado (pruebas, otras plataformas)
     }
 
     [Fact]

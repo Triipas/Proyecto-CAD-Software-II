@@ -32,9 +32,15 @@ public partial class ReportePagina : ContentPage
         await vistaModelo.AlAparecerAsync();
     }
 
+    // Botón «atrás» del sistema: desde el formulario, vuelve al mosaico de tipos.
+    protected override bool OnBackButtonPressed() => vistaModelo.VolverAlMosaico() || base.OnBackButtonPressed();
+
     private async void AlCambiarVistaModelo(object? emisor, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ReporteVistaModelo.MostrarMapa) && vistaModelo.MostrarMapa && !mapaCargado)
+        // Cada paso empieza arriba.
+        if (e.PropertyName == nameof(ReporteVistaModelo.EligiendoTipo))
+            await Desplazamiento.ScrollToAsync(0, 0, false);
+        else if (e.PropertyName == nameof(ReporteVistaModelo.MostrarMapa) && vistaModelo.MostrarMapa && !mapaCargado)
         {
             mapaCargado = true;
             await CargarMapaAsync();

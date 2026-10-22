@@ -468,3 +468,16 @@ public sealed class PushFalso : IServicioPush
     public Task<string?> ObtenerTokenAsync(CancellationToken ct) => Task.FromResult(Token);
     public void Renovar(string token) { Token = token; TokenRenovado?.Invoke(token); }
 }
+
+public sealed class DictadoFalso : IDictado
+{
+    public bool Disponible { get; set; } = true;
+    public Func<string?> Resultado { get; set; } = () => null;
+    public int Llamadas;
+
+    public Task<string?> DictarAsync()
+    {
+        Llamadas++;
+        return Task.FromResult(Resultado());
+    }
+}
