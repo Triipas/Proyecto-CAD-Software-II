@@ -70,8 +70,10 @@ public static class MauiProgram
         builder.Services.AddTransient<MisDatosVistaModelo>();
 #if ANDROID
         builder.Services.AddSingleton<IServicioSegundoPlano, Platforms.Android.SegundoPlanoAndroid>(); // DP13
+        builder.Services.AddSingleton<IDictado, Platforms.Android.DictadoAndroid>();
 #else
         builder.Services.AddSingleton<IServicioSegundoPlano, SegundoPlanoNoDisponible>();
+        builder.Services.AddSingleton<IDictado, DictadoNoDisponible>();
 #endif
         builder.Services.AddSingleton<ServicioAcompanamiento>(); // la sesión y la transmisión sobreviven al cambio de pantalla
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
@@ -84,7 +86,8 @@ public static class MauiProgram
         builder.Services.AddTransient<AcompanamientoPagina>();
         builder.Services.AddTransient(s => new ReporteVistaModelo(
             s.GetRequiredService<IApiCad>(), s.GetRequiredService<RegistradorReporte>(), s.GetRequiredService<IServicioUbicacion>(),
-            s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+            s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>(),
+            dictado: s.GetRequiredService<IDictado>()));
         builder.Services.AddSingleton<ServicioTurnoSereno>();
         builder.Services.AddSingleton<ICanalSereno, CanalSerenoSignalR>();
 #if ANDROID

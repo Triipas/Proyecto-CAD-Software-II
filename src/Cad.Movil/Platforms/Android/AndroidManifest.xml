@@ -25,6 +25,10 @@
 			<action android:name="android.intent.action.DIAL" />
 			<data android:scheme="tel" />
 		</intent>
+		<!-- Reporte: dictado de la descripción con el reconocedor de voz del sistema (la app no pide el micrófono). -->
+		<intent>
+			<action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+		</intent>
 	</queries>
 	<uses-feature android:name="android.hardware.location" android:required="false" />
 	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
