@@ -6,6 +6,7 @@ using Cad.Contratos.Reportes;
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 using Cad.Movil.Servicios;
+using Cad.Calles;
 
 namespace Cad.Movil.Tests;
 
@@ -490,5 +491,19 @@ public sealed class DictadoFalso : IDictado
     {
         Llamadas++;
         return Task.FromResult(Resultado());
+    }
+}
+
+// Ruta del sereno: devuelve la respuesta configurada y registra cada cálculo pedido.
+public sealed class RutasFalsas : IServicioRutas
+{
+    public List<(PuntoRuta Origen, PuntoRuta Destino)> Pedidas { get; } = [];
+    public Func<PuntoRuta, PuntoRuta, ResultadoRuta> Respuesta { get; set; } =
+        (o, d) => new ResultadoRuta.Encontrada([o, new PuntoRuta(o.Latitud, d.Longitud), d], 520);
+
+    public Task<ResultadoRuta> CalcularAsync(PuntoRuta origen, PuntoRuta destino, CancellationToken ct)
+    {
+        lock (Pedidas) Pedidas.Add((origen, destino));
+        return Task.FromResult(Respuesta(origen, destino));
     }
 }

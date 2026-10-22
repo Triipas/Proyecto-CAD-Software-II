@@ -34,7 +34,7 @@
             }).addTo(mapa);
 
             const COLORES = { sos: "#B42318", reporte: "#6D28D9" };
-            let destino = null, precision = null, yo = null, linea = null, ultimo = null, encuadrado = false, movido = false;
+            let destino = null, precision = null, yo = null, linea = null, ruta = null, borde = null, ultimo = null, encuadrado = false, movido = false;
             // Si el sereno mueve el mapa con el dedo, no se le reencuadra solo hasta que cambie el caso o pulse «Ver ambos».
             mapa.on("dragstart", () => { movido = true; });
             // El mapa se crea oculto (sin despacho) o cambia de alto con el panel: al cambiar de tamaño, se recalcula y reencuadra.
@@ -48,10 +48,11 @@
 
             // Encuadra el caso y al sereno (o el que exista) dejando margen para el panel inferior.
             const verAmbos = () => {
-                const puntos = [destino, yo].filter(Boolean).map((m) => m.getLatLng());
+                const puntos = [destino, yo].filter(Boolean).map((m) => m.getLatLng())
+                    .concat(ruta ? ruta.getLatLngs() : []); // con ruta, que se vea entera aunque dé un rodeo
                 // Márgenes proporcionales al mapa: con el panel de cierre abierto el mapa es bajo y unos márgenes fijos alejarían la vista.
                 const t = mapa.getSize(), m = Math.round(Math.min(t.x, t.y) * 0.16);
-                if (puntos.length === 2) mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [m, m + 12], paddingBottomRight: [m, m], maxZoom: 17 });
+                if (puntos.length >= 2) mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [m, m + 12], paddingBottomRight: [m, m], maxZoom: 17 });
                 else if (puntos.length === 1) mapa.setView(puntos[0], 16);
             };
 
@@ -75,15 +76,26 @@
                         if (!yo) yo = L.circleMarker([p.lat, p.lon], { radius: 8, color: "#FFFFFF", weight: 3, fillColor: "#1D4ED8", fillOpacity: 1 }).addTo(mapa);
                         else yo.setLatLng([p.lat, p.lon]);
                     }
-                    if (destino && yo) {
+                    // Ruta por calles (calculada en la app): línea azul con borde blanco. Sin ruta, la línea recta punteada.
+                    const r = datos.ruta;
+                    if (r && r.length > 1) {
+                        if (!ruta) {
+                            borde = L.polyline(r, { color: "#FFFFFF", weight: 9, opacity: 0.9, lineCap: "round", lineJoin: "round" }).addTo(mapa);
+                            ruta = L.polyline(r, { color: "#1D4ED8", weight: 5, lineCap: "round", lineJoin: "round" }).addTo(mapa);
+                        } else { borde.setLatLngs(r); ruta.setLatLngs(r); }
+                        if (destino) destino.setZIndexOffset(1000);
+                    } else if (ruta) { mapa.removeLayer(ruta); mapa.removeLayer(borde); ruta = borde = null; }
+
+                    if (destino && yo && !ruta) {
                         const tramo = [yo.getLatLng(), destino.getLatLng()];
                         if (!linea) linea = L.polyline(tramo, { color: "#0B1F44", weight: 3, dashArray: "2 8", lineCap: "round" }).addTo(mapa);
                         else linea.setLatLngs(tramo);
                     } else if (linea) { mapa.removeLayer(linea); linea = null; }
+                    if (yo) yo.bringToFront();
 
-                    // Solo se reencuadra cuando cambia el caso o aparece la posición del sereno (o la primera vez): si el sereno movió
-                    // el mapa, se respeta.
-                    const clave = `${d ? `${d.lat},${d.lon}` : "sin-punto"}|${yo ? "con-sereno" : "sin-sereno"}`;
+                    // Solo se reencuadra cuando cambia el caso, aparece la posición del sereno o llega la primera ruta (o la primera vez):
+                    // si el sereno movió el mapa, se respeta.
+                    const clave = `${d ? `${d.lat},${d.lon}` : "sin-punto"}|${yo ? "con-sereno" : "sin-sereno"}|${ruta ? "con-ruta" : "sin-ruta"}`;
                     if (!encuadrado || clave !== ultimo) { movido = false; verAmbos(); encuadrado = true; ultimo = clave; }
                 },
                 verAmbos: () => { movido = false; verAmbos(); },

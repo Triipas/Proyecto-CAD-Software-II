@@ -1,6 +1,7 @@
 using System.Globalization;
 using Cad.Contratos.Serenos;
 using Cad.Movil.Servicios;
+using Cad.Calles;
 
 namespace Cad.Movil.VistasModelo;
 
@@ -13,17 +14,33 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
     private readonly Func<Uri, Task<bool>> abrirEnlace;
-    private bool mostrarExplicacion, mostrarAjustes, mostrarCierre, mostrarInformacion;
+    private readonly IServicioRutas rutas;
+    private bool mostrarExplicacion, mostrarAjustes, mostrarCierre, mostrarInformacion, panelExpandido, mostrarEtapas = true, calculandoRuta;
     private CategoriaCatalogo? categoriaCierre;
     private string? resultadoCierre, notasCierre, avisoComoLlegar;
+    private ResultadoRuta? ruta;
+    private PuntoRuta? origenRuta;
+    private PuntoMapa? destinoRuta;
+    private CancellationTokenSource? calculoRuta;
 
     public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, ServicioNotificaciones notificaciones,
-        IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes, Func<Uri, Task<bool>>? abrirEnlace = null)
+        IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes, Func<Uri, Task<bool>>? abrirEnlace = null,
+        IServicioRutas? rutas = null)
     {
         (this.turno, this.despacho, this.notificaciones, this.sesiones, this.navegacion) = (turno, despacho, notificaciones, sesiones, navegacion);
         this.abrirEnlace = abrirEnlace ?? (_ => Task.FromResult(false));
+        this.rutas = rutas ?? new RutasNoDisponibles();
         ComoLlegar = new ComandoAsincrono(ComoLlegarAsync, () => HayDestino);
-        VerInformacion = new ComandoAsincrono(() => { MostrarInformacion = !MostrarInformacion; return Task.CompletedTask; });
+        VerInformacion = new ComandoAsincrono(() =>
+        {
+            MostrarInformacion = !MostrarInformacion;
+            if (MostrarInformacion) PanelExpandido = true; // el detalle se lee con el panel desplegado
+            return Task.CompletedTask;
+        });
+        AlternarPanel = new ComandoAsincrono(() => { PanelExpandido = !PanelExpandido; return Task.CompletedTask; });
+        ExpandirPanel = new ComandoAsincrono(() => { PanelExpandido = true; return Task.CompletedTask; });
+        RecogerPanel = new ComandoAsincrono(() => { PanelExpandido = false; return Task.CompletedTask; });
+        AlternarEtapas = new ComandoAsincrono(() => { MostrarEtapas = !MostrarEtapas; return Task.CompletedTask; });
         PermitirNotificaciones = new ComandoAsincrono(() => notificaciones.PermitirAsync());
         Alternar = new ComandoAsincrono(AlternarAsync, () => !turno.SesionTerminada);
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
@@ -55,6 +72,114 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public ComandoAsincrono PermitirNotificaciones { get; }
     public ComandoAsincrono ComoLlegar { get; }
     public ComandoAsincrono VerInformacion { get; }
+    public ComandoAsincrono AlternarPanel { get; }
+    public ComandoAsincrono ExpandirPanel { get; }
+    public ComandoAsincrono RecogerPanel { get; }
+    public ComandoAsincrono AlternarEtapas { get; }
+
+    // ----- Panel inferior desplegable y encabezado plegable (22/10/2026) -----
+    // Recogido: dónde, la distancia y la acción de la etapa; desplegado: el detalle de la central, el cierre y el turno.
+    public bool PanelExpandido
+    {
+        get => panelExpandido;
+        private set
+        {
+            if (!Asignar(ref panelExpandido, value)) return;
+            foreach (var p in new[] { nameof(IconoPanel), nameof(TextoAsaPanel), nameof(MostrarDetalleCentral), nameof(MostrarFormularioCierre), nameof(PuedeContinuarCierre) })
+                Notificar(p);
+        }
+    }
+    public string IconoPanel => panelExpandido ? "abajo" : "arriba";
+    public string TextoAsaPanel => panelExpandido ? "Recoger el panel" : "Desplegar el panel";
+    public bool MostrarDetalleCentral => mostrarInformacion && panelExpandido;
+    public bool MostrarFormularioCierre => MostrarCierre && panelExpandido;
+    // Con el cierre empezado y el panel recogido, un botón lo retoma.
+    public bool PuedeContinuarCierre => MostrarCierre && !panelExpandido;
+
+    public bool MostrarEtapas { get => mostrarEtapas; private set { Asignar(ref mostrarEtapas, value); Notificar(nameof(IconoEtapas)); } }
+    public string IconoEtapas => mostrarEtapas ? "arriba" : "abajo";
+    // Una línea con el estado del caso, visible aunque las etapas estén ocultas.
+    public string TextoEstadoCabecera => despacho.Actual switch
+    {
+        null => "",
+        { Estado: DespachoSereno.EstadoEnAtencion, EnAtencionEn: { } t } => $"En atención desde las {HoraCorta(t)}",
+        { Estado: DespachoSereno.EstadoEnCamino, EnCaminoEn: { } c } => $"En camino desde las {HoraCorta(c)}",
+        { Estado: var e, AsignadoEn: var a } => $"{e} a las {HoraCorta(a)}",
+    };
+
+    // ----- Ruta por calles, calculada en la app (A* sobre OpenStreetMap) -----
+    public IReadOnlyList<PuntoRuta>? RutaMapa => ruta is ResultadoRuta.Encontrada e ? e.Puntos : null;
+    public bool HayRuta => RutaMapa is not null;
+    public string EtiquetaDistancia => ruta is ResultadoRuta.Encontrada e ? $"por calles · ~{MinutosEnVehiculo(e.Metros)} min" : "en línea recta";
+    public string EstadoRuta => calculandoRuta ? "Calculando la ruta por las calles…" : ruta is ResultadoRuta.NoDisponible n ? n.Motivo : "";
+    public bool HayEstadoRuta => EstadoRuta.Length > 0;
+    // Si la app no pudo calcular la ruta, queda el respaldo de la app de mapas del teléfono.
+    public bool MostrarAbrirEnMaps => HayDestino && ruta is ResultadoRuta.NoDisponible;
+
+    // Tiempo orientativo en vehículo por la ciudad (25 km/h de media, con semáforos y tráfico).
+    public static int MinutosEnVehiculo(double metros) => Math.Max(1, (int)Math.Round(metros / (25_000 / 60.0)));
+
+    private void ActualizarRuta()
+    {
+        var destino = Destino;
+        if (destino is null || PosicionPropia is not { } propia)
+        {
+            calculoRuta?.Cancel();
+            (destinoRuta, origenRuta) = (null, null);
+            if (ruta is not null || calculandoRuta)
+            {
+                (ruta, calculandoRuta) = (null, false);
+                NotificarRuta();
+            }
+            return;
+        }
+        var origen = new PuntoRuta(propia.Latitud, propia.Longitud);
+        // Se recalcula si cambia el caso o el sereno se movió más de 25 m: así la ruta sigue al sereno sin calcular a cada envío.
+        if (destino == destinoRuta && origenRuta is { } anterior && Geo.DistanciaMetros(anterior, origen) < 25)
+            return;
+        var casoNuevo = destino != destinoRuta;
+        if (casoNuevo) ruta = null; // no se deja a la vista la ruta de otro punto
+        (destinoRuta, origenRuta) = (destino, origen);
+        _ = CalcularRutaAsync(origen, new PuntoRuta(destino.Latitud, destino.Longitud), primera: casoNuevo || ruta is null);
+    }
+
+    private async Task CalcularRutaAsync(PuntoRuta origen, PuntoRuta destino, bool primera)
+    {
+        calculoRuta?.Cancel();
+        var cancelacion = calculoRuta = new CancellationTokenSource();
+        if (primera)
+        {
+            calculandoRuta = true; // mientras se recalcula por movimiento, la ruta anterior sigue a la vista
+            NotificarRuta();
+        }
+        ResultadoRuta resultado;
+        try
+        {
+            resultado = await rutas.CalcularAsync(origen, destino, cancelacion.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception)
+        {
+            resultado = new ResultadoRuta.NoDisponible("No se pudo calcular la ruta.");
+        }
+        if (cancelacion.IsCancellationRequested)
+            return;
+        await HiloPrincipal(() =>
+        {
+            (ruta, calculandoRuta) = (resultado, false);
+            NotificarRuta();
+        });
+    }
+
+    private void NotificarRuta()
+    {
+        foreach (var p in new[] { nameof(RutaMapa), nameof(HayRuta), nameof(TextoDistancia), nameof(HayDistancia), nameof(EtiquetaDistancia),
+                     nameof(EstadoRuta), nameof(HayEstadoRuta), nameof(MostrarAbrirEnMaps) })
+            Notificar(p);
+    }
 
     // ----- Despacho con mapa (diseño C, 22/10/2026) -----
     // El punto del caso: la ubicación del teléfono del ciudadano (SOS) o el lugar del hecho que marcó (reporte). Null si no hay
@@ -91,9 +216,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         _ => "El ciudadano no compartió su ubicación: guíate por lo que registró la central.",
     };
 
-    // Distancia en línea recta entre el sereno y el punto del caso; la ruta real la da «Cómo llegar».
-    public string TextoDistancia => Destino is { } d && PosicionPropia is { } p
-        ? FormatoDistancia(DistanciaMetros(p.Latitud, p.Longitud, d.Latitud, d.Longitud)) : "";
+    // Distancia por las calles si ya hay ruta; mientras tanto (o sin ruta), en línea recta.
+    public string TextoDistancia => ruta is ResultadoRuta.Encontrada e ? FormatoDistancia(e.Metros)
+        : Destino is { } d && PosicionPropia is { } p ? FormatoDistancia(DistanciaMetros(p.Latitud, p.Longitud, d.Latitud, d.Longitud)) : "";
     public bool HayDistancia => TextoDistancia.Length > 0;
 
     // Etapas del caso con su hora: el sereno ve en qué paso está.
@@ -115,7 +240,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         null => "",
         _ => "Sin información registrada.",
     };
-    public bool MostrarInformacion { get => mostrarInformacion; private set { Asignar(ref mostrarInformacion, value); Notificar(nameof(IconoInformacion)); } }
+    public bool MostrarInformacion { get => mostrarInformacion; private set { Asignar(ref mostrarInformacion, value); Notificar(nameof(IconoInformacion)); Notificar(nameof(MostrarDetalleCentral)); } }
     public string IconoInformacion => mostrarInformacion ? "arriba" : "abajo";
 
     public string? AvisoComoLlegar { get => avisoComoLlegar; private set { Asignar(ref avisoComoLlegar, value); Notificar(nameof(HayAvisoComoLlegar)); } }
@@ -136,15 +261,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     }
 
     // Fórmula del haversine (radio medio de la Tierra): suficiente para distancias urbanas.
-    public static double DistanciaMetros(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double Radio = 6_371_000;
-        static double Rad(double grados) => grados * Math.PI / 180;
-        var dLat = Rad(lat2 - lat1);
-        var dLon = Rad(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        return 2 * Radio * Math.Asin(Math.Min(1, Math.Sqrt(a)));
-    }
+    public static double DistanciaMetros(double lat1, double lon1, double lat2, double lon2) => Geo.DistanciaMetros(lat1, lon1, lat2, lon2);
 
     // Menos de 1 km: en metros redondeados a 10; desde 1 km: en kilómetros con un decimal (formato es-PE: punto decimal).
     public static string FormatoDistancia(double metros)
@@ -268,6 +385,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     {
         await despacho.CargarCategoriasAsync();
         MostrarCierre = true;
+        PanelExpandido = true; // el formulario se llena con el panel desplegado
         ActualizarDespacho();
     }
 
@@ -336,6 +454,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
                      nameof(Error), nameof(HayError), nameof(SesionTerminada), nameof(PuedeSalir), nameof(TextoAyudaSalir), nameof(HayAyudaSalir),
                      nameof(PosicionPropia), nameof(TextoDistancia), nameof(HayDistancia) })
             Notificar(p);
+        ActualizarRuta();
         Alternar.ActualizarDisponibilidad();
         Salir.ActualizarDisponibilidad();
     }
@@ -360,9 +479,11 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
                      nameof(ErrorResultadoCierre), nameof(HayErrorResultadoCierre), nameof(ErrorNotasCierre), nameof(HayErrorNotasCierre),
                      nameof(CierreReciente), nameof(HayCierreReciente),
                      nameof(Destino), nameof(HayDestino), nameof(SinPuntoEnMapa), nameof(TituloUbicacion), nameof(DetalleUbicacion),
-                     nameof(TextoDistancia), nameof(HayDistancia), nameof(Etapas), nameof(ResumenCentral), nameof(SinModoDespacho), nameof(PuedeActuar) })
+                     nameof(TextoDistancia), nameof(HayDistancia), nameof(Etapas), nameof(ResumenCentral), nameof(SinModoDespacho), nameof(PuedeActuar),
+                     nameof(TextoEstadoCabecera), nameof(MostrarFormularioCierre), nameof(PuedeContinuarCierre), nameof(MostrarDetalleCentral) })
             Notificar(p);
         ComoLlegar.ActualizarDisponibilidad();
+        ActualizarRuta();
     }
 }
 

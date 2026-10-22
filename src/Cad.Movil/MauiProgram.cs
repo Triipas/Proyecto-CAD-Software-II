@@ -101,16 +101,19 @@ public static class MauiProgram
 #endif
         builder.Services.AddSingleton<ServicioNotificaciones>();
         builder.Services.AddSingleton<ServicioDespacho>();
+        // Ruta hasta el caso calculada en la app, sin internet: A* sobre la red de calles que viaja en la app (Cad.Calles).
+        builder.Services.AddSingleton<IServicioRutas>(_ => new RutasLocales(() => FileSystem.OpenAppPackageFileAsync("mapa/red-viaria.bin")));
         builder.Services.AddTransient(s => new InicioSerenoVistaModelo(
             s.GetRequiredService<ServicioTurnoSereno>(), s.GetRequiredService<ServicioDespacho>(), s.GetRequiredService<ServicioNotificaciones>(),
             s.GetRequiredService<IAlmacenSesion>(),
             s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
-            // «Cómo llegar»: Google Maps (la app si está instalada; si no, el navegador).
+            // Respaldo si la app no puede calcular la ruta: Google Maps (la app si está instalada; si no, el navegador).
             async enlace =>
             {
                 try { return await Launcher.Default.OpenAsync(enlace); }
                 catch (Exception) { return false; } // ninguna app puede abrir el enlace
-            }));
+            },
+            s.GetRequiredService<IServicioRutas>()));
         builder.Services.AddTransient<IngresoPagina>();
         builder.Services.AddTransient<CambiarContrasenaPagina>();
         builder.Services.AddTransient<BienvenidaPagina>();
