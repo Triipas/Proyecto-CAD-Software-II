@@ -10,6 +10,7 @@ on:
     paths:
       - "src/Cad.Movil/**"
       - "src/Cad.Contratos/**"
+      - "src/Cad.Calles/**"
       - "tests/Cad.Movil.Tests/**"
       - "CadMovil.slnx"
       - "global.json"
@@ -19,6 +20,7 @@ on:
     paths:
       - "src/Cad.Movil/**"
       - "src/Cad.Contratos/**"
+      - "src/Cad.Calles/**"
       - "tests/Cad.Movil.Tests/**"
       - "CadMovil.slnx"
       - "global.json"

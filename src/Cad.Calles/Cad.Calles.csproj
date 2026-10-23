@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Red de calles y ruta más corta (A*) para el despacho del sereno. Sin dependencias: la usan la app y la herramienta que
+       prepara la red de calles (herramientas/red-viaria). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

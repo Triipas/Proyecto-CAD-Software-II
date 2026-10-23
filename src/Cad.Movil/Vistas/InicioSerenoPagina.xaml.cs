@@ -46,25 +46,25 @@ public partial class InicioSerenoPagina : ContentPage
     {
         switch (e.PropertyName)
         {
-            case nameof(InicioSerenoVistaModelo.Destino) or nameof(InicioSerenoVistaModelo.PosicionPropia):
+            case nameof(InicioSerenoVistaModelo.Destino) or nameof(InicioSerenoVistaModelo.PosicionPropia) or nameof(InicioSerenoVistaModelo.RutaMapa):
                 await DibujarAsync();
                 break;
             case nameof(InicioSerenoVistaModelo.HayDespacho) when vistaModelo.HayDespacho && mapaListo:
                 // El mapa estaba oculto: Leaflet recalcula su tamaño al mostrarse.
                 await EjecutarAsync("window.cad && window.cad.ajustar()");
                 break;
-            case nameof(InicioSerenoVistaModelo.MostrarCierre) or nameof(InicioSerenoVistaModelo.MostrarInformacion):
+            case nameof(InicioSerenoVistaModelo.PanelExpandido):
                 AjustarPanel();
                 break;
         }
     }
 
-    // El panel ocupa como máximo algo menos de la mitad de la pantalla; con el cierre o el detalle abiertos crece y el mapa se
+    // Recogido, el panel ocupa como máximo algo menos de la mitad de la pantalla; desplegado (detalle o cierre) crece y el mapa se
     // reduce (sin desaparecer: queda como referencia).
     private void AjustarPanel()
     {
         if (Height <= 0) return;
-        var proporcion = vistaModelo.MostrarCierre || vistaModelo.MostrarInformacion ? 0.62 : 0.46;
+        var proporcion = vistaModelo.PanelExpandido ? 0.6 : 0.42;
         PanelDespacho.MaximumHeightRequest = Height * proporcion;
     }
 
@@ -88,6 +88,7 @@ public partial class InicioSerenoPagina : ContentPage
         {
             destino = destino is null ? null : new { lat = destino.Latitud, lon = destino.Longitud, precision = destino.PrecisionMetros ?? 0, tipo = destino.Tipo },
             yo = propia is null ? null : new { lat = propia.Latitud, lon = propia.Longitud },
+            ruta = vistaModelo.RutaMapa?.Select(p => new[] { p.Latitud, p.Longitud }),
         });
         await EjecutarAsync($"window.cad && window.cad.mostrar({datos})");
     }

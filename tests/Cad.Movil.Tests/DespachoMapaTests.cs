@@ -1,6 +1,7 @@
 using Cad.Contratos.Serenos;
 using Cad.Contratos.Sos;
 using Cad.Movil.Servicios;
+using Cad.Calles;
 using Cad.Movil.VistasModelo;
 using Microsoft.Extensions.Time.Testing;
 
@@ -19,11 +20,11 @@ public class DespachoMapaTests
     private static DespachoSereno Sos(UbicacionDespacho? ubicacion) =>
         new(Guid.NewGuid(), "SOS", DespachoSereno.EstadoAsignada, Inicio, Inicio.AddMinutes(1), ubicacion, []);
 
-    private InicioSerenoVistaModelo VistaModelo() =>
+    private InicioSerenoVistaModelo VistaModelo(IServicioRutas? rutas = null) =>
         new(new ServicioTurnoSereno(api, ubicacion, sesiones, new FakeTimeProvider(Inicio)),
             new ServicioDespacho(api, sesiones, new CanalFalso(), TimeProvider.System),
             new ServicioNotificaciones(api, sesiones, new ServicioPushNoDisponible(), TimeProvider.System), sesiones, new NavegacionFalsa(), () => { },
-            enlace => { enlaces.Add(enlace); return Task.FromResult(abreEnlaces); })
+            enlace => { enlaces.Add(enlace); return Task.FromResult(abreEnlaces); }, rutas)
         { HiloPrincipal = a => { a(); return Task.CompletedTask; } };
 
     private static async Task Esperar(Func<bool> condicion, string descripcion)
@@ -143,6 +144,115 @@ public class DespachoMapaTests
         await vm.VerInformacion.EjecutarAsync();
         Assert.True(vm.MostrarInformacion);
         Assert.Equal("arriba", vm.IconoInformacion);
+    }
+
+    // ----- Ruta por calles calculada en la app -----
+
+    private async Task<InicioSerenoVistaModelo> SosConPosicionAsync(IServicioRutas rutas)
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Sos(new UbicacionDespacho(-12.0464, -77.0428, 12, Inicio)));
+        api.EstadoServidor = new RespuestaEstadoOperativo(true, Inicio, 15);
+        ubicacion.Posicion = () => new UbicacionSos(-12.0500, -77.0428, 8, Inicio);
+        var vm = VistaModelo(rutas);
+        await vm.AlAparecerAsync();
+        return vm;
+    }
+
+    [Fact]
+    public async Task ConPosicionYDestino_LaRutaSeCalculaEnLaApp_YLaDistanciaEsPorCalles()
+    {
+        var rutas = new RutasFalsas();
+        var vm = await SosConPosicionAsync(rutas);
+        await Esperar(() => vm.HayRuta, "la ruta llega");
+
+        var (origen, destino) = rutas.Pedidas[0];
+        Assert.Equal(new PuntoRuta(-12.0500, -77.0428), origen);
+        Assert.Equal(new PuntoRuta(-12.0464, -77.0428), destino);
+        Assert.Equal(3, vm.RutaMapa!.Count);
+        Assert.Equal("520 m", vm.TextoDistancia);
+        Assert.Equal("por calles · ~1 min", vm.EtiquetaDistancia);
+        Assert.False(vm.HayEstadoRuta);
+        Assert.False(vm.MostrarAbrirEnMaps);
+    }
+
+    [Fact]
+    public async Task SiLaRutaNoSePuedeCalcular_SeDiceElMotivo_YQuedaElRespaldoDeLaAppDeMapas()
+    {
+        var rutas = new RutasFalsas { Respuesta = (_, _) => new ResultadoRuta.NoDisponible("No se pudieron descargar las calles de la zona.") };
+        var vm = await SosConPosicionAsync(rutas);
+        await Esperar(() => vm.HayEstadoRuta && !vm.EstadoRuta.StartsWith("Calculando"), "el motivo llega");
+
+        Assert.Equal("No se pudieron descargar las calles de la zona.", vm.EstadoRuta);
+        Assert.True(vm.MostrarAbrirEnMaps);
+        Assert.Equal("400 m", vm.TextoDistancia); // en línea recta mientras no hay ruta
+        Assert.Equal("en línea recta", vm.EtiquetaDistancia);
+    }
+
+    [Theory]
+    [InlineData(100, 1)]
+    [InlineData(1000, 2)]
+    [InlineData(5000, 12)]
+    public void ElTiempoEnVehiculo_EsOrientativo(double metros, int minutos) =>
+        Assert.Equal(minutos, InicioSerenoVistaModelo.MinutosEnVehiculo(metros));
+
+    // ----- Panel desplegable y encabezado plegable -----
+
+    [Fact]
+    public async Task ElPanel_EmpiezaRecogido_YElCierreLoDespliega_YSePuedeRetomar()
+    {
+        var enAtencion = Sos(null) with { Estado = DespachoSereno.EstadoEnAtencion, EnCaminoEn = Inicio.AddMinutes(2), EnAtencionEn = Inicio.AddMinutes(9) };
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(enAtencion);
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+        Assert.False(vm.PanelExpandido);
+        Assert.Equal("arriba", vm.IconoPanel);
+
+        var avisadas = new List<string?>();
+        vm.PropertyChanged += (_, e) => avisadas.Add(e.PropertyName);
+        await vm.AbrirCierre.EjecutarAsync();
+        Assert.True(vm.PanelExpandido);
+        Assert.True(vm.MostrarFormularioCierre);
+        Assert.Equal("Recoger el panel", vm.TextoAsaPanel);
+        Assert.Contains(nameof(vm.TextoAsaPanel), avisadas); // el lector de pantalla anuncia el estado real del asa
+
+        await vm.RecogerPanel.EjecutarAsync(); // el sereno quiere ver el mapa sin perder lo escrito
+        Assert.False(vm.MostrarFormularioCierre);
+        Assert.True(vm.PuedeContinuarCierre);
+        Assert.True(vm.MostrarCierre);
+
+        await vm.ExpandirPanel.EjecutarAsync();
+        Assert.True(vm.MostrarFormularioCierre);
+        Assert.False(vm.PuedeContinuarCierre);
+    }
+
+    [Fact]
+    public async Task LoQueRegistroLaCentral_AlDesplegarse_DespliegaElPanel()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Sos(null));
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+
+        await vm.VerInformacion.EjecutarAsync();
+
+        Assert.True(vm.PanelExpandido);
+        Assert.True(vm.MostrarDetalleCentral);
+        await vm.AlternarPanel.EjecutarAsync();
+        Assert.False(vm.MostrarDetalleCentral); // recogido no se ve el detalle
+    }
+
+    [Fact]
+    public async Task ElEncabezado_ResumeElEstadoEnUnaLinea_YLasEtapasSeOcultan()
+    {
+        var enCamino = Sos(null) with { Estado = DespachoSereno.EstadoEnCamino, EnCaminoEn = Inicio.AddMinutes(3) };
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(enCamino);
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+
+        Assert.StartsWith("En camino desde las ", vm.TextoEstadoCabecera);
+        Assert.True(vm.MostrarEtapas);
+        await vm.AlternarEtapas.EjecutarAsync();
+        Assert.False(vm.MostrarEtapas);
+        Assert.Equal("abajo", vm.IconoEtapas);
     }
 
     [Theory]

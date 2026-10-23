@@ -41,6 +41,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Cad.Contratos\Cad.Contratos.csproj" />
+		<ProjectReference Include="..\Cad.Calles\Cad.Calles.csproj" />
 	</ItemGroup>
 
 	<!-- HU21 (ADR-07): notificación push del despacho con Firebase Cloud Messaging, solo en Android.
