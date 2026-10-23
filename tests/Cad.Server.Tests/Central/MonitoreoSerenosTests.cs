@@ -124,6 +124,24 @@ public class MonitoreoSerenosTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task ConPosicion_SeOfreceUnBotonParaUbicarloEnElMapa_YSinCasoNoHayVinculo()
+    {
+        var (app, sereno) = await SerenoAsync();
+        await CambiarAsync(app, true);
+        await PosicionAsync(app, -12.07, -77.05);
+        var operador = await OperadorAsync();
+
+        var elemento = Elemento(await operador.GetStringAsync(Fragmento), sereno.Id);
+
+        // Un botón a la vista (antes un texto con aspecto de enlace), aparte de la hora de la última ubicación.
+        Assert.Matches("<button type=\"button\" class=\"boton boton--secundario boton--compacto sereno__ubicar\" data-ver-sereno", elemento);
+        Assert.Contains("Ubicar en el mapa", elemento);
+        Assert.Contains("Última ubicación a las ", elemento);
+        // Sin caso asignado no hay caso con el que vincularlo en el mapa.
+        Assert.Contains("data-caso=\"\"", elemento);
+    }
+
+    [Fact]
     public async Task CA04_SerenoSinPosiciones_ApareceConUbicacionNoDisponibleSinMarcador()
     {
         var (app, sereno) = await SerenoAsync();

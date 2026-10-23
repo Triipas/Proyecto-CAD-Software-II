@@ -209,9 +209,10 @@
 
   // HU25-CA01/CA02/CA03: un marcador por caso en curso, distinto por origen (color) y por estado (con borde; reporte en
   // revisión con borde discontinuo). Al elegirlo se ven su identificador, origen y estado, con un enlace a su detalle.
-  function dibujarCasosEnCurso() {
+  function dibujarCasosEnCurso(vinculados) {
     for (const m of marcadoresEnCurso.splice(0)) m.remove();
     for (const item of regionCasosMapa?.querySelectorAll("[data-caso-mapa]") ?? []) {
+      if (vinculados.get(item.dataset.casoMapa)?.enElLugar) continue; // lo dibuja el marcador conjunto con su sereno
       const reporte = item.dataset.origen === "Reporte";
       const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
       const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
@@ -247,12 +248,70 @@
   const regionSerenos = document.querySelector("[data-region-serenos]");
   const marcadoresSerenos = new Map();
 
-  function dibujarSerenos() {
+  // ---------- El sereno y su caso: en el lugar (un solo marcador) o en camino (una línea los une) ----------
+  // A menos de esta distancia del punto del caso, el sereno está en el lugar: se dibujan juntos para que no parezcan dos
+  // sitios distintos (antes cada marcador iba por su lado y, con unos metros de diferencia, quedaban uno al lado del otro).
+  const EN_EL_LUGAR_METROS = 50;
+  const lineasVinculo = [];
+
+  // Caso en curso → su sereno asignado, con la distancia entre ambos (solo si los dos tienen ubicación).
+  function vinculos() {
+    const resultado = new Map();
+    for (const sereno of regionSerenos.querySelectorAll("[data-sereno][data-caso]")) {
+      if (!sereno.dataset.caso || !sereno.dataset.lat) continue;
+      const caso = regionCasosMapa?.querySelector(`[data-caso-mapa="${CSS.escape(sereno.dataset.caso)}"]`);
+      if (!caso) continue;
+      const puntoCaso = L.latLng(Number(caso.dataset.lat), Number(caso.dataset.lon));
+      const puntoSereno = L.latLng(Number(sereno.dataset.lat), Number(sereno.dataset.lon));
+      const metros = puntoCaso.distanceTo(puntoSereno);
+      resultado.set(sereno.dataset.caso, { caso, sereno, puntoCaso, puntoSereno, metros, enElLugar: metros <= EN_EL_LUGAR_METROS });
+    }
+    return resultado;
+  }
+
+  function dibujarEnCurso() {
+    const vinculados = vinculos();
+    dibujarCasosEnCurso(vinculados);
+    dibujarSerenos(vinculados);
+    for (const linea of lineasVinculo.splice(0)) linea.remove();
+    for (const v of vinculados.values()) {
+      if (v.enElLugar) continue;
+      // En camino: una línea fina une al sereno con su caso (el destino del despacho).
+      lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: "linea-vinculo" }).addTo(mapa));
+    }
+  }
+
+  // Un solo marcador: el del caso, con el escudo del sereno encima y la etiqueta «En el lugar».
+  function marcadorEnElLugar(v) {
+    const reporte = v.caso.dataset.origen === "Reporte";
+    const disponible = v.sereno.dataset.disponible === "true";
+    const texto = `${v.caso.dataset.origen} · ${v.caso.dataset.estado} · sereno ${v.sereno.dataset.nombre} en el lugar`;
+    return L.marker(v.puntoCaso, {
+      icon: L.divIcon({
+        className: `marcador-conjunto marcador-conjunto--${reporte ? "reporte" : "sos"}`,
+        html: `<span class="conjunto__caso ${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso">${reporte ? "" : SIRENA}</span>`
+          + `<span class="conjunto__sereno marcador-sereno">${escudo(disponible)}</span><span class="conjunto__etiqueta">En el lugar</span>`,
+        iconSize: [40, 36], iconAnchor: [20, 18], popupAnchor: [0, -24],
+      }),
+      title: texto,
+      alt: texto,
+      keyboard: true,
+      zIndexOffset: 500,
+    }).bindPopup(`<strong>${escapar(v.caso.dataset.origen)} · ${escapar(v.caso.dataset.estado)}</strong><br>${escapar(v.caso.dataset.ciudadano)}<br>`
+      + `Sereno en el lugar: ${escapar(v.sereno.dataset.nombre)} (a ${Math.round(v.metros)} m · ${escapar(v.sereno.dataset.hora)})<br><a href="${escapar(v.caso.dataset.detalle)}">Ver el caso</a>`);
+  }
+
+  function dibujarSerenos(vinculados) {
     for (const marcador of marcadoresSerenos.values()) marcador.remove();
     marcadoresSerenos.clear();
+    const enElLugar = new Map([...vinculados.values()].filter((v) => v.enElLugar).map((v) => [v.sereno.dataset.sereno, v]));
     for (const item of regionSerenos.querySelectorAll("[data-sereno][data-lat]")) {
       if (!item.dataset.lat) continue; // HU19-CA04: sin ubicación no hay marcador
       const id = item.dataset.sereno;
+      if (enElLugar.has(id)) {
+        marcadoresSerenos.set(id, marcadorEnElLugar(enElLugar.get(id)).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa));
+        continue;
+      }
       const disponible = item.dataset.disponible === "true";
       const texto = `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
@@ -369,7 +428,7 @@
     if (respuesta.redirected || !respuesta.ok) return false;
     const seleccionado = regionSerenos.querySelector(".sereno--seleccionado")?.dataset.sereno;
     regionSerenos.innerHTML = await respuesta.text();
-    dibujarSerenos();
+    dibujarEnCurso();
     if (seleccionado) {
       document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
       resaltar(marcadoresSerenos, seleccionado);
@@ -507,7 +566,7 @@
       if (enCurso.ok && !enCurso.redirected) regionCasosMapa.innerHTML = await enCurso.text();
     }
     dibujarMarcadores();
-    dibujarCasosEnCurso();
+    dibujarEnCurso();
     if (sosSeleccionado) {
       document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
       resaltar(marcadores, sosSeleccionado);
@@ -583,8 +642,7 @@
   }
 
   dibujarMarcadores();
-  dibujarCasosEnCurso();
-  dibujarSerenos();
+  dibujarEnCurso();
   iniciar();
 
   // Acceso para la verificación automatizada (estado de la conexión y vista del mapa, sin datos).
