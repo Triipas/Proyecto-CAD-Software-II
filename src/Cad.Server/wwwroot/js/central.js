@@ -209,9 +209,10 @@
 
   // HU25-CA01/CA02/CA03: un marcador por caso en curso, distinto por origen (color) y por estado (con borde; reporte en
   // revisión con borde discontinuo). Al elegirlo se ven su identificador, origen y estado, con un enlace a su detalle.
-  function dibujarCasosEnCurso() {
+  function dibujarCasosEnCurso(vinculados) {
     for (const m of marcadoresEnCurso.splice(0)) m.remove();
     for (const item of regionCasosMapa?.querySelectorAll("[data-caso-mapa]") ?? []) {
+      if (vinculados.get(item.dataset.casoMapa)?.enElLugar) continue; // lo dibuja el marcador conjunto con su sereno
       const reporte = item.dataset.origen === "Reporte";
       const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
       const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
@@ -224,6 +225,7 @@
       })
         .bindPopup(`<strong>${escapar(item.dataset.origen)} · ${escapar(item.dataset.estado)}</strong><br>Identificador: ${escapar(item.dataset.casoMapa)}<br>${escapar(item.dataset.ciudadano)}<br><a href="${escapar(item.dataset.detalle)}">Ver el caso</a>`)
         .addTo(mapa));
+      marcadoresEnCurso.at(-1).claves = [`caso:${item.dataset.casoMapa}`];
     }
   }
 
@@ -247,12 +249,120 @@
   const regionSerenos = document.querySelector("[data-region-serenos]");
   const marcadoresSerenos = new Map();
 
-  function dibujarSerenos() {
+  // ---------- El sereno y su caso: en el lugar (un solo marcador) o en camino (una línea los une) ----------
+  // A menos de esta distancia del punto del caso, el sereno está en el lugar: se dibujan juntos para que no parezcan dos
+  // sitios distintos (antes cada marcador iba por su lado y, con unos metros de diferencia, quedaban uno al lado del otro).
+  const EN_EL_LUGAR_METROS = 50;
+  const lineasVinculo = [];
+
+  // Caso en curso → su sereno asignado, con la distancia entre ambos (solo si los dos tienen ubicación).
+  function vinculos() {
+    const resultado = new Map();
+    for (const sereno of regionSerenos.querySelectorAll("[data-sereno][data-caso]")) {
+      if (!sereno.dataset.caso || !sereno.dataset.lat) continue;
+      const caso = regionCasosMapa?.querySelector(`[data-caso-mapa="${CSS.escape(sereno.dataset.caso)}"]`);
+      if (!caso) continue;
+      const puntoCaso = L.latLng(Number(caso.dataset.lat), Number(caso.dataset.lon));
+      const puntoSereno = L.latLng(Number(sereno.dataset.lat), Number(sereno.dataset.lon));
+      const metros = puntoCaso.distanceTo(puntoSereno);
+      resultado.set(sereno.dataset.caso, { caso, sereno, puntoCaso, puntoSereno, metros, enElLugar: metros <= EN_EL_LUGAR_METROS });
+    }
+    return resultado;
+  }
+
+  function dibujarEnCurso() {
+    // Los marcadores se rehacen con cada aviso (la posición de un sereno llega cada pocos segundos): si el operador tenía
+    // abierto el detalle de un caso o de un sereno, se vuelve a abrir en el marcador nuevo.
+    const enMapa = () => [...marcadoresEnCurso, ...marcadoresSerenos.values()];
+    const abierto = enMapa().find((m) => m.isPopupOpen())?.claves ?? [];
+    const vinculados = vinculos();
+    dibujarCasosEnCurso(vinculados);
+    dibujarSerenos(vinculados);
+    if (abierto.length) enMapa().find((m) => m.claves?.some((c) => abierto.includes(c)))?.openPopup();
+    dibujarRecorridos(vinculados);
+  }
+
+  // En camino: el recorrido por calles del sereno hasta su caso. El servidor lo busca con la misma red de calles y el mismo A*
+  // que la app, así que la central ve la ruta que sigue el sereno. Se vuelve a pedir solo cuando un sereno con caso cambia de
+  // posición; mientras llega la primera, o si el caso está fuera de la zona con calles cargadas, una línea recta punteada.
+  const recorridos = new Map(); // sereno → { clave, caso, puntos }
+  let pidiendoRecorridos = false;
+  const claveRecorrido = (v) => `${v.caso.dataset.casoMapa}|${v.sereno.dataset.lat},${v.sereno.dataset.lon}`;
+
+  function dibujarRecorridos(vinculados) {
+    for (const linea of lineasVinculo.splice(0)) linea.remove();
+    let faltan = false;
+    for (const v of vinculados.values()) {
+      if (v.enElLugar) continue;
+      const recorrido = recorridos.get(v.sereno.dataset.sereno);
+      if (recorrido?.clave !== claveRecorrido(v)) faltan = true;
+      // Hasta que llega el nuevo, se mantiene el recorrido anterior del mismo caso (sin parpadeo cada 15 s).
+      if (recorrido?.caso === v.caso.dataset.casoMapa && recorrido.puntos) {
+        const trazo = { lineCap: "round", lineJoin: "round", interactive: false };
+        lineasVinculo.push(
+          L.polyline(recorrido.puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9, className: "linea-vinculo" }).addTo(mapa),
+          L.polyline(recorrido.puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9, className: "linea-vinculo" }).addTo(mapa));
+      } else {
+        lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: "linea-vinculo" }).addTo(mapa));
+      }
+    }
+    if (faltan) pedirRecorridos(vinculados);
+  }
+
+  async function pedirRecorridos(vinculados) {
+    if (pidiendoRecorridos) return; // al terminar se redibuja y, si algo cambió entretanto, se vuelve a pedir
+    pidiendoRecorridos = true;
+    const claves = new Map([...vinculados.values()].map((v) => [v.sereno.dataset.sereno, { clave: claveRecorrido(v), caso: v.caso.dataset.casoMapa }]));
+    try {
+      const respuesta = await fetch("/panel/central?handler=Rutas", { headers: { Accept: "application/json" }, credentials: "same-origin" });
+      if (respuesta.redirected || !respuesta.ok) return;
+      const rutas = new Map((await respuesta.json()).map((r) => [r.sereno, r]));
+      // Un sereno sin recorrido en la respuesta queda con la línea recta (y no se pide otra vez hasta que se mueva).
+      for (const [sereno, pedido] of claves) {
+        const ruta = rutas.get(sereno);
+        recorridos.set(sereno, { ...pedido, puntos: ruta?.caso === pedido.caso ? ruta.puntos : null });
+      }
+    } catch {
+      return;
+    } finally {
+      pidiendoRecorridos = false;
+    }
+    dibujarRecorridos(vinculos());
+  }
+
+  // Un solo marcador: el del caso, con el escudo del sereno encima y la etiqueta «En el lugar».
+  function marcadorEnElLugar(v) {
+    const reporte = v.caso.dataset.origen === "Reporte";
+    const disponible = v.sereno.dataset.disponible === "true";
+    const texto = `${v.caso.dataset.origen} · ${v.caso.dataset.estado} · sereno ${v.sereno.dataset.nombre} en el lugar`;
+    return L.marker(v.puntoCaso, {
+      icon: L.divIcon({
+        className: `marcador-conjunto marcador-conjunto--${reporte ? "reporte" : "sos"}`,
+        html: `<span class="conjunto__caso ${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso">${reporte ? "" : SIRENA}</span>`
+          + `<span class="conjunto__sereno marcador-sereno">${escudo(disponible)}</span><span class="conjunto__etiqueta">En el lugar</span>`,
+        iconSize: [40, 36], iconAnchor: [20, 18], popupAnchor: [0, -24],
+      }),
+      title: texto,
+      alt: texto,
+      keyboard: true,
+      zIndexOffset: 500,
+    }).bindPopup(`<strong>${escapar(v.caso.dataset.origen)} · ${escapar(v.caso.dataset.estado)}</strong><br>${escapar(v.caso.dataset.ciudadano)}<br>`
+      + `Sereno en el lugar: ${escapar(v.sereno.dataset.nombre)} (a ${Math.round(v.metros)} m · ${escapar(v.sereno.dataset.hora)})<br><a href="${escapar(v.caso.dataset.detalle)}">Ver el caso</a>`);
+  }
+
+  function dibujarSerenos(vinculados) {
     for (const marcador of marcadoresSerenos.values()) marcador.remove();
     marcadoresSerenos.clear();
+    const enElLugar = new Map([...vinculados.values()].filter((v) => v.enElLugar).map((v) => [v.sereno.dataset.sereno, v]));
     for (const item of regionSerenos.querySelectorAll("[data-sereno][data-lat]")) {
       if (!item.dataset.lat) continue; // HU19-CA04: sin ubicación no hay marcador
       const id = item.dataset.sereno;
+      if (enElLugar.has(id)) {
+        const conjunto = marcadorEnElLugar(enElLugar.get(id)).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa);
+        conjunto.claves = [`sereno:${id}`, `caso:${enElLugar.get(id).caso.dataset.casoMapa}`];
+        marcadoresSerenos.set(id, conjunto);
+        continue;
+      }
       const disponible = item.dataset.disponible === "true";
       const texto = `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
@@ -267,6 +377,7 @@
         .bindPopup(`<strong>Sereno · Operativo</strong><br>${escapar(item.dataset.nombre)}<br>${disponible ? "Disponible" : "No disponible"}<br>Última ubicación a las ${escapar(item.dataset.hora)}`)
         .on("click", () => seleccionarSereno(id, { desdeMapa: true }))
         .addTo(mapa);
+      marcador.claves = [`sereno:${id}`];
       marcadoresSerenos.set(id, marcador);
     }
   }
@@ -369,7 +480,7 @@
     if (respuesta.redirected || !respuesta.ok) return false;
     const seleccionado = regionSerenos.querySelector(".sereno--seleccionado")?.dataset.sereno;
     regionSerenos.innerHTML = await respuesta.text();
-    dibujarSerenos();
+    dibujarEnCurso();
     if (seleccionado) {
       document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
       resaltar(marcadoresSerenos, seleccionado);
@@ -507,7 +618,7 @@
       if (enCurso.ok && !enCurso.redirected) regionCasosMapa.innerHTML = await enCurso.text();
     }
     dibujarMarcadores();
-    dibujarCasosEnCurso();
+    dibujarEnCurso();
     if (sosSeleccionado) {
       document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
       resaltar(marcadores, sosSeleccionado);
@@ -583,8 +694,7 @@
   }
 
   dibujarMarcadores();
-  dibujarCasosEnCurso();
-  dibujarSerenos();
+  dibujarEnCurso();
   iniciar();
 
   // Acceso para la verificación automatizada (estado de la conexión y vista del mapa, sin datos).

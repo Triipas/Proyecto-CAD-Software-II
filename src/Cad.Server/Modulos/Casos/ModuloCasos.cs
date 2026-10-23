@@ -31,6 +31,8 @@ public static class ModuloCasos
         services.AddScoped<EvaluarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
+        services.AddSingleton<Modulos.Consultas.RedCalles>();
+        services.AddScoped<Modulos.Consultas.ConsultarRutasEnCamino>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();
         services.AddScoped<Modulos.Consultas.ConsultarFichaCiudadano>(); // ADR-08, fase D
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();

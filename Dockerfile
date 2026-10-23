@@ -6,6 +6,7 @@ WORKDIR /fuente
 # Primero los proyectos, para reutilizar la capa de restauración si solo cambia el código.
 COPY global.json ./
 COPY src/Cad.Contratos/Cad.Contratos.csproj src/Cad.Contratos/
+COPY src/Cad.Calles/Cad.Calles.csproj src/Cad.Calles/
 COPY src/Cad.Server/Cad.Server.csproj src/Cad.Server/
 RUN dotnet restore src/Cad.Server/Cad.Server.csproj
 COPY src/ src/

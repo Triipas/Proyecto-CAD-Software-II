@@ -20,7 +20,7 @@
                 <li class="sereno @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
                     data-sereno="@sereno.Id" data-nombre="@sereno.Nombre"
                     data-disponible="@(sereno.Disponible ? "true" : "false")"
-                    data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)"
+                    data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)" data-caso="@sereno.CasoAsignadoId"
                     data-hora="@(sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "")">
                     <div class="sereno__cabecera">
                         <span class="sereno__nombre">@sereno.Nombre</span>
@@ -38,9 +38,14 @@
                     }
                     @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is { } recibida)
                     {
-                        <button type="button" class="sos__ubicacion" data-ver-sereno aria-label="Ver en el mapa al sereno @sereno.Nombre">
-                            <partial name="_Icono" model="@("ubicacion")" />
-                            <span>Última ubicación a las @TimeZoneInfo.ConvertTime(recibida, Model.ZonaHoraria).ToString("HH:mm:ss", inv) · ± @sereno.PrecisionMetros?.ToString("0", inv) m · Ver en el mapa</span>
+                        <p class="sereno__ubicacion">
+                            <partial name="_Icono" model="@("reloj")" />
+                            <span>Última ubicación a las @TimeZoneInfo.ConvertTime(recibida, Model.ZonaHoraria).ToString("HH:mm:ss", inv) · ± @sereno.PrecisionMetros?.ToString("0", inv) m</span>
+                        </p>
+                        @* Botón a la vista (antes era un texto con aspecto de enlace): lleva el mapa al sereno. *@
+                        <button type="button" class="boton boton--secundario boton--compacto sereno__ubicar" data-ver-sereno
+                                aria-label="Ubicar en el mapa al sereno @sereno.Nombre">
+                            <partial name="_Icono" model="@("ubicacion")" />Ubicar en el mapa
                         </button>
                     }
                     else

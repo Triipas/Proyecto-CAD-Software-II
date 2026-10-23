@@ -12,7 +12,7 @@ namespace Cad.Server.Panel.Pages.Central;
 // muestran aparte, en «Reportes admitidos», y se asignan con las mismas reglas.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consultarSerenos, ConsultarReportesAdmitidos consultarReportes,
-    ConsultarCasosEnMapa consultarCasosEnMapa, ConsultarAcompanamientos consultarAcompanamientos, IConfiguration configuracion,
+    ConsultarCasosEnMapa consultarCasosEnMapa, ConsultarRutasEnCamino consultarRutas, ConsultarAcompanamientos consultarAcompanamientos, IConfiguration configuracion,
     Microsoft.Extensions.Options.IOptions<Modulos.Mediciones.OpcionesMedicion> medicion) : PageModel
 {
     // RNF02: con la medición activada, el panel envía el acuse de presentación de cada SOS.
@@ -73,6 +73,17 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     // HU19-CA03: fragmento de los serenos, que el panel pide al recibir «SerenoActualizado» o al reconectar.
     public async Task<IActionResult> OnGetSerenosAsync(CancellationToken ct) =>
         Partial("_ListaSerenos", new ListaSerenos(await consultarSerenos.EjecutarAsync(ct), ZonaHoraria()));
+
+    // Recorrido por calles de cada sereno hasta su caso; el panel lo pide cuando un sereno con caso cambia de posición.
+    // Puntos como [latitud, longitud], el formato de Leaflet.
+    public async Task<IActionResult> OnGetRutasAsync(CancellationToken ct) =>
+        new JsonResult((await consultarRutas.EjecutarAsync(ct)).Select(r => new
+        {
+            sereno = r.SerenoId,
+            caso = r.CasoId,
+            puntos = r.Puntos?.Select(p => new[] { Math.Round(p.Latitud, 6), Math.Round(p.Longitud, 6) }),
+            metros = r.Metros is { } m ? Math.Round(m) : (double?)null,
+        }));
 
     public ListaSos Lista => new(Pendientes, ZonaHoraria());
     public ListaReportes ListaDeReportes => new(ReportesAdmitidos, ZonaHoraria());
