@@ -88,6 +88,19 @@ public class RutasTests
     }
 
     [Fact]
+    public void ElFinalDeUnaViaDeUnSoloSentido_SirveDeDestino()
+    {
+        // 1→2→3 de un solo sentido: la esquina 3 tiene entrada pero no salida. El caso junto a ella debe terminar ahí, no en 2.
+        var red = Red(([1, 2, 3], "yes"));
+        var caso = new PuntoRuta(-11.9999, -76.9999); // a ~15 m de la esquina 3
+
+        var ruta = Assert.IsType<ResultadoRuta.Encontrada>(Calcular(red, P(1), caso));
+
+        Assert.Equal(P(3), ruta.Puntos[^2]); // la última esquina antes del caso
+        Assert.InRange(ruta.Metros, 2 * 109 + 10, 2 * 109 + 25);
+    }
+
+    [Fact]
     public void SiLosSentidosLoImpiden_SeRepiteSinSentidos()
     {
         // Única calle, de un solo sentido 3→2→1: de 1 a 3 no hay camino respetándolo (red recortada en el borde).

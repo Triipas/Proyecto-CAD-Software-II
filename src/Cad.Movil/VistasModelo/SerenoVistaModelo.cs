@@ -33,8 +33,10 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         ComoLlegar = new ComandoAsincrono(ComoLlegarAsync, () => HayDestino);
         VerInformacion = new ComandoAsincrono(() =>
         {
-            MostrarInformacion = !MostrarInformacion;
-            if (MostrarInformacion) PanelExpandido = true; // el detalle se lee con el panel desplegado
+            // Según lo que se ve: si el detalle quedó abierto pero el panel se recogió, el toque lo vuelve a mostrar.
+            var mostrar = !MostrarDetalleCentral;
+            MostrarInformacion = mostrar;
+            if (mostrar) PanelExpandido = true; // el detalle se lee con el panel desplegado
             return Task.CompletedTask;
         });
         AlternarPanel = new ComandoAsincrono(() => { PanelExpandido = !PanelExpandido; return Task.CompletedTask; });

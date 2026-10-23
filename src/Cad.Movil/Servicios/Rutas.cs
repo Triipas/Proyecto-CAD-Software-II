@@ -62,7 +62,7 @@ public sealed class RutasLocales(Func<Task<Stream>> abrirRed) : IServicioRutas
 
     public static ResultadoRuta Calcular(GrafoViario conSentidos, GrafoViario sinSentidos, PuntoRuta origen, PuntoRuta destino)
     {
-        if (conSentidos.MasCercano(origen) is not { } a || conSentidos.MasCercano(destino) is not { } b
+        if (conSentidos.MasCercano(origen) is not { } a || conSentidos.MasCercano(destino, comoDestino: true) is not { } b
             || a.Metros > DistanciaMaximaACalleMetros || b.Metros > DistanciaMaximaACalleMetros)
             return new ResultadoRuta.NoDisponible(MensajeFueraDeZona);
 

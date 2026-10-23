@@ -116,6 +116,8 @@ public sealed class RedViaria
 public sealed class GrafoViario(IReadOnlyList<PuntoRuta> nodos)
 {
     private readonly List<(int Hasta, double Metros)>?[] salidas = new List<(int, double)>?[nodos.Count];
+    // Nodos a los que se puede llegar (el final de una vía de un solo sentido tiene entrada pero quizá no salida).
+    private readonly bool[] conEntrada = new bool[nodos.Count];
 
     public IReadOnlyList<PuntoRuta> Nodos => nodos;
 
@@ -130,15 +132,20 @@ public sealed class GrafoViario(IReadOnlyList<PuntoRuta> nodos)
         }
     }
 
-    private void Unir(int desde, int hasta, double metros) => (salidas[desde] ??= []).Add((hasta, metros));
+    private void Unir(int desde, int hasta, double metros)
+    {
+        (salidas[desde] ??= []).Add((hasta, metros));
+        conEntrada[hasta] = true;
+    }
 
-    // Nodo de la red más cercano a un punto, entre los que tienen salida (para empezar y terminar la ruta sobre una calle).
-    public (int Nodo, double Metros)? MasCercano(PuntoRuta punto)
+    // Nodo de la red más cercano a un punto, para empezar o terminar la ruta sobre una calle: el origen necesita una salida y el
+    // destino, una entrada.
+    public (int Nodo, double Metros)? MasCercano(PuntoRuta punto, bool comoDestino = false)
     {
         (int, double)? mejor = null;
         for (var i = 0; i < nodos.Count; i++)
         {
-            if (salidas[i] is null) continue;
+            if (comoDestino ? !conEntrada[i] : salidas[i] is null) continue;
             var d = Geo.DistanciaMetros(punto, nodos[i]);
             if (mejor is null || d < mejor.Value.Item2) mejor = (i, d);
         }

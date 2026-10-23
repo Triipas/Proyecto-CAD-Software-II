@@ -238,6 +238,12 @@ public class DespachoMapaTests
         Assert.True(vm.MostrarDetalleCentral);
         await vm.AlternarPanel.EjecutarAsync();
         Assert.False(vm.MostrarDetalleCentral); // recogido no se ve el detalle
+
+        await vm.VerInformacion.EjecutarAsync(); // un solo toque lo vuelve a mostrar
+        Assert.True(vm.MostrarDetalleCentral);
+        Assert.True(vm.PanelExpandido);
+        await vm.VerInformacion.EjecutarAsync();
+        Assert.False(vm.MostrarDetalleCentral);
     }
 
     [Fact]
