@@ -506,6 +506,12 @@
   box-shadow: 0 1px 3px rgba(13, 27, 51, 0.35);
 }
 
+/* La leyenda sigue mandando sobre el marcador conjunto: después de sus estilos y con más especificidad que su display. */
+.central--sin-sos .marcador-conjunto .marcador-sos,
+.central--sin-reporte .marcador-conjunto .marcador-reporte {
+  display: none;
+}
+
 .marcador-conjunto.marcador--elegido::after {
   inset: -9px -14px -9px -9px;
   border-radius: 0.875rem;

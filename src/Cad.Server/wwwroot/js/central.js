@@ -225,6 +225,7 @@
       })
         .bindPopup(`<strong>${escapar(item.dataset.origen)} · ${escapar(item.dataset.estado)}</strong><br>Identificador: ${escapar(item.dataset.casoMapa)}<br>${escapar(item.dataset.ciudadano)}<br><a href="${escapar(item.dataset.detalle)}">Ver el caso</a>`)
         .addTo(mapa));
+      marcadoresEnCurso.at(-1).claves = [`caso:${item.dataset.casoMapa}`];
     }
   }
 
@@ -270,9 +271,14 @@
   }
 
   function dibujarEnCurso() {
+    // Los marcadores se rehacen con cada aviso (la posición de un sereno llega cada pocos segundos): si el operador tenía
+    // abierto el detalle de un caso o de un sereno, se vuelve a abrir en el marcador nuevo.
+    const enMapa = () => [...marcadoresEnCurso, ...marcadoresSerenos.values()];
+    const abierto = enMapa().find((m) => m.isPopupOpen())?.claves ?? [];
     const vinculados = vinculos();
     dibujarCasosEnCurso(vinculados);
     dibujarSerenos(vinculados);
+    if (abierto.length) enMapa().find((m) => m.claves?.some((c) => abierto.includes(c)))?.openPopup();
     for (const linea of lineasVinculo.splice(0)) linea.remove();
     for (const v of vinculados.values()) {
       if (v.enElLugar) continue;
@@ -309,7 +315,9 @@
       if (!item.dataset.lat) continue; // HU19-CA04: sin ubicación no hay marcador
       const id = item.dataset.sereno;
       if (enElLugar.has(id)) {
-        marcadoresSerenos.set(id, marcadorEnElLugar(enElLugar.get(id)).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa));
+        const conjunto = marcadorEnElLugar(enElLugar.get(id)).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa);
+        conjunto.claves = [`sereno:${id}`, `caso:${enElLugar.get(id).caso.dataset.casoMapa}`];
+        marcadoresSerenos.set(id, conjunto);
         continue;
       }
       const disponible = item.dataset.disponible === "true";
@@ -326,6 +334,7 @@
         .bindPopup(`<strong>Sereno · Operativo</strong><br>${escapar(item.dataset.nombre)}<br>${disponible ? "Disponible" : "No disponible"}<br>Última ubicación a las ${escapar(item.dataset.hora)}`)
         .on("click", () => seleccionarSereno(id, { desdeMapa: true }))
         .addTo(mapa);
+      marcador.claves = [`sereno:${id}`];
       marcadoresSerenos.set(id, marcador);
     }
   }
