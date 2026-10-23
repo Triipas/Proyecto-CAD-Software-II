@@ -37,7 +37,7 @@ public class RutasTests
     private static PuntoRuta P(long esquina) => new(Esquinas[esquina].Lat, Esquinas[esquina].Lon);
 
     private static ResultadoRuta Calcular(RedViaria red, PuntoRuta origen, PuntoRuta destino) =>
-        RutasLocales.Calcular(red.Grafo(true), red.Grafo(false), origen, destino);
+        BuscadorRutas.Calcular(red.Grafo(true), red.Grafo(false), origen, destino);
 
     [Fact]
     public void AEstrella_EncuentraElCaminoMasCorto()
@@ -103,7 +103,7 @@ public class RutasTests
 
         var resultado = Calcular(red, P(1), new PuntoRuta(-12.05, -77.0)); // a ~5 km de cualquier calle cargada
 
-        Assert.Equal(RutasLocales.MensajeFueraDeZona, Assert.IsType<ResultadoRuta.NoDisponible>(resultado).Motivo);
+        Assert.Equal(BuscadorRutas.MensajeFueraDeZona, Assert.IsType<ResultadoRuta.NoDisponible>(resultado).Motivo);
     }
 
     [Fact]
