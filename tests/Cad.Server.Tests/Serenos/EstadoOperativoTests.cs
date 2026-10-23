@@ -56,13 +56,13 @@ public class EstadoOperativoTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task DP15_ElIntervaloInicialEsDe30Segundos()
+    public async Task DP15_ElIntervaloEsDe15Segundos() // cambiado por el PO el 22/10/2026 (antes 30 s)
     {
         var (app, _) = await SerenoAsync();
 
         var estado = await app.GetFromJsonAsync<RespuestaEstadoOperativo>(Estado);
 
-        Assert.Equal(30, estado!.IntervaloPosicionesSegundos);
+        Assert.Equal(15, estado!.IntervaloPosicionesSegundos);
         Assert.False(estado.Operativo);
         Assert.Null(estado.CambiadoEn); // nunca se activó: no se inventa una hora de cambio
     }

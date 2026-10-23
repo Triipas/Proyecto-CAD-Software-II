@@ -1,0 +1,96 @@
+<!doctype html>
+<!-- Despacho del sereno (diseño C, 22/10/2026): el punto del caso, la posición del sereno y la línea recta entre ambos.
+     Leaflet 1.9.4 incluido en la app (sin CDN); teselas de OpenStreetMap apagadas como en el resto de la app. Los datos los
+     pone la app con window.cad.mostrar(): esta página no lee la ubicación ni envía nada. -->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>/*LEAFLET_CSS*/</style>
+    <style>
+        html, body, #mapa { height: 100%; margin: 0; background: #e3e9f1; }
+        .leaflet-tile-pane { filter: grayscale(1) sepia(0.2) hue-rotate(180deg) saturate(1.5) brightness(1.03) contrast(0.92); }
+        .leaflet-control-attribution { font: 10px/1.4 sans-serif; background: rgba(255,255,255,.75) !important; }
+        /* El panel inferior se monta 16 px sobre el mapa. */
+        .leaflet-bottom { bottom: 18px; }
+        .pin { display: grid; justify-items: center; filter: drop-shadow(0 3px 4px rgba(11,31,68,.35)); }
+        .pin b { display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; box-sizing: border-box; border-radius: 17px;
+                 border: 3px solid #fff; color: #fff; font: 800 11px/1 sans-serif; letter-spacing: .04em; }
+        .pin i { width: 10px; height: 10px; margin-top: -6px; transform: rotate(45deg); border-right: 3px solid #fff; border-bottom: 3px solid #fff; }
+        .pin--sos b, .pin--sos i { background: #B42318; }
+        .pin--reporte b, .pin--reporte i { background: #6D28D9; }
+    </style>
+</head>
+<body>
+    <div id="mapa" role="img" aria-label="Mapa del despacho: el punto del caso y tu posición"></div>
+    <script>/*LEAFLET_JS*/</script>
+    <script>
+        (() => {
+            const config = /*CONFIG*/;
+            const mapa = L.map("mapa", { zoomControl: false, attributionControl: true }).setView([config.lat, config.lon], config.zoom);
+            L.tileLayer(config.teselas, {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            }).addTo(mapa);
+
+            const COLORES = { sos: "#B42318", reporte: "#6D28D9" };
+            let destino = null, precision = null, yo = null, linea = null, ultimo = null, encuadrado = false, movido = false;
+            // Si el sereno mueve el mapa con el dedo, no se le reencuadra solo hasta que cambie el caso o pulse «Ver ambos».
+            mapa.on("dragstart", () => { movido = true; });
+            // El mapa se crea oculto (sin despacho) o cambia de alto con el panel: al cambiar de tamaño, se recalcula y reencuadra.
+            window.addEventListener("resize", () => { mapa.invalidateSize(false); if (!movido) verAmbos(); });
+
+            const icono = (tipo) => L.divIcon({
+                className: "",
+                html: `<div class="pin pin--${tipo}"><b>${tipo === "sos" ? "SOS" : "&#9679;"}</b><i></i></div>`,
+                iconSize: [40, 44], iconAnchor: [20, 44],
+            });
+
+            // Encuadra el caso y al sereno (o el que exista) dejando margen para el panel inferior.
+            const verAmbos = () => {
+                const puntos = [destino, yo].filter(Boolean).map((m) => m.getLatLng());
+                // Márgenes proporcionales al mapa: con el panel de cierre abierto el mapa es bajo y unos márgenes fijos alejarían la vista.
+                const t = mapa.getSize(), m = Math.round(Math.min(t.x, t.y) * 0.16);
+                if (puntos.length === 2) mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [m, m + 12], paddingBottomRight: [m, m], maxZoom: 17 });
+                else if (puntos.length === 1) mapa.setView(puntos[0], 16);
+            };
+
+            window.cad = {
+                // datos: { destino: {lat, lon, precision, tipo} | null, yo: {lat, lon} | null }
+                mostrar: (datos) => {
+                    const d = datos.destino, p = datos.yo;
+                    if (d) {
+                        const color = COLORES[d.tipo] || COLORES.sos;
+                        if (!destino) {
+                            precision = L.circle([d.lat, d.lon], { radius: d.precision || 0, color, weight: 1.5, dashArray: "4 4", fillColor: color, fillOpacity: 0.12 }).addTo(mapa);
+                            destino = L.marker([d.lat, d.lon], { icon: icono(d.tipo), keyboard: false }).addTo(mapa);
+                        } else {
+                            destino.setLatLng([d.lat, d.lon]).setIcon(icono(d.tipo));
+                            precision.setLatLng([d.lat, d.lon]).setRadius(d.precision || 0).setStyle({ color, fillColor: color });
+                        }
+                    } else if (destino) {
+                        mapa.removeLayer(destino); mapa.removeLayer(precision); destino = precision = null;
+                    }
+                    if (p) {
+                        if (!yo) yo = L.circleMarker([p.lat, p.lon], { radius: 8, color: "#FFFFFF", weight: 3, fillColor: "#1D4ED8", fillOpacity: 1 }).addTo(mapa);
+                        else yo.setLatLng([p.lat, p.lon]);
+                    }
+                    if (destino && yo) {
+                        const tramo = [yo.getLatLng(), destino.getLatLng()];
+                        if (!linea) linea = L.polyline(tramo, { color: "#0B1F44", weight: 3, dashArray: "2 8", lineCap: "round" }).addTo(mapa);
+                        else linea.setLatLngs(tramo);
+                    } else if (linea) { mapa.removeLayer(linea); linea = null; }
+
+                    // Solo se reencuadra cuando cambia el caso o aparece la posición del sereno (o la primera vez): si el sereno movió
+                    // el mapa, se respeta.
+                    const clave = `${d ? `${d.lat},${d.lon}` : "sin-punto"}|${yo ? "con-sereno" : "sin-sereno"}`;
+                    if (!encuadrado || clave !== ultimo) { movido = false; verAmbos(); encuadrado = true; ultimo = clave; }
+                },
+                verAmbos: () => { movido = false; verAmbos(); },
+                // Al volver a mostrarse el mapa (estaba oculto) Leaflet necesita recalcular su tamaño.
+                ajustar: () => setTimeout(() => { mapa.invalidateSize(false); if (!movido) verAmbos(); }, 200),
+            };
+        })();
+    </script>
+</body>
+</html>

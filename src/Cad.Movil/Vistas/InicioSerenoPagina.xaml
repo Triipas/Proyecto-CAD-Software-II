@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Modo sereno — HU18: activar el estado operativo y compartir la ubicación. Los despachos llegan con HU21.
-     Rediseño CAD v2 (fase 4): una sola pantalla; el encabezado dice si estás operativo y el despacho vigente destaca con su acción. -->
+     Rediseño CAD v2 (fase 4): una sola pantalla; el encabezado dice si estás operativo.
+     Despacho con mapa (diseño C, 22/10/2026): con un despacho, arriba las etapas del caso, al centro el mapa con el punto del caso
+     y tu posición, y abajo un panel con la distancia, lo que registró la central, «Cómo llegar» y la acción de la etapa. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -9,25 +11,61 @@
              x:Class="Cad.Movil.Vistas.InicioSerenoPagina"
              x:DataType="vm:InicioSerenoVistaModelo"
              Title="Sereno">
-    <ScrollView>
-        <VerticalStackLayout Spacing="0">
-            <Grid Style="{StaticResource EncabezadoMarino}" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                <Label Text="Mi turno" Style="{StaticResource TituloSobreMarino}" VerticalOptions="Center" />
-                <Button Grid.Column="1" Text="Salir" Style="{StaticResource BotonSobreMarino}" Command="{Binding Salir}" />
-                <!-- Estado operativo a la vista: punto verde si estás operativo, gris si no (siempre con el texto). -->
-                <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource PildoraSobreMarino}">
-                    <HorizontalStackLayout Spacing="8">
-                        <Ellipse WidthRequest="10" HeightRequest="10" VerticalOptions="Center" Fill="#8291A7">
-                            <Ellipse.Triggers>
-                                <DataTrigger TargetType="Ellipse" Binding="{Binding Operativo}" Value="True">
-                                    <Setter Property="Fill" Value="#4ADE80" />
-                                </DataTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                        <Label Text="{Binding TextoEstado}" TextColor="White" FontFamily="PublicSansSemiBold" FontSize="14" VerticalOptions="Center" />
-                    </HorizontalStackLayout>
+    <Grid RowDefinitions="Auto,*">
+        <!-- Encabezado: «Mi turno» o el despacho en curso con sus etapas. -->
+        <Grid Style="{StaticResource EncabezadoMarino}" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+            <Label Text="Mi turno" Style="{StaticResource TituloSobreMarino}" VerticalOptions="Center" IsVisible="{Binding SinModoDespacho}" />
+            <HorizontalStackLayout Spacing="8" VerticalOptions="Center" IsVisible="{Binding HayDespacho}">
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,3" BackgroundColor="{StaticResource ColorUrgente}" IsVisible="{Binding DespachoEsSos}" VerticalOptions="Center">
+                    <Label Text="SOS" TextColor="White" FontFamily="PublicSansBold" FontSize="13" />
                 </Border>
-            </Grid>
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,3" BackgroundColor="{StaticResource ColorReporte}" IsVisible="{Binding DespachoEsReporte}" VerticalOptions="Center">
+                    <Label Text="Reporte" TextColor="White" FontFamily="PublicSansBold" FontSize="13" />
+                </Border>
+                <Label Text="Despacho en curso" Style="{StaticResource TituloSobreMarino}" FontSize="22" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+            <Button Grid.Column="1" Text="Salir" Style="{StaticResource BotonSobreMarino}" Command="{Binding Salir}" />
+            <!-- Estado operativo a la vista: punto verde si estás operativo, gris si no (siempre con el texto). -->
+            <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource PildoraSobreMarino}">
+                <HorizontalStackLayout Spacing="8">
+                    <Ellipse WidthRequest="10" HeightRequest="10" VerticalOptions="Center" Fill="#8291A7">
+                        <Ellipse.Triggers>
+                            <DataTrigger TargetType="Ellipse" Binding="{Binding Operativo}" Value="True">
+                                <Setter Property="Fill" Value="#4ADE80" />
+                            </DataTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+                    <Label Text="{Binding TextoEstado}" TextColor="White" FontFamily="PublicSansSemiBold" FontSize="14" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Border>
+            <!-- Etapas del caso: barra verde si se cumplió; la etapa actual, en blanco. -->
+            <v:Mosaico Grid.Row="2" Grid.ColumnSpan="2" Columnas="4" Espacio="6" IsVisible="{Binding HayDespacho}" BindableLayout.ItemsSource="{Binding Etapas}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EtapaDespacho">
+                        <VerticalStackLayout Spacing="5" SemanticProperties.Description="{Binding Descripcion}">
+                            <BoxView HeightRequest="4" CornerRadius="2" Color="#33FFFFFF">
+                                <BoxView.Triggers>
+                                    <DataTrigger TargetType="BoxView" Binding="{Binding Hecha}" Value="True">
+                                        <Setter Property="Color" Value="#4ADE80" />
+                                    </DataTrigger>
+                                </BoxView.Triggers>
+                            </BoxView>
+                            <Label Text="{Binding Nombre}" FontSize="12" FontFamily="PublicSansSemiBold" TextColor="{StaticResource ColorTextoSobreMarinoSecundario}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Actual}" Value="True">
+                                        <Setter Property="TextColor" Value="White" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Text="{Binding Hora}" FontSize="11" TextColor="{StaticResource ColorTextoSobreMarinoSecundario}" IsVisible="{Binding HayHora}" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </v:Mosaico>
+        </Grid>
+
+        <!-- Sin despacho: el turno (estado operativo, permisos y avisos). -->
+        <ScrollView Grid.Row="1" IsVisible="{Binding SinModoDespacho}">
             <VerticalStackLayout Padding="16,20,16,32" Spacing="16" MaximumWidthRequest="480">
                 <Label Text="{Binding TextoAyudaSalir}" Style="{StaticResource TextoSecundario}" FontSize="13"
                        IsVisible="{Binding HayAyudaSalir}" HorizontalTextAlignment="End" />
@@ -49,92 +87,16 @@
                 </Border>
                 <v:Aviso Tipo="advertencia" Texto="{Binding AvisoNotificaciones}" IsVisible="{Binding HayAvisoNotificaciones}" />
 
-                <!-- HU21 — despacho vigente (datos de DP06). Con un despacho, la tarjeta toma el borde de acción. -->
                 <Border Style="{StaticResource Superficie}" Padding="16,20">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border" Binding="{Binding HayDespacho}" Value="True">
-                            <Setter Property="Stroke" Value="{StaticResource ColorPrimario}" />
-                            <Setter Property="StrokeThickness" Value="2" />
-                        </DataTrigger>
-                    </Border.Triggers>
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Despacho" Style="{StaticResource TituloSeccion}" />
                         <Label Text="Recibirás un aviso en este teléfono cuando te asignen un caso, aunque la app esté cerrada." Style="{StaticResource TextoSecundario}"
                                FontSize="13" IsVisible="{Binding NotificacionesActivas}" />
-                        <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
                         <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
                         <HorizontalStackLayout Spacing="10" IsVisible="{Binding SinDespacho}">
                             <v:Icono Nombre="bandeja" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                             <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
-                        <VerticalStackLayout Spacing="8" IsVisible="{Binding HayDespacho}">
-                            <HorizontalStackLayout Spacing="8" SemanticProperties.Description="{Binding TextoDespacho}">
-                                <Border StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,3" BackgroundColor="{StaticResource ColorUrgente}" IsVisible="{Binding DespachoEsSos}">
-                                    <Label Text="SOS" TextColor="White" FontFamily="PublicSansBold" FontSize="13" />
-                                </Border>
-                                <Border StrokeThickness="0" StrokeShape="RoundRectangle 6" Padding="8,3" BackgroundColor="{StaticResource ColorReporte}" IsVisible="{Binding DespachoEsReporte}">
-                                    <Label Text="Reporte" TextColor="White" FontFamily="PublicSansBold" FontSize="13" />
-                                </Border>
-                                <v:ChipEstado Estado="{Binding EstadoDespacho}" />
-                            </HorizontalStackLayout>
-                            <Label Text="{Binding TextoAsignado}" Style="{StaticResource TextoSecundario}" />
-                            <Label Text="{Binding TextoIdentificador}" Style="{StaticResource TextoSecundario}" FontSize="12" />
-                            <Label Text="{Binding TextoAvances}" Style="{StaticResource TextoSecundario}" IsVisible="{Binding HayAvances}" />
-                            <!-- HU22: confirmar el desplazamiento; HU23: registrar el inicio de atención. -->
-                            <Button Text="Voy en camino" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarDesplazamiento}"
-                                    IsVisible="{Binding PuedeConfirmarDesplazamiento}" SemanticProperties.Hint="Confirma a la central que te diriges a atender el caso" />
-                            <Button Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
-                                    IsVisible="{Binding PuedeIniciarAtencion}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
-                            <!-- HU24: cierre con tipificación final y resultado (obligatorios) y notas internas (opcionales). -->
-                            <Button Text="Cerrar el caso" Style="{StaticResource BotonPrincipal}" Command="{Binding AbrirCierre}" IsVisible="{Binding PuedeAbrirCierre}" />
-                            <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarCierre}">
-                                <Label Text="Tipificación final" Style="{StaticResource Etiqueta}" />
-                                <Border Style="{StaticResource MarcoCampo}">
-                                    <Picker Title="Elige una categoría" ItemsSource="{Binding CategoriasCierre}" SelectedItem="{Binding CategoriaCierre}"
-                                            ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" />
-                                </Border>
-                                <Label Text="{Binding ErrorCategoriaCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoriaCierre}" />
-                                <Label Text="Resultado de la atención" Style="{StaticResource Etiqueta}" />
-                                <Border Style="{StaticResource MarcoCampo}">
-                                    <Editor Text="{Binding ResultadoCierre}" HeightRequest="100" Placeholder="Cómo se resolvió el caso" />
-                                </Border>
-                                <Label Text="Es el resultado público: el ciudadano podrá verlo." Style="{StaticResource TextoSecundario}" FontSize="13" />
-                                <Label Text="{Binding ErrorResultadoCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorResultadoCierre}" />
-                                <Label Text="Notas internas (opcional)" Style="{StaticResource Etiqueta}" />
-                                <Border Style="{StaticResource MarcoCampo}">
-                                    <Editor Text="{Binding NotasCierre}" HeightRequest="80" Placeholder="Solo para el personal autorizado" />
-                                </Border>
-                                <Label Text="El ciudadano no verá estas notas." Style="{StaticResource TextoSecundario}" FontSize="13" />
-                                <Label Text="{Binding ErrorNotasCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNotasCierre}" />
-                                <Button Text="Confirmar cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCierre}" />
-                                <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarCierre}" />
-                            </VerticalStackLayout>
-                            <!-- HU20-CA07: en un reporte admitido, el lugar del hecho (no hay ubicación del dispositivo). -->
-                            <VerticalStackLayout Spacing="4" IsVisible="{Binding EsReporteDespacho}">
-                                <Label Text="Lugar del hecho (indicado por el ciudadano)" Style="{StaticResource Etiqueta}" />
-                                <Label Text="{Binding TextoLugarHecho}" IsVisible="{Binding HayPuntoLugarHecho}" />
-                                <Label Text="{Binding TextoReferenciaLugarHecho}" IsVisible="{Binding HayReferenciaLugarHecho}" />
-                                <!-- DP06 (16/10/2026): descripción del ciudadano, sin sus datos personales. -->
-                                <Label Text="Descripción del ciudadano" Style="{StaticResource Etiqueta}" IsVisible="{Binding HayDescripcionReporte}" />
-                                <Label Text="{Binding TextoDescripcionReporte}" IsVisible="{Binding HayDescripcionReporte}" />
-                            </VerticalStackLayout>
-                            <Label Text="Ubicación del dispositivo" Style="{StaticResource Etiqueta}" IsVisible="{Binding MostrarUbicacionDispositivo}" />
-                            <Label Text="{Binding TextoUbicacionDespacho}" IsVisible="{Binding HayUbicacionDespacho}" />
-                            <v:Aviso Tipo="advertencia" Texto="Ubicación del dispositivo no disponible." IsVisible="{Binding SinUbicacionDespacho}" />
-                            <Label Text="Información registrada por la central" Style="{StaticResource Etiqueta}" />
-                            <Label Text="Sin información registrada." Style="{StaticResource TextoSecundario}" IsVisible="{Binding SinInformacionDespacho}" />
-                            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding InformacionDespacho}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ElementoInformacionDespacho">
-                                        <VerticalStackLayout Spacing="2">
-                                            <Label Text="{Binding Hora}" Style="{StaticResource TextoSecundario}" FontSize="12" />
-                                            <Label Text="{Binding InformacionHecho, StringFormat='Hecho: {0}'}" IsVisible="{Binding HayHecho}" />
-                                            <Label Text="{Binding ReferenciaUbicacion, StringFormat='Referencia indicada por el ciudadano (no es la ubicación del dispositivo): {0}'}" IsVisible="{Binding HayReferencia}" />
-                                        </VerticalStackLayout>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </VerticalStackLayout>
-                        </VerticalStackLayout>
                         <v:Aviso Tipo="error" Texto="{Binding ErrorDespacho}" IsVisible="{Binding HayErrorDespacho}" />
                     </VerticalStackLayout>
                 </Border>
@@ -143,10 +105,8 @@
                     <VerticalStackLayout Spacing="16">
                         <v:Aviso Tipo="{Binding TipoAvisoEstado}" Texto="{Binding TextoEstado}" />
                         <Label Text="{Binding TextoDetalleEstado}" Style="{StaticResource TextoSecundario}" />
-
                         <Button Text="{Binding TextoBoton}" Style="{StaticResource BotonPrincipal}" Command="{Binding Alternar}"
                                 SemanticProperties.Hint="Activa o desactiva tu estado operativo" />
-
                         <Label Text="{Binding TextoUltimoEnvio}" Style="{StaticResource TextoSecundario}" IsVisible="{Binding HayUltimoEnvio}" />
                         <v:Aviso Tipo="advertencia" Texto="{Binding AvisoEnvio}" IsVisible="{Binding HayAvisoEnvio}" />
                         <v:Aviso Tipo="error" Texto="{Binding Error}" IsVisible="{Binding HayError}" />
@@ -174,6 +134,158 @@
                 <Label Text="MVP académico con datos simulados. Mantén la app abierta mientras estés operativo." Style="{StaticResource TextoSecundario}"
                        FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+
+        <!-- Con despacho (HU21–HU24, datos de DP06): mapa y panel. -->
+        <Grid Grid.Row="1" RowDefinitions="*,Auto" IsVisible="{Binding HayDespacho}">
+            <Grid MinimumHeightRequest="140">
+                <WebView x:Name="Mapa" SemanticProperties.Description="Mapa del despacho con el punto del caso y tu posición" />
+                <!-- Clave de los colores: rojo, teléfono del ciudadano (SOS); morado, lugar del hecho (reporte); azul, tú. -->
+                <Border VerticalOptions="Start" HorizontalOptions="Start" Margin="12" Padding="10,6" StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                        BackgroundColor="#F0FFFFFF" IsVisible="{Binding HayDestino}">
+                    <HorizontalStackLayout Spacing="12">
+                        <HorizontalStackLayout Spacing="5" IsVisible="{Binding DespachoEsSos}">
+                            <Ellipse WidthRequest="9" HeightRequest="9" Fill="{StaticResource ColorUrgente}" VerticalOptions="Center" />
+                            <Label Text="Teléfono del ciudadano" FontSize="12" TextColor="{StaticResource ColorTextoSecundario}" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Spacing="5" IsVisible="{Binding DespachoEsReporte}">
+                            <Ellipse WidthRequest="9" HeightRequest="9" Fill="{StaticResource ColorReporte}" VerticalOptions="Center" />
+                            <Label Text="Lugar del hecho" FontSize="12" TextColor="{StaticResource ColorTextoSecundario}" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Spacing="5">
+                            <Ellipse WidthRequest="9" HeightRequest="9" Fill="{StaticResource ColorPrimario}" VerticalOptions="Center" />
+                            <Label Text="Tú" FontSize="12" TextColor="{StaticResource ColorTextoSecundario}" />
+                        </HorizontalStackLayout>
+                    </HorizontalStackLayout>
+                </Border>
+                <v:Aviso Tipo="advertencia" VerticalOptions="Start" Margin="12" IsVisible="{Binding SinPuntoEnMapa}"
+                         Texto="Este caso no tiene un punto en el mapa: guíate por la referencia y lo que registró la central." />
+                <Border VerticalOptions="End" HorizontalOptions="End" Margin="12,0,12,28" Padding="14,0" HeightRequest="44" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 22" BackgroundColor="{StaticResource ColorSuperficie}">
+                    <Border.Shadow><Shadow Brush="#0B1F44" Offset="0,4" Radius="12" Opacity="0.18" /></Border.Shadow>
+                    <Border.GestureRecognizers><TapGestureRecognizer Tapped="AlVerAmbos" /></Border.GestureRecognizers>
+                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center" SemanticProperties.Description="Ver el caso y tu posición en el mapa">
+                        <v:Icono Nombre="centrar" Color="{StaticResource ColorPrimario}" Tamano="18" VerticalOptions="Center" />
+                        <Label Text="Ver ambos" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="1" Margin="0,-16,0,0" StrokeThickness="0" StrokeShape="RoundRectangle 22,22,0,0" BackgroundColor="{StaticResource ColorSuperficie}">
+                <Border.Shadow><Shadow Brush="#0B1F44" Offset="0,-8" Radius="22" Opacity="0.16" /></Border.Shadow>
+                <ScrollView x:Name="PanelDespacho">
+                    <VerticalStackLayout Padding="16,16,16,20" Spacing="12" MaximumWidthRequest="520">
+                        <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
+
+                        <!-- Dónde y a qué distancia. -->
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
+                            <Label Text="{Binding TituloUbicacion}" Style="{StaticResource Etiqueta}" FontSize="16" />
+                            <Label Grid.Row="1" Text="{Binding DetalleUbicacion}" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <VerticalStackLayout Grid.Column="1" Grid.RowSpan="2" IsVisible="{Binding HayDistancia}" VerticalOptions="Center">
+                                <Label Text="{Binding TextoDistancia}" FontFamily="PublicSansBold" FontSize="24" TextColor="{StaticResource ColorMarino}" HorizontalTextAlignment="End" />
+                                <Label Text="en línea recta" Style="{StaticResource TextoSecundario}" FontSize="12" HorizontalTextAlignment="End" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Lo que registró la central: una línea; al tocar, todo el detalle. -->
+                        <Border Padding="12,10" StrokeThickness="1" Stroke="{StaticResource ColorBorde}" StrokeShape="RoundRectangle 14"
+                                BackgroundColor="{StaticResource ColorFondo}">
+                            <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding VerInformacion}" /></Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" SemanticProperties.Description="Lo que registró la central"
+                                  SemanticProperties.Hint="Muestra u oculta el detalle del caso">
+                                <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 10" BackgroundColor="{StaticResource ColorInformacionFondo}">
+                                    <v:Icono Nombre="informacion" Color="{StaticResource ColorInformacion}" Tamano="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="Lo que registró la central" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" />
+                                    <Label Text="{Binding ResumenCentral}" Style="{StaticResource TextoSecundario}" FontSize="12" MaxLines="1" LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                                <v:Icono Grid.Column="2" Nombre="{Binding IconoInformacion}" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarInformacion}">
+                            <Label Text="{Binding TextoAsignado}" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <Label Text="{Binding TextoAvances}" Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding HayAvances}" />
+                            <!-- HU20-CA07 y DP06 (16/10/2026): en un reporte, la referencia y la descripción del ciudadano (sin sus datos personales). -->
+                            <Label Text="{Binding TextoReferenciaLugarHecho}" IsVisible="{Binding HayReferenciaLugarHecho}" />
+                            <Label Text="Descripción del ciudadano" Style="{StaticResource Etiqueta}" IsVisible="{Binding HayDescripcionReporte}" />
+                            <Label Text="{Binding TextoDescripcionReporte}" IsVisible="{Binding HayDescripcionReporte}" />
+                            <Label Text="Información registrada por la central" Style="{StaticResource Etiqueta}" />
+                            <Label Text="Sin información registrada." Style="{StaticResource TextoSecundario}" IsVisible="{Binding SinInformacionDespacho}" />
+                            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding InformacionDespacho}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ElementoInformacionDespacho">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{Binding Hora}" Style="{StaticResource TextoSecundario}" FontSize="12" />
+                                            <Label Text="{Binding InformacionHecho, StringFormat='Hecho: {0}'}" IsVisible="{Binding HayHecho}" />
+                                            <Label Text="{Binding ReferenciaUbicacion, StringFormat='Referencia indicada por el ciudadano (no es la ubicación del dispositivo): {0}'}" IsVisible="{Binding HayReferencia}" />
+                                        </VerticalStackLayout>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                            <Label Text="{Binding TextoIdentificador}" Style="{StaticResource TextoSecundario}" FontSize="12" />
+                        </VerticalStackLayout>
+
+                        <v:Aviso Tipo="error" Texto="{Binding ErrorDespacho}" IsVisible="{Binding HayErrorDespacho}" />
+                        <v:Aviso Tipo="advertencia" Texto="{Binding AvisoComoLlegar}" IsVisible="{Binding HayAvisoComoLlegar}" />
+
+                        <!-- «Cómo llegar» y la acción de la etapa (HU22, HU23, HU24), en la zona del pulgar. -->
+                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding PuedeActuar}">
+                            <Button Text="Cómo llegar" Style="{StaticResource BotonSecundario}" Command="{Binding ComoLlegar}" IsVisible="{Binding HayDestino}"
+                                    Padding="16,0" Margin="0,0,10,0" SemanticProperties.Hint="Abre la app de mapas del teléfono con la ruta hasta el punto del caso" />
+                            <Button Grid.Column="1" Text="Voy en camino" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarDesplazamiento}"
+                                    IsVisible="{Binding PuedeConfirmarDesplazamiento}" SemanticProperties.Hint="Confirma a la central que te diriges a atender el caso" />
+                            <Button Grid.Column="1" Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
+                                    IsVisible="{Binding PuedeIniciarAtencion}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
+                            <Button Grid.Column="1" Text="Cerrar el caso" Style="{StaticResource BotonPrincipal}" Command="{Binding AbrirCierre}" IsVisible="{Binding PuedeAbrirCierre}" />
+                        </Grid>
+
+                        <!-- HU24: cierre con tipificación final y resultado (obligatorios) y notas internas (opcionales). -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarCierre}">
+                            <Label Text="Cierre del caso" Style="{StaticResource TituloSeccion}" />
+                            <Label Text="Tipificación final" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Picker Title="Elige una categoría" ItemsSource="{Binding CategoriasCierre}" SelectedItem="{Binding CategoriaCierre}"
+                                        ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" />
+                            </Border>
+                            <Label Text="{Binding ErrorCategoriaCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoriaCierre}" />
+                            <Label Text="Resultado de la atención" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Editor Text="{Binding ResultadoCierre}" HeightRequest="100" Placeholder="Cómo se resolvió el caso" />
+                            </Border>
+                            <Label Text="Es el resultado público: el ciudadano podrá verlo." Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <Label Text="{Binding ErrorResultadoCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorResultadoCierre}" />
+                            <Label Text="Notas internas (opcional)" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Editor Text="{Binding NotasCierre}" HeightRequest="80" Placeholder="Solo para el personal autorizado" />
+                            </Border>
+                            <Label Text="El ciudadano no verá estas notas." Style="{StaticResource TextoSecundario}" FontSize="13" />
+                            <Label Text="{Binding ErrorNotasCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNotasCierre}" />
+                            <Button Text="Confirmar cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCierre}" />
+                            <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarCierre}" />
+                        </VerticalStackLayout>
+
+                        <!-- Tu turno: el envío de la posición sigue mientras atiendes. -->
+                        <Label Text="{Binding TextoUltimoEnvio}" Style="{StaticResource TextoSecundario}" FontSize="12" IsVisible="{Binding HayUltimoEnvio}" />
+                        <Button Text="{Binding TextoBoton}" Style="{StaticResource BotonSecundario}" Command="{Binding Alternar}"
+                                SemanticProperties.Hint="Activa o desactiva tu estado operativo" />
+                        <!-- DP16-a también durante un despacho: si se reactiva sin permiso de ubicación, se explica o se lleva a los ajustes. -->
+                        <VerticalStackLayout Spacing="12" IsVisible="{Binding MostrarExplicacion}">
+                            <v:Aviso Tipo="informacion"
+                                     Texto="Para activar tu estado operativo necesitas permitir el acceso a tu ubicación. Solo se comparte con la central mientras estés operativo y con la app abierta." />
+                            <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}" Command="{Binding PermitirUbicacion}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Spacing="12" IsVisible="{Binding MostrarAjustes}">
+                            <v:Aviso Tipo="advertencia"
+                                     Texto="Sin permiso de ubicación no puedes activar tu estado operativo. Concédelo en los ajustes del teléfono y vuelve a intentarlo." />
+                            <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}" Command="{Binding AbrirAjustes}" />
+                        </VerticalStackLayout>
+                        <v:Aviso Tipo="advertencia" Texto="{Binding AvisoEnvio}" IsVisible="{Binding HayAvisoEnvio}" />
+                        <v:Aviso Tipo="error" Texto="{Binding Error}" IsVisible="{Binding HayError}" />
+                        <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Border>
+        </Grid>
+    </Grid>
 </ContentPage>

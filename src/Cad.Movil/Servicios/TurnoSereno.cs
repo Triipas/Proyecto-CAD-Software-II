@@ -24,7 +24,9 @@ public sealed class ServicioTurnoSereno(IApiCad api, IServicioUbicacion ubicacio
     public bool Operativo { get; private set; }
     // El bucle de envío está en marcha en este dispositivo.
     public bool Transmitiendo => envio is not null;
-    public int IntervaloSegundos { get; private set; } = 30;
+    public int IntervaloSegundos { get; private set; } = 15; // DP15: el valor real llega del servidor
+    // Última posición leída de este teléfono (se envíe o no): el despacho la usa para el mapa y la distancia.
+    public Contratos.Sos.UbicacionSos? UltimaPosicion { get; private set; }
     public DateTimeOffset? UltimoEnvio { get; private set; }
     // Aviso del último intento de envío (sin posición, sin conexión…); null si fue bien.
     public string? AvisoEnvio { get; private set; }
@@ -162,6 +164,7 @@ public sealed class ServicioTurnoSereno(IApiCad api, IServicioUbicacion ubicacio
         await DetenerEnvioAsync();
         Operativo = false;
         UltimoEnvio = null;
+        UltimaPosicion = null;
         AvisoEnvio = null;
         Error = null;
         SesionTerminada = false;
@@ -254,6 +257,7 @@ public sealed class ServicioTurnoSereno(IApiCad api, IServicioUbicacion ubicacio
             AvisoEnvio = "No se pudo obtener tu posición en el último intento.";
             return true;
         }
+        UltimaPosicion = lectura;
 
         ResultadoApi<SinContenido> resultado;
         try

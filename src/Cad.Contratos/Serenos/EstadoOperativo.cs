@@ -5,7 +5,7 @@ namespace Cad.Contratos.Serenos;
 // consultar ese permiso; rechaza activar sin él (DP16-a, decidida el 13/10/2026) y la app lo comprueba antes.
 public sealed record SolicitudCambioEstadoOperativo(bool Operativo, bool UbicacionAutorizada);
 
-// IntervaloPosicionesSegundos: cada cuánto envía la app la posición mientras está operativo (DP15: 30 s,
+// IntervaloPosicionesSegundos: cada cuánto envía la app la posición mientras está operativo (DP15: 15 s desde el 22/10/2026,
 // configurable en el servidor).
 public sealed record RespuestaEstadoOperativo(bool Operativo, DateTimeOffset? CambiadoEn, int IntervaloPosicionesSegundos);
 
