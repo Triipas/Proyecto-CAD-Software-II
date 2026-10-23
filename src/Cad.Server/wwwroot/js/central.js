@@ -279,12 +279,55 @@
     dibujarCasosEnCurso(vinculados);
     dibujarSerenos(vinculados);
     if (abierto.length) enMapa().find((m) => m.claves?.some((c) => abierto.includes(c)))?.openPopup();
+    dibujarRecorridos(vinculados);
+  }
+
+  // En camino: el recorrido por calles del sereno hasta su caso. El servidor lo busca con la misma red de calles y el mismo A*
+  // que la app, así que la central ve la ruta que sigue el sereno. Se vuelve a pedir solo cuando un sereno con caso cambia de
+  // posición; mientras llega la primera, o si el caso está fuera de la zona con calles cargadas, una línea recta punteada.
+  const recorridos = new Map(); // sereno → { clave, caso, puntos }
+  let pidiendoRecorridos = false;
+  const claveRecorrido = (v) => `${v.caso.dataset.casoMapa}|${v.sereno.dataset.lat},${v.sereno.dataset.lon}`;
+
+  function dibujarRecorridos(vinculados) {
     for (const linea of lineasVinculo.splice(0)) linea.remove();
+    let faltan = false;
     for (const v of vinculados.values()) {
       if (v.enElLugar) continue;
-      // En camino: una línea fina une al sereno con su caso (el destino del despacho).
-      lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: "linea-vinculo" }).addTo(mapa));
+      const recorrido = recorridos.get(v.sereno.dataset.sereno);
+      if (recorrido?.clave !== claveRecorrido(v)) faltan = true;
+      // Hasta que llega el nuevo, se mantiene el recorrido anterior del mismo caso (sin parpadeo cada 15 s).
+      if (recorrido?.caso === v.caso.dataset.casoMapa && recorrido.puntos) {
+        const trazo = { lineCap: "round", lineJoin: "round", interactive: false };
+        lineasVinculo.push(
+          L.polyline(recorrido.puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9, className: "linea-vinculo" }).addTo(mapa),
+          L.polyline(recorrido.puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9, className: "linea-vinculo" }).addTo(mapa));
+      } else {
+        lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: "linea-vinculo" }).addTo(mapa));
+      }
     }
+    if (faltan) pedirRecorridos(vinculados);
+  }
+
+  async function pedirRecorridos(vinculados) {
+    if (pidiendoRecorridos) return; // al terminar se redibuja y, si algo cambió entretanto, se vuelve a pedir
+    pidiendoRecorridos = true;
+    const claves = new Map([...vinculados.values()].map((v) => [v.sereno.dataset.sereno, { clave: claveRecorrido(v), caso: v.caso.dataset.casoMapa }]));
+    try {
+      const respuesta = await fetch("/panel/central?handler=Rutas", { headers: { Accept: "application/json" }, credentials: "same-origin" });
+      if (respuesta.redirected || !respuesta.ok) return;
+      const rutas = new Map((await respuesta.json()).map((r) => [r.sereno, r]));
+      // Un sereno sin recorrido en la respuesta queda con la línea recta (y no se pide otra vez hasta que se mueva).
+      for (const [sereno, pedido] of claves) {
+        const ruta = rutas.get(sereno);
+        recorridos.set(sereno, { ...pedido, puntos: ruta?.caso === pedido.caso ? ruta.puntos : null });
+      }
+    } catch {
+      return;
+    } finally {
+      pidiendoRecorridos = false;
+    }
+    dibujarRecorridos(vinculos());
   }
 
   // Un solo marcador: el del caso, con el escudo del sereno encima y la etiqueta «En el lugar».
