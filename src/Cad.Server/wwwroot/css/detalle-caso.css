@@ -458,3 +458,10 @@
 .historial--linea .historial__elemento--interna .historial__actuacion {
   color: var(--color-texto-secundario);
 }
+
+/* Descartar el caso (23/10/2026): es una acción secundaria, al final de la columna. Su confirmación es un aviso ligero, no la
+   caja roja de las acciones sobre cuentas: el botón de confirmar ya es el que marca el peligro. */
+.descarte .confirmacion__contenido {
+  border-color: var(--color-borde);
+  background: var(--color-superficie);
+}

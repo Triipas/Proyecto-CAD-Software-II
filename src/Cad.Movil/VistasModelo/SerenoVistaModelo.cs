@@ -378,6 +378,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public bool HayErrorNotasCierre => ErrorNotasCierre is not null;
     public string? CierreReciente => despacho.CierreReciente;
     public bool HayCierreReciente => despacho.CierreReciente is not null && !HayDespacho;
+    public string? DespachoRetirado => despacho.Retirado;
+    public bool HayDespachoRetirado => despacho.Retirado is not null && !HayDespacho;
 
     private string? PrimerError(string campo) => despacho.ErroresCierre.TryGetValue(campo, out var m) && m.Length > 0 ? m[0] : null;
 
@@ -477,7 +479,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
                      nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances),
                      nameof(MostrarCierre), nameof(PuedeAbrirCierre), nameof(CategoriasCierre), nameof(ErrorCategoriaCierre), nameof(HayErrorCategoriaCierre),
                      nameof(ErrorResultadoCierre), nameof(HayErrorResultadoCierre), nameof(ErrorNotasCierre), nameof(HayErrorNotasCierre),
-                     nameof(CierreReciente), nameof(HayCierreReciente),
+                     nameof(CierreReciente), nameof(HayCierreReciente), nameof(DespachoRetirado), nameof(HayDespachoRetirado),
                      nameof(Destino), nameof(HayDestino), nameof(SinPuntoEnMapa), nameof(TituloUbicacion), nameof(DetalleUbicacion),
                      nameof(TextoDistancia), nameof(HayDistancia), nameof(Etapas), nameof(ResumenCentral), nameof(SinModoDespacho), nameof(PuedeActuar),
                      nameof(TextoEstadoCabecera), nameof(MostrarFormularioCierre), nameof(PuedeContinuarCierre), nameof(MostrarDetalleCentral) })

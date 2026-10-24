@@ -2,7 +2,8 @@ namespace Cad.Server.Modulos.Casos.Dominio;
 
 // Historial de actuaciones de un caso: solo inserción (Plan de Arquitectura, 9.1). Base de HU27 y HU28.
 public enum TipoEventoCaso { SosEmitido, IntentoContactoRegistrado, CasoAsignado, CasoClasificado, DesplazamientoConfirmado, AtencionIniciada, CasoCerrado, ReporteRegistrado,
-    RevisionIniciada, CategoriaCorregida, ReporteAdmitido, ReporteDerivado, ReporteDescartado, AsignacionCancelada, SosCancelado, CasoUrgenteCreado }
+    RevisionIniciada, CategoriaCorregida, ReporteAdmitido, ReporteDerivado, ReporteDescartado, AsignacionCancelada, SosCancelado, CasoUrgenteCreado,
+    CasoDescartado }
 
 // Pública = visible para el ciudadano titular; Interna = solo roles autorizados (RNF12).
 public enum VisibilidadEvento { Publica, Interna }

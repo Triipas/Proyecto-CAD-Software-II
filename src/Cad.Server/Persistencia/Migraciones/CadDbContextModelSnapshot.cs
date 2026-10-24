@@ -748,6 +748,37 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DescarteCaso", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DescartadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EstadoPrevio")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("OperadorId");
+
+                    b.ToTable("DescartesCaso", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DescartesCaso_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", b =>
                 {
                     b.Property<Guid>("CasoId")
@@ -1689,6 +1720,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
                         .WithOne()
                         .HasForeignKey("Cad.Server.Modulos.Casos.Dominio.DecisionReporte", "CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.DescarteCaso", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Casos.Dominio.DescarteCaso", "CasoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

@@ -1,0 +1,42 @@
+@model Cad.Server.Panel.Pages.VistaDescarte
+@* Descarte por la central (23/10/2026): un caso falso o erróneo termina como «Descartado». Se confirma de forma explícita,
+   con un aviso de lo que pasa y un motivo obligatorio (solo lo ve el personal autorizado). *@
+<details class="confirmacion descarte" open="@Model.Abierto" data-descarte>
+    <summary class="boton boton--secundario">Descartar el caso…</summary>
+    <form method="post" asp-page-handler="Descartar" class="pila confirmacion__contenido" data-formulario novalidate>
+        <div class="aviso aviso--advertencia">
+            <partial name="_Icono" model="@("advertencia")" />
+            <div>
+                <p class="aviso__titulo">¿Es un caso falso o erróneo?</p>
+                <p class="aviso__texto">
+                    El caso terminará como «Descartado» y no se podrá reabrir.
+                    @(Model.Sereno is { } sereno ? $"Se retirará el despacho a {sereno}, que quedará libre para otro caso." : "Saldrá de la cola y del mapa de la central.")
+                    El ciudadano verá que su caso fue descartado.
+                </p>
+            </div>
+        </div>
+        @if (Model.Error is not null)
+        {
+            <div class="aviso aviso--error" role="alert">
+                <partial name="_Icono" model="@("error")" />
+                <div><p class="aviso__texto">@Model.Error</p></div>
+            </div>
+        }
+        <div class="campo">
+            <label class="campo__etiqueta" for="Descarte_Motivo">Motivo del descarte</label>
+            <textarea class="campo__control campo__control--texto" id="Descarte_Motivo" name="Descarte.Motivo" rows="3" required
+                      maxlength="@Cad.Server.Modulos.Casos.Dominio.DescarteCaso.MaximoMotivo"
+                      aria-invalid="@(Model.ErrorMotivo is null ? null : "true")"
+                      aria-describedby="Descarte_Motivo-ayuda@(Model.ErrorMotivo is null ? "" : " Descarte_Motivo-error")">@Model.Motivo</textarea>
+            <p id="Descarte_Motivo-ayuda" class="campo__ayuda">Por ejemplo: llamada de broma, SOS enviado por error, reporte duplicado. Solo lo ve el personal autorizado.</p>
+            @if (Model.ErrorMotivo is not null)
+            {
+                <p id="Descarte_Motivo-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorMotivo</span></p>
+            }
+        </div>
+        <div class="acciones">
+            <a class="boton boton--secundario" href="@Model.UrlPagina">Cancelar</a>
+            <button type="submit" class="boton boton--peligro" data-texto-carga="Descartando…">Descartar el caso</button>
+        </div>
+    </form>
+</details>

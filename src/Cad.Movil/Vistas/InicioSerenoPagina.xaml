@@ -124,6 +124,7 @@
                         <Label Text="Recibirás un aviso en este teléfono cuando te asignen un caso, aunque la app esté cerrada." Style="{StaticResource TextoSecundario}"
                                FontSize="13" IsVisible="{Binding NotificacionesActivas}" />
                         <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
+                        <v:Aviso Tipo="informacion" Texto="{Binding DespachoRetirado}" IsVisible="{Binding HayDespachoRetirado}" />
                         <HorizontalStackLayout Spacing="10" IsVisible="{Binding SinDespacho}">
                             <v:Icono Nombre="bandeja" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                             <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" VerticalOptions="Center" />

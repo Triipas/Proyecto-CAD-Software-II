@@ -25,6 +25,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<CancelacionSos> CancelacionesSos => Set<CancelacionSos>();
+    public DbSet<DescarteCaso> DescartesCaso => Set<DescarteCaso>();
     public DbSet<EvaluacionCaso> EvaluacionesCaso => Set<EvaluacionCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
@@ -186,6 +187,18 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cancelacion.Property(c => c.Motivo).HasMaxLength(CancelacionSos.MaximoMotivo);
             cancelacion.HasOne<Caso>().WithOne().HasForeignKey<CancelacionSos>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
             cancelacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Descarte por la central (23/10/2026): uno por caso, con el motivo obligatorio también garantizado por la base de datos.
+        builder.Entity<DescarteCaso>(descarte =>
+        {
+            descarte.ToTable("DescartesCaso", tabla =>
+                tabla.HasCheckConstraint("CK_DescartesCaso_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0"));
+            descarte.HasKey(d => d.CasoId);
+            descarte.Property(d => d.Motivo).HasMaxLength(DescarteCaso.MaximoMotivo);
+            descarte.Property(d => d.EstadoPrevio).HasConversion<string>().HasMaxLength(20);
+            descarte.HasOne<Caso>().WithOne().HasForeignKey<DescarteCaso>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
+            descarte.HasOne<Usuario>().WithMany().HasForeignKey(d => d.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU32: una evaluación por caso (CA03), con la puntuación de 1 a 5 (CA02) también garantizada por la base de datos.
