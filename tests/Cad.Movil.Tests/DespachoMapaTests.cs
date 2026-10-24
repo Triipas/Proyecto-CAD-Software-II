@@ -159,7 +159,7 @@ public class DespachoMapaTests
     }
 
     [Fact]
-    public async Task ConPosicionYDestino_LaRutaSeCalculaEnLaApp_YLaDistanciaEsPorCalles()
+    public async Task ConPosicionYDestino_LaRutaSeCalculaEnLaApp_YLaDistanciaEsEnLineaRecta_ConElRecorridoDebajo()
     {
         var rutas = new RutasFalsas();
         var vm = await SosConPosicionAsync(rutas);
@@ -169,8 +169,8 @@ public class DespachoMapaTests
         Assert.Equal(new PuntoRuta(-12.0500, -77.0428), origen);
         Assert.Equal(new PuntoRuta(-12.0464, -77.0428), destino);
         Assert.Equal(3, vm.RutaMapa!.Count);
-        Assert.Equal("520 m", vm.TextoDistancia);
-        Assert.Equal("por calles · ~1 min", vm.EtiquetaDistancia);
+        Assert.Equal("400 m", vm.TextoDistancia); // la misma distancia que la central y el rango de atención
+        Assert.Equal("en línea recta · por calles 520 m (~1 min)", vm.EtiquetaDistancia);
         Assert.False(vm.HayEstadoRuta);
         Assert.False(vm.MostrarAbrirEnMaps);
     }

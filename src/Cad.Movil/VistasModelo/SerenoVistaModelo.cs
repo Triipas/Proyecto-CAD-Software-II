@@ -222,7 +222,11 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     // ----- Ruta por calles, calculada en la app (A* sobre OpenStreetMap) -----
     public IReadOnlyList<PuntoRuta>? RutaMapa => ruta is ResultadoRuta.Encontrada e ? e.Puntos : null;
     public bool HayRuta => RutaMapa is not null;
-    public string EtiquetaDistancia => ruta is ResultadoRuta.Encontrada e ? $"por calles · ~{MinutosEnVehiculo(e.Metros)} min" : "en línea recta";
+    // 24/10/2026: la distancia grande es en línea recta (la misma que ve la central y la que usa el rango de atención); el
+    // recorrido por calles, que puede ser bastante más largo por los sentidos de las vías, va debajo con su tiempo.
+    public string EtiquetaDistancia => ruta is ResultadoRuta.Encontrada e
+        ? $"en línea recta · por calles {FormatoDistancia(e.Metros)} (~{MinutosEnVehiculo(e.Metros)} min)"
+        : "en línea recta";
     public string EstadoRuta => calculandoRuta ? "Calculando la ruta por las calles…" : ruta is ResultadoRuta.NoDisponible n ? n.Motivo : "";
     public bool HayEstadoRuta => EstadoRuta.Length > 0;
     // Si la app no pudo calcular la ruta, queda el respaldo de la app de mapas del teléfono.
@@ -329,8 +333,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     };
 
     // Distancia por las calles si ya hay ruta; mientras tanto (o sin ruta), en línea recta.
-    public string TextoDistancia => ruta is ResultadoRuta.Encontrada e ? FormatoDistancia(e.Metros)
-        : Destino is { } d && PosicionPropia is { } p ? FormatoDistancia(DistanciaMetros(p.Latitud, p.Longitud, d.Latitud, d.Longitud)) : "";
+    public string TextoDistancia => Destino is { } d && PosicionPropia is { } p ? FormatoDistancia(DistanciaMetros(p.Latitud, p.Longitud, d.Latitud, d.Longitud)) : "";
     public bool HayDistancia => TextoDistancia.Length > 0;
 
     // Etapas del caso con su hora: el sereno ve en qué paso está.
