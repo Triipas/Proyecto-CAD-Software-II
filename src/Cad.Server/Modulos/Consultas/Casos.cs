@@ -12,7 +12,8 @@ public sealed record FiltroCasos(
     DateTimeOffset? Desde = null,
     DateTimeOffset? Hasta = null,
     OrigenCaso? Origen = null,
-    // Categoría vigente del catálogo, o SinTipo para «Tipo por determinar» (CA02).
+    // Tipo del catálogo, o SinTipo para «Tipo por determinar» (CA02). Decisión del PO (24/10/2026): en un caso cerrado
+    // cuenta la tipificación final del cierre (lo que realmente pasó); en los demás, la clasificación vigente.
     Guid? CategoriaId = null,
     bool SinTipo = false,
     EstadoCaso? Estado = null,
@@ -25,7 +26,7 @@ public sealed record CasoEncontrado(
     string Estado,
     DateTimeOffset RegistradoEn,
     string Ciudadano,
-    // null = «Tipo por determinar» (CA02).
+    // null = «Tipo por determinar» (CA02). En un caso cerrado, la tipificación final (ver FiltroCasos).
     string? Tipo,
     // Último sereno asignado, si lo hubo.
     string? Sereno,
@@ -64,9 +65,9 @@ public sealed class ConsultarCasos(CadDbContext db)
         if (filtro.Origen is { } origen)
             casos = casos.Where(c => c.Origen == origen);
         if (filtro.SinTipo)
-            casos = casos.Where(c => c.CategoriaId == null);
+            casos = casos.Where(c => c.CategoriaId == null && !db.CierresCaso.Any(x => x.CasoId == c.Id));
         else if (filtro.CategoriaId is { } categoria)
-            casos = casos.Where(c => c.CategoriaId == categoria);
+            casos = casos.Where(c => (db.CierresCaso.Where(x => x.CasoId == c.Id).Select(x => (Guid?)x.CategoriaId).FirstOrDefault() ?? c.CategoriaId) == categoria);
         if (filtro.Estado is { } estado)
             casos = casos.Where(c => c.Estado == estado);
         if (filtro.SerenoId is { } sereno)
@@ -77,7 +78,8 @@ public sealed class ConsultarCasos(CadDbContext db)
 
         var filas = await (from caso in casos
                            from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
-                           join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id into categorias
+                           let tipo = db.CierresCaso.Where(x => x.CasoId == caso.Id).Select(x => (Guid?)x.CategoriaId).FirstOrDefault() ?? caso.CategoriaId
+                           join categoria in db.CategoriasIncidencia.AsNoTracking() on tipo equals (Guid?)categoria.Id into categorias
                            from categoria in categorias.DefaultIfEmpty()
                            join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId into detalles
                            from detalle in detalles.DefaultIfEmpty()
