@@ -32,6 +32,12 @@ public partial class ReportePagina : ContentPage
         await vistaModelo.AlAparecerAsync();
     }
 
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        vistaModelo.AlDesaparecer();
+    }
+
     // Botón «atrás» del sistema: desde el formulario, vuelve al mosaico de tipos.
     protected override bool OnBackButtonPressed() => vistaModelo.VolverAlMosaico() || base.OnBackButtonPressed();
 

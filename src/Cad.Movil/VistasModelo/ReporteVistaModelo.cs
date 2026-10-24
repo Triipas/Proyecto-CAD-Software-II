@@ -63,7 +63,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             return Task.CompletedTask;
         });
         CambiarTipo = new ComandoAsincrono(() => { EligiendoTipo = true; return Task.CompletedTask; }, () => Editable);
-        Volver = new ComandoAsincrono(async () => { if (!VolverAlMosaico()) await navegacion.IrAAsync(Rutas.Ciudadano); });
+        Volver = new ComandoAsincrono(async () => { if (!VolverAlMosaico()) await IrAlInicioAsync(); });
         Dictar = new ComandoAsincrono(DictarAsync, () => Editable && this.dictado.Disponible);
         ElegirMapa = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Mapa, limpiarPunto: modo != ModoUbicacionHecho.Mapa); return Task.CompletedTask; }, () => Editable);
         QuitarPunto = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
@@ -79,20 +79,26 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     // (en esa pantalla ya no queda nada por hacer). «Volver al inicio» lo hace al instante.
     public TimeSpan EsperaTrasRegistro { get; init; } = TimeSpan.FromSeconds(2.5);
     private bool volviendoAlInicio, regresoProgramado;
+    private readonly CancellationTokenSource salida = new();
 
     private async Task IrAlInicioAsync()
     {
         if (volviendoAlInicio) return;
         volviendoAlInicio = true;
+        await salida.CancelAsync(); // el regreso automático ya no hace falta
         await navegacion.IrAAsync(Rutas.Ciudadano);
     }
+
+    // La página dejó de verse (p. ej., «atrás» del sistema): el regreso automático pendiente no debe interrumpir la
+    // pantalla a la que fue el ciudadano.
+    public void AlDesaparecer() => salida.Cancel();
 
     private async void VolverTrasRegistro()
     {
         regresoProgramado = true;
         try
         {
-            await Task.Delay(EsperaTrasRegistro);
+            await Task.Delay(EsperaTrasRegistro, salida.Token);
             await IrAlInicioAsync();
         }
         catch (Exception)

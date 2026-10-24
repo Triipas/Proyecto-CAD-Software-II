@@ -425,6 +425,18 @@ public class ReporteTests
     }
 
     [Fact]
+    public async Task TrasRegistrar_SiElCiudadanoSaleDeLaPagina_LaEsperaNoLoSacaDeOtraPantalla()
+    {
+        var vm = await FormularioCompletoAsync(new(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima) { EsperaTrasRegistro = TimeSpan.FromMilliseconds(50) });
+        await vm.Enviar.EjecutarAsync();
+
+        vm.AlDesaparecer(); // «atrás» del sistema hacia otra pantalla
+        await Task.Delay(200);
+
+        Assert.Empty(navegacion.Rutas);
+    }
+
+    [Fact]
     public async Task CA03_PorMapa_SeEnviaElPuntoTocado()
     {
         var vm = await FormularioCompletoAsync();
