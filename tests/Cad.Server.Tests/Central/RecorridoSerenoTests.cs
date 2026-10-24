@@ -8,8 +8,8 @@ using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests.Central;
 
-// Recorrido por calles del sereno hasta su caso en el mapa de la central: la misma red de calles que viaja en la app (zona MVP
-// alrededor de -12.0464, -77.0428) y la misma búsqueda. Coordenadas ficticias.
+// Recorrido por calles del sereno hasta su caso en el mapa de la central: la misma red de calles que viaja en la app (ciudad de
+// Arequipa) y la misma búsqueda. Coordenadas ficticias.
 [Collection(ColeccionServidor.Nombre)]
 public class RecorridoSerenoTests(FabricaCad fabrica)
 {
@@ -29,7 +29,7 @@ public class RecorridoSerenoTests(FabricaCad fabrica)
         var app = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Ciudadano));
         var ahora = DateTimeOffset.UtcNow;
         var respuesta = await app.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), ahora,
-            new UbicacionSos(-12.0464, -77.0428, 10, ahora.AddSeconds(1))));
+            new UbicacionSos(-16.3988, -71.5369, 10, ahora.AddSeconds(1))));
         return (await respuesta.Content.ReadFromJsonAsync<RespuestaSos>())!.Id;
     }
 
@@ -62,7 +62,7 @@ public class RecorridoSerenoTests(FabricaCad fabrica)
     [Fact]
     public async Task SerenoEnCamino_SuRecorridoVaPorLasCallesDesdeSuPosicionHastaElCaso()
     {
-        var (serenoId, _) = await SerenoEnAsync(-12.0500, -77.0428); // a ~400 m del caso en línea recta
+        var (serenoId, _) = await SerenoEnAsync(-16.4024, -71.5369); // a ~400 m del caso en línea recta
         var casoId = await SosAsync();
         var operador = await OperadorAsync();
         await AsignarAsync(operador, casoId, serenoId);
@@ -72,15 +72,15 @@ public class RecorridoSerenoTests(FabricaCad fabrica)
         Assert.Equal(casoId, recorrido.GetProperty("caso").GetGuid());
         var puntos = recorrido.GetProperty("puntos").EnumerateArray().Select(p => (p[0].GetDouble(), p[1].GetDouble())).ToList();
         Assert.True(puntos.Count > 2); // no es la línea recta
-        Assert.Equal((-12.05, -77.0428), puntos[0]);
-        Assert.Equal((-12.0464, -77.0428), puntos[^1]);
+        Assert.Equal((-16.4024, -71.5369), puntos[0]);
+        Assert.Equal((-16.3988, -71.5369), puntos[^1]);
         Assert.InRange(recorrido.GetProperty("metros").GetDouble(), 400, 1500);
     }
 
     [Fact]
     public async Task FueraDeLaZonaConCalles_NoHayRecorrido_YElMapaQuedaConLaLineaRecta()
     {
-        var (serenoId, _) = await SerenoEnAsync(-12.2000, -76.9000); // a ~20 km de la zona
+        var (serenoId, _) = await SerenoEnAsync(-12.0464, -77.0428); // en Lima, a ~760 km de la zona
         var casoId = await SosAsync();
         var operador = await OperadorAsync();
         await AsignarAsync(operador, casoId, serenoId);
@@ -94,7 +94,7 @@ public class RecorridoSerenoTests(FabricaCad fabrica)
     [Fact]
     public async Task SerenoSinCaso_NoTieneRecorrido()
     {
-        var (serenoId, _) = await SerenoEnAsync(-12.0500, -77.0428);
+        var (serenoId, _) = await SerenoEnAsync(-16.4024, -71.5369);
 
         var json = await (await OperadorAsync()).GetStringAsync(Rutas);
 

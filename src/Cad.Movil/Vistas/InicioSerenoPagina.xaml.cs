@@ -8,7 +8,7 @@ namespace Cad.Movil.Vistas;
 public partial class InicioSerenoPagina : ContentPage
 {
     // Centro y teselas como el mapa del panel (Panel:Mapa en appsettings del servidor).
-    private const double CentroLatitud = -12.0464, CentroLongitud = -77.0428;
+    private const double CentroLatitud = -16.3988, CentroLongitud = -71.5369;
     private const int Zoom = 13;
     private const string Teselas = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
