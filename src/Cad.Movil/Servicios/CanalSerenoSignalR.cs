@@ -13,6 +13,7 @@ public sealed class CanalSerenoSignalR(IConfiguracionServidor configuracion, IAl
     public event Action? DespachoAsignado;
     public event Action? Reconectado;
     public event Action? DespachoActualizado;
+    public bool Conectado => conexion?.State == HubConnectionState.Connected;
 
     public async Task<bool> ConectarAsync(CancellationToken ct)
     {

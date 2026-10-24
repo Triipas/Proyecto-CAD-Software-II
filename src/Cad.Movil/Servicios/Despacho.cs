@@ -14,6 +14,9 @@ public interface ICanalSereno
     // HU23-CA02: otro responsable (un operador) cambió el estado del despacho.
     event Action? DespachoActualizado;
 
+    // Si el canal está conectado en este momento (no reconectando ni caído): su aviso llegará y sonará en la app.
+    bool Conectado { get; }
+
     // Devuelve false si no se pudo conectar (sin red o sin servidor); el despacho sigue siendo consultable.
     Task<bool> ConectarAsync(CancellationToken ct);
     Task DesconectarAsync();

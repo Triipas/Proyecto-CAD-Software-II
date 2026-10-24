@@ -132,7 +132,10 @@ public sealed class ServicioMensajesFirebase : FirebaseMessagingService
         constructor.SetPriority(NotificationCompat.PriorityHigh);
         constructor.SetAutoCancel(true);
         constructor.SetContentIntent(pendiente);
-        constructor.SetSilent(true); // con la app abierta ya suena el aviso en tiempo real (ServicioDespacho)
+        // Con la app abierta y el canal en tiempo real conectado, el aviso ya suena en la app (ServicioDespacho): la
+        // notificación va en silencio. Si el canal está caído o reconectando, la notificación es el único aviso y suena.
+        if (IPlatformApplication.Current?.Services.GetService<ICanalSereno>() is { Conectado: true })
+            constructor.SetSilent(true);
         var notificacion = constructor.Build();
         try
         {

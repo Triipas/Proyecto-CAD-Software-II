@@ -454,6 +454,7 @@ public sealed class CanalFalso : ICanalSereno
     public event Action? Reconectado;
     public event Action? DespachoActualizado;
     public bool Conecta { get; set; } = true;
+    public bool Conectado => Conecta;
     public int Conexiones;
 
     public Task<bool> ConectarAsync(CancellationToken ct) { Interlocked.Increment(ref Conexiones); return Task.FromResult(Conecta); }
