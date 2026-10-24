@@ -481,3 +481,20 @@
   height: 1rem;
   margin-top: 2px;
 }
+
+/* 24/10/2026: el sereno asignado se desactivó con el caso en curso (DP16-b). */
+.despacho-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-1);
+  margin: var(--espacio-2) 0 0;
+  font-weight: var(--peso-semi);
+  color: var(--color-advertencia);
+}
+
+.despacho-alerta .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 2px;
+}

@@ -60,7 +60,9 @@ public static class TextoInicioAtencion
 public sealed record ClasificacionVista(string Categoria, string Operador, DateTimeOffset ClasificadoEn);
 
 // HU20: asignación vigente del caso (sereno y momento).
-public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffset AsignadaEn, DateTimeOffset? FinalizadaEn = null);
+// SerenoOperativo: falso si el sereno de una asignación vigente se desactivó (24/10/2026, DP16-b): la central lo ve marcado.
+public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffset AsignadaEn, DateTimeOffset? FinalizadaEn = null,
+    bool SerenoOperativo = true);
 
 // HU24: cierre registrado. Resultado público y notas internas diferenciados (CA04).
 public sealed record CierreVista(string Tipificacion, string ResultadoPublico, string? NotasInternas, string Responsable, DateTimeOffset CerradoEn);
@@ -106,7 +108,9 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
                                 where a.CasoId == casoId
                                 // La vigente o, si el caso se cerró, la que finalizó con el cierre (HU24).
                                 orderby a.Vigente descending, a.AsignadaEn descending
-                                select new AsignacionVista(a.SerenoId, sereno.Nombres + " " + sereno.Apellidos, a.AsignadaEn, a.FinalizadaEn))
+                                let operativo = db.EstadosSereno.Any(e => e.SerenoId == a.SerenoId && e.Operativo)
+                                select new AsignacionVista(a.SerenoId, sereno.Nombres + " " + sereno.Apellidos, a.AsignadaEn, a.FinalizadaEn,
+                                    !a.Vigente || operativo))
                                .FirstOrDefaultAsync(ct);
 
         var cierre = await (from c in db.CierresCaso.AsNoTracking()

@@ -311,6 +311,13 @@
                 <p class="estado estado--activa">
                     <partial name="_Icono" model="@("exito")" />Asignado a @asignacion.Sereno a las @Local(asignacion.AsignadaEn)
                 </p>
+                @if (!asignacion.SerenoOperativo)
+                {
+                    <p class="despacho-alerta" data-desactivado-con-caso>
+                        <partial name="_Icono" model="@("advertencia")" />
+                        <span>@asignacion.Sereno se desactivó con el caso en curso: la central no ve su ubicación y el caso sigue a su nombre.</span>
+                    </p>
+                }
                 @if (s.Avances is { Count: > 0 } avances)
                 {
                     <ol class="historial" data-avances>

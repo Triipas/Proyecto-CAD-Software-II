@@ -64,7 +64,8 @@ public class RangoAtencionTests
 
         // Se acerca: el turno envía la nueva posición y la pantalla se actualiza.
         ubicacion.Posicion = () => new UbicacionSos(LatCaso, LonCaso + 0.0005, 8, Inicio);
-        await vm.Alternar.EjecutarAsync(); // desactiva
+        await vm.Alternar.EjecutarAsync(); // con un caso en curso, pide confirmación…
+        await vm.ConfirmarDesactivacion.EjecutarAsync(); // …y se desactiva
         await vm.Alternar.EjecutarAsync(); // vuelve a activar y lee la posición
         var limite = DateTime.UtcNow.AddSeconds(5);
         while (!vm.MostrarLlegaste && DateTime.UtcNow < limite)
@@ -129,5 +130,27 @@ public class RangoAtencionTests
         Assert.False(vm.MostrarLlegaste);
         Assert.False(vm.MostrarMotivoInicio);
         Assert.Single(api.InicioSolicitudes);
+    }
+
+    // 24/10/2026 (DP16-b sigue vigente): con un caso en curso, desactivarse se confirma antes.
+    [Fact]
+    public async Task ConUnCasoEnCurso_DesactivarsePideConfirmacion()
+    {
+        var vm = await SerenoEnAsync(LatCaso - 0.01, LonCaso);
+        var antes = api.CambiosEstado.Count;
+
+        await vm.Alternar.EjecutarAsync();
+        Assert.True(vm.MostrarConfirmarDesactivacion);
+        Assert.False(vm.MostrarBotonAlternar);
+        Assert.Equal(antes, api.CambiosEstado.Count); // todavía no se desactivó
+
+        await vm.SeguirOperativo.EjecutarAsync();
+        Assert.False(vm.MostrarConfirmarDesactivacion);
+        Assert.True(vm.Operativo);
+
+        await vm.Alternar.EjecutarAsync();
+        await vm.ConfirmarDesactivacion.EjecutarAsync();
+        Assert.False(vm.MostrarConfirmarDesactivacion);
+        Assert.False(Assert.Single(api.CambiosEstado.Skip(antes)).Operativo);
     }
 }
