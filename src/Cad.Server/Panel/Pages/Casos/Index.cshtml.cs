@@ -36,6 +36,10 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
         EstadoCaso.EnAtencion, EstadoCaso.Cerrada, EstadoCaso.Derivada, EstadoCaso.Descartada, EstadoCaso.Cancelada,
     ];
 
+    // «Pendiente» filtra los SOS sin sereno y los reportes admitidos que esperan sereno (en el resultado, «Admitido»).
+    public static string TextoEstadoFiltro(EstadoCaso estado) =>
+        estado == EstadoCaso.Pendiente ? $"{EstadosCaso.Texto(estado)} (SOS) / {EstadosCaso.ReporteAdmitido} (reporte)" : EstadosCaso.Texto(estado);
+
     public TimeZoneInfo ZonaHoraria =>
         TimeZoneInfo.FindSystemTimeZoneById(configuracion["Panel:ZonaHoraria"] ?? "America/Lima");
 
@@ -76,7 +80,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
                 ("origen", "Origen", Origen, v => v switch { "Sos" => "SOS", "Reporte" => "Reporte", "Acompanamiento" => "Acompañamiento", _ => null }),
                 ("tipo", "Tipo", Tipo, v => v == ValorSinTipo ? CasoEncontrado.TipoPorDeterminar
                     : Categorias.FirstOrDefault(c => c.Id.ToString() == v)?.Nombre),
-                ("estado", "Estado", Estado, v => Enum.TryParse<EstadoCaso>(v, out var e) ? EstadosCaso.Texto(e) : null),
+                ("estado", "Estado", Estado, v => Enum.TryParse<EstadoCaso>(v, out var e) ? TextoEstadoFiltro(e) : null),
                 ("sereno", "Sereno", Sereno, v => Serenos.FirstOrDefault(s => s.Id.ToString() == v)?.Nombre),
             };
             return valores

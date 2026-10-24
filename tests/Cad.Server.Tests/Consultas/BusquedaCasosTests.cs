@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Cad.Contratos.Reportes;
@@ -201,6 +201,33 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         Assert.Contains($"<td data-tipo>{CategoriaIncidencia.Iniciales[3].Nombre}</td>", Regex.Match(html, $"<tr data-caso=\"{cerrado}\">.*?</tr>", RegexOptions.Singleline).Value);
         Assert.Contains($"<td data-tipo>{CategoriaIncidencia.Iniciales[1].Nombre}</td>", Regex.Match(html, $"<tr data-caso=\"{enCurso}\">.*?</tr>", RegexOptions.Singleline).Value);
         Assert.Contains("En los casos cerrados, la tipificación final.", html);
+    }
+
+    // 24/10/2026: un reporte admitido que espera sereno se muestra «Admitido» en todo el panel (búsqueda, detalle, cola),
+    // como en sus pasos de progreso y en la app del ciudadano; «Pendiente» queda para el SOS.
+    [Fact]
+    public async Task UnReporteAdmitido_SeMuestraAdmitido_EnLaBusquedaElDetalleYLaCola()
+    {
+        var reporte = await ReporteAdmitidoAsync(Robo);
+        var sos = await SosAsync();
+        var operador = await OperadorAsync();
+
+        // Base compartida: se acota al día y al tipo para que los dos casos estén en la primera página.
+        var hoy = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("America/Lima")).ToString("yyyy-MM-dd");
+        await Clasificar(sos, Robo);
+        var busqueda = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?estado=Pendiente&tipo={Robo}&desde={hoy}&hasta={hoy}"));
+        var filaReporte = Regex.Match(busqueda, $"<tr data-caso=\"{reporte}\">.*?</tr>", RegexOptions.Singleline).Value;
+        var filaSos = Regex.Match(busqueda, $"<tr data-caso=\"{sos}\">.*?</tr>", RegexOptions.Singleline).Value;
+        Assert.Contains("Admitido</span>", filaReporte);
+        Assert.Contains("Pendiente</span>", filaSos);
+        Assert.Contains("Pendiente (SOS) / Admitido (reporte)", busqueda);
+
+        var detalle = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/reportes/{reporte}"));
+        Assert.Matches(new Regex("<span data-estado>\\s*<span class=\"chip chip--advertencia\">.*?Admitido</span>", RegexOptions.Singleline), detalle);
+        Assert.Contains("Asignada", detalle); // los pasos se llaman como los estados
+
+        var cola = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync("/panel/central"));
+        Assert.Contains("<span class=\"sos__estado\">Admitido</span>", Regex.Match(cola, $"id=\"sos-{reporte}\".*?</li>", RegexOptions.Singleline).Value);
     }
 
     // ----- CA03 y CA04 -----

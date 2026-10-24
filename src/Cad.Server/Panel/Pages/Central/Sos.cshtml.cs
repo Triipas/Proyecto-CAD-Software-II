@@ -144,7 +144,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                 Sos.EnAtencion || avances.Any(a => a.Descripcion == "En atención") || Sos.Cierre is not null,
                 Sos.Cierre is not null || cancelado || descartado,
             ];
-            string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignado", "En camino", "En atención", cancelado ? "Cancelado" : descartado ? "Descartado" : "Cerrado"];
+            string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignada", "En camino", "En atención", cancelado ? "Cancelada" : descartado ? "Descartada" : "Cerrada"];
             var actual = Siguiente switch
             {
                 SiguienteAccion.Contactar => 1,

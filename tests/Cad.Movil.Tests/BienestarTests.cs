@@ -103,9 +103,11 @@ public class BienestarTests
         api.RespuestaConsultaConfirmacion = _ => new ResultadoApi<ConfirmacionBienestarVista?>.Correcto(Pendiente());
         reloj.Advance(TimeSpan.FromSeconds(15));
         await Esperar(() => servicio.Confirmacion is not null, "la app recibe la confirmación");
+        // El aviso del teléfono va justo después de guardar la confirmación: se espera a él, no a un tiempo fijo.
+        await Esperar(() => segundoPlano.AvisosConfirmacion > 0, "el teléfono avisa");
         await Task.Delay(100);
         Assert.Empty(api.Presentaciones);
-        Assert.Equal(1, segundoPlano.AvisosConfirmacion); // el teléfono avisa
+        Assert.Equal(1, segundoPlano.AvisosConfirmacion); // el teléfono avisa una vez
 
         await vm.AlAparecerAsync(); // el ciudadano vuelve a la pantalla
         await Esperar(() => !api.Presentaciones.IsEmpty, "se registra la presentación");

@@ -130,7 +130,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
         if (await db.DescartesCaso.AsNoTracking().SingleOrDefaultAsync(d => d.CasoId == casoId, ct) is { } descarte)
         {
             entradas.Add(new(descarte.DescartadoEn, "Caso descartado por la central", await NombreAsync(descarte.OperadorId),
-                $"Estaba «{EstadosCaso.Texto(descarte.EstadoPrevio)}». Motivo: {descarte.Motivo}"));
+                $"Estaba «{EstadosCaso.Texto(caso.Origen, descarte.EstadoPrevio)}». Motivo: {descarte.Motivo}"));
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Descartada), $"Descartado por la central. Motivo: {descarte.Motivo}", descarte.DescartadoEn);
         }
 
@@ -178,7 +178,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);
         }
 
-        return new HistorialCaso(caso.Id, OrigenesCaso.Texto(caso.Origen), EstadosCaso.Texto(caso.Estado),
+        return new HistorialCaso(caso.Id, OrigenesCaso.Texto(caso.Origen), EstadosCaso.Texto(caso.Origen, caso.Estado),
             caso.RegistradoEn, resultado,
             // Orden temporal; a igual momento, el orden en que se añadieron (registro, cierre antes que sus notas).
             entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn,

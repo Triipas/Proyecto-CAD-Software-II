@@ -42,6 +42,12 @@ public static class EstadosCaso
         EstadoCaso.Cancelada => "Cancelada",
         _ => estado.ToString(),
     };
+
+    // Lo que ve el panel (24/10/2026): un reporte «Pendiente» ya fue admitido y espera sereno, así que se muestra «Admitido»,
+    // como en sus pasos de progreso y en la app del ciudadano. El estado del dominio y los textos de la API no cambian.
+    public const string ReporteAdmitido = "Admitido";
+    public static string Texto(OrigenCaso origen, EstadoCaso estado) =>
+        origen == OrigenCaso.Reporte && estado == EstadoCaso.Pendiente ? ReporteAdmitido : Texto(estado);
 }
 
 public sealed class Caso

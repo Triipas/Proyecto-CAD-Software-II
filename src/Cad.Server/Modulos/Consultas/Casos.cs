@@ -109,7 +109,7 @@ public sealed class ConsultarCasos(CadDbContext db)
                           .ToListAsync(ct);
 
         return new PaginaCasos(
-            filas.Select(f => new CasoEncontrado(f.Id, f.Origen, EstadosCaso.Texto(f.Estado), f.RegistradoEn, f.Ciudadano, f.Tipo, f.Sereno,
+            filas.Select(f => new CasoEncontrado(f.Id, f.Origen, EstadosCaso.Texto(f.Origen, f.Estado), f.RegistradoEn, f.Ciudadano, f.Tipo, f.Sereno,
                 f.Latitud, f.Longitud, new TiemposCaso(f.Origen, f.RegistradoEn, f.DecididoEn, f.Decision, f.AtencionIniciadaEn))).ToList(),
             total, pagina, TamanoPagina);
     }

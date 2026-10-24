@@ -563,7 +563,8 @@ public class AcompanamientoTests
         api.RespuestaAcompanamiento = id => Cerrada(id, EstadosAcompanamiento.Vencida, Inicio);
 
         reloj.Advance(TimeSpan.FromSeconds(15));
-        await Esperar(() => servicio.Estado == EstadoAcompanamiento.Vencido, "cierre informado por el servidor");
+        // El estado cambia un instante antes de que el bucle de envío se retire: se esperan las dos cosas.
+        await Esperar(() => servicio.Estado == EstadoAcompanamiento.Vencido && !servicio.Transmitiendo, "cierre informado por el servidor");
 
         Assert.False(servicio.Transmitiendo);
     }
