@@ -202,6 +202,14 @@
   // El sereno sugerido para el caso elegido (el disponible más cercano), para el detalle del caso en el mapa.
   let sugerencia = null;
   function dibujarDespacho() {
+    calcularDespacho();
+    // Si el detalle del caso elegido está abierto, se rehace: su sereno sugerido puede haber cambiado (llega una posición
+    // nueva, un sereno deja de estar disponible…). Leaflet vuelve a llamar a fichaPendiente al actualizarlo.
+    const marcador = sosSeleccionado && marcadores.get(sosSeleccionado);
+    if (marcador?.isPopupOpen()) marcador.getPopup().update();
+  }
+
+  function calcularDespacho() {
     lineaDespacho?.remove();
     lineaDespacho = null;
     sugerencia = null;
@@ -657,6 +665,7 @@
     dibujarEnCurso();
     if (sosSeleccionado) {
       document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
+      document.getElementById(`sos-${sosSeleccionado}`)?.querySelector("[data-seleccionar-sos]")?.setAttribute("aria-pressed", "true");
       resaltar(marcadores, sosSeleccionado);
     }
     actualizarAsignacion();
