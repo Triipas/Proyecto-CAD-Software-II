@@ -396,6 +396,34 @@ public class ReporteTests
         Assert.False(vm.Editable);
     }
 
+    // 24/10/2026: tras registrarlo, la app vuelve sola al inicio después de mostrar la confirmación.
+    [Fact]
+    public async Task TrasRegistrar_VuelveSolaAlInicio_UnaSolaVez()
+    {
+        var vm = await FormularioCompletoAsync(new(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima) { EsperaTrasRegistro = TimeSpan.FromMilliseconds(50) });
+
+        await vm.Enviar.EjecutarAsync();
+        Assert.Contains("Volviendo al inicio", vm.TextoEstado);
+        Assert.Empty(navegacion.Rutas); // primero se ve la confirmación
+
+        var limite = DateTime.UtcNow.AddSeconds(5);
+        while (navegacion.Rutas.Count == 0 && DateTime.UtcNow < limite) await Task.Delay(10);
+        await vm.IrAlSos.EjecutarAsync(); // tocar «Volver al inicio» a la vez no navega dos veces
+        Assert.Equal([Rutas.Ciudadano], navegacion.Rutas);
+    }
+
+    [Fact]
+    public async Task TrasRegistrar_ElBotonVuelveAlInstante_YLaEsperaNoNavegaOtraVez()
+    {
+        var vm = await FormularioCompletoAsync(new(api, Registrador(), ubicacion, sesiones, navegacion, reloj, Lima) { EsperaTrasRegistro = TimeSpan.FromMilliseconds(50) });
+        await vm.Enviar.EjecutarAsync();
+
+        await vm.IrAlSos.EjecutarAsync();
+        await Task.Delay(200);
+
+        Assert.Equal([Rutas.Ciudadano], navegacion.Rutas);
+    }
+
     [Fact]
     public async Task CA03_PorMapa_SeEnviaElPuntoTocado()
     {
