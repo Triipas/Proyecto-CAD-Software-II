@@ -18,7 +18,8 @@
                 var local = TimeZoneInfo.ConvertTime(reporte.AdmitidoEn, Model.ZonaHoraria);
                 <li class="sos sos--reporte" id="sos-@reporte.Id" tabindex="-1" data-sos="@reporte.Id" data-origen="Reporte"
                     data-ciudadano="@reporte.Ciudadano" data-categoria="@reporte.Categoria"
-                    data-lat="@reporte.Latitud?.ToString(inv)" data-lon="@reporte.Longitud?.ToString(inv)">
+                    data-lat="@reporte.Latitud?.ToString(inv)" data-lon="@reporte.Longitud?.ToString(inv)"
+                    data-hora="@local.ToString("HH:mm", inv)" data-detalle="/panel/reportes/@reporte.Id">
                     <div class="sos__cabecera">
                         <span class="etiqueta-reporte">Reporte</span>
                         <span class="sos__estado">Pendiente</span>
@@ -28,9 +29,12 @@
                     <p class="sos__tipo" data-tipo>Tipo: @reporte.Categoria</p>
                     @if (reporte.ConPunto)
                     {
-                        <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa el lugar del hecho del reporte de @reporte.Ciudadano">
+                        <p class="sos__dato-ubicacion">
                             <partial name="_Icono" model="@("ubicacion")" />
-                            <span>Lugar del hecho indicado por el ciudadano · Ver en el mapa</span>
+                            <span>Lugar del hecho indicado por el ciudadano</span>
+                        </p>
+                        <button type="button" class="boton boton--secundario boton--compacto sos__ver" data-ver-en-mapa aria-label="Ver en el mapa el lugar del hecho del reporte de @reporte.Ciudadano">
+                            <partial name="_Icono" model="@("ubicacion")" />Ver en el mapa
                         </button>
                     }
                     else

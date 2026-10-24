@@ -40,7 +40,8 @@
 
   // ---------- Vuelo al caso: el mapa viaja al punto, casi al zoom máximo, y lo marca al llegar ----------
   // Propósito: continuidad espacial (de la tarjeta al lugar). Con movimiento reducido el salto es inmediato.
-  const ZOOM_CERCANO = 18;
+  // «Ver en el mapa» acerca hasta el zoom máximo de las teselas (24/10/2026: antes se quedaba uno por debajo).
+  const ZOOM_CERCANO = 19;
   const DURACION_VUELO = 0.9; // segundos (Leaflet)
 
   // Franja horizontal del mapa que no tapan los paneles flotantes abiertos (en píxeles del contenedor).
@@ -63,11 +64,21 @@
       contenedorMapa.scrollIntoView({ block: "start", behavior: reducido.matches ? "auto" : "smooth" });
   }
 
-  function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
-    const punto = marcador.getLatLng();
+  // Centro de la franja del mapa que no tapan los paneles, para un punto y un zoom.
+  function centroLibre(punto, zoom) {
     const { izquierda, derecha, ancho } = franjaLibre();
     const desfase = (izquierda + derecha) / 2 - ancho / 2;
-    const destino = mapa.unproject(mapa.project(punto, zoom).subtract([desfase, 0]), zoom);
+    return mapa.unproject(mapa.project(punto, zoom).subtract([desfase, 0]), zoom);
+  }
+
+  // Al tocar un caso en el mapa se centra en la franja libre, sin cambiar el zoom (24/10/2026).
+  function centrar(marcador) {
+    mapa.panTo(centroLibre(marcador.getLatLng(), mapa.getZoom()), { animate: !reducido.matches, duration: 0.5 });
+  }
+
+  function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
+    const punto = marcador.getLatLng();
+    const destino = centroLibre(punto, zoom);
     const llegar = () => { marcador.openPopup(); marcarLlegada(punto, clase); };
     traerMapaALaVista();
     if (reducido.matches) {
@@ -133,7 +144,11 @@
           alt: texto,
           keyboard: true,
         })
-          .bindPopup(`<strong>Reporte · Pendiente</strong><br>Identificador: ${escapar(id)}<br>${escapar(item.dataset.ciudadano)}<br>Tipo: ${escapar(item.dataset.categoria)}<br>Lugar del hecho indicado por el ciudadano`)
+          .bindPopup(ficha({
+            tipo: "reporte", etiqueta: "Reporte", estado: "Pendiente", hora: `Admitido ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
+            datos: [["Tipo", item.dataset.categoria]],
+            acciones: accion(item.dataset.detalle, "Ver el reporte", true) + elegirDesdeMapa(id),
+          }), GLOBO)
           .on("click", () => seleccionar(id, { desdeMapa: true }))
           .addTo(mapa);
         marcadores.set(id, marcador);
@@ -145,7 +160,11 @@
         alt: `SOS de ${item.dataset.ciudadano}`,
         keyboard: true,
       })
-        .bindPopup(`<strong>SOS · Pendiente</strong><br>Identificador: ${escapar(id)}<br>${escapar(item.dataset.ciudadano)}<br>Precisión ± ${escapar(item.dataset.precision)} m`)
+        .bindPopup(ficha({
+          tipo: "sos", etiqueta: "SOS", estado: "Pendiente", hora: `Recibido ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
+          datos: [["Tipo", item.dataset.clase], ["Ubicación", `Teléfono del ciudadano · ± ${item.dataset.precision} m`]],
+          acciones: accion(item.dataset.detalle, "Verificar", true) + elegirDesdeMapa(id),
+        }), GLOBO)
         .on("click", () => seleccionar(id, { desdeMapa: true }))
         .addTo(mapa);
       marcadores.set(id, marcador);
@@ -172,7 +191,11 @@
     marcarComoVisto();
     actualizarAsignacion();
     dibujarDespacho();
-    if (!marcador || desdeMapa) return;
+    if (!marcador) return;
+    if (desdeMapa) {
+      centrar(marcador);
+      return;
+    }
     // Al elegir sereno se encuadran el caso y el sereno más cercano; al «Ver en el mapa», se vuela al caso.
     if (conSereno && lineaDespacho) encuadrar(lineaDespacho.getBounds(), marcador, claseLlegada(id));
     else volarA(marcador, { clase: claseLlegada(id) });
@@ -217,13 +240,19 @@
       const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
       const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
       const texto = `${item.dataset.origen} · ${item.dataset.estado} · ${item.dataset.ciudadano}`;
+      const sereno = vinculados.get(item.dataset.casoMapa); // el sereno asignado, si tiene ubicación
       marcadoresEnCurso.push(L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
         icon: L.divIcon({ className: clase, html: reporte ? "" : SIRENA, iconSize: reporte ? [26, 26] : [36, 32], iconAnchor: reporte ? [13, 13] : [18, 16], popupAnchor: [0, reporte ? -18 : -22] }),
         title: texto,
         alt: texto,
         keyboard: true,
       })
-        .bindPopup(`<strong>${escapar(item.dataset.origen)} · ${escapar(item.dataset.estado)}</strong><br>Identificador: ${escapar(item.dataset.casoMapa)}<br>${escapar(item.dataset.ciudadano)}<br><a href="${escapar(item.dataset.detalle)}">Ver el caso</a>`)
+        .bindPopup(ficha({
+          tipo: reporte ? "reporte" : "sos", etiqueta: item.dataset.origen, estado: item.dataset.estado, titulo: item.dataset.ciudadano,
+          datos: [["Sereno", sereno ? `${sereno.sereno.dataset.nombre} · a ${distancia(sereno.metros)}` : ""]],
+          acciones: accion(item.dataset.detalle, "Ver el caso", true),
+        }), GLOBO)
+        .on("click", (e) => centrar(e.target))
         .addTo(mapa));
       marcadoresEnCurso.at(-1).claves = [`caso:${item.dataset.casoMapa}`];
     }
@@ -243,6 +272,13 @@
     }
   }
   region.addEventListener("click", alHacerClicEnLista);
+  // «Elegir sereno» del detalle en el mapa: pulsa el mismo botón del caso en la cola.
+  contenedorMapa.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("[data-elegir-desde-mapa]");
+    if (!boton) return;
+    mapa.closePopup();
+    document.getElementById(`sos-${boton.dataset.elegirDesdeMapa}`)?.querySelector("[data-seleccionar-sos]")?.click();
+  });
   regionReportes?.addEventListener("click", alHacerClicEnLista);
 
   // ---------- HU19: serenos en el mismo mapa (sin rutas, líneas ni distancias) ----------
@@ -346,8 +382,11 @@
       alt: texto,
       keyboard: true,
       zIndexOffset: 500,
-    }).bindPopup(`<strong>${escapar(v.caso.dataset.origen)} · ${escapar(v.caso.dataset.estado)}</strong><br>${escapar(v.caso.dataset.ciudadano)}<br>`
-      + `Sereno en el lugar: ${escapar(v.sereno.dataset.nombre)} (a ${Math.round(v.metros)} m · ${escapar(v.sereno.dataset.hora)})<br><a href="${escapar(v.caso.dataset.detalle)}">Ver el caso</a>`);
+    }).bindPopup(ficha({
+      tipo: reporte ? "reporte" : "sos", etiqueta: v.caso.dataset.origen, estado: v.caso.dataset.estado, titulo: v.caso.dataset.ciudadano,
+      datos: [["Sereno", `${v.sereno.dataset.nombre} · en el lugar`], ["Posición", `a ${Math.round(v.metros)} m del caso · ${v.sereno.dataset.hora}`]],
+      acciones: accion(v.caso.dataset.detalle, "Ver el caso", true),
+    }), GLOBO);
   }
 
   function dibujarSerenos(vinculados) {
@@ -374,7 +413,10 @@
         alt: texto,
         keyboard: true,
       })
-        .bindPopup(`<strong>Sereno · Operativo</strong><br>${escapar(item.dataset.nombre)}<br>${disponible ? "Disponible" : "No disponible"}<br>Última ubicación a las ${escapar(item.dataset.hora)}`)
+        .bindPopup(ficha({
+          tipo: "sereno", etiqueta: "Sereno", estado: disponible ? "Disponible" : "No disponible", titulo: item.dataset.nombre,
+          datos: [["Ubicación", `Última a las ${item.dataset.hora}`]],
+        }), GLOBO)
         .on("click", () => seleccionarSereno(id, { desdeMapa: true }))
         .addTo(mapa);
       marcador.claves = [`sereno:${id}`];
@@ -687,6 +729,35 @@
       estadoConexion("desconectado", "Sin conexión en tiempo real. Reintentando…");
       setTimeout(iniciar, 5000);
     }
+  }
+
+  // Detalle de un caso o de un sereno en el mapa (24/10/2026): sin el identificador interno (largo y sin uso para el
+  // operador); con quién es, lo que sirve para decidir y un acceso a la siguiente acción.
+  const GLOBO = { className: "ficha-globo", minWidth: 240, maxWidth: 300 };
+
+  function ficha({ tipo, etiqueta, estado, hora, titulo, datos = [], acciones = "" }) {
+    const filas = datos.filter(([, valor]) => valor).map(([nombre, valor]) => `<div><dt>${escapar(nombre)}</dt><dd>${escapar(valor)}</dd></div>`).join("");
+    return `<div class="ficha ficha--${tipo}">`
+      + `<p class="ficha__cabecera"><span class="ficha__origen">${escapar(etiqueta)}</span>`
+      + (estado ? `<span class="ficha__estado">${escapar(estado)}</span>` : "")
+      + (hora ? `<span class="ficha__hora">${escapar(hora)}</span>` : "") + `</p>`
+      + `<p class="ficha__titulo">${escapar(titulo)}</p>`
+      + (filas ? `<dl class="ficha__datos">${filas}</dl>` : "")
+      + (acciones ? `<div class="ficha__acciones">${acciones}</div>` : "")
+      + `</div>`;
+  }
+
+  function distancia(metros) {
+    return metros < 1000 ? `${Math.round(metros)} m` : `${(metros / 1000).toFixed(1).replace(".", ",")} km`;
+  }
+
+  function accion(href, texto, principal) {
+    return `<a class="boton ${principal ? "boton--principal" : "boton--secundario"} boton--compacto" href="${escapar(href)}">${escapar(texto)}</a>`;
+  }
+
+  // Igual que «Elegir sereno para asignar» de la cola (el mismo botón hace el trabajo).
+  function elegirDesdeMapa(id) {
+    return `<button type="button" class="boton boton--secundario boton--compacto" data-elegir-desde-mapa="${escapar(id)}">Elegir sereno</button>`;
   }
 
   function escapar(texto) {

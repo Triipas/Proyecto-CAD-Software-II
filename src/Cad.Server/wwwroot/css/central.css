@@ -374,7 +374,8 @@
 
 /* Hora y precisión de la última ubicación, y debajo el botón para ubicar al sereno en el mapa (antes un texto con aspecto de
    enlace: ahora se ve dónde pulsar). */
-.central .sereno__ubicacion {
+.central .sereno__ubicacion,
+.central .sos__dato-ubicacion {
   display: flex;
   align-items: center;
   gap: var(--espacio-1);
@@ -383,18 +384,21 @@
   color: var(--color-texto-secundario);
 }
 
-.central .sereno__ubicacion .icono {
+.central .sereno__ubicacion .icono,
+.central .sos__dato-ubicacion .icono {
   width: 0.875rem;
   height: 0.875rem;
   flex: none;
 }
 
-.central .sereno__ubicar {
+.central .sereno__ubicar,
+.central .sos__ver {
   justify-self: start;
   gap: var(--espacio-1);
 }
 
-.central .sereno__ubicar .icono {
+.central .sereno__ubicar .icono,
+.central .sos__ver .icono {
   width: 1rem;
   height: 1rem;
   color: var(--color-primario);
@@ -765,4 +769,101 @@
     animation: none;
     opacity: 1;
   }
+}
+
+/* ── Detalle de un caso o de un sereno en el mapa (24/10/2026) ──
+   Quién es, su estado y lo que sirve para decidir, con la siguiente acción a mano. Sin el identificador interno. */
+.ficha-globo .leaflet-popup-content-wrapper {
+  border-radius: var(--radio-superficie);
+  box-shadow: var(--sombra-2);
+}
+
+.ficha-globo .leaflet-popup-content {
+  margin: var(--espacio-3) var(--espacio-4) var(--espacio-4);
+  font: var(--peso-normal) var(--texto-sm)/1.4 var(--fuente);
+  color: var(--color-texto);
+}
+
+.ficha-globo .leaflet-popup-close-button {
+  top: var(--espacio-2);
+  right: var(--espacio-2);
+}
+
+.ficha__cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0 var(--espacio-4) var(--espacio-2) 0;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.ficha__origen {
+  padding: 2px var(--espacio-2);
+  border-radius: var(--radio-pildora);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-urgente);
+}
+
+.ficha--reporte .ficha__origen {
+  background: var(--color-reporte);
+}
+
+.ficha--sereno .ficha__origen {
+  background: var(--color-marino);
+}
+
+.ficha__estado {
+  font-weight: var(--peso-semi);
+  color: var(--color-texto);
+}
+
+.ficha__hora {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha__titulo {
+  margin: 0;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  line-height: 1.25;
+  color: var(--color-marino);
+}
+
+.ficha__datos {
+  display: grid;
+  gap: var(--espacio-1);
+  margin: var(--espacio-2) 0 0;
+}
+
+.ficha__datos div {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--espacio-2);
+}
+
+.ficha__datos dt {
+  color: var(--color-texto-secundario);
+}
+
+.ficha__datos dd {
+  margin: 0;
+}
+
+.ficha__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-3);
+}
+
+/* Leaflet pinta los enlaces del globo con su azul: los botones conservan sus colores. */
+.ficha-globo .ficha__acciones a.boton--principal {
+  color: #FFFFFF;
+}
+
+.ficha-globo .ficha__acciones a.boton--secundario {
+  color: var(--color-marino);
 }

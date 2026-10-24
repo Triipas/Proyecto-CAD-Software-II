@@ -21,7 +21,8 @@
                 var local = TimeZoneInfo.ConvertTime(sos.RegistradoEn, Model.ZonaHoraria);
                 <li class="sos" id="sos-@sos.Id" tabindex="-1" data-sos="@sos.Id" data-ciudadano="@sos.Ciudadano"
                     data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)"
-                    data-precision="@sos.PrecisionMetros?.ToString("0", inv)">
+                    data-precision="@sos.PrecisionMetros?.ToString("0", inv)" data-hora="@local.ToString("HH:mm", inv)"
+                    data-clase="@(sos.Tipo ?? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar)" data-detalle="/panel/central/sos/@sos.Id">
                     <div class="sos__cabecera">
                         <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@sos.Origen</span>
                         <span class="sos__estado">@sos.Estado</span>
@@ -32,9 +33,13 @@
                     <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
                     @if (sos.UbicacionDisponible)
                     {
-                        <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa el SOS de @sos.Ciudadano">
+                        <p class="sos__dato-ubicacion">
                             <partial name="_Icono" model="@("ubicacion")" />
-                            <span>Ubicación disponible · ± @sos.PrecisionMetros?.ToString("0", inv) m · Ver en el mapa</span>
+                            <span>Ubicación disponible · ± @sos.PrecisionMetros?.ToString("0", inv) m</span>
+                        </p>
+                        @* Botón a la vista (antes era un texto con aspecto de enlace): lleva el mapa al SOS. *@
+                        <button type="button" class="boton boton--secundario boton--compacto sos__ver" data-ver-en-mapa aria-label="Ver en el mapa el SOS de @sos.Ciudadano">
+                            <partial name="_Icono" model="@("ubicacion")" />Ver en el mapa
                         </button>
                     }
                     else
