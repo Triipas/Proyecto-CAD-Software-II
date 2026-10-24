@@ -63,9 +63,14 @@ public static class ModuloSerenos
             AvanzarAsync(id, Casos.Aplicacion.Avance.ConfirmarDesplazamiento, contexto, avanzar, despachos, ct));
         // Rango de atención (24/10/2026): el cuerpo es opcional (posición y, fuera del rango, el motivo). 422 si el sereno está
         // lejos del punto del caso y no indicó por qué, con la distancia y el radio en los errores.
-        sereno.MapPost("/casos/{id:guid}/atencion", (Guid id, SolicitudInicioAtencion? solicitud, HttpContext contexto,
+        // El cuerpo se lee a mano: una app anterior envía la solicitud sin cuerpo ni Content-Type, y el enlace automático de
+        // ASP.NET la rechazaba (415/400 sin explicación) en lugar de tratarla como «sin datos».
+        sereno.MapPost("/casos/{id:guid}/atencion", async (Guid id, HttpContext contexto,
                 Casos.Aplicacion.AvanzarCaso avanzar, Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
-            AvanzarAsync(id, Casos.Aplicacion.Avance.IniciarAtencion, contexto, avanzar, despachos, ct, solicitud));
+            await LeerInicioAsync(contexto.Request, ct) is var (solicitud, valida) && !valida
+                ? Results.ValidationProblem(new Dictionary<string, string[]> { ["cuerpo"] = ["La solicitud no tiene un formato válido."] },
+                    title: "No se pudo registrar el inicio de atención: la solicitud no tiene un formato válido.")
+                : await AvanzarAsync(id, Casos.Aplicacion.Avance.IniciarAtencion, contexto, avanzar, despachos, ct, solicitud));
 
         // HU24 — cierre por el sereno asignado. 200 también ante un reenvío del mismo cierre; 400 si faltan la
         // tipificación o el resultado (CA02); 409 si el estado lo impide (CA03); 404 si el caso no es suyo (CA06).
@@ -123,6 +128,23 @@ public static class ModuloSerenos
             Casos.Aplicacion.ResultadoAvance.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
             _ => Results.NotFound(),
         };
+    }
+
+    // Cuerpo opcional del inicio de atención: vacío (o solo espacios) = sin datos; si trae algo, debe ser el JSON esperado.
+    private static async Task<(SolicitudInicioAtencion? Solicitud, bool Valida)> LeerInicioAsync(HttpRequest peticion, CancellationToken ct)
+    {
+        using var lector = new StreamReader(peticion.Body);
+        var texto = await lector.ReadToEndAsync(ct);
+        if (string.IsNullOrWhiteSpace(texto))
+            return (null, true);
+        try
+        {
+            return (System.Text.Json.JsonSerializer.Deserialize<SolicitudInicioAtencion>(texto, System.Text.Json.JsonSerializerOptions.Web), true);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return (null, false);
+        }
     }
 
     private static RespuestaCierreCaso RespuestaCierre(Casos.Dominio.CierreCaso cierre) =>

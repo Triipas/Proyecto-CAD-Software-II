@@ -181,6 +181,34 @@ public class RangoAtencionTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task UnaAppAnterior_SinCuerpoNiTipo_OConOtroTipo_NoRecibeUnRechazoSinExplicacion()
+    {
+        var sereno = await SerenoAsync();
+        var (casoId, _) = await EnCaminoAsync(sereno);
+        await EnviarPosicionAsync(sereno, LatCaso - 0.0005, LonCaso);
+        var ruta = $"/api/sereno/casos/{casoId}/atencion";
+
+        // JSON con otro Content-Type: se lee igual.
+        var otroTipo = new StringContent("{}", System.Text.Encoding.UTF8, "text/plain");
+        Assert.Equal(HttpStatusCode.OK, (await sereno.App.PostAsync(ruta, otroTipo)).StatusCode);
+        Assert.True((await InicioAsync(casoId)).DentroDelRango);
+    }
+
+    [Fact]
+    public async Task UnCuerpoMalFormado_SeRechazaConUnMensajeLegible()
+    {
+        var sereno = await SerenoAsync();
+        var (casoId, _) = await EnCaminoAsync(sereno);
+
+        var respuesta = await sereno.App.PostAsync($"/api/sereno/casos/{casoId}/atencion",
+            new StringContent("{ no es json", System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("no tiene un formato válido", await respuesta.Content.ReadAsStringAsync());
+        Assert.Equal(EstadoCaso.EnCamino, await EstadoAsync(casoId));
+    }
+
+    [Fact]
     public async Task UnCasoSinPunto_NoTieneRangoQueComprobar()
     {
         var sereno = await SerenoAsync();
