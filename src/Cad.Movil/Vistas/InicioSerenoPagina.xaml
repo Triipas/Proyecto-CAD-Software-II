@@ -286,8 +286,29 @@
                             <!-- La acción de la etapa (HU22, HU23, HU24), en la zona del pulgar. -->
                             <Button Text="Voy en camino" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarDesplazamiento}"
                                     IsVisible="{Binding PuedeConfirmarDesplazamiento}" SemanticProperties.Hint="Confirma a la central que te diriges a atender el caso" />
+                            <!-- Rango de atención (24/10/2026): «Llegaste» dentro del rango; fuera, el motivo antes de iniciar. -->
+                            <v:Aviso Tipo="exito" Texto="Llegaste al lugar del caso. Inicia la atención cuando estés con el ciudadano." IsVisible="{Binding MostrarLlegaste}" />
                             <Button Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
-                                    IsVisible="{Binding PuedeIniciarAtencion}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
+                                    IsVisible="{Binding MostrarBotonIniciar}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
+                            <VerticalStackLayout Spacing="10" IsVisible="{Binding MostrarMotivoInicio}">
+                                <v:Aviso Tipo="advertencia" Texto="{Binding TextoFueraDeRango}" />
+                                <Label Text="Motivo" Style="{StaticResource Etiqueta}" />
+                                <Border Style="{StaticResource MarcoCampo}">
+                                    <Picker Title="Elige un motivo" ItemsSource="{Binding OpcionesMotivo}" SelectedItem="{Binding MotivoInicio}"
+                                            ItemDisplayBinding="{Binding Texto, x:DataType=vm:OpcionMotivo}" />
+                                </Border>
+                                <VerticalStackLayout Spacing="6" IsVisible="{Binding PideDetalleMotivo}">
+                                    <Label Text="Cuéntalo brevemente" Style="{StaticResource Etiqueta}" />
+                                    <Border Style="{StaticResource MarcoCampo}">
+                                        <Entry Text="{Binding DetalleMotivoInicio}" MaxLength="{Binding MaximoDetalleMotivo}"
+                                               SemanticProperties.Description="Detalle del motivo para iniciar la atención aquí" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <Label Text="{Binding ErrorMotivoInicio}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorMotivoInicio}" />
+                                <Button Text="Iniciar atención aquí" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarInicioFueraDeRango}"
+                                        SemanticProperties.Hint="Registra el inicio de la atención fuera del rango, con el motivo elegido" />
+                                <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarInicioFueraDeRango}" />
+                            </VerticalStackLayout>
                             <Button Text="Cerrar el caso" Style="{StaticResource BotonPrincipal}" Command="{Binding AbrirCierre}" IsVisible="{Binding PuedeAbrirCierre}" />
                             <Button Text="Continuar el cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ExpandirPanel}" IsVisible="{Binding PuedeContinuarCierre}" />
 

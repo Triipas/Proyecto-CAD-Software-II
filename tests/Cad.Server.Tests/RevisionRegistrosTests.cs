@@ -139,7 +139,7 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
             ["Clasificacion.CategoriaId"] = Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id.ToString(),
         });
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{sos.Id}/desplazamiento", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{sos.Id}/atencion", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{sos.Id}/atencion", await fabrica.EnElLugarAsync(sos.Id))).StatusCode);
         var resultadoCierre = $"Se atendió a la señora del domicilio {sello}";
         var notasCierre = $"Vecino identificado como agresor {sello}";
         sensibles["datos personales"].AddRange([resultadoCierre, notasCierre]);
@@ -241,7 +241,7 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         }, "/panel/central");
         Assert.Contains(referencias[0], await serenoApp.GetStringAsync("/api/sereno/despacho"));
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{reportes[0]}/desplazamiento", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{reportes[0]}/atencion", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{reportes[0]}/atencion", await fabrica.EnElLugarAsync(reportes[0]))).StatusCode);
         var resultado = $"Se recuperó la moto del señor {sello}";
         var notas = $"El denunciante es primo del sospechoso {sello}";
         sensibles["datos personales"].AddRange([resultado, notas]);

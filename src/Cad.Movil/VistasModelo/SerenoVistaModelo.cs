@@ -15,6 +15,12 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private readonly INavegacion navegacion;
     private readonly Func<Uri, Task<bool>> abrirEnlace;
     private readonly IServicioRutas rutas;
+    private readonly TimeProvider reloj;
+    // Rango de atención: panel del motivo para iniciar fuera del rango y aviso de llegada (uno por caso).
+    private bool mostrarMotivoInicio;
+    private string textoFueraDeRango = "", detalleMotivoInicio = "", errorMotivoInicio = "";
+    private OpcionMotivo? motivoInicio;
+    private Guid? llegadaAvisada;
     private bool mostrarExplicacion, mostrarAjustes, mostrarCierre, mostrarInformacion, panelExpandido, mostrarEtapas = true, calculandoRuta;
     private CategoriaCatalogo? categoriaCierre;
     private string? resultadoCierre, notasCierre, avisoComoLlegar;
@@ -25,8 +31,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
 
     public InicioSerenoVistaModelo(ServicioTurnoSereno turno, ServicioDespacho despacho, ServicioNotificaciones notificaciones,
         IAlmacenSesion sesiones, INavegacion navegacion, Action abrirAjustes, Func<Uri, Task<bool>>? abrirEnlace = null,
-        IServicioRutas? rutas = null)
+        IServicioRutas? rutas = null, TimeProvider? reloj = null)
     {
+        this.reloj = reloj ?? TimeProvider.System;
         (this.turno, this.despacho, this.notificaciones, this.sesiones, this.navegacion) = (turno, despacho, notificaciones, sesiones, navegacion);
         this.abrirEnlace = abrirEnlace ?? (_ => Task.FromResult(false));
         this.rutas = rutas ?? new RutasNoDisponibles();
@@ -47,7 +54,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
         Salir = new ComandoAsincrono(SalirAsync, () => PuedeSalir);
         ConfirmarDesplazamiento = new ComandoAsincrono(() => despacho.ConfirmarDesplazamientoAsync());
-        IniciarAtencion = new ComandoAsincrono(() => despacho.IniciarAtencionAsync());
+        IniciarAtencion = new ComandoAsincrono(IniciarAtencionAsync);
+        ConfirmarInicioFueraDeRango = new ComandoAsincrono(ConfirmarInicioFueraDeRangoAsync);
+        CancelarInicioFueraDeRango = new ComandoAsincrono(() => { CerrarMotivoInicio(); return Task.CompletedTask; });
         AbrirCierre = new ComandoAsincrono(AbrirCierreAsync);
         CancelarCierre = new ComandoAsincrono(() => { MostrarCierre = false; ActualizarDespacho(); return Task.CompletedTask; });
         ConfirmarCierre = new ComandoAsincrono(ConfirmarCierreAsync);
@@ -66,6 +75,109 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public ComandoAsincrono Salir { get; }
     public ComandoAsincrono ConfirmarDesplazamiento { get; }
     public ComandoAsincrono IniciarAtencion { get; }
+    public ComandoAsincrono ConfirmarInicioFueraDeRango { get; }
+    public ComandoAsincrono CancelarInicioFueraDeRango { get; }
+
+    // ----- Rango de atención (24/10/2026) -----
+    // La posición propia sirve si es reciente (la regla del servidor usa la misma antigüedad máxima).
+    public Contratos.Sos.UbicacionSos? PosicionReciente =>
+        PosicionPropia is { } p && reloj.GetUtcNow() - p.ObtenidaEn <= RangoAtencion.AntiguedadMaxima ? p : null;
+    public double? DistanciaAlCaso => Destino is { } d && PosicionReciente is { } p ? Geo.DistanciaMetros(p.Latitud, p.Longitud, d.Latitud, d.Longitud) : null;
+    public double RadioAtencion => RangoAtencion.Radio(Destino?.PrecisionMetros, PosicionReciente?.PrecisionMetros);
+    public bool EnElLugar => DistanciaAlCaso is { } d && d <= RadioAtencion;
+    // Sin punto del caso no hay rango que comprobar.
+    public bool FueraDeRangoPrevisto => HayDestino && !EnElLugar;
+    // «Llegaste»: en camino y dentro del rango; el botón para iniciar está justo debajo.
+    public bool MostrarLlegaste => PuedeIniciarAtencion && EnElLugar && !MostrarMotivoInicio;
+    public event Action? Llegada;
+
+    public bool MostrarMotivoInicio { get => mostrarMotivoInicio; private set { Asignar(ref mostrarMotivoInicio, value); Notificar(nameof(MostrarLlegaste)); Notificar(nameof(MostrarBotonIniciar)); } }
+    public bool MostrarBotonIniciar => PuedeIniciarAtencion && !MostrarMotivoInicio;
+    public string TextoFueraDeRango { get => textoFueraDeRango; private set => Asignar(ref textoFueraDeRango, value); }
+    // «Sin posición» solo tiene sentido si el teléfono no tiene una reciente.
+    public IReadOnlyList<OpcionMotivo> OpcionesMotivo => MotivosInicioFueraDeRango.Todos
+        .Where(m => m != MotivosInicioFueraDeRango.SinPosicion || PosicionReciente is null)
+        .Select(m => new OpcionMotivo(m, MotivosInicioFueraDeRango.Texto(m))).ToList();
+    public OpcionMotivo? MotivoInicio
+    {
+        get => motivoInicio;
+        set { Asignar(ref motivoInicio, value); Notificar(nameof(PideDetalleMotivo)); ErrorMotivoInicio = ""; }
+    }
+    public bool PideDetalleMotivo => motivoInicio?.Clave == MotivosInicioFueraDeRango.Otro;
+    public string DetalleMotivoInicio { get => detalleMotivoInicio; set => Asignar(ref detalleMotivoInicio, value ?? ""); }
+    public string ErrorMotivoInicio { get => errorMotivoInicio; private set { Asignar(ref errorMotivoInicio, value); Notificar(nameof(HayErrorMotivoInicio)); } }
+    public bool HayErrorMotivoInicio => errorMotivoInicio.Length > 0;
+    public int MaximoDetalleMotivo => MotivosInicioFueraDeRango.MaximoDetalle;
+
+    // Dentro del rango (o sin punto del caso) se inicia directamente; fuera, primero se pide el motivo.
+    private async Task IniciarAtencionAsync()
+    {
+        if (FueraDeRangoPrevisto)
+        {
+            AbrirMotivoInicio(DistanciaAlCaso is { } d
+                ? $"Estás a {RangoAtencion.TextoDistancia(d)} del punto del caso (el rango es de {RadioAtencion.ToString("0", CultureInfo.InvariantCulture)} m). Indica por qué inicias la atención aquí."
+                : "No hay una posición reciente de tu teléfono para comprobar que estás en el lugar. Indica por qué inicias la atención.");
+            return;
+        }
+        await EnviarInicioAsync(null, null);
+    }
+
+    private async Task ConfirmarInicioFueraDeRangoAsync()
+    {
+        if (MotivoInicio is null)
+        {
+            ErrorMotivoInicio = "Elige un motivo.";
+            return;
+        }
+        if (PideDetalleMotivo && string.IsNullOrWhiteSpace(DetalleMotivoInicio))
+        {
+            ErrorMotivoInicio = "Cuenta brevemente el motivo.";
+            return;
+        }
+        await EnviarInicioAsync(MotivoInicio.Clave, string.IsNullOrWhiteSpace(DetalleMotivoInicio) ? null : DetalleMotivoInicio.Trim());
+    }
+
+    private async Task EnviarInicioAsync(string? motivo, string? detalle)
+    {
+        var p = PosicionReciente;
+        var solicitud = new SolicitudInicioAtencion(p is null ? null : new PosicionSerenoEnviada(p.Latitud, p.Longitud, p.PrecisionMetros, p.ObtenidaEn),
+            motivo, detalle);
+        if (await despacho.IniciarAtencionAsync(solicitud))
+            CerrarMotivoInicio();
+        else if (despacho.FueraDeRango is { } rango)
+            AbrirMotivoInicio(rango.Mensaje); // el servidor, con su posición, lo vio fuera del rango
+    }
+
+    private void AbrirMotivoInicio(string texto)
+    {
+        TextoFueraDeRango = texto;
+        ErrorMotivoInicio = "";
+        Notificar(nameof(OpcionesMotivo));
+        MostrarMotivoInicio = true;
+        PanelExpandido = true;
+    }
+
+    private void CerrarMotivoInicio()
+    {
+        MostrarMotivoInicio = false;
+        (MotivoInicio, DetalleMotivoInicio) = (null, "");
+        despacho.OlvidarFueraDeRango();
+    }
+
+    // Una sola vez por caso, al entrar en el rango: la página vibra y lo anuncia al lector de pantalla.
+    private void RevisarLlegada()
+    {
+        foreach (var p in new[] { nameof(PosicionReciente), nameof(DistanciaAlCaso), nameof(RadioAtencion), nameof(EnElLugar),
+                     nameof(FueraDeRangoPrevisto), nameof(MostrarLlegaste), nameof(MostrarBotonIniciar) })
+            Notificar(p);
+        if (MostrarLlegaste && despacho.Actual is { } d && llegadaAvisada != d.CasoId)
+        {
+            llegadaAvisada = d.CasoId;
+            Llegada?.Invoke();
+        }
+        if (!PuedeIniciarAtencion && MostrarMotivoInicio)
+            CerrarMotivoInicio(); // la atención ya se inició (p. ej., un operador) o el caso cambió
+    }
     public ComandoAsincrono AbrirCierre { get; }
     public ComandoAsincrono CancelarCierre { get; }
     public ComandoAsincrono ConfirmarCierre { get; }
@@ -457,6 +569,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
                      nameof(PosicionPropia), nameof(TextoDistancia), nameof(HayDistancia) })
             Notificar(p);
         ActualizarRuta();
+        RevisarLlegada();
         Alternar.ActualizarDisponibilidad();
         Salir.ActualizarDisponibilidad();
     }
@@ -486,8 +599,12 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
             Notificar(p);
         ComoLlegar.ActualizarDisponibilidad();
         ActualizarRuta();
+        RevisarLlegada();
     }
 }
+
+// Motivo para iniciar la atención fuera del rango (lista de la pantalla).
+public sealed record OpcionMotivo(string Clave, string Texto);
 
 // Información que registró la central (HU12). La referencia indicada por el ciudadano se muestra aparte de la
 // ubicación del dispositivo (HU21-CA03).

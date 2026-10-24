@@ -149,12 +149,17 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Add(new(evento.OcurridoEn, "Asignación cancelada: la cuenta del sereno se desactivó", await NombreAsync(evento.ActorId),
                 "El caso vuelve a «Pendiente» para asignarlo a otro sereno."));
 
-        // HU22 y HU23: avances registrados como eventos.
+        // HU22 y HU23: avances registrados como eventos. El inicio de atención del sereno lleva dónde estaba (rango de atención).
+        var inicios = await db.IniciosAtencion.AsNoTracking().Where(i => i.CasoId == casoId).ToListAsync(ct);
         foreach (var evento in await db.EventosCaso.AsNoTracking()
                      .Where(e => e.CasoId == casoId && (e.Tipo == TipoEventoCaso.DesplazamientoConfirmado || e.Tipo == TipoEventoCaso.AtencionIniciada))
                      .ToListAsync(ct))
             entradas.Add(new(evento.OcurridoEn, evento.Tipo == TipoEventoCaso.DesplazamientoConfirmado ? "En camino" : "Inicio de atención",
-                await NombreAsync(evento.ActorId), null));
+                await NombreAsync(evento.ActorId),
+                evento.Tipo == TipoEventoCaso.AtencionIniciada
+                    && inicios.FirstOrDefault(i => i.SerenoId == evento.ActorId && i.IniciadaEn == evento.OcurridoEn) is { } inicio
+                    ? TextoInicioAtencion.Describir(inicio)
+                    : null));
 
         // HU24: cierre, con el resultado público y, aparte, las notas internas (CA04).
         if (await db.CierresCaso.AsNoTracking().SingleOrDefaultAsync(c => c.CasoId == casoId, ct) is { } cierre)

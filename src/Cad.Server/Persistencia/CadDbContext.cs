@@ -25,6 +25,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CategoriaIncidencia> CategoriasIncidencia => Set<CategoriaIncidencia>();
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<CancelacionSos> CancelacionesSos => Set<CancelacionSos>();
+    public DbSet<InicioAtencion> IniciosAtencion => Set<InicioAtencion>();
     public DbSet<DescarteCaso> DescartesCaso => Set<DescarteCaso>();
     public DbSet<EvaluacionCaso> EvaluacionesCaso => Set<EvaluacionCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
@@ -204,6 +205,20 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             descarte.Property(d => d.EstadoPrevio).HasConversion<string>().HasMaxLength(20);
             descarte.HasOne<Caso>().WithOne().HasForeignKey<DescarteCaso>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
             descarte.HasOne<Usuario>().WithMany().HasForeignKey(d => d.OperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Rango de atención (24/10/2026): cada inicio de atención del sereno, con su distancia al caso y, fuera del rango, el motivo.
+        builder.Entity<InicioAtencion>(inicio =>
+        {
+            inicio.ToTable("IniciosAtencion", tabla =>
+                tabla.HasCheckConstraint("CK_IniciosAtencion_MotivoFueraDeRango", "\"DentroDelRango\" IS DISTINCT FROM false OR \"Motivo\" IS NOT NULL"));
+            inicio.HasKey(i => i.Id);
+            inicio.HasIndex(i => i.CasoId);
+            inicio.Property(i => i.Motivo).HasMaxLength(30);
+            inicio.Property(i => i.Detalle).HasMaxLength(Cad.Contratos.Serenos.MotivosInicioFueraDeRango.MaximoDetalle);
+            inicio.Ignore(i => i.FueraDeRango);
+            inicio.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
+            inicio.HasOne<Usuario>().WithMany().HasForeignKey(i => i.SerenoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU32: una evaluación por caso (CA03), con la puntuación de 1 a 5 (CA02) también garantizada por la base de datos.

@@ -80,7 +80,7 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
     {
         var avanzar = s.GetRequiredService<AvanzarCaso>();
         await avanzar.EjecutarAsync(casoId, Avance.ConfirmarDesplazamiento, serenoId, ActorAvance.Sereno, CancellationToken.None);
-        await avanzar.EjecutarAsync(casoId, Avance.IniciarAtencion, serenoId, ActorAvance.Sereno, CancellationToken.None);
+        await avanzar.EjecutarAsync(casoId, Avance.IniciarAtencion, serenoId, ActorAvance.Sereno, CancellationToken.None, await fabrica.EnElLugarAsync(casoId));
         return await s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId, new DatosCierre(Robo, "Resultado ficticio", null), serenoId,
             ActorAvance.Sereno, CancellationToken.None);
     });

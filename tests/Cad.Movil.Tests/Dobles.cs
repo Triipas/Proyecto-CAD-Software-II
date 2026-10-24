@@ -184,7 +184,12 @@ public sealed class ApiFalsa : IApiCad
     public ConcurrentQueue<string> Avances { get; } = new();
 
     public Task<ResultadoApi<DespachoSereno?>> ConfirmarDesplazamientoAsync(string token, Guid casoId, CancellationToken ct) => Avanzar("desplazamiento");
-    public Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, CancellationToken ct) => Avanzar("atencion");
+    public ConcurrentQueue<SolicitudInicioAtencion> InicioSolicitudes { get; } = new();
+    public Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, SolicitudInicioAtencion solicitud, CancellationToken ct)
+    {
+        InicioSolicitudes.Enqueue(solicitud);
+        return Avanzar("atencion");
+    }
 
     private Task<ResultadoApi<DespachoSereno?>> Avanzar(string avance)
     {

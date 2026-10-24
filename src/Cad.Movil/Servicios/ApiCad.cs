@@ -121,8 +121,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<DespachoSereno?>> ConfirmarDesplazamientoAsync(string token, Guid casoId, CancellationToken ct) =>
         EnviarAsync<DespachoSereno?>(HttpMethod.Post, $"api/sereno/casos/{casoId}/desplazamiento", null, token, ct);
 
-    public Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, CancellationToken ct) =>
-        EnviarAsync<DespachoSereno?>(HttpMethod.Post, $"api/sereno/casos/{casoId}/atencion", null, token, ct);
+    // Rango de atención (24/10/2026): con la posición del teléfono y, fuera del rango, el motivo.
+    public Task<ResultadoApi<DespachoSereno?>> IniciarAtencionAsync(string token, Guid casoId, SolicitudInicioAtencion solicitud, CancellationToken ct) =>
+        EnviarAsync<DespachoSereno?>(HttpMethod.Post, $"api/sereno/casos/{casoId}/atencion", solicitud, token, ct);
 
     public Task<ResultadoApi<RespuestaCierreCaso>> CerrarCasoAsync(string token, Guid casoId, SolicitudCierreCaso solicitud, CancellationToken ct) =>
         EnviarAsync<RespuestaCierreCaso>(HttpMethod.Post, $"api/sereno/casos/{casoId}/cierre", solicitud, token, ct);
