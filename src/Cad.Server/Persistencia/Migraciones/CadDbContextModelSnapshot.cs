@@ -954,12 +954,17 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<double?>("RadioMetros")
                         .HasColumnType("double precision");
 
+                    b.Property<Guid?>("RegistradoPorOperadorId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("SerenoId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CasoId");
+
+                    b.HasIndex("RegistradoPorOperadorId");
 
                     b.HasIndex("SerenoId");
 
@@ -1874,6 +1879,11 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasForeignKey("CasoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("RegistradoPorOperadorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()

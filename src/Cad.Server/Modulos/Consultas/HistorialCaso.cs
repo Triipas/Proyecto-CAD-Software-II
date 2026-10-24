@@ -157,7 +157,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Add(new(evento.OcurridoEn, evento.Tipo == TipoEventoCaso.DesplazamientoConfirmado ? "En camino" : "Inicio de atención",
                 await NombreAsync(evento.ActorId),
                 evento.Tipo == TipoEventoCaso.AtencionIniciada
-                    && inicios.FirstOrDefault(i => i.SerenoId == evento.ActorId && i.IniciadaEn == evento.OcurridoEn) is { } inicio
+                    && inicios.FirstOrDefault(i => (i.RegistradoPorOperadorId ?? i.SerenoId) == evento.ActorId && i.IniciadaEn == evento.OcurridoEn) is { } inicio
                     ? TextoInicioAtencion.Describir(inicio)
                     : null));
 

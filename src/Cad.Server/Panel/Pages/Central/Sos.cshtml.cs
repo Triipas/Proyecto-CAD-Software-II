@@ -32,6 +32,11 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
 
+    // 24/10/2026: por qué registra el operador el inicio de atención por el sereno (obligatorio).
+    [BindProperty]
+    public string? MotivoInicio { get; set; }
+    public string? ErrorMotivoInicio { get; private set; }
+
     [BindProperty]
     public FormularioDescarte Descarte { get; set; } = new();
 
@@ -235,12 +240,18 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // HU23-CA02: el operador registra el inicio de atención y queda como responsable.
     public async Task<IActionResult> OnPostIniciarAtencionAsync(Guid id, CancellationToken ct)
     {
-        switch (await avanzar.EjecutarAsync(id, Avance.IniciarAtencion, User.IdUsuario(), ActorAvance.Operador, ct))
+        switch (await avanzar.EjecutarAsync(id, Avance.IniciarAtencion, User.IdUsuario(), ActorAvance.Operador, ct,
+                    new Cad.Contratos.Serenos.SolicitudInicioAtencion(Detalle: MotivoInicio)))
         {
             case ResultadoAvance.Registrado or ResultadoAvance.YaRegistrado:
                 Mensaje = "Inicio de atención registrado.";
-                DetalleMensaje = "Quedas como responsable del registro.";
+                DetalleMensaje = "Quedas como responsable del registro, con el motivo que indicaste.";
                 return RedirectToPage(new { id });
+            case ResultadoAvance.Invalido i when await CargarAsync(id, ct):
+                ErrorMotivoInicio = i.Errores.Values.First()[0];
+                Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
+                Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+                return Page();
             case ResultadoAvance.Rechazado r when await CargarAsync(id, ct):
                 ErrorAvance = r.Motivo;
                 Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };

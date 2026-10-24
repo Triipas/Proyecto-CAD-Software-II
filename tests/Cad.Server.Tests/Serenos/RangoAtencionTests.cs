@@ -219,18 +219,32 @@ public class RangoAtencionTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task ElOperadorQueRegistraElInicio_NoPasaPorElRango()
+    public async Task ElOperadorQueRegistraElInicio_NoPasaPorElRango_PeroIndicaElMotivoPorEscrito()
     {
         var sereno = await SerenoAsync();
         var (casoId, operador) = await EnCaminoAsync(sereno);
         var ruta = $"/panel/central/sos/{casoId}";
+        async Task<HttpResponseMessage> RegistrarAsync(string motivo) =>
+            await operador.PostAsync($"{ruta}?handler=IniciarAtencion", new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["MotivoInicio"] = motivo,
+                ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
+            }));
 
-        Assert.Equal(HttpStatusCode.Redirect, (await operador.PostAsync($"{ruta}?handler=IniciarAtencion", new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
-        }))).StatusCode);
+        // Sin motivo no se registra y se explica por qué.
+        var sinMotivo = await RegistrarAsync("   ");
+        Assert.Equal(HttpStatusCode.OK, sinMotivo.StatusCode);
+        Assert.Contains("Indica por qué registras tú el inicio de atención", await sinMotivo.Content.ReadAsStringAsync());
+        Assert.Equal(EstadoCaso.EnCamino, await EstadoAsync(casoId));
+
+        Assert.Equal(HttpStatusCode.Redirect, (await RegistrarAsync("El sereno avisó por radio: se quedó sin batería.")).StatusCode);
 
         Assert.Equal(EstadoCaso.EnAtencion, await EstadoAsync(casoId));
-        Assert.False(await fabrica.ConBaseDatosAsync(db => db.IniciosAtencion.AnyAsync(i => i.CasoId == casoId)));
+        var inicio = await InicioAsync(casoId);
+        Assert.Null(inicio.DentroDelRango); // sin rango: el operador no tiene posición
+        Assert.Equal(("El sereno avisó por radio: se quedó sin batería.", sereno.Cuenta.Id), (inicio.Detalle, inicio.SerenoId));
+        Assert.NotNull(inicio.RegistradoPorOperadorId);
+        Assert.Contains("Registrado por la central: El sereno avisó por radio", await operador.GetStringAsync(ruta));
+        Assert.Contains("Registrado por la central: El sereno avisó por radio", await operador.GetStringAsync($"/panel/casos/{casoId}/historial"));
     }
 }

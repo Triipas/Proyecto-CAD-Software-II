@@ -44,6 +44,7 @@ public sealed class AvanzarCaso(CadDbContext db, TimeProvider reloj, INotificado
     public const string MotivoNoEnCamino = "El caso no está «En camino»: no se puede registrar el inicio de atención.";
     public const string MotivoSoloSereno = "Solo el sereno asignado puede confirmar el desplazamiento.";
     public const string MotivoCambioConcurrente = "El caso cambió mientras se registraba. Revisa su estado e inténtalo de nuevo.";
+    public const string MotivoFaltaOperador = "Indica por qué registras tú el inicio de atención (por ejemplo, el sereno avisó por radio).";
 
     private const int Intentos = 3;
 
@@ -91,6 +92,17 @@ public sealed class AvanzarCaso(CadDbContext db, TimeProvider reloj, INotificado
                 if (rechazo is not null)
                     return rechazo;
                 registroInicio = evaluado;
+            }
+            // 24/10/2026: el operador que registra el inicio por el sereno indica por qué, por escrito.
+            else if (avance == Avance.IniciarAtencion && actor == ActorAvance.Operador)
+            {
+                var motivo = inicio?.Detalle?.Trim();
+                if (string.IsNullOrEmpty(motivo))
+                    return new ResultadoAvance.Invalido(new() { ["detalle"] = [MotivoFaltaOperador] });
+                if (motivo.Length > MotivosInicioFueraDeRango.MaximoDetalle)
+                    return new ResultadoAvance.Invalido(new() { ["detalle"] = [$"El motivo admite hasta {MotivosInicioFueraDeRango.MaximoDetalle} caracteres."] });
+                if (asignacion is not null)
+                    registroInicio = InicioAtencion.RegistrarPorCentral(caso, asignacion.SerenoId, actorId, motivo, ahora);
             }
 
             if (avance == Avance.ConfirmarDesplazamiento)
