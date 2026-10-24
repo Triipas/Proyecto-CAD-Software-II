@@ -463,10 +463,6 @@
 
 /* Sereno en el lugar del caso: un solo marcador. El del caso, con el escudo del sereno montado en su esquina y la etiqueta
    «En el lugar» debajo, para que se lea como una sola ubicación. */
-.marcador-conjunto {
-  position: relative;
-}
-
 .marcador-conjunto .conjunto__caso {
   position: absolute;
   top: 0;
@@ -518,8 +514,9 @@
 }
 
 /* ── Marcadores: la forma distingue la entidad; el color, su estado ── */
+/* Sin «position»: Leaflet coloca cada marcador con position: absolute, y eso también ancla su pulso. Con «relative» los
+   marcadores quedaban apilados uno debajo de otro y se desplazaban de su punto (más lejos cuanto menos zoom). */
 .marcador-sos {
-  position: relative;
   border-radius: var(--radio-control);
   background: var(--mapa-sos);
   border: 3px solid #FFFFFF;
