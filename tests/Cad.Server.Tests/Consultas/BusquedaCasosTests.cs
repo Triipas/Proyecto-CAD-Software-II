@@ -76,12 +76,12 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
     });
 
     // Cierra el caso (en camino, atención y cierre por el sereno) para que el sereno quede libre para otra asignación.
-    private Task Cerrar(Guid casoId, Guid serenoId) => fabrica.ConServiciosAsync(async s =>
+    private Task Cerrar(Guid casoId, Guid serenoId, Guid? tipificacion = null) => fabrica.ConServiciosAsync(async s =>
     {
         var avanzar = s.GetRequiredService<AvanzarCaso>();
         await avanzar.EjecutarAsync(casoId, Avance.ConfirmarDesplazamiento, serenoId, ActorAvance.Sereno, CancellationToken.None);
         await avanzar.EjecutarAsync(casoId, Avance.IniciarAtencion, serenoId, ActorAvance.Sereno, CancellationToken.None, await fabrica.EnElLugarAsync(casoId));
-        return await s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId, new DatosCierre(Robo, "Resultado ficticio", null), serenoId,
+        return await s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId, new DatosCierre(tipificacion ?? Robo, "Resultado ficticio", null), serenoId,
             ActorAvance.Sereno, CancellationToken.None);
     });
 
@@ -102,7 +102,7 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         await Cerrar(sosRobo, sereno.Id);
         var sosSinTipo = await SosAsync();
         Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(sosSinTipo, sereno.Id));
-        await Cerrar(sosSinTipo, sereno.Id);
+        await Cerrar(sosSinTipo, sereno.Id, Otros); // cerrado: cuenta su tipificación final
         var reporteRobo = await ReporteAdmitidoAsync(Robo);
         Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(reporteRobo, sereno.Id)); // queda «Asignada»
         var operador = await OperadorAsync();
@@ -166,12 +166,12 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
     public async Task CA02_UnSosSinClasificar_ApareceComoTipoPorDeterminar_YSePuedeFiltrar()
     {
         var sereno = await SerenoAsync();
+        var otroSereno = await SerenoAsync();
         var sinTipo = await SosAsync();
-        await Asignar(sinTipo, sereno.Id);
-        await Cerrar(sinTipo, sereno.Id);
+        await Asignar(sinTipo, sereno.Id); // en curso y sin clasificar (un caso cerrado ya tiene su tipificación final)
         var clasificado = await SosAsync();
         await Clasificar(clasificado, Otros);
-        await Asignar(clasificado, sereno.Id);
+        await Asignar(clasificado, otroSereno.Id);
         var operador = await OperadorAsync();
 
         var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}"));
@@ -179,6 +179,28 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
 
         Assert.Contains("Tipo por determinar", filaSinTipo);
         Assert.Equal([sinTipo], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&tipo=sin-tipo")));
+    }
+
+    // Decisión del PO (24/10/2026): en un caso cerrado, el tipo es la tipificación final, no la clasificación inicial.
+    [Fact]
+    public async Task UnCasoCerrado_SeBuscaYSeMuestraPorSuTipificacionFinal()
+    {
+        var sereno = await SerenoAsync();
+        var cerrado = await SosAsync();
+        await Clasificar(cerrado, Robo);
+        Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(cerrado, sereno.Id));
+        await Cerrar(cerrado, sereno.Id, Otros);
+        var enCurso = await SosAsync();
+        await Clasificar(enCurso, Robo);
+        Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(enCurso, sereno.Id));
+        var operador = await OperadorAsync();
+
+        Assert.Equal([enCurso], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&tipo={Robo}")));
+        Assert.Equal([cerrado], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&tipo={Otros}")));
+        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}"));
+        Assert.Contains($"<td data-tipo>{CategoriaIncidencia.Iniciales[3].Nombre}</td>", Regex.Match(html, $"<tr data-caso=\"{cerrado}\">.*?</tr>", RegexOptions.Singleline).Value);
+        Assert.Contains($"<td data-tipo>{CategoriaIncidencia.Iniciales[1].Nombre}</td>", Regex.Match(html, $"<tr data-caso=\"{enCurso}\">.*?</tr>", RegexOptions.Singleline).Value);
+        Assert.Contains("En los casos cerrados, la tipificación final.", html);
     }
 
     // ----- CA03 y CA04 -----
