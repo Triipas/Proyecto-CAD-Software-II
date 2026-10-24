@@ -104,8 +104,20 @@
                     break;
                 case Accion.EsperarAtencion:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">@sos.Asignacion!.Sereno va en camino</h2>
-                    <form method="post" asp-page-handler="IniciarAtencion" class="formulario" data-formulario>
-                        <p class="texto-secundario">Si el sereno no puede registrarlo, puedes registrar el inicio de atención; quedarás como responsable.</p>
+                    <form method="post" asp-page-handler="IniciarAtencion" class="formulario" data-formulario novalidate>
+                        <p class="texto-secundario">Si el sereno no puede registrarlo, puedes registrar el inicio de atención; quedarás como responsable y el motivo quedará en el historial.</p>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="MotivoInicio">Motivo</label>
+                            <textarea class="campo__control campo__control--texto" id="MotivoInicio" name="MotivoInicio" rows="2" required
+                                      maxlength="@Cad.Contratos.Serenos.MotivosInicioFueraDeRango.MaximoDetalle"
+                                      aria-invalid="@(Model.ErrorMotivoInicio is null ? null : "true")"
+                                      aria-describedby="MotivoInicio-ayuda@(Model.ErrorMotivoInicio is null ? "" : " MotivoInicio-error")">@Model.MotivoInicio</textarea>
+                            <p id="MotivoInicio-ayuda" class="campo__ayuda">Por ejemplo: el sereno avisó por radio que llegó; su teléfono no tiene señal.</p>
+                            @if (Model.ErrorMotivoInicio is not null)
+                            {
+                                <p id="MotivoInicio-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorMotivoInicio</span></p>
+                            }
+                        </div>
                         <div class="acciones">
                             <button type="submit" class="boton boton--secundario" data-texto-carga="Registrando…">Registrar inicio de atención</button>
                         </div>

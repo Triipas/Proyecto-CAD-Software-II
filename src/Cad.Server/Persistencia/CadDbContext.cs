@@ -219,6 +219,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             inicio.Ignore(i => i.FueraDeRango);
             inicio.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
             inicio.HasOne<Usuario>().WithMany().HasForeignKey(i => i.SerenoId).OnDelete(DeleteBehavior.Restrict);
+            inicio.HasOne<Usuario>().WithMany().HasForeignKey(i => i.RegistradoPorOperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU32: una evaluación por caso (CA03), con la puntuación de 1 a 5 (CA02) también garantizada por la base de datos.

@@ -22,6 +22,11 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
 
+    // 24/10/2026: por qué registra el operador el inicio de atención por el sereno (obligatorio).
+    [BindProperty]
+    public string? MotivoInicio { get; set; }
+    public string? ErrorMotivoInicio { get; private set; }
+
     [BindProperty]
     public FormularioDescarte Descarte { get; set; } = new();
     public string? ErrorDescarte { get; private set; }
@@ -219,10 +224,14 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     // HU23-CA02: el operador registra el inicio de atención y queda como responsable.
     public async Task<IActionResult> OnPostIniciarAtencionAsync(Guid id, CancellationToken ct)
     {
-        switch (await avanzar.EjecutarAsync(id, Avance.IniciarAtencion, User.IdUsuario(), ActorAvance.Operador, ct))
+        switch (await avanzar.EjecutarAsync(id, Avance.IniciarAtencion, User.IdUsuario(), ActorAvance.Operador, ct,
+                    new Cad.Contratos.Serenos.SolicitudInicioAtencion(Detalle: MotivoInicio)))
         {
             case ResultadoAvance.Registrado or ResultadoAvance.YaRegistrado:
-                return Hecho(id, "Inicio de atención registrado.", "Quedas como responsable del registro.");
+                return Hecho(id, "Inicio de atención registrado.", "Quedas como responsable del registro, con el motivo que indicaste.");
+            case ResultadoAvance.Invalido i when await CargarAsync(id, ct):
+                ErrorMotivoInicio = i.Errores.Values.First()[0];
+                return Page();
             case ResultadoAvance.Rechazado r when await CargarAsync(id, ct):
                 ErrorAtencion = r.Motivo;
                 return Page();

@@ -16,11 +16,24 @@ public sealed class InicioAtencion
     public bool? DentroDelRango { get; private set; }
     public string? Motivo { get; private set; }
     public string? Detalle { get; private set; }
+    // 24/10/2026: si lo registró un operador por el sereno (HU23-CA02), quién y por qué (en Detalle, obligatorio).
+    public Guid? RegistradoPorOperadorId { get; private set; }
     public DateTimeOffset IniciadaEn { get; private set; }
 
     public bool FueraDeRango => DentroDelRango == false;
 
     private InicioAtencion() { } // EF Core
+
+    // El operador registra el inicio por el sereno (sin señal, sin batería, avisó por radio…), con el motivo por escrito.
+    public static InicioAtencion RegistrarPorCentral(Caso caso, Guid serenoId, Guid operadorId, string motivo, DateTimeOffset ahora) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        CasoId = caso.Id,
+        SerenoId = serenoId,
+        Detalle = motivo,
+        RegistradoPorOperadorId = operadorId,
+        IniciadaEn = ahora,
+    };
 
     public static InicioAtencion Registrar(Caso caso, Guid serenoId, (double Latitud, double Longitud, double Precision)? posicion,
         double? distancia, double? radio, bool? dentro, string? motivo, string? detalle, DateTimeOffset ahora) => new()

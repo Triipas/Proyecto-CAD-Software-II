@@ -63,8 +63,10 @@ public class AtencionTests(FabricaCad fabrica)
     {
         var ruta = $"/panel/central/sos/{casoId}";
         token ??= await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta);
-        return await operador.PostAsync($"{ruta}?handler=IniciarAtencion",
-            new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token }));
+        return await operador.PostAsync($"{ruta}?handler=IniciarAtencion", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["MotivoInicio"] = "El sereno avisó por radio que ya llegó.", ["__RequestVerificationToken"] = token,
+        }));
     }
 
     private Task<Caso> CasoAsync(Guid casoId) =>

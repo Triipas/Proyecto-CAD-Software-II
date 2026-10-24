@@ -63,7 +63,8 @@ public class AtencionReporteTests(FabricaCad fabrica)
         var (operador, cuenta) = await OperadorAsync();
         Assert.Contains("Registrar inicio de atención", await operador.GetStringAsync(Ruta(id)));
 
-        var respuesta = await EnviarAsync(operador, id, "IniciarAtencion");
+        // 24/10/2026: con el motivo por escrito de por qué lo registra el operador.
+        var respuesta = await EnviarAsync(operador, id, "IniciarAtencion", new() { ["MotivoInicio"] = "El sereno avisó por teléfono que ya llegó." });
 
         Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
         Assert.Equal(EstadoCaso.EnAtencion, (await CasoAsync(id)).Estado);

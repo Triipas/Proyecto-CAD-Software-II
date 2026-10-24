@@ -42,6 +42,8 @@ public static class TextoInicioAtencion
 {
     public static string? Describir(InicioAtencion inicio)
     {
+        if (inicio.RegistradoPorOperadorId is not null)
+            return $"Registrado por la central: {inicio.Detalle}";
         var motivo = inicio.Motivo is { } m
             ? $" · Motivo: {MotivosInicioFueraDeRango.Texto(m)}{(inicio.Detalle is { } d ? $" ({d})" : "")}"
             : "";
