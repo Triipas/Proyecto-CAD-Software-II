@@ -205,17 +205,18 @@
                 </Border>
             </Grid>
 
-            <!-- Panel desplegable (22/10/2026). Recogido: dónde, la distancia, la ruta y la acción de la etapa. Desplegado (tocando o
-                 deslizando el asa): lo que registró la central, el cierre y el turno. El mapa nunca queda tapado del todo. -->
+            <!-- Panel desplegable (22/10/2026). Recogido: dónde, la distancia, la ruta y la acción de la etapa. Desplegado: lo que
+                 registró la central, el cierre y el turno. El mapa nunca queda tapado del todo. Desde el 24/10/2026 el asa se arrastra
+                 (el panel sigue al dedo y al soltar se queda recogido o desplegado); un toque sigue alternando. -->
             <Border Grid.Row="1" Margin="0,-16,0,0" StrokeThickness="0" StrokeShape="RoundRectangle 22,22,0,0" BackgroundColor="{StaticResource ColorSuperficie}">
                 <Border.Shadow><Shadow Brush="#0B1F44" Offset="0,-8" Radius="22" Opacity="0.16" /></Border.Shadow>
                 <Grid RowDefinitions="Auto,*">
-                    <!-- Asa: un toque alterna; deslizar hacia arriba despliega y hacia abajo recoge. -->
-                    <Grid HeightRequest="30" BackgroundColor="Transparent" SemanticProperties.Description="{Binding TextoAsaPanel}">
+                    <!-- Asa: se arrastra (el panel sigue al dedo) o, con un toque, alterna entre recogido y desplegado. -->
+                    <Grid HeightRequest="36" BackgroundColor="Transparent" SemanticProperties.Description="{Binding TextoAsaPanel}"
+                          SemanticProperties.Hint="Arrastra hacia arriba o hacia abajo, o toca para alternar">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding AlternarPanel}" />
-                            <SwipeGestureRecognizer Direction="Up" Command="{Binding ExpandirPanel}" />
-                            <SwipeGestureRecognizer Direction="Down" Command="{Binding RecogerPanel}" />
+                            <PanGestureRecognizer PanUpdated="AlArrastrarAsa" />
                         </Grid.GestureRecognizers>
                         <BoxView WidthRequest="44" HeightRequest="5" CornerRadius="3" Color="{StaticResource ColorBordeFuerte}" HorizontalOptions="Center" VerticalOptions="Center" />
                         <v:Icono Nombre="{Binding IconoPanel}" Color="{StaticResource ColorTextoTerciario}" Tamano="18" HorizontalOptions="End" VerticalOptions="Center" Margin="0,0,16,0" />

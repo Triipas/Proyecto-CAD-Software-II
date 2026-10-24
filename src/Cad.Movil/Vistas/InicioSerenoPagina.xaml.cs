@@ -67,11 +67,58 @@ public partial class InicioSerenoPagina : ContentPage
 
     // Recogido, el panel ocupa como máximo algo menos de la mitad de la pantalla; desplegado (detalle o cierre) crece y el mapa se
     // reduce (sin desaparecer: queda como referencia).
+    private const double Recogido = 0.42, Desplegado = 0.6, Minimo = 0.25, Maximo = 0.8;
+    private double altoAlEmpezar, ultimoArrastre;
+
     private void AjustarPanel()
     {
         if (Height <= 0) return;
-        var proporcion = vistaModelo.PanelExpandido ? 0.6 : 0.42;
-        PanelDespacho.MaximumHeightRequest = Height * proporcion;
+        var tope = Height * (vistaModelo.PanelExpandido ? Desplegado : Recogido);
+        // Si viene de un arrastre, el panel se desliza hasta su altura; si no, cambia directamente.
+        if (PanelDespacho.HeightRequest < 0)
+        {
+            PanelDespacho.MaximumHeightRequest = tope;
+            return;
+        }
+        var contenido = PanelDespacho.Content?.Height ?? tope;
+        var destino = Math.Min(tope, contenido > 0 ? contenido : tope);
+        PanelDespacho.MaximumHeightRequest = Math.Max(tope, PanelDespacho.HeightRequest);
+        new Animation(v => PanelDespacho.HeightRequest = v, PanelDespacho.HeightRequest, destino, Easing.CubicOut)
+            .Commit(this, "panel", length: 180, finished: (_, cancelado) =>
+            {
+                if (cancelado) return;
+                PanelDespacho.HeightRequest = -1;
+                PanelDespacho.MaximumHeightRequest = tope;
+            });
+    }
+
+    // 24/10/2026: el asa se arrastra como una hoja inferior. El panel sigue al dedo y, al soltar, se queda en el estado más
+    // cercano (recogido o desplegado); un arrastre claro decide por su dirección.
+    private void AlArrastrarAsa(object? emisor, PanUpdatedEventArgs e)
+    {
+        switch (e.StatusType)
+        {
+            case GestureStatus.Started:
+                this.AbortAnimation("panel");
+                altoAlEmpezar = PanelDespacho.Height;
+                ultimoArrastre = 0;
+                break;
+            case GestureStatus.Running:
+                ultimoArrastre = e.TotalY; // en Android, al soltar TotalY llega en 0
+                var alto = Math.Clamp(altoAlEmpezar - e.TotalY, Height * Minimo, Height * Maximo);
+                PanelDespacho.MaximumHeightRequest = alto;
+                PanelDespacho.HeightRequest = alto;
+                break;
+            case GestureStatus.Completed or GestureStatus.Canceled:
+                var desplegar = Math.Abs(ultimoArrastre) > 40
+                    ? ultimoArrastre < 0
+                    : PanelDespacho.HeightRequest > Height * (Recogido + Desplegado) / 2;
+                if (desplegar == vistaModelo.PanelExpandido)
+                    AjustarPanel(); // vuelve a su altura
+                else
+                    (desplegar ? vistaModelo.ExpandirPanel : vistaModelo.RecogerPanel).Execute(null);
+                break;
+        }
     }
 
     // Leaflet va dentro de la página (sin CDN), como en el inicio del ciudadano. Las posiciones solo se dibujan aquí.
