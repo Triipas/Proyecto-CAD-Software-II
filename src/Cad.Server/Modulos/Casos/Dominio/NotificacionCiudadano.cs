@@ -19,7 +19,7 @@ public sealed class NotificacionCiudadano
     public static NotificacionCiudadano PorCambioDeEstado(Caso caso, string estadoPublico, DateTimeOffset ahora) => new()
     {
         Id = Guid.CreateVersion7(),
-        CiudadanoId = caso.CiudadanoId,
+        CiudadanoId = caso.CiudadanoId!.Value,
         CasoId = caso.Id,
         EstadoPublico = estadoPublico,
         Texto = $"Tu {caso.Origen switch { OrigenCaso.Sos => "SOS", OrigenCaso.Reporte => "reporte", _ => "caso" }} pasó a «{estadoPublico}».",

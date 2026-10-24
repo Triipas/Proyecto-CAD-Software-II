@@ -60,7 +60,11 @@ public sealed record DetalleReporteVista(
     string? RevisionIniciadaPor,
     DateTimeOffset? RevisionIniciadaEn,
     IReadOnlyList<CorreccionVista> Correcciones,
-    DecisionVista? Decision = null)
+    DecisionVista? Decision = null,
+    // Reporte registrado por la central (23/10/2026): quién avisó y su teléfono, si los dio.
+    bool DeLaCentral = false,
+    string? ContactoNombre = null,
+    string? ContactoTelefono = null)
 {
     public bool PuedeIniciarRevision => Estado == EstadoCaso.Recibido;
     public bool PuedeCorregirCategoria => Estado == EstadoCaso.EnRevision;
@@ -77,13 +81,13 @@ public sealed class ConsultarReportes(CadDbContext db)
     {
         var filas = await (from caso in db.Casos.AsNoTracking()
                            join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId
-                           join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+                           from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                            join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id
                            where caso.Origen == OrigenCaso.Reporte && (caso.Estado == EstadoCaso.Recibido || caso.Estado == EstadoCaso.EnRevision)
                            orderby caso.RegistradoEn descending
                            select new
                            {
-                               caso.Id, caso.Estado, caso.RegistradoEn, Ciudadano = ciudadano.Nombres + " " + ciudadano.Apellidos,
+                               caso.Id, caso.Estado, caso.RegistradoEn, Ciudadano = ciudadano == null ? (detalle.ContactoNombre == null ? AutorReporte.DeLaCentral : detalle.ContactoNombre + AutorReporte.SufijoContacto) : ciudadano.Nombres + " " + ciudadano.Apellidos,
                                Categoria = categoria.Nombre, detalle.OcurridoAproximadamenteEn, detalle.FuenteUbicacion,
                            }).ToListAsync(ct);
         return filas.Select(f => new ReporteEnBandeja(f.Id, EstadosCaso.Texto(f.Estado), f.RegistradoEn, f.Ciudadano, f.Categoria,
@@ -97,9 +101,9 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
     {
         var fila = await (from caso in db.Casos.AsNoTracking()
                           join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId
-                          join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+                          from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                           where caso.Id == casoId && caso.Origen == OrigenCaso.Reporte
-                          select new { caso, detalle, Ciudadano = ciudadano.Nombres + " " + ciudadano.Apellidos })
+                          select new { caso, detalle, Ciudadano = ciudadano == null ? (detalle.ContactoNombre == null ? AutorReporte.DeLaCentral : detalle.ContactoNombre + AutorReporte.SufijoContacto) : ciudadano.Nombres + " " + ciudadano.Apellidos })
             .SingleOrDefaultAsync(ct);
         if (fila is null)
             return null;
@@ -129,8 +133,15 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
         return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
             d.OcurridoAproximadamenteEn, d.FuenteUbicacion, d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros,
             d.ReferenciaHecho, c.CategoriaId!.Value, categorias[c.CategoriaId!.Value], categorias[d.CategoriaOriginalId],
-            revision?.Operador, revision?.OcurridoEn, correcciones, decision);
+            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono);
     }
+}
+
+// Reporte registrado por la central (23/10/2026): no tiene ciudadano; se nombra por quien avisó, si lo dio.
+public static class AutorReporte
+{
+    public const string DeLaCentral = "Registrado por la central";
+    public const string SufijoContacto = " (avisó a la central)";
 }
 
 // HU15-CA02: los reportes admitidos que esperan asignación, los más recientes primero, como los SOS pendientes.
@@ -140,11 +151,12 @@ public sealed class ConsultarReportesAdmitidos(CadDbContext db)
         await (from caso in db.Casos.AsNoTracking()
                join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId
                join decision in db.DecisionesReporte.AsNoTracking() on caso.Id equals decision.CasoId
-               join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+               from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id
                where caso.Origen == OrigenCaso.Reporte && caso.Estado == EstadoCaso.Pendiente
                orderby caso.RegistradoEn descending
-               select new ReporteAdmitido(caso.Id, caso.RegistradoEn, decision.DecididaEn, ciudadano.Nombres + " " + ciudadano.Apellidos,
+               select new ReporteAdmitido(caso.Id, caso.RegistradoEn, decision.DecididaEn,
+                   ciudadano == null ? (detalle.ContactoNombre == null ? AutorReporte.DeLaCentral : detalle.ContactoNombre + AutorReporte.SufijoContacto) : ciudadano.Nombres + " " + ciudadano.Apellidos,
                    categoria.Nombre, detalle.LatitudHecho, detalle.LongitudHecho, detalle.ReferenciaHecho))
               .ToListAsync(ct);
 }

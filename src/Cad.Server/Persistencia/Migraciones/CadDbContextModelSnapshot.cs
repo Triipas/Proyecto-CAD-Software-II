@@ -431,7 +431,7 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<Guid?>("CategoriaId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CiudadanoId")
+                    b.Property<Guid?>("CiudadanoId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ClasificadoEn")
@@ -480,11 +480,18 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.HasIndex("ClasificadoPor");
 
+                    b.HasIndex("IdSolicitud")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Casos_IdSolicitud_DeLaCentral")
+                        .HasFilter("\"CiudadanoId\" IS NULL");
+
                     b.HasIndex("CiudadanoId", "IdSolicitud")
                         .IsUnique();
 
                     b.ToTable("Casos", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Casos_CiudadanoSalvoReporte", "\"CiudadanoId\" IS NOT NULL OR \"Origen\" = 'Reporte'");
+
                             t.HasCheckConstraint("CK_Casos_ClasificacionCompleta", "(\"CategoriaId\" IS NULL AND \"ClasificadoPor\" IS NULL AND \"ClasificadoEn\" IS NULL) OR (\"CategoriaId\" IS NOT NULL AND \"ClasificadoPor\" IS NOT NULL AND \"ClasificadoEn\" IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_Casos_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
@@ -756,6 +763,14 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<Guid>("CategoriaOriginalId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ContactoNombre")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("ContactoTelefono")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -782,9 +797,14 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("RegistradoPorOperadorId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("CasoId");
 
                     b.HasIndex("CategoriaOriginalId");
+
+                    b.HasIndex("RegistradoPorOperadorId");
 
                     b.ToTable("DetallesReporte", null, t =>
                         {
@@ -1627,8 +1647,7 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("CiudadanoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
@@ -1712,6 +1731,11 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasForeignKey("CategoriaOriginalId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("RegistradoPorOperadorId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.EvaluacionCaso", b =>

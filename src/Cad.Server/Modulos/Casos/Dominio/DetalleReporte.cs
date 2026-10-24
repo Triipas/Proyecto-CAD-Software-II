@@ -7,6 +7,8 @@ public sealed class DetalleReporte
     // Límites técnicos de longitud (DP08 y DP10), no reglas de negocio.
     public const int MaximoDescripcion = 2000;
     public const int MaximoReferencia = 500;
+    public const int MaximoContactoNombre = 120;
+    public const int MaximoContactoTelefono = 20;
 
     public Guid CasoId { get; private set; }
     public string Descripcion { get; private set; } = "";
@@ -22,10 +24,18 @@ public sealed class DetalleReporte
     // CA07: la categoría que eligió el ciudadano se conserva aunque el operador la corrija después (HU14).
     public Guid CategoriaOriginalId { get; private set; }
 
+    // Reporte registrado por la central (23/10/2026): el operador que lo registró y, si los dio, quién avisó y su teléfono.
+    // Son datos personales: solo se muestran al personal y nunca se registran en los logs.
+    public Guid? RegistradoPorOperadorId { get; private set; }
+    public string? ContactoNombre { get; private set; }
+    public string? ContactoTelefono { get; private set; }
+    public bool DeLaCentral => RegistradoPorOperadorId is not null;
+
     private DetalleReporte() { } // EF Core
 
     public static DetalleReporte Registrar(Caso caso, Guid categoriaId, string descripcion, DateTimeOffset ocurridoEn, string fuente,
-        double? latitud, double? longitud, double? precision, string? referencia) => new()
+        double? latitud, double? longitud, double? precision, string? referencia,
+        Guid? registradoPorOperadorId = null, string? contactoNombre = null, string? contactoTelefono = null) => new()
     {
         CasoId = caso.Id,
         CategoriaOriginalId = categoriaId,
@@ -36,5 +46,8 @@ public sealed class DetalleReporte
         LongitudHecho = longitud,
         PrecisionHechoMetros = precision,
         ReferenciaHecho = referencia,
+        RegistradoPorOperadorId = registradoPorOperadorId,
+        ContactoNombre = contactoNombre,
+        ContactoTelefono = contactoTelefono,
     };
 }

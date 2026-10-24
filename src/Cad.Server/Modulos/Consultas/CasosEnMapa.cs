@@ -33,11 +33,11 @@ public sealed class ConsultarCasosEnMapa(CadDbContext db)
                         .ToListAsync(ct);
         var reportes = await (from caso in db.Casos.AsNoTracking()
                               join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId
-                              join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+                              from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                               where caso.Origen == OrigenCaso.Reporte && EstadosEnCurso.Contains(caso.Estado)
                                   && detalle.LatitudHecho != null && detalle.LongitudHecho != null
                               select new CasoEnMapa(caso.Id, caso.Origen, caso.Estado, detalle.LatitudHecho!.Value, detalle.LongitudHecho!.Value,
-                                  ciudadano.Nombres + " " + ciudadano.Apellidos))
+                                  ciudadano == null ? (detalle.ContactoNombre == null ? AutorReporte.DeLaCentral : detalle.ContactoNombre + AutorReporte.SufijoContacto) : ciudadano.Nombres + " " + ciudadano.Apellidos))
                              .ToListAsync(ct);
         return [.. sos, .. reportes];
     }

@@ -70,7 +70,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             var caso = entrada.Entity;
             var antes = EstadoPublicoCaso.De(caso.Origen, estado.OriginalValue);
             var despues = EstadoPublicoCaso.De(caso.Origen, estado.CurrentValue);
-            if (antes != despues && despues != Cad.Contratos.Casos.EstadosPublicos.Cancelado)
+            // Un reporte de la central no tiene ciudadano al que avisar.
+            if (antes != despues && despues != Cad.Contratos.Casos.EstadosPublicos.Cancelado && caso.CiudadanoId is not null)
                 NotificacionesCiudadano.Add(NotificacionCiudadano.PorCambioDeEstado(caso, despues, ahora));
         }
     }
@@ -94,6 +95,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
                 tabla.HasCheckConstraint("CK_Casos_ClasificacionCompleta",
                     "(\"CategoriaId\" IS NULL AND \"ClasificadoPor\" IS NULL AND \"ClasificadoEn\" IS NULL) OR " +
                     "(\"CategoriaId\" IS NOT NULL AND \"ClasificadoPor\" IS NOT NULL AND \"ClasificadoEn\" IS NOT NULL)");
+                // Solo un reporte registrado por la central (23/10/2026) puede no tener ciudadano; un SOS siempre lo tiene.
+                tabla.HasCheckConstraint("CK_Casos_CiudadanoSalvoReporte", "\"CiudadanoId\" IS NOT NULL OR \"Origen\" = 'Reporte'");
             });
             caso.HasKey(c => c.Id);
             caso.Property(c => c.Origen).HasConversion<string>().HasMaxLength(20);
@@ -106,7 +109,9 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             caso.Property(c => c.Version).IsRowVersion();
             // Idempotencia: una sola fila por ciudadano y solicitud (HU07-CA07).
             caso.HasIndex(c => new { c.CiudadanoId, c.IdSolicitud }).IsUnique();
-            caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+            // Reportes de la central (sin ciudadano): la misma solicitud reenviada no crea un segundo reporte.
+            caso.HasIndex(c => c.IdSolicitud).IsUnique().HasFilter("\"CiudadanoId\" IS NULL").HasDatabaseName("IX_Casos_IdSolicitud_DeLaCentral");
+            caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
             // HU13-CA04: solo una categoría del catálogo (la base de datos lo garantiza aunque falle el código).
             caso.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(c => c.CategoriaId).OnDelete(DeleteBehavior.Restrict);
             caso.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ClasificadoPor).OnDelete(DeleteBehavior.Restrict);
@@ -218,6 +223,10 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             detalle.Property(d => d.Descripcion).HasMaxLength(DetalleReporte.MaximoDescripcion);
             detalle.Property(d => d.ReferenciaHecho).HasMaxLength(DetalleReporte.MaximoReferencia);
             detalle.Property(d => d.FuenteUbicacion).HasMaxLength(20);
+            detalle.Property(d => d.ContactoNombre).HasMaxLength(DetalleReporte.MaximoContactoNombre);
+            detalle.Property(d => d.ContactoTelefono).HasMaxLength(DetalleReporte.MaximoContactoTelefono);
+            detalle.Ignore(d => d.DeLaCentral);
+            detalle.HasOne<Usuario>().WithMany().HasForeignKey(d => d.RegistradoPorOperadorId).OnDelete(DeleteBehavior.Restrict);
             detalle.HasOne<Caso>().WithOne().HasForeignKey<DetalleReporte>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
             // CA07: la categoría original también es del catálogo.
             detalle.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(d => d.CategoriaOriginalId).OnDelete(DeleteBehavior.Restrict);

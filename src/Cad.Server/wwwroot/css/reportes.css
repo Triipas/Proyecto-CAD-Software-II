@@ -140,3 +140,30 @@
     min-height: 2.25rem;
   }
 }
+
+/* Nuevo reporte de la central (23/10/2026): el hecho, dónde y quién avisó, en una sola columna legible. */
+.nuevo-reporte {
+  display: grid;
+  gap: var(--espacio-4);
+  max-width: 48rem;
+}
+
+.nuevo-reporte__mapa {
+  min-height: 0;
+  height: 22rem;
+  cursor: crosshair;
+}
+
+.nuevo-reporte__punto:empty {
+  display: none;
+}
+
+.nuevo-reporte__contacto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--espacio-3);
+}
+
+.nuevo-reporte .marcador-hecho--reporte span {
+  background: var(--color-reporte);
+}
