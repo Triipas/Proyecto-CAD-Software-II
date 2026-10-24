@@ -103,6 +103,9 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // HU14 — página «Reportes» (E5) y detalle de un reporte. Con un reporte inexistente el operador llega a la página
         // (404); al enviar sin token antifalsificación recibe 400. El resto es rechazado antes, sin ver ni registrar nada.
         new("GET", "/panel/reportes", "HU14", Acceso.SoloRol, Roles.Operador),
+        // 23/10/2026: reporte registrado por la central (p. ej. por una llamada).
+        new("GET", "/panel/reportes/nuevo", "Reporte de la central", Acceso.SoloRol, Roles.Operador),
+        new("POST", "/panel/reportes/nuevo", "Reporte de la central", Acceso.SoloRol, Roles.Operador),
         new("GET", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
         new("POST", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,

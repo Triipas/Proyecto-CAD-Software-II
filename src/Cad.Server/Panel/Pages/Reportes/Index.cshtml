@@ -19,6 +19,8 @@
         <h1 class="titulo">Reportes</h1>
         <p class="texto-secundario">Recibidos y en revisión, los más recientes primero. No son alertas urgentes: los SOS siguen en la central.</p>
     </div>
+    @* 23/10/2026: un hecho que llega por otra vía (p. ej. una llamada) lo registra la central. *@
+    <a class="boton boton--principal" href="/panel/reportes/nuevo"><partial name="_Icono" model="@("documento")" />Nuevo reporte</a>
 </div>
 
 @if (Model.Reportes.Count == 0)

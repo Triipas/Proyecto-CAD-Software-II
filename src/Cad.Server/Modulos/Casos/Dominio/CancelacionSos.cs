@@ -15,7 +15,7 @@ public sealed class CancelacionSos
     public static CancelacionSos Registrar(Caso caso, string motivo, DateTimeOffset ahora) => new()
     {
         CasoId = caso.Id,
-        CiudadanoId = caso.CiudadanoId,
+        CiudadanoId = caso.CiudadanoId!.Value,
         Motivo = motivo.Trim(),
         CanceladaEn = ahora,
     };

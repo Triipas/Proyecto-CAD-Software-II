@@ -29,7 +29,7 @@ public sealed class EvaluacionCaso
         return new()
         {
             CasoId = caso.Id,
-            CiudadanoId = caso.CiudadanoId,
+            CiudadanoId = caso.CiudadanoId!.Value,
             IdSolicitud = idSolicitud,
             Puntuacion = puntuacion,
             Comentario = string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(),

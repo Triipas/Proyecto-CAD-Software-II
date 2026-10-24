@@ -1,0 +1,103 @@
+@page "/panel/reportes/nuevo"
+@model Cad.Server.Panel.Pages.Reportes.NuevoModel
+@using Cad.Server.Modulos.Casos.Dominio
+@{
+    ViewData["Title"] = "Nuevo reporte";
+    ViewData["TituloResumenErrores"] = "No se pudo registrar el reporte";
+    var r = Model.Reporte;
+    var errorUbicacion = Model.ErrorDe("ubicacion") ?? Model.ErrorDe("ubicacion.referencia");
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/reportes.css" asp-append-version="true" />
+}
+
+<p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
+
+<div class="pagina__encabezado">
+    <div>
+        <h1 class="titulo">Nuevo reporte</h1>
+        <p class="texto-secundario">Para un hecho que llega a la central por otra vía, como una llamada. Queda admitido para asignarle un sereno. Los SOS solo los emiten los ciudadanos desde la app.</p>
+    </div>
+</div>
+
+<partial name="_ResumenErrores" model="@Model.Errores.Count" />
+
+<form method="post" class="nuevo-reporte" data-formulario novalidate>
+    <input type="hidden" name="Reporte.IdSolicitud" value="@r.IdSolicitud" />
+
+    <section class="superficie pila" aria-labelledby="titulo-hecho">
+        <h2 id="titulo-hecho" class="seccion-caso__titulo">El hecho</h2>
+        <div class="campo">
+            <label class="campo__etiqueta" for="Reporte_CategoriaId">Tipo de incidencia</label>
+            <select class="campo__control campo__control--seleccion" id="Reporte_CategoriaId" name="Reporte.CategoriaId" required
+                    aria-invalid="@(Model.ErrorDe("categoriaId") is null ? null : "true")"
+                    aria-describedby="@(Model.ErrorDe("categoriaId") is null ? null : "Reporte_CategoriaId-error")">
+                <option value="">Elige un tipo</option>
+                @foreach (var categoria in Model.Categorias)
+                {
+                    <option value="@categoria.Id" selected="@(r.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                }
+            </select>
+            @if (Model.ErrorDe("categoriaId") is { } errorCategoria)
+            {
+                <p id="Reporte_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
+            }
+        </div>
+        <div class="campo">
+            <label class="campo__etiqueta" for="Reporte_Descripcion">Qué pasó</label>
+            <textarea class="campo__control campo__control--texto" id="Reporte_Descripcion" name="Reporte.Descripcion" rows="4" required
+                      maxlength="@DetalleReporte.MaximoDescripcion"
+                      aria-invalid="@(Model.ErrorDe("descripcion") is null ? null : "true")"
+                      aria-describedby="@(Model.ErrorDe("descripcion") is null ? null : "Reporte_Descripcion-error")">@r.Descripcion</textarea>
+            @if (Model.ErrorDe("descripcion") is { } errorDescripcion)
+            {
+                <p id="Reporte_Descripcion-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorDescripcion</span></p>
+            }
+        </div>
+        <partial name="_Campo" model="@(new CampoFormulario("Reporte_OcurridoEn", "Reporte.OcurridoEn", "Fecha y hora aproximadas", "datetime-local", r.OcurridoEn, Model.ErrorDe("ocurridoAproximadamenteEn")))" />
+    </section>
+
+    <section class="superficie pila" aria-labelledby="titulo-lugar">
+        <h2 id="titulo-lugar" class="seccion-caso__titulo">Dónde</h2>
+        <p class="texto-secundario" id="ayuda-lugar">Toca el mapa para marcar el lugar del hecho, escribe una referencia, o ambas. Sin punto en el mapa, la referencia es obligatoria.</p>
+        <div id="mapa-nuevo-reporte" class="mapa nuevo-reporte__mapa" role="region" aria-label="Mapa para marcar el lugar del hecho"
+             aria-describedby="ayuda-lugar"
+             data-lat="@Model.CentroLatitud" data-lon="@Model.CentroLongitud" data-teselas="@Model.UrlTeselas"></div>
+        <input type="hidden" name="Reporte.Latitud" value="@r.Latitud" data-latitud />
+        <input type="hidden" name="Reporte.Longitud" value="@r.Longitud" data-longitud />
+        <p class="nuevo-reporte__punto" data-punto aria-live="polite"></p>
+        <button type="button" class="boton boton--secundario boton--compacto" data-quitar-punto hidden>Quitar el punto</button>
+        <div class="campo">
+            <label class="campo__etiqueta" for="Reporte_Referencia">Referencia</label>
+            <input class="campo__control" id="Reporte_Referencia" name="Reporte.Referencia" type="text" value="@r.Referencia"
+                   maxlength="@DetalleReporte.MaximoReferencia"
+                   aria-invalid="@(errorUbicacion is null ? null : "true")"
+                   aria-describedby="Reporte_Referencia-ayuda@(errorUbicacion is null ? "" : " Reporte_Referencia-error")" />
+            <p id="Reporte_Referencia-ayuda" class="campo__ayuda">Por ejemplo: «Esquina de Mercaderes con San Juan de Dios, frente a la farmacia».</p>
+            @if (errorUbicacion is not null)
+            {
+                <p id="Reporte_Referencia-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorUbicacion</span></p>
+            }
+        </div>
+    </section>
+
+    <section class="superficie pila" aria-labelledby="titulo-contacto">
+        <h2 id="titulo-contacto" class="seccion-caso__titulo">Quién avisó <span class="texto-secundario">(opcional)</span></h2>
+        <p class="texto-secundario">Solo lo ve el personal autorizado. Déjalo vacío si la persona no quiso dar sus datos.</p>
+        <div class="nuevo-reporte__contacto">
+            <partial name="_Campo" model="@(new CampoFormulario("Reporte_ContactoNombre", "Reporte.ContactoNombre", "Nombre", Valor: r.ContactoNombre, Error: Model.ErrorDe("contactoNombre"), Autocompletar: "off", Requerido: false))" />
+            <partial name="_Campo" model="@(new CampoFormulario("Reporte_ContactoTelefono", "Reporte.ContactoTelefono", "Teléfono", "tel", r.ContactoTelefono, Model.ErrorDe("contactoTelefono"), Autocompletar: "off", Requerido: false))" />
+        </div>
+    </section>
+
+    <div class="acciones">
+        <a class="boton boton--secundario" href="/panel/reportes">Cancelar</a>
+        <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar el reporte</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    <script src="~/js/nuevo-reporte.js" asp-append-version="true"></script>
+}

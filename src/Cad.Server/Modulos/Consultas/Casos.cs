@@ -76,7 +76,7 @@ public sealed class ConsultarCasos(CadDbContext db)
         pagina = Math.Clamp(pagina, 1, Math.Max(1, (int)Math.Ceiling(total / (double)TamanoPagina)));
 
         var filas = await (from caso in casos
-                           join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+                           from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                            join categoria in db.CategoriasIncidencia.AsNoTracking() on caso.CategoriaId equals (Guid?)categoria.Id into categorias
                            from categoria in categorias.DefaultIfEmpty()
                            join detalle in db.DetallesReporte.AsNoTracking() on caso.Id equals detalle.CasoId into detalles
@@ -90,7 +90,9 @@ public sealed class ConsultarCasos(CadDbContext db)
                            select new
                            {
                                caso.Id, caso.Origen, caso.Estado, caso.RegistradoEn,
-                               Ciudadano = ciudadano.Nombres + " " + ciudadano.Apellidos,
+                               Ciudadano = ciudadano == null
+                                   ? (detalle != null && detalle.ContactoNombre != null ? detalle.ContactoNombre + AutorReporte.SufijoContacto : AutorReporte.DeLaCentral)
+                                   : ciudadano.Nombres + " " + ciudadano.Apellidos,
                                Tipo = categoria == null ? null : categoria.Nombre,
                                Sereno = ultimoSereno,
                                Latitud = caso.Origen != OrigenCaso.Reporte ? caso.Latitud : (detalle == null ? null : detalle.LatitudHecho),

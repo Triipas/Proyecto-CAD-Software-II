@@ -54,8 +54,13 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             // HU10: el reporte con la categoría que eligió el ciudadano (CA07) y la ubicación del hecho (CA03).
             var detalle = await db.DetallesReporte.AsNoTracking().SingleAsync(d => d.CasoId == casoId, ct);
             hechoOcurridoEn = detalle.OcurridoAproximadamenteEn;
-            entradas.Add(new(caso.RegistradoEn, $"Reporte registrado como «{await CategoriaAsync(detalle.CategoriaOriginalId, ct)}»",
-                await NombreAsync(caso.CiudadanoId), Unir(TextoFuente(detalle.FuenteUbicacion), detalle.ReferenciaHecho is { } r ? $"Referencia: {r}" : null)));
+            // Un reporte de la central (23/10/2026) lo registra un operador, con quien avisó si lo dio.
+            var deLaCentral = detalle.RegistradoPorOperadorId is { } operadorId;
+            entradas.Add(new(caso.RegistradoEn,
+                $"Reporte registrado {(deLaCentral ? "por la central " : "")}como «{await CategoriaAsync(detalle.CategoriaOriginalId, ct)}»",
+                await NombreAsync(detalle.RegistradoPorOperadorId ?? caso.CiudadanoId!.Value),
+                Unir(TextoFuente(detalle.FuenteUbicacion), detalle.ReferenciaHecho is { } r ? $"Referencia: {r}" : null,
+                    detalle.ContactoNombre is { } contacto ? $"Avisó: {contacto}{(detalle.ContactoTelefono is { } t ? $" ({t})" : "")}" : null)));
         }
         else if (caso.Origen == OrigenCaso.Acompanamiento)
         {
@@ -69,7 +74,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
                     caso.UbicacionDisponible ? "Ubicación: última posición conocida de la sesión" : "Sin posiciones en la sesión")));
         }
         else
-            entradas.Add(new(caso.RegistradoEn, "SOS emitido", await NombreAsync(caso.CiudadanoId),
+            entradas.Add(new(caso.RegistradoEn, "SOS emitido", await NombreAsync(caso.CiudadanoId!.Value),
                 caso.UbicacionDisponible ? "Con ubicación del dispositivo" : "Ubicación no disponible"));
 
         // HU12: intentos de contacto con su resultado.

@@ -32,32 +32,7 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
             return Reiteracion(existente);
 
         var ahora = reloj.GetUtcNow();
-        var errores = new Dictionary<string, string[]>();
-        void Error(string campo, string mensaje) => errores[campo] = [mensaje];
-
-        // CA01, CA07 y DP07: tipo del catálogo compartido.
-        var categoriaValida = solicitud.CategoriaId is { } categoriaId
-            && await db.CategoriasIncidencia.AsNoTracking().AnyAsync(c => c.Id == categoriaId, ct);
-        if (!categoriaValida)
-            Error("categoriaId", "Elige un tipo de incidencia del catálogo.");
-
-        // CA02 y DP08: descripción obligatoria con límite técnico.
-        var descripcion = solicitud.Descripcion?.Trim();
-        if (string.IsNullOrEmpty(descripcion))
-            Error("descripcion", "Describe lo ocurrido.");
-        else if (descripcion.Length > DetalleReporte.MaximoDescripcion)
-            Error("descripcion", $"La descripción admite hasta {DetalleReporte.MaximoDescripcion} caracteres.");
-
-        // CA02 y DP08: fecha y hora aproximadas obligatorias y no futuras.
-        if (solicitud.OcurridoAproximadamenteEn is not { } ocurrido || ocurrido == default)
-            Error("ocurridoAproximadamenteEn", "Indica la fecha y hora aproximadas del hecho.");
-        else if (ocurrido > ahora + MargenReloj)
-            Error("ocurridoAproximadamenteEn", "La fecha y hora del hecho no pueden ser futuras.");
-
-        // CA03 y CA04: ubicación del hecho por un punto (del mapa o la posición actual, si el ciudadano la eligió) o por
-        // una referencia textual. Con «Texto» no se admiten coordenadas: no debe llegar ninguna posición del dispositivo.
-        var ubicacion = ValidarUbicacion(solicitud.Ubicacion, Error);
-
+        var (errores, descripcion, ubicacion) = await ValidarAsync(solicitud, ahora, ct);
         if (errores.Count > 0)
             return new ResultadoRegistroReporte.Invalido(errores);
 
@@ -84,6 +59,88 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
         registro.LogInformation("Reporte {CasoId} registrado (ubicación del hecho: {Fuente}).", caso.Id, u.Fuente);
         await AvisarAsync(caso.Id);
         return new ResultadoRegistroReporte.Registrado(caso);
+    }
+
+    // Reporte registrado por la central (23/10/2026), p. ej. por una llamada: sin ciudadano, con quién avisó y su teléfono si los
+    // dio (opcionales), y ya admitido para asignarlo. La admisión queda como decisión del operador, como la de un reporte revisado,
+    // para que figure en «Reportes admitidos» y en sus tiempos. No genera avisos a ningún ciudadano.
+    public const string MotivoAdmisionCentral = "Registrado por la central: no requiere revisión.";
+
+    public async Task<ResultadoRegistroReporte> RegistrarDeLaCentralAsync(Guid operadorId, SolicitudRegistroReporte solicitud,
+        string? contactoNombre, string? contactoTelefono, CancellationToken ct)
+    {
+        if (solicitud.IdSolicitud == Guid.Empty)
+            return new ResultadoRegistroReporte.Invalido(new() { ["idSolicitud"] = ["Falta el identificador de la solicitud."] });
+        if (await BuscarDeLaCentralAsync(solicitud.IdSolicitud, ct) is { } existente)
+            return new ResultadoRegistroReporte.YaRegistrado(existente);
+
+        var ahora = reloj.GetUtcNow();
+        var (errores, descripcion, ubicacion) = await ValidarAsync(solicitud, ahora, ct);
+        var nombre = string.IsNullOrWhiteSpace(contactoNombre) ? null : contactoNombre.Trim();
+        var telefono = string.IsNullOrWhiteSpace(contactoTelefono) ? null : contactoTelefono.Trim();
+        if (nombre is { Length: > DetalleReporte.MaximoContactoNombre })
+            errores["contactoNombre"] = [$"El nombre admite hasta {DetalleReporte.MaximoContactoNombre} caracteres."];
+        if (telefono is not null && (telefono.Length > DetalleReporte.MaximoContactoTelefono || !telefono.All(c => char.IsDigit(c) || c is ' ' or '+' or '-')))
+            errores["contactoTelefono"] = ["Escribe el teléfono solo con números (puede llevar +, espacios o guiones)."];
+        if (errores.Count > 0)
+            return new ResultadoRegistroReporte.Invalido(errores);
+
+        var caso = Caso.RegistrarReporteDeLaCentral(operadorId, solicitud.IdSolicitud, solicitud.CategoriaId!.Value, ahora);
+        var u = ubicacion!;
+        db.Casos.Add(caso);
+        db.DetallesReporte.Add(DetalleReporte.Registrar(caso, caso.CategoriaId!.Value, descripcion!,
+            solicitud.OcurridoAproximadamenteEn!.Value.ToUniversalTime(), u.Fuente, u.Latitud, u.Longitud, u.Precision, u.Referencia,
+            operadorId, nombre, telefono));
+        db.DecisionesReporte.Add(DecisionReporte.Registrar(caso, TipoDecisionReporte.Admision, MotivoAdmisionCentral, null, null, operadorId, ahora));
+        db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteRegistrado, operadorId, VisibilidadEvento.Interna, ahora));
+        db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteAdmitido, operadorId, VisibilidadEvento.Interna, ahora));
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
+        {
+            db.ChangeTracker.Clear();
+            return new ResultadoRegistroReporte.YaRegistrado((await BuscarDeLaCentralAsync(solicitud.IdSolicitud, ct))!);
+        }
+
+        // Sin descripción, contacto, referencia ni coordenadas en el registro (RNF07).
+        registro.LogInformation("Reporte {CasoId} registrado por la central (ubicación del hecho: {Fuente}).", caso.Id, u.Fuente);
+        await AvisarAsync(caso.Id);
+        return new ResultadoRegistroReporte.Registrado(caso);
+    }
+
+    // Validación común a la app (HU10) y a la central: tipo del catálogo, descripción, fecha y hora del hecho y su ubicación.
+    private async Task<(Dictionary<string, string[]> Errores, string? Descripcion, UbicacionValida? Ubicacion)> ValidarAsync(
+        SolicitudRegistroReporte solicitud, DateTimeOffset ahora, CancellationToken ct)
+    {
+        var errores = new Dictionary<string, string[]>();
+        void Error(string campo, string mensaje) => errores[campo] = [mensaje];
+
+        // CA01, CA07 y DP07: tipo del catálogo compartido.
+        var categoriaValida = solicitud.CategoriaId is { } categoriaId
+            && await db.CategoriasIncidencia.AsNoTracking().AnyAsync(c => c.Id == categoriaId, ct);
+        if (!categoriaValida)
+            Error("categoriaId", "Elige un tipo de incidencia del catálogo.");
+
+        // CA02 y DP08: descripción obligatoria con límite técnico.
+        var descripcion = solicitud.Descripcion?.Trim();
+        if (string.IsNullOrEmpty(descripcion))
+            Error("descripcion", "Describe lo ocurrido.");
+        else if (descripcion.Length > DetalleReporte.MaximoDescripcion)
+            Error("descripcion", $"La descripción admite hasta {DetalleReporte.MaximoDescripcion} caracteres.");
+
+        // CA02 y DP08: fecha y hora aproximadas obligatorias y no futuras.
+        if (solicitud.OcurridoAproximadamenteEn is not { } ocurrido || ocurrido == default)
+            Error("ocurridoAproximadamenteEn", "Indica la fecha y hora aproximadas del hecho.");
+        else if (ocurrido > ahora + MargenReloj)
+            Error("ocurridoAproximadamenteEn", "La fecha y hora del hecho no pueden ser futuras.");
+
+        // CA03 y CA04: ubicación del hecho por un punto (del mapa o la posición actual, si el ciudadano la eligió) o por
+        // una referencia textual. Con «Texto» no se admiten coordenadas: no debe llegar ninguna posición del dispositivo.
+        var ubicacion = ValidarUbicacion(solicitud.Ubicacion, Error);
+
+        return (errores, descripcion, ubicacion);
     }
 
     // HU25-CA05: la central incorpora el marcador sin recargar (sin el aviso sonoro de un SOS: no es urgente). Después de
@@ -159,6 +216,9 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
     private static ResultadoRegistroReporte Reiteracion(Caso existente) => existente.Origen == OrigenCaso.Reporte
         ? new ResultadoRegistroReporte.YaRegistrado(existente)
         : new ResultadoRegistroReporte.Invalido(new() { ["idSolicitud"] = ["El identificador de la solicitud ya se usó en otro caso."] });
+
+    private Task<Caso?> BuscarDeLaCentralAsync(Guid idSolicitud, CancellationToken ct) =>
+        db.Casos.AsNoTracking().SingleOrDefaultAsync(c => c.CiudadanoId == null && c.IdSolicitud == idSolicitud, ct);
 
     private Task<Caso?> BuscarAsync(Guid ciudadanoId, Guid idSolicitud, CancellationToken ct) =>
         db.Casos.AsNoTracking().SingleOrDefaultAsync(c => c.CiudadanoId == ciudadanoId && c.IdSolicitud == idSolicitud, ct);

@@ -49,9 +49,10 @@ public sealed class Caso
     public Guid Id { get; private set; }
     public OrigenCaso Origen { get; private set; }
     public EstadoCaso Estado { get; private set; }
-    public Guid CiudadanoId { get; private set; }
+    // Nulo en un reporte que registró la central (23/10/2026), p. ej. por una llamada: no pertenece a ningún ciudadano de la app.
+    public Guid? CiudadanoId { get; private set; }
 
-    // Idempotencia: único por ciudadano (HU07-CA07, DP14).
+    // Idempotencia: único por ciudadano (HU07-CA07, DP14); en un reporte de la central, único entre los de la central.
     public Guid IdSolicitud { get; private set; }
 
     // Momento en que el servidor aceptó y registró el SOS (HU07-CA02; base de la medición de RNF02).
@@ -190,6 +191,20 @@ public sealed class Caso
 
     // HU10-CA01: un reporte nace «Recibido». La categoría que elige el ciudadano es la del caso desde el inicio (el
     // ciudadano queda como responsable de esa primera clasificación); HU14 podrá corregirla conservando la original.
+    // Reporte que registra la central (23/10/2026): sin ciudadano y ya admitido («Pendiente»), porque lo crea el propio operador.
+    // La categoría la elige él y queda como su clasificación.
+    public static Caso RegistrarReporteDeLaCentral(Guid operadorId, Guid idSolicitud, Guid categoriaId, DateTimeOffset ahora) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        Origen = OrigenCaso.Reporte,
+        Estado = EstadoCaso.Pendiente,
+        IdSolicitud = idSolicitud,
+        RegistradoEn = ahora,
+        CategoriaId = categoriaId,
+        ClasificadoPor = operadorId,
+        ClasificadoEn = ahora,
+    };
+
     public static Caso RegistrarReporte(Guid ciudadanoId, Guid idSolicitud, Guid categoriaId, DateTimeOffset ahora) => new()
     {
         Id = Guid.CreateVersion7(),

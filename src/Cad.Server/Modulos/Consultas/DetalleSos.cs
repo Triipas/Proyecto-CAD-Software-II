@@ -57,13 +57,13 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
     public async Task<DetalleSos?> EjecutarAsync(Guid casoId, CancellationToken ct, bool cualquierOrigen = false)
     {
         var sos = await (from caso in db.Casos.AsNoTracking()
-                         join ciudadano in db.Users.AsNoTracking() on caso.CiudadanoId equals ciudadano.Id
+                         from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                          where caso.Id == casoId && (cualquierOrigen || caso.Origen != OrigenCaso.Reporte)
                          select new
                          {
                              caso.Id, caso.Estado, caso.RegistradoEn, caso.Origen,
-                             Ciudadano = ciudadano.Nombres + " " + ciudadano.Apellidos,
-                             ciudadano.PhoneNumber,
+                             Ciudadano = ciudadano == null ? AutorReporte.DeLaCentral : ciudadano.Nombres + " " + ciudadano.Apellidos,
+                             PhoneNumber = ciudadano == null ? null : ciudadano.PhoneNumber,
                              caso.Latitud, caso.Longitud, caso.PrecisionMetros, caso.UbicacionObtenidaEn,
                          })
                         .SingleOrDefaultAsync(ct);

@@ -344,7 +344,15 @@
         <section class="superficie seccion-caso" aria-labelledby="titulo-hecho">
             <h2 id="titulo-hecho" class="seccion-caso__titulo">Hecho reportado</h2>
             <dl class="datos">
-                <div><dt>Ciudadano</dt><dd>@r.Ciudadano</dd></div>
+                @if (r.DeLaCentral)
+                {
+                    <div><dt>Registrado</dt><dd>Por la central</dd></div>
+                    <div><dt>Quién avisó</dt><dd data-contacto>@(r.ContactoNombre ?? "Sin datos")@(r.ContactoTelefono is { } telefono ? $" · {telefono}" : "")</dd></div>
+                }
+                else
+                {
+                    <div><dt>Ciudadano</dt><dd>@r.Ciudadano</dd></div>
+                }
                 <div><dt>Ocurrió aproximadamente</dt><dd>@Local(r.OcurridoAproximadamenteEn, "dd/MM/yyyy HH:mm")</dd></div>
                 <div><dt>Descripción</dt><dd class="datos__texto" data-descripcion>@r.Descripcion</dd></div>
             </dl>
