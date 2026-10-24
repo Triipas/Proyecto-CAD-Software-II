@@ -25,6 +25,10 @@ public sealed class Descartable : SwipeView
     {
         foreach (var lado in new[] { izquierda, derecha })
             ((SwipeItem)lado[0]).Invoked += async (_, _) => await QuitarAsync();
+        // Las colecciones se asignan una sola vez: cambiarlas mientras la página se construye (al poner el contenido) hacía
+        // que MAUI las recorriera a la vez y la página del ciudadano se cerraba al abrirse.
+        LeftItems = izquierda;
+        RightItems = derecha;
         BackgroundColor = Colors.Transparent;
         Revisar();
     }
@@ -66,11 +70,10 @@ public sealed class Descartable : SwipeView
     private void Revisar()
     {
         var descartado = Permitido && !string.IsNullOrEmpty(Nombre) && !string.IsNullOrEmpty(Clave) && Leer() == Clave;
-        // Sin elementos a los lados no hay gesto; los botones del aviso siguen funcionando.
+        // Sin elementos visibles a los lados no hay gesto; los botones del aviso siguen funcionando.
         if (izquierda is not null)
         {
-            LeftItems = Permitido ? izquierda : [];
-            RightItems = Permitido ? derecha : [];
+            izquierda[0].IsVisible = derecha[0].IsVisible = Permitido;
             SemanticProperties.SetHint(this, Permitido ? "Desliza a un lado para quitar este aviso" : "");
         }
         IsVisible = (Content?.IsVisible ?? false) && !descartado;
