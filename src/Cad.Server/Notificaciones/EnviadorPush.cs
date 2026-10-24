@@ -19,7 +19,7 @@ public sealed class OpcionesPush
 public sealed class EnviadorPushFcm : IEnviadorPush
 {
     // Canal de notificaciones de la app Android (debe coincidir con el que crea la app).
-    public const string CanalAndroid = "despachos";
+    public const string CanalAndroid = "despachos-v2"; // 24/10/2026: canal con el sonido de nuevo despacho
     public const string Titulo = "Nuevo despacho";
     public const string Texto = "Tienes un caso asignado. Abre la app para ver los datos.";
 

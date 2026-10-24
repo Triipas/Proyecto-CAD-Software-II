@@ -16,15 +16,16 @@ public partial class InicioSerenoPagina : ContentPage
     private readonly IConfiguracionServidor servidor;
     private bool mapaCargado, mapaListo;
 
-    public InicioSerenoPagina(InicioSerenoVistaModelo vistaModelo, IConfiguracionServidor servidor)
+    public InicioSerenoPagina(InicioSerenoVistaModelo vistaModelo, IConfiguracionServidor servidor, IReproductorSonidos sonidos)
     {
         InitializeComponent();
         BindingContext = this.vistaModelo = vistaModelo;
         this.servidor = servidor;
         vistaModelo.PropertyChanged += AlCambiarVistaModelo;
-        // Rango de atención (24/10/2026): al llegar al lugar del caso, una vibración breve y el aviso al lector de pantalla.
+        // Rango de atención (24/10/2026): al llegar al lugar del caso, un sonido, una vibración breve y el aviso al lector de pantalla.
         vistaModelo.Llegada += () =>
         {
+            sonidos.Reproducir(Sonido.Llegaste);
             try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); } catch (Exception) { /* sin vibración en este equipo */ }
             SemanticScreenReader.Announce("Llegaste al lugar del caso. Ya puedes iniciar la atención.");
         };

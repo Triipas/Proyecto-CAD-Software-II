@@ -17,7 +17,8 @@ public abstract record EstadoSos
 }
 
 // HU07 — Emitir un SOS con una única activación — y HU08 — ubicación actual del SOS (lado de la app).
-public sealed class EmisorSos(IApiCad api, IServicioUbicacion ubicacion, IAlmacenSesion sesiones, TimeProvider reloj)
+public sealed class EmisorSos(IApiCad api, IServicioUbicacion ubicacion, IAlmacenSesion sesiones, TimeProvider reloj,
+    IReproductorSonidos? sonidos = null)
 {
     // DP11 (decidida por delegación): espera máxima para obtener la ubicación actual al emitir.
     public static readonly TimeSpan EsperaUbicacion = TimeSpan.FromSeconds(10);
@@ -154,5 +155,10 @@ public sealed class EmisorSos(IApiCad api, IServicioUbicacion ubicacion, IAlmace
     {
         Estado = estado;
         Cambio?.Invoke(estado);
+        // 24/10/2026: «te escuchamos» cuando el servidor confirma el SOS; si no se pudo, el sonido de error.
+        if (estado is EstadoSos.Confirmado)
+            sonidos?.Reproducir(Sonido.SosRegistrado);
+        else if (estado is EstadoSos.Rechazado or EstadoSos.NoConfirmado)
+            sonidos?.Reproducir(Sonido.Error);
     }
 }

@@ -13,7 +13,9 @@ namespace Cad.Movil.Platforms.Android;
 public sealed class ServicioPushAndroid : IServicioPush
 {
     // Debe coincidir con el canal que indica el servidor en la notificación (EnviadorPushFcm.CanalAndroid).
-    public const string Canal = "despachos";
+    // «-v2» (24/10/2026): el canal suena con nuevo_despacho.wav; Android no deja cambiar el sonido de un canal ya creado.
+    public const string Canal = "despachos-v2";
+    private const string CanalAnterior = "despachos";
     private const string YaSolicitado = "cad.notificaciones.solicitadas";
     private static readonly TimeSpan EsperaToken = TimeSpan.FromSeconds(10);
 
@@ -93,7 +95,14 @@ public sealed class ServicioPushAndroid : IServicioPush
         {
             Description = "Avisos de casos asignados por la central",
         };
-        ((NotificationManager)contexto.GetSystemService(Context.NotificationService)!).CreateNotificationChannel(canal);
+        var sonido = global::Android.Net.Uri.Parse($"android.resource://{contexto.PackageName}/{Resource.Raw.nuevo_despacho}");
+        canal.SetSound(sonido, new global::Android.Media.AudioAttributes.Builder()
+            .SetUsage(global::Android.Media.AudioUsageKind.Notification)!
+            .SetContentType(global::Android.Media.AudioContentType.Sonification)!
+            .Build());
+        var notificaciones = (NotificationManager)contexto.GetSystemService(Context.NotificationService)!;
+        notificaciones.DeleteNotificationChannel(CanalAnterior);
+        notificaciones.CreateNotificationChannel(canal);
     }
 }
 
@@ -123,6 +132,7 @@ public sealed class ServicioMensajesFirebase : FirebaseMessagingService
         constructor.SetPriority(NotificationCompat.PriorityHigh);
         constructor.SetAutoCancel(true);
         constructor.SetContentIntent(pendiente);
+        constructor.SetSilent(true); // con la app abierta ya suena el aviso en tiempo real (ServicioDespacho)
         var notificacion = constructor.Build();
         try
         {
