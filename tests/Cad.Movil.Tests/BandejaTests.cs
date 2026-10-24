@@ -124,6 +124,26 @@ public class BandejaTests
     }
 
     [Fact]
+    public async Task ElAvisoDelInicio_SeIdentificaPorLaNotificacionMasReciente_NoPorElNumero()
+    {
+        // Una sin leer; se lee; llega otra: el número es el mismo, pero el aviso es otro (si se quitó el primero, este se ve).
+        NotificacionCiudadanoVista Aviso(bool leida) => new(Guid.NewGuid(), Guid.NewGuid(), "Tu SOS pasó a «En atención».", DateTimeOffset.UtcNow, leida);
+        var primera = Aviso(false);
+        api.RespuestaBandeja = () => new ResultadoApi<BandejaNotificaciones>.Correcto(new BandejaNotificaciones(1, [primera]));
+        var inicio = Inicio();
+        await inicio.AlAparecerAsync();
+        var clavePrimera = inicio.ClaveNotificaciones;
+
+        var segunda = Aviso(false);
+        api.RespuestaBandeja = () => new ResultadoApi<BandejaNotificaciones>.Correcto(new BandejaNotificaciones(1, [segunda, primera with { Leida = true }]));
+        await inicio.AlAparecerAsync();
+
+        Assert.Equal(primera.Id.ToString(), clavePrimera);
+        Assert.Equal(segunda.Id.ToString(), inicio.ClaveNotificaciones);
+        Assert.Equal("Notificaciones (1 sin leer)", inicio.TextoNotificaciones);
+    }
+
+    [Fact]
     public async Task ElInicio_SinRespuesta_NoMuestraUnNumero()
     {
         api.RespuestaBandeja = () => new ResultadoApi<BandejaNotificaciones>.SinRespuesta("sin red");

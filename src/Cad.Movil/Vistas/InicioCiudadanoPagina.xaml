@@ -99,7 +99,9 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- HU07/HU08: resultado del SOS, junto a lo demás que está en curso. -->
+                <!-- HU07/HU08: resultado del SOS, junto a lo demás que está en curso. Confirmado, se puede quitar deslizándolo; si hay
+                     que reintentar o volver a ingresar, no. -->
+                <v:Descartable Nombre="sos" Clave="{Binding TextoSos}" Permitido="{Binding AvisoSosDescartable}">
                 <Border Style="{StaticResource Flotante}" Padding="12" IsVisible="{Binding HayEstadoSos}">
                     <VerticalStackLayout Spacing="10">
                         <v:Aviso Tipo="{Binding TipoAvisoSos}" Texto="{Binding TextoSos}" />
@@ -109,12 +111,16 @@
                                 Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
                     </VerticalStackLayout>
                 </Border>
+                </v:Descartable>
 
+                <v:Descartable Nombre="centrar" Clave="{Binding TextoCentrar}">
                 <Border Style="{StaticResource Flotante}" Padding="12" IsVisible="{Binding HayTextoCentrar}">
                     <v:Aviso Tipo="advertencia" Texto="{Binding TextoCentrar}" />
                 </Border>
+                </v:Descartable>
 
-                <!-- HU31: avisos sin leer de los casos propios. -->
+                <!-- HU31: avisos sin leer de los casos propios. Deslizándolo se quita hasta que llegue otro aviso. -->
+                <v:Descartable Nombre="notificaciones" Clave="{Binding ClaveNotificaciones}">
                 <Grid IsVisible="{Binding HayNoLeidas}">
                     <Border Style="{StaticResource Flotante}" Padding="12,10">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
@@ -128,6 +134,7 @@
                             SemanticProperties.Description="{Binding TextoNotificaciones}"
                             SemanticProperties.Hint="Muestra los avisos de cambios de estado de tus casos" />
                 </Grid>
+                </v:Descartable>
         </VerticalStackLayout>
 
         <!-- Abajo, en la zona del pulgar. -->

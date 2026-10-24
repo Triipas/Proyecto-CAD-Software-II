@@ -20,6 +20,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     private MiCasoResumen? casoActivo;
     private ResultadoPreparacion? estadoUbicacion;
     private int? noLeidas;
+    private Guid? ultimaNoLeida;
     private bool preparada;
 
     public InicioCiudadanoVistaModelo(EmisorSos emisor, PreparacionUbicacion preparacion, IAlmacenSesion sesiones,
@@ -141,6 +142,8 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     // HU31: aviso de notificaciones sin leer (sin número si no se pudo consultar).
     public string TextoNotificaciones => noLeidas is > 0 ? $"Notificaciones ({noLeidas} sin leer)" : "Notificaciones";
     public bool HayNoLeidas => noLeidas is > 0;
+    // Identifica el aviso por la notificación más reciente: quitado, solo vuelve con una notificación nueva (no con el mismo número).
+    public string ClaveNotificaciones => ultimaNoLeida?.ToString() ?? "";
 
     // ----- HU06: preparación al abrir la aplicación -----
     public bool MostrarExplicacion => estadoUbicacion == ResultadoPreparacion.NecesitaExplicacion;
@@ -172,8 +175,10 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         // HU31: cada vez que se muestra el inicio (también al volver de la bandeja) se actualiza el número sin leer.
         if (bandeja is not null)
         {
-            noLeidas = await bandeja.ContarNoLeidasAsync();
+            var resumen = await bandeja.ContarNoLeidasAsync();
+            (noLeidas, ultimaNoLeida) = (resumen?.NoLeidas, resumen?.Ultima);
             Notificar(nameof(TextoNotificaciones));
+            Notificar(nameof(ClaveNotificaciones));
             Notificar(nameof(HayNoLeidas));
         }
         if (acompanamiento is not null)
@@ -206,6 +211,8 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     public bool HayEstadoSos => emisor.Estado is not EstadoSos.Listo;
     public bool PuedeReintentar => emisor.PuedeReintentar;
     public bool SesionTerminada => emisor.Estado is EstadoSos.Rechazado { Estado: 401 };
+    // Solo el SOS confirmado se puede quitar deslizándolo: mientras se envía o si falló, el aviso pide seguir atento o reintentar.
+    public bool AvisoSosDescartable => emisor.Estado is EstadoSos.Confirmado;
     public string TipoAvisoSos => emisor.Estado switch
     {
         EstadoSos.Confirmado => "exito",
@@ -228,7 +235,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     private void ActualizarSos()
     {
         foreach (var p in new[] { nameof(SosEnCurso), nameof(SosListo), nameof(TextoBotonSos), nameof(HayEstadoSos), nameof(PuedeReintentar),
-                     nameof(SesionTerminada), nameof(TipoAvisoSos), nameof(TextoSos) })
+                     nameof(SesionTerminada), nameof(TipoAvisoSos), nameof(TextoSos), nameof(AvisoSosDescartable) })
             Notificar(p);
         EmitirSos.ActualizarDisponibilidad();
         Reintentar.ActualizarDisponibilidad();
