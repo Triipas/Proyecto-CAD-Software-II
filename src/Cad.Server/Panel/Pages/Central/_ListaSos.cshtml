@@ -28,7 +28,9 @@
                         <span class="sos__estado">@sos.Estado</span>
                         <time class="sos__hora" datetime="@sos.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm:ss", inv)</time>
                     </div>
-                    <p class="sos__ciudadano">@sos.Ciudadano</p>
+                    @* 24/10/2026: elegir el caso es la acción de la tarjeta (el nombre es el botón; con el ratón, toda la tarjeta):
+                       el mapa lo encuadra con su sereno sugerido y se abren los serenos para asignar. *@
+                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false">@sos.Ciudadano<span class="visualmente-oculto">: elegir este SOS para asignarlo</span></button>
                     @* HU13-CA03: el tipo se muestra siempre; sin clasificar, «Tipo por determinar». *@
                     <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
                     @if (sos.UbicacionDisponible)
@@ -37,10 +39,6 @@
                             <partial name="_Icono" model="@("ubicacion")" />
                             <span>Ubicación disponible · ± @sos.PrecisionMetros?.ToString("0", inv) m</span>
                         </p>
-                        @* Botón a la vista (antes era un texto con aspecto de enlace): lleva el mapa al SOS. *@
-                        <button type="button" class="boton boton--secundario boton--compacto sos__ver" data-ver-en-mapa aria-label="Ver en el mapa el SOS de @sos.Ciudadano">
-                            <partial name="_Icono" model="@("ubicacion")" />Ver en el mapa
-                        </button>
                     }
                     else
                     {
@@ -51,8 +49,6 @@
                     }
                     <div class="sos__acciones">
                         <a class="sos__detalle" href="/panel/central/sos/@sos.Id">Verificar y registrar contacto<span class="visualmente-oculto"> del SOS de @sos.Ciudadano</span></a>
-                        @* HU20: selecciona el SOS (con o sin ubicación) y lleva a los serenos disponibles. *@
-                        <button type="button" class="sos__detalle sos__elegir" data-seleccionar-sos>Elegir sereno para asignar<span class="visualmente-oculto"> el SOS de @sos.Ciudadano</span></button>
                     </div>
                 </li>
             }

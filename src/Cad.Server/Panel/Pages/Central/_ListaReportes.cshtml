@@ -25,17 +25,14 @@
                         <span class="sos__estado">Pendiente</span>
                         <span class="sos__hora">Admitido a las <time datetime="@reporte.AdmitidoEn.ToString("O", inv)">@local.ToString("HH:mm", inv)</time></span>
                     </div>
-                    <p class="sos__ciudadano">@reporte.Ciudadano</p>
+                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false">@reporte.Ciudadano<span class="visualmente-oculto">: elegir este reporte para asignarlo</span></button>
                     <p class="sos__tipo" data-tipo>Tipo: @reporte.Categoria</p>
                     @if (reporte.ConPunto)
                     {
                         <p class="sos__dato-ubicacion">
                             <partial name="_Icono" model="@("ubicacion")" />
-                            <span>Lugar del hecho indicado por el ciudadano</span>
+                            <span>@(reporte.DeLaCentral ? "Lugar del hecho" : "Lugar del hecho indicado por el ciudadano")</span>
                         </p>
-                        <button type="button" class="boton boton--secundario boton--compacto sos__ver" data-ver-en-mapa aria-label="Ver en el mapa el lugar del hecho del reporte de @reporte.Ciudadano">
-                            <partial name="_Icono" model="@("ubicacion")" />Ver en el mapa
-                        </button>
                     }
                     else
                     {
@@ -46,7 +43,6 @@
                     }
                     <div class="sos__acciones">
                         <a class="sos__detalle" href="/panel/reportes/@reporte.Id">Ver el reporte<span class="visualmente-oculto"> de @reporte.Ciudadano</span></a>
-                        <button type="button" class="sos__detalle sos__elegir" data-seleccionar-sos>Elegir sereno para asignar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></button>
                     </div>
                 </li>
             }

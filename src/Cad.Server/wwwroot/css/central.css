@@ -283,6 +283,40 @@
   font-size: var(--texto-md);
 }
 
+/* 24/10/2026: elegir el caso es la acción de la tarjeta. El nombre es el botón (teclado y lector de pantalla); con el ratón,
+   toda la tarjeta. Se ve como el título de la tarjeta, no como un botón más. */
+.central .lista-sos > .sos {
+  cursor: pointer;
+}
+
+.central .sos__seleccionar {
+  justify-self: stretch;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: var(--peso-medio) var(--texto-md)/1.3 var(--fuente);
+  text-align: left;
+  color: var(--color-texto);
+  background: none;
+  cursor: pointer;
+}
+
+.central .sos__seleccionar:focus-visible {
+  outline: none;
+}
+
+.central .sos:has(.sos__seleccionar:focus-visible) {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .central .lista-sos > .sos:not(.sos--seleccionado):hover {
+    border-color: var(--color-borde-control);
+    box-shadow: var(--sombra-1);
+  }
+}
+
 .central .sos__tipo,
 .central .sos__ubicacion {
   font-size: var(--texto-xs);
@@ -391,14 +425,12 @@
   flex: none;
 }
 
-.central .sereno__ubicar,
-.central .sos__ver {
+.central .sereno__ubicar {
   justify-self: start;
   gap: var(--espacio-1);
 }
 
-.central .sereno__ubicar .icono,
-.central .sos__ver .icono {
+.central .sereno__ubicar .icono {
   width: 1rem;
   height: 1rem;
   color: var(--color-primario);

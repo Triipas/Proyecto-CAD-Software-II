@@ -40,7 +40,7 @@
 
   // ---------- Vuelo al caso: el mapa viaja al punto, casi al zoom máximo, y lo marca al llegar ----------
   // Propósito: continuidad espacial (de la tarjeta al lugar). Con movimiento reducido el salto es inmediato.
-  // «Ver en el mapa» acerca hasta el zoom máximo de las teselas (24/10/2026: antes se quedaba uno por debajo).
+  // Al elegir un caso sin sereno sugerido, el mapa acerca hasta el zoom máximo de las teselas (24/10/2026).
   const ZOOM_CERCANO = 19;
   const DURACION_VUELO = 0.9; // segundos (Leaflet)
 
@@ -144,12 +144,9 @@
           alt: texto,
           keyboard: true,
         })
-          .bindPopup(ficha({
-            tipo: "reporte", etiqueta: "Reporte", estado: "Pendiente", hora: `Admitido ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
-            datos: [["Tipo", item.dataset.categoria]],
-            acciones: accion(item.dataset.detalle, "Ver el reporte", true) + elegirDesdeMapa(id),
-          }), GLOBO)
-          .on("click", () => seleccionar(id, { desdeMapa: true }))
+          // Primero se elige el caso y después se abre el detalle: así ya muestra el sereno sugerido.
+          .on("click", () => elegirCaso(id, { desdeMapa: true }))
+          .bindPopup(() => fichaPendiente(item), GLOBO)
           .addTo(mapa);
         marcadores.set(id, marcador);
         continue;
@@ -160,12 +157,8 @@
         alt: `SOS de ${item.dataset.ciudadano}`,
         keyboard: true,
       })
-        .bindPopup(ficha({
-          tipo: "sos", etiqueta: "SOS", estado: "Pendiente", hora: `Recibido ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
-          datos: [["Tipo", item.dataset.clase], ["Ubicación", `Teléfono del ciudadano · ± ${item.dataset.precision} m`]],
-          acciones: accion(item.dataset.detalle, "Verificar", true) + elegirDesdeMapa(id),
-        }), GLOBO)
-        .on("click", () => seleccionar(id, { desdeMapa: true }))
+        .on("click", () => elegirCaso(id, { desdeMapa: true }))
+        .bindPopup(() => fichaPendiente(item), GLOBO)
         .addTo(mapa);
       marcadores.set(id, marcador);
     }
@@ -176,7 +169,9 @@
   function seleccionar(id, { desdeMapa = false, conSereno = false } = {}) {
     sosSeleccionado = id;
     for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
+    for (const boton of document.querySelectorAll("[data-seleccionar-sos][aria-pressed=true]")) boton.setAttribute("aria-pressed", "false");
     const item = document.getElementById(`sos-${id}`);
+    item?.querySelector("[data-seleccionar-sos]")?.setAttribute("aria-pressed", "true");
     if (nuevos.delete(id)) marcadores.get(id)?.getElement()?.classList.remove("marcador-sos--pulso");
     if (item) {
       item.classList.add("sos--seleccionado");
@@ -196,7 +191,7 @@
       centrar(marcador);
       return;
     }
-    // Al elegir sereno se encuadran el caso y el sereno más cercano; al «Ver en el mapa», se vuela al caso.
+    // Se encuadran el caso y el sereno sugerido; si no hay ninguno, se vuela al caso con el zoom máximo.
     if (conSereno && lineaDespacho) encuadrar(lineaDespacho.getBounds(), marcador, claseLlegada(id));
     else volarA(marcador, { clase: claseLlegada(id) });
   }
@@ -204,9 +199,12 @@
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
   // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
   let lineaDespacho = null;
+  // El sereno sugerido para el caso elegido (el disponible más cercano), para el detalle del caso en el mapa.
+  let sugerencia = null;
   function dibujarDespacho() {
     lineaDespacho?.remove();
     lineaDespacho = null;
+    sugerencia = null;
     for (const el of regionSerenos.querySelectorAll(".sereno--sugerido")) el.classList.remove("sereno--sugerido");
     for (const el of regionSerenos.querySelectorAll("[data-distancia]")) el.remove();
     const caso = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
@@ -220,7 +218,8 @@
       if (!cercano || metros < cercano.metros) cercano = { s, destino, metros };
     }
     if (!cercano) return;
-    const texto = cercano.metros < 1000 ? `${Math.round(cercano.metros)} m` : `${(cercano.metros / 1000).toFixed(1).replace(".", ",")} km`;
+    const texto = distancia(cercano.metros);
+    sugerencia = { nombre: cercano.s.dataset.nombre, texto };
     const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
     lineaDespacho = L.polyline([origen, cercano.destino], { color, weight: 3, dashArray: "8 7", interactive: false, className: "linea-despacho" })
       .bindTooltip(texto, { permanent: true, direction: "center", className: "etiqueta-despacho" })
@@ -250,7 +249,7 @@
         .bindPopup(ficha({
           tipo: reporte ? "reporte" : "sos", etiqueta: item.dataset.origen, estado: item.dataset.estado, titulo: item.dataset.ciudadano,
           datos: [["Sereno", sereno ? `${sereno.sereno.dataset.nombre} · a ${distancia(sereno.metros)}` : ""]],
-          acciones: accion(item.dataset.detalle, "Ver el caso", true),
+          acciones: accion(item.dataset.detalle, "Abrir el caso", false),
         }), GLOBO)
         .on("click", (e) => centrar(e.target))
         .addTo(mapa));
@@ -258,27 +257,22 @@
     }
   }
 
+  // 24/10/2026: elegir el caso es la acción principal, desde la cola o desde el mapa. El mapa lo encuadra con su sereno
+  // sugerido (o vuela a él) y se abren los serenos para asignar; reemplaza a «Ver en el mapa» y «Elegir sereno».
+  function elegirCaso(id, { desdeMapa = false } = {}) {
+    desplegar(document.getElementById("panel-serenos"));
+    seleccionar(id, { desdeMapa, conSereno: true });
+  }
+
+  // Con el teclado, el nombre es el botón; con el ratón, toda la tarjeta (sus enlaces siguen haciendo lo suyo).
   function alHacerClicEnLista(evento) {
-    const boton = evento.target.closest("[data-ver-en-mapa]");
-    if (boton) seleccionar(boton.closest("[data-sos]").dataset.sos);
-    // HU20: elegir sereno para un SOS (también sin ubicación): se selecciona y se va a los serenos.
-    const elegir = evento.target.closest("[data-seleccionar-sos]");
-    if (elegir) {
-      desplegar(document.getElementById("panel-serenos"));
-      seleccionar(elegir.closest("[data-sos]").dataset.sos, { conSereno: true });
-      const primero = regionSerenos.querySelector("[data-asignar-sereno]:not([hidden])");
-      (primero ?? regionSerenos).scrollIntoView({ block: "center" });
-      primero?.focus();
-    }
+    const tarjeta = evento.target.closest("[data-sos]");
+    const control = evento.target.closest("a, button, input, select, textarea");
+    if (!tarjeta || (control && !control.matches("[data-seleccionar-sos]"))) return;
+    if (!control && getSelection()?.toString()) return; // estaba seleccionando texto
+    elegirCaso(tarjeta.dataset.sos);
   }
   region.addEventListener("click", alHacerClicEnLista);
-  // «Elegir sereno» del detalle en el mapa: pulsa el mismo botón del caso en la cola.
-  contenedorMapa.addEventListener("click", (evento) => {
-    const boton = evento.target.closest("[data-elegir-desde-mapa]");
-    if (!boton) return;
-    mapa.closePopup();
-    document.getElementById(`sos-${boton.dataset.elegirDesdeMapa}`)?.querySelector("[data-seleccionar-sos]")?.click();
-  });
   regionReportes?.addEventListener("click", alHacerClicEnLista);
 
   // ---------- HU19: serenos en el mismo mapa (sin rutas, líneas ni distancias) ----------
@@ -385,7 +379,7 @@
     }).bindPopup(ficha({
       tipo: reporte ? "reporte" : "sos", etiqueta: v.caso.dataset.origen, estado: v.caso.dataset.estado, titulo: v.caso.dataset.ciudadano,
       datos: [["Sereno", `${v.sereno.dataset.nombre} · en el lugar`], ["Posición", `a ${Math.round(v.metros)} m del caso · ${v.sereno.dataset.hora}`]],
-      acciones: accion(v.caso.dataset.detalle, "Ver el caso", true),
+      acciones: accion(v.caso.dataset.detalle, "Abrir el caso", false),
     }), GLOBO);
   }
 
@@ -755,9 +749,21 @@
     return `<a class="boton ${principal ? "boton--principal" : "boton--secundario"} boton--compacto" href="${escapar(href)}">${escapar(texto)}</a>`;
   }
 
-  // Igual que «Elegir sereno para asignar» de la cola (el mismo botón hace el trabajo).
-  function elegirDesdeMapa(id) {
-    return `<button type="button" class="boton boton--secundario boton--compacto" data-elegir-desde-mapa="${escapar(id)}">Elegir sereno</button>`;
+  // Detalle de un caso pendiente: informativo, con el sereno sugerido si el caso está elegido. La acción es elegirlo (ya
+  // hecho al tocarlo) y asignar desde «Serenos»; aquí solo se puede abrir su detalle.
+  function fichaPendiente(item) {
+    const reporte = item.dataset.origen === "Reporte";
+    const sugerido = sosSeleccionado === item.dataset.sos ? sugerencia : null;
+    return ficha({
+      tipo: reporte ? "reporte" : "sos", etiqueta: reporte ? "Reporte" : "SOS", estado: "Pendiente",
+      hora: `${reporte ? "Admitido" : "Recibido"} ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
+      datos: [
+        ["Tipo", reporte ? item.dataset.categoria : item.dataset.clase],
+        ["Ubicación", reporte ? "" : `Teléfono del ciudadano · ± ${item.dataset.precision} m`],
+        ["Sugerido", sugerido ? `${sugerido.nombre} · a ${sugerido.texto}` : "Ningún sereno disponible con ubicación"],
+      ],
+      acciones: accion(item.dataset.detalle, reporte ? "Abrir el reporte" : "Abrir el SOS", false),
+    });
   }
 
   function escapar(texto) {
