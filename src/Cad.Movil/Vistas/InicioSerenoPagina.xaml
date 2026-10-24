@@ -123,7 +123,9 @@
                         <Label Text="Despacho" Style="{StaticResource TituloSeccion}" />
                         <Label Text="Recibirás un aviso en este teléfono cuando te asignen un caso, aunque la app esté cerrada." Style="{StaticResource TextoSecundario}"
                                FontSize="13" IsVisible="{Binding NotificacionesActivas}" />
-                        <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
+                        <v:Descartable Nombre="cierre" Clave="{Binding CierreReciente}">
+                            <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
+                        </v:Descartable>
                         <HorizontalStackLayout Spacing="10" IsVisible="{Binding SinDespacho}">
                             <v:Icono Nombre="bandeja" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                             <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" VerticalOptions="Center" />
@@ -219,7 +221,9 @@
                     </Grid>
                     <ScrollView Grid.Row="1" x:Name="PanelDespacho">
                         <VerticalStackLayout Padding="16,0,16,18" Spacing="12" MaximumWidthRequest="520">
-                            <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
+                            <v:Descartable Nombre="nuevo-despacho" Clave="{Binding TextoIdentificador}">
+                                <v:Aviso Tipo="exito" Texto="Tienes un nuevo despacho." IsVisible="{Binding AvisoNuevoDespacho}" />
+                            </v:Descartable>
 
                             <!-- Dónde y a qué distancia (por calles si ya hay ruta). -->
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
