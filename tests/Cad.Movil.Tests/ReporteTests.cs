@@ -37,8 +37,7 @@ public class ReporteTests
         await vm.AlAparecerAsync();
         await vm.ElegirCategoria.EjecutarAsync(vm.Opciones[0]);
         vm.Descripcion = "Robo de una bicicleta";
-        await vm.ElegirReferencia.EjecutarAsync();
-        vm.Referencia = "Esquina del mercado";
+        vm.Referencia = "Esquina del mercado"; // sin punto, el lugar es la referencia
         return vm;
     }
 
@@ -414,15 +413,20 @@ public class ReporteTests
     }
 
     [Fact]
-    public async Task CA03_ElMapaSinPunto_NoSeEnvia()
+    public async Task CA03_ElMapaSinPunto_SeEnviaComoReferencia_YSinReferenciaNoSeEnvia()
     {
         var vm = await FormularioCompletoAsync();
         await vm.ElegirMapa.EjecutarAsync();
+        vm.Referencia = "";
 
         await vm.Enviar.EjecutarAsync();
 
         Assert.Empty(api.ReportesEnviados);
-        Assert.True(vm.HayErrorUbicacion);
+        Assert.Equal("Marca el lugar en el mapa o escribe una referencia.", vm.ErrorUbicacion);
+
+        vm.Referencia = "Esquina del mercado";
+        await vm.Enviar.EjecutarAsync();
+        Assert.Equal(FuentesUbicacionHecho.Texto, Assert.Single(api.ReportesEnviados).Ubicacion!.Fuente);
     }
 
     [Fact]
@@ -431,7 +435,7 @@ public class ReporteTests
         var vm = await FormularioCompletoAsync();
         await vm.ElegirMapa.EjecutarAsync();
         vm.ElegirPuntoEnMapa(-12.1, -77.02);
-        await vm.ElegirReferencia.EjecutarAsync();
+        await vm.QuitarPunto.EjecutarAsync();
 
         await vm.Enviar.EjecutarAsync();
 
@@ -479,7 +483,7 @@ public class ReporteTests
         var vm = await FormularioCompletoAsync();
         await vm.UsarPosicionActual.EjecutarAsync();
 
-        await vm.ElegirReferencia.EjecutarAsync();
+        await vm.QuitarPunto.EjecutarAsync();
         vm.Referencia = "Frente al parque";
         await vm.Enviar.EjecutarAsync();
 
@@ -498,7 +502,30 @@ public class ReporteTests
         await vm.ElegirMapa.EjecutarAsync();
 
         Assert.Null(vm.Latitud);
-        Assert.Equal(FuentesUbicacionHecho.Mapa, vm.Datos().Ubicacion!.Fuente);
+        // Con el mapa abierto sin tocarlo no hay punto: el lugar es la referencia, sin la posición anterior.
+        Assert.Equal((FuentesUbicacionHecho.Texto, (double?)null), (vm.Datos().Ubicacion!.Fuente, vm.Datos().Ubicacion!.Latitud));
+    }
+
+    [Fact]
+    public async Task LaReferencia_EstaSiempreAMano_YEsObligatoriaSoloSinPunto()
+    {
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+
+        Assert.Equal(ModoUbicacionHecho.Texto, vm.Modo);
+        Assert.False(vm.HayPunto);
+        Assert.Equal("Referencia del lugar", vm.EtiquetaReferencia);
+
+        await vm.ElegirMapa.EjecutarAsync();
+        Assert.Equal("Cerrar el mapa", vm.TextoQuitarPunto);
+        vm.ElegirPuntoEnMapa(-16.3988, -71.5369);
+        Assert.Equal("Referencia (opcional)", vm.EtiquetaReferencia);
+        Assert.Equal("Quitar el punto", vm.TextoQuitarPunto);
+
+        await vm.QuitarPunto.EjecutarAsync();
+        Assert.False(vm.HayPunto);
+        Assert.False(vm.MostrarMapa);
+        Assert.Equal("Referencia del lugar", vm.EtiquetaReferencia);
     }
 
     [Theory]
@@ -559,7 +586,7 @@ public class ReporteTests
     {
         var vm = VistaModelo();
         await vm.AlAparecerAsync();
-        await vm.ElegirReferencia.EjecutarAsync();
+        await vm.QuitarPunto.EjecutarAsync();
         vm.Referencia = "Esquina";
 
         await vm.Enviar.EjecutarAsync();

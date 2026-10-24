@@ -7,7 +7,7 @@ using Cad.Movil.Servicios;
 namespace Cad.Movil.VistasModelo;
 
 // CA03 y CA04: cómo indica el ciudadano la ubicación del hecho. Nada se elige por defecto.
-public enum ModoUbicacionHecho { SinElegir, Mapa, PosicionActual, Texto }
+public enum ModoUbicacionHecho { Mapa, PosicionActual, Texto }
 
 // HU10 — Registrar un reporte de incidencia (S3-T01 y S3-T02, app).
 public sealed class ReporteVistaModelo : VistaModeloBase
@@ -33,7 +33,8 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     private string descripcion = "", referencia = "", mensajeCategorias = "", mensajeUbicacion = "";
     private DateTime? fecha;
     private TimeSpan? hora;
-    private ModoUbicacionHecho modo;
+    // 24/10/2026: sin punto, el lugar es la referencia (el cuadro de referencia está siempre a la vista).
+    private ModoUbicacionHecho modo = ModoUbicacionHecho.Texto;
     private double? latitud, longitud, precision;
     private bool obteniendoPosicion, cargandoCategorias, eligiendoTipo = true;
     private string mensajeDictado = "";
@@ -65,7 +66,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         Volver = new ComandoAsincrono(async () => { if (!VolverAlMosaico()) await navegacion.IrAAsync(Rutas.Ciudadano); });
         Dictar = new ComandoAsincrono(DictarAsync, () => Editable && this.dictado.Disponible);
         ElegirMapa = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Mapa, limpiarPunto: modo != ModoUbicacionHecho.Mapa); return Task.CompletedTask; }, () => Editable);
-        ElegirReferencia = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
+        QuitarPunto = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
         UsarPosicionActual = new ComandoAsincrono(UsarPosicionActualAsync, () => Editable);
         Enviar = new ComandoAsincrono(() => registrador.EnviarAsync(Datos()), () => Editable);
         Reintentar = new ComandoAsincrono(() => registrador.ReintentarAsync(), () => registrador.PuedeReintentar);
@@ -80,7 +81,8 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     public ComandoAsincrono Volver { get; }
     public ComandoAsincrono Dictar { get; }
     public ComandoAsincrono ElegirMapa { get; }
-    public ComandoAsincrono ElegirReferencia { get; }
+    // Quita el punto (o cierra el mapa sin punto): el lugar vuelve a ser solo la referencia.
+    public ComandoAsincrono QuitarPunto { get; }
     public ComandoAsincrono UsarPosicionActual { get; }
     public ComandoAsincrono Enviar { get; }
     public ComandoAsincrono Reintentar { get; }
@@ -239,11 +241,12 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     // ----- Ubicación del hecho (CA03, CA04, DP10) -----
     public ModoUbicacionHecho Modo => modo;
     public bool MostrarMapa => modo is ModoUbicacionHecho.Mapa or ModoUbicacionHecho.PosicionActual;
-    public bool MostrarReferencia => modo != ModoUbicacionHecho.SinElegir;
+    public bool HayPunto => latitud is not null && longitud is not null;
+    public string TextoQuitarPunto => HayPunto ? "Quitar el punto" : "Cerrar el mapa";
     public bool ObteniendoPosicion { get => obteniendoPosicion; private set => Asignar(ref obteniendoPosicion, value); }
     public double? Latitud => latitud;
     public double? Longitud => longitud;
-    public string EtiquetaReferencia => modo == ModoUbicacionHecho.Texto ? "Referencia del lugar" : "Referencia (opcional)";
+    public string EtiquetaReferencia => HayPunto ? "Referencia (opcional)" : "Referencia del lugar";
     public string Referencia { get => referencia; set => Asignar(ref referencia, value ?? ""); }
     public string MensajeUbicacion { get => mensajeUbicacion; private set { Asignar(ref mensajeUbicacion, value); Notificar(nameof(HayMensajeUbicacion)); } }
     public bool HayMensajeUbicacion => mensajeUbicacion.Length > 0;
@@ -253,8 +256,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         ModoUbicacionHecho.Mapa => "Punto elegido en el mapa. Toca otro lugar para moverlo.",
         ModoUbicacionHecho.PosicionActual => $"Se usará tu posición actual como lugar del hecho (± {precision?.ToString("0", CultureInfo.InvariantCulture) ?? "?"} m). " +
             "Si el hecho ocurrió en otro lugar, toca el mapa para moverlo.",
-        ModoUbicacionHecho.Texto => "Describe el lugar del hecho; no se enviará ninguna posición.",
-        _ => "Elige cómo indicar dónde ocurrió. Tu posición solo se usa si eliges «Usar mi posición actual».",
+        _ => "Marca el lugar en el mapa, usa tu posición actual o escribe abajo una referencia. Tu posición solo se usa si eliges «Usar mi posición actual».",
     };
 
     // La página llama a este método cuando el ciudadano toca el mapa.
@@ -318,7 +320,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
 
     private void NotificarUbicacion()
     {
-        foreach (var p in new[] { nameof(Modo), nameof(MostrarMapa), nameof(MostrarReferencia), nameof(Latitud), nameof(Longitud),
+        foreach (var p in new[] { nameof(Modo), nameof(MostrarMapa), nameof(HayPunto), nameof(TextoQuitarPunto), nameof(Latitud), nameof(Longitud),
                      nameof(EtiquetaReferencia), nameof(TextoUbicacion) })
             Notificar(p);
     }
@@ -332,9 +334,10 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             var local = DateTime.SpecifyKind(f.Date + h, DateTimeKind.Unspecified);
             ocurrido = new DateTimeOffset(local, zona.GetUtcOffset(local));
         }
+        // Sin punto (también con el mapa abierto sin tocarlo), el lugar es la referencia.
         var lugar = modo switch
         {
-            ModoUbicacionHecho.Texto => new UbicacionHecho(FuentesUbicacionHecho.Texto, null, null, null, referencia),
+            _ when !HayPunto => new UbicacionHecho(FuentesUbicacionHecho.Texto, null, null, null, referencia),
             ModoUbicacionHecho.Mapa => new UbicacionHecho(FuentesUbicacionHecho.Mapa, latitud, longitud, null, referencia),
             ModoUbicacionHecho.PosicionActual => new UbicacionHecho(FuentesUbicacionHecho.PosicionActual, latitud, longitud, precision, referencia),
             _ => null,
@@ -390,7 +393,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
                      nameof(ErrorCategoria), nameof(ErrorDescripcion), nameof(ErrorFecha), nameof(ErrorUbicacion),
                      nameof(HayErrorCategoria), nameof(HayErrorDescripcion), nameof(HayErrorFecha), nameof(HayErrorUbicacion) })
             Notificar(p);
-        foreach (var comando in new[] { ElegirMapa, ElegirReferencia, UsarPosicionActual, Enviar, Reintentar, CambiarTipo, Dictar })
+        foreach (var comando in new[] { ElegirMapa, QuitarPunto, UsarPosicionActual, Enviar, Reintentar, CambiarTipo, Dictar })
             comando.ActualizarDisponibilidad();
     }
 }
