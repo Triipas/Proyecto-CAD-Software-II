@@ -206,6 +206,8 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     public bool HayEstadoSos => emisor.Estado is not EstadoSos.Listo;
     public bool PuedeReintentar => emisor.PuedeReintentar;
     public bool SesionTerminada => emisor.Estado is EstadoSos.Rechazado { Estado: 401 };
+    // Solo el SOS confirmado se puede quitar deslizándolo: mientras se envía o si falló, el aviso pide seguir atento o reintentar.
+    public bool AvisoSosDescartable => emisor.Estado is EstadoSos.Confirmado;
     public string TipoAvisoSos => emisor.Estado switch
     {
         EstadoSos.Confirmado => "exito",
@@ -228,7 +230,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     private void ActualizarSos()
     {
         foreach (var p in new[] { nameof(SosEnCurso), nameof(SosListo), nameof(TextoBotonSos), nameof(HayEstadoSos), nameof(PuedeReintentar),
-                     nameof(SesionTerminada), nameof(TipoAvisoSos), nameof(TextoSos) })
+                     nameof(SesionTerminada), nameof(TipoAvisoSos), nameof(TextoSos), nameof(AvisoSosDescartable) })
             Notificar(p);
         EmitirSos.ActualizarDisponibilidad();
         Reintentar.ActualizarDisponibilidad();
