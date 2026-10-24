@@ -21,7 +21,8 @@
                 var local = TimeZoneInfo.ConvertTime(sos.RegistradoEn, Model.ZonaHoraria);
                 <li class="sos" id="sos-@sos.Id" tabindex="-1" data-sos="@sos.Id" data-ciudadano="@sos.Ciudadano"
                     data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)"
-                    data-precision="@sos.PrecisionMetros?.ToString("0", inv)">
+                    data-precision="@sos.PrecisionMetros?.ToString("0", inv)" data-hora="@local.ToString("HH:mm", inv)"
+                    data-clase="@(sos.Tipo ?? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar)" data-detalle="/panel/central/sos/@sos.Id">
                     <div class="sos__cabecera">
                         <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@sos.Origen</span>
                         <span class="sos__estado">@sos.Estado</span>
