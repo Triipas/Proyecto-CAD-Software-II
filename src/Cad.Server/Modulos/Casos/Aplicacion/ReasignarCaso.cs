@@ -75,6 +75,9 @@ public sealed class ReasignarCaso(CadDbContext db, TimeProvider reloj, INotifica
             {
                 anterior.Cancelar(ahora);
                 caso.Reasignar();
+                // De «Asignada» a «Asignada» el estado no cambia y EF no actualizaría el caso: se fuerza la actualización para
+                // que compruebe su versión (xmin). Así una reasignación y un avance del sereno anterior no confirman a la vez.
+                db.Entry(caso).Property(c => c.Estado).IsModified = true;
                 await db.SaveChangesAsync(ct);
                 nueva = Asignacion.Registrar(caso, serenoNuevoId, operadorId, idSolicitud, ahora);
                 db.Asignaciones.Add(nueva);
