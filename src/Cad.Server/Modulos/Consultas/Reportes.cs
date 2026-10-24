@@ -36,7 +36,9 @@ public sealed record ReporteAdmitido(
     string Categoria,
     double? Latitud,
     double? Longitud,
-    string? Referencia)
+    string? Referencia,
+    // Registrado por la central (23/10/2026): su lugar no lo indicó ningún ciudadano.
+    bool DeLaCentral = false)
 {
     public bool ConPunto => Latitud is not null && Longitud is not null;
 }
@@ -157,6 +159,6 @@ public sealed class ConsultarReportesAdmitidos(CadDbContext db)
                orderby caso.RegistradoEn descending
                select new ReporteAdmitido(caso.Id, caso.RegistradoEn, decision.DecididaEn,
                    ciudadano == null ? (detalle.ContactoNombre == null ? AutorReporte.DeLaCentral : detalle.ContactoNombre + AutorReporte.SufijoContacto) : ciudadano.Nombres + " " + ciudadano.Apellidos,
-                   categoria.Nombre, detalle.LatitudHecho, detalle.LongitudHecho, detalle.ReferenciaHecho))
+                   categoria.Nombre, detalle.LatitudHecho, detalle.LongitudHecho, detalle.ReferenciaHecho, detalle.RegistradoPorOperadorId != null))
               .ToListAsync(ct);
 }

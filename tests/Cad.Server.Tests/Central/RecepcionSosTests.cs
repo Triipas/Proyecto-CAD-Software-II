@@ -95,7 +95,8 @@ public class RecepcionSosTests(FabricaCad fabrica)
         Assert.Contains("Pendiente", itemCon);
         Assert.Contains($"Prueba {Roles.Ciudadano}", itemCon);
         Assert.Contains("data-lat=\"-12.0711\"", itemCon); // representable en el mapa (CA01)
-        Assert.Contains("Ver en el mapa", itemCon);
+        Assert.Contains("Ubicación disponible", itemCon);
+        Assert.Contains("data-seleccionar-sos", itemCon); // 24/10/2026: elegirlo lo lleva en el mapa y abre los serenos
         var itemSin = Item(lista, sinUbicacion);
         Assert.Contains("Ubicación no disponible", itemSin); // CA04
         Assert.Contains("data-lat=\"\"", itemSin);           // sin marcador en el mapa
