@@ -122,13 +122,13 @@ public class RutasTests
     }
 
     [Fact]
-    public async Task ConLaRedRealDeLaApp_SeEncuentraLaRutaEnElCercado()
+    public async Task ConLaRedRealDeLaApp_SeEncuentraLaRutaEnArequipa()
     {
-        // La red que viaja en la app (zona MVP alrededor de -12.0464, -77.0428). Del Hospital Loayza a la plaza del ejemplo.
+        // La red que viaja en la app (ciudad de Arequipa). De ~400 m al sur de la Plaza de Armas a la plaza.
         var archivo = BuscarEnRepositorio(Path.Combine("src", "Cad.Movil", "Resources", "Raw", "mapa", "red-viaria.bin"));
         var rutas = new RutasLocales(() => Task.FromResult<Stream>(File.OpenRead(archivo)));
 
-        var resultado = await rutas.CalcularAsync(new PuntoRuta(-12.0500, -77.0428), new PuntoRuta(-12.0464, -77.0428), CancellationToken.None);
+        var resultado = await rutas.CalcularAsync(new PuntoRuta(-16.4024, -71.5369), new PuntoRuta(-16.3988, -71.5369), CancellationToken.None);
 
         var ruta = Assert.IsType<ResultadoRuta.Encontrada>(resultado);
         Assert.InRange(ruta.Metros, 400, 1500); // ~400 m en línea recta; por calles, algo más

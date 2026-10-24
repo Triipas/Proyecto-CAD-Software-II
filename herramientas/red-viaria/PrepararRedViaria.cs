@@ -1,14 +1,15 @@
 #:project ../../src/Cad.Calles/Cad.Calles.csproj
 
-// Prepara la red de calles que viaja dentro de la app para la ruta del sereno (22/10/2026).
+// Prepara la red de calles que viaja dentro de la app para la ruta del sereno (22/10/2026). Desde el 23/10/2026, la ciudad
+// de Arequipa (demostración): Cercado, Cayma, Yanahuara, Cerro Colorado, Paucarpata, Socabaya, J. L. Bustamante y alrededores.
 //
 // Uso (una vez, o al cambiar la zona):
-//   1. Descargar de Overpass las vías de la zona (MVP: ~4 km alrededor del centro de los mapas, Cercado de Lima):
+//   1. Descargar de Overpass las vías de la zona (Arequipa metropolitana, ~19 × 19 km):
 //        curl -A "CadMovil-preparacion/1.0" --data-urlencode "data=<consulta>" https://overpass-api.de/api/interpreter -o red.json
 //      con la consulta:
 //        [out:json][timeout:180];
 //        way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|road|
-//                          motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$"](-12.0824,-77.0798,-12.0104,-77.0058);
+//                          motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$"](-16.4900,-71.6300,-16.3200,-71.4500);
 //        out body qt;>;out skel qt;
 //   2. Convertir:  dotnet run herramientas/red-viaria/PrepararRedViaria.cs -- red.json src/Cad.Movil/Resources/Raw/mapa/red-viaria.bin
 //

@@ -39,8 +39,8 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public string? ErrorAccion { get; set; }
 
     // Mapa base mínimo (cláusula de mapa de HU11-CA01, opción aprobada). Valores de configuración, no de negocio.
-    public string CentroLatitud => Numero("Panel:Mapa:CentroLatitud", -12.0464);
-    public string CentroLongitud => Numero("Panel:Mapa:CentroLongitud", -77.0428);
+    public string CentroLatitud => Numero("Panel:Mapa:CentroLatitud", -16.3988);
+    public string CentroLongitud => Numero("Panel:Mapa:CentroLongitud", -71.5369);
     public string Zoom => Numero("Panel:Mapa:Zoom", 12);
     public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
