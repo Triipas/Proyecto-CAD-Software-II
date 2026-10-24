@@ -63,16 +63,48 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             return Task.CompletedTask;
         });
         CambiarTipo = new ComandoAsincrono(() => { EligiendoTipo = true; return Task.CompletedTask; }, () => Editable);
-        Volver = new ComandoAsincrono(async () => { if (!VolverAlMosaico()) await navegacion.IrAAsync(Rutas.Ciudadano); });
+        Volver = new ComandoAsincrono(async () => { if (!VolverAlMosaico()) await IrAlInicioAsync(); });
         Dictar = new ComandoAsincrono(DictarAsync, () => Editable && this.dictado.Disponible);
         ElegirMapa = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Mapa, limpiarPunto: modo != ModoUbicacionHecho.Mapa); return Task.CompletedTask; }, () => Editable);
         QuitarPunto = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
         UsarPosicionActual = new ComandoAsincrono(UsarPosicionActualAsync, () => Editable);
         Enviar = new ComandoAsincrono(() => registrador.EnviarAsync(Datos()), () => Editable);
         Reintentar = new ComandoAsincrono(() => registrador.ReintentarAsync(), () => registrador.PuedeReintentar);
-        IrAlSos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Ciudadano));
+        IrAlSos = new ComandoAsincrono(IrAlInicioAsync);
         VolverAIngresar = new ComandoAsincrono(async () => { sesiones.Cerrar(); await navegacion.IrAAsync(Rutas.Ingreso); });
         registrador.Cambio += _ => ActualizarEstado();
+    }
+
+    // 24/10/2026: tras registrar el reporte, la app vuelve sola al inicio después de mostrar la confirmación un momento
+    // (en esa pantalla ya no queda nada por hacer). «Volver al inicio» lo hace al instante.
+    public TimeSpan EsperaTrasRegistro { get; init; } = TimeSpan.FromSeconds(2.5);
+    private bool volviendoAlInicio, regresoProgramado;
+    private readonly CancellationTokenSource salida = new();
+
+    private async Task IrAlInicioAsync()
+    {
+        if (volviendoAlInicio) return;
+        volviendoAlInicio = true;
+        await salida.CancelAsync(); // el regreso automático ya no hace falta
+        await navegacion.IrAAsync(Rutas.Ciudadano);
+    }
+
+    // La página dejó de verse (p. ej., «atrás» del sistema): el regreso automático pendiente no debe interrumpir la
+    // pantalla a la que fue el ciudadano.
+    public void AlDesaparecer() => salida.Cancel();
+
+    private async void VolverTrasRegistro()
+    {
+        regresoProgramado = true;
+        try
+        {
+            await Task.Delay(EsperaTrasRegistro, salida.Token);
+            await IrAlInicioAsync();
+        }
+        catch (Exception)
+        {
+            // Sin navegación (la página ya se cerró): queda el botón «Volver al inicio».
+        }
     }
 
     public ComandoAsincrono CargarCategorias { get; }
@@ -364,7 +396,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         EstadoReporte.Enviando e => $"Sin respuesta todavía. Reintentando ({e.Intento})…",
         // Solo con la respuesta del servidor.
         EstadoReporte.Registrado r => $"Reporte registrado a las {TimeZoneInfo.ConvertTime(r.Respuesta.RegistradoEn, zona).ToString("HH:mm", CultureInfo.InvariantCulture)} " +
-            $"(estado: {r.Respuesta.Estado}). La central lo revisará.",
+            $"(estado: {r.Respuesta.Estado}). La central lo revisará. Volviendo al inicio…",
         EstadoReporte.NoConfirmado n => n.Mensaje,
         EstadoReporte.Rechazado { Estado: 400 } => "Revisa los datos marcados.",
         EstadoReporte.Rechazado r => r.Mensaje,
@@ -395,6 +427,8 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             Notificar(p);
         foreach (var comando in new[] { ElegirMapa, QuitarPunto, UsarPosicionActual, Enviar, Reintentar, CambiarTipo, Dictar })
             comando.ActualizarDisponibilidad();
+        if (Registrado && !regresoProgramado)
+            VolverTrasRegistro();
     }
 }
 
