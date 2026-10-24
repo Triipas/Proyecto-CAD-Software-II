@@ -155,6 +155,21 @@ public class RangoAtencionTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task UnaPosicionGuardadaConLaHoraAdelantada_NoCuentaComoReciente()
+    {
+        var sereno = await SerenoAsync();
+        var (casoId, _) = await EnCaminoAsync(sereno);
+        // En el punto del caso, pero con la hora del teléfono 30 minutos adelantada.
+        Assert.Equal(HttpStatusCode.Created, (await sereno.App.PostAsJsonAsync("/api/sereno/posiciones",
+            Posicion(LatCaso, LonCaso, -TimeSpan.FromMinutes(30)))).StatusCode);
+
+        var respuesta = await IniciarAsync(sereno, casoId);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, respuesta.StatusCode);
+        Assert.Contains("No hay una posición reciente", await respuesta.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async Task LaPosicionEnviadaAlIniciar_MandaSobreUnaAnteriorLejana()
     {
         var sereno = await SerenoAsync();

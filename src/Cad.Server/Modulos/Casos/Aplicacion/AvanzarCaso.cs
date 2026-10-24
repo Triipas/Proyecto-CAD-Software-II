@@ -166,19 +166,23 @@ public sealed class AvanzarCaso(CadDbContext db, TimeProvider reloj, INotificado
         return (null, InicioAtencion.Registrar(caso, serenoId, posicion, distancia, radio, dentro, motivo, detalle, ahora));
     }
 
+    // Diferencia admitida entre el reloj del teléfono y el del servidor (técnica, no una regla de negocio).
+    private static readonly TimeSpan MargenReloj = TimeSpan.FromMinutes(1);
+
     // La posición enviada con la solicitud, si es válida y reciente (con un margen para el reloj del teléfono).
     private static (double Latitud, double Longitud, double Precision)? PosicionReciente(PosicionSerenoEnviada? enviada, DateTimeOffset ahora) =>
         enviada is { } e && double.IsFinite(e.Latitud) && e.Latitud is >= -90 and <= 90 && double.IsFinite(e.Longitud) && e.Longitud is >= -180 and <= 180
             && double.IsFinite(e.PrecisionMetros) && e.PrecisionMetros > 0
-            && e.ObtenidaEn >= ahora - RangoAtencion.AntiguedadMaxima && e.ObtenidaEn <= ahora + TimeSpan.FromMinutes(1)
+            && e.ObtenidaEn >= ahora - RangoAtencion.AntiguedadMaxima && e.ObtenidaEn <= ahora + MargenReloj
             ? (e.Latitud, e.Longitud, e.PrecisionMetros)
             : null;
 
     private async Task<(double Latitud, double Longitud, double Precision)?> UltimaPosicionAsync(Guid serenoId, DateTimeOffset ahora, CancellationToken ct)
     {
-        var desde = ahora - RangoAtencion.AntiguedadMaxima;
+        // El mismo límite futuro que la posición enviada: una hora adelantada en el teléfono no hace «reciente» una posición vieja.
+        var (desde, hasta) = (ahora - RangoAtencion.AntiguedadMaxima, ahora + MargenReloj);
         var ultima = await db.PosicionesSereno.AsNoTracking()
-            .Where(p => p.SerenoId == serenoId && p.ObtenidaEn >= desde)
+            .Where(p => p.SerenoId == serenoId && p.ObtenidaEn >= desde && p.ObtenidaEn <= hasta)
             .OrderByDescending(p => p.ObtenidaEn)
             .Select(p => new { p.Latitud, p.Longitud, p.PrecisionMetros })
             .FirstOrDefaultAsync(ct);
