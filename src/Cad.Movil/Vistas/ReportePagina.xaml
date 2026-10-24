@@ -119,21 +119,22 @@
                             </Grid>
                             <Label Text="{Binding ErrorFecha}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFecha}" />
 
-                            <!-- CA03, CA04 y DP10: lugar del hecho por mapa, por la posición actual (solo si se elige) o por referencia. -->
+                            <!-- CA03, CA04 y DP10: lugar del hecho por mapa o por la posición actual (solo si se elige), con una referencia
+                                 siempre a la vista: opcional con un punto, obligatoria sin él (24/10/2026). -->
                             <Label Text="Dónde ocurrió" Style="{StaticResource Etiqueta}" />
                             <Label Text="{Binding TextoUbicacion}" Style="{StaticResource TextoSecundario}" />
                             <Button Text="Marcar en el mapa" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirMapa}"
                                     SemanticProperties.Hint="Muestra un mapa para tocar el lugar del hecho" />
                             <Button Text="Usar mi posición actual" Style="{StaticResource BotonSecundario}" Command="{Binding UsarPosicionActual}"
                                     SemanticProperties.Hint="Usa la posición del teléfono como lugar del hecho; solo se lee si eliges esta opción" />
-                            <Button Text="Escribir una referencia" Style="{StaticResource BotonSecundario}" Command="{Binding ElegirReferencia}"
-                                    SemanticProperties.Hint="Describe el lugar con palabras, sin enviar ninguna posición" />
                             <ActivityIndicator IsRunning="{Binding ObteniendoPosicion}" IsVisible="{Binding ObteniendoPosicion}" HorizontalOptions="Center" />
                             <v:Aviso Tipo="advertencia" Texto="{Binding MensajeUbicacion}" IsVisible="{Binding HayMensajeUbicacion}" />
                             <Border x:Name="MarcoMapa" Style="{StaticResource MarcoCampo}" Padding="0" HeightRequest="280" IsVisible="{Binding MostrarMapa}">
                                 <WebView x:Name="Mapa" Navigating="AlNavegarMapa" SemanticProperties.Description="Mapa para marcar el lugar del hecho" />
                             </Border>
-                            <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarReferencia}">
+                            <Button Text="{Binding TextoQuitarPunto}" Style="{StaticResource BotonSecundario}" Command="{Binding QuitarPunto}"
+                                    IsVisible="{Binding MostrarMapa}" SemanticProperties.Hint="El lugar del hecho será solo la referencia, sin ninguna posición" />
+                            <VerticalStackLayout Spacing="8">
                                 <Label Text="{Binding EtiquetaReferencia}" Style="{StaticResource Etiqueta}" />
                                 <Border Style="{StaticResource MarcoCampo}">
                                     <Entry Text="{Binding Referencia}" MaxLength="{Binding MaximoReferencia}" IsEnabled="{Binding Editable}"

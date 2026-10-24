@@ -60,7 +60,7 @@ public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, Tim
                 errores["ubicacion"] = "Indica dónde ocurrió: un punto en el mapa, tu posición actual o una referencia.";
                 break;
             case { Fuente: FuentesUbicacionHecho.Texto } u when string.IsNullOrWhiteSpace(u.Referencia):
-                errores["ubicacion"] = "Escribe una referencia del lugar del hecho.";
+                errores["ubicacion"] = "Marca el lugar en el mapa o escribe una referencia.";
                 break;
             case { Fuente: FuentesUbicacionHecho.Mapa or FuentesUbicacionHecho.PosicionActual } u when u.Latitud is null || u.Longitud is null:
                 errores["ubicacion"] = "Elige el punto del hecho en el mapa.";
