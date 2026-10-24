@@ -374,7 +374,8 @@
 
 /* Hora y precisión de la última ubicación, y debajo el botón para ubicar al sereno en el mapa (antes un texto con aspecto de
    enlace: ahora se ve dónde pulsar). */
-.central .sereno__ubicacion {
+.central .sereno__ubicacion,
+.central .sos__dato-ubicacion {
   display: flex;
   align-items: center;
   gap: var(--espacio-1);
@@ -383,18 +384,21 @@
   color: var(--color-texto-secundario);
 }
 
-.central .sereno__ubicacion .icono {
+.central .sereno__ubicacion .icono,
+.central .sos__dato-ubicacion .icono {
   width: 0.875rem;
   height: 0.875rem;
   flex: none;
 }
 
-.central .sereno__ubicar {
+.central .sereno__ubicar,
+.central .sos__ver {
   justify-self: start;
   gap: var(--espacio-1);
 }
 
-.central .sereno__ubicar .icono {
+.central .sereno__ubicar .icono,
+.central .sos__ver .icono {
   width: 1rem;
   height: 1rem;
   color: var(--color-primario);

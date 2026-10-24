@@ -40,7 +40,8 @@
 
   // ---------- Vuelo al caso: el mapa viaja al punto, casi al zoom máximo, y lo marca al llegar ----------
   // Propósito: continuidad espacial (de la tarjeta al lugar). Con movimiento reducido el salto es inmediato.
-  const ZOOM_CERCANO = 18;
+  // «Ver en el mapa» acerca hasta el zoom máximo de las teselas (24/10/2026: antes se quedaba uno por debajo).
+  const ZOOM_CERCANO = 19;
   const DURACION_VUELO = 0.9; // segundos (Leaflet)
 
   // Franja horizontal del mapa que no tapan los paneles flotantes abiertos (en píxeles del contenedor).
@@ -63,11 +64,21 @@
       contenedorMapa.scrollIntoView({ block: "start", behavior: reducido.matches ? "auto" : "smooth" });
   }
 
-  function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
-    const punto = marcador.getLatLng();
+  // Centro de la franja del mapa que no tapan los paneles, para un punto y un zoom.
+  function centroLibre(punto, zoom) {
     const { izquierda, derecha, ancho } = franjaLibre();
     const desfase = (izquierda + derecha) / 2 - ancho / 2;
-    const destino = mapa.unproject(mapa.project(punto, zoom).subtract([desfase, 0]), zoom);
+    return mapa.unproject(mapa.project(punto, zoom).subtract([desfase, 0]), zoom);
+  }
+
+  // Al tocar un caso en el mapa se centra en la franja libre, sin cambiar el zoom (24/10/2026).
+  function centrar(marcador) {
+    mapa.panTo(centroLibre(marcador.getLatLng(), mapa.getZoom()), { animate: !reducido.matches, duration: 0.5 });
+  }
+
+  function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
+    const punto = marcador.getLatLng();
+    const destino = centroLibre(punto, zoom);
     const llegar = () => { marcador.openPopup(); marcarLlegada(punto, clase); };
     traerMapaALaVista();
     if (reducido.matches) {
@@ -172,7 +183,11 @@
     marcarComoVisto();
     actualizarAsignacion();
     dibujarDespacho();
-    if (!marcador || desdeMapa) return;
+    if (!marcador) return;
+    if (desdeMapa) {
+      centrar(marcador);
+      return;
+    }
     // Al elegir sereno se encuadran el caso y el sereno más cercano; al «Ver en el mapa», se vuela al caso.
     if (conSereno && lineaDespacho) encuadrar(lineaDespacho.getBounds(), marcador, claseLlegada(id));
     else volarA(marcador, { clase: claseLlegada(id) });
@@ -224,6 +239,7 @@
         keyboard: true,
       })
         .bindPopup(`<strong>${escapar(item.dataset.origen)} · ${escapar(item.dataset.estado)}</strong><br>Identificador: ${escapar(item.dataset.casoMapa)}<br>${escapar(item.dataset.ciudadano)}<br><a href="${escapar(item.dataset.detalle)}">Ver el caso</a>`)
+        .on("click", (e) => centrar(e.target))
         .addTo(mapa));
       marcadoresEnCurso.at(-1).claves = [`caso:${item.dataset.casoMapa}`];
     }
