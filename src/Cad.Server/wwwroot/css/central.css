@@ -283,10 +283,22 @@
   font-size: var(--texto-md);
 }
 
-/* 24/10/2026: elegir el caso es la acción de la tarjeta. El nombre es el botón (teclado y lector de pantalla); con el ratón,
-   toda la tarjeta. Se ve como el título de la tarjeta, no como un botón más. */
+/* 24/10/2026: la tarjeta entera es el botón que elige el caso. El botón es el nombre (lo que anuncia el lector de pantalla)
+   y su área se extiende a toda la tarjeta; las acciones quedan por encima y siguen siendo pulsables. */
 .central .lista-sos > .sos {
-  cursor: pointer;
+  position: relative;
+}
+
+.central .sos__seleccionar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.central .lista-sos > .sos .sos__acciones {
+  position: relative;
+  z-index: 1;
 }
 
 .central .sos__seleccionar {

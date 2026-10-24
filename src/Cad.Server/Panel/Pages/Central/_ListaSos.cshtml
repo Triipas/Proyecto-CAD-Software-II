@@ -28,21 +28,22 @@
                         <span class="sos__estado">@sos.Estado</span>
                         <time class="sos__hora" datetime="@sos.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm:ss", inv)</time>
                     </div>
-                    @* 24/10/2026: elegir el caso es la acción de la tarjeta (el nombre es el botón; con el ratón, toda la tarjeta):
+                    @* 24/10/2026: la tarjeta entera es el botón que elige el caso (el del nombre, extendido a toda la tarjeta):
                        el mapa lo encuadra con su sereno sugerido y se abren los serenos para asignar. *@
-                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false">@sos.Ciudadano<span class="visualmente-oculto">: elegir este SOS para asignarlo</span></button>
+                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false"
+                            aria-describedby="sos-@sos.Id-tipo sos-@sos.Id-lugar">@sos.Ciudadano<span class="visualmente-oculto">: elegir este SOS para asignarlo</span></button>
                     @* HU13-CA03: el tipo se muestra siempre; sin clasificar, «Tipo por determinar». *@
-                    <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
+                    <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" id="sos-@sos.Id-tipo" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
                     @if (sos.UbicacionDisponible)
                     {
-                        <p class="sos__dato-ubicacion">
+                        <p class="sos__dato-ubicacion" id="sos-@sos.Id-lugar">
                             <partial name="_Icono" model="@("ubicacion")" />
                             <span>Ubicación disponible · ± @sos.PrecisionMetros?.ToString("0", inv) m</span>
                         </p>
                     }
                     else
                     {
-                        <p class="sos__ubicacion sos__ubicacion--no">
+                        <p class="sos__ubicacion sos__ubicacion--no" id="sos-@sos.Id-lugar">
                             <partial name="_Icono" model="@("advertencia")" />
                             <span>Ubicación no disponible</span>
                         </p>

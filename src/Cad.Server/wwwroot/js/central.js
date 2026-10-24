@@ -272,13 +272,10 @@
     seleccionar(id, { desdeMapa, conSereno: true });
   }
 
-  // Con el teclado, el nombre es el botón; con el ratón, toda la tarjeta (sus enlaces siguen haciendo lo suyo).
+  // La tarjeta entera es el botón que elige el caso (su área cubre la tarjeta; ver central.css).
   function alHacerClicEnLista(evento) {
-    const tarjeta = evento.target.closest("[data-sos]");
-    const control = evento.target.closest("a, button, input, select, textarea");
-    if (!tarjeta || (control && !control.matches("[data-seleccionar-sos]"))) return;
-    if (!control && getSelection()?.toString()) return; // estaba seleccionando texto
-    elegirCaso(tarjeta.dataset.sos);
+    const boton = evento.target.closest("[data-seleccionar-sos]");
+    if (boton) elegirCaso(boton.closest("[data-sos]").dataset.sos);
   }
   region.addEventListener("click", alHacerClicEnLista);
   regionReportes?.addEventListener("click", alHacerClicEnLista);

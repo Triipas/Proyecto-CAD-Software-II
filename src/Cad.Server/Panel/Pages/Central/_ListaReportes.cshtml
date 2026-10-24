@@ -25,18 +25,19 @@
                         <span class="sos__estado">Pendiente</span>
                         <span class="sos__hora">Admitido a las <time datetime="@reporte.AdmitidoEn.ToString("O", inv)">@local.ToString("HH:mm", inv)</time></span>
                     </div>
-                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false">@reporte.Ciudadano<span class="visualmente-oculto">: elegir este reporte para asignarlo</span></button>
-                    <p class="sos__tipo" data-tipo>Tipo: @reporte.Categoria</p>
+                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false"
+                            aria-describedby="sos-@reporte.Id-tipo sos-@reporte.Id-lugar">@reporte.Ciudadano<span class="visualmente-oculto">: elegir este reporte para asignarlo</span></button>
+                    <p class="sos__tipo" id="sos-@reporte.Id-tipo" data-tipo>Tipo: @reporte.Categoria</p>
                     @if (reporte.ConPunto)
                     {
-                        <p class="sos__dato-ubicacion">
+                        <p class="sos__dato-ubicacion" id="sos-@reporte.Id-lugar">
                             <partial name="_Icono" model="@("ubicacion")" />
                             <span>@(reporte.DeLaCentral ? "Lugar del hecho" : "Lugar del hecho indicado por el ciudadano")</span>
                         </p>
                     }
                     else
                     {
-                        <p class="sos__ubicacion sos__ubicacion--no">
+                        <p class="sos__ubicacion sos__ubicacion--no" id="sos-@reporte.Id-lugar">
                             <partial name="_Icono" model="@("advertencia")" />
                             <span>Sin punto en el mapa · Referencia: @reporte.Referencia</span>
                         </p>
