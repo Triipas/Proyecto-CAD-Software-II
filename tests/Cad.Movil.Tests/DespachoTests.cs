@@ -111,6 +111,22 @@ public class DespachoTests
     }
 
     [Fact]
+    public async Task AlSalir_ElAvisoDeDespachoRetirado_NoPasaALaSiguienteCuenta()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho());
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+        await despacho.ActualizarAsync();
+        Assert.NotNull(despacho.Retirado);
+
+        await despacho.ReiniciarAsync();
+        await despacho.IniciarAsync(); // otra cuenta, sin despacho
+
+        Assert.Null(despacho.Retirado);
+    }
+
+    [Fact]
     public async Task SinDespachoDesdeElInicio_NoSeAvisaDeNingunRetiro()
     {
         var despacho = Servicio();

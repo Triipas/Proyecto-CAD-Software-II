@@ -36,10 +36,12 @@ public class DescarteCasoTests(FabricaCad fabrica)
         return navegador;
     }
 
+    private HttpClient? appCiudadano;
+
     private async Task<(Guid CasoId, Guid CiudadanoId)> SosAsync()
     {
         var cuenta = await fabrica.CrearAsync(Roles.Ciudadano);
-        var ciudadano = await fabrica.CrearClienteAppAsync(cuenta);
+        var ciudadano = appCiudadano = await fabrica.CrearClienteAppAsync(cuenta);
         var sos = await (await ciudadano.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), DateTimeOffset.UtcNow, null)))
             .Content.ReadFromJsonAsync<RespuestaSos>();
         return (sos!.Id, cuenta.Id);
@@ -84,6 +86,11 @@ public class DescarteCasoTests(FabricaCad fabrica)
         var avisos = await fabrica.ConBaseDatosAsync(db => db.NotificacionesCiudadano.Where(n => n.CiudadanoId == ciudadanoId).Select(n => n.Texto).ToListAsync());
         Assert.Contains("Tu SOS pasó a «Descartado».", avisos);
         Assert.DoesNotContain(avisos, a => a.Contains("broma"));
+        // «Mis casos»: el descarte cierra la línea de tiempo pública, con su hora y sin el motivo.
+        var miCaso = await appCiudadano!.GetFromJsonAsync<Cad.Contratos.Casos.MiCasoDetalle>($"/api/casos/mios/{casoId}");
+        Assert.Equal(("Descartado", "Descartado por la central."), (miCaso!.Estado, miCaso.Resultado));
+        Assert.Equal(("Descartado", descarte.DescartadoEn), (miCaso.Avances[^1].Estado, miCaso.Avances[^1].En));
+        Assert.DoesNotContain(miCaso.Avances, a => a.Detalle?.Contains("broma") == true);
         // El detalle y el historial lo muestran como resultado final, con el motivo para el personal.
         var detalle = await operador.GetStringAsync($"/panel/central/sos/{casoId}");
         Assert.Contains("Caso descartado", detalle);

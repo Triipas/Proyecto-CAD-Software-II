@@ -227,7 +227,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             suscrito = false;
         }
         await canal.DesconectarAsync();
-        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente) = (null, false, null, false, false, null);
+        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente, Retirado) = (null, false, null, false, false, null, null);
         ErroresCierre = new Dictionary<string, string[]>();
         Cambio?.Invoke();
     }

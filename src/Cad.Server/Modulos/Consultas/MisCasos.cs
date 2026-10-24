@@ -54,6 +54,9 @@ public sealed class ConsultarMisCasos(CadDbContext db)
             .Select(d => new { d.Tipo, d.DecididaEn, d.Destino, d.Motivo }).SingleOrDefaultAsync(ct);
         var cancelacion = await db.CancelacionesSos.AsNoTracking().Where(c => c.CasoId == casoId)
             .Select(c => new { c.CanceladaEn, c.Motivo }).SingleOrDefaultAsync(ct);
+        // Descarte por la central (23/10/2026): el ciudadano ve cuándo terminó así, pero no el motivo (es interno).
+        var descartadoEn = await db.DescartesCaso.AsNoTracking().Where(d => d.CasoId == casoId)
+            .Select(d => (DateTimeOffset?)d.DescartadoEn).SingleOrDefaultAsync(ct);
         var evaluacion = await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
             .Select(e => new MiEvaluacion(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct);
         var revision = await db.EventosCaso.AsNoTracking()
@@ -80,11 +83,15 @@ public sealed class ConsultarMisCasos(CadDbContext db)
             avances.Add(new(cierre.CerradoEn, EstadosPublicos.Cerrado, cierre.ResultadoPublico));
         if (cancelacion is not null)
             avances.Add(new(cancelacion.CanceladaEn, EstadosPublicos.Cancelado, $"Motivo: {cancelacion.Motivo}"));
+        if (descartadoEn is { } descartado)
+            avances.Add(new(descartado, EstadosPublicos.Descartado, ResultadoDescarteCentral));
 
         return new MiCasoDetalle(caso.Id, TextoOrigen(caso.Origen), caso.RegistradoEn, EstadoPublico(caso.Origen, caso.Estado),
             Resultado(caso.Estado, cierre?.ResultadoPublico, decision?.Tipo, decision?.Destino, decision?.Motivo, cancelacion?.Motivo),
             avances.OrderBy(a => a.En).ToList(), evaluacion);
     }
+
+    public const string ResultadoDescarteCentral = "Descartado por la central.";
 
     // CA03 y DP05: el resultado público de un caso finalizado (cerrado, derivado, descartado o cancelado por el titular).
     private static string? Resultado(EstadoCaso estado, string? resultadoPublico, TipoDecisionReporte? decision, string? destino, string? motivo,
@@ -94,6 +101,7 @@ public sealed class ConsultarMisCasos(CadDbContext db)
             EstadoCaso.Cerrada => resultadoPublico,
             EstadoCaso.Derivada when decision == TipoDecisionReporte.Derivacion => $"Derivado a {destino}",
             EstadoCaso.Descartada when decision == TipoDecisionReporte.Descarte => $"Descartado. Motivo: {motivo}",
+            EstadoCaso.Descartada => ResultadoDescarteCentral, // descartado por la central: sin el motivo interno
             EstadoCaso.Cancelada when motivoCancelacion is not null => $"Cancelado por ti. Motivo: {motivoCancelacion}",
             _ => null,
         };
