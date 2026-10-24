@@ -40,6 +40,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     public IReadOnlyList<CategoriaCatalogo> Categorias { get; private set; } = [];
     public IReadOnlyDictionary<string, string[]> ErroresCierre { get; private set; } = new Dictionary<string, string[]>();
     public string? CierreReciente { get; private set; }
+    // El despacho que tenía el sereno desapareció sin que él lo cerrara: la central lo descartó o lo retiró (23/10/2026).
+    public string? Retirado { get; private set; }
 
     public async Task IniciarAsync(CancellationToken ct = default)
     {
@@ -67,6 +69,10 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             switch (await api.ConsultarDespachoAsync(sesion.Token, ct))
             {
                 case ResultadoApi<DespachoSereno?>.Correcto c:
+                    if (Actual is { } anterior && c.Valor is null)
+                        Retirado = "La central retiró el caso que tenías asignado: ya no tienes que atenderlo.";
+                    else if (c.Valor is not null)
+                        Retirado = null;
                     Actual = c.Valor;
                     Consultado = true;
                     Error = null;
@@ -177,6 +183,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
                     Consultado = true;
                     Error = null;
                     CierreReciente = $"Caso cerrado a las {c.Valor.CerradoEn.ToLocalTime():HH:mm:ss}.";
+                    Retirado = null;
                     cerrado = true;
                     break;
                 case ResultadoApi<RespuestaCierreCaso>.Rechazado { Estado: 400 } r:
@@ -220,7 +227,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             suscrito = false;
         }
         await canal.DesconectarAsync();
-        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente) = (null, false, null, false, false, null);
+        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente, Retirado) = (null, false, null, false, false, null, null);
         ErroresCierre = new Dictionary<string, string[]>();
         Cambio?.Invoke();
     }

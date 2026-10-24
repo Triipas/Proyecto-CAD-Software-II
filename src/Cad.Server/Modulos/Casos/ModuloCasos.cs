@@ -28,6 +28,7 @@ public static class ModuloCasos
         services.AddScoped<AvanzarCaso>();
         services.AddScoped<CerrarCaso>();
         services.AddScoped<CancelarSos>();
+        services.AddScoped<DescartarCaso>();
         services.AddScoped<EvaluarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
@@ -37,6 +38,7 @@ public static class ModuloCasos
         services.AddScoped<Modulos.Consultas.ConsultarFichaCiudadano>(); // ADR-08, fase D
         services.AddScoped<Modulos.Consultas.ConsultarCategorias>();
         services.AddScoped<Modulos.Consultas.ConsultarHistorialCaso>();
+        services.AddScoped<Modulos.Consultas.ConsultarDescarte>();
         services.AddScoped<Modulos.Consultas.ConsultarTiemposCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarConcentracion>();
         return services;

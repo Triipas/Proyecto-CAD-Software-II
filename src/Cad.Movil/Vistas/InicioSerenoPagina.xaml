@@ -126,6 +126,7 @@
                         <v:Descartable Nombre="cierre" Clave="{Binding CierreReciente}">
                             <v:Aviso Tipo="exito" Texto="{Binding CierreReciente}" IsVisible="{Binding HayCierreReciente}" />
                         </v:Descartable>
+                        <v:Aviso Tipo="informacion" Texto="{Binding DespachoRetirado}" IsVisible="{Binding HayDespachoRetirado}" />
                         <HorizontalStackLayout Spacing="10" IsVisible="{Binding SinDespacho}">
                             <v:Icono Nombre="bandeja" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                             <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" VerticalOptions="Center" />

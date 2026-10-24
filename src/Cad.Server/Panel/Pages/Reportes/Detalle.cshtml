@@ -74,7 +74,8 @@
     ("No se pudo corregir la categoría", Model.ErrorCorreccion),
     ("No se pudo registrar la decisión", Model.ErrorDecision),
     ("No se registró el inicio de atención", Model.ErrorAtencion),
-    ("No se pudo cerrar el reporte", Model.ErrorCierre) })
+    ("No se pudo cerrar el reporte", Model.ErrorCierre),
+    ("No se pudo descartar el reporte", Model.ErrorDescarte) })
 {
     if (error is null) continue;
     <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
@@ -252,6 +253,16 @@
                         <p class="texto-secundario">La derivación es solo un registro: el sistema no envía información a la entidad de destino.</p>
                     }
                     break;
+                case Accion.VerDescarte:
+                    var descarte = Model.Descartado!;
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Reporte descartado por la central</h2>
+                    <dl class="datos" data-descartado>
+                        <div><dt>Motivo (solo personal autorizado)</dt><dd>@descarte.Motivo</dd></div>
+                        <div><dt>Estaba</dt><dd>@descarte.EstadoPrevio</dd></div>
+                        <div><dt>Descartado por</dt><dd>@descarte.Operador</dd></div>
+                        <div><dt>Fecha y hora</dt><dd>@Local(descarte.DescartadoEn)</dd></div>
+                    </dl>
+                    break;
                 default:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Sin acciones pendientes</h2>
                     <p class="texto-secundario">El reporte no admite más acciones en el estado «@r.TextoEstado».</p>
@@ -316,6 +327,11 @@
                     </ol>
                 }
             </section>
+        }
+
+        @if (Model.PuedeDescartarse)
+        {
+            <partial name="_DescartarCaso" model="Model.VistaDescarte" />
         }
     </div>
 

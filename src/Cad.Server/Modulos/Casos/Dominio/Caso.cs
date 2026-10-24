@@ -114,6 +114,17 @@ public sealed class Caso
         Estado = EstadoCaso.Cancelada;
     }
 
+    // Descarte por la central (23/10/2026): un caso falso o erróneo termina como «Descartada» desde cualquier estado abierto de
+    // la atención. Un reporte recibido o en revisión se descarta con su decisión (HU17), no por aquí.
+    public bool PuedeDescartarse => Estado is EstadoCaso.Pendiente or EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion;
+
+    public void Descartar()
+    {
+        if (!PuedeDescartarse)
+            throw new InvalidOperationException("Solo un caso pendiente o en atención puede descartarse.");
+        Estado = EstadoCaso.Descartada;
+    }
+
     // HU24-CA01/CA03: solo un caso «En atención» se cierra.
     public void Cerrar()
     {

@@ -121,6 +121,14 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cancelada), $"Cancelado por el ciudadano. Motivo: {cancelacion.Motivo}", cancelacion.CanceladaEn);
         }
 
+        // Descarte por la central (23/10/2026): «Descartada» es un resultado final, con el motivo (solo personal autorizado).
+        if (await db.DescartesCaso.AsNoTracking().SingleOrDefaultAsync(d => d.CasoId == casoId, ct) is { } descarte)
+        {
+            entradas.Add(new(descarte.DescartadoEn, "Caso descartado por la central", await NombreAsync(descarte.OperadorId),
+                $"Estaba «{EstadosCaso.Texto(descarte.EstadoPrevio)}». Motivo: {descarte.Motivo}"));
+            resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Descartada), $"Descartado por la central. Motivo: {descarte.Motivo}", descarte.DescartadoEn);
+        }
+
         // HU20: asignaciones (y su fin, al cerrar el caso).
         foreach (var asignacion in await db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync(ct))
         {

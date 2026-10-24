@@ -12,8 +12,8 @@
     var primerNombre = sos.Ciudadano.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? sos.Ciudadano;
 
     // «Otras acciones»: lo que también se puede hacer ahora, además de la siguiente acción.
-    var intentoComoOtra = siguiente != Accion.Contactar && siguiente is not (Accion.VerCierre or Accion.VerCancelacion);
-    var clasificarComoOtra = siguiente != Accion.Clasificar && sos.Clasificacion is null && siguiente != Accion.VerCancelacion;
+    var intentoComoOtra = siguiente != Accion.Contactar && siguiente is not (Accion.VerCierre or Accion.VerCancelacion or Accion.VerDescarte);
+    var clasificarComoOtra = siguiente != Accion.Clasificar && sos.Clasificacion is null && siguiente is not (Accion.VerCancelacion or Accion.VerDescarte);
     var asignarComoOtra = siguiente is Accion.Contactar or Accion.Clasificar;
     var hayOtras = intentoComoOtra || clasificarComoOtra || asignarComoOtra;
     var abrirOtras = (intentoComoOtra && Model.Errores.Count > 0) || (clasificarComoOtra && Model.ErrorCategoria is not null);
@@ -59,7 +59,8 @@
     ("No se pudo clasificar el SOS", Model.ErrorClasificacion),
     ("No se pudo asignar el caso", Model.ErrorAsignacion),
     ("No se pudo registrar el inicio de atención", Model.ErrorAvance),
-    ("No se pudo cerrar el caso", Model.ErrorCierre) })
+    ("No se pudo cerrar el caso", Model.ErrorCierre),
+    ("No se pudo descartar el caso", Model.ErrorDescarte) })
 {
     if (error is null) continue;
     <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
@@ -181,6 +182,18 @@
                     <h2 class="siguiente__titulo" id="titulo-siguiente">SOS cancelado</h2>
                     <p class="texto-secundario">El ciudadano canceló este SOS: no se puede asignar. El motivo está en el historial.</p>
                     break;
+                case Accion.VerDescarte:
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Caso descartado</h2>
+                    @if (Model.Descartado is { } descarte)
+                    {
+                        <dl class="datos" data-descartado>
+                            <div><dt>Motivo (solo personal autorizado)</dt><dd>@descarte.Motivo</dd></div>
+                            <div><dt>Estaba</dt><dd>@descarte.EstadoPrevio</dd></div>
+                            <div><dt>Descartado por</dt><dd>@descarte.Operador</dd></div>
+                            <div><dt>Fecha y hora</dt><dd>@Local(descarte.DescartadoEn)</dd></div>
+                        </dl>
+                    }
+                    break;
                 default:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Sin acciones pendientes</h2>
                     <p class="texto-secundario">El caso no está pendiente: no se puede asignar.</p>
@@ -281,6 +294,11 @@
                 </ol>
             }
         </section>
+
+        @if (Model.PuedeDescartarse)
+        {
+            <partial name="_DescartarCaso" model="Model.VistaDescarte" />
+        }
     </div>
 
     <aside class="detalle-caso__contexto" aria-label="Contexto del caso">

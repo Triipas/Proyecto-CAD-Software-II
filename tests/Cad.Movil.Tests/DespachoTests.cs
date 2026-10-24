@@ -90,6 +90,53 @@ public class DespachoTests
     }
 
     [Fact]
+    public async Task SiLaCentralDescartaElCaso_ElDespachoDesapareceConUnAviso_YUnoNuevoLoQuita()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho());
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        var vm = VistaModelo(despacho);
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+
+        await despacho.ActualizarAsync();
+
+        Assert.Null(despacho.Actual);
+        Assert.True(vm.HayDespachoRetirado);
+        Assert.Contains("La central retiró el caso", vm.DespachoRetirado);
+        Assert.False(vm.HayCierreReciente);
+
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho());
+        await despacho.ActualizarAsync();
+        Assert.False(vm.HayDespachoRetirado);
+    }
+
+    [Fact]
+    public async Task AlSalir_ElAvisoDeDespachoRetirado_NoPasaALaSiguienteCuenta()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Despacho());
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+        await despacho.ActualizarAsync();
+        Assert.NotNull(despacho.Retirado);
+
+        await despacho.ReiniciarAsync();
+        await despacho.IniciarAsync(); // otra cuenta, sin despacho
+
+        Assert.Null(despacho.Retirado);
+    }
+
+    [Fact]
+    public async Task SinDespachoDesdeElInicio_NoSeAvisaDeNingunRetiro()
+    {
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        await despacho.ActualizarAsync();
+
+        Assert.Null(despacho.Retirado);
+    }
+
+    [Fact]
     public async Task SinConexion_ConservaElUltimoDespachoYAvisa()
     {
         var conocido = Despacho();

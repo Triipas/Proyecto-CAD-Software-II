@@ -13,13 +13,25 @@ namespace Cad.Server.Panel.Pages.Reportes;
 // la política de la página rechaza cualquier otra sesión, incluida una solicitud directa).
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 // Decisión del PO del 16/10/2026: el operador registra el inicio de atención (HU23-CA02) y cierra (HU24-CA05) un reporte en
-// curso, como en un SOS.
+// curso, como en un SOS. Desde el 23/10/2026, la central también descarta un reporte falso o erróneo ya admitido.
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
     ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
-    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, IConfiguration configuracion) : PageModel
+    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte,
+    IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
+
+    [BindProperty]
+    public FormularioDescarte Descarte { get; set; } = new();
+    public string? ErrorDescarte { get; private set; }
+    public string? ErrorMotivoDescarte { get; private set; }
+
+    // Descarte por la central (un reporte recibido o en revisión se descarta con su decisión, HU17).
+    public DescarteVista? Descartado { get; private set; }
+    public bool PuedeDescartarse => Reporte.Estado is EstadoCaso.Pendiente or EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion;
+    public VistaDescarte VistaDescarte => new($"/panel/reportes/{Reporte.Id}",
+        Seguimiento?.Asignacion is { FinalizadaEn: null } vigente ? vigente.Sereno : null, Descarte.Motivo, ErrorDescarte, ErrorMotivoDescarte);
 
     // Asignación, avances y cierre de un reporte admitido (null antes de la admisión).
     public DetalleSos? Seguimiento { get; private set; }
@@ -71,6 +83,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     {
         EstadoCaso.Recibido => SiguienteAccion.IniciarRevision,
         EstadoCaso.EnRevision => SiguienteAccion.Decidir,
+        EstadoCaso.Descartada when Descartado is not null => SiguienteAccion.VerDescarte,
         EstadoCaso.Derivada or EstadoCaso.Descartada => SiguienteAccion.VerDecision,
         _ when Seguimiento?.Cierre is not null => SiguienteAccion.VerCierre,
         _ when Seguimiento is { EnAtencion: true } => SiguienteAccion.Cerrar,
@@ -117,7 +130,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         }
     }
 
-    public enum SiguienteAccion { IniciarRevision, Decidir, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerDecision, SinAcciones }
+    public enum SiguienteAccion { IniciarRevision, Decidir, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerDecision, VerDescarte, SinAcciones }
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct) =>
         await CargarAsync(id, ct) ? Page() : NotFound();
@@ -243,6 +256,25 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         ? "Asígnalo a un sereno disponible desde la central."
         : "Es un estado final.";
 
+    // Descarte por la central (23/10/2026): un reporte admitido falso o erróneo termina como «Descartada», con motivo obligatorio.
+    public async Task<IActionResult> OnPostDescartarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await descartar.EjecutarAsync(id, Descarte.Motivo, User.IdUsuario(), ct);
+        switch (resultado)
+        {
+            case ResultadoDescarte.Descartado or ResultadoDescarte.YaDescartado:
+                return Hecho(id, "Reporte descartado.", "Salió de la central y del mapa; si tenía sereno, quedó libre para otro caso.");
+            case ResultadoDescarte.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErrorMotivoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivo")?[0];
+                ErrorDescarte = (resultado as ResultadoDescarte.Rechazado)?.Motivo;
+                return Page();
+        }
+    }
+
     private RedirectToPageResult Hecho(Guid id, string mensaje, string detalle)
     {
         Mensaje = mensaje;
@@ -260,6 +292,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
+        Descartado = reporte.Estado == EstadoCaso.Descartada ? await consultarDescarte.EjecutarAsync(id, ct) : null;
         return true;
     }
 

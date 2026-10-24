@@ -13,11 +13,12 @@ namespace Cad.Server.Panel.Pages.Central;
 // HU20 — Asignar el caso pendiente a un sereno disponible (S2-T05) y
 // HU13 — Clasificar el SOS después de su registro (S2-T08) y
 // HU23 — Registrar el inicio de atención como operador (S2-T11, CA02) y
-// HU24 — Cerrar el caso como operador (S2-T13, CA05). Solo operadores.
+// HU24 — Cerrar el caso como operador (S2-T13, CA05) y descartar un caso falso o erróneo (23/10/2026). Solo operadores.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
     ClasificarCaso clasificar, AvanzarCaso avanzar, CerrarCaso cerrar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
-    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, IConfiguration configuracion) : PageModel
+    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte,
+    IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioIntento Formulario { get; set; } = new();
@@ -30,6 +31,9 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
 
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
+
+    [BindProperty]
+    public FormularioDescarte Descarte { get; set; } = new();
 
     public DetalleSos Sos { get; private set; } = null!;
 
@@ -52,6 +56,16 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public string? ErrorAvance { get; private set; }
     public string? ErrorCierre { get; private set; }
     public Dictionary<string, string[]> ErroresCierre { get; private set; } = [];
+
+    public string? ErrorDescarte { get; private set; }
+    public string? ErrorMotivoDescarte { get; private set; }
+
+    // Descarte por la central: el registrado (si el caso ya se descartó) y el bloque para descartarlo mientras está abierto.
+    public DescarteVista? Descartado { get; private set; }
+    public bool PuedeDescartarse => new[] { EstadoCaso.Pendiente, EstadoCaso.Asignada, EstadoCaso.EnCamino, EstadoCaso.EnAtencion }
+        .Any(e => Sos.Estado == EstadosCaso.Texto(e));
+    public VistaDescarte VistaDescarte => new($"/panel/central/sos/{Sos.Id}",
+        Sos.Asignacion is { FinalizadaEn: null } vigente ? vigente.Sereno : null, Descarte.Motivo, ErrorDescarte, ErrorMotivoDescarte);
 
     public string? ErrorCierreDe(string campo) => ErroresCierre.TryGetValue(campo, out var mensajes) ? mensajes[0] : null;
 
@@ -85,6 +99,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public SiguienteAccion Siguiente => Sos.Estado switch
     {
         "Cancelada" => SiguienteAccion.VerCancelacion,
+        "Descartada" => SiguienteAccion.VerDescarte,
         "Cerrada" => SiguienteAccion.VerCierre,
         _ when Sos.EnAtencion => SiguienteAccion.Cerrar,
         _ when Sos.EnCamino => SiguienteAccion.EsperarAtencion,
@@ -101,6 +116,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         {
             var avances = Sos.Avances ?? [];
             var cancelado = Sos.Estado == "Cancelada";
+            var descartado = Sos.Estado == "Descartada";
             bool[] hechos =
             [
                 true,
@@ -109,9 +125,9 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                 Sos.Asignacion is not null,
                 Sos.EnCamino || Sos.EnAtencion || avances.Any(a => a.Descripcion == "En camino") || Sos.Cierre is not null,
                 Sos.EnAtencion || avances.Any(a => a.Descripcion == "En atención") || Sos.Cierre is not null,
-                Sos.Cierre is not null || cancelado,
+                Sos.Cierre is not null || cancelado || descartado,
             ];
-            string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignado", "En camino", "En atención", cancelado ? "Cancelado" : "Cerrado"];
+            string[] textos = ["Pendiente", "Contactado", "Clasificado", "Asignado", "En camino", "En atención", cancelado ? "Cancelado" : descartado ? "Descartado" : "Cerrado"];
             var actual = Siguiente switch
             {
                 SiguienteAccion.Contactar => 1,
@@ -259,6 +275,29 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         }
     }
 
+    // Descarte por la central (23/10/2026): un caso falso o erróneo termina como «Descartada», con motivo obligatorio.
+    public async Task<IActionResult> OnPostDescartarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await descartar.EjecutarAsync(id, Descarte.Motivo, User.IdUsuario(), ct);
+        switch (resultado)
+        {
+            case ResultadoDescarte.Descartado or ResultadoDescarte.YaDescartado:
+                Mensaje = "Caso descartado.";
+                DetalleMensaje = "Salió de la cola y del mapa; si tenía sereno, quedó libre para otro caso.";
+                return RedirectToPage(new { id });
+            case ResultadoDescarte.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErrorMotivoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivo")?[0];
+                ErrorDescarte = (resultado as ResultadoDescarte.Rechazado)?.Motivo;
+                Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
+                Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+                return Page();
+        }
+    }
+
     private RedirectToPageResult Clasificado(Guid id, string categoria)
     {
         Mensaje = "SOS clasificado.";
@@ -275,10 +314,11 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         SerenosDisponibles = (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList();
         Categorias = await consultarCategorias.EjecutarAsync(ct);
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
+        Descartado = await consultarDescarte.EjecutarAsync(id, ct);
         return true;
     }
 
-    public enum SiguienteAccion { Contactar, Clasificar, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerCancelacion, NoAsignable }
+    public enum SiguienteAccion { Contactar, Clasificar, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerCancelacion, VerDescarte, NoAsignable }
 
     public sealed class FormularioIntento
     {
