@@ -26,6 +26,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<CierreCaso> CierresCaso => Set<CierreCaso>();
     public DbSet<CancelacionSos> CancelacionesSos => Set<CancelacionSos>();
     public DbSet<InicioAtencion> IniciosAtencion => Set<InicioAtencion>();
+    public DbSet<Reasignacion> Reasignaciones => Set<Reasignacion>();
     public DbSet<DescarteCaso> DescartesCaso => Set<DescarteCaso>();
     public DbSet<EvaluacionCaso> EvaluacionesCaso => Set<EvaluacionCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
@@ -220,6 +221,20 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             inicio.HasOne<Caso>().WithMany().HasForeignKey(i => i.CasoId).OnDelete(DeleteBehavior.Restrict);
             inicio.HasOne<Usuario>().WithMany().HasForeignKey(i => i.SerenoId).OnDelete(DeleteBehavior.Restrict);
             inicio.HasOne<Usuario>().WithMany().HasForeignKey(i => i.RegistradoPorOperadorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Reasignación por la central (24/10/2026), con el motivo obligatorio también garantizado por la base de datos.
+        builder.Entity<Reasignacion>(reasignacion =>
+        {
+            reasignacion.ToTable("Reasignaciones", tabla =>
+                tabla.HasCheckConstraint("CK_Reasignaciones_Motivo", "length(btrim(\"Motivo\")) > 0"));
+            reasignacion.HasKey(r => r.Id);
+            reasignacion.HasIndex(r => r.CasoId);
+            reasignacion.Property(r => r.Motivo).HasMaxLength(Reasignacion.MaximoMotivo);
+            reasignacion.HasOne<Caso>().WithMany().HasForeignKey(r => r.CasoId).OnDelete(DeleteBehavior.Restrict);
+            reasignacion.HasOne<Usuario>().WithMany().HasForeignKey(r => r.SerenoAnteriorId).OnDelete(DeleteBehavior.Restrict);
+            reasignacion.HasOne<Usuario>().WithMany().HasForeignKey(r => r.SerenoNuevoId).OnDelete(DeleteBehavior.Restrict);
+            reasignacion.HasOne<Usuario>().WithMany().HasForeignKey(r => r.OperadorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU32: una evaluación por caso (CA03), con la puntuación de 1 a 5 (CA02) también garantizada por la base de datos.

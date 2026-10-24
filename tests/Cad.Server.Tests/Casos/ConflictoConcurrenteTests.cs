@@ -94,6 +94,34 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
         Assert.Equal(EstadoCaso.Cerrada, (await CasoAsync(casoId)).Estado);
     }
 
+    // Reasignación (24/10/2026): con el caso «Asignada» el estado no cambia, pero la versión del caso se comprueba igual; si
+    // el caso cambió (p. ej., el sereno anterior confirmó que va en camino), no se reasigna ni queda nada parcial.
+    [Fact]
+    public async Task Reasignar_UnCasoAsignadoQueCambioALaVez_SeRechazaSinRegistrosParciales()
+    {
+        var casoId = await SosAsync();
+        var operador = await fabrica.CrearAsync(Roles.Operador);
+        var anterior = await fabrica.CrearAsync(Roles.Sereno);
+        var nuevo = await fabrica.CrearAsync(Roles.Sereno);
+        foreach (var sereno in new[] { anterior, nuevo })
+            Assert.Equal(HttpStatusCode.OK, (await (await fabrica.CrearClienteAppAsync(sereno))
+                .PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
+        await fabrica.ConServiciosAsync(async s =>
+        {
+            Assert.IsType<ResultadoAsignacion.Asignado>(await s.GetRequiredService<AsignarCaso>().EjecutarAsync(casoId, anterior.Id, operador.Id, Guid.NewGuid(), CancellationToken.None));
+            return true;
+        });
+
+        var resultado = await ConConflictosAsync(casoId, 1, (db, notificador) =>
+            new ReasignarCaso(db, TimeProvider.System, notificador, fabrica.Services.GetRequiredService<Cad.Server.Notificaciones.ColaAvisosDespacho>(),
+                    NullLogger<ReasignarCaso>.Instance)
+                .EjecutarAsync(casoId, nuevo.Id, "El sereno no responde.", operador.Id, Guid.NewGuid(), CancellationToken.None));
+
+        Assert.Equal(ReasignarCaso.MotivoCambioConcurrente, Assert.IsType<ResultadoReasignacion.Rechazado>(resultado).Motivo);
+        Assert.Equal(anterior.Id, await fabrica.ConBaseDatosAsync(db => db.Asignaciones.Where(a => a.CasoId == casoId && a.Vigente).Select(a => a.SerenoId).SingleAsync()));
+        Assert.False(await fabrica.ConBaseDatosAsync(db => db.Reasignaciones.AnyAsync(r => r.CasoId == casoId)));
+    }
+
     [Fact]
     public async Task Cerrar_ConConflictosPersistentes_SeRechazaSinRegistrosParciales()
     {

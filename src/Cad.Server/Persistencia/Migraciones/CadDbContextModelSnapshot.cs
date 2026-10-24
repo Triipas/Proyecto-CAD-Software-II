@@ -1057,6 +1057,48 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("NotificacionesCiudadano", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Reasignacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("OperadorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ReasignadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SerenoAnteriorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SerenoNuevoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CasoId");
+
+                    b.HasIndex("OperadorId");
+
+                    b.HasIndex("SerenoAnteriorId");
+
+                    b.HasIndex("SerenoNuevoId");
+
+                    b.ToTable("Reasignaciones", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Reasignaciones_Motivo", "length(btrim(\"Motivo\")) > 0");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.DispositivoCiudadano", b =>
                 {
                     b.Property<Guid>("UsuarioId")
@@ -1918,6 +1960,33 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("CiudadanoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Reasignacion", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("OperadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoAnteriorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoNuevoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

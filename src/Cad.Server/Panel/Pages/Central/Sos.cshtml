@@ -60,7 +60,8 @@
     ("No se pudo asignar el caso", Model.ErrorAsignacion),
     ("No se pudo registrar el inicio de atención", Model.ErrorAvance),
     ("No se pudo cerrar el caso", Model.ErrorCierre),
-    ("No se pudo descartar el caso", Model.ErrorDescarte) })
+    ("No se pudo descartar el caso", Model.ErrorDescarte),
+    ("No se pudo reasignar el caso", Model.ErrorReasignacion) })
 {
     if (error is null) continue;
     <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
@@ -250,6 +251,10 @@
                 <p class="estado estado--activa">
                     <partial name="_Icono" model="@("exito")" />Asignado a @vigente.Sereno a las @Local(vigente.AsignadaEn)
                 </p>
+                @if (Model.PuedeReasignarse)
+                {
+                    <partial name="_ReasignarCaso" model="Model.VistaReasignacion" />
+                }
                 @if (!vigente.SerenoOperativo)
                 {
                     <p class="despacho-alerta" data-desactivado-con-caso>
