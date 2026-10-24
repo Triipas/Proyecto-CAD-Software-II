@@ -42,6 +42,9 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     public string? CierreReciente { get; private set; }
     // El despacho que tenía el sereno desapareció sin que él lo cerrara: la central lo descartó o lo retiró (23/10/2026).
     public string? Retirado { get; private set; }
+    // Rango de atención (24/10/2026): el servidor no registró el inicio porque el sereno está lejos del punto del caso (o sin
+    // posición reciente) y falta el motivo. La pantalla lo pide y vuelve a enviar.
+    public RangoExcedido? FueraDeRango { get; private set; }
 
     public async Task IniciarAsync(CancellationToken ct = default)
     {
@@ -102,8 +105,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     public Task<bool> ConfirmarDesplazamientoAsync(CancellationToken ct = default) =>
         AvanzarAsync((api, token, id) => api.ConfirmarDesplazamientoAsync(token, id, ct), "confirmar el desplazamiento", ct);
 
-    public Task<bool> IniciarAtencionAsync(CancellationToken ct = default) =>
-        AvanzarAsync((api, token, id) => api.IniciarAtencionAsync(token, id, ct), "registrar el inicio de atención", ct);
+    public Task<bool> IniciarAtencionAsync(SolicitudInicioAtencion? solicitud = null, CancellationToken ct = default) =>
+        AvanzarAsync((api, token, id) => api.IniciarAtencionAsync(token, id, solicitud ?? new(), ct), "registrar el inicio de atención", ct);
 
     private async Task<bool> AvanzarAsync(Func<IApiCad, string, Guid, Task<ResultadoApi<DespachoSereno?>>> llamada, string accion, CancellationToken ct)
     {
@@ -121,9 +124,17 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
                 case ResultadoApi<DespachoSereno?>.Correcto c:
                     Actual = c.Valor;
                     Error = null;
+                    FueraDeRango = null;
                     aplicado = true;
                     break;
                 case ResultadoApi<DespachoSereno?>.Rechazado { Estado: 401 }:
+                    break;
+                case ResultadoApi<DespachoSereno?>.Rechazado r when r.Errores.TryGetValue(RangoAtencion.ErrorFueraDeRango, out var rango):
+                    FueraDeRango = new RangoExcedido(r.Mensaje, Numero(rango.ElementAtOrDefault(0)), Numero(rango.ElementAtOrDefault(1)) ?? RangoAtencion.RadioBaseMetros);
+                    Error = null;
+                    break;
+                case ResultadoApi<DespachoSereno?>.Rechazado { Estado: 400 } r:
+                    Error = r.Errores.Values.SelectMany(e => e).FirstOrDefault() ?? r.Mensaje; // motivo o detalle no válidos
                     break;
                 case ResultadoApi<DespachoSereno?>.Rechazado r:
                     Error = r.Mensaje;
@@ -216,6 +227,15 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         return cerrado;
     }
 
+    public void OlvidarFueraDeRango()
+    {
+        FueraDeRango = null;
+        Cambio?.Invoke();
+    }
+
+    private static double? Numero(string? texto) =>
+        double.TryParse(texto, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var valor) ? valor : null;
+
     // Al salir de la sesión: el siguiente sereno que ingrese en este teléfono no hereda nada.
     public async Task ReiniciarAsync()
     {
@@ -227,7 +247,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             suscrito = false;
         }
         await canal.DesconectarAsync();
-        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente, Retirado) = (null, false, null, false, false, null, null);
+        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente, Retirado, FueraDeRango) = (null, false, null, false, false, null, null, null);
         ErroresCierre = new Dictionary<string, string[]>();
         Cambio?.Invoke();
     }
@@ -258,3 +278,6 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         }
     }
 }
+
+// El servidor rechazó el inicio de atención por estar fuera del rango; Mensaje lo explica.
+public sealed record RangoExcedido(string Mensaje, double? DistanciaMetros, double RadioMetros);

@@ -61,7 +61,7 @@ public partial class HistorialTests(FabricaCad fabrica)
             ["Asignacion.SerenoId"] = serenoCuenta.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(),
         });
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{casoId}/desplazamiento", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{casoId}/atencion", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/atencion", await fabrica.EnElLugarAsync(casoId))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre",
             new SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, "Se resolvió en el lugar", notas))).StatusCode);
         return (casoId, operador);

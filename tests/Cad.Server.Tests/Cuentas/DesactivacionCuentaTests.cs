@@ -184,7 +184,7 @@ public class DesactivacionCuentaTests(FabricaCad fabrica)
         Assert.IsType<Cad.Server.Modulos.Casos.Aplicacion.ResultadoAsignacion.Asignado>(await fabrica.ConServiciosAsync(s =>
             s.GetRequiredService<Cad.Server.Modulos.Casos.Aplicacion.AsignarCaso>().EjecutarAsync(casoId, serenoCuenta.Id, operadorCuenta.Id, Guid.NewGuid(), CancellationToken.None)));
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{casoId}/desplazamiento", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{casoId}/atencion", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/atencion", await fabrica.EnElLugarAsync(casoId))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre",
             new SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, "Se resolvió en el lugar (ficticio)", null))).StatusCode);
         var eventosAntes = await fabrica.ConBaseDatosAsync(db => db.EventosCaso.CountAsync(e => e.ActorId == serenoCuenta.Id));

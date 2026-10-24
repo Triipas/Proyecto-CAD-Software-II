@@ -254,6 +254,16 @@
                                     <time datetime="@avance.En.ToString("O", inv)">@Local(avance.En)</time>
                                     <span class="texto-secundario">· @avance.Responsable</span>
                                 </p>
+                                @if (avance.Nota is { } nota)
+                                {
+                                    <p class="historial__texto@(avance.Alerta ? " historial__texto--alerta" : "")" data-inicio-atencion>
+                                        @if (avance.Alerta)
+                                        {
+                                            <partial name="_Icono" model="@("advertencia")" />
+                                        }
+                                        <span>@nota</span>
+                                    </p>
+                                }
                             </li>
                         }
                     </ol>

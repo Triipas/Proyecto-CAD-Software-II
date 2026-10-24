@@ -151,7 +151,7 @@ public class ReporteDeLaCentralTests(FabricaCad fabrica)
         }))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.GetAsync("/api/sereno/despacho")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{id}/desplazamiento", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{id}/atencion", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{id}/atencion", await fabrica.EnElLugarAsync(id))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{id}/cierre",
             new SolicitudCierreCaso(Robo, "Se verificó el lugar; la tienda estaba cerrada y sin daños.", null))).StatusCode);
 

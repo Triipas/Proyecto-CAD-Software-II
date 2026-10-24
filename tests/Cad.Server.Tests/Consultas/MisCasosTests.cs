@@ -59,7 +59,8 @@ public class MisCasosTests(FabricaCad fabrica)
         Assert.IsType<ResultadoAsignacion.Asignado>(await Servicio(s =>
             s.GetRequiredService<AsignarCaso>().EjecutarAsync(id, sereno.Id, operador.Id, Guid.NewGuid(), CancellationToken.None)));
         await Servicio(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(id, Avance.ConfirmarDesplazamiento, sereno.Id, ActorAvance.Sereno, CancellationToken.None));
-        await Servicio(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(id, Avance.IniciarAtencion, sereno.Id, ActorAvance.Sereno, CancellationToken.None));
+        var enElLugar = await fabrica.EnElLugarAsync(id);
+        await Servicio(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(id, Avance.IniciarAtencion, sereno.Id, ActorAvance.Sereno, CancellationToken.None, enElLugar));
         if (cerrar)
             Assert.IsType<ResultadoCierre.Cerrado>(await Servicio(s => s.GetRequiredService<CerrarCaso>().EjecutarAsync(id,
                 new DatosCierre(Robo, "Se recuperó el objeto y se orientó al ciudadano", "Nota interna ficticia reservada"), sereno.Id,

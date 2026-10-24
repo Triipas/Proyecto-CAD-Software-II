@@ -61,9 +61,11 @@ public static class ModuloSerenos
         sereno.MapPost("/casos/{id:guid}/desplazamiento", (Guid id, HttpContext contexto, Casos.Aplicacion.AvanzarCaso avanzar,
                 Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
             AvanzarAsync(id, Casos.Aplicacion.Avance.ConfirmarDesplazamiento, contexto, avanzar, despachos, ct));
-        sereno.MapPost("/casos/{id:guid}/atencion", (Guid id, HttpContext contexto, Casos.Aplicacion.AvanzarCaso avanzar,
-                Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
-            AvanzarAsync(id, Casos.Aplicacion.Avance.IniciarAtencion, contexto, avanzar, despachos, ct));
+        // Rango de atención (24/10/2026): el cuerpo es opcional (posición y, fuera del rango, el motivo). 422 si el sereno está
+        // lejos del punto del caso y no indicó por qué, con la distancia y el radio en los errores.
+        sereno.MapPost("/casos/{id:guid}/atencion", (Guid id, SolicitudInicioAtencion? solicitud, HttpContext contexto,
+                Casos.Aplicacion.AvanzarCaso avanzar, Consultas.ConsultarDespacho despachos, CancellationToken ct) =>
+            AvanzarAsync(id, Casos.Aplicacion.Avance.IniciarAtencion, contexto, avanzar, despachos, ct, solicitud));
 
         // HU24 — cierre por el sereno asignado. 200 también ante un reenvío del mismo cierre; 400 si faltan la
         // tipificación o el resultado (CA02); 409 si el estado lo impide (CA03); 404 si el caso no es suyo (CA06).
@@ -103,11 +105,19 @@ public static class ModuloSerenos
     }
 
     private static async Task<IResult> AvanzarAsync(Guid casoId, Casos.Aplicacion.Avance avance, HttpContext contexto,
-        Casos.Aplicacion.AvanzarCaso avanzar, Consultas.ConsultarDespacho despachos, CancellationToken ct)
+        Casos.Aplicacion.AvanzarCaso avanzar, Consultas.ConsultarDespacho despachos, CancellationToken ct, SolicitudInicioAtencion? inicio = null)
     {
         var serenoId = contexto.User.IdUsuario();
-        return await avanzar.EjecutarAsync(casoId, avance, serenoId, Casos.Aplicacion.ActorAvance.Sereno, ct) switch
+        return await avanzar.EjecutarAsync(casoId, avance, serenoId, Casos.Aplicacion.ActorAvance.Sereno, ct, inicio) switch
         {
+            Casos.Aplicacion.ResultadoAvance.FueraDeRango f => Results.ValidationProblem(
+                new Dictionary<string, string[]>
+                {
+                    [RangoAtencion.ErrorFueraDeRango] = [f.DistanciaMetros?.ToString("0", System.Globalization.CultureInfo.InvariantCulture) ?? "",
+                        f.RadioMetros.ToString("0", System.Globalization.CultureInfo.InvariantCulture)],
+                },
+                title: f.Mensaje, statusCode: StatusCodes.Status422UnprocessableEntity),
+            Casos.Aplicacion.ResultadoAvance.Invalido i => Results.ValidationProblem(i.Errores, title: "No se pudo registrar el inicio de atención."),
             Casos.Aplicacion.ResultadoAvance.Registrado or Casos.Aplicacion.ResultadoAvance.YaRegistrado =>
                 Results.Ok(await despachos.DelCasoAsync(serenoId, casoId, ct)),
             Casos.Aplicacion.ResultadoAvance.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),

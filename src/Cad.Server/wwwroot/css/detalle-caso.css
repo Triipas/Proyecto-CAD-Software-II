@@ -465,3 +465,19 @@
   border-color: var(--color-borde);
   background: var(--color-superficie);
 }
+
+/* Rango de atención (24/10/2026): un inicio de atención fuera del rango se marca para la central. */
+.historial__texto--alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-1);
+  font-weight: var(--peso-semi);
+  color: var(--color-advertencia);
+}
+
+.historial__texto--alerta .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 2px;
+}

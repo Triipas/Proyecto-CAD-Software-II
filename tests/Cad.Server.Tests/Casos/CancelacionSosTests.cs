@@ -137,7 +137,10 @@ public class CancelacionSosTests(FabricaCad fabrica)
             _ => [],
         };
         foreach (var avance in avances)
-            await fabrica.ConServiciosAsync(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(casoId, avance, serenoId, ActorAvance.Sereno, CancellationToken.None));
+        {
+            var inicio = avance == Avance.IniciarAtencion ? await fabrica.EnElLugarAsync(casoId) : null;
+            await fabrica.ConServiciosAsync(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(casoId, avance, serenoId, ActorAvance.Sereno, CancellationToken.None, inicio));
+        }
         Assert.Equal(estado, (await CasoAsync(casoId)).Estado);
 
         var respuesta = await CancelarAsync(app, casoId, "Ya no lo necesito.");

@@ -916,6 +916,59 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("EventosCaso", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.InicioAtencion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("DentroDelRango")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Detalle")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<double?>("DistanciaMetros")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("IniciadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Latitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<double?>("PrecisionMetros")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("RadioMetros")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CasoId");
+
+                    b.HasIndex("SerenoId");
+
+                    b.ToTable("IniciosAtencion", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_IniciosAtencion_MotivoFueraDeRango", "\"DentroDelRango\" IS DISTINCT FROM false OR \"Motivo\" IS NOT NULL");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.IntentoContacto", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1810,6 +1863,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
                         .WithMany()
                         .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.InicioAtencion", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
