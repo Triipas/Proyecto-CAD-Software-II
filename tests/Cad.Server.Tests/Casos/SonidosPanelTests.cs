@@ -37,6 +37,23 @@ public class SonidosPanelTests(FabricaCad fabrica)
         Assert.DoesNotContain($"data-sonido=\"{SonidoPanel.CasoAsignado}\"", await operador.GetStringAsync(ruta)); // al recargar no vuelve a sonar
     }
 
+    [Fact]
+    public async Task ElBotonDelAltavoz_EstaEnLaBarraDelOperador_ActivadoPorDefecto_YNoEnLaDelAdministrador()
+    {
+        var operadorCuenta = await fabrica.CrearAsync(Roles.Operador);
+        var operador = fabrica.CrearNavegador();
+        await operador.IngresarAlPanelAsync(operadorCuenta.Correo, operadorCuenta.Clave);
+        var central = await operador.GetStringAsync("/panel/central");
+        Assert.Contains("data-alternar-sonido", central);
+        Assert.Contains("aria-pressed=\"true\" title=\"Silenciar avisos sonoros\"", central);
+        Assert.DoesNotContain("Activar avisos sonoros</button>", central);
+
+        var adminCuenta = await fabrica.CrearAsync(Roles.Administrador);
+        var admin = fabrica.CrearNavegador();
+        await admin.IngresarAlPanelAsync(adminCuenta.Correo, adminCuenta.Clave);
+        Assert.DoesNotContain("data-alternar-sonido", await admin.GetStringAsync("/panel/admin/cuentas"));
+    }
+
     [Theory]
     [InlineData("/sonidos/sos-nuevo.wav")]
     [InlineData("/sonidos/reporte-admitido.wav")]

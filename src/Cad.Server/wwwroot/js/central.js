@@ -7,7 +7,6 @@
   const contador = document.querySelector("[data-contador]");
   const anuncio = document.querySelector("[data-anuncio]");
   const indicador = document.querySelector("[data-conexion]");
-  const botonSonido = document.querySelector("[data-activar-sonido]");
   const seccion = document.querySelector(".central__urgente");
   const contenedorMapa = document.getElementById("mapa");
   // HU15-CA02 y HU20-CA07: reportes admitidos, en su propia sección; se seleccionan y asignan como un SOS.
@@ -569,33 +568,8 @@
   }
 
   // ---------- Aviso visual y sonoro ----------
-  // Los sonidos están en sonidos.js (24/10/2026). El botón los activa o los silencia; la preferencia queda en este navegador.
+  // Los sonidos y su botón (barra superior) están en sonidos.js (24/10/2026): activados por defecto.
   let audio = null;
-
-  function mostrarSonido() {
-    botonSonido.setAttribute("aria-pressed", String(CadSonidos.activos));
-    botonSonido.textContent = CadSonidos.activos ? "Avisos sonoros activados" : "Activar avisos sonoros";
-  }
-  mostrarSonido();
-
-  botonSonido.addEventListener("click", () => {
-    // Activados pero bloqueados por el navegador: este clic ya los habilita, así que no se silencian.
-    const bloqueado = botonSonido.dataset.bloqueado === "true";
-    delete botonSonido.dataset.bloqueado;
-    if (!bloqueado) CadSonidos.activar(!CadSonidos.activos);
-    mostrarSonido();
-    if (CadSonidos.activos) {
-      audio ??= new AudioContext();
-      audio.resume();
-      CadSonidos.reproducir("caso-asignado");
-    }
-  });
-
-  // El navegador bloqueó un sonido porque aún no hubo interacción con la página: se pide un clic.
-  document.addEventListener("cad:sonido-bloqueado", () => {
-    botonSonido.dataset.bloqueado = "true";
-    botonSonido.textContent = "Haz clic para permitir los avisos sonoros";
-  });
 
   // Tono sintetizado solo para la cancelación de un SOS, que no tiene sonido propio.
   function tono(frecuencias, duracion) {
