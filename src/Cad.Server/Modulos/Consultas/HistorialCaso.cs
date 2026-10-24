@@ -143,6 +143,12 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
                 entradas.Add(new(fin, "Asignación finalizada", await NombreAsync(asignacion.SerenoId), "El sereno queda libre para otro caso."));
         }
 
+        // Reasignación por la central (24/10/2026): de quién a quién y por qué.
+        foreach (var reasignacion in await db.Reasignaciones.AsNoTracking().Where(r => r.CasoId == casoId).ToListAsync(ct))
+            entradas.Add(new(reasignacion.ReasignadoEn,
+                $"Reasignado de {await NombreAsync(reasignacion.SerenoAnteriorId)} a {await NombreAsync(reasignacion.SerenoNuevoId)}",
+                await NombreAsync(reasignacion.OperadorId), $"Motivo: {reasignacion.Motivo}"));
+
         // DP03 (16/10/2026): asignación cancelada al desactivar la cuenta del sereno; el responsable es el administrador.
         foreach (var evento in await db.EventosCaso.AsNoTracking()
                      .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.AsignacionCancelada).ToListAsync(ct))

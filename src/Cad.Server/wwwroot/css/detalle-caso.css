@@ -498,3 +498,13 @@
   height: 1rem;
   margin-top: 2px;
 }
+
+/* Reasignar el caso (24/10/2026): como el descarte, una confirmación ligera al final de la sección «Despacho». */
+.reasignacion {
+  margin-top: var(--espacio-3);
+}
+
+.reasignacion .confirmacion__contenido {
+  border-color: var(--color-borde);
+  background: var(--color-superficie);
+}

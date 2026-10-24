@@ -70,8 +70,9 @@ public sealed class AvanzarCaso(CadDbContext db, TimeProvider reloj, INotificado
                 return new ResultadoAvance.NoEncontrado();
 
             // Primero lo ya registrado: un reenvío del mismo responsable no es un error.
+            var desde = asignacion?.AsignadaEn ?? DateTimeOffset.MinValue;
             var previo = await db.EventosCaso.AsNoTracking()
-                .Where(e => e.CasoId == casoId && e.Tipo == tipoEvento)
+                .Where(e => e.CasoId == casoId && e.Tipo == tipoEvento && e.OcurridoEn >= desde)
                 .Select(e => (Guid?)e.ActorId)
                 .FirstOrDefaultAsync(ct);
             if (previo is { } responsable)

@@ -126,6 +126,17 @@ public sealed class Caso
         Estado = EstadoCaso.Descartada;
     }
 
+    // Reasignación por la central (24/10/2026): mientras el sereno no está con el ciudadano («Asignada» o «En camino»); en
+    // atención, no. El caso vuelve a «Asignada» con el sereno nuevo, que debe confirmar que va en camino.
+    public bool PuedeReasignarse => Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino;
+
+    public void Reasignar()
+    {
+        if (!PuedeReasignarse)
+            throw new InvalidOperationException("Solo un caso asignado o en camino puede reasignarse.");
+        Estado = EstadoCaso.Asignada;
+    }
+
     // HU24-CA01/CA03: solo un caso «En atención» se cierra.
     public void Cerrar()
     {

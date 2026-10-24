@@ -1,0 +1,56 @@
+@model Cad.Server.Panel.Pages.VistaReasignacion
+@* Reasignación por la central (24/10/2026): a otro sereno disponible, con motivo obligatorio. Solo «Asignada» o «En camino». *@
+<details class="confirmacion reasignacion" open="@Model.Abierto" data-reasignacion>
+    <summary class="boton boton--secundario">Reasignar…</summary>
+    <form method="post" asp-page-handler="Reasignar" class="pila confirmacion__contenido" data-formulario novalidate>
+        <input type="hidden" name="Reasignacion.IdSolicitud" value="@Model.Formulario.IdSolicitud" />
+        <div class="aviso aviso--advertencia">
+            <partial name="_Icono" model="@("advertencia")" />
+            <div>
+                <p class="aviso__titulo">Reasignar el caso a otro sereno</p>
+                <p class="aviso__texto">Se retirará el despacho a @Model.SerenoActual, que quedará libre. El sereno que elijas lo recibirá como una asignación nueva y deberá confirmar que va en camino.</p>
+            </div>
+        </div>
+        @if (Model.Disponibles.Count == 0)
+        {
+            <p class="texto-secundario">No hay otro sereno disponible en este momento (operativo y sin asignación vigente).</p>
+        }
+        else
+        {
+            <fieldset class="opciones" aria-describedby="@(Model.ErrorDe("serenoId") is null ? null : "Reasignacion_SerenoId-error")">
+                <legend class="campo__etiqueta">Nuevo sereno</legend>
+                @foreach (var sereno in Model.Disponibles)
+                {
+                    var idOpcion = $"Reasignacion_Sereno_{sereno.Id:N}";
+                    <label class="opcion" for="@idOpcion">
+                        <input type="radio" id="@idOpcion" name="Reasignacion.SerenoId" value="@sereno.Id" required checked="@(Model.Formulario.SerenoId == sereno.Id)" />
+                        <span>@sereno.Nombre <span class="texto-secundario">· @sereno.Detalle</span></span>
+                    </label>
+                }
+            </fieldset>
+            @if (Model.ErrorDe("serenoId") is { } errorSereno)
+            {
+                <p id="Reasignacion_SerenoId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorSereno</span></p>
+            }
+            <div class="campo">
+                <label class="campo__etiqueta" for="Reasignacion_Motivo">Motivo</label>
+                <textarea class="campo__control campo__control--texto" id="Reasignacion_Motivo" name="Reasignacion.Motivo" rows="2" required
+                          maxlength="@Cad.Server.Modulos.Casos.Dominio.Reasignacion.MaximoMotivo"
+                          aria-invalid="@(Model.ErrorDe("motivo") is null ? null : "true")"
+                          aria-describedby="Reasignacion_Motivo-ayuda@(Model.ErrorDe("motivo") is null ? "" : " Reasignacion_Motivo-error")">@Model.Formulario.Motivo</textarea>
+                <p id="Reasignacion_Motivo-ayuda" class="campo__ayuda">Por ejemplo: el sereno se desactivó; otro sereno está más cerca; el sereno no responde.</p>
+                @if (Model.ErrorDe("motivo") is { } errorMotivo)
+                {
+                    <p id="Reasignacion_Motivo-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorMotivo</span></p>
+                }
+            </div>
+        }
+        <div class="acciones">
+            <a class="boton boton--secundario" href="@Model.UrlPagina">Cancelar</a>
+            @if (Model.Disponibles.Count > 0)
+            {
+                <button type="submit" class="boton boton--principal" data-texto-carga="Reasignando…">Reasignar el caso</button>
+            }
+        </div>
+    </form>
+</details>

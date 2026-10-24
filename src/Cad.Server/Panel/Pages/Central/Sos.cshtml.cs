@@ -17,7 +17,7 @@ namespace Cad.Server.Panel.Pages.Central;
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
     ClasificarCaso clasificar, AvanzarCaso avanzar, CerrarCaso cerrar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
-    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte,
+    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte, ReasignarCaso reasignar,
     IConfiguration configuracion) : PageModel
 {
     [BindProperty]
@@ -39,6 +39,18 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
 
     [BindProperty]
     public FormularioDescarte Descarte { get; set; } = new();
+
+    // Reasignación por la central (24/10/2026).
+    [BindProperty]
+    public FormularioReasignacion Reasignacion { get; set; } = new();
+    public Dictionary<string, string[]> ErroresReasignacion { get; private set; } = [];
+    public string? ErrorReasignacion { get; private set; }
+    public bool PuedeReasignarse => Sos.Asignacion is { FinalizadaEn: null } && (Sos.Estado == EstadosCaso.Texto(EstadoCaso.Asignada) || Sos.EnCamino);
+    public VistaReasignacion VistaReasignacion => new($"/panel/central/sos/{Sos.Id}", Sos.Asignacion?.Sereno ?? "",
+        SerenosDisponibles.Select(s => new SerenoParaReasignar(s.Id, s.Nombre, s.UltimaPosicionEn is { } h
+            ? $"última ubicación a las {TimeZoneInfo.ConvertTime(h, ZonaHoraria):HH:mm:ss}" : "ubicación no disponible")).ToList(),
+        Reasignacion.IdSolicitud == Guid.Empty ? new FormularioReasignacion { IdSolicitud = Guid.NewGuid() } : Reasignacion,
+        ErroresReasignacion, ErrorReasignacion);
 
     public DetalleSos Sos { get; private set; } = null!;
 
@@ -303,6 +315,29 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                     return NotFound();
                 ErrorMotivoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivo")?[0];
                 ErrorDescarte = (resultado as ResultadoDescarte.Rechazado)?.Motivo;
+                Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
+                Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+                return Page();
+        }
+    }
+
+    // Reasignación por la central (24/10/2026): a otro sereno disponible, con motivo; solo «Asignada» o «En camino».
+    public async Task<IActionResult> OnPostReasignarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await reasignar.EjecutarAsync(id, Reasignacion.SerenoId, Reasignacion.Motivo, User.IdUsuario(), Reasignacion.IdSolicitud, ct);
+        switch (resultado)
+        {
+            case ResultadoReasignacion.Reasignado or ResultadoReasignacion.YaReasignado:
+                Mensaje = "Caso reasignado.";
+                DetalleMensaje = "El sereno anterior quedó libre; el nuevo recibió el despacho.";
+                return RedirectToPage(new { id });
+            case ResultadoReasignacion.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErroresReasignacion = (resultado as ResultadoReasignacion.Invalido)?.Errores ?? [];
+                ErrorReasignacion = (resultado as ResultadoReasignacion.Rechazado)?.Motivo;
                 Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
                 Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
                 return Page();

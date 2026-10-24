@@ -16,7 +16,7 @@ namespace Cad.Server.Panel.Pages.Reportes;
 // curso, como en un SOS. Desde el 23/10/2026, la central también descarta un reporte falso o erróneo ya admitido.
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
     ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
-    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte,
+    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte, ReasignarCaso reasignar, ConsultarSerenos consultarSerenos,
     IConfiguration configuracion) : PageModel
 {
     [BindProperty]
@@ -29,6 +29,19 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
 
     [BindProperty]
     public FormularioDescarte Descarte { get; set; } = new();
+
+    // Reasignación por la central (24/10/2026).
+    [BindProperty]
+    public FormularioReasignacion Reasignacion { get; set; } = new();
+    public Dictionary<string, string[]> ErroresReasignacion { get; private set; } = [];
+    public string? ErrorReasignacion { get; private set; }
+    public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
+    public bool PuedeReasignarse => Seguimiento?.Asignacion is { FinalizadaEn: null } && Reporte.Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino;
+    public VistaReasignacion VistaReasignacion => new($"/panel/reportes/{Reporte.Id}", Seguimiento?.Asignacion?.Sereno ?? "",
+        SerenosDisponibles.Select(s => new SerenoParaReasignar(s.Id, s.Nombre, s.UltimaPosicionEn is { } h
+            ? $"última ubicación a las {TimeZoneInfo.ConvertTime(h, ZonaHoraria):HH:mm:ss}" : "ubicación no disponible")).ToList(),
+        Reasignacion.IdSolicitud == Guid.Empty ? new FormularioReasignacion { IdSolicitud = Guid.NewGuid() } : Reasignacion,
+        ErroresReasignacion, ErrorReasignacion);
     public string? ErrorDescarte { get; private set; }
     public string? ErrorMotivoDescarte { get; private set; }
 
@@ -284,6 +297,25 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         }
     }
 
+    // Reasignación por la central (24/10/2026): a otro sereno disponible, con motivo; solo «Asignada» o «En camino».
+    public async Task<IActionResult> OnPostReasignarAsync(Guid id, CancellationToken ct)
+    {
+        var resultado = await reasignar.EjecutarAsync(id, Reasignacion.SerenoId, Reasignacion.Motivo, User.IdUsuario(), Reasignacion.IdSolicitud, ct);
+        switch (resultado)
+        {
+            case ResultadoReasignacion.Reasignado or ResultadoReasignacion.YaReasignado:
+                return Hecho(id, "Reporte reasignado.", "El sereno anterior quedó libre; el nuevo recibió el despacho.");
+            case ResultadoReasignacion.NoEncontrado:
+                return NotFound();
+            default:
+                if (!await CargarAsync(id, ct))
+                    return NotFound();
+                ErroresReasignacion = (resultado as ResultadoReasignacion.Invalido)?.Errores ?? [];
+                ErrorReasignacion = (resultado as ResultadoReasignacion.Rechazado)?.Motivo;
+                return Page();
+        }
+    }
+
     private RedirectToPageResult Hecho(Guid id, string mensaje, string detalle)
     {
         Mensaje = mensaje;
@@ -301,6 +333,9 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
+        SerenosDisponibles = Seguimiento?.Asignacion is { FinalizadaEn: null }
+            ? (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList()
+            : [];
         Descartado = reporte.Estado == EstadoCaso.Descartada ? await consultarDescarte.EjecutarAsync(id, ct) : null;
         return true;
     }
