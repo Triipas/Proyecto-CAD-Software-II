@@ -1,7 +1,9 @@
 // HU38 — acompañamientos activos: la lista se vuelve a pedir al servidor cada 10 s (la base de datos es la fuente de verdad)
 // y la antigüedad de cada posición avanza cada segundo. Una posición desactualizada (DP12) o una sesión sin conexión (DP20) se
 // dibuja en gris y nunca como posición actual (CA03).
-// Rediseño CAD v2: «Ver en el mapa» vuela a la sesión, como en la central, y el marcador elegido queda fijado.
+// Rediseño CAD v2: elegir una sesión vuela a ella en el mapa, como en la central, y el marcador elegido queda fijado.
+// 24/10/2026: la tarjeta entera es el botón que la elige, y la lista se actualiza en cuanto llega algo del ciudadano (aviso
+// «AcompanamientoActualizado» del canal de la central); la consulta cada 10 s queda de respaldo y para el umbral de DP20.
 (() => {
   const region = document.querySelector("[data-region-acompanamientos]");
   const contenedor = document.getElementById("mapa");
@@ -46,8 +48,10 @@
       marcador.getElement()?.classList.toggle("marcador--elegido", clave === id);
       marcador.setZIndexOffset(clave === id ? 1000 : 0);
     }
-    for (const item of region.querySelectorAll("[data-acompanamiento]"))
+    for (const item of region.querySelectorAll("[data-acompanamiento]")) {
       item.classList.toggle("acompanamiento--elegido", item.dataset.acompanamiento === id);
+      item.querySelector("[data-elegir-acompanamiento]")?.setAttribute("aria-pressed", String(item.dataset.acompanamiento === id));
+    }
   }
 
   // Dos anillos se abren desde el punto al aterrizar (sin ellos si se pide reducir el movimiento).
@@ -87,7 +91,7 @@
   }
 
   region.addEventListener("click", (evento) => {
-    const boton = evento.target.closest("[data-ver-en-mapa]");
+    const boton = evento.target.closest("[data-elegir-acompanamiento]");
     if (boton) elegir(boton.closest("[data-acompanamiento]").dataset.acompanamiento);
   });
 
@@ -101,15 +105,27 @@
     for (const span of region.querySelectorAll("[data-antiguedad]")) span.textContent = antiguedad(span.dataset.desde);
   }, 1000);
 
+  let pidiendo = false, pendiente = false;
   async function actualizar() {
+    if (pidiendo) { pendiente = true; return; }
+    pidiendo = true;
     try {
       const respuesta = await fetch("/panel/acompanamientos?handler=Lista", { credentials: "same-origin", headers: { Accept: "text/html" } });
       if (respuesta.redirected || !respuesta.ok) return; // sesión terminada o error: se conserva lo último mostrado
+      // El foco del teclado vuelve al mismo botón o enlace de la misma sesión tras cambiar la lista.
+      const foco = document.activeElement;
+      const sesionConFoco = region.contains(foco) ? foco.closest("[data-acompanamiento]")?.dataset.acompanamiento : null;
+      const selectorFoco = foco?.matches?.("[data-elegir-acompanamiento]") ? "[data-elegir-acompanamiento]" : foco?.matches?.("a") ? `a[href="${foco.getAttribute("href")}"]` : null;
       region.innerHTML = await respuesta.text();
+      if (sesionConFoco && selectorFoco)
+        region.querySelector(`[data-acompanamiento="${CSS.escape(sesionConFoco)}"] ${selectorFoco}`)?.focus({ preventScroll: true });
       avisarNuevos();
       dibujar();
     } catch {
       // Sin conexión con el servidor: se reintenta en la siguiente vuelta.
+    } finally {
+      pidiendo = false;
+      if (pendiente) { pendiente = false; actualizar(); }
     }
   }
 
@@ -127,4 +143,10 @@
 
   dibujar();
   setInterval(actualizar, 10000);
+  if (typeof signalR !== "undefined") {
+    const conexion = new signalR.HubConnectionBuilder().withUrl("/hubs/central").withAutomaticReconnect().build();
+    conexion.on("AcompanamientoActualizado", () => actualizar());
+    conexion.onreconnected(() => actualizar());
+    conexion.start().catch(() => { /* sin canal en tiempo real: queda la consulta cada 10 s */ });
+  }
 })();

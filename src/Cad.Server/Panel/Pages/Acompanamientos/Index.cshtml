@@ -19,7 +19,7 @@
     <section class="superficie acompanamientos__lista" aria-labelledby="titulo-activos">
         <div class="acompanamientos__cabecera">
             <h2 id="titulo-activos" class="acompanamientos__titulo">Sesiones activas</h2>
-            <p class="texto-secundario">Se actualiza cada 10 segundos. Una posición con más de @((int)Model.Lista.Umbral.TotalSeconds) s está desactualizada.</p>
+            <p class="texto-secundario">Se actualiza al llegar cada envío del ciudadano. Una posición con más de @((int)Model.Lista.Umbral.TotalSeconds) s está desactualizada.</p>
         </div>
         <div data-region-acompanamientos aria-live="polite">
             <partial name="_ListaAcompanamientos" model="@Model.Lista" />
@@ -40,5 +40,6 @@
 
 @section Scripts {
     <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/acompanamientos.js" asp-append-version="true"></script>
 }

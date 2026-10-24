@@ -430,5 +430,6 @@ public class CancelacionSosTests(FabricaCad fabrica)
         public Task SosCanceladoAsync(Guid casoId, CancellationToken ct) => throw new InvalidOperationException("Fallo simulado.");
         public Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
+        public Task AcompanamientoActualizadoAsync(Guid sesionId, CancellationToken ct) => Task.CompletedTask;
     }
 }

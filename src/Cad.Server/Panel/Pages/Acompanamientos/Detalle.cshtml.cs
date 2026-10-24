@@ -36,6 +36,17 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
 
     public DetalleAcompanamiento Sesion { get; private set; } = null!;
 
+    // 24/10/2026: la tabla de posiciones va por páginas (la más reciente primero); el mapa sigue mostrando todo el recorrido.
+    public const int PosicionesPorPagina = 20;
+
+    [BindProperty(SupportsGet = true)]
+    public int Pagina { get; set; } = 1;
+
+    public int Paginas => Math.Max(1, (int)Math.Ceiling(Sesion.Posiciones.Count / (double)PosicionesPorPagina));
+    public int PrimeraDeLaPagina => (Pagina - 1) * PosicionesPorPagina;
+    public IEnumerable<(PosicionVista Posicion, int Indice)> PosicionesDeLaPagina =>
+        Sesion.Posiciones.Select((p, i) => (p, i)).Skip(PrimeraDeLaPagina).Take(PosicionesPorPagina);
+
     // ADR-08, fase D: celular verificado y datos opcionales del ciudadano (p. ej., su contacto de emergencia).
     public Modulos.Consultas.FichaCiudadano? Ficha { get; private set; }
     public TimeZoneInfo ZonaHoraria => Formato.Zona(configuracion);
@@ -47,6 +58,7 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
         if (await consultar.DetalleAsync(id, ct) is not { } sesion)
             return NotFound();
         Sesion = sesion;
+        Pagina = Math.Clamp(Pagina, 1, Paginas);
         Ficha = await consultarFicha.PorSesionAsync(id, ct);
         Avisos = await consultarAvisos.DeSesionAsync(id, ct);
         IdSolicitudConfirmacion = Guid.NewGuid();

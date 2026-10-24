@@ -438,5 +438,6 @@ public class DecisionReporteTests(FabricaCad fabrica)
         public Task SerenoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoAsignadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
         public Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct) => Task.CompletedTask;
+        public Task AcompanamientoActualizadoAsync(Guid sesionId, CancellationToken ct) => Task.CompletedTask;
     }
 }

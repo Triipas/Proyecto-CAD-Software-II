@@ -22,4 +22,8 @@ public interface INotificador
 
     // HU23-CA02: otro responsable (un operador) cambió el estado del despacho del sereno.
     Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct);
+
+    // 24/10/2026: una sesión de acompañamiento cambió (inicio, posición, confirmación, aviso o cierre). Solo el identificador:
+    // el panel vuelve a leer la sesión (las coordenadas nunca viajan en el aviso).
+    Task AcompanamientoActualizadoAsync(Guid sesionId, CancellationToken ct);
 }
