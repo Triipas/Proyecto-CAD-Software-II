@@ -10,7 +10,7 @@ namespace Cad.Server.Modulos.Consultas;
 public sealed record CasoEnMapa(Guid Id, OrigenCaso Origen, EstadoCaso Estado, double Latitud, double Longitud, string Ciudadano)
 {
     public string TextoOrigen => Origen == OrigenCaso.Sos ? "SOS" : "Reporte";
-    public string TextoEstado => EstadosCaso.Texto(Estado);
+    public string TextoEstado => EstadosCaso.Texto(Origen, Estado);
     public string Detalle => Origen == OrigenCaso.Sos ? $"/panel/central/sos/{Id}" : $"/panel/reportes/{Id}";
 }
 

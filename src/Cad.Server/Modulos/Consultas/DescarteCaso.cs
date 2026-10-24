@@ -12,9 +12,10 @@ public sealed class ConsultarDescarte(CadDbContext db)
     public async Task<DescarteVista?> EjecutarAsync(Guid casoId, CancellationToken ct) =>
         await (from descarte in db.DescartesCaso.AsNoTracking()
                join operador in db.Users.AsNoTracking() on descarte.OperadorId equals operador.Id
+               join caso in db.Casos.AsNoTracking() on descarte.CasoId equals caso.Id
                where descarte.CasoId == casoId
-               select new { descarte.EstadoPrevio, descarte.Motivo, descarte.DescartadoEn, Operador = operador.Nombres + " " + operador.Apellidos })
+               select new { caso.Origen, descarte.EstadoPrevio, descarte.Motivo, descarte.DescartadoEn, Operador = operador.Nombres + " " + operador.Apellidos })
             .SingleOrDefaultAsync(ct) is { } d
-            ? new DescarteVista(d.Operador, EstadosCaso.Texto(d.EstadoPrevio), d.Motivo, d.DescartadoEn)
+            ? new DescarteVista(d.Operador, EstadosCaso.Texto(d.Origen, d.EstadoPrevio), d.Motivo, d.DescartadoEn)
             : null;
 }

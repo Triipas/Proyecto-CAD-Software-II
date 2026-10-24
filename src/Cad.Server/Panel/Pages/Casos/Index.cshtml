@@ -78,7 +78,7 @@
                    Model.Categorias.Select(c => (c.Id.ToString(), c.Nombre)).Append((Cad.Server.Panel.Pages.Casos.IndexModel.ValorSinTipo, Cad.Server.Modulos.Consultas.CasoEncontrado.TipoPorDeterminar)), "Todos",
                    "En los casos cerrados, la tipificación final."); }
             @{ await Selector("estado", "Estado", Model.Estado,
-                   Cad.Server.Panel.Pages.Casos.IndexModel.EstadosFiltrables.Select(e => (e.ToString(), EstadosCaso.Texto(e))), "Todos"); }
+                   Cad.Server.Panel.Pages.Casos.IndexModel.EstadosFiltrables.Select(e => (e.ToString(), Cad.Server.Panel.Pages.Casos.IndexModel.TextoEstadoFiltro(e))), "Todos"); }
             @{ await Selector("sereno", "Sereno asignado", Model.Sereno, Model.Serenos.Select(s => (s.Id.ToString(), s.Nombre)), "Todos"); }
         </div>
         <div class="acciones filtros__acciones">

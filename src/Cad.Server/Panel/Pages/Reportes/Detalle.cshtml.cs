@@ -111,7 +111,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         _ => SiguienteAccion.SinAcciones,
     };
 
-    // Recibido → En revisión → Admitido → Asignado → En camino → En atención → Cerrado; un reporte derivado o descartado
+    // Recibido → En revisión → Admitido → Asignada → En camino → En atención → Cerrada; un reporte derivado o descartado
     // termina en el tercer paso.
     public IReadOnlyList<PasoCaso> Pasos
     {
@@ -119,7 +119,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         {
             if (Reporte.Estado is EstadoCaso.Derivada or EstadoCaso.Descartada)
                 return ProgresoCaso.Construir(
-                    ["Recibido", "En revisión", Reporte.Estado == EstadoCaso.Derivada ? "Derivado" : "Descartado"], [true, true, true], -1);
+                    ["Recibido", "En revisión", EstadosCaso.Texto(Reporte.Estado)], [true, true, true], -1);
 
             var indice = Reporte.Estado switch
             {
@@ -142,8 +142,10 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
                 indice == 5 || (indice > 5 && avances.Any(a => a.Descripcion == "En atención")),
                 indice == 6,
             ];
-            string[] textos = ["Recibido", "En revisión", "Admitido", "Asignado", "En camino", "En atención",
-                Reporte.Estado == EstadoCaso.Cancelada ? "Cancelado" : "Cerrado"];
+            // Los pasos que son estados se llaman como el estado: el chip y el paso marcado dicen lo mismo (24/10/2026).
+            string[] textos = [EstadosCaso.Texto(EstadoCaso.Recibido), EstadosCaso.Texto(EstadoCaso.EnRevision), EstadosCaso.ReporteAdmitido,
+                EstadosCaso.Texto(EstadoCaso.Asignada), EstadosCaso.Texto(EstadoCaso.EnCamino), EstadosCaso.Texto(EstadoCaso.EnAtencion),
+                EstadosCaso.Texto(Reporte.Estado == EstadoCaso.Cancelada ? EstadoCaso.Cancelada : EstadoCaso.Cerrada)];
             return ProgresoCaso.Construir(textos, hechos, indice < 6 ? indice + 1 : -1);
         }
     }

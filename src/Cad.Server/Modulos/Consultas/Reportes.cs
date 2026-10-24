@@ -132,7 +132,7 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
             .SingleOrDefaultAsync(ct);
 
         var (c, d) = (fila.caso, fila.detalle);
-        return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
+        return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Origen, c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
             d.OcurridoAproximadamenteEn, d.FuenteUbicacion, d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros,
             d.ReferenciaHecho, c.CategoriaId!.Value, categorias[c.CategoriaId!.Value], categorias[d.CategoriaOriginalId],
             revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono);
