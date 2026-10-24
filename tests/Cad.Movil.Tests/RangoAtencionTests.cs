@@ -59,7 +59,7 @@ public class RangoAtencionTests
     {
         var llegadas = 0;
         var vm = await SerenoEnAsync(LatCaso + 0.03, LonCaso); // lejos al principio
-        vm.Llegada += () => llegadas++;
+        vm.Llegada += () => Interlocked.Increment(ref llegadas);
         Assert.False(vm.MostrarLlegaste);
 
         // Se acerca: el turno envía la nueva posición y la pantalla se actualiza.
@@ -67,12 +67,15 @@ public class RangoAtencionTests
         await vm.Alternar.EjecutarAsync(); // con un caso en curso, pide confirmación…
         await vm.ConfirmarDesactivacion.EjecutarAsync(); // …y se desactiva
         await vm.Alternar.EjecutarAsync(); // vuelve a activar y lee la posición
+        // Se espera al aviso, no a MostrarLlegaste: esa propiedad se calcula al vuelo y puede verse antes de que el
+        // modelo de vista termine de revisar la llegada en el otro hilo.
         var limite = DateTime.UtcNow.AddSeconds(5);
-        while (!vm.MostrarLlegaste && DateTime.UtcNow < limite)
+        while (Volatile.Read(ref llegadas) == 0 && DateTime.UtcNow < limite)
             await Task.Delay(10);
+        await Task.Delay(50); // por si llegara un segundo aviso
 
         Assert.True(vm.MostrarLlegaste);
-        Assert.Equal(1, llegadas);
+        Assert.Equal(1, Volatile.Read(ref llegadas));
     }
 
     [Fact]
