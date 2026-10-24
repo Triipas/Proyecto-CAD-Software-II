@@ -120,7 +120,7 @@
                 </v:Descartable>
 
                 <!-- HU31: avisos sin leer de los casos propios. Deslizándolo se quita hasta que llegue otro aviso. -->
-                <v:Descartable Nombre="notificaciones" Clave="{Binding TextoNotificaciones}">
+                <v:Descartable Nombre="notificaciones" Clave="{Binding ClaveNotificaciones}">
                 <Grid IsVisible="{Binding HayNoLeidas}">
                     <Border Style="{StaticResource Flotante}" Padding="12,10">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">

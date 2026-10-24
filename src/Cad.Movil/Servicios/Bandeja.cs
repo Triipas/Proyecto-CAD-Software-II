@@ -7,14 +7,17 @@ namespace Cad.Movil.Servicios;
 public sealed class ServicioBandeja(IApiCad api, IAlmacenSesion sesiones, TimeProvider reloj)
 {
     // Sin leer, para el aviso del inicio; null si no hay sesión vigente o respuesta (no se muestra un número falso).
-    public async Task<int?> ContarNoLeidasAsync(CancellationToken ct = default)
+    // Ultima: la no leída más reciente; identifica el aviso del inicio para quitarlo deslizándolo (el número solo se repite).
+    public async Task<ResumenNoLeidas?> ContarNoLeidasAsync(CancellationToken ct = default)
     {
         var sesion = await sesiones.LeerAsync();
         if (sesion is null || !sesion.Vigente(reloj.GetUtcNow()))
             return null;
         try
         {
-            return await api.ConsultarNotificacionesAsync(sesion.Token, ct) is ResultadoApi<BandejaNotificaciones>.Correcto c ? c.Valor.NoLeidas : null;
+            return await api.ConsultarNotificacionesAsync(sesion.Token, ct) is ResultadoApi<BandejaNotificaciones>.Correcto c
+                ? new ResumenNoLeidas(c.Valor.NoLeidas, c.Valor.Notificaciones.FirstOrDefault(n => !n.Leida)?.Id)
+                : null;
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {
@@ -22,3 +25,5 @@ public sealed class ServicioBandeja(IApiCad api, IAlmacenSesion sesiones, TimePr
         }
     }
 }
+
+public sealed record ResumenNoLeidas(int NoLeidas, Guid? Ultima);
