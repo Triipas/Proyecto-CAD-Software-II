@@ -199,6 +199,8 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         switch (resultado)
         {
             case ResultadoDecision.Registrado r:
+                if (r.Estado == EstadosCaso.Texto(EstadoCaso.Pendiente)) // admitido: queda listo para asignar
+                    TempData[SonidoPanel.Clave] = SonidoPanel.ReporteAdmitido;
                 return Hecho(id, "Decisión registrada.", QueSigue(r.Estado));
             case ResultadoDecision.YaRegistrado r:
                 return Hecho(id, "Decisión registrada.", QueSigue(r.Estado));
@@ -220,6 +222,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         {
             case ResultadoAsignacion.Asignado or ResultadoAsignacion.YaAsignado:
                 TempData[nameof(Central.IndexModel.Mensaje)] = "Reporte asignado.";
+                TempData[SonidoPanel.Clave] = SonidoPanel.CasoAsignado;
                 TempData[nameof(Central.IndexModel.DetalleMensaje)] = "El sereno ya no figura como disponible.";
                 break;
             case ResultadoAsignacion.CasoNoEncontrado:
@@ -304,6 +307,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         switch (resultado)
         {
             case ResultadoReasignacion.Reasignado or ResultadoReasignacion.YaReasignado:
+                TempData[SonidoPanel.Clave] = SonidoPanel.CasoAsignado;
                 return Hecho(id, "Reporte reasignado.", "El sereno anterior quedó libre; el nuevo recibió el despacho.");
             case ResultadoReasignacion.NoEncontrado:
                 return NotFound();

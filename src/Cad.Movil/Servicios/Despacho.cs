@@ -14,6 +14,9 @@ public interface ICanalSereno
     // HU23-CA02: otro responsable (un operador) cambió el estado del despacho.
     event Action? DespachoActualizado;
 
+    // Si el canal está conectado en este momento (no reconectando ni caído): su aviso llegará y sonará en la app.
+    bool Conectado { get; }
+
     // Devuelve false si no se pudo conectar (sin red o sin servidor); el despacho sigue siendo consultable.
     Task<bool> ConectarAsync(CancellationToken ct);
     Task DesconectarAsync();
@@ -21,7 +24,8 @@ public interface ICanalSereno
 
 // HU21 — despacho del sereno en la app: se consulta al abrir la pantalla, al recibir el aviso y al reconectar.
 // Si el aviso no llega (sin conexión, app cerrada), el despacho aparece igualmente al abrir la app (ADR-07, punto 4).
-public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICanalSereno canal, TimeProvider reloj)
+public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICanalSereno canal, TimeProvider reloj,
+    IReproductorSonidos? sonidos = null)
 {
     private readonly SemaphoreSlim consulta = new(1, 1);
     private bool suscrito;
@@ -114,6 +118,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             return false; // sin despacho, o con otra operación en curso (doble toque)
         var aplicado = false;
         var recargar = false;
+        var rechazado = false;
         try
         {
             var sesion = await sesiones.LeerAsync();
@@ -135,13 +140,15 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
                     break;
                 case ResultadoApi<DespachoSereno?>.Rechazado { Estado: 400 } r:
                     Error = r.Errores.Values.SelectMany(e => e).FirstOrDefault() ?? r.Mensaje; // motivo o detalle no válidos
+                    rechazado = true;
                     break;
                 case ResultadoApi<DespachoSereno?>.Rechazado r:
                     Error = r.Mensaje;
-                    recargar = true; // el estado cambió (p. ej., un operador registró el inicio) o el caso ya no es suyo
+                    recargar = rechazado = true; // el estado cambió (p. ej., un operador registró el inicio) o el caso ya no es suyo
                     break;
                 case ResultadoApi<DespachoSereno?>.SinRespuesta s:
                     Error = $"No se pudo {accion}: {s.Motivo} Reinténtalo.";
+                    rechazado = true;
                     break;
             }
         }
@@ -150,6 +157,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             consulta.Release();
             Cambio?.Invoke();
         }
+        if (rechazado)
+            sonidos?.Reproducir(Sonido.Error);
         if (recargar)
         {
             var motivo = Error;
@@ -181,6 +190,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             return false;
         var cerrado = false;
         var recargar = false;
+        var rechazado = false;
         try
         {
             var sesion = await sesiones.LeerAsync();
@@ -200,15 +210,17 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
                 case ResultadoApi<RespuestaCierreCaso>.Rechazado { Estado: 400 } r:
                     ErroresCierre = r.Errores; // CA02: faltan la tipificación o el resultado
                     Error = null;
+                    rechazado = true;
                     break;
                 case ResultadoApi<RespuestaCierreCaso>.Rechazado { Estado: 401 }:
                     break;
                 case ResultadoApi<RespuestaCierreCaso>.Rechazado r:
                     Error = r.Mensaje; // p. ej., el operador ya lo cerró
-                    recargar = true;
+                    recargar = rechazado = true;
                     break;
                 case ResultadoApi<RespuestaCierreCaso>.SinRespuesta s:
                     Error = $"No se pudo cerrar el caso: {s.Motivo} Reinténtalo.";
+                    rechazado = true;
                     break;
             }
         }
@@ -217,6 +229,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             consulta.Release();
             Cambio?.Invoke();
         }
+        if (rechazado)
+            sonidos?.Reproducir(Sonido.Error);
         if (recargar)
         {
             var motivo = Error;
@@ -256,6 +270,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     {
         AvisoNuevo = true;
         await ActualizarSinExcepcionesAsync();
+        if (Actual is not null)
+            sonidos?.Reproducir(Sonido.NuevoDespacho); // con la app abierta; en segundo plano suena la notificación
     }
 
     private async void AlReconectar()

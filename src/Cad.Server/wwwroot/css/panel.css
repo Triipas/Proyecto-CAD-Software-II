@@ -691,6 +691,57 @@ a.boton {
   border-left: 1px solid var(--color-borde-sobre-marino);
 }
 
+/* Avisos sonoros (24/10/2026): solo icono; el estado lo dan aria-pressed, el título y el icono. */
+.barra__sonido {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-borde-sobre-marino);
+  border-radius: var(--radio-control);
+  color: var(--color-texto-sobre-marino);
+  background: transparent;
+  cursor: pointer;
+}
+
+.barra__sonido:hover {
+  color: #FFFFFF;
+  background: var(--color-marino-elevado);
+}
+
+.barra__sonido:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+.barra__sonido .icono {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.barra__sonido[aria-pressed="true"] [data-icono-sonido="silenciado"],
+.barra__sonido[aria-pressed="false"] [data-icono-sonido="activado"] {
+  display: none;
+}
+
+.barra__sonido[aria-pressed="false"] {
+  color: var(--color-texto-sobre-marino);
+  opacity: 0.75;
+}
+
+/* El navegador bloqueó un sonido hasta que haya un clic en la página: un punto lo señala. */
+.barra__sonido[data-bloqueado]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-advertencia);
+}
+
 .barra__avatar {
   width: 2rem;
   height: 2rem;

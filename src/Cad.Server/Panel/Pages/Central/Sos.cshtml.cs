@@ -200,6 +200,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         {
             case ResultadoAsignacion.Asignado or ResultadoAsignacion.YaAsignado:
                 Mensaje = "SOS asignado.";
+                TempData[SonidoPanel.Clave] = SonidoPanel.CasoAsignado;
                 DetalleMensaje = "El sereno ya no figura como disponible.";
                 return volverACentral ? RedirectToPage("/Central/Index") : RedirectToPage(new { id });
             case ResultadoAsignacion.CasoNoEncontrado:
@@ -329,6 +330,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         {
             case ResultadoReasignacion.Reasignado or ResultadoReasignacion.YaReasignado:
                 Mensaje = "Caso reasignado.";
+                TempData[SonidoPanel.Clave] = SonidoPanel.CasoAsignado;
                 DetalleMensaje = "El sereno anterior quedó libre; el nuevo recibió el despacho.";
                 return RedirectToPage(new { id });
             case ResultadoReasignacion.NoEncontrado:

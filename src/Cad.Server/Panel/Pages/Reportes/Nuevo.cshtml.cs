@@ -50,6 +50,7 @@ public class NuevoModel(RegistrarReporte registrar, ConsultarCategorias consulta
             case ResultadoRegistroReporte.Registrado or ResultadoRegistroReporte.YaRegistrado:
                 var caso = resultado is ResultadoRegistroReporte.Registrado r ? r.Caso : ((ResultadoRegistroReporte.YaRegistrado)resultado).Caso;
                 Mensaje = "Reporte registrado y admitido.";
+                TempData[SonidoPanel.Clave] = SonidoPanel.ReporteAdmitido;
                 DetalleMensaje = "Ya aparece en «Reportes admitidos» de la central: asígnale un sereno.";
                 return RedirectToPage("/Reportes/Detalle", new { id = caso.Id }); // PRG
             default:

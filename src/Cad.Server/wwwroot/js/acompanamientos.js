@@ -106,10 +106,23 @@
       const respuesta = await fetch("/panel/acompanamientos?handler=Lista", { credentials: "same-origin", headers: { Accept: "text/html" } });
       if (respuesta.redirected || !respuesta.ok) return; // sesión terminada o error: se conserva lo último mostrado
       region.innerHTML = await respuesta.text();
+      avisarNuevos();
       dibujar();
     } catch {
       // Sin conexión con el servidor: se reintenta en la siguiente vuelta.
     }
+  }
+
+  // 24/10/2026: un aviso de acompañamiento que aparece en la lista suena una vez (sonidos.js, si están activados).
+  const avisosVistos = new Set([...region.querySelectorAll("[data-aviso]")].map((el) => el.dataset.aviso));
+  function avisarNuevos() {
+    let hayNuevo = false;
+    for (const el of region.querySelectorAll("[data-aviso]")) {
+      if (avisosVistos.has(el.dataset.aviso)) continue;
+      avisosVistos.add(el.dataset.aviso);
+      hayNuevo = true;
+    }
+    if (hayNuevo) window.CadSonidos?.reproducir("aviso-acompanamiento");
   }
 
   dibujar();

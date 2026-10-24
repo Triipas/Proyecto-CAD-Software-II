@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
     @await RenderSectionAsync("Estilos", required: false)
 </head>
-<body>
+<body data-sonido="@TempData[Cad.Server.Panel.SonidoPanel.Clave]">
     @* Barra superior del rediseño CAD v2 (dirección «Mapa protagonista»): marca, secciones y sesión.
        Por debajo de 1100 px las secciones pasan a un menú desplegable (data-menu, formulario.js). *@
     <header class="barra" data-barra>
@@ -55,6 +55,15 @@
             var nombre = User.FindFirstValue(Autenticacion.ReclamoNombre) ?? "";
             var iniciales = string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
             <form method="post" asp-page="/Salir" class="barra__sesion">
+                @if (rol == Roles.Operador)
+                {
+                    @* Avisos sonoros (24/10/2026): activados por defecto; este botón los silencia o los vuelve a activar (sonidos.js). *@
+                    <button type="button" class="barra__sonido" aria-pressed="true" title="Silenciar avisos sonoros" data-alternar-sonido>
+                        <span data-icono-sonido="activado"><partial name="_Icono" model="@("sonido")" /></span>
+                        <span data-icono-sonido="silenciado"><partial name="_Icono" model="@("silencio")" /></span>
+                        <span class="visualmente-oculto">Avisos sonoros</span>
+                    </button>
+                }
                 <span class="barra__avatar" aria-hidden="true">@iniciales</span>
                 <span class="barra__persona"><b>@nombre</b><span>@rol</span></span>
                 <button type="submit" class="boton boton--sobre-marino boton--compacto">Salir</button>
@@ -64,6 +73,7 @@
     <main class="pagina @ViewData["ClasePagina"]">
         @RenderBody()
     </main>
+    <script src="~/js/sonidos.js" asp-append-version="true"></script>
     <script src="~/js/formulario.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

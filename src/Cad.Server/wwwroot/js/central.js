@@ -7,7 +7,6 @@
   const contador = document.querySelector("[data-contador]");
   const anuncio = document.querySelector("[data-anuncio]");
   const indicador = document.querySelector("[data-conexion]");
-  const botonSonido = document.querySelector("[data-activar-sonido]");
   const seccion = document.querySelector(".central__urgente");
   const contenedorMapa = document.getElementById("mapa");
   // HU15-CA02 y HU20-CA07: reportes admitidos, en su propia sección; se seleccionan y asignan como un SOS.
@@ -569,27 +568,21 @@
   }
 
   // ---------- Aviso visual y sonoro ----------
+  // Los sonidos y su botón (barra superior) están en sonidos.js (24/10/2026): activados por defecto.
   let audio = null;
 
-  botonSonido.addEventListener("click", () => {
-    // Los navegadores solo permiten sonido tras una acción del usuario (Plan de Arquitectura, SP-E).
-    audio ??= new AudioContext();
-    audio.resume();
-    botonSonido.setAttribute("aria-pressed", "true");
-    botonSonido.textContent = "Avisos sonoros activados";
-    botonSonido.disabled = true;
-    tono([660], 0.12);
-  });
-
+  // Tono sintetizado solo para la cancelación de un SOS, que no tiene sonido propio.
   function tono(frecuencias, duracion) {
-    if (!audio || audio.state !== "running") return false;
+    if (!CadSonidos.activos) return false;
+    audio ??= new AudioContext();
+    if (audio.state !== "running") audio.resume();
     let inicio = audio.currentTime;
     for (const frecuencia of frecuencias) {
       const oscilador = audio.createOscillator();
       const volumen = audio.createGain();
-      oscilador.type = "square";
+      oscilador.type = "sine";
       oscilador.frequency.value = frecuencia;
-      volumen.gain.setValueAtTime(0.15, inicio);
+      volumen.gain.setValueAtTime(0.2, inicio);
       volumen.gain.exponentialRampToValueAtTime(0.001, inicio + duracion);
       oscilador.connect(volumen).connect(audio.destination);
       oscilador.start(inicio);
@@ -609,7 +602,7 @@
     document.title = `(${sinVer}) ${tituloBase}`;
     const ubicacion = item.dataset.lat ? "con ubicación" : "sin ubicación disponible";
     anuncio.textContent = `Nuevo SOS de ${item.dataset.ciudadano}, ${ubicacion}.`;
-    if (tono([880, 660, 880], 0.18))
+    if (CadSonidos.reproducir("sos-nuevo"))
       seccion.dataset.avisosSonoros = String(Number(seccion.dataset.avisosSonoros) + 1);
   }
 
@@ -627,6 +620,18 @@
     anuncio.textContent = texto;
     if (tono([440, 330], 0.2))
       seccion.dataset.avisosSonoros = String(Number(seccion.dataset.avisosSonoros) + 1);
+  }
+
+  // Un reporte que entra a «Reportes admitidos» (otro operador lo admitió o lo registró) suena una vez.
+  const reportesVistos = new Set([...(regionReportes?.querySelectorAll("[data-sos]") ?? [])].map((el) => el.dataset.sos));
+  function avisarReportesNuevos() {
+    let hayNuevo = false;
+    for (const el of regionReportes.querySelectorAll("[data-sos]")) {
+      if (reportesVistos.has(el.dataset.sos)) continue;
+      reportesVistos.add(el.dataset.sos);
+      hayNuevo = true;
+    }
+    if (hayNuevo) CadSonidos.reproducir("reporte-admitido");
   }
 
   function marcarComoVisto() {
@@ -652,6 +657,7 @@
       if (reportes.ok && !reportes.redirected) {
         regionReportes.innerHTML = await reportes.text();
         contadorReportes.textContent = regionReportes.querySelector("[data-lista-reportes]").dataset.total;
+        avisarReportesNuevos();
       }
     }
     if (regionCasosMapa) {

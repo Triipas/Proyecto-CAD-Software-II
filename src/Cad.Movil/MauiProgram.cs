@@ -96,7 +96,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<ICanalSereno, CanalSerenoSignalR>();
 #if ANDROID
         builder.Services.AddSingleton<IServicioPush, Platforms.Android.ServicioPushAndroid>();
+        builder.Services.AddSingleton<IReproductorSonidos, Platforms.Android.ReproductorSonidosAndroid>();
 #else
+        builder.Services.AddSingleton<IReproductorSonidos, SinSonidos>();
         builder.Services.AddSingleton<IServicioPush, ServicioPushNoDisponible>();
 #endif
         builder.Services.AddSingleton<ServicioNotificaciones>();

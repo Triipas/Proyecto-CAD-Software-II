@@ -19,7 +19,7 @@ public abstract record EstadoReporte
 
 // HU10 — Registrar un reporte de incidencia (lado de la app). Mismo mecanismo que el SOS (S1-T14): un IdSolicitud por
 // envío del ciudadano, reutilizado en cada reintento técnico, de modo que el servidor nunca crea dos reportes (CA08).
-public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, TimeProvider reloj)
+public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, TimeProvider reloj, IReproductorSonidos? sonidos = null)
 {
     // Los mismos límites que el servidor (DP08, DP10); el servidor vuelve a comprobarlo todo.
     public const int MaximoDescripcion = 2000;
@@ -158,5 +158,7 @@ public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, Tim
     {
         Estado = estado;
         Cambio?.Invoke(estado);
+        if (estado is EstadoReporte.Rechazado or EstadoReporte.NoConfirmado)
+            sonidos?.Reproducir(Sonido.Error); // 24/10/2026: el aviso en pantalla dice qué pasó
     }
 }
