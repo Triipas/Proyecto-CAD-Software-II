@@ -412,6 +412,24 @@
   height: 0.875rem;
 }
 
+/* 24/10/2026: sereno desactivado con un caso en curso (DP16-b): la central lo ve marcado. */
+.central .sereno__alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-1);
+  margin: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  color: var(--color-advertencia);
+}
+
+.central .sereno__alerta .icono {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 2px;
+}
+
 .central .sereno__distancia {
   font-size: var(--texto-xs);
   font-weight: var(--peso-medio);

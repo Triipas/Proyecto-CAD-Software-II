@@ -29,6 +29,14 @@
                         </span>
                         <span class="sereno__disponibilidad">@(sereno.Disponible ? "Disponible" : sereno.ConAsignacion ? "No disponible · con asignación vigente" : "No disponible")</span>
                     </div>
+                    @if (!sereno.Operativo && sereno.ConAsignacion)
+                    {
+                        @* 24/10/2026 (DP16-b): se desactivó con un caso en curso; el caso sigue a su nombre. *@
+                        <p class="sereno__alerta" data-desactivado-con-caso>
+                            <partial name="_Icono" model="@("advertencia")" />
+                            <span>Se desactivó con el caso en curso: no se ve su ubicación y el caso sigue a su nombre.</span>
+                        </p>
+                    }
                     @if (sereno.CasoAsignadoId is { } casoAsignado)
                     {
                         @* HU23-CA03: el estado del caso asignado se refleja en la central. *@

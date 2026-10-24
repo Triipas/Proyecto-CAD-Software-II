@@ -341,7 +341,15 @@
                             <VerticalStackLayout Spacing="12" IsVisible="{Binding PanelExpandido}">
                                 <Label Text="{Binding TextoUltimoEnvio}" Style="{StaticResource TextoSecundario}" FontSize="12" IsVisible="{Binding HayUltimoEnvio}" />
                                 <Button Text="{Binding TextoBoton}" Style="{StaticResource BotonSecundario}" Command="{Binding Alternar}"
-                                        SemanticProperties.Hint="Activa o desactiva tu estado operativo" />
+                                        IsVisible="{Binding MostrarBotonAlternar}" SemanticProperties.Hint="Activa o desactiva tu estado operativo" />
+                                <!-- 24/10/2026: desactivarse con un caso en curso se confirma (el caso sigue asignado, DP16-b). -->
+                                <VerticalStackLayout Spacing="10" IsVisible="{Binding MostrarConfirmarDesactivacion}">
+                                    <v:Aviso Tipo="advertencia"
+                                             Texto="Tienes un caso asignado. Si te desactivas, la central dejará de ver tu ubicación y el caso seguirá a tu nombre." />
+                                    <Button Text="Seguir operativo" Style="{StaticResource BotonPrincipal}" Command="{Binding SeguirOperativo}" />
+                                    <Button Text="Desactivar igual" Style="{StaticResource BotonSecundario}" Command="{Binding ConfirmarDesactivacion}"
+                                            SemanticProperties.Hint="Desactiva tu estado operativo aunque tengas un caso asignado" />
+                                </VerticalStackLayout>
                                 <Label Text="{Binding TextoAyudaSalir}" Style="{StaticResource TextoSecundario}" FontSize="12" IsVisible="{Binding HayAyudaSalir}" />
                                 <Button Text="Salir" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" />
                             </VerticalStackLayout>

@@ -250,6 +250,13 @@
                 <p class="estado estado--activa">
                     <partial name="_Icono" model="@("exito")" />Asignado a @vigente.Sereno a las @Local(vigente.AsignadaEn)
                 </p>
+                @if (!vigente.SerenoOperativo)
+                {
+                    <p class="despacho-alerta" data-desactivado-con-caso>
+                        <partial name="_Icono" model="@("advertencia")" />
+                        <span>@vigente.Sereno se desactivó con el caso en curso: la central no ve su ubicación y el caso sigue a su nombre.</span>
+                    </p>
+                }
                 @if (vigente.FinalizadaEn is { } finalizada)
                 {
                     <p class="texto-secundario">Asignación finalizada con el cierre a las @Local(finalizada).</p>

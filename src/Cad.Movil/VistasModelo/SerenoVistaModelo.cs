@@ -21,6 +21,9 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private string textoFueraDeRango = "", detalleMotivoInicio = "", errorMotivoInicio = "";
     private OpcionMotivo? motivoInicio;
     private Guid? llegadaAvisada;
+    // 24/10/2026 (DP16-b sigue vigente): desactivarse con un caso en curso se confirma antes, porque la central deja de ver la
+    // ubicación y el caso sigue a nombre del sereno.
+    private bool mostrarConfirmarDesactivacion;
     private bool mostrarExplicacion, mostrarAjustes, mostrarCierre, mostrarInformacion, panelExpandido, mostrarEtapas = true, calculandoRuta;
     private CategoriaCatalogo? categoriaCierre;
     private string? resultadoCierre, notasCierre, avisoComoLlegar;
@@ -50,6 +53,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
         AlternarEtapas = new ComandoAsincrono(() => { MostrarEtapas = !MostrarEtapas; return Task.CompletedTask; });
         PermitirNotificaciones = new ComandoAsincrono(() => notificaciones.PermitirAsync());
         Alternar = new ComandoAsincrono(AlternarAsync, () => !turno.SesionTerminada);
+        ConfirmarDesactivacion = new ComandoAsincrono(async () => { MostrarConfirmarDesactivacion = false; await turno.DesactivarAsync(); });
+        SeguirOperativo = new ComandoAsincrono(() => { MostrarConfirmarDesactivacion = false; return Task.CompletedTask; });
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
         Salir = new ComandoAsincrono(SalirAsync, () => PuedeSalir);
@@ -70,6 +75,14 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public Func<Action, Task> HiloPrincipal { get; init; } = accion => MainThread.InvokeOnMainThreadAsync(accion);
 
     public ComandoAsincrono Alternar { get; }
+    public ComandoAsincrono ConfirmarDesactivacion { get; }
+    public ComandoAsincrono SeguirOperativo { get; }
+    public bool MostrarConfirmarDesactivacion
+    {
+        get => mostrarConfirmarDesactivacion;
+        private set { Asignar(ref mostrarConfirmarDesactivacion, value); Notificar(nameof(MostrarBotonAlternar)); }
+    }
+    public bool MostrarBotonAlternar => !MostrarConfirmarDesactivacion;
     public ComandoAsincrono PermitirUbicacion { get; }
     public ComandoAsincrono AbrirAjustes { get; }
     public ComandoAsincrono Salir { get; }
@@ -533,6 +546,12 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     {
         if (Operativo)
         {
+            if (HayDespacho)
+            {
+                MostrarConfirmarDesactivacion = true; // primero se avisa: el caso sigue a su nombre
+                PanelExpandido = true;
+                return;
+            }
             await turno.DesactivarAsync();
             return;
         }
