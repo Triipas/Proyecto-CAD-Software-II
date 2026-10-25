@@ -8,6 +8,8 @@
   const texto = document.querySelector("[data-punto]");
   const quitar = document.querySelector("[data-quitar-punto]");
 
+  // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+  L.Control.Attribution.prototype.options.prefix = false;
   const mapa = L.map(contenedor).setView([Number(contenedor.dataset.lat), Number(contenedor.dataset.lon)], 14);
   L.tileLayer(contenedor.dataset.teselas, {
     maxZoom: 19,

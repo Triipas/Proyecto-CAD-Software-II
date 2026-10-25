@@ -49,7 +49,6 @@ public sealed class IngresoVistaModelo : VistaModeloBase
         direccionServidor = servidor.Direccion?.ToString() ?? "";
         Ingresar = new ComandoAsincrono(IngresarAsync);
         Volver = new ComandoAsincrono(() => navegacion.IrAAsync(".."));
-        IrADiagnostico = new ComandoAsincrono(IrADiagnosticoAsync);
     }
 
     public string Correo { get => correo; set => Asignar(ref correo, value); }
@@ -60,17 +59,6 @@ public sealed class IngresoVistaModelo : VistaModeloBase
 
     public ComandoAsincrono Ingresar { get; }
     public ComandoAsincrono Volver { get; }
-    public ComandoAsincrono IrADiagnostico { get; }
-    public bool MostrarDiagnostico => Compilacion.EsDepuracion;
-
-    // La sonda de SPIKE01 usa la dirección escrita en el campo, validada igual que al ingresar (RNF09).
-    private async Task IrADiagnosticoAsync()
-    {
-        Mensaje = "";
-        if (servidor.Guardar(DireccionServidor) is { } errorServidor) { Mensaje = errorServidor; return; }
-        await navegacion.IrAAsync(Rutas.Diagnostico);
-    }
-
     private async Task IngresarAsync()
     {
         Mensaje = "";
@@ -102,13 +90,4 @@ public sealed class IngresoVistaModelo : VistaModeloBase
                 break;
         }
     }
-}
-
-public static class Compilacion
-{
-#if DEBUG
-    public const bool EsDepuracion = true;
-#else
-    public const bool EsDepuracion = false;
-#endif
 }

@@ -27,6 +27,8 @@
 
   // ---------- Mapa base mínimo (Leaflet + OpenStreetMap) ----------
   // El zoom va abajo a la derecha: arriba a la izquierda lo taparía la cola de trabajo.
+  // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+  L.Control.Attribution.prototype.options.prefix = false;
   const mapa = L.map(contenedorMapa, { zoomControl: false }).setView(
     [Number(contenedorMapa.dataset.centroLat), Number(contenedorMapa.dataset.centroLon)],
     Number(contenedorMapa.dataset.zoom));

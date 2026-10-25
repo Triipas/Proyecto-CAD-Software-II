@@ -69,38 +69,6 @@ public class IngresoVistaModeloTests
     }
 }
 
-public class DiagnosticoDesdeIngresoTests
-{
-    [Fact]
-    public async Task SPIKE01_IrAlDiagnostico_ValidaYGuardaLaDireccionAntes()
-    {
-        var navegacion = new NavegacionFalsa();
-        var vistaModelo = new IngresoVistaModelo(new ApiFalsa(), new SesionesFalsas(), new ServidorConfigurable(), navegacion)
-        {
-            DireccionServidor = "http://cad.ejemplo.test",
-        };
-
-        await vistaModelo.IrADiagnostico.EjecutarAsync();
-        Assert.Empty(navegacion.Rutas);
-        Assert.StartsWith("La dirección debe empezar por https://", vistaModelo.Mensaje);
-
-        vistaModelo.DireccionServidor = "http://localhost:5220";
-        await vistaModelo.IrADiagnostico.EjecutarAsync();
-        Assert.Equal([Rutas.Diagnostico], navegacion.Rutas);
-    }
-
-    private sealed class ServidorConfigurable : IConfiguracionServidor
-    {
-        public Uri? Direccion { get; private set; }
-        public string? Guardar(string direccion)
-        {
-            var error = ValidacionDireccion.Validar(direccion, out var uri);
-            if (error is null) Direccion = uri;
-            return error;
-        }
-    }
-}
-
 public class InicioCiudadanoVistaModeloTests
 {
     private readonly UbicacionFalsa ubicacion = new();
