@@ -1,32 +1,42 @@
 @model Cad.Server.Panel.Pages.Acompanamientos.ListaAcompanamientos
 @using Cad.Server.Panel.Pages.Acompanamientos
+@using Cad.Server.Modulos.Acompanamiento.Dominio
 @{
     var umbral = (int)Model.Umbral.TotalSeconds;
     static string Iniciales(string nombre) => string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+    var ordenadas = Model.Ordenadas;
+    var urgentes = ordenadas.Where(s => Model.AtencionDe(s) != Atencion.Calma).ToList();
+    var calma = ordenadas.Where(s => Model.AtencionDe(s) == Atencion.Calma).ToList();
 }
-@* HU42-CA04: los avisos técnicos y de verificación, en su propia lista: no son SOS ni generan despacho. *@
-@if (Model.Avisos is { Count: > 0 } avisos)
+@* Rediseño (25/10/2026): cola de vigilancia por urgencia. La tarjeta entera elige a la persona y pasa al modo «sesión». *@
+<p class="vigilancia__resumen" data-resumen data-cantidad="@Model.Sesiones.Count">
+    <span><b class="num">@Model.Sesiones.Count</b> @(Model.Sesiones.Count == 1 ? "activa" : "activas")</span>
+    @if (Model.RequierenAtencion > 0)
+    {
+        <span class="vigilancia__resumen-atencion"><b class="num">@Model.RequierenAtencion</b> @(Model.RequierenAtencion == 1 ? "requiere" : "requieren") atención</span>
+    }
+</p>
+
+@if (Model.AvisosSinSesion is { Count: > 0 } sueltos)
 {
-    <section class="avisos-acompanamiento" aria-label="Avisos del acompañamiento sin resolver" data-avisos="@avisos.Count">
-        <h3 class="acompanamientos__subtitulo"><partial name="_Icono" model="@("advertencia")" />Avisos sin resolver · @avisos.Count</h3>
-        <ul class="lista-acompanamientos">
-            @foreach (var aviso in avisos)
+    @* HU42-CA04: avisos de sesiones que ya terminaron: siguen pendientes y no son SOS. *@
+    <section class="vigilancia__grupo" aria-label="Avisos de sesiones terminadas">
+        <h2 class="vigilancia__grupo-titulo"><partial name="_Icono" model="@("advertencia")" />Avisos de sesiones terminadas</h2>
+        <ul class="vigilados">
+            @foreach (var aviso in sueltos)
             {
-                <li class="aviso-acompanamiento" data-aviso="@aviso.Id" data-regla="@aviso.Regla" data-estado-aviso="@aviso.Estado">
-                    <p class="acompanamiento__meta">
-                        <span class="etiqueta-acompanamiento">@aviso.TextoTipo</span>
-                        <strong>@aviso.TextoRegla</strong>
-                    </p>
-                    <p class="acompanamiento__dato texto-secundario">@aviso.Ciudadano · @Formato.Hora(aviso.GeneradoEn, Model.ZonaHoraria) · @aviso.TextoEstado@(aviso.Responsable is { } responsable ? $" ({responsable})" : "")</p>
-                    <p class="acompanamiento__dato"><a href="/panel/avisos/@aviso.Id">Revisar el aviso<span class="visualmente-oculto"> de @aviso.Ciudadano</span></a></p>
+                <li class="vigilado vigilado--aviso-suelto">
+                    <p class="vigilado__linea"><strong>@aviso.TextoTipo: @aviso.TextoRegla</strong><span class="texto-secundario"> · @aviso.Ciudadano · @Formato.Hora(aviso.GeneradoEn, Model.ZonaHoraria, "HH:mm")</span></p>
+                    <a class="vigilado__enlace" href="/panel/avisos/@aviso.Id" data-aviso="@aviso.Id" data-regla="@aviso.Regla" data-estado-aviso="@aviso.Estado">Revisar el aviso<span class="visualmente-oculto"> de @aviso.Ciudadano</span></a>
                 </li>
             }
         </ul>
     </section>
 }
+
 @if (Model.Sesiones.Count == 0)
 {
-    <div class="estado-vacio acompanamientos__vacio" data-sin-acompanamientos>
+    <div class="vigilancia__vacio" data-sin-acompanamientos>
         <partial name="_Icono" model="@("ruta")" />
         <p class="aviso__titulo">No hay acompañamientos activos.</p>
         <p>Cuando un ciudadano comparta su trayecto, aparecerá aquí y en el mapa.</p>
@@ -34,99 +44,95 @@
 }
 else
 {
-    <ul class="lista-acompanamientos" data-cantidad="@Model.Sesiones.Count">
-        @foreach (var s in Model.Sesiones)
-        {
-            var p = s.Ultima;
-            var gris = s.SinConexion || p is { Desactualizada: true };
-            <li class="acompanamiento @(s.SinConexion ? "acompanamiento--sin-conexion" : "")" data-acompanamiento="@s.Id"
-                data-ciudadano="@s.Ciudadano" data-sin-conexion="@(s.SinConexion ? "true" : "false")"
-                data-lat="@(p is null ? null : Formato.Numero(p.Latitud))" data-lon="@(p is null ? null : Formato.Numero(p.Longitud))"
-                data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")">
-                <div class="acompanamiento__cabecera">
-                    @* 24/10/2026: sonar mientras la sesión se vigila con posición al día; desfasado por sesión para que no laten a la vez. *@
-                    <span class="acompanamiento__inicial@(gris ? " acompanamiento__inicial--gris" : " sonar")" aria-hidden="true"
-                          style="--desfase: -@(Math.Abs(s.Id.GetHashCode() % 24) * 100)ms">@Iniciales(s.Ciudadano)</span>
-                    <div class="acompanamiento__quien">
-                        @* 24/10/2026: como en la central, la tarjeta entera es el botón que ubica la sesión en el mapa (el del nombre,
-                           extendido a toda la tarjeta). Sin ninguna posición no hay nada que ubicar. *@
-                        @if (p is not null)
-                        {
-                            <button type="button" class="acompanamiento__ciudadano acompanamiento__elegir" data-elegir-acompanamiento aria-pressed="false"
-                                    aria-describedby="acompanamiento-@s.Id-posicion">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")<span class="visualmente-oculto">: ubicar en el mapa</span></button>
-                        }
-                        else
-                        {
-                            <p class="acompanamiento__ciudadano">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")</p>
-                        }
-                        <p class="acompanamiento__meta">
-                            <span class="etiqueta-acompanamiento">Acompañamiento</span>
-                            <span class="texto-secundario">hasta las @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
-                        </p>
-                    </div>
-                    @* DP20: sin envíos del dispositivo durante más del umbral, la sesión se muestra «Sin conexión». *@
-                    @if (s.SinConexion)
-                    {
-                        <span class="chip chip--advertencia" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
-                    }
-                    else
-                    {
-                        <span class="chip chip--acompanamiento" data-estado-sesion><partial name="_Icono" model="@("exito")" />Activa</span>
-                    }
-                </div>
-                @* HU40/HU41: última confirmación de bienestar de la sesión. «Necesito ayuda» es una alerta solo mientras su SOS sigue
-                   abierto; si el ciudadano lo canceló (o se cerró o descartó), se dice y deja de mostrarse en rojo (24/10/2026). *@
-                @if (s.UltimaConfirmacion is { } confirmacion)
+    foreach (var (titulo, grupo, clase) in new[] { ("Requieren atención", urgentes, "atencion"), ("En calma", calma, "calma") })
+    {
+        if (grupo.Count == 0) continue;
+        <section class="vigilancia__grupo vigilancia__grupo--@clase" aria-label="@titulo">
+            <h2 class="vigilancia__grupo-titulo">@titulo <span class="num">@grupo.Count</span></h2>
+            <ul class="vigilados" data-cantidad="@grupo.Count">
+                @foreach (var s in grupo)
                 {
-                    var ayuda = confirmacion.Respuesta == Cad.Server.Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda;
-                    <p class="@(!ayuda ? "acompanamiento__dato" : confirmacion.SosEnCurso ? "aviso aviso--error acompanamiento__aviso" : "aviso aviso--advertencia acompanamiento__aviso")"
-                       data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")" data-sos-en-curso="@(confirmacion.SosEnCurso ? "true" : "false")">
-                        Confirmación de bienestar (@Formato.Hora(confirmacion.SolicitadaEn, Model.ZonaHoraria, "HH:mm")): <strong>@confirmacion.TextoRespuesta</strong>
-                        @if (confirmacion.TextoSos is { } textoSos)
-                        {
-                            <span data-estado-sos>@textoSos</span>
-                        }
-                        @if (confirmacion.CasoId is { } caso)
-                        {
-                            <a href="/panel/central/sos/@caso">Ver el SOS</a>
-                        }
-                    </p>
+                    var p = s.Ultima;
+                    var gris = s.SinConexion || p is { Desactualizada: true } || p is null;
+                    var atencion = Model.AtencionDe(s);
+                    var avisos = Model.AvisosDe(s.Id);
+                    <li class="vigilado vigilado--@atencion.ToString().ToLowerInvariant()" data-acompanamiento="@s.Id" data-ciudadano="@s.Ciudadano"
+                        data-atencion="@atencion" data-sin-conexion="@(s.SinConexion ? "true" : "false")"
+                        data-lat="@(p is null ? null : Formato.Numero(p.Latitud))" data-lon="@(p is null ? null : Formato.Numero(p.Longitud))"
+                        data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")">
+                        @* Sonar mientras su posición está al día; desfasado por sesión para que no laten a la vez. *@
+                        <span class="vigilado__avatar@(gris ? " vigilado__avatar--gris" : " sonar")" aria-hidden="true"
+                              style="--desfase: -@(Math.Abs(s.Id.GetHashCode() % 24) * 100)ms">@Iniciales(s.Ciudadano)</span>
+                        <div class="vigilado__cuerpo">
+                            <p class="vigilado__linea">
+                                <a class="vigilado__nombre" href="/panel/acompanamientos?sesion=@s.Id" data-elegir-acompanamiento
+                                   aria-describedby="acompanamiento-@s.Id-posicion">@s.Ciudadano<span class="visualmente-oculto">: seguir su recorrido</span></a>
+                                <span class="vigilado__vence num">hasta @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
+                            </p>
+                            @* El motivo de la urgencia, siempre con icono y texto. *@
+                            @switch (atencion)
+                            {
+                                case Atencion.PideAyuda:
+                                    <span class="chip chip--urgente vigilado__motivo"><partial name="_Icono" model="@("urgente")" />Pidió ayuda · SOS abierto</span>
+                                    break;
+                                case Atencion.Aviso when p is not { Desactualizada: true }:
+                                    <span class="chip chip--advertencia vigilado__motivo"><partial name="_Icono" model="@("advertencia")" />@avisos[0].TextoRegla</span>
+                                    break;
+                                case Atencion.SinConexion:
+                                    <span class="chip chip--advertencia vigilado__motivo" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
+                                    break;
+                                case Atencion.Desactualizada:
+                                    <span class="chip chip--advertencia vigilado__motivo" data-desactualizada-aviso><partial name="_Icono" model="@("reloj")" />Posición desactualizada</span>
+                                    break;
+                            }
+                            @if (p is { Desactualizada: true } && atencion != Atencion.Desactualizada)
+                            {
+                                <span class="chip chip--advertencia vigilado__motivo" data-desactualizada-aviso><partial name="_Icono" model="@("reloj")" />Posición desactualizada</span>
+                            }
+                            @if (s.SinConexion && atencion != Atencion.SinConexion)
+                            {
+                                <span class="chip chip--advertencia vigilado__motivo" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
+                            }
+                            @if (p is null)
+                            {
+                                <p class="vigilado__dato texto-secundario" id="acompanamiento-@s.Id-posicion" data-sin-posicion>Aún no se recibió ninguna posición.</p>
+                            }
+                            else
+                            {
+                                @* HU38-CA01/CA02/CA03: hora de obtención, precisión y antigüedad; una posición desactualizada no se presenta como actual. *@
+                                <p class="vigilado__dato" id="acompanamiento-@s.Id-posicion" data-posicion>
+                                    <strong>@(p.Desactualizada || s.SinConexion ? "Última posición conocida" : "Posición actual")</strong>
+                                    · <time class="num sin-corte" datetime="@p.ObtenidaEn.ToString("O")" data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")" data-umbral="@umbral">@Formato.Antiguedad(p.Antiguedad)</time>
+                                    · <span class="sin-corte">precisión ± @Formato.Numero(p.PrecisionMetros, "0") m</span>
+                                </p>
+                            }
+                            @* HU40/HU41: última confirmación de bienestar. «Necesito ayuda» es una alerta solo mientras su SOS sigue abierto. *@
+                            @if (s.UltimaConfirmacion is { } confirmacion)
+                            {
+                                var ayuda = confirmacion.Respuesta == RespuestaBienestar.NecesitoAyuda;
+                                <p class="@(!ayuda ? "vigilado__dato" : confirmacion.SosEnCurso ? "aviso aviso--error vigilado__nota" : "aviso aviso--advertencia vigilado__nota")"
+                                   data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")" data-sos-en-curso="@(confirmacion.SosEnCurso ? "true" : "false")">
+                                    Bienestar (@Formato.Hora(confirmacion.SolicitadaEn, Model.ZonaHoraria, "HH:mm")): <strong>@confirmacion.TextoRespuesta</strong>
+                                    @if (confirmacion.TextoSos is { } textoSos)
+                                    {
+                                        <span data-estado-sos>@textoSos</span>
+                                    }
+                                    @if (confirmacion.CasoId is { } caso)
+                                    {
+                                        <a class="vigilado__enlace" href="/panel/central/sos/@caso">Ver el SOS</a>
+                                    }
+                                </p>
+                            }
+                            @foreach (var aviso in avisos)
+                            {
+                                <a class="vigilado__enlace" href="/panel/avisos/@aviso.Id" data-aviso="@aviso.Id" data-regla="@aviso.Regla" data-estado-aviso="@aviso.Estado">
+                                    @aviso.TextoTipo · @aviso.TextoEstado.ToLowerInvariant()<span class="visualmente-oculto">: @aviso.TextoRegla</span>
+                                </a>
+                            }
+                        </div>
+                    </li>
                 }
-                @if (p is null)
-                {
-                    <p class="acompanamiento__dato texto-secundario" data-sin-posicion>Aún no se recibió ninguna posición.</p>
-                }
-                else
-                {
-                    @* HU38-CA01/CA02/CA03: hora de obtención, precisión y antigüedad; una posición desactualizada no se presenta como actual. *@
-                    <p class="acompanamiento__dato" id="acompanamiento-@s.Id-posicion" data-posicion>
-                        <partial name="_Icono" model="@("ubicacion")" />
-                        <span>
-                            <strong>@(p.Desactualizada || s.SinConexion ? "Última posición conocida" : "Posición actual")</strong>
-                            · obtenida a las <time datetime="@p.ObtenidaEn.ToString("O")">@Formato.Hora(p.ObtenidaEn, Model.ZonaHoraria)</time>
-                            (<span data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")" data-umbral="@umbral">@Formato.Antiguedad(p.Antiguedad)</span>)
-                            · precisión ± @Formato.Numero(p.PrecisionMetros, "0") m
-                        </span>
-                    </p>
-                    @if (p.Desactualizada)
-                    {
-                        <p class="aviso aviso--advertencia acompanamiento__aviso" data-desactualizada-aviso>
-                            <partial name="_Icono" model="@("advertencia")" />
-                            <span>Posición desactualizada: tiene más de @umbral s. No es la ubicación actual del ciudadano.</span>
-                        </p>
-                    }
-                }
-                @if (s.SinConexion)
-                {
-                    <p class="aviso aviso--advertencia acompanamiento__aviso" data-sin-conexion-aviso>
-                        <partial name="_Icono" model="@("advertencia")" />
-                        <span>Sin conexión: no llega ningún envío del dispositivo desde las @(s.UltimoContactoEn is { } u ? Formato.Hora(u, Model.ZonaHoraria) : "—"). Si el ciudadano finalizó sin conexión, el cierre llegará cuando la recupere.</span>
-                    </p>
-                }
-                <div class="acompanamiento__acciones">
-                    <a class="acompanamiento__recorrido" href="/panel/acompanamientos/@s.Id">Ver el recorrido (@s.Posiciones @(s.Posiciones == 1 ? "posición" : "posiciones"))</a>
-                </div>
-            </li>
-        }
-    </ul>
+            </ul>
+        </section>
+    }
 }

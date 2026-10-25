@@ -1,208 +1,696 @@
 /*
-  Acompañamientos (HU38–HU43) en el rediseño CAD v2, fase 3: activos, detalle de la sesión e historial.
-  En los activos, la lista y el mapa van lado a lado; el mapa queda fijo mientras se recorre la lista.
+  Acompañamientos (HU38–HU43). Rediseño del 25/10/2026: la vigilancia es la central en dos modos sobre un mismo mapa a sangre.
+  «Todas»: cola por urgencia en un panel flotante y cada vigilado en el mapa con su sonar. «Sesión»: el recorrido aislado de una
+  sola persona y su ficha con la siguiente acción. El detalle completo de una sesión usa la misma gramática: recorrido a sangre y
+  la ficha en un panel flotante desplazable. Por debajo de 760 px el panel se apila bajo el mapa.
 */
 
-/* ── Activos: lista + mapa ─────────────────────────────── */
-.acompanamientos {
-  display: grid;
-  grid-template-columns: minmax(22rem, 30rem) minmax(0, 1fr);
-  align-items: start;
-  gap: var(--espacio-4);
+.num {
+  font-variant-numeric: tabular-nums;
 }
 
-.acompanamientos__lista {
-  display: grid;
-  gap: var(--espacio-4);
-  padding: var(--espacio-5);
+/* ── Marco: mapa a sangre y panel flotante ─────────────── */
+.pagina--vigilancia {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
-.acompanamientos__cabecera {
-  display: grid;
-  gap: var(--espacio-1);
+.vigilancia {
+  position: relative;
+  height: calc(100vh - var(--alto-barra));
+  min-height: 38rem;
+  overflow: hidden;
 }
 
-.acompanamientos__titulo {
+.vigilancia__mapa {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.vigilancia__panel {
+  position: absolute;
+  z-index: 500; /* sobre las capas del mapa, bajo sus controles (1000) */
+  top: var(--espacio-4);
+  bottom: var(--espacio-4);
+  left: var(--espacio-4);
+  width: 24rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+}
+
+.vigilancia__panel--ancho {
+  width: 32rem;
+}
+
+.vigilancia__todas,
+.vigilancia__sesion,
+.vigilancia__detalle {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde-fuerte) transparent;
+}
+
+.vigilancia__todas[hidden],
+.vigilancia__sesion[hidden] {
+  display: none;
+}
+
+/* ── Modo «todas»: cabecera y cola por urgencia ────────── */
+.vigilancia__cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-3);
+  padding: var(--espacio-5) var(--espacio-5) var(--espacio-3);
+  background: var(--color-superficie);
+}
+
+.vigilancia__titulo {
   margin: 0;
   font-size: var(--texto-lg);
+  line-height: var(--interlineado-titulo);
+  letter-spacing: var(--tracking-titulo);
   color: var(--color-marino);
 }
 
-.acompanamientos__subtitulo {
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2);
-  margin: 0 0 var(--espacio-2);
+.vigilancia__ayuda {
+  grid-column: 1 / -1;
+  margin: 0;
   font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+
+.vigilancia__lista {
+  display: grid;
+  gap: var(--espacio-4);
+  padding: 0 var(--espacio-4) var(--espacio-5);
+}
+
+.vigilancia__resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-4);
+  margin: 0 var(--espacio-1);
+  padding: var(--espacio-3) 0;
+  border-top: var(--grosor-borde) solid var(--color-borde);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.vigilancia__resumen b {
+  font-size: var(--texto-md);
+  color: var(--color-marino);
+}
+
+.vigilancia__resumen-atencion b {
   color: var(--color-advertencia);
 }
 
-.acompanamientos__subtitulo .icono {
+.vigilancia__grupo {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
+.vigilancia__grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0 var(--espacio-1);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  letter-spacing: var(--tracking-etiqueta);
+  color: var(--color-texto-secundario);
+}
+
+.vigilancia__grupo-titulo .num {
+  min-width: 1.5rem;
+  padding: 0 var(--espacio-2);
+  border-radius: var(--radio-pildora);
+  text-align: center;
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-hundida);
+}
+
+.vigilancia__grupo--atencion .vigilancia__grupo-titulo {
+  color: var(--color-advertencia);
+}
+
+.vigilancia__grupo--atencion .vigilancia__grupo-titulo .num {
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
+}
+
+.vigilancia__grupo-titulo .icono {
   width: 1rem;
   height: 1rem;
 }
 
-.acompanamientos__mapa {
-  position: sticky;
-  top: calc(var(--alto-barra) + var(--espacio-4));
+.vigilancia__vacio {
   display: grid;
-  gap: var(--espacio-2);
-}
-
-.mapa--acompanamientos {
-  height: calc(100vh - var(--alto-barra) - 8rem);
-  min-height: 24rem;
-  border-radius: var(--radio-superficie);
-  box-shadow: var(--sombra-1);
-}
-
-.leyenda-acompanamientos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espacio-4);
-  margin: 0;
-  font-size: var(--texto-xs);
+  justify-items: center;
+  gap: var(--espacio-1);
+  padding: var(--espacio-8) var(--espacio-4);
+  text-align: center;
   color: var(--color-texto-secundario);
 }
 
-.leyenda-acompanamientos > span {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--espacio-2);
+.vigilancia__vacio .icono {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: var(--espacio-2);
+  color: var(--color-acompanamiento);
 }
 
-.leyenda-acompanamientos__muestra {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 999px;
-  background: var(--mapa-acompanamiento);
-}
-
-.leyenda-acompanamientos__muestra--gris {
-  background: var(--color-texto-secundario);
-}
-
-.acompanamientos__vacio {
-  padding: var(--espacio-8) var(--espacio-4);
-}
-
-/* ── Tarjeta de sesión ─────────────────────────────────── */
-.acompanamiento__cabecera {
+/* ── Tarjeta del vigilado: la tarjeta entera es el botón que lo sigue ── */
+.vigilados {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--espacio-3);
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.acompanamiento__inicial {
+.vigilado {
+  position: relative;
+  overflow: hidden; /* el sonar del avatar no sale de la tarjeta */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-3) var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+  transition: border-color var(--duracion-rapida) ease, box-shadow var(--duracion-rapida) ease, background-color var(--duracion-rapida) ease;
+}
+
+.vigilado--pideayuda {
+  border-color: var(--color-urgente-borde);
+  background: var(--color-urgente-fondo);
+}
+
+.vigilado--aviso,
+.vigilado--sinconexion,
+.vigilado--desactualizada {
+  border-color: var(--color-advertencia-borde);
+}
+
+.vigilado--calma {
+  padding-block: var(--espacio-2);
+}
+
+.vigilado--calma .vigilado__avatar {
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--texto-xs);
+}
+
+.vigilado--aviso-suelto {
+  grid-template-columns: minmax(0, 1fr);
+  border-color: var(--color-advertencia-borde);
+  background: var(--color-advertencia-fondo);
+}
+
+.vigilado--elegido {
+  border-color: var(--color-acompanamiento);
+  box-shadow: 0 0 0 1px var(--color-acompanamiento), var(--sombra-2);
+}
+
+.vigilado__avatar {
   width: 2.5rem;
   height: 2.5rem;
   display: grid;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 50%;
   font-size: var(--texto-sm);
   font-weight: var(--peso-fuerte);
   color: #FFFFFF;
   background: var(--color-acompanamiento);
 }
 
-.acompanamiento__inicial--gris {
-  background: var(--color-texto-secundario);
+.vigilado--pideayuda .vigilado__avatar {
+  background: var(--color-urgente);
 }
 
-.acompanamiento__quien {
+.vigilado--pideayuda .sonar::before,
+.vigilado--pideayuda .sonar::after {
+  border-color: var(--color-urgente);
+}
+
+.vigilado__avatar--ayuda {
+  background: var(--color-urgente);
+}
+
+.seguimiento__avatar.vigilado__avatar--ayuda.sonar::before,
+.seguimiento__avatar.vigilado__avatar--ayuda.sonar::after {
+  border-color: var(--color-urgente);
+}
+
+.vigilado__avatar--gris {
+  background: var(--color-texto-terciario);
+}
+
+.vigilado__cuerpo {
   display: grid;
-  gap: 2px;
+  justify-items: start;
+  gap: var(--espacio-1);
   min-width: 0;
 }
 
-.acompanamiento__quien p {
-  margin: 0;
-}
-
-.acompanamiento__dato {
+.vigilado__linea {
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   gap: var(--espacio-2);
+  width: 100%;
   margin: 0;
-  font-size: var(--texto-sm);
 }
 
-.acompanamiento__dato > .icono {
-  width: 1rem;
-  height: 1rem;
-  margin-top: 0.15rem;
-  color: var(--color-acompanamiento);
-}
-
-.acompanamiento__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--espacio-3);
-  padding-top: var(--espacio-3);
-  border-top: var(--grosor-borde) solid var(--color-borde);
-}
-
-/* 24/10/2026: la tarjeta entera es el botón que ubica la sesión en el mapa, como en la cola de la central. El botón es el
-   nombre; su ::after cubre la tarjeta. Los enlaces de la tarjeta quedan por encima y siguen funcionando. */
-.lista-acompanamientos > .acompanamiento {
-  position: relative;
-}
-
-.acompanamiento__elegir {
-  justify-self: start;
+.vigilado__nombre {
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
-  font: var(--peso-medio) var(--texto-md)/1.3 var(--fuente);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--peso-semi) var(--texto-md)/1.3 var(--fuente);
   text-align: left;
+  text-decoration: none;
   color: var(--color-texto);
   background: none;
   cursor: pointer;
 }
 
-.acompanamiento__elegir::after {
+/* El nombre es el enlace a su seguimiento (?sesion=…, también sin JavaScript); su ::after cubre la tarjeta. */
+.vigilado__nombre::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
 }
 
-.acompanamiento__elegir:focus-visible {
+.vigilado__nombre:focus-visible {
   outline: none;
 }
 
-.acompanamiento:has(.acompanamiento__elegir:focus-visible) {
+.vigilado:has(.vigilado__nombre:focus-visible) {
   outline: var(--grosor-foco) solid var(--color-foco);
   outline-offset: 2px;
 }
 
-.acompanamiento a {
+/* Los demás enlaces de la tarjeta quedan por encima del ::after del nombre (que sí debe cubrir la tarjeta). */
+.vigilado a:not(.vigilado__nombre) {
   position: relative;
   z-index: 1;
 }
 
+.vigilado__vence {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.vigilado__motivo .icono {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.vigilado__dato {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.vigilado__dato strong {
+  font-weight: var(--peso-semi);
+  color: var(--color-texto);
+}
+
+/* La nota de bienestar es una línea más de la tarjeta, no una tarjeta dentro de otra: conserva solo el color del aviso. */
+.vigilado .vigilado__nota {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--texto-sm);
+}
+
+.vigilado__enlace {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  white-space: nowrap;
+}
+
+.sin-corte {
+  white-space: nowrap;
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .lista-acompanamientos > .acompanamiento:has(.acompanamiento__elegir):not(.acompanamiento--elegido):hover {
+  .vigilado:has(.vigilado__nombre):not(.vigilado--elegido):hover {
     border-color: var(--color-borde-control);
     box-shadow: var(--sombra-1);
   }
 }
 
-.acompanamiento__recorrido {
+/* ── Modo «sesión»: la ficha de una persona ──────────────── */
+.seguimiento {
+  display: grid;
+  gap: var(--espacio-4);
+  padding: var(--espacio-4) var(--espacio-5) var(--espacio-5);
+}
+
+/* Al cambiar de modo (no al cargar la página), la ficha entra desde el borde del panel. */
+.seguimiento--entra {
+  animation: seguimiento-entrada var(--duracion-base) var(--curva-salida) both;
+}
+
+@keyframes seguimiento-entrada {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+.seguimiento__volver {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: 2rem;
+  padding: 0 var(--espacio-2) 0 var(--espacio-1);
+  margin-left: calc(-1 * var(--espacio-1));
+  border-radius: var(--radio-control);
   font-size: var(--texto-sm);
-  font-weight: var(--peso-medio);
+  font-weight: var(--peso-semi);
+  text-decoration: none;
+  color: var(--color-primario);
 }
 
-/* La sesión elegida en el mapa se distingue en la lista. */
-.acompanamiento--elegido {
-  border-color: var(--color-acompanamiento);
-  box-shadow: 0 0 0 1px var(--color-acompanamiento), var(--sombra-2);
+.seguimiento__volver .icono {
+  width: 1rem;
+  height: 1rem;
 }
 
-/* ── Detalle de la sesión ──────────────────────────────── */
+.seguimiento__volver:hover {
+  background: var(--color-tenue);
+}
+
+.seguimiento__cabecera {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.seguimiento__avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--texto-md);
+}
+
+.seguimiento__quien {
+  display: grid;
+  gap: var(--espacio-1);
+  min-width: 0;
+}
+
+.seguimiento__nombre {
+  margin: 0;
+  font-size: var(--texto-xl);
+  line-height: var(--interlineado-titulo);
+  letter-spacing: var(--tracking-titulo);
+  color: var(--color-marino);
+}
+
+.seguimiento__nombre:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 2px;
+  border-radius: var(--radio-pequeno);
+}
+
+.seguimiento__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+}
+
+.seguimiento__telefono {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+}
+
+/* La siguiente acción: el componente propio de los detalles (borde azul, sombra de atención). */
+.seguimiento__siguiente {
+  display: grid;
+  justify-items: start;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4);
+  border: var(--grosor-borde) solid var(--color-primario);
+  border-radius: var(--radio-superficie);
+  box-shadow: var(--sombra-2);
+}
+
+.seguimiento__siguiente p {
+  margin: 0;
+  font-size: var(--texto-sm);
+}
+
+.seguimiento__siguiente .boton {
+  margin-top: var(--espacio-1);
+}
+
+.seguimiento__accion {
+  margin: 0;
+  font-size: var(--texto-lg);
+  color: var(--color-marino);
+}
+
+.seguimiento__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3) var(--espacio-4);
+  margin: 0;
+}
+
+.seguimiento__datos dt {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  letter-spacing: var(--tracking-etiqueta);
+  color: var(--color-texto-terciario);
+}
+
+.seguimiento__datos dd {
+  margin: 2px 0 0;
+  font-size: var(--texto-sm);
+}
+
+.seguimiento__datos > div:first-child {
+  grid-column: 1 / -1;
+}
+
+.seguimiento__seccion {
+  display: grid;
+  gap: var(--espacio-2);
+  padding-top: var(--espacio-3);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.seguimiento__subtitulo {
+  margin: 0;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  color: var(--color-texto-secundario);
+}
+
+.seguimiento__lista {
+  display: grid;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--texto-sm);
+}
+
+.seguimiento__lista li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.seguimiento__detalle {
+  justify-self: stretch;
+}
+
+/* ── Leyenda del mapa ──────────────────────────────────── */
+/* Leyenda en chips, como la central; «Recorrido» solo en el modo «sesión», que es cuando se dibuja. */
+.vigilancia__leyenda {
+  position: absolute;
+  z-index: 500;
+  right: 4.5rem;
+  bottom: var(--espacio-4);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vigilancia__leyenda > li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  padding: var(--espacio-1) var(--espacio-3);
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.vigilancia[data-modo="todas"] .vigilancia__leyenda-ruta {
+  display: none;
+}
+
+.vigilancia__muestra.vigilancia__muestra--ayuda {
+  background: var(--color-urgente);
+}
+
+.vigilancia__muestra {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--mapa-acompanamiento);
+}
+
+.vigilancia__muestra--gris {
+  background: var(--color-texto-terciario);
+}
+
+.vigilancia__muestra--ruta {
+  width: 1.25rem;
+  height: 4px;
+  border-radius: var(--radio-pildora);
+}
+
+.vigilancia__sin-js {
+  position: absolute;
+  z-index: 500;
+  right: var(--espacio-4);
+  top: var(--espacio-4);
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  background: var(--color-superficie);
+}
+
+/* Etiqueta del marcador al pasar el puntero: el nombre, en la tipografía del panel. */
+.vigilancia__etiqueta {
+  padding: 2px var(--espacio-2);
+  border: 0;
+  border-radius: var(--radio-pequeno);
+  font: var(--peso-semi) var(--texto-xs)/1.4 var(--fuente);
+  color: #FFFFFF;
+  background: var(--color-marino);
+  box-shadow: var(--sombra-1);
+}
+
+.vigilancia__etiqueta::before {
+  display: none;
+}
+
+/* Aislar: los demás vigilados se desvanecen al seguir a una persona. */
+.marcador-acompanamiento {
+  transition: opacity var(--duracion-base) var(--curva-estandar);
+}
+
+.marcador--oculto {
+  pointer-events: none;
+}
+
+.marcador-acompanamiento--ayuda {
+  background: var(--color-urgente);
+  box-shadow: 0 0 0 1px var(--color-urgente);
+}
+
+.marcador-acompanamiento--ayuda::before,
+.marcador-acompanamiento--ayuda::after {
+  border-color: var(--color-urgente);
+}
+
+/* ── Detalle completo de la sesión ──────────────────────── */
+.vigilancia__detalle {
+  gap: var(--espacio-4);
+  padding: var(--espacio-4) var(--espacio-5) var(--espacio-6);
+}
+
+.vigilancia__detalle > .cabecera-caso {
+  margin: 0;
+}
+
+/* Dentro del panel, las secciones no son tarjetas: se separan con una línea. Solo la siguiente acción conserva su marco. */
+.vigilancia__detalle .seccion-caso:not(.siguiente) {
+  padding: var(--espacio-4) 0 0;
+  border: 0;
+  border-top: var(--grosor-borde) solid var(--color-borde);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.vigilancia__detalle .tabla-contenedor {
+  margin-top: var(--espacio-3);
+}
+
+.vigilancia__detalle .tabla caption {
+  text-wrap: balance;
+}
+
+.vigilancia__detalle .tabla {
+  font-size: var(--texto-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.vigilancia__detalle .tabla th,
+.vigilancia__detalle .tabla td {
+  padding-inline: var(--espacio-3);
+  white-space: nowrap;
+}
+
+/* Latitud y longitud en dos líneas: la tabla cabe en el panel sin desplazamiento horizontal. */
+.vigilancia__detalle .tabla__coordenadas {
+  line-height: var(--interlineado-compacto);
+}
+
 .etiqueta-acompanamiento--grande {
   display: inline-flex;
   align-items: center;
@@ -225,32 +713,55 @@
   font-size: var(--texto-sm);
 }
 
-/* ── Pantallas estrechas: la lista arriba y el mapa debajo ── */
-@media (max-width: 60rem) {
-  .acompanamientos {
+/* ── Pantallas estrechas: el panel bajo el mapa ─────────── */
+@media (max-width: 47.5rem) {
+  .vigilancia {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: grid;
+    gap: var(--espacio-3);
+    padding-bottom: var(--espacio-6);
+  }
+
+  .vigilancia__mapa {
+    position: relative;
+    height: 46vh;
+  }
+
+  .vigilancia__panel,
+  .vigilancia__panel--ancho {
+    position: relative;
+    inset: auto;
+    width: auto;
+    margin: 0 var(--espacio-3);
+    overflow: visible;
+  }
+
+  .vigilancia__todas,
+  .vigilancia__sesion,
+  .vigilancia__detalle {
+    height: auto;
+    overflow: visible;
+  }
+
+  .vigilancia__leyenda {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    justify-content: flex-start;
+    margin: 0 var(--espacio-3);
+  }
+
+  .seguimiento__datos {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .acompanamientos__mapa {
-    position: static;
-  }
-
-  .mapa--acompanamientos {
-    height: 55vh;
   }
 }
 
-@media (max-width: 47.5rem) {
-  .acompanamientos__lista {
-    padding: var(--espacio-4);
-  }
-
-  .acompanamiento__cabecera {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .acompanamiento__cabecera > .chip {
-    grid-column: 2;
-    justify-self: start;
+@media (prefers-reduced-motion: reduce) {
+  .seguimiento--entra,
+  .marcador-acompanamiento {
+    animation: none;
+    transition: none;
   }
 }

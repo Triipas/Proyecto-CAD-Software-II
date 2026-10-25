@@ -119,7 +119,7 @@ public class SupervisionAcompanamientoTests(FabricaCad fabrica)
         var acompanamientos = await HtmlAsync(operador, Pagina);
         var central = await HtmlAsync(operador, "/panel/central?handler=Lista");
 
-        Assert.Contains("etiqueta-acompanamiento", Bloque(acompanamientos, sesion.Id));
+        Assert.Contains("vigilado", Bloque(acompanamientos, sesion.Id)); // en la vigilancia de acompañamientos, no en la central
         Assert.DoesNotContain(sos.Id.ToString(), acompanamientos);       // el SOS no está entre los acompañamientos
         Assert.DoesNotContain(sesion.Id.ToString(), central);            // la sesión no está entre los SOS
         Assert.Contains(sos.Id.ToString(), central);

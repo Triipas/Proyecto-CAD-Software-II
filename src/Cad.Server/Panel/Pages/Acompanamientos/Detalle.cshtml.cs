@@ -23,6 +23,10 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
 
     public string? ErrorConfirmacion { get; private set; }
 
+    // «lista» si la confirmación se pidió desde el seguimiento de la vigilancia: se vuelve ahí, a la misma persona.
+    [BindProperty]
+    public string? Volver { get; set; }
+
     [BindProperty]
     public FormularioConservacion Conservacion { get; set; } = new();
 
@@ -53,6 +57,8 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
     public TimeSpan Umbral => consultar.Umbral;
     public DateTimeOffset Ahora => reloj.GetUtcNow();
     public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+    public string CentroLatitud => configuracion.GetValue("Panel:Mapa:CentroLatitud", -16.3988).ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public string CentroLongitud => configuracion.GetValue("Panel:Mapa:CentroLongitud", -71.5369).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct)
     {
@@ -75,7 +81,7 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
                 return NotFound();
             case Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.Solicitada or Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.YaSolicitada:
                 Mensaje = "Confirmación solicitada. El ciudadano la verá en su aplicación.";
-                return RedirectToPage(new { id });
+                return Volver == "lista" ? RedirectToPage("/Acompanamientos/Index", new { sesion = id }) : RedirectToPage(new { id });
             case Modulos.Acompanamiento.Aplicacion.ResultadoSolicitudBienestar.SesionNoActiva:
                 ErrorConfirmacion = "La sesión ya no está activa: no se puede pedir una confirmación.";
                 break;

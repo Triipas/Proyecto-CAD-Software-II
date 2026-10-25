@@ -1,28 +1,46 @@
-// HU38 — acompañamientos activos: la lista se vuelve a pedir al servidor cada 10 s (la base de datos es la fuente de verdad)
-// y la antigüedad de cada posición avanza cada segundo. Una posición desactualizada (DP12) o una sesión sin conexión (DP20) se
-// dibuja en gris y nunca como posición actual (CA03).
-// Rediseño CAD v2: elegir una sesión vuela a ella en el mapa, como en la central, y el marcador elegido queda fijado.
-// 24/10/2026: la tarjeta entera es el botón que la elige, y la lista se actualiza en cuanto llega algo del ciudadano (aviso
-// «AcompanamientoActualizado» del canal de la central); la consulta cada 10 s queda de respaldo y para el umbral de DP20.
+// HU38 — vigilancia de acompañamientos. Rediseño (25/10/2026): la central en dos modos sobre un mismo mapa.
+//  - «Todas»: cada vigilado en el mapa con su sonar y, en el panel, una cola por urgencia. La lista se vuelve a pedir al
+//    servidor (fuente de verdad) cuando llega algo de un ciudadano («AcompanamientoActualizado») o cada 10 s.
+//  - «Sesión» (?sesion=…): al elegir a alguien (su tarjeta o su marcador) los demás se desvanecen, se dibuja solo su recorrido
+//    y el panel pasa a su ficha. «Todas las sesiones», Escape o «Atrás» del navegador devuelven a «todas».
+// Una posición desactualizada (DP12) o una sesión sin conexión (DP20) se dibuja en gris y nunca como actual (CA03).
 (() => {
+  const raiz = document.querySelector("[data-vigilancia]");
   const region = document.querySelector("[data-region-acompanamientos]");
+  const regionSesion = document.querySelector("[data-region-seguimiento]");
+  const todas = document.querySelector("[data-modo-todas]");
   const contenedor = document.getElementById("mapa");
-  if (!region || !contenedor || typeof L === "undefined") return;
+  if (!raiz || !region || !contenedor || typeof L === "undefined") return;
 
   const reducido = matchMedia("(prefers-reduced-motion: reduce)");
   // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
   L.Control.Attribution.prototype.options.prefix = false;
-  const mapa = L.map(contenedor, { zoomControl: false }).setView([Number(contenedor.dataset.centroLat), Number(contenedor.dataset.centroLon)], Number(contenedor.dataset.zoom));
+  // Con «reducir movimiento», panel.css anula las transiciones y Leaflet esperaría para siempre el fin de la animación del
+  // zoom (las teselas nuevas no llegarían): sin animaciones del mapa en ese caso.
+  const sinAnimar = { zoomAnimation: !reducido.matches, markerZoomAnimation: !reducido.matches };
+  const mapa = L.map(contenedor, { zoomControl: false, ...sinAnimar }).setView([Number(contenedor.dataset.centroLat), Number(contenedor.dataset.centroLon)], Number(contenedor.dataset.zoom));
   L.tileLayer(contenedor.dataset.teselas, {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
   }).addTo(mapa);
   L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
+  const colorRuta = getComputedStyle(document.documentElement).getPropertyValue("--mapa-acompanamiento").trim() || "#0D9488";
+
   const marcadores = new Map();
-  let elegida = null;
+  // La sesión que se sigue la dice su ficha (el servidor la pinta con ?sesion=…), no la dirección.
+  let sesion = raiz.dataset.modo === "sesion" ? regionSesion?.querySelector("[data-seguimiento]")?.dataset.seguimiento ?? null : null;
+  let capaRuta = null;
 
   const escapar = (texto) => String(texto ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+  // El panel deja libre la franja izquierda del mapa: los encuadres la descuentan.
+  function margenPanel() {
+    const panel = raiz.querySelector(".vigilancia__panel");
+    const ancho = panel && getComputedStyle(panel).position === "absolute" ? panel.getBoundingClientRect().width + 32 : 24;
+    return { paddingTopLeft: [ancho, 24], paddingBottomRight: [24, 24] };
+  }
+
+  // ---------- Marcadores de «todas» ----------
   function dibujar() {
     for (const m of marcadores.values()) m.remove();
     marcadores.clear();
@@ -30,82 +48,169 @@
       if (!item.dataset.lat) continue;
       const id = item.dataset.acompanamiento;
       const gris = item.dataset.desactualizada === "true" || item.dataset.sinConexion === "true";
-      const texto = `Acompañamiento de ${item.dataset.ciudadano}${gris ? " (última posición conocida)" : ""}`;
+      const pide = item.dataset.atencion === "PideAyuda";
+      const texto = `${item.dataset.ciudadano}${gris ? " (última posición conocida)" : ""}: seguir su recorrido`;
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: `marcador-acompanamiento${gris ? " marcador-acompanamiento--desactualizado" : " marcador-acompanamiento--vigilado"}`, html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -18] }),
+        icon: L.divIcon({
+          className: `marcador-acompanamiento${gris ? " marcador-acompanamiento--desactualizado" : " marcador-acompanamiento--vigilado"}${pide ? " marcador-acompanamiento--ayuda" : ""}`,
+          html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15], tooltipAnchor: [16, 0],
+        }),
         title: texto,
         alt: texto,
         keyboard: true,
       })
-        .bindPopup(`<strong>Acompañamiento</strong><br>${escapar(item.dataset.ciudadano)}<br>${gris ? "Última posición conocida, no actual" : "Posición actual"}`)
-        .on("click", () => elegir(id, { desdeMapa: true }))
+        .bindTooltip(escapar(item.dataset.ciudadano), { direction: "right", className: "vigilancia__etiqueta" })
+        .on("click", () => elegir(id))
         .addTo(mapa);
       marcadores.set(id, marcador);
     }
-    if (elegida) resaltar(elegida);
+    aislar();
   }
 
-  function resaltar(id) {
-    for (const [clave, marcador] of marcadores) {
-      marcador.getElement()?.classList.toggle("marcador--elegido", clave === id);
-      marcador.setZIndexOffset(clave === id ? 1000 : 0);
+  // En «sesión», los demás vigilados se desvanecen; en «todas», vuelven.
+  function aislar() {
+    for (const [id, marcador] of marcadores) {
+      const fuera = sesion !== null && id !== sesion;
+      marcador.setOpacity(fuera ? 0 : 1);
+      const el = marcador.getElement();
+      if (el) {
+        el.classList.toggle("marcador--oculto", fuera);
+        el.tabIndex = fuera ? -1 : 0;
+      }
+      if (sesion !== null && id === sesion) marcador.closeTooltip();
     }
     for (const item of region.querySelectorAll("[data-acompanamiento]")) {
-      item.classList.toggle("acompanamiento--elegido", item.dataset.acompanamiento === id);
-      item.querySelector("[data-elegir-acompanamiento]")?.setAttribute("aria-pressed", String(item.dataset.acompanamiento === id));
+      const elegida = item.dataset.acompanamiento === sesion;
+      item.classList.toggle("vigilado--elegido", elegida);
+      const enlace = item.querySelector("[data-elegir-acompanamiento]");
+      if (elegida) enlace?.setAttribute("aria-current", "true");
+      else enlace?.removeAttribute("aria-current");
     }
   }
 
-  // Dos anillos se abren desde el punto al aterrizar (sin ellos si se pide reducir el movimiento).
-  function marcarLlegada(punto, gris) {
-    if (reducido.matches) return;
-    const anillo = L.marker(punto, {
-      icon: L.divIcon({ className: `llegada ${gris ? "llegada--gris" : "llegada--acompanamiento"}`, html: "<span></span><span></span>", iconSize: [96, 96], iconAnchor: [48, 48] }),
-      interactive: false,
-      keyboard: false,
-      zIndexOffset: -1000,
-    }).addTo(mapa);
-    setTimeout(() => anillo.remove(), 1300);
+  // ---------- Recorrido de la sesión elegida ----------
+  function dibujarRuta({ encuadrar = false } = {}) {
+    capaRuta?.remove();
+    capaRuta = null;
+    const ficha = regionSesion?.querySelector("[data-seguimiento]");
+    if (!ficha || !ficha.dataset.puntos) return;
+    const puntos = ficha.dataset.puntos.split(";").map((p) => p.split(",").map(Number));
+    const actual = ficha.dataset.actual === "true";
+    capaRuta = L.layerGroup().addTo(mapa);
+    const linea = L.polyline([...puntos].reverse(), { color: colorRuta, weight: 5, lineJoin: "round", opacity: 0.9 }).addTo(capaRuta);
+    if (puntos.length > 1) {
+      L.marker(puntos.at(-1), {
+        icon: L.divIcon({ className: "marcador-inicio-recorrido", html: "", iconSize: [14, 14], iconAnchor: [7, 7] }),
+        title: "Inicio del recorrido", alt: "Inicio del recorrido", keyboard: false, interactive: false,
+      }).addTo(capaRuta);
+    }
+    // Sin marcador propio para la posición actual: es el de la sesión en el mapa, que queda a la vista.
+    if (!marcadores.has(sesion)) {
+      L.marker(puntos[0], {
+        icon: L.divIcon({ className: `marcador-acompanamiento${actual ? " marcador-acompanamiento--vigilado" : " marcador-acompanamiento--desactualizado"}`, html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15] }),
+        title: actual ? "Posición actual" : "Última posición conocida", alt: actual ? "Posición actual" : "Última posición conocida", keyboard: false,
+      }).addTo(capaRuta);
+    }
+    if (!encuadrar) return;
+    const opciones = { ...margenPanel(), maxZoom: 17, animate: !reducido.matches };
+    // Con una sola posición, los límites son ese punto: el mismo encuadre con margen la deja fuera del panel.
+    const limites = puntos.length > 1 ? linea.getBounds() : L.latLngBounds([puntos[0], puntos[0]]);
+    mapa.flyToBounds(limites, { ...opciones, duration: 0.8 });
   }
 
-  function elegir(id, { desdeMapa = false } = {}) {
-    elegida = id;
-    resaltar(id);
-    const item = region.querySelector(`[data-acompanamiento="${CSS.escape(id)}"]`);
-    if (desdeMapa) {
-      item?.scrollIntoView({ block: "nearest", behavior: reducido.matches ? "auto" : "smooth" });
-      return;
-    }
-    const marcador = marcadores.get(id);
-    if (!marcador) return;
-    const punto = marcador.getLatLng();
-    const gris = item?.dataset.desactualizada === "true" || item?.dataset.sinConexion === "true";
-    const llegar = () => { marcador.openPopup(); marcarLlegada(punto, gris); };
-    const caja = contenedor.getBoundingClientRect();
-    if (caja.top < 0 || caja.bottom > innerHeight) contenedor.scrollIntoView({ block: "center", behavior: reducido.matches ? "auto" : "smooth" });
-    if (reducido.matches) {
-      mapa.setView(punto, 17, { animate: false });
-      llegar();
-      return;
-    }
-    mapa.once("moveend", llegar);
-    mapa.flyTo(punto, 17, { duration: 0.9, easeLinearity: 0.2 });
+  // ---------- Cambio de modo ----------
+  // Cada elección (o la vuelta a «todas») invalida las anteriores: si el operador elige A y enseguida B, la respuesta tardía
+  // de A no reemplaza la ficha de B ni cambia la dirección.
+  let eleccion = 0;
+  async function elegir(id, { historial = true } = {}) {
+    const turno = ++eleccion;
+    const respuesta = await fetch(`/panel/acompanamientos?handler=Sesion&id=${encodeURIComponent(id)}`, { credentials: "same-origin", headers: { Accept: "text/html" } }).catch(() => null);
+    if (turno !== eleccion) return;
+    if (!respuesta || respuesta.redirected || !respuesta.ok) return; // la sesión ya no existe o terminó la sesión del panel
+    const html = await respuesta.text();
+    if (turno !== eleccion) return;
+    regionSesion.innerHTML = html;
+    regionSesion.querySelector("[data-seguimiento]")?.classList.add("seguimiento--entra");
+    sesion = id;
+    raiz.dataset.modo = "sesion";
+    todas.hidden = true;
+    regionSesion.hidden = false;
+    if (historial) history.pushState({ sesion: id }, "", `/panel/acompanamientos?sesion=${encodeURIComponent(id)}`);
+    aislar();
+    dibujarRuta({ encuadrar: true });
+    regionSesion.querySelector("#seguimiento-titulo")?.focus({ preventScroll: true });
+    // En pantallas estrechas el mapa va arriba del panel: se lleva a la vista para ver el recorrido aislado.
+    if (getComputedStyle(raiz.querySelector(".vigilancia__panel")).position !== "absolute")
+      contenedor.scrollIntoView({ block: "start", behavior: reducido.matches ? "auto" : "smooth" });
+  }
+
+  function volver({ historial = true } = {}) {
+    eleccion++; // una elección todavía en camino ya no vale
+    if (sesion === null) return;
+    const anterior = sesion;
+    sesion = null;
+    raiz.dataset.modo = "todas";
+    regionSesion.hidden = true;
+    regionSesion.innerHTML = "";
+    todas.hidden = false;
+    capaRuta?.remove();
+    capaRuta = null;
+    if (historial) history.pushState({}, "", "/panel/acompanamientos");
+    aislar();
+    const visibles = [...marcadores.values()].map((m) => m.getLatLng());
+    if (visibles.length > 0) mapa.flyToBounds(L.latLngBounds(visibles), { ...margenPanel(), maxZoom: 15, animate: !reducido.matches, duration: 0.6 });
+    region.querySelector(`[data-acompanamiento="${CSS.escape(anterior)}"] [data-elegir-acompanamiento]`)?.focus({ preventScroll: true });
   }
 
   region.addEventListener("click", (evento) => {
-    const boton = evento.target.closest("[data-elegir-acompanamiento]");
-    if (boton) elegir(boton.closest("[data-acompanamiento]").dataset.acompanamiento);
+    const enlace = evento.target.closest("[data-elegir-acompanamiento]");
+    if (!enlace || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.button !== 0) return;
+    evento.preventDefault();
+    elegir(enlace.closest("[data-acompanamiento]").dataset.acompanamiento);
+  });
+  regionSesion.addEventListener("click", (evento) => {
+    if (!evento.target.closest("[data-volver-lista]") || evento.ctrlKey || evento.metaKey) return;
+    evento.preventDefault();
+    volver();
+  });
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && sesion !== null && !evento.target.closest("input, textarea, select")) volver();
+  });
+  window.addEventListener("popstate", () => {
+    const id = new URLSearchParams(location.search).get("sesion");
+    if (id) elegir(id, { historial: false });
+    else volver({ historial: false });
   });
 
+  // ---------- Antigüedad al segundo ----------
   // «hace 12 s» / «hace 3 min 5 s», como el servidor.
   function antiguedad(desde) {
     const segundos = Math.max(0, Math.floor((Date.now() - new Date(desde).getTime()) / 1000));
     return segundos < 60 ? `hace ${segundos} s` : `hace ${Math.floor(segundos / 60)} min ${segundos % 60} s`;
   }
-
+  // Tiempo que le queda a la sesión que se sigue (vence a los 30 minutos).
+  function restante(hasta) {
+    const minutos = Math.ceil((new Date(hasta).getTime() - Date.now()) / 60000);
+    return minutos > 0 ? `quedan ${minutos} min` : "vence ahora";
+  }
   setInterval(() => {
-    for (const span of region.querySelectorAll("[data-antiguedad]")) span.textContent = antiguedad(span.dataset.desde);
+    for (const span of raiz.querySelectorAll("[data-antiguedad]")) span.textContent = antiguedad(span.dataset.desde);
+    for (const span of raiz.querySelectorAll("[data-restante]")) span.textContent = restante(span.dataset.hasta);
   }, 1000);
+
+  // ---------- Actualización desde el servidor ----------
+  // El foco del teclado vuelve al mismo botón o enlace de la misma sesión tras cambiar la lista.
+  function cambiarConFoco(contenedor, html, clave) {
+    const foco = document.activeElement;
+    const dentro = contenedor.contains(foco);
+    const grupo = dentro ? foco.closest(clave)?.getAttribute(clave.slice(1, -1)) : null;
+    const selector = !dentro ? null : foco.matches("[data-elegir-acompanamiento]") ? "[data-elegir-acompanamiento]"
+      : foco.id ? `#${CSS.escape(foco.id)}` : foco.matches("a[href]") ? `a[href="${CSS.escape(foco.getAttribute("href"))}"]` : foco.matches("button[type=submit]") ? "button[type=submit]" : null;
+    contenedor.innerHTML = html;
+    if (!selector) return;
+    const destino = grupo ? contenedor.querySelector(`${clave.slice(0, -1)}="${CSS.escape(grupo)}"] ${selector}`) : contenedor.querySelector(selector);
+    destino?.focus({ preventScroll: true });
+  }
 
   let pidiendo = false, pendiente = false;
   async function actualizar() {
@@ -113,16 +218,11 @@
     pidiendo = true;
     try {
       const respuesta = await fetch("/panel/acompanamientos?handler=Lista", { credentials: "same-origin", headers: { Accept: "text/html" } });
-      if (respuesta.redirected || !respuesta.ok) return; // sesión terminada o error: se conserva lo último mostrado
-      // El foco del teclado vuelve al mismo botón o enlace de la misma sesión tras cambiar la lista.
-      const foco = document.activeElement;
-      const sesionConFoco = region.contains(foco) ? foco.closest("[data-acompanamiento]")?.dataset.acompanamiento : null;
-      const selectorFoco = foco?.matches?.("[data-elegir-acompanamiento]") ? "[data-elegir-acompanamiento]" : foco?.matches?.("a") ? `a[href="${foco.getAttribute("href")}"]` : null;
-      region.innerHTML = await respuesta.text();
-      if (sesionConFoco && selectorFoco)
-        region.querySelector(`[data-acompanamiento="${CSS.escape(sesionConFoco)}"] ${selectorFoco}`)?.focus({ preventScroll: true });
+      if (respuesta.redirected || !respuesta.ok) return; // sesión del panel terminada o error: se conserva lo mostrado
+      cambiarConFoco(region, await respuesta.text(), "[data-acompanamiento]");
       avisarNuevos();
       dibujar();
+      if (sesion !== null) await actualizarSesion();
     } catch {
       // Sin conexión con el servidor: se reintenta en la siguiente vuelta.
     } finally {
@@ -131,7 +231,15 @@
     }
   }
 
-  // 24/10/2026: un aviso de acompañamiento que aparece en la lista suena una vez (sonidos.js, si están activados).
+  async function actualizarSesion() {
+    const id = sesion;
+    const respuesta = await fetch(`/panel/acompanamientos?handler=Sesion&id=${encodeURIComponent(id)}`, { credentials: "same-origin", headers: { Accept: "text/html" } });
+    if (respuesta.redirected || !respuesta.ok || sesion !== id) return;
+    cambiarConFoco(regionSesion, await respuesta.text(), "[data-seguimiento]");
+    dibujarRuta();
+  }
+
+  // Un aviso de acompañamiento que aparece en la lista suena una vez (sonidos.js, si están activados).
   const avisosVistos = new Set([...region.querySelectorAll("[data-aviso]")].map((el) => el.dataset.aviso));
   function avisarNuevos() {
     let hayNuevo = false;
@@ -144,6 +252,12 @@
   }
 
   dibujar();
+  if (sesion !== null) {
+    history.replaceState({ sesion }, "", location.href);
+    dibujarRuta({ encuadrar: true });
+  } else if (marcadores.size > 0) {
+    mapa.fitBounds(L.latLngBounds([...marcadores.values()].map((m) => m.getLatLng())), { ...margenPanel(), maxZoom: 15 });
+  }
   setInterval(actualizar, 10000);
   if (typeof signalR !== "undefined") {
     const conexion = new signalR.HubConnectionBuilder().withUrl("/hubs/central").withAutomaticReconnect().build();

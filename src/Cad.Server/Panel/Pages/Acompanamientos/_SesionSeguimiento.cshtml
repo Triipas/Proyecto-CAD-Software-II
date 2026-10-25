@@ -1,0 +1,173 @@
+@model Cad.Server.Panel.Pages.Acompanamientos.SeguimientoSesion
+@using Cad.Server.Panel.Pages.Acompanamientos
+@using Cad.Server.Modulos.Acompanamiento.Dominio
+@{
+    var s = Model.Sesion;
+    var zona = Model.ZonaHoraria;
+    var p = Model.Ultima;
+    var iniciales = string.Concat(s.Ciudadano.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    var (estado, tono) = s.Estado switch
+    {
+        EstadoSesion.Activa when s.SinConexion => ("Sin conexión", "advertencia"),
+        EstadoSesion.Activa => ("Activa", "acompanamiento"),
+        EstadoSesion.Finalizada => ("Finalizada por el ciudadano", "neutro"),
+        _ => ("Vencida a los 30 minutos", "neutro"),
+    };
+}
+@* Modo «sesión» (25/10/2026): la ficha de una sola persona; el mapa muestra solo su recorrido (acompanamientos.js lo dibuja
+   con data-puntos). Se vuelve a pedir al llegar algo de esa sesión. *@
+<div class="seguimiento" data-seguimiento="@s.Id" data-activa="@(s.Activa ? "true" : "false")"
+     data-puntos="@string.Join(";", s.Posiciones.Select(x => $"{Formato.Numero(x.Latitud)},{Formato.Numero(x.Longitud)}"))"
+     data-actual="@(Model.PosicionActual ? "true" : "false")">
+    <a class="seguimiento__volver" href="/panel/acompanamientos" data-volver-lista>
+        <partial name="_Icono" model="@("izquierda")" />Todas las sesiones
+    </a>
+
+    <header class="seguimiento__cabecera">
+        <span class="vigilado__avatar seguimiento__avatar@(Model.PideAyuda ? " vigilado__avatar--ayuda" : "")@(Model.PosicionActual ? " sonar" : Model.PideAyuda ? "" : " vigilado__avatar--gris")" aria-hidden="true">@iniciales</span>
+        <div class="seguimiento__quien">
+            <h2 class="seguimiento__nombre" id="seguimiento-titulo" tabindex="-1">@s.Ciudadano</h2>
+            <p class="seguimiento__meta">
+                <span class="chip chip--@tono" data-estado-sesion>@estado</span>
+                @if (s.Telefono is { } telefono)
+                {
+                    <a class="seguimiento__telefono num" href="tel:@telefono.Replace(" ", "")">@telefono</a>
+                }
+            </p>
+        </div>
+    </header>
+
+    @if (Model.Mensaje is { } mensaje)
+    {
+        <div class="aviso aviso--exito" role="status" data-enfocar>
+            <partial name="_Icono" model="@("exito")" />
+            <p class="aviso__texto">@mensaje</p>
+        </div>
+    }
+
+    @* La siguiente acción: lo más urgente de esta persona, una sola cosa a la vez. *@
+    <section class="seguimiento__siguiente" aria-labelledby="seguimiento-siguiente">
+        @if (Model.PideAyuda && Model.UltimaConfirmacion?.CasoId is { } caso)
+        {
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Pidió ayuda: atiende su SOS</h3>
+            <p class="texto-secundario">Respondió «Necesito ayuda» a la confirmación de las @Formato.Hora(Model.UltimaConfirmacion.SolicitadaEn, zona, "HH:mm"). El SOS está en la cola de la central.</p>
+            <a class="boton boton--peligro" href="/panel/central/sos/@caso"><partial name="_Icono" model="@("urgente")" />Abrir el SOS</a>
+        }
+        else if (Model.AvisoAbierto is { } aviso)
+        {
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Revisa el aviso: @aviso.TextoRegla.ToLowerInvariant()</h3>
+            <p class="texto-secundario">Generado a las @Formato.Hora(aviso.GeneradoEn, zona, "HH:mm") · @aviso.TextoEstado@(aviso.Responsable is { } r ? $" ({r})" : "").</p>
+            <a class="boton boton--principal" href="/panel/avisos/@aviso.Id" data-aviso="@aviso.Id">Revisar el aviso</a>
+        }
+        else if (s.Activa && !s.ConfirmacionPendiente)
+        {
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente">¿Cómo está @s.Ciudadano.Split(' ')[0]?</h3>
+            <p class="texto-secundario">Verá «Estoy bien» y «Necesito ayuda»; solo «Necesito ayuda» emite un SOS.</p>
+            <form method="post" asp-page="/Acompanamientos/Detalle" asp-route-id="@s.Id" asp-page-handler="SolicitarConfirmacion" data-formulario>
+                <input type="hidden" name="IdSolicitudConfirmacion" value="@Model.IdSolicitudConfirmacion" />
+                <input type="hidden" name="Volver" value="lista" />
+                <button type="submit" class="boton boton--principal" data-texto-carga="Solicitando…">Pedir confirmación de bienestar</button>
+            </form>
+        }
+        else if (s.Activa)
+        {
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Esperando su respuesta</h3>
+            <p class="texto-secundario" data-confirmacion-en-espera>Se le pidió una confirmación de bienestar@(Model.UltimaConfirmacion is { } c ? $" a las {Formato.Hora(c.SolicitadaEn, zona, "HH:mm")}" : ""). Si no responde en 2 minutos, se genera un aviso.</p>
+        }
+        else
+        {
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente">La sesión terminó</h3>
+            <p class="texto-secundario">Su recorrido queda en el historial de sesiones.</p>
+        }
+    </section>
+
+    <dl class="seguimiento__datos">
+        <div>
+            <dt>@(Model.PosicionActual ? "Posición actual" : "Última posición conocida")</dt>
+            <dd>
+                @if (p is null)
+                {
+                    <span class="texto-secundario" data-sin-posicion>Aún no se recibió ninguna posición.</span>
+                }
+                else
+                {
+                    <span class="num">@Formato.Hora(p.ObtenidaEn, zona)</span>
+                    @if (s.Activa)
+                    {
+                        <span class="texto-secundario"> · <span class="num" data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")">@Formato.Antiguedad(p.Antiguedad)</span></span>
+                    }
+                    <span class="texto-secundario"> · ± @Formato.Numero(p.PrecisionMetros, "0") m</span>
+                }
+            </dd>
+        </div>
+        <div>
+            <dt>Último envío</dt>
+            <dd>
+                @if (s.UltimoContactoEn is { } contacto)
+                {
+                    <span class="num">@Formato.Hora(contacto, zona)</span>
+                    @if (s.Activa)
+                    {
+                        <span class="texto-secundario"> · <span class="num" data-antiguedad data-desde="@contacto.ToString("O")">@Formato.Antiguedad(Model.Ahora - contacto)</span></span>
+                    }
+                }
+                else
+                {
+                    <span>—</span>
+                }
+            </dd>
+        </div>
+        <div>
+            <dt>@(s.Activa ? "Tiempo restante" : "Cierre")</dt>
+            @if (s.Activa)
+            {
+                var restante = Math.Max(0, (int)Math.Ceiling((s.VenceEn - Model.Ahora).TotalMinutes));
+                <dd><strong class="num" data-restante data-hasta="@s.VenceEn.ToString("O")">quedan @restante min</strong> <span class="texto-secundario num">· vence @Formato.Hora(s.VenceEn, zona, "HH:mm")</span></dd>
+            }
+            else
+            {
+                <dd class="num">@Formato.Hora(s.CerradaEn ?? s.VenceEn, zona, "HH:mm") <span class="texto-secundario">· inició @Formato.Hora(s.IniciadaEn, zona, "HH:mm")</span></dd>
+            }
+        </div>
+        <div>
+            <dt>Recorrido</dt>
+            <dd><span class="num">@s.Posiciones.Count</span> @(s.Posiciones.Count == 1 ? "posición" : "posiciones")</dd>
+        </div>
+    </dl>
+
+    @if (s.Confirmaciones is { Count: > 0 } confirmaciones)
+    {
+        <section class="seguimiento__seccion" aria-labelledby="seguimiento-bienestar">
+            <h3 class="seguimiento__subtitulo" id="seguimiento-bienestar">Confirmaciones de bienestar</h3>
+            <ol class="seguimiento__lista">
+                @foreach (var conf in confirmaciones.Take(3))
+                {
+                    var ayuda = conf.Respuesta == RespuestaBienestar.NecesitoAyuda;
+                    <li data-confirmacion="@(conf.Respuesta?.ToString() ?? "Pendiente")">
+                        <span class="chip @(ayuda && conf.SosEnCurso ? "chip--urgente" : conf.Pendiente || ayuda ? "chip--neutro" : "chip--exito")">@conf.TextoRespuesta</span>
+                        <span class="texto-secundario num">@Formato.Hora(conf.SolicitadaEn, zona, "HH:mm")</span>
+                        @if (conf.TextoSos is { } textoSos)
+                        {
+                            <span class="texto-secundario" data-estado-sos>@textoSos</span>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+
+    @if (Model.Avisos.Count > 0)
+    {
+        <section class="seguimiento__seccion" aria-labelledby="seguimiento-avisos">
+            <h3 class="seguimiento__subtitulo" id="seguimiento-avisos">Avisos de la sesión</h3>
+            <ul class="seguimiento__lista">
+                @foreach (var aviso in Model.Avisos)
+                {
+                    <li><a href="/panel/avisos/@aviso.Id">@aviso.TextoRegla</a> <span class="texto-secundario">· @Formato.Hora(aviso.GeneradoEn, zona, "HH:mm") · @aviso.TextoEstado</span></li>
+                }
+            </ul>
+        </section>
+    }
+
+    <a class="boton boton--secundario seguimiento__detalle" href="/panel/acompanamientos/@s.Id">Ver el detalle completo</a>
+</div>
