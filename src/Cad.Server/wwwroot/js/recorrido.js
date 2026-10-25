@@ -54,7 +54,7 @@
       }).addTo(mapa);
     }
     ultima = L.marker(puntos[0], {
-      icon: L.divIcon({ className: `marcador-acompanamiento${actual ? "" : " marcador-acompanamiento--desactualizado"}`, html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -18] }),
+      icon: L.divIcon({ className: `marcador-acompanamiento${actual ? " marcador-acompanamiento--vigilado" : " marcador-acompanamiento--desactualizado"}`, html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -18] }),
       title: texto,
       alt: texto,
       keyboard: true,

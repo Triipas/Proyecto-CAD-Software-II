@@ -269,6 +269,34 @@ public class BienestarTests(FabricaCad fabrica)
         Assert.Contains($"/panel/central/sos/{sos.Id}", await (await PanelAsync()).Navegador.GetStringAsync($"/panel/acompanamientos/{ciudadano.SesionId}"));
     }
 
+    // 24/10/2026: si el ciudadano cancela el SOS de «Necesito ayuda», la tarjeta y el detalle lo dicen y dejan de mostrarlo como
+    // una petición de ayuda en curso (rojo); la central recibe el aviso para actualizarse.
+    [Fact]
+    public async Task NecesitoAyuda_ConElSosCancelado_YaNoSeMuestraComoAlertaEnCurso()
+    {
+        var ciudadano = await AcompanamientoAsync();
+        var id = await ConfirmacionAsync(ciudadano.SesionId);
+        var vista = (await (await ResponderAsync(ciudadano.App, id, RespuestasBienestar.NecesitoAyuda, Sos())).Content.ReadFromJsonAsync<ConfirmacionBienestarVista>())!;
+        var (navegador, _) = await PanelAsync();
+        string Tarjeta(string lista) => System.Text.RegularExpressions.Regex.Match(lista,
+            $"data-acompanamiento=\"{ciudadano.SesionId}\".*?</li>", System.Text.RegularExpressions.RegexOptions.Singleline).Value;
+
+        var antes = Tarjeta(await navegador.GetStringAsync("/panel/acompanamientos?handler=Lista"));
+        Assert.Contains("aviso aviso--error", antes);
+        Assert.Contains("data-sos-en-curso=\"true\"", antes);
+
+        await using var central = await fabrica.OperadorEnCentralAsync();
+        Assert.Equal(HttpStatusCode.OK, (await ciudadano.App.PostAsJsonAsync($"/api/casos/mios/{vista.CasoId}/cancelacion",
+            new SolicitudCancelacionSos("Ya estoy a salvo."))).StatusCode);
+        Assert.True(await CentralDePrueba.EsperarAsync(() => central.AvisosCancelaciones.Contains(vista.CasoId!.Value)), "aviso de la cancelación");
+
+        var despues = System.Net.WebUtility.HtmlDecode(Tarjeta(await navegador.GetStringAsync("/panel/acompanamientos?handler=Lista")));
+        Assert.DoesNotContain("aviso aviso--error", despues);
+        Assert.Contains("aviso aviso--advertencia", despues);
+        Assert.Contains("El ciudadano canceló el SOS.", despues);
+        Assert.Contains("El ciudadano canceló el SOS.", System.Net.WebUtility.HtmlDecode(await navegador.GetStringAsync($"/panel/acompanamientos/{ciudadano.SesionId}")));
+    }
+
     [Theory]
     [InlineData(EstadoCaso.Pendiente)]
     [InlineData(EstadoCaso.Asignada)]

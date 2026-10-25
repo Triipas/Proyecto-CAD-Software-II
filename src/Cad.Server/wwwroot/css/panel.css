@@ -1631,6 +1631,59 @@ a.boton {
   outline-offset: 2px;
 }
 
+/* 24/10/2026: sonar de vigilancia. Dos anillos se abren desde el círculo del ciudadano mientras su sesión está activa y con
+   posición al día (tarjeta, marcador del mapa y recorrido). Solo bordes: no tapan la inicial. Con la posición desactualizada
+   o sin conexión no hay sonar, y con «reducir movimiento» tampoco. */
+/* El marcador de Leaflet ya está posicionado (absolute): solo la inicial de la tarjeta necesita relative. */
+.sonar {
+  position: relative;
+}
+
+.sonar::before,
+.sonar::after,
+.marcador-acompanamiento--vigilado::before,
+.marcador-acompanamiento--vigilado::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--color-acompanamiento);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  animation: sonar 2.4s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+  animation-delay: var(--desfase, 0s);
+}
+
+.sonar::after,
+.marcador-acompanamiento--vigilado::after {
+  animation-delay: calc(var(--desfase, 0s) + 1.2s);
+}
+
+.marcador-acompanamiento--vigilado::before,
+.marcador-acompanamiento--vigilado::after {
+  border-color: var(--mapa-acompanamiento);
+}
+
+@keyframes sonar {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sonar::before,
+  .sonar::after,
+  .marcador-acompanamiento--vigilado::before,
+  .marcador-acompanamiento--vigilado::after {
+    animation: none;
+  }
+}
+
 /* Inicio del recorrido: punto hueco del color del acompañamiento. */
 .marcador-inicio-recorrido {
   border: 3px solid var(--mapa-acompanamiento);
