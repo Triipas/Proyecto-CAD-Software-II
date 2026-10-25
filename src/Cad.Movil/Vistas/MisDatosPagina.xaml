@@ -14,7 +14,7 @@
                                 Ayuda="Solo el nombre es obligatorio. Lo demás ayuda a la central a atenderte y solo lo ve mientras atiende tu caso." />
 
             <VerticalStackLayout Padding="16,20,16,32" Spacing="10" MaximumWidthRequest="480">
-                <v:Aviso Tipo="{Binding TipoMensaje}" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <v:Aviso Emergente="True" Tipo="{Binding TipoMensaje}" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
 
                 <Label Text="Celular" Style="{StaticResource Etiqueta}" />
                 <Border Style="{StaticResource MarcoCampo}" BackgroundColor="{StaticResource ColorSuperficieHundida}">

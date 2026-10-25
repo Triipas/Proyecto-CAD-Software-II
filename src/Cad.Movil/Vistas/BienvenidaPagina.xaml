@@ -29,7 +29,7 @@
                         <Label Text="Ingresa o crea tu cuenta" Style="{StaticResource Titulo}" FontSize="22" SemanticProperties.HeadingLevel="Level2" />
                         <Label Text="Te enviaremos un código por SMS para verificar tu número." Style="{StaticResource TextoSecundario}" />
 
-                        <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                        <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
 
                         <Label Text="Número de celular" Style="{StaticResource Etiqueta}" />
                         <Border Style="{StaticResource MarcoCampo}">

@@ -31,7 +31,7 @@
             </Grid>
 
             <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
-                <v:Aviso Tipo="{Binding TipoMensaje}" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <v:Aviso Emergente="True" Tipo="{Binding TipoMensaje}" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
 
                 <!-- Mis datos: todo opcional salvo el nombre. -->
                 <Grid>
