@@ -1,4 +1,8 @@
 using Microsoft.Maui.Controls.Shapes;
+#if ANDROID
+using Android.Graphics.Drawables;
+using Microsoft.Maui.Platform;
+#endif
 
 namespace Cad.Movil.Vistas;
 
@@ -6,54 +10,13 @@ namespace Cad.Movil.Vistas;
 // el texto y «Entendido». Solo para los avisos de un momento (resultado de una acción o un suceso); los de estado siguen en la
 // pantalla. Se abren de uno en uno y un aviso idéntico al que ya está abierto o en cola no se repite (la misma propiedad
 // puede mostrarse en dos sitios de una pantalla).
-public sealed class DialogoAviso : ContentPage
+// No es una página modal: abrir una página haría que la pantalla de debajo «desapareciera» y «reapareciera» (recargaría el
+// formulario, cancelaría la vuelta automática del reporte…). En Android es una ventana de diálogo nativa con la tarjeta MAUI
+// dentro, que no detiene la actividad, así que la pantalla no se entera.
+public static class DialogoAviso
 {
     private static readonly SemaphoreSlim turno = new(1, 1);
     private static readonly HashSet<(string, string)> pendientes = [];
-    private readonly TaskCompletionSource cerrado = new();
-    private readonly Border tarjeta;
-
-    private DialogoAviso(string tipo, string texto)
-    {
-        var (color, titulo) = tipo switch
-        {
-            "exito" => ("ColorExito", "Listo"),
-            "advertencia" => ("ColorAdvertencia", "Atención"),
-            "error" => ("ColorError", "No se pudo completar"),
-            _ => ("ColorInformacion", "Aviso"),
-        };
-        BackgroundColor = Color.FromRgba(0, 0, 0, 0.55);
-        Shell.SetPresentationMode(this, PresentationMode.ModalNotAnimated);
-
-        var icono = new Icono { Nombre = tipo is "exito" or "advertencia" or "error" ? tipo : "informacion", Tamano = 32, Color = Recurso(color), HorizontalOptions = LayoutOptions.Center };
-        var encabezado = new Label { Text = titulo, FontSize = 20, FontAttributes = FontAttributes.Bold, TextColor = Recurso("ColorTexto"), HorizontalTextAlignment = TextAlignment.Center };
-        SemanticProperties.SetHeadingLevel(encabezado, SemanticHeadingLevel.Level1);
-        var cuerpo = new Label { Text = texto, FontSize = 16, TextColor = Recurso("ColorTexto"), HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.WordWrap };
-        var entendido = new Button { Text = "Entendido", Margin = new Thickness(0, 8, 0, 0) };
-        if (Application.Current?.Resources.TryGetValue("BotonPrincipal", out var estilo) == true)
-            entendido.Style = (Style)estilo;
-        entendido.Clicked += async (_, _) => await CerrarAsync();
-
-        tarjeta = new Border
-        {
-            StrokeThickness = 0,
-            StrokeShape = new RoundRectangle { CornerRadius = 16 },
-            BackgroundColor = Recurso("ColorSuperficie"),
-            Padding = new Thickness(24, 24, 24, 20),
-            Margin = new Thickness(24),
-            MaximumWidthRequest = 380,
-            VerticalOptions = LayoutOptions.Center,
-            HorizontalOptions = LayoutOptions.Fill,
-            Shadow = new Shadow { Brush = Brush.Black, Opacity = 0.25f, Radius = 24, Offset = new Point(0, 8) },
-            Content = new VerticalStackLayout { Spacing = 12, Children = { icono, encabezado, cuerpo, entendido } },
-        };
-        Content = new Grid { Children = { tarjeta } };
-        // El lector de pantalla lo anuncia completo al abrirse.
-        SemanticProperties.SetDescription(tarjeta, $"{titulo}: {texto}");
-    }
-
-    private static Color Recurso(string clave) =>
-        Application.Current?.Resources.TryGetValue(clave, out var valor) == true ? (Color)valor : Colors.Black;
 
     // Abre el aviso cuando le toca (uno a la vez) y espera a que se cierre.
     public static async Task MostrarAsync(string tipo, string texto)
@@ -65,11 +28,7 @@ public sealed class DialogoAviso : ContentPage
         await turno.WaitAsync();
         try
         {
-            if (Application.Current?.Windows.FirstOrDefault()?.Page is not { } raiz)
-                return;
-            var dialogo = new DialogoAviso(tipo, texto);
-            await MainThread.InvokeOnMainThreadAsync(() => raiz.Navigation.PushModalAsync(dialogo, false));
-            await dialogo.cerrado.Task;
+            await MainThread.InvokeOnMainThreadAsync(() => PresentarAsync(tipo, texto));
         }
         catch (Exception)
         {
@@ -83,33 +42,80 @@ public sealed class DialogoAviso : ContentPage
         }
     }
 
-    protected override async void OnAppearing()
+    private static (string Titulo, string Color) Aspecto(string tipo) => tipo switch
     {
-        base.OnAppearing();
+        "exito" => ("Listo", "ColorExito"),
+        "advertencia" => ("Atención", "ColorAdvertencia"),
+        "error" => ("No se pudo completar", "ColorError"),
+        _ => ("Aviso", "ColorInformacion"),
+    };
+
+    private static Color Recurso(string clave) =>
+        Application.Current?.Resources.TryGetValue(clave, out var valor) == true ? (Color)valor : Colors.Black;
+
+    // La tarjeta: icono, título, texto y «Entendido» (cerrar lo hace quien la presenta).
+    private static Border Tarjeta(string tipo, string texto, Action cerrar)
+    {
+        var (titulo, color) = Aspecto(tipo);
+        var icono = new Icono { Nombre = tipo is "exito" or "advertencia" or "error" ? tipo : "informacion", Tamano = 32, Color = Recurso(color), HorizontalOptions = LayoutOptions.Center };
+        var encabezado = new Label { Text = titulo, FontSize = 20, FontAttributes = FontAttributes.Bold, TextColor = Recurso("ColorTexto"), HorizontalTextAlignment = TextAlignment.Center };
+        SemanticProperties.SetHeadingLevel(encabezado, SemanticHeadingLevel.Level1);
+        var cuerpo = new Label { Text = texto, FontSize = 16, TextColor = Recurso("ColorTexto"), HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.WordWrap };
+        var entendido = new Button { Text = "Entendido", Margin = new Thickness(0, 8, 0, 0) };
+        if (Application.Current?.Resources.TryGetValue("BotonPrincipal", out var estilo) == true)
+            entendido.Style = (Style)estilo;
+        entendido.Clicked += (_, _) => cerrar();
+
+        var tarjeta = new Border
+        {
+            StrokeThickness = 0,
+            StrokeShape = new RoundRectangle { CornerRadius = 16 },
+            BackgroundColor = Recurso("ColorSuperficie"),
+            Padding = new Thickness(24, 24, 24, 20),
+            MaximumWidthRequest = 380,
+            Content = new VerticalStackLayout { Spacing = 12, Children = { icono, encabezado, cuerpo, entendido } },
+        };
+        // El lector de pantalla lo anuncia completo al abrirse.
+        SemanticProperties.SetDescription(tarjeta, $"{titulo}: {texto}");
+        return tarjeta;
+    }
+
+#if ANDROID
+    private static async Task PresentarAsync(string tipo, string texto)
+    {
+        if (Platform.CurrentActivity is not { } actividad || Application.Current?.Windows.FirstOrDefault()?.Handler?.MauiContext is not { } contexto)
+            return;
+        var cerrado = new TaskCompletionSource();
+        Android.App.Dialog? dialogo = null;
+        var tarjeta = Tarjeta(tipo, texto, () => dialogo?.Dismiss());
+        var envoltura = new Grid { Padding = new Thickness(24), Children = { tarjeta } };
+
+        dialogo = new Android.App.Dialog(actividad);
+        dialogo.RequestWindowFeature((int)Android.Views.WindowFeatures.NoTitle);
+        dialogo.SetContentView(envoltura.ToPlatform(contexto));
+        dialogo.SetCancelable(true); // «Atrás» también lo cierra
+        dialogo.SetCanceledOnTouchOutside(false);
+        if (dialogo.Window is { } ventana)
+        {
+            ventana.SetBackgroundDrawable(new ColorDrawable(Android.Graphics.Color.Transparent));
+            ventana.SetLayout(Android.Views.ViewGroup.LayoutParams.MatchParent, Android.Views.ViewGroup.LayoutParams.WrapContent);
+            ventana.SetDimAmount(0.55f);
+        }
+        dialogo.DismissEvent += (_, _) => cerrado.TrySetResult();
         tarjeta.Opacity = 0;
         tarjeta.Scale = 0.94;
+        dialogo.Show();
         await Task.WhenAll(tarjeta.FadeToAsync(1, 160, Easing.CubicOut), tarjeta.ScaleToAsync(1, 160, Easing.CubicOut));
         tarjeta.SetSemanticFocus();
+        await cerrado.Task;
+        envoltura.Handler?.DisconnectHandler();
     }
-
-    // «Atrás» del sistema también lo cierra.
-    protected override bool OnBackButtonPressed()
+#else
+    // Fuera de Android (y en las pruebas) basta la alerta del sistema.
+    private static async Task PresentarAsync(string tipo, string texto)
     {
-        _ = CerrarAsync();
-        return true;
+        if (Application.Current?.Windows.FirstOrDefault()?.Page is { } pagina)
+            await pagina.DisplayAlertAsync(Aspecto(tipo).Titulo, texto, "Entendido");
     }
-
-    private async Task CerrarAsync()
-    {
-        if (cerrado.Task.IsCompleted)
-            return;
-        try
-        {
-            await Navigation.PopModalAsync(false);
-        }
-        finally
-        {
-            cerrado.TrySetResult();
-        }
-    }
+#endif
 }
