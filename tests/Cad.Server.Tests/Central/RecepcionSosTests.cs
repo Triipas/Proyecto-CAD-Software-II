@@ -183,5 +183,8 @@ public class RecepcionSosTests(FabricaCad fabrica)
 
         public Task DespachoActualizadoAsync(Guid serenoId, CancellationToken ct) =>
             throw new InvalidOperationException("Fallo simulado.");
+
+        public Task AcompanamientoActualizadoAsync(Guid sesionId, CancellationToken ct) =>
+            throw new InvalidOperationException("Fallo simulado.");
     }
 }

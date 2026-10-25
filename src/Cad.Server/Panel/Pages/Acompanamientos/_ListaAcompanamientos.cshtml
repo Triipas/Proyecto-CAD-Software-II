@@ -46,7 +46,17 @@ else
                 <div class="acompanamiento__cabecera">
                     <span class="acompanamiento__inicial@(gris ? " acompanamiento__inicial--gris" : "")" aria-hidden="true">@Iniciales(s.Ciudadano)</span>
                     <div class="acompanamiento__quien">
-                        <p class="acompanamiento__ciudadano">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")</p>
+                        @* 24/10/2026: como en la central, la tarjeta entera es el botón que ubica la sesión en el mapa (el del nombre,
+                           extendido a toda la tarjeta). Sin ninguna posición no hay nada que ubicar. *@
+                        @if (p is not null)
+                        {
+                            <button type="button" class="acompanamiento__ciudadano acompanamiento__elegir" data-elegir-acompanamiento aria-pressed="false"
+                                    aria-describedby="acompanamiento-@s.Id-posicion">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")<span class="visualmente-oculto">: ubicar en el mapa</span></button>
+                        }
+                        else
+                        {
+                            <p class="acompanamiento__ciudadano">@s.Ciudadano @(s.Telefono is { } t ? $"· {t}" : "")</p>
+                        }
                         <p class="acompanamiento__meta">
                             <span class="etiqueta-acompanamiento">Acompañamiento</span>
                             <span class="texto-secundario">hasta las @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
@@ -80,7 +90,7 @@ else
                 else
                 {
                     @* HU38-CA01/CA02/CA03: hora de obtención, precisión y antigüedad; una posición desactualizada no se presenta como actual. *@
-                    <p class="acompanamiento__dato" data-posicion>
+                    <p class="acompanamiento__dato" id="acompanamiento-@s.Id-posicion" data-posicion>
                         <partial name="_Icono" model="@("ubicacion")" />
                         <span>
                             <strong>@(p.Desactualizada || s.SinConexion ? "Última posición conocida" : "Posición actual")</strong>
@@ -105,12 +115,6 @@ else
                     </p>
                 }
                 <div class="acompanamiento__acciones">
-                    @if (p is not null)
-                    {
-                        <button type="button" class="sos__ubicacion" data-ver-en-mapa aria-label="Ver en el mapa la posición de @s.Ciudadano">
-                            <partial name="_Icono" model="@("ubicacion")" /><span>Ver en el mapa</span>
-                        </button>
-                    }
                     <a class="acompanamiento__recorrido" href="/panel/acompanamientos/@s.Id">Ver el recorrido (@s.Posiciones @(s.Posiciones == 1 ? "posición" : "posiciones"))</a>
                 </div>
             </li>

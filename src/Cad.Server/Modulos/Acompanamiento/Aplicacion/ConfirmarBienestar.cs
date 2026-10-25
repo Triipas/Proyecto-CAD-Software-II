@@ -1,4 +1,5 @@
 using Cad.Contratos.Acompanamiento;
+using Cad.Server.Compartido;
 using Cad.Server.Modulos.Acompanamiento.Dominio;
 using Cad.Server.Modulos.Casos.Aplicacion;
 using Cad.Server.Modulos.Casos.Dominio;
@@ -31,7 +32,7 @@ public abstract record ResultadoRespuestaBienestar
 }
 
 // HU40 — Solicitar una confirmación de bienestar (S5-T04) y HU41 — Responderla (S5-T05, S5-T06).
-public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, TimeProvider reloj, ILogger<ConfirmarBienestar> registro)
+public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, TimeProvider reloj, INotificador notificador, ILogger<ConfirmarBienestar> registro)
 {
     // Decisión del PO del 16/10/2026: SOS vigente para «Necesito ayuda» = Pendiente, Asignada, En camino o En atención
     // (lo que el ciudadano ve como «Recibido» o «En atención»).
@@ -79,6 +80,7 @@ public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, Tim
         }
 
         registro.LogInformation("Confirmación de bienestar {ConfirmacionId} solicitada en el acompañamiento {SesionId}.", confirmacion.Id, sesionId);
+        await AvisarAsync(sesionId);
         return new ResultadoSolicitudBienestar.Solicitada(confirmacion);
     }
 
@@ -102,6 +104,7 @@ public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, Tim
             try
             {
                 await db.SaveChangesAsync(ct);
+                await AvisarAsync(confirmacion.SesionId);
                 return confirmacion;
             }
             catch (DbUpdateConcurrencyException) when (intento < Intentos)
@@ -184,7 +187,21 @@ public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, Tim
             }
 
             registro.LogInformation("Confirmación de bienestar {ConfirmacionId} respondida: {Respuesta}.", confirmacion.Id, respuesta);
+            await AvisarAsync(confirmacion.SesionId);
             return new ResultadoRespuestaBienestar.Registrada(confirmacion);
+        }
+    }
+
+    // 24/10/2026: después del COMMIT, la central vuelve a leer la sesión. Un fallo del canal no afecta al registro.
+    private async Task AvisarAsync(Guid sesionId)
+    {
+        try
+        {
+            await notificador.AcompanamientoActualizadoAsync(sesionId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogWarning(ex, "No se pudo avisar a la central del acompañamiento {SesionId}; se verá al actualizar.", sesionId);
         }
     }
 }

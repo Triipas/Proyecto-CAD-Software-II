@@ -1,4 +1,5 @@
 using Cad.Contratos.Acompanamiento;
+using Cad.Server.Compartido;
 using Cad.Server.Modulos.Acompanamiento.Dominio;
 using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +67,7 @@ public abstract record ResultadoFinalizacion
 // los endpoints y la titularidad, cada consulta (una sesión ajena responde igual que una inexistente).
 // Ni el inicio ni el cierre crean, cambian ni cancelan casos (HU34-CA05, HU36-CA05/CA06, HU37-CA05).
 public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj, IOptions<OpcionesAcompanamiento> opciones,
-    ILogger<GestionarAcompanamiento> registro)
+    INotificador notificador, ILogger<GestionarAcompanamiento> registro)
 {
     public int IntervaloPosicionesSegundos => opciones.Value.IntervaloPosicionesSegundos;
 
@@ -116,6 +117,7 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
         }
 
         registro.LogInformation("Acompañamiento {SesionId} iniciado.", sesion.Id);
+        await AvisarAsync(sesion.Id);
         return new ResultadoInicioAcompanamiento.Iniciada(sesion);
     }
 
@@ -187,6 +189,7 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
 
         // Sin coordenadas en el registro (RNF07).
         registro.LogDebug("Posición del acompañamiento {SesionId} registrada.", sesion.Id);
+        await AvisarAsync(sesion.Id);
         return new ResultadoPosicionAcompanamiento.Registrada();
     }
 
@@ -223,6 +226,7 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
             // HU36-CA06: un cierre voluntario no es una señal de peligro; solo se anota cómo terminó.
             registro.LogInformation("Acompañamiento {SesionId} {Cierre} (antes: {Estado}).", sesion.Id,
                 sesion.Estado == EstadoSesion.Finalizada ? "finalizado por el ciudadano" : "vencido", estadoAnterior);
+            await AvisarAsync(sesion.Id);
             return new ResultadoFinalizacion.Cerrada(sesion);
         }
     }
@@ -244,8 +248,25 @@ public sealed class GestionarAcompanamiento(CadDbContext db, TimeProvider reloj,
                 .SetProperty(x => x.Estado, EstadoSesion.Vencida)
                 .SetProperty(x => x.CerradaEn, x => (DateTimeOffset?)x.VenceEn), ct);
         foreach (var vencida in ids)
+        {
             registro.LogInformation("Acompañamiento {SesionId} vencido a los 30 minutos.", vencida);
+            await AvisarAsync(vencida);
+        }
         return ids;
+    }
+
+    // 24/10/2026: después del COMMIT, la central vuelve a leer la sesión (lista y detalle se actualizan al momento). Un fallo
+    // del canal en tiempo real no afecta al registro: el panel también consulta cada cierto tiempo.
+    private async Task AvisarAsync(Guid sesionId)
+    {
+        try
+        {
+            await notificador.AcompanamientoActualizadoAsync(sesionId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogWarning(ex, "No se pudo avisar a la central del acompañamiento {SesionId}; se verá al actualizar.", sesionId);
+        }
     }
 
     private Task<SesionAcompanamiento?> PorSolicitudAsync(Guid ciudadanoId, Guid idSolicitud, CancellationToken ct) =>

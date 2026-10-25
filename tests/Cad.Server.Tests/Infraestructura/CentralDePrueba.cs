@@ -19,6 +19,9 @@ public sealed record OperadorEnCentral(HubConnection Conexion, HttpClient Navega
     // HU09-CA02: identificadores de los SOS de los avisos «SosCancelado».
     public ConcurrentQueue<Guid> AvisosCancelaciones { get; init; } = new();
 
+    // 24/10/2026: identificadores de las sesiones de los avisos «AcompanamientoActualizado».
+    public ConcurrentQueue<Guid> AvisosAcompanamientos { get; init; } = new();
+
     public ValueTask DisposeAsync() => Conexion.DisposeAsync();
 }
 
@@ -49,10 +52,13 @@ public static class CentralDePrueba
         conexion.On<JsonElement>("CasoActualizado", aviso => avisosCasos.Enqueue(aviso.GetProperty("id").GetGuid()));
         var avisosCancelaciones = new ConcurrentQueue<Guid>();
         conexion.On<JsonElement>("SosCancelado", aviso => avisosCancelaciones.Enqueue(aviso.GetProperty("id").GetGuid()));
+        var avisosAcompanamientos = new ConcurrentQueue<Guid>();
+        conexion.On<JsonElement>("AcompanamientoActualizado", aviso => avisosAcompanamientos.Enqueue(aviso.GetProperty("id").GetGuid()));
         await conexion.StartAsync();
         return new OperadorEnCentral(conexion, navegador, avisos)
         {
             AvisosSerenos = avisosSerenos, AvisosCasos = avisosCasos, AvisosCancelaciones = avisosCancelaciones,
+            AvisosAcompanamientos = avisosAcompanamientos,
         };
     }
 

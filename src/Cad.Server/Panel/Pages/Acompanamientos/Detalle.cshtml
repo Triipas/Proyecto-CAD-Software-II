@@ -19,7 +19,8 @@
     <link rel="stylesheet" href="~/css/acompanamientos.css" asp-append-version="true" />
 }
 <p><a class="enlace-volver" href="@(s.Activa ? "/panel/acompanamientos" : "/panel/acompanamientos/historial")">← @(s.Activa ? "Acompañamientos activos" : "Historial de sesiones")</a></p>
-<header class="cabecera-caso">
+@* 24/10/2026: con la sesión activa, las partes marcadas con data-vivo se actualizan solas (acompanamiento-detalle.js). *@
+<header class="cabecera-caso" data-vivo="cabecera">
     <div class="cabecera-caso__fila">
         <span class="etiqueta-acompanamiento etiqueta-acompanamiento--grande"><partial name="_Icono" model="@("ruta")" />Acompañamiento</span>
         <h1 class="titulo">@s.Ciudadano</h1>
@@ -38,7 +39,7 @@
     </div>
 }
 
-<div class="detalle-caso">
+<div class="detalle-caso" data-sesion="@s.Id" data-activa="@(s.Activa ? "true" : "false")">
     <div class="detalle-caso__principal">
         <section class="superficie seccion-caso" aria-labelledby="titulo-recorrido">
             <h2 id="titulo-recorrido" class="seccion-caso__titulo">Recorrido</h2>
@@ -49,18 +50,24 @@
                     <span>Las posiciones se eliminaron el @Formato.Hora(eliminadas, zona, "dd/MM/yyyy HH:mm") al cumplirse el plazo de conservación (@Model.ConservacionDias días, DP22). Se conservan los datos de la sesión.</span>
                 </p>
             }
-            else if (s.Posiciones.Count == 0)
+            else
+            {
+                @* El mapa no se vuelve a crear al actualizar: recorrido.js toma los puntos nuevos de data-puntos. *@
+                <div id="mapa-recorrido" class="mapa mapa--recorrido" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"
+                     hidden="@(s.Posiciones.Count == 0)"
+                     data-puntos="@string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}"))"
+                     data-actual="@(s.Posiciones.Count > 0 && s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
+            }
+            <div data-vivo="posiciones">
+            @if (s.PosicionesEliminadasEn is null && s.Posiciones.Count == 0)
             {
                 <p class="texto-secundario" data-sin-posiciones>Sin posiciones registradas.</p>
             }
-            else
+            else if (s.PosicionesEliminadasEn is null)
             {
-                <div id="mapa-recorrido" class="mapa mapa--recorrido" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"
-                     data-puntos="@string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}"))"
-                     data-actual="@(s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
                 <div class="tabla-contenedor" tabindex="0" role="region" aria-labelledby="leyenda-posiciones">
                     <table class="tabla" data-posiciones>
-                        <caption id="leyenda-posiciones">@s.Posiciones.Count @(s.Posiciones.Count == 1 ? "posición" : "posiciones"), de la más reciente a la más antigua</caption>
+                        <caption id="leyenda-posiciones" tabindex="-1">@s.Posiciones.Count @(s.Posiciones.Count == 1 ? "posición" : "posiciones"), de la más reciente a la más antigua@(Model.Paginas > 1 ? $" · página {Model.Pagina} de {Model.Paginas}" : "")</caption>
                         <thead>
                             <tr>
                                 <th scope="col">Obtenida</th>
@@ -71,9 +78,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (var i = 0; i < s.Posiciones.Count; i++)
+                            @foreach (var (p, i) in Model.PosicionesDeLaPagina)
                             {
-                                var p = s.Posiciones[i];
                                 var actual = i == 0 && s.Activa && !p.Desactualizada && !s.SinConexion;
                                 <tr data-posicion data-desactualizada="@(p.Desactualizada ? "true" : "false")">
                                     <td>@Formato.Hora(p.ObtenidaEn, zona) @(actual ? "· actual" : "")</td>
@@ -86,13 +92,30 @@
                         </tbody>
                     </table>
                 </div>
+                @if (Model.Paginas > 1)
+                {
+                    var desde = Model.PrimeraDeLaPagina + 1;
+                    var hasta = Math.Min(Model.PrimeraDeLaPagina + DetalleModel.PosicionesPorPagina, s.Posiciones.Count);
+                    <nav class="paginacion" aria-label="Páginas de posiciones" data-paginacion>
+                        @if (Model.Pagina > 1)
+                        {
+                            <a class="boton boton--secundario boton--compacto" href="?pagina=@(Model.Pagina - 1)" data-pagina="@(Model.Pagina - 1)">← Más recientes</a>
+                        }
+                        <span class="texto-secundario">Posiciones @desde–@hasta de @s.Posiciones.Count</span>
+                        @if (Model.Pagina < Model.Paginas)
+                        {
+                            <a class="boton boton--secundario boton--compacto" href="?pagina=@(Model.Pagina + 1)" data-pagina="@(Model.Pagina + 1)">Anteriores →</a>
+                        }
+                    </nav>
+                }
             }
+            </div>
         </section>
     </div>
 
     <aside class="detalle-caso__contexto" aria-label="Sesión y acciones">
         @* HU40 y HU41 — confirmación de bienestar: se pide durante una sesión activa, sin crear un SOS ni un despacho. *@
-        <section class="superficie seccion-caso@(s.Activa ? " siguiente" : "")" aria-labelledby="titulo-bienestar" data-bienestar>
+        <section class="superficie seccion-caso@(s.Activa ? " siguiente" : "")" aria-labelledby="titulo-bienestar" data-bienestar data-vivo="bienestar">
             <h2 id="titulo-bienestar" class="@(s.Activa ? "siguiente__titulo" : "seccion-caso__titulo")">Confirmación de bienestar</h2>
             @if (Model.ErrorConfirmacion is { } errorConfirmacion)
             {
@@ -151,7 +174,7 @@
             <partial name="_FichaCiudadano" model="ficha" />
         }
 
-        <section class="superficie seccion-caso" aria-labelledby="titulo-datos">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-datos" data-vivo="datos">
             <h2 id="titulo-datos" class="seccion-caso__titulo">Datos de la sesión</h2>
             <dl class="datos datos--en-linea">
                 <div><dt>Ciudadano</dt><dd>@s.Ciudadano</dd></div>
@@ -171,7 +194,7 @@
         </section>
 
         @* HU42 y HU43 — avisos de esta sesión. *@
-        <section class="superficie seccion-caso" aria-labelledby="titulo-avisos" data-avisos-sesion="@Model.Avisos.Count">
+        <section class="superficie seccion-caso" aria-labelledby="titulo-avisos" data-avisos-sesion="@Model.Avisos.Count" data-vivo="avisos">
             <h2 id="titulo-avisos" class="seccion-caso__titulo">Avisos de la sesión</h2>
             @if (Model.Avisos.Count == 0)
             {
@@ -235,9 +258,14 @@
 </div>
 
 @section Scripts {
-    @if (s.Posiciones.Count > 0)
+    @if (s.PosicionesEliminadasEn is null)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
         <script src="~/js/recorrido.js" asp-append-version="true"></script>
     }
+    @if (s.Activa)
+    {
+        <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    }
+    <script src="~/js/acompanamiento-detalle.js" asp-append-version="true"></script>
 }

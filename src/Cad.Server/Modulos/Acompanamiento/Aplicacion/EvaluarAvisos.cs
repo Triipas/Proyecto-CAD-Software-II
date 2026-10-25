@@ -1,3 +1,4 @@
+using Cad.Server.Compartido;
 using Cad.Server.Modulos.Acompanamiento.Dominio;
 using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ namespace Cad.Server.Modulos.Acompanamiento.Aplicacion;
 // CA03: la clave de la condición (la última posición o la confirmación) es única por sesión y regla, también en la base de datos:
 // mientras la condición persiste no se repite el aviso; una posición nueva que vuelva a quedar desactualizada es otra condición.
 // CA04: un aviso no es un SOS: no entra en la sección urgente ni genera despacho.
-public sealed class EvaluarAvisos(CadDbContext db, IOptions<OpcionesAcompanamiento> opciones, ILogger<EvaluarAvisos> registro)
+public sealed class EvaluarAvisos(CadDbContext db, IOptions<OpcionesAcompanamiento> opciones, INotificador notificador, ILogger<EvaluarAvisos> registro)
 {
     public TimeSpan Umbral => TimeSpan.FromSeconds(Math.Max(1, opciones.Value.UmbralDesactualizadaSegundos));
     public TimeSpan PlazoConfirmacion => TimeSpan.FromSeconds(Math.Max(1, opciones.Value.PlazoConfirmacionSegundos));
@@ -59,6 +60,7 @@ public sealed class EvaluarAvisos(CadDbContext db, IOptions<OpcionesAcompanamien
                 await db.SaveChangesAsync(ct);
                 generados.Add(aviso);
                 registro.LogInformation("Aviso {AvisoId} generado en el acompañamiento {SesionId}: {Regla}.", aviso.Id, aviso.SesionId, aviso.Regla);
+                await AvisarAsync(aviso.SesionId);
             }
             catch (DbUpdateException ex) when (ex.EsViolacionDeUnicidad())
             {
@@ -67,6 +69,19 @@ public sealed class EvaluarAvisos(CadDbContext db, IOptions<OpcionesAcompanamien
             }
         }
         return generados;
+    }
+
+    // 24/10/2026: después del COMMIT, la central vuelve a leer la sesión. Un fallo del canal no afecta al registro.
+    private async Task AvisarAsync(Guid sesionId)
+    {
+        try
+        {
+            await notificador.AcompanamientoActualizadoAsync(sesionId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogWarning(ex, "No se pudo avisar a la central del acompañamiento {SesionId}; se verá al actualizar.", sesionId);
+        }
     }
 }
 
