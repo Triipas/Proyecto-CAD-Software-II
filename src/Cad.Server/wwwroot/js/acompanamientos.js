@@ -82,7 +82,9 @@
     for (const item of region.querySelectorAll("[data-acompanamiento]")) {
       const elegida = item.dataset.acompanamiento === sesion;
       item.classList.toggle("vigilado--elegido", elegida);
-      item.querySelector("[data-elegir-acompanamiento]")?.setAttribute("aria-pressed", String(elegida));
+      const enlace = item.querySelector("[data-elegir-acompanamiento]");
+      if (elegida) enlace?.setAttribute("aria-current", "true");
+      else enlace?.removeAttribute("aria-current");
     }
   }
 
@@ -111,15 +113,23 @@
     }
     if (!encuadrar) return;
     const opciones = { ...margenPanel(), maxZoom: 17, animate: !reducido.matches };
-    if (puntos.length > 1) mapa.flyToBounds(linea.getBounds(), { ...opciones, duration: 0.8 });
-    else mapa.flyTo(puntos[0], 17, { animate: !reducido.matches, duration: 0.8 });
+    // Con una sola posición, los límites son ese punto: el mismo encuadre con margen la deja fuera del panel.
+    const limites = puntos.length > 1 ? linea.getBounds() : L.latLngBounds([puntos[0], puntos[0]]);
+    mapa.flyToBounds(limites, { ...opciones, duration: 0.8 });
   }
 
   // ---------- Cambio de modo ----------
+  // Cada elección (o la vuelta a «todas») invalida las anteriores: si el operador elige A y enseguida B, la respuesta tardía
+  // de A no reemplaza la ficha de B ni cambia la dirección.
+  let eleccion = 0;
   async function elegir(id, { historial = true } = {}) {
+    const turno = ++eleccion;
     const respuesta = await fetch(`/panel/acompanamientos?handler=Sesion&id=${encodeURIComponent(id)}`, { credentials: "same-origin", headers: { Accept: "text/html" } }).catch(() => null);
+    if (turno !== eleccion) return;
     if (!respuesta || respuesta.redirected || !respuesta.ok) return; // la sesión ya no existe o terminó la sesión del panel
-    regionSesion.innerHTML = await respuesta.text();
+    const html = await respuesta.text();
+    if (turno !== eleccion) return;
+    regionSesion.innerHTML = html;
     regionSesion.querySelector("[data-seguimiento]")?.classList.add("seguimiento--entra");
     sesion = id;
     raiz.dataset.modo = "sesion";
@@ -135,6 +145,7 @@
   }
 
   function volver({ historial = true } = {}) {
+    eleccion++; // una elección todavía en camino ya no vale
     if (sesion === null) return;
     const anterior = sesion;
     sesion = null;
@@ -152,8 +163,10 @@
   }
 
   region.addEventListener("click", (evento) => {
-    const boton = evento.target.closest("[data-elegir-acompanamiento]");
-    if (boton) elegir(boton.closest("[data-acompanamiento]").dataset.acompanamiento);
+    const enlace = evento.target.closest("[data-elegir-acompanamiento]");
+    if (!enlace || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.button !== 0) return;
+    evento.preventDefault();
+    elegir(enlace.closest("[data-acompanamiento]").dataset.acompanamiento);
   });
   regionSesion.addEventListener("click", (evento) => {
     if (!evento.target.closest("[data-volver-lista]") || evento.ctrlKey || evento.metaKey) return;

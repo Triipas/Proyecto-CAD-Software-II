@@ -295,12 +295,13 @@
   white-space: nowrap;
   font: var(--peso-semi) var(--texto-md)/1.3 var(--fuente);
   text-align: left;
+  text-decoration: none;
   color: var(--color-texto);
   background: none;
   cursor: pointer;
 }
 
-/* El botón es el nombre; su ::after cubre la tarjeta. Los enlaces de la tarjeta quedan por encima. */
+/* El nombre es el enlace a su seguimiento (?sesion=…, también sin JavaScript); su ::after cubre la tarjeta. */
 .vigilado__nombre::after {
   content: "";
   position: absolute;
@@ -317,7 +318,8 @@
   outline-offset: 2px;
 }
 
-.vigilado a {
+/* Los demás enlaces de la tarjeta quedan por encima del ::after del nombre (que sí debe cubrir la tarjeta). */
+.vigilado a:not(.vigilado__nombre) {
   position: relative;
   z-index: 1;
 }

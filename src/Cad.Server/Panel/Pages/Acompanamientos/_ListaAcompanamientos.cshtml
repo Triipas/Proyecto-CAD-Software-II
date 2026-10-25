@@ -65,8 +65,8 @@ else
                               style="--desfase: -@(Math.Abs(s.Id.GetHashCode() % 24) * 100)ms">@Iniciales(s.Ciudadano)</span>
                         <div class="vigilado__cuerpo">
                             <p class="vigilado__linea">
-                                <button type="button" class="vigilado__nombre" data-elegir-acompanamiento aria-pressed="false"
-                                        aria-describedby="acompanamiento-@s.Id-posicion">@s.Ciudadano<span class="visualmente-oculto">: seguir su recorrido</span></button>
+                                <a class="vigilado__nombre" href="/panel/acompanamientos?sesion=@s.Id" data-elegir-acompanamiento
+                                   aria-describedby="acompanamiento-@s.Id-posicion">@s.Ciudadano<span class="visualmente-oculto">: seguir su recorrido</span></a>
                                 <span class="vigilado__vence num">hasta @Formato.Hora(s.VenceEn, Model.ZonaHoraria, "HH:mm")</span>
                             </p>
                             @* El motivo de la urgencia, siempre con icono y texto. *@

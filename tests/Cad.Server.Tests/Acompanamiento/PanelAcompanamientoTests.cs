@@ -90,6 +90,8 @@ public class PanelAcompanamientoTests(FabricaCad fabrica)
         string Tarjeta(Guid id) => Regex.Match(lista, $"<li class=\"vigilado[^\"]*\" data-acompanamiento=\"{id}\".*?</li>", RegexOptions.Singleline).Value;
         Assert.Contains("data-elegir-acompanamiento", Tarjeta(conPosicion));
         Assert.Contains("data-elegir-acompanamiento", Tarjeta(sinPosicion));
+        // Sin JavaScript, el nombre sigue llevando al seguimiento: es un enlace a ?sesion=….
+        Assert.Contains($"href=\"/panel/acompanamientos?sesion={conPosicion}\"", Tarjeta(conPosicion));
         Assert.Contains("data-sin-posicion", Tarjeta(sinPosicion));
         Assert.DoesNotContain("data-ver-en-mapa", lista);
 
