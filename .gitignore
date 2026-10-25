@@ -494,3 +494,7 @@ google-services.json
 skills-lock.json
 # Material de trabajo local (p. ej., los audios originales de los sonidos): lo que se usa ya está procesado en src/
 artefactos/
+# Herramienta de diseño (Impeccable): su configuración y sus notas de diseño y producto son locales (decisión del PO, 25/10/2026)
+.impeccable/
+DESIGN.md
+PRODUCT.md
