@@ -13,7 +13,7 @@
             <v:EncabezadoPagina Titulo="Verifica tu número" Ayuda="{Binding Destino}" TextoVolver="Cambiar número" />
 
             <VerticalStackLayout Padding="16,24,16,32" Spacing="16" MaximumWidthRequest="480">
-                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
                 <v:Aviso Tipo="informacion" Texto="{Binding CodigoDePrueba}" IsVisible="{Binding HayCodigoDePrueba}" />
 
                 <Label Text="Código de 6 dígitos" Style="{StaticResource Etiqueta}" />

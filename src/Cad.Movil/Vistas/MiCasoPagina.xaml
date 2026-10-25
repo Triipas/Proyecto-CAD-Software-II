@@ -15,10 +15,10 @@
                 <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
                     <Label Text="{Binding Identificador}" Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding HayCaso}" />
 
-                    <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                    <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
                     <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
 
-                    <v:Aviso Tipo="exito" Texto="{Binding Confirmacion}" IsVisible="{Binding HayConfirmacion}" />
+                    <v:Aviso Emergente="True" Tipo="exito" Texto="{Binding Confirmacion}" Mostrar="{Binding HayConfirmacion}" />
 
                     <!-- HU09 — cancelar un SOS pendiente, con motivo obligatorio. No finaliza un acompañamiento activo. -->
                     <Button Text="Cancelar este SOS" Style="{StaticResource BotonSecundario}" TextColor="{StaticResource ColorUrgente}" Command="{Binding MostrarCancelacion}"

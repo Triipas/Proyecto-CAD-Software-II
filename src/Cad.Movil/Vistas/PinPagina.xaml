@@ -43,7 +43,7 @@
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
 
-                <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
 
                 <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="12">
                     <Button Text="1" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="1" />

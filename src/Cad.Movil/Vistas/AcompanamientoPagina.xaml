@@ -33,7 +33,7 @@
                                 </Label.GestureRecognizers>
                             </Label>
                         </Grid>
-                        <v:Aviso Tipo="advertencia" Texto="{Binding MensajeInicio}" IsVisible="{Binding HayMensajeInicio}" />
+                        <v:Aviso Emergente="True" Tipo="advertencia" Texto="{Binding MensajeInicio}" Mostrar="{Binding HayMensajeInicio}" />
                         <Button Text="Continuar y permitir la ubicación" Style="{StaticResource BotonPrincipal}"
                                 Command="{Binding PermitirUbicacion}" IsVisible="{Binding MostrarPermitir}" />
                         <Button Text="Abrir los ajustes del teléfono" Style="{StaticResource BotonSecundario}"
@@ -55,7 +55,7 @@
                         <ActivityIndicator IsRunning="{Binding RespondiendoConfirmacion}" IsVisible="{Binding RespondiendoConfirmacion}" />
                     </VerticalStackLayout>
                 </Border>
-                <v:Aviso Tipo="{Binding TipoResultadoConfirmacion}" Texto="{Binding ResultadoConfirmacion}" IsVisible="{Binding HayResultadoConfirmacion}" />
+                <v:Aviso Emergente="True" Tipo="{Binding TipoResultadoConfirmacion}" Texto="{Binding ResultadoConfirmacion}" Mostrar="{Binding HayResultadoConfirmacion}" />
 
                 <!-- HU34-CA01/CA08: estado activo, tiempo restante y control de finalización; HU35-CA04: condición real. -->
                 <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarActivo}">

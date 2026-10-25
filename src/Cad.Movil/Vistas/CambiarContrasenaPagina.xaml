@@ -15,7 +15,7 @@
             <VerticalStackLayout Padding="16,20,16,32" Spacing="12" MaximumWidthRequest="480">
                 <Border Style="{StaticResource Superficie}" Padding="20">
                     <VerticalStackLayout Spacing="8">
-                        <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                        <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
 
                         <Label Text="Contraseña actual" Style="{StaticResource Etiqueta}" />
                         <Border Style="{StaticResource MarcoCampo}">

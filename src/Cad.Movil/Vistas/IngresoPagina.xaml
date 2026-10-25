@@ -28,7 +28,7 @@
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Ingresar" Style="{StaticResource Titulo}" FontSize="24" SemanticProperties.HeadingLevel="Level1" />
 
-                        <v:Aviso Tipo="error" Texto="{Binding Mensaje}" IsVisible="{Binding HayMensaje}" />
+                        <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
 
                         <Label Text="Correo electrónico" Style="{StaticResource Etiqueta}" />
                         <Border Style="{StaticResource MarcoCampo}">

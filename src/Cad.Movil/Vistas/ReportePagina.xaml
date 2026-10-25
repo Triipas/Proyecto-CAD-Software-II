@@ -128,7 +128,7 @@
                             <Button Text="Usar mi posición actual" Style="{StaticResource BotonSecundario}" Command="{Binding UsarPosicionActual}"
                                     SemanticProperties.Hint="Usa la posición del teléfono como lugar del hecho; solo se lee si eliges esta opción" />
                             <ActivityIndicator IsRunning="{Binding ObteniendoPosicion}" IsVisible="{Binding ObteniendoPosicion}" HorizontalOptions="Center" />
-                            <v:Aviso Tipo="advertencia" Texto="{Binding MensajeUbicacion}" IsVisible="{Binding HayMensajeUbicacion}" />
+                            <v:Aviso Emergente="True" Tipo="advertencia" Texto="{Binding MensajeUbicacion}" Mostrar="{Binding HayMensajeUbicacion}" />
                             <Border x:Name="MarcoMapa" Style="{StaticResource MarcoCampo}" Padding="0" HeightRequest="280" IsVisible="{Binding MostrarMapa}">
                                 <WebView x:Name="Mapa" Navigating="AlNavegarMapa" SemanticProperties.Description="Mapa para marcar el lugar del hecho" />
                             </Border>
