@@ -43,8 +43,6 @@
 
                         <Button Text="Ingresar" Style="{StaticResource BotonPrincipal}" Command="{Binding Ingresar}" Margin="0,4,0,0" />
                         <Button Text="Volver a la bienvenida" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
-                        <Button Text="Diagnóstico de ubicación (SPIKE01)" Style="{StaticResource BotonTerciario}"
-                                Command="{Binding IrADiagnostico}" IsVisible="{Binding MostrarDiagnostico}" />
                     </VerticalStackLayout>
                 </Border>
 

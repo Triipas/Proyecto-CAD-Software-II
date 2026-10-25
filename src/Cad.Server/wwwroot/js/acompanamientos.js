@@ -10,6 +10,8 @@
   if (!region || !contenedor || typeof L === "undefined") return;
 
   const reducido = matchMedia("(prefers-reduced-motion: reduce)");
+  // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+  L.Control.Attribution.prototype.options.prefix = false;
   const mapa = L.map(contenedor, { zoomControl: false }).setView([Number(contenedor.dataset.centroLat), Number(contenedor.dataset.centroLon)], Number(contenedor.dataset.zoom));
   L.tileLayer(contenedor.dataset.teselas, {
     maxZoom: 19,

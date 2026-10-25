@@ -4,6 +4,8 @@
   const contenedor = document.getElementById("mapa-hecho");
   if (!contenedor || typeof L === "undefined") return;
   const punto = [Number(contenedor.dataset.lat), Number(contenedor.dataset.lon)];
+  // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+  L.Control.Attribution.prototype.options.prefix = false;
   const mapa = L.map(contenedor).setView(punto, 16);
   L.tileLayer(contenedor.dataset.teselas, {
     maxZoom: 19,

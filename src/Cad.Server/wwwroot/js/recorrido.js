@@ -32,6 +32,8 @@
     clave = nueva;
     contenedor.hidden = false;
     if (primeraVez) {
+      // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+      L.Control.Attribution.prototype.options.prefix = false;
       mapa = L.map(contenedor, { zoomControl: false });
       L.tileLayer(contenedor.dataset.teselas, {
         maxZoom: 19,
