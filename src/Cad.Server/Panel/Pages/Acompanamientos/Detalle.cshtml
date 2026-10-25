@@ -85,7 +85,15 @@
                                     <td>@Formato.Hora(p.ObtenidaEn, zona) @(actual ? "· actual" : "")</td>
                                     <td>± @Formato.Numero(p.PrecisionMetros, "0") m</td>
                                     <td>@Formato.Hora(p.RecibidaEn, zona)</td>
-                                    <td>@(s.Activa ? Formato.Antiguedad(p.Antiguedad) : "—")@(s.Activa && p.Desactualizada ? " · desactualizada" : "")</td>
+                                    @* Con la sesión activa, la antigüedad avanza cada segundo en el navegador (acompanamiento-detalle.js). *@
+                                    <td>@if (s.Activa)
+                                        {
+                                            <span data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")">@Formato.Antiguedad(p.Antiguedad)</span>
+                                        }
+                                        else
+                                        {
+                                            @("—")
+                                        }@(s.Activa && p.Desactualizada ? " · desactualizada" : "")</td>
                                     <td>@Formato.Numero(p.Latitud, "0.00000"), @Formato.Numero(p.Longitud, "0.00000")</td>
                                 </tr>
                             }
@@ -145,7 +153,7 @@
                     {
                         <li class="historial__elemento" data-confirmacion="@conf.Id" data-respuesta="@(conf.Respuesta?.ToString() ?? "Pendiente")">
                             <p class="historial__cabecera">
-                                <span class="estado @(conf.Respuesta == RespuestaBienestar.NecesitoAyuda ? "estado--sin-contacto" : conf.Pendiente ? "estado--inactiva" : "estado--activa")">@conf.TextoRespuesta</span>
+                                <span class="estado @(conf.Respuesta == RespuestaBienestar.NecesitoAyuda && conf.SosEnCurso ? "estado--sin-contacto" : conf.Pendiente || conf.Respuesta == RespuestaBienestar.NecesitoAyuda ? "estado--inactiva" : "estado--activa")">@conf.TextoRespuesta</span>
                                 <span class="texto-secundario">Solicitada a las @Formato.Hora(conf.SolicitadaEn, zona) por @conf.Operador</span>
                             </p>
                             <p class="historial__texto">
@@ -153,6 +161,10 @@
                                 @if (conf.RespondidaEn is { } respondida)
                                 {
                                     <span>Respondida a las @Formato.Hora(respondida, zona).</span>
+                                }
+                                @if (conf.TextoSos is { } textoSos)
+                                {
+                                    <span data-estado-sos>@textoSos</span>
                                 }
                                 @if (conf.CasoId is { } caso)
                                 {
@@ -182,7 +194,10 @@
                 <div><dt>Inicio</dt><dd data-inicio>@Formato.Hora(s.IniciadaEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
                 <div><dt>Vencimiento</dt><dd data-vencimiento>@Formato.Hora(s.VenceEn, zona, "dd/MM/yyyy HH:mm:ss")</dd></div>
                 <div><dt>Cierre</dt><dd data-cierre>@(s.CerradaEn is { } c ? $"{Formato.Hora(c, zona, "dd/MM/yyyy HH:mm:ss")} · {estado}" : "Sin cerrar (activa)")</dd></div>
-                <div><dt>Último envío recibido</dt><dd>@(s.UltimoContactoEn is { } u ? Formato.Hora(u, zona, "dd/MM/yyyy HH:mm:ss") : "—")</dd></div>
+                <div><dt>Último envío recibido</dt><dd>@(s.UltimoContactoEn is { } u ? Formato.Hora(u, zona, "dd/MM/yyyy HH:mm:ss") : "—")@if (s.Activa && s.UltimoContactoEn is { } contacto)
+                    {
+                        <span class="texto-secundario"> (<span data-antiguedad data-desde="@contacto.ToString("O")">@Formato.Antiguedad(Model.Ahora - contacto)</span>)</span>
+                    }</dd></div>
             </dl>
             @if (s.SinConexion)
             {

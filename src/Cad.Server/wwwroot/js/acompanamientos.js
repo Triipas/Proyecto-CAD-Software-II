@@ -30,7 +30,7 @@
       const gris = item.dataset.desactualizada === "true" || item.dataset.sinConexion === "true";
       const texto = `Acompañamiento de ${item.dataset.ciudadano}${gris ? " (última posición conocida)" : ""}`;
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: `marcador-acompanamiento${gris ? " marcador-acompanamiento--desactualizado" : ""}`, html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -18] }),
+        icon: L.divIcon({ className: `marcador-acompanamiento${gris ? " marcador-acompanamiento--desactualizado" : " marcador-acompanamiento--vigilado"}`, html: "<span>A</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -18] }),
         title: texto,
         alt: texto,
         keyboard: true,
@@ -146,6 +146,9 @@
   if (typeof signalR !== "undefined") {
     const conexion = new signalR.HubConnectionBuilder().withUrl("/hubs/central").withAutomaticReconnect().build();
     conexion.on("AcompanamientoActualizado", () => actualizar());
+    // El SOS de «Necesito ayuda» puede cancelarse o cerrarse: la tarjeta deja de mostrarlo como alerta.
+    conexion.on("SosCancelado", () => actualizar());
+    conexion.on("CasoActualizado", () => actualizar());
     conexion.onreconnected(() => actualizar());
     conexion.start().catch(() => { /* sin canal en tiempo real: queda la consulta cada 10 s */ });
   }

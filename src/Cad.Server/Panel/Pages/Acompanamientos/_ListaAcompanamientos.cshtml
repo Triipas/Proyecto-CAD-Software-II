@@ -44,7 +44,9 @@ else
                 data-lat="@(p is null ? null : Formato.Numero(p.Latitud))" data-lon="@(p is null ? null : Formato.Numero(p.Longitud))"
                 data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")">
                 <div class="acompanamiento__cabecera">
-                    <span class="acompanamiento__inicial@(gris ? " acompanamiento__inicial--gris" : "")" aria-hidden="true">@Iniciales(s.Ciudadano)</span>
+                    @* 24/10/2026: sonar mientras la sesión se vigila con posición al día; desfasado por sesión para que no laten a la vez. *@
+                    <span class="acompanamiento__inicial@(gris ? " acompanamiento__inicial--gris" : " sonar")" aria-hidden="true"
+                          style="--desfase: -@(Math.Abs(s.Id.GetHashCode() % 24) * 100)ms">@Iniciales(s.Ciudadano)</span>
                     <div class="acompanamiento__quien">
                         @* 24/10/2026: como en la central, la tarjeta entera es el botón que ubica la sesión en el mapa (el del nombre,
                            extendido a toda la tarjeta). Sin ninguna posición no hay nada que ubicar. *@
@@ -72,11 +74,18 @@ else
                         <span class="chip chip--acompanamiento" data-estado-sesion><partial name="_Icono" model="@("exito")" />Activa</span>
                     }
                 </div>
-                @* HU40/HU41: última confirmación de bienestar de la sesión. *@
+                @* HU40/HU41: última confirmación de bienestar de la sesión. «Necesito ayuda» es una alerta solo mientras su SOS sigue
+                   abierto; si el ciudadano lo canceló (o se cerró o descartó), se dice y deja de mostrarse en rojo (24/10/2026). *@
                 @if (s.UltimaConfirmacion is { } confirmacion)
                 {
-                    <p class="@(confirmacion.Respuesta == Cad.Server.Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda ? "aviso aviso--error acompanamiento__aviso" : "acompanamiento__dato")" data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")">
+                    var ayuda = confirmacion.Respuesta == Cad.Server.Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda;
+                    <p class="@(!ayuda ? "acompanamiento__dato" : confirmacion.SosEnCurso ? "aviso aviso--error acompanamiento__aviso" : "aviso aviso--advertencia acompanamiento__aviso")"
+                       data-confirmacion="@(confirmacion.Respuesta?.ToString() ?? "Pendiente")" data-sos-en-curso="@(confirmacion.SosEnCurso ? "true" : "false")">
                         Confirmación de bienestar (@Formato.Hora(confirmacion.SolicitadaEn, Model.ZonaHoraria, "HH:mm")): <strong>@confirmacion.TextoRespuesta</strong>
+                        @if (confirmacion.TextoSos is { } textoSos)
+                        {
+                            <span data-estado-sos>@textoSos</span>
+                        }
                         @if (confirmacion.CasoId is { } caso)
                         {
                             <a href="/panel/central/sos/@caso">Ver el SOS</a>

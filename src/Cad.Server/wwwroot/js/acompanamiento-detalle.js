@@ -3,7 +3,7 @@
 //    JavaScript son enlaces normales (?pagina=N).
 //  - Con la sesión activa, la página se actualiza sola: el servidor avisa por el canal de la central cada vez que llega algo
 //    del ciudadano (posición, confirmación, aviso o cierre) y, por si se pierde un aviso o pasa el umbral de «sin conexión»,
-//    también se consulta cada 10 s. Se vuelve a pedir la misma página y se cambian solo las partes marcadas con data-vivo.
+//    también se consulta cada 5 s; la antigüedad de las posiciones avanza cada segundo. Se vuelve a pedir la misma página y se cambian solo las partes marcadas con data-vivo.
 //    Si el foco del operador está en una parte, esta se cambia igual y el foco vuelve al elemento equivalente; solo se deja
 //    para después la parte en la que está escribiendo o la que muestra un error recién recibido.
 (() => {
@@ -98,11 +98,24 @@
     conexion?.stop();
   }
 
+  // La antigüedad avanza cada segundo entre actualizaciones («hace 12 s» / «hace 3 min 5 s», como el servidor).
+  function antiguedad(desde) {
+    const segundos = Math.max(0, Math.floor((Date.now() - new Date(desde).getTime()) / 1000));
+    return segundos < 60 ? `hace ${segundos} s` : `hace ${Math.floor(segundos / 60)} min ${segundos % 60} s`;
+  }
+  const reloj = setInterval(() => {
+    if (!activa) { clearInterval(reloj); return; }
+    for (const span of document.querySelectorAll("[data-antiguedad]")) span.textContent = antiguedad(span.dataset.desde);
+  }, 1000);
+
   if (!activa) return;
-  temporizador = setInterval(() => refrescar(), 10000);
+  temporizador = setInterval(() => refrescar(), 5000);
   if (typeof signalR === "undefined") return;
   conexion = new signalR.HubConnectionBuilder().withUrl("/hubs/central").withAutomaticReconnect().build();
   conexion.on("AcompanamientoActualizado", ({ id }) => { if (id === sesion) refrescar(); });
+  // El SOS de «Necesito ayuda» puede cancelarse o cerrarse: la confirmación de bienestar lo refleja.
+  conexion.on("SosCancelado", () => refrescar());
+  conexion.on("CasoActualizado", () => refrescar());
   conexion.onreconnected(() => refrescar()); // lo que llegó durante el corte se lee de la base de datos
   conexion.start().catch(() => { /* sin canal en tiempo real: queda la consulta cada 10 s */ });
 })();

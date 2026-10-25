@@ -1,5 +1,6 @@
 using Cad.Server.Modulos.Acompanamiento.Aplicacion;
 using Cad.Server.Modulos.Acompanamiento.Dominio;
+using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -16,10 +17,23 @@ public sealed record AcompanamientoActivo(Guid Id, string Ciudadano, string? Tel
     DateTimeOffset? UltimoContactoEn, bool SinConexion, PosicionVista? Ultima, int Posiciones, ConfirmacionVista? UltimaConfirmacion = null);
 
 // HU40 y HU41: una confirmación de bienestar con quién la pidió, cuándo se presentó y la respuesta (con su SOS, si pidió ayuda).
+// EstadoSos (24/10/2026): el estado actual de ese SOS, porque el ciudadano puede cancelarlo después de pedir ayuda y la
+// central no debe seguir viéndolo como una petición de ayuda en curso.
 public sealed record ConfirmacionVista(Guid Id, string Operador, DateTimeOffset SolicitadaEn, DateTimeOffset? PresentadaEn,
-    RespuestaBienestar? Respuesta, DateTimeOffset? RespondidaEn, Guid? CasoId)
+    RespuestaBienestar? Respuesta, DateTimeOffset? RespondidaEn, Guid? CasoId, EstadoCaso? EstadoSos = null)
 {
     public bool Pendiente => Respuesta is null;
+
+    // El SOS de «Necesito ayuda» sigue abierto (en la cola o en atención): es lo único que se muestra como alerta.
+    public bool SosEnCurso => CasoId is not null && EstadoSos is not (EstadoCaso.Cancelada or EstadoCaso.Cerrada or EstadoCaso.Descartada);
+
+    public string? TextoSos => CasoId is null ? null : EstadoSos switch
+    {
+        EstadoCaso.Cancelada => "El ciudadano canceló el SOS.",
+        EstadoCaso.Cerrada => "El SOS ya se cerró.",
+        EstadoCaso.Descartada => "La central descartó el SOS.",
+        _ => null,
+    };
     public string TextoRespuesta => Respuesta switch
     {
         RespuestaBienestar.EstoyBien => "Estoy bien",
@@ -117,7 +131,8 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
                 join operador in db.Users.AsNoTracking() on c.OperadorId equals operador.Id
                 orderby c.SolicitadaEn descending
                 select new { c.SesionId, Vista = new ConfirmacionVista(c.Id, operador.Nombres + " " + operador.Apellidos, c.SolicitadaEn, c.PresentadaEn,
-                    c.Respuesta, c.RespondidaEn, c.CasoId) })
+                    c.Respuesta, c.RespondidaEn, c.CasoId,
+                    db.Casos.Where(caso => caso.Id == c.CasoId).Select(caso => (EstadoCaso?)caso.Estado).FirstOrDefault()) })
             .ToListAsync(ct))
         .Select(x => (x.SesionId, x.Vista)).ToList();
 
