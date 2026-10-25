@@ -2,40 +2,46 @@
 @model Cad.Server.Panel.Pages.Acompanamientos.IndexModel
 @{
     ViewData["Title"] = "Acompañamientos";
+    // Rediseño (25/10/2026): como la central, el mapa ocupa la pantalla y la vigilancia flota encima, en dos modos:
+    // «todas» (cola por urgencia) y «sesión» (?sesion=…: el recorrido de una sola persona y su ficha).
+    ViewData["ClasePagina"] = "pagina--vigilancia";
+    var siguiendo = Model.Seguimiento is not null;
 }
 @section Estilos {
     <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/acompanamientos.css" asp-append-version="true" />
 }
-<div class="pagina__encabezado">
-    <div>
-        <h1 class="titulo">Acompañamientos activos</h1>
-        <p class="texto-secundario">Ciudadanos que comparten su ubicación durante un trayecto. No son SOS ni reportes: no se asignan ni generan despacho.</p>
-    </div>
-    <a class="boton boton--secundario" href="/panel/acompanamientos/historial">Historial de sesiones</a>
-</div>
 
-<div class="acompanamientos">
-    <section class="superficie acompanamientos__lista" aria-labelledby="titulo-activos">
-        <div class="acompanamientos__cabecera">
-            <h2 id="titulo-activos" class="acompanamientos__titulo">Sesiones activas</h2>
-            <p class="texto-secundario">Se actualiza al llegar cada envío del ciudadano. Una posición con más de @((int)Model.Lista.Umbral.TotalSeconds) s está desactualizada.</p>
-        </div>
-        <div data-region-acompanamientos aria-live="polite">
-            <partial name="_ListaAcompanamientos" model="@Model.Lista" />
-        </div>
-    </section>
+<div class="vigilancia" data-vigilancia data-modo="@(siguiendo ? "sesion" : "todas")">
+    <div id="mapa" class="mapa vigilancia__mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+         data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de los acompañamientos activos"></div>
 
-    <section class="acompanamientos__mapa" aria-labelledby="titulo-mapa">
-        <h2 id="titulo-mapa" class="visualmente-oculto">Mapa de acompañamientos</h2>
-        <div id="mapa" class="mapa mapa--acompanamientos" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de la última posición de cada acompañamiento activo"></div>
-        <p class="leyenda-acompanamientos">
-            <span><span class="leyenda-acompanamientos__muestra" aria-hidden="true"></span>Posición actual</span>
-            <span><span class="leyenda-acompanamientos__muestra leyenda-acompanamientos__muestra--gris" aria-hidden="true"></span>Desactualizada o sin envíos</span>
-        </p>
-        <noscript><p class="texto-secundario">El mapa y la actualización automática necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
-    </section>
+    <aside class="vigilancia__panel" aria-label="Vigilancia de acompañamientos">
+        <div class="vigilancia__todas" data-modo-todas hidden="@siguiendo">
+            <header class="vigilancia__cabecera">
+                <h1 class="vigilancia__titulo">Acompañamientos activos</h1>
+                <a class="boton boton--secundario boton--compacto" href="/panel/acompanamientos/historial">Historial</a>
+                <p class="vigilancia__ayuda">No son SOS ni reportes: no se asignan ni generan despacho.</p>
+            </header>
+            <div class="vigilancia__lista" data-region-acompanamientos aria-live="polite">
+                <partial name="_ListaAcompanamientos" model="@Model.Lista" />
+            </div>
+        </div>
+        <div class="vigilancia__sesion" data-region-seguimiento hidden="@(!siguiendo)">
+            @if (Model.Seguimiento is { } seguimiento)
+            {
+                <partial name="_SesionSeguimiento" model="seguimiento" />
+            }
+        </div>
+    </aside>
+
+    <ul class="vigilancia__leyenda" aria-label="Leyenda del mapa">
+        <li><span class="vigilancia__muestra" aria-hidden="true"></span>Posición al día</li>
+        <li><span class="vigilancia__muestra vigilancia__muestra--ayuda" aria-hidden="true"></span>Pidió ayuda</li>
+        <li><span class="vigilancia__muestra vigilancia__muestra--gris" aria-hidden="true"></span>Desactualizada o sin conexión</li>
+        <li class="vigilancia__leyenda-ruta"><span class="vigilancia__muestra vigilancia__muestra--ruta" aria-hidden="true"></span>Recorrido</li>
+    </ul>
+    <noscript><p class="vigilancia__sin-js">El mapa y la actualización automática necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
 </div>
 
 @section Scripts {

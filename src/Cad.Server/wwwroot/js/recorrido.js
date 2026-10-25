@@ -12,6 +12,25 @@
 
   const leer = (texto) => (texto ? texto.split(";").map((p) => p.split(",").map(Number)) : []);
 
+  // 25/10/2026: el recorrido va a sangre bajo el panel flotante de la ficha; los encuadres descuentan su ancho.
+  function margenPanel() {
+    const panel = document.querySelector(".vigilancia__panel");
+    const ancho = panel && getComputedStyle(panel).position === "absolute" ? panel.getBoundingClientRect().width + 32 : 24;
+    return { paddingTopLeft: [ancho, 32], paddingBottomRight: [32, 32] };
+  }
+
+  function crearMapa() {
+    // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+    L.Control.Attribution.prototype.options.prefix = false;
+    // Con «reducir movimiento», panel.css anula las transiciones: sin animaciones del mapa, o el zoom no terminaría.
+    mapa = L.map(contenedor, { zoomControl: false, zoomAnimation: !reducido.matches, markerZoomAnimation: !reducido.matches });
+    L.tileLayer(contenedor.dataset.teselas, {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
+    }).addTo(mapa);
+    L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
+  }
+
   function anillo(punto, actual) {
     if (reducido.matches) return;
     const marca = L.marker(punto, {
@@ -25,22 +44,19 @@
 
   function dibujar(textoPuntos, actual) {
     const puntos = leer(textoPuntos);
-    if (puntos.length === 0) return;
+    if (puntos.length === 0) {
+      // Sin posiciones todavía: la ciudad, a la espera de la primera.
+      if (!mapa) {
+        crearMapa();
+        mapa.setView([Number(contenedor.dataset.centroLat), Number(contenedor.dataset.centroLon)], 13);
+      }
+      return;
+    }
     const nueva = `${textoPuntos}|${actual}`;
     if (nueva === clave) return; // nada cambió
-    const primeraVez = mapa === null;
+    const primeraVez = clave === "";
     clave = nueva;
-    contenedor.hidden = false;
-    if (primeraVez) {
-      // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
-      L.Control.Attribution.prototype.options.prefix = false;
-      mapa = L.map(contenedor, { zoomControl: false });
-      L.tileLayer(contenedor.dataset.teselas, {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
-      }).addTo(mapa);
-      L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
-    }
+    if (!mapa) crearMapa();
     const anterior = ultima?.getLatLng();
     linea?.remove();
     inicio?.remove();
@@ -63,7 +79,7 @@
     }).bindPopup(texto).addTo(mapa);
 
     if (primeraVez) {
-      mapa.fitBounds(linea.getBounds().pad(0.3), { maxZoom: 17 });
+      mapa.fitBounds(linea.getBounds(), { ...margenPanel(), maxZoom: 17 });
       setTimeout(() => anillo(puntos[0], actual), 250);
       return;
     }

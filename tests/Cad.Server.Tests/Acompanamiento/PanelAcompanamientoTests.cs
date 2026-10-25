@@ -77,8 +77,9 @@ public class PanelAcompanamientoTests(FabricaCad fabrica)
         Assert.Equal(5, Filas(System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"{ruta}?pagina=99")))); // fuera de rango: la última
     }
 
+    // Rediseño (25/10/2026): cualquier sesión se puede seguir, también sin posición (se le puede pedir confirmación de bienestar).
     [Fact]
-    public async Task LaTarjeta_EsElBotonQueUbicaLaSesion_YElDetalleMarcaLasPartesVivas()
+    public async Task LaTarjeta_EsElBotonQueSigueLaSesion_YElDetalleMarcaLasPartesVivas()
     {
         var (conPosicion, app) = await SesionAsync();
         await PosicionAsync(app, conPosicion);
@@ -86,9 +87,10 @@ public class PanelAcompanamientoTests(FabricaCad fabrica)
         var operador = await OperadorAsync();
 
         var lista = await operador.GetStringAsync("/panel/acompanamientos?handler=Lista");
-        string Tarjeta(Guid id) => Regex.Match(lista, $"<li class=\"acompanamiento[^\"]*\" data-acompanamiento=\"{id}\".*?</li>", RegexOptions.Singleline).Value;
+        string Tarjeta(Guid id) => Regex.Match(lista, $"<li class=\"vigilado[^\"]*\" data-acompanamiento=\"{id}\".*?</li>", RegexOptions.Singleline).Value;
         Assert.Contains("data-elegir-acompanamiento", Tarjeta(conPosicion));
-        Assert.DoesNotContain("data-elegir-acompanamiento", Tarjeta(sinPosicion)); // sin posición no hay nada que ubicar
+        Assert.Contains("data-elegir-acompanamiento", Tarjeta(sinPosicion));
+        Assert.Contains("data-sin-posicion", Tarjeta(sinPosicion));
         Assert.DoesNotContain("data-ver-en-mapa", lista);
 
         var detalle = await operador.GetStringAsync($"/panel/acompanamientos/{conPosicion}");
@@ -96,5 +98,50 @@ public class PanelAcompanamientoTests(FabricaCad fabrica)
             Assert.Contains($"data-vivo=\"{parte}\"", detalle);
         Assert.Contains("data-activa=\"true\"", detalle);
         Assert.Contains("signalr.min.js", detalle);
+    }
+
+    // Modo «sesión»: ?sesion=… abre la vigilancia siguiendo a una persona (también sin JavaScript), y la ficha se pide sola.
+    [Fact]
+    public async Task ElModoSesion_MuestraSoloSuFicha_ConSuRecorridoYLaSiguienteAccion()
+    {
+        var (sesionId, app) = await SesionAsync();
+        await PosicionAsync(app, sesionId);
+        await PosicionAsync(app, sesionId);
+        var operador = await OperadorAsync();
+
+        var pagina = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/acompanamientos?sesion={sesionId}"));
+        Assert.Contains("data-modo=\"sesion\"", pagina);
+        Assert.Contains($"data-seguimiento=\"{sesionId}\"", pagina);
+        Assert.Equal(2, Regex.Match(pagina, @"data-seguimiento=""[^""]*"" data-activa=""true""\s+data-puntos=""([^""]*)""").Groups[1].Value.Split(';').Length);
+        Assert.Contains("Pedir confirmación de bienestar", pagina);
+        Assert.Contains("name=\"Volver\" value=\"lista\"", pagina);
+
+        var ficha = await operador.GetAsync($"/panel/acompanamientos?handler=Sesion&id={sesionId}");
+        Assert.Equal(HttpStatusCode.OK, ficha.StatusCode);
+        Assert.Contains($"data-seguimiento=\"{sesionId}\"", await ficha.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await operador.GetAsync($"/panel/acompanamientos?handler=Sesion&id={Guid.NewGuid()}")).StatusCode);
+        Assert.Contains("data-modo=\"todas\"", await operador.GetStringAsync($"/panel/acompanamientos?sesion={Guid.NewGuid()}"));
+    }
+
+    // Pedir la confirmación desde el seguimiento vuelve al seguimiento de la misma persona.
+    [Fact]
+    public async Task PedirConfirmacionDesdeElSeguimiento_VuelveAlSeguimiento()
+    {
+        var (sesionId, app) = await SesionAsync();
+        await PosicionAsync(app, sesionId);
+        var operador = await OperadorAsync();
+        var ruta = $"/panel/acompanamientos/{sesionId}";
+
+        var respuesta = await operador.PostAsync($"{ruta}?handler=SolicitarConfirmacion", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["IdSolicitudConfirmacion"] = Guid.NewGuid().ToString(), ["Volver"] = "lista",
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
+        }));
+
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Equal($"/panel/acompanamientos?sesion={sesionId}", respuesta.Headers.Location?.OriginalString);
+        var seguimiento = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync(respuesta.Headers.Location!.OriginalString));
+        Assert.Contains("Esperando su respuesta", seguimiento);
+        Assert.Contains("Confirmación solicitada", seguimiento);
     }
 }
