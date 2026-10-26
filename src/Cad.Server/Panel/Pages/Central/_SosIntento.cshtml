@@ -5,10 +5,32 @@
     var errorInformacion = Model.ErrorDe("informacionHecho");
     var errorReferencia = Model.ErrorDe("referenciaUbicacion");
     var errorSolicitud = Model.ErrorDe("idSolicitud");
+    var ficha = Model.Ficha;
+    var primerNombre = ficha?.Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+    static string Agrupar(string numero) => numero.Length == 9 ? $"{numero[..3]} {numero[3..6]} {numero[6..]}" : numero;
 }
 <form method="post" class="formulario" data-formulario novalidate>
     <partial name="_ResumenErrores" model="@Model.Errores.Count" />
     <input type="hidden" name="Formulario.IdSolicitud" value="@Model.Formulario.IdSolicitud" />
+    @* 26/10/2026: llamar desde el mismo paso. El enlace tel: abre el teléfono o el programa de llamadas del equipo del operador;
+       la llamada no pasa por el sistema. Al pulsarlo, llamar.js anota la hora aquí para registrar el resultado al terminar. *@
+    @if (ficha?.Telefono is { Length: > 0 } telefono)
+    {
+        <div class="llamada" data-llamada>
+            <div class="llamada__acciones">
+                <a class="boton boton--principal" href="tel:@telefono" data-llamar="ciudadano" data-nombre="@primerNombre">
+                    <partial name="_Icono" model="@("telefono")" />Llamar a @primerNombre <span class="num">@Agrupar(telefono)</span>
+                </a>
+                @if (ficha.TieneContacto)
+                {
+                    <a class="boton boton--secundario" href="tel:@ficha.ContactoTelefono" data-llamar="contacto" data-nombre="@ficha.ContactoNombre">
+                        <partial name="_Icono" model="@("telefono")" />Contacto de emergencia: @ficha.ContactoNombre (@ficha.ContactoParentesco)
+                    </a>
+                }
+            </div>
+            <p class="llamada__estado" role="status" data-llamada-estado hidden></p>
+        </div>
+    }
     @if (errorSolicitud is not null)
     {
         <p class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorSolicitud</span></p>
