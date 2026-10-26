@@ -27,7 +27,7 @@
 
             <VerticalStackLayout Padding="16,24,16,32" Spacing="20" MaximumWidthRequest="420">
                 <!-- Seis puntos: lleno = dígito escrito. -->
-                <HorizontalStackLayout HorizontalOptions="Center" Spacing="16" BindableLayout.ItemsSource="{Binding Puntos}"
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="16" BindableLayout.ItemsSource="{Binding Puntos}" v:Movimiento.SacudirAl="{Binding Mensaje}"
                                        SemanticProperties.Description="Dígitos del PIN escritos">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="x:Boolean">

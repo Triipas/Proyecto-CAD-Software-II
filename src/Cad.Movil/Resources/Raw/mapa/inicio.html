@@ -29,18 +29,37 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             }).addTo(mapa);
 
-            let punto = null, precision = null;
+            // Movimiento (fase 3, 26/10/2026): tu punto se desliza entre lecturas y «Centrar» viaja hasta él; la primera vez, directo.
+            const reducido = config.reducido || matchMedia("(prefers-reduced-motion: reduce)").matches;
+            let punto = null, precision = null, deslizando = null;
+            const deslizar = (marcas, destino) => {
+                cancelAnimationFrame(deslizando);
+                const desde = marcas[0].getLatLng(), hasta = L.latLng(destino);
+                if (reducido || desde.equals(hasta)) { marcas.forEach((m) => m.setLatLng(hasta)); return; }
+                const comienzo = performance.now(), duracion = 700;
+                const paso = (ahora) => {
+                    const t = Math.min(1, (ahora - comienzo) / duracion), k = 1 - Math.pow(1 - t, 3);
+                    const aqui = [desde.lat + (hasta.lat - desde.lat) * k, desde.lng + (hasta.lng - desde.lng) * k];
+                    marcas.forEach((m) => m.setLatLng(aqui));
+                    if (t < 1) deslizando = requestAnimationFrame(paso);
+                };
+                deslizando = requestAnimationFrame(paso);
+            };
             window.cad = {
                 posicion: (lat, lon, metros) => {
-                    if (!punto) {
+                    const primera = !punto;
+                    if (primera) {
                         precision = L.circle([lat, lon], { radius: metros, color: "#1D4ED8", weight: 1, fillColor: "#1D4ED8", fillOpacity: 0.12 }).addTo(mapa);
                         punto = L.circleMarker([lat, lon], { radius: 8, color: "#FFFFFF", weight: 3, fillColor: "#1D4ED8", fillOpacity: 1 }).addTo(mapa);
                     } else {
-                        punto.setLatLng([lat, lon]);
-                        precision.setLatLng([lat, lon]).setRadius(metros);
+                        precision.setRadius(metros);
+                        deslizar([punto, precision], [lat, lon]);
                     }
-                    mapa.setView([lat, lon], Math.max(mapa.getZoom(), 16), { animate: false });
-                    mapa.panBy([0, 70], { animate: false }); // el punto queda en la franja visible entre el saludo y el dock
+                    // El punto queda en la franja visible entre el saludo y el dock (70 px por debajo del centro).
+                    const zoom = Math.max(mapa.getZoom(), 16);
+                    const centro = mapa.unproject(mapa.project([lat, lon], zoom).subtract([0, 70]), zoom);
+                    if (primera || reducido) mapa.setView(centro, zoom, { animate: false });
+                    else mapa.flyTo(centro, zoom, { duration: 0.6 });
                 },
             };
         })();

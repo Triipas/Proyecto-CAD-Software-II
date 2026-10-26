@@ -87,7 +87,7 @@ public sealed class Descartable : SwipeView
             return;
         quitadoEnMemoria = Clave;
         Guardar(Clave);
-        await this.FadeTo(0, 160, Easing.CubicOut);
+        await this.FadeToAsync(0, Movimiento.Rapida, Movimiento.Entrada);
         Revisar();
     }
 

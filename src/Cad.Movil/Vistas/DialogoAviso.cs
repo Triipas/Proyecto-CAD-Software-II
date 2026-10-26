@@ -105,7 +105,7 @@ public static class DialogoAviso
         tarjeta.Opacity = 0;
         tarjeta.Scale = 0.94;
         dialogo.Show();
-        await Task.WhenAll(tarjeta.FadeToAsync(1, 160, Easing.CubicOut), tarjeta.ScaleToAsync(1, 160, Easing.CubicOut));
+        await Task.WhenAll(tarjeta.FadeToAsync(1, Movimiento.Rapida, Movimiento.Salida), tarjeta.ScaleToAsync(1, Movimiento.Rapida, Movimiento.Salida));
         tarjeta.SetSemanticFocus();
         await cerrado.Task;
         envoltura.Handler?.DisconnectHandler();

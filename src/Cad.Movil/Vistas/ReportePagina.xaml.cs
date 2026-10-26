@@ -16,6 +16,7 @@ public partial class ReportePagina : ContentPage
     private readonly ReporteVistaModelo vistaModelo;
     private readonly IConfiguracionServidor servidor;
     private bool mapaCargado;
+    private string? tipoAnterior; // Movimiento (fase 3): para animar solo los cambios del estado del envío
 
     public ReportePagina(ReporteVistaModelo vistaModelo, IConfiguracionServidor servidor)
     {
@@ -53,6 +54,26 @@ public partial class ReportePagina : ContentPage
         }
         else if (e.PropertyName == nameof(ReporteVistaModelo.Latitud) && vistaModelo.Latitud is null && mapaCargado)
             await EjecutarAsync("window.cad && window.cad.quitarPunto()");
+        else if (e.PropertyName == nameof(ReporteVistaModelo.TipoAviso))
+            await AnunciarEstadoAsync();
+    }
+
+    // Movimiento (fase 3, 26/10/2026): el estado del envío aparece subiendo y la pantalla baja hasta él (está al final de un
+    // formulario largo); cuando la central lo registra, el teléfono vibra.
+    private async Task AnunciarEstadoAsync()
+    {
+        var tipo = vistaModelo.HayEstado ? vistaModelo.TipoAviso : null;
+        if (tipo == tipoAnterior) return;
+        tipoAnterior = tipo;
+        if (tipo is null) return;
+        if (tipo == "exito")
+        {
+            try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); }
+            catch (Exception) { /* sin vibración disponible */ }
+        }
+        await Task.Yield(); // que el aviso ya esté a la vista y medido
+        await Desplazamiento.ScrollToAsync(AvisoEstado, ScrollToPosition.MakeVisible, !Movimiento.Reducido);
+        await AvisoEstado.ResaltarAsync();
     }
 
     // Leaflet va dentro de la página (sin CDN). La dirección base es la del servidor CAD, de modo que las peticiones de

@@ -22,26 +22,44 @@ async function api(ruta, { cuerpo, token, metodo = 'POST' } = {}) {
 const token = async (correo, contrasena) =>
   (await api('/api/auth/token', { cuerpo: { correo, contrasena } })).token;
 
-async function ingresarPanel(contexto, correo, contrasena) {
+// Con { provisional }, la cuenta entra con la contraseña del administrador y la cambia por la suya, como pide el panel.
+async function ingresarPanel(contexto, correo, contrasena, { provisional } = {}) {
   const pagina = await contexto.newPage();
   await pagina.goto(`${URL_BASE}/panel/ingresar`);
   await pagina.getByLabel('Correo electrónico').fill(correo);
-  await pagina.getByLabel('Contraseña').fill(contrasena);
+  await pagina.getByLabel('Contraseña').fill(provisional ?? contrasena);
   await pagina.getByRole('button', { name: 'Ingresar' }).click();
   await pagina.waitForURL((url) => !url.pathname.endsWith('/ingresar'));
+  if (provisional) {
+    await pagina.getByLabel('Contraseña actual').fill(provisional);
+    await pagina.getByLabel('Contraseña nueva', { exact: true }).fill(contrasena);
+    await pagina.getByLabel('Repite la contraseña nueva').fill(contrasena);
+    await pagina.getByRole('button', { name: 'Guardar contraseña' }).click();
+    await pagina.waitForURL((url) => !/contrasena/i.test(url.pathname));
+  }
   return pagina;
 }
 
-async function crearCuenta(pagina, { nombres, apellidos, correo, telefono, rol, contrasena }) {
+// Cuentas del personal (22/10/2026): DNI obligatorio y contraseña inicial provisional, que se cambia al primer ingreso.
+async function crearCuenta(pagina, { nombres, apellidos, dni, correo, telefono, rol, contrasena }) {
   await pagina.goto(`${URL_BASE}/panel/admin/cuentas/nueva`);
   await pagina.getByLabel('Nombres').fill(nombres);
   await pagina.getByLabel('Apellidos').fill(apellidos);
+  await pagina.getByLabel('DNI').fill(dni);
   await pagina.getByLabel('Correo electrónico').fill(correo);
-  await pagina.getByLabel('Teléfono móvil (opcional)').fill(telefono);
+  await pagina.getByLabel('Teléfono móvil').fill(telefono);
   await pagina.getByLabel('Rol').selectOption(rol);
   await pagina.getByLabel('Contraseña inicial').fill(contrasena);
   await pagina.getByRole('button', { name: 'Crear cuenta' }).click();
   await pagina.waitForURL((url) => !url.pathname.endsWith('/nueva'));
+}
+
+// El sereno cambia la provisional desde la app (API) antes de operar.
+async function estrenarSereno(correo, provisional, contrasena) {
+  await api('/api/cuentas/contrasena', {
+    token: await token(correo, provisional),
+    cuerpo: { actual: provisional, nueva: contrasena, confirmacion: contrasena },
+  });
 }
 
 export async function sembrar(navegador, secretos) {
@@ -57,11 +75,14 @@ export async function sembrar(navegador, secretos) {
   // 1. El administrador crea las cuentas institucionales desde el panel.
   const contextoAdmin = await navegador.newContext();
   const admin = await ingresarPanel(contextoAdmin, cuentas.admin.correo, cuentas.admin.clave);
-  await crearCuenta(admin, { nombres: 'Olga', apellidos: 'Operadora Ficticia', correo: cuentas.operador.correo, telefono: '911111111', rol: 'Operador', contrasena: cuentas.operador.clave });
-  await crearCuenta(admin, { nombres: 'Sara', apellidos: 'Serena Ficticia', correo: cuentas.serena.correo, telefono: '922222222', rol: 'Sereno', contrasena: cuentas.serena.clave });
-  await crearCuenta(admin, { nombres: 'Pedro', apellidos: 'Suplente Ficticio', correo: cuentas.suplente.correo, telefono: '933333333', rol: 'Sereno', contrasena: cuentas.suplente.clave });
+  const provisionales = { operador: clave(), serena: clave(), suplente: clave() };
+  await crearCuenta(admin, { nombres: 'Olga', apellidos: 'Operadora Ficticia', dni: '40000001', correo: cuentas.operador.correo, telefono: '911111111', rol: 'Operador', contrasena: provisionales.operador });
+  await crearCuenta(admin, { nombres: 'Sara', apellidos: 'Serena Ficticia', dni: '40000002', correo: cuentas.serena.correo, telefono: '922222222', rol: 'Sereno', contrasena: provisionales.serena });
+  await crearCuenta(admin, { nombres: 'Pedro', apellidos: 'Suplente Ficticio', dni: '40000003', correo: cuentas.suplente.correo, telefono: '933333333', rol: 'Sereno', contrasena: provisionales.suplente });
   await contextoAdmin.storageState({ path: sesion('admin') });
   await contextoAdmin.close();
+  await estrenarSereno(cuentas.serena.correo, provisionales.serena, cuentas.serena.clave);
+  await estrenarSereno(cuentas.suplente.correo, provisionales.suplente, cuentas.suplente.clave);
 
   // 2. Ciudadanos registrados desde la app (API).
   await api('/api/cuentas/registro', { cuerpo: { nombres: 'Ana', apellidos: 'Ficticia', correo: cuentas.ciudadana.correo, telefono: '900000001', contrasena: cuentas.ciudadana.clave } });
@@ -77,7 +98,7 @@ export async function sembrar(navegador, secretos) {
   // 4. Primer SOS de Ana: se verifica, clasifica, asigna, atiende y cierra.
   const sosCerrado = await api('/api/sos', { token: ana, cuerpo: { idSolicitud: randomUUID(), activadoEn: ahora(), ubicacion: { ...LIMA, precisionMetros: 5, obtenidaEn: ahora() } } });
   const contextoOperador = await navegador.newContext();
-  const operador = await ingresarPanel(contextoOperador, cuentas.operador.correo, cuentas.operador.clave);
+  const operador = await ingresarPanel(contextoOperador, cuentas.operador.correo, cuentas.operador.clave, { provisional: provisionales.operador });
   await operador.goto(`${URL_BASE}/panel/central/sos/${sosCerrado.id}`);
   await operador.getByLabel('Contactado').check();
   await operador.getByLabel('Información del hecho (opcional)').fill('La ciudadana indica que un desconocido la sigue desde el paradero (dato ficticio).');
@@ -93,6 +114,8 @@ export async function sembrar(navegador, secretos) {
 
   const categoriasSereno = await api('/api/sereno/categorias', { metodo: 'GET', token: sara });
   await api(`/api/sereno/casos/${sosCerrado.id}/desplazamiento`, { token: sara });
+  // Llega al lugar: la atención se inicia a menos de 150 m del punto del caso.
+  await api('/api/sereno/posiciones', { token: sara, cuerpo: { ...cerca(0.0003, 0.0002), precisionMetros: 6, obtenidaEn: ahora() } });
   await api(`/api/sereno/casos/${sosCerrado.id}/atencion`, { token: sara });
   await api(`/api/sereno/casos/${sosCerrado.id}/cierre`, {
     token: sara,

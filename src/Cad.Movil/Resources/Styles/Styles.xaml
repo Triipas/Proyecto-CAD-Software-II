@@ -4,12 +4,15 @@
      Los pesos se eligen por familia (PublicSansSemiBold, PublicSansBold), no con FontAttributes,
      para no sintetizar negritas. Radios: 8 controles, 12 superficies, 999 chips. -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    xmlns:v="clr-namespace:Cad.Movil.Vistas">
 
     <!-- ── Página ──────────────────────────────────────────────────────── -->
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{StaticResource ColorFondo}" />
         <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        <!-- Movimiento (fase 4): cada pantalla entra subiendo 8 px (Movimiento.EntradaPagina). -->
+        <Setter Property="v:Movimiento.EntradaPagina" Value="True" />
     </Style>
 
     <!-- ── Texto ───────────────────────────────────────────────────────── -->
@@ -55,6 +58,8 @@
     <Style x:Key="ErrorCampo" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="TextColor" Value="{StaticResource ColorError}" />
+        <!-- Movimiento (fase 4): el error de un campo aparece subiendo, no de golpe. -->
+        <Setter Property="v:Movimiento.Aparecer" Value="True" />
     </Style>
 
     <!-- ── Campos ──────────────────────────────────────────────────────── -->
@@ -120,6 +125,8 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="52" />
+        <!-- Movimiento (fase 2): al tocar se hunde un poco y vuelve (Movimiento.Pulsable). -->
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -149,6 +156,8 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="48" />
+        <!-- Movimiento (fase 2): al tocar se hunde un poco y vuelve (Movimiento.Pulsable). -->
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
         <!-- Deshabilitado: texto y borde atenuados (el estado no depende solo del color: hay un texto que lo explica). -->
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>

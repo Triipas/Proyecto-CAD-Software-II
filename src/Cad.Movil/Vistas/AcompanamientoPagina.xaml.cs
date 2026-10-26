@@ -55,7 +55,7 @@ public partial class AcompanamientoPagina : ContentPage
     // Leaflet va dentro de la página (sin CDN), como en el inicio. El recorrido lo pone la app: el mapa no lee ni envía nada.
     private async Task CargarMapaAsync()
     {
-        var config = JsonSerializer.Serialize(new { lat = CentroLatitud, lon = CentroLongitud, zoom = Zoom, teselas = Teselas, arriba = AltoArriba, dock = AltoDock });
+        var config = JsonSerializer.Serialize(new { lat = CentroLatitud, lon = CentroLongitud, zoom = Zoom, teselas = Teselas, arriba = AltoArriba, dock = AltoDock, reducido = Movimiento.Reducido });
         var html = (await LeerAsync("mapa/acompanamiento.html"))
             .Replace("/*LEAFLET_CSS*/", await LeerAsync("mapa/leaflet.css"))
             .Replace("/*CONFIG*/", config)

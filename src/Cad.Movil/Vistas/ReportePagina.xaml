@@ -146,7 +146,7 @@
                     </Border>
 
                     <!-- CA08: la confirmación solo llega con la respuesta del servidor; el reintento no duplica el reporte. -->
-                    <v:Aviso Tipo="{Binding TipoAviso}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
+                    <v:Aviso x:Name="AvisoEstado" Tipo="{Binding TipoAviso}" Texto="{Binding TextoEstado}" IsVisible="{Binding HayEstado}" />
                     <Button Text="{Binding TextoBotonEnviar}" Style="{StaticResource BotonPrincipal}" Command="{Binding Enviar}" IsVisible="{Binding Editable}" />
                     <Button Text="Reintentar el mismo reporte" Style="{StaticResource BotonPrincipal}" Command="{Binding Reintentar}" IsVisible="{Binding PuedeReintentar}" />
                     <Button Text="Volver al inicio" Style="{StaticResource BotonPrincipal}" Command="{Binding IrAlSos}" IsVisible="{Binding Registrado}" />

@@ -9,7 +9,7 @@
     var calma = ordenadas.Where(s => Model.AtencionDe(s) == Atencion.Calma).ToList();
 }
 @* Rediseño (25/10/2026): cola de vigilancia por urgencia. La tarjeta entera elige a la persona y pasa al modo «sesión». *@
-<p class="vigilancia__resumen" data-resumen data-cantidad="@Model.Sesiones.Count">
+<p class="vigilancia__resumen" data-suave data-resumen data-cantidad="@Model.Sesiones.Count">
     <span><b class="num">@Model.Sesiones.Count</b> @(Model.Sesiones.Count == 1 ? "activa" : "activas")</span>
     @if (Model.RequierenAtencion > 0)
     {
@@ -25,7 +25,7 @@
         <ul class="vigilados">
             @foreach (var aviso in sueltos)
             {
-                <li class="vigilado vigilado--aviso-suelto">
+                <li class="vigilado vigilado--aviso-suelto" data-clave="aviso-@aviso.Id">
                     <p class="vigilado__linea"><strong>@aviso.TextoTipo: @aviso.TextoRegla</strong><span class="texto-secundario"> · @aviso.Ciudadano · @Formato.Hora(aviso.GeneradoEn, Model.ZonaHoraria, "HH:mm")</span></p>
                     <a class="vigilado__enlace" href="/panel/avisos/@aviso.Id" data-aviso="@aviso.Id" data-regla="@aviso.Regla" data-estado-aviso="@aviso.Estado">Revisar el aviso<span class="visualmente-oculto"> de @aviso.Ciudadano</span></a>
                 </li>
@@ -59,7 +59,7 @@ else
                     <li class="vigilado vigilado--@atencion.ToString().ToLowerInvariant()" data-acompanamiento="@s.Id" data-ciudadano="@s.Ciudadano"
                         data-atencion="@atencion" data-sin-conexion="@(s.SinConexion ? "true" : "false")"
                         data-lat="@(p is null ? null : Formato.Numero(p.Latitud))" data-lon="@(p is null ? null : Formato.Numero(p.Longitud))"
-                        data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")">
+                        data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")" data-clave="@s.Id">
                         @* Sonar mientras su posición está al día; desfasado por sesión para que no laten a la vez. *@
                         <span class="vigilado__avatar@(gris ? " vigilado__avatar--gris" : " sonar")" aria-hidden="true"
                               style="--desfase: -@(Math.Abs(s.Id.GetHashCode() % 24) * 100)ms">@Iniciales(s.Ciudadano)</span>
@@ -73,28 +73,28 @@ else
                             @switch (atencion)
                             {
                                 case Atencion.PideAyuda:
-                                    <span class="chip chip--urgente vigilado__motivo"><partial name="_Icono" model="@("urgente")" />Pidió ayuda · SOS abierto</span>
+                                    <span class="chip chip--urgente vigilado__motivo" data-suave><partial name="_Icono" model="@("urgente")" />Pidió ayuda · SOS abierto</span>
                                     break;
                                 case Atencion.AlgoNoEstaBien:
-                                    <span class="chip chip--advertencia vigilado__motivo" data-algo-no-esta-bien><partial name="_Icono" model="@("advertencia")" />Avisó que algo no está bien</span>
+                                    <span class="chip chip--advertencia vigilado__motivo" data-suave data-algo-no-esta-bien><partial name="_Icono" model="@("advertencia")" />Avisó que algo no está bien</span>
                                     break;
                                 case Atencion.Aviso when p is not { Desactualizada: true }:
-                                    <span class="chip chip--advertencia vigilado__motivo"><partial name="_Icono" model="@("advertencia")" />@avisos[0].TextoRegla</span>
+                                    <span class="chip chip--advertencia vigilado__motivo" data-suave><partial name="_Icono" model="@("advertencia")" />@avisos[0].TextoRegla</span>
                                     break;
                                 case Atencion.SinConexion:
-                                    <span class="chip chip--advertencia vigilado__motivo" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
+                                    <span class="chip chip--advertencia vigilado__motivo" data-suave data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
                                     break;
                                 case Atencion.Desactualizada:
-                                    <span class="chip chip--advertencia vigilado__motivo" data-desactualizada-aviso><partial name="_Icono" model="@("reloj")" />Posición desactualizada</span>
+                                    <span class="chip chip--advertencia vigilado__motivo" data-suave data-desactualizada-aviso><partial name="_Icono" model="@("reloj")" />Posición desactualizada</span>
                                     break;
                             }
                             @if (p is { Desactualizada: true } && atencion != Atencion.Desactualizada)
                             {
-                                <span class="chip chip--advertencia vigilado__motivo" data-desactualizada-aviso><partial name="_Icono" model="@("reloj")" />Posición desactualizada</span>
+                                <span class="chip chip--advertencia vigilado__motivo" data-suave data-desactualizada-aviso><partial name="_Icono" model="@("reloj")" />Posición desactualizada</span>
                             }
                             @if (s.SinConexion && atencion != Atencion.SinConexion)
                             {
-                                <span class="chip chip--advertencia vigilado__motivo" data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
+                                <span class="chip chip--advertencia vigilado__motivo" data-suave data-estado-sesion><partial name="_Icono" model="@("advertencia")" />Sin conexión</span>
                             }
                             @if (p is null)
                             {

@@ -15,7 +15,7 @@
   const casos = () => [...region.querySelectorAll("[data-sos]"), ...(regionReportes?.querySelectorAll("[data-sos]") ?? [])];
   // HU25: casos en curso con ubicación (no asignables), con su origen y su estado.
   const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
-  const marcadoresEnCurso = [];
+  const marcadoresEnCurso = new Map();
   const tituloBase = document.title;
   const avisoCancelacion = document.querySelector("[data-aviso-cancelacion]");
   let sinVer = 0;
@@ -131,12 +131,27 @@
   }
   const claseLlegada = (id) => document.getElementById(`sos-${id}`)?.dataset.origen === "Reporte" ? "llegada--reporte" : "";
 
+  // Fase 1 de movimiento (26/10/2026): los marcadores ya no se rehacen en cada aviso. El que sigue se queda (y se desliza si
+  // cambió de posición), el que llega entra creciendo y el que se va se desvanece. Así el mapa no parpadea con cada aviso.
+  let mapaDibujado = false;
+  const { deslizarMarcador: deslizar, retirarMarcador: retirar } = cadMovimiento;
+  // En la carga inicial no se anima: solo lo que llega con la central abierta.
+  const entrar = (marcador) => { if (mapaDibujado) cadMovimiento.entrarMarcador(marcador); };
+
   function dibujarMarcadores() {
-    for (const marcador of marcadores.values()) marcador.remove();
-    marcadores.clear();
+    const vigentes = new Set();
     for (const item of casos()) {
       if (!item.dataset.lat) continue;
       const id = item.dataset.sos;
+      vigentes.add(id);
+      const existente = marcadores.get(id);
+      if (existente) {
+        deslizar(existente, [Number(item.dataset.lat), Number(item.dataset.lon)]);
+        existente.getElement()?.classList.toggle("marcador-sos--pulso", nuevos.has(id));
+        continue;
+      }
+      // El detalle se arma al abrirlo con la tarjeta vigente (la del momento, no la de cuando se creó el marcador).
+      const tarjeta = () => document.getElementById(`sos-${id}`) ?? item;
       if (item.dataset.origen === "Reporte") {
         const texto = `Reporte admitido de ${item.dataset.ciudadano}`;
         const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
@@ -147,9 +162,10 @@
         })
           // Primero se elige el caso y después se abre el detalle: así ya muestra el sereno sugerido.
           .on("click", () => elegirCaso(id, { desdeMapa: true }))
-          .bindPopup(() => fichaPendiente(item), GLOBO)
+          .bindPopup(() => fichaPendiente(tarjeta()), GLOBO)
           .addTo(mapa);
         marcadores.set(id, marcador);
+        entrar(marcador);
         continue;
       }
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
@@ -159,9 +175,15 @@
         keyboard: true,
       })
         .on("click", () => elegirCaso(id, { desdeMapa: true }))
-        .bindPopup(() => fichaPendiente(item), GLOBO)
+        .bindPopup(() => fichaPendiente(tarjeta()), GLOBO)
         .addTo(mapa);
       marcadores.set(id, marcador);
+      entrar(marcador);
+    }
+    for (const [id, marcador] of marcadores) {
+      if (vigentes.has(id)) continue;
+      marcadores.delete(id);
+      retirar(marcador);
     }
   }
 
@@ -200,6 +222,7 @@
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
   // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
   let lineaDespacho = null;
+  const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
   // El sereno sugerido para el caso elegido (el disponible más cercano), para el detalle del caso en el mapa.
   let sugerencia = null;
   function dibujarDespacho() {
@@ -229,7 +252,6 @@
     if (!cercano) return;
     const texto = distancia(cercano.metros);
     sugerencia = { nombre: cercano.s.dataset.nombre, texto };
-    const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
     lineaDespacho = L.polyline([origen, cercano.destino], { color, weight: 3, dashArray: "8 7", interactive: false, className: "linea-despacho" })
       .bindTooltip(texto, { permanent: true, direction: "center", className: "etiqueta-despacho" })
       .addTo(mapa);
@@ -240,29 +262,48 @@
 
   // HU25-CA01/CA02/CA03: un marcador por caso en curso, distinto por origen (color) y por estado (con borde; reporte en
   // revisión con borde discontinuo). Al elegirlo se ven su identificador, origen y estado, con un enlace a su detalle.
+  // Como los demás, el marcador de un caso que sigue con el mismo estado se conserva (solo cambia su detalle).
   function dibujarCasosEnCurso(vinculados) {
-    for (const m of marcadoresEnCurso.splice(0)) m.remove();
+    const vigentes = new Set();
     for (const item of regionCasosMapa?.querySelectorAll("[data-caso-mapa]") ?? []) {
-      if (vinculados.get(item.dataset.casoMapa)?.enElLugar) continue; // lo dibuja el marcador conjunto con su sereno
+      const id = item.dataset.casoMapa;
+      if (vinculados.get(id)?.enElLugar) continue; // lo dibuja el marcador conjunto con su sereno
       const reporte = item.dataset.origen === "Reporte";
       const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
       const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
       const texto = `${item.dataset.origen} · ${item.dataset.estado} · ${item.dataset.ciudadano}`;
-      const sereno = vinculados.get(item.dataset.casoMapa); // el sereno asignado, si tiene ubicación
-      marcadoresEnCurso.push(L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
+      const sereno = vinculados.get(id); // el sereno asignado, si tiene ubicación
+      const detalle = ficha({
+        tipo: reporte ? "reporte" : "sos", etiqueta: item.dataset.origen, estado: item.dataset.estado, titulo: item.dataset.ciudadano,
+        datos: [["Sereno", sereno ? `${sereno.sereno.dataset.nombre} · a ${distancia(sereno.metros)}` : ""]],
+        acciones: accion(item.dataset.detalle, "Abrir el caso", false),
+      });
+      vigentes.add(id);
+      const existente = marcadoresEnCurso.get(id);
+      if (existente?.forma === `${clase}|${texto}`) {
+        deslizar(existente, [Number(item.dataset.lat), Number(item.dataset.lon)]);
+        existente.setPopupContent(detalle);
+        continue;
+      }
+      existente?.remove();
+      const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
         icon: L.divIcon({ className: clase, html: reporte ? "" : SIRENA, iconSize: reporte ? [26, 26] : [36, 32], iconAnchor: reporte ? [13, 13] : [18, 16], popupAnchor: [0, reporte ? -18 : -22] }),
         title: texto,
         alt: texto,
         keyboard: true,
       })
-        .bindPopup(ficha({
-          tipo: reporte ? "reporte" : "sos", etiqueta: item.dataset.origen, estado: item.dataset.estado, titulo: item.dataset.ciudadano,
-          datos: [["Sereno", sereno ? `${sereno.sereno.dataset.nombre} · a ${distancia(sereno.metros)}` : ""]],
-          acciones: accion(item.dataset.detalle, "Abrir el caso", false),
-        }), GLOBO)
+        .bindPopup(detalle, GLOBO)
         .on("click", (e) => centrar(e.target))
-        .addTo(mapa));
-      marcadoresEnCurso.at(-1).claves = [`caso:${item.dataset.casoMapa}`];
+        .addTo(mapa);
+      marcador.claves = [`caso:${id}`];
+      marcador.forma = `${clase}|${texto}`;
+      marcadoresEnCurso.set(id, marcador);
+      if (!existente) entrar(marcador);
+    }
+    for (const [id, marcador] of marcadoresEnCurso) {
+      if (vigentes.has(id)) continue;
+      marcadoresEnCurso.delete(id);
+      retirar(marcador);
     }
   }
 
@@ -309,7 +350,7 @@
   function dibujarEnCurso() {
     // Los marcadores se rehacen con cada aviso (la posición de un sereno llega cada pocos segundos): si el operador tenía
     // abierto el detalle de un caso o de un sereno, se vuelve a abrir en el marcador nuevo.
-    const enMapa = () => [...marcadoresEnCurso, ...marcadoresSerenos.values()];
+    const enMapa = () => [...marcadoresEnCurso.values(), ...marcadoresSerenos.values()];
     const abierto = enMapa().find((m) => m.isPopupOpen())?.claves ?? [];
     const vinculados = vinculos();
     dibujarCasosEnCurso(vinculados);
@@ -367,6 +408,12 @@
   }
 
   // Un solo marcador: el del caso, con el escudo del sereno encima y la etiqueta «En el lugar».
+  const fichaEnElLugar = (v) => ficha({
+    tipo: v.caso.dataset.origen === "Reporte" ? "reporte" : "sos", etiqueta: v.caso.dataset.origen, estado: v.caso.dataset.estado, titulo: v.caso.dataset.ciudadano,
+    datos: [["Sereno", `${v.sereno.dataset.nombre} · en el lugar`], ["Posición", `a ${Math.round(v.metros)} m del caso · ${v.sereno.dataset.hora}`]],
+    acciones: accion(v.caso.dataset.detalle, "Abrir el caso", false),
+  });
+
   function marcadorEnElLugar(v) {
     const reporte = v.caso.dataset.origen === "Reporte";
     const disponible = v.sereno.dataset.disponible === "true";
@@ -382,27 +429,40 @@
       alt: texto,
       keyboard: true,
       zIndexOffset: 500,
-    }).bindPopup(ficha({
-      tipo: reporte ? "reporte" : "sos", etiqueta: v.caso.dataset.origen, estado: v.caso.dataset.estado, titulo: v.caso.dataset.ciudadano,
-      datos: [["Sereno", `${v.sereno.dataset.nombre} · en el lugar`], ["Posición", `a ${Math.round(v.metros)} m del caso · ${v.sereno.dataset.hora}`]],
-      acciones: accion(v.caso.dataset.detalle, "Abrir el caso", false),
-    }), GLOBO);
+    }).bindPopup(fichaEnElLugar(v), GLOBO);
   }
 
+  const fichaSereno = (item, disponible) => ficha({
+    tipo: "sereno", etiqueta: "Sereno", estado: disponible ? "Disponible" : "No disponible", titulo: item.dataset.nombre,
+    datos: [["Ubicación", `Última a las ${item.dataset.hora}`]],
+  });
+
+  // Un sereno que sigue igual (mismo caso en el lugar, o misma disponibilidad) conserva su marcador y se desliza a su nueva
+  // posición; si cambió de forma, el marcador se rehace.
   function dibujarSerenos(vinculados) {
-    for (const marcador of marcadoresSerenos.values()) marcador.remove();
-    marcadoresSerenos.clear();
     const enElLugar = new Map([...vinculados.values()].filter((v) => v.enElLugar).map((v) => [v.sereno.dataset.sereno, v]));
+    const vigentes = new Set();
     for (const item of regionSerenos.querySelectorAll("[data-sereno][data-lat]")) {
       if (!item.dataset.lat) continue; // HU19-CA04: sin ubicación no hay marcador
       const id = item.dataset.sereno;
-      if (enElLugar.has(id)) {
-        const conjunto = marcadorEnElLugar(enElLugar.get(id)).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa);
-        conjunto.claves = [`sereno:${id}`, `caso:${enElLugar.get(id).caso.dataset.casoMapa}`];
+      const disponible = item.dataset.disponible === "true";
+      const v = enElLugar.get(id);
+      const forma = v ? `conjunto:${v.caso.dataset.casoMapa}:${disponible}` : `sereno:${disponible}`;
+      const existente = marcadoresSerenos.get(id);
+      vigentes.add(id);
+      if (existente?.forma === forma) {
+        deslizar(existente, v ? v.puntoCaso : [Number(item.dataset.lat), Number(item.dataset.lon)]);
+        existente.setPopupContent(v ? fichaEnElLugar(v) : fichaSereno(item, disponible));
+        continue;
+      }
+      existente?.remove();
+      if (v) {
+        const conjunto = marcadorEnElLugar(v).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa);
+        conjunto.claves = [`sereno:${id}`, `caso:${v.caso.dataset.casoMapa}`];
+        conjunto.forma = forma;
         marcadoresSerenos.set(id, conjunto);
         continue;
       }
-      const disponible = item.dataset.disponible === "true";
       const texto = `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
         icon: L.divIcon({
@@ -413,14 +473,18 @@
         alt: texto,
         keyboard: true,
       })
-        .bindPopup(ficha({
-          tipo: "sereno", etiqueta: "Sereno", estado: disponible ? "Disponible" : "No disponible", titulo: item.dataset.nombre,
-          datos: [["Ubicación", `Última a las ${item.dataset.hora}`]],
-        }), GLOBO)
+        .bindPopup(fichaSereno(item, disponible), GLOBO)
         .on("click", () => seleccionarSereno(id, { desdeMapa: true }))
         .addTo(mapa);
       marcador.claves = [`sereno:${id}`];
+      marcador.forma = forma;
       marcadoresSerenos.set(id, marcador);
+      entrar(marcador);
+    }
+    for (const [id, marcador] of marcadoresSerenos) {
+      if (vigentes.has(id)) continue;
+      marcadoresSerenos.delete(id);
+      retirar(marcador);
     }
   }
 
@@ -521,13 +585,18 @@
     const respuesta = await fetch("/panel/central?handler=Serenos", { headers: { Accept: "text/html" }, credentials: "same-origin" });
     if (respuesta.redirected || !respuesta.ok) return false;
     const seleccionado = regionSerenos.querySelector(".sereno--seleccionado")?.dataset.sereno;
-    regionSerenos.innerHTML = await respuesta.text();
+    // Lo que solo sabe el navegador (elegido, sugerido, «Asignar» a la vista) se repone antes de medir: así la tarjeta no
+    // cambia de alto por un instante ni parece moverse.
+    cadMovimiento.actualizarRegion(regionSerenos, await respuesta.text(), {
+      animar: true,
+      despues: () => {
+        if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+        actualizarAsignacion();
+        calcularDespacho();
+      },
+    });
     dibujarEnCurso();
-    if (seleccionado) {
-      document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
-      resaltar(marcadoresSerenos, seleccionado);
-    }
-    actualizarAsignacion();
+    if (seleccionado) resaltar(marcadoresSerenos, seleccionado);
     dibujarDespacho();
     actualizarIndicadores();
     return true;
@@ -540,10 +609,7 @@
     const cifra = indicador?.querySelector("[data-valor]");
     if (!cifra) return;
     if (etiqueta) indicador.querySelector("[data-etiqueta]").textContent = etiqueta;
-    if (cifra.textContent === String(valor)) return;
-    cifra.textContent = valor;
-    if (!reducido.matches)
-      cifra.animate([{ transform: "scale(1.35)" }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+    cadMovimiento.fijarCifra(cifra, valor);
   }
 
   function actualizarIndicadores() {
@@ -555,8 +621,7 @@
     fijarIndicador("por-asignar", sos + reportes);
     fijarIndicador("serenos-libres", libres, libres === 1 ? "sereno libre" : "serenos libres");
     for (const [clave, valor] of [["sos", sos], ["reportes", reportes]]) {
-      const total = document.querySelector(`[data-filtro-total="${clave}"]`);
-      if (total) total.textContent = valor;
+      cadMovimiento.fijarCifra(document.querySelector(`[data-filtro-total="${clave}"]`), valor);
     }
   }
 
@@ -649,49 +714,41 @@
       estadoConexion("desconectado", "La sesión terminó o no hay acceso. Vuelve a ingresar para recibir SOS.");
       return false;
     }
-    const antes = posiciones(region);
-    region.innerHTML = await respuesta.text();
-    for (const id of nuevos) document.getElementById(`sos-${id}`)?.classList.add("sos--nuevo");
-    moverEnSuSitio(region, antes);
-    contador.textContent = region.querySelector("[data-lista-sos]").dataset.total;
+    // Fase 1 de movimiento (26/10/2026): las listas se actualizan en su sitio (actualizarRegion, movimiento.js): lo nuevo entra,
+    // lo que se asignó se desvanece, el resto se desliza, y la tarjeta bajo el cursor no se mueve. La selección y la marca
+    // «Nuevo» se reponen antes de medir.
+    const reponerSeleccion = () => {
+      for (const id of nuevos) document.getElementById(`sos-${id}`)?.classList.add("sos--nuevo");
+      const elegido = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
+      elegido?.classList.add("sos--seleccionado");
+      elegido?.querySelector("[data-seleccionar-sos]")?.setAttribute("aria-pressed", "true");
+    };
+    cadMovimiento.actualizarRegion(region, await respuesta.text(), { animar: true, despues: reponerSeleccion });
+    cadMovimiento.fijarCifra(contador, region.querySelector("[data-lista-sos]").dataset.total);
     if (regionReportes) {
       const reportes = await fetch("/panel/central?handler=Reportes", { headers: { Accept: "text/html" }, credentials: "same-origin" });
       if (reportes.ok && !reportes.redirected) {
-        regionReportes.innerHTML = await reportes.text();
-        contadorReportes.textContent = regionReportes.querySelector("[data-lista-reportes]").dataset.total;
+        const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionReportes, await reportes.text(), { animar: true, despues: reponerSeleccion });
+        // Un reporte que llega mientras la central está abierta se marca un momento (un anillo que se apaga solo).
+        for (const id of llegados) {
+          const tarjeta = document.getElementById(`sos-${id}`);
+          tarjeta?.classList.add("sos--llegada");
+          tarjeta?.addEventListener("animationend", () => tarjeta.classList.remove("sos--llegada"), { once: true });
+        }
+        cadMovimiento.fijarCifra(contadorReportes, regionReportes.querySelector("[data-lista-reportes]").dataset.total);
         avisarReportesNuevos();
       }
     }
     if (regionCasosMapa) {
       const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
-      if (enCurso.ok && !enCurso.redirected) regionCasosMapa.innerHTML = await enCurso.text();
+      if (enCurso.ok && !enCurso.redirected) cadMovimiento.actualizarRegion(regionCasosMapa, await enCurso.text());
     }
     dibujarMarcadores();
     dibujarEnCurso();
-    if (sosSeleccionado) {
-      document.getElementById(`sos-${sosSeleccionado}`)?.classList.add("sos--seleccionado");
-      document.getElementById(`sos-${sosSeleccionado}`)?.querySelector("[data-seleccionar-sos]")?.setAttribute("aria-pressed", "true");
-      resaltar(marcadores, sosSeleccionado);
-    }
+    if (sosSeleccionado) resaltar(marcadores, sosSeleccionado);
     actualizarAsignacion();
     actualizarIndicadores();
     return true;
-  }
-
-  // Lo que cambia se mueve en su sitio: cada tarjeta que sigue en la lista se desliza desde su posición anterior.
-  function posiciones(contenedor) {
-    return new Map([...contenedor.querySelectorAll("[data-sos]")].map((el) => [el.dataset.sos, el.getBoundingClientRect().top]));
-  }
-  function moverEnSuSitio(contenedor, antes) {
-    if (reducido.matches) return;
-    for (const el of contenedor.querySelectorAll("[data-sos]")) {
-      const previo = antes.get(el.dataset.sos);
-      if (previo === undefined) continue;
-      const desplazamiento = previo - el.getBoundingClientRect().top;
-      if (Math.abs(desplazamiento) < 1) continue;
-      el.animate([{ transform: `translateY(${desplazamiento}px)` }, { transform: "none" }],
-        { duration: 240, easing: "cubic-bezier(0.77, 0, 0.175, 1)" });
-    }
   }
 
   // ---------- Conexión en tiempo real ----------
@@ -786,6 +843,7 @@
 
   dibujarMarcadores();
   dibujarEnCurso();
+  mapaDibujado = true;
   iniciar();
 
   // Acceso para la verificación automatizada (estado de la conexión y vista del mapa, sin datos).

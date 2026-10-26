@@ -17,7 +17,7 @@
                 <v:Aviso Tipo="informacion" Texto="{Binding CodigoDePrueba}" IsVisible="{Binding HayCodigoDePrueba}" />
 
                 <Label Text="Código de 6 dígitos" Style="{StaticResource Etiqueta}" />
-                <Border Style="{StaticResource MarcoCampo}" Padding="16,8">
+                <Border Style="{StaticResource MarcoCampo}" Padding="16,8" v:Movimiento.SacudirAl="{Binding Mensaje}">
                     <Entry x:Name="Campo" Text="{Binding Codigo}" Keyboard="Numeric" MaxLength="6"
                            FontFamily="PublicSansSemiBold" FontSize="28" CharacterSpacing="14" HorizontalTextAlignment="Center"
                            Placeholder="······" SemanticProperties.Description="Código de verificación de 6 dígitos" />

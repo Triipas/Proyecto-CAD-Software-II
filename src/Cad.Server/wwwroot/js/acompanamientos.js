@@ -63,26 +63,42 @@
   }
 
   // ---------- Marcadores de «todas» ----------
+  // Fase 1 de movimiento (26/10/2026): los marcadores ya no se rehacen en cada vuelta (cada 10 s el sonar volvía a empezar).
+  // El de una persona que sigue igual se conserva y se desliza a su nueva posición; el que cambia de aspecto (pasa a gris o pide
+  // ayuda) se rehace; el que llega entra creciendo y el que se va se desvanece.
+  let dibujado = false;
   function dibujar() {
-    for (const m of marcadores.values()) m.remove();
-    marcadores.clear();
+    const vigentes = new Set();
     for (const item of region.querySelectorAll("[data-acompanamiento]")) {
       if (!item.dataset.lat) continue;
       const id = item.dataset.acompanamiento;
       const gris = item.dataset.desactualizada === "true" || item.dataset.sinConexion === "true";
       const pide = item.dataset.atencion === "PideAyuda";
       const texto = `${item.dataset.ciudadano}${gris ? " (última posición conocida)" : ""}: seguir su recorrido`;
-      const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: icono(`${gris ? "marcador-acompanamiento--desactualizado" : "marcador-acompanamiento--vigilado"}${pide ? " marcador-acompanamiento--ayuda" : ""}`),
-        title: texto,
-        alt: texto,
-        keyboard: true,
-      })
+      const clases = `${gris ? "marcador-acompanamiento--desactualizado" : "marcador-acompanamiento--vigilado"}${pide ? " marcador-acompanamiento--ayuda" : ""}`;
+      const punto = [Number(item.dataset.lat), Number(item.dataset.lon)];
+      vigentes.add(id);
+      const existente = marcadores.get(id);
+      if (existente?.forma === `${clases}|${texto}`) {
+        cadMovimiento.deslizarMarcador(existente, punto);
+        continue;
+      }
+      existente?.remove();
+      const marcador = L.marker(punto, { icon: icono(clases), title: texto, alt: texto, keyboard: true })
         .bindTooltip(escapar(item.dataset.ciudadano), { direction: "right", className: "vigilancia__etiqueta" })
         .on("click", () => elegir(id))
         .addTo(mapa);
+      marcador.forma = `${clases}|${texto}`;
       marcadores.set(id, marcador);
+      // Solo lo que llega con la página abierta, y no si queda oculto por seguir a otra persona.
+      if (dibujado && !existente && (sesion === null || sesion === id)) cadMovimiento.entrarMarcador(marcador);
     }
+    for (const [id, marcador] of marcadores) {
+      if (vigentes.has(id)) continue;
+      marcadores.delete(id);
+      cadMovimiento.retirarMarcador(marcador);
+    }
+    dibujado = true;
     aislar();
   }
 
@@ -98,6 +114,11 @@
       }
       if (sesion !== null && id === sesion) marcador.closeTooltip();
     }
+    marcarElegida();
+  }
+
+  // La tarjeta de la persona que se sigue (lo sabe solo el navegador): se repone también tras cada actualización de la cola.
+  function marcarElegida() {
     for (const item of region.querySelectorAll("[data-acompanamiento]")) {
       const elegida = item.dataset.acompanamiento === sesion;
       item.classList.toggle("vigilado--elegido", elegida);
@@ -325,19 +346,9 @@
   }, 1000);
 
   // ---------- Actualización desde el servidor ----------
-  // El foco del teclado vuelve al mismo botón o enlace de la misma sesión tras cambiar la lista.
-  function cambiarConFoco(contenedor, html, clave) {
-    const foco = document.activeElement;
-    const dentro = contenedor.contains(foco);
-    const grupo = dentro ? foco.closest(clave)?.getAttribute(clave.slice(1, -1)) : null;
-    const selector = !dentro ? null : foco.matches("[data-elegir-acompanamiento]") ? "[data-elegir-acompanamiento]"
-      : foco.id ? `#${CSS.escape(foco.id)}` : foco.matches("a[href]") ? `a[href="${CSS.escape(foco.getAttribute("href"))}"]` : foco.matches("button[type=submit]") ? "button[type=submit]" : null;
-    contenedor.innerHTML = html;
-    if (!selector) return;
-    const destino = grupo ? contenedor.querySelector(`${clave.slice(0, -1)}="${CSS.escape(grupo)}"] ${selector}`) : contenedor.querySelector(selector);
-    destino?.focus({ preventScroll: true });
-  }
-
+  // La cola y la ficha se actualizan en su sitio (actualizarRegion, movimiento.js): el foco, el desplazamiento y el sonar de cada
+  // tarjeta siguen como estaban; quien pasa de «En calma» a «Requieren atención» se desliza a su grupo, y un chip que cambia
+  // aparece con un fundido corto.
   let pidiendo = false, pendiente = false;
   async function actualizar() {
     if (pidiendo) { pendiente = true; return; }
@@ -345,7 +356,7 @@
     try {
       const respuesta = await fetch("/panel/acompanamientos?handler=Lista", { credentials: "same-origin", headers: { Accept: "text/html" } });
       if (respuesta.redirected || !respuesta.ok) return; // sesión del panel terminada o error: se conserva lo mostrado
-      cambiarConFoco(region, await respuesta.text(), "[data-acompanamiento]");
+      cadMovimiento.actualizarRegion(region, await respuesta.text(), { animar: true, despues: marcarElegida });
       avisarNuevos();
       dibujar();
       if (modo === "sesion") await actualizarSesion();
@@ -365,7 +376,7 @@
     const id = sesion;
     const respuesta = await fetch(`/panel/acompanamientos?handler=Sesion&id=${encodeURIComponent(id)}`, { credentials: "same-origin", headers: { Accept: "text/html" } });
     if (respuesta.redirected || !respuesta.ok || sesion !== id || modo !== "sesion") return;
-    cambiarConFoco(regionSesion, await respuesta.text(), "[data-seguimiento]");
+    cadMovimiento.actualizarRegion(regionSesion, await respuesta.text(), { animar: true });
     dibujarRuta();
   }
 
@@ -408,4 +419,7 @@
     conexion.onreconnected(() => actualizar());
     conexion.start().catch(() => { /* sin canal en tiempo real: queda la consulta cada 10 s */ });
   }
+
+  // Acceso para la verificación automatizada (como window.cadCentral).
+  window.cadVigilancia = { actualizar, mapa };
 })();

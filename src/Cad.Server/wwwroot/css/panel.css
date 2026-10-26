@@ -414,6 +414,22 @@ html {
   }
 }
 
+/* Movimiento (fase 4, 26/10/2026): si vuelve con credenciales incorrectas, la tarjeta no entra de nuevo: se sacude, como
+   «esto no fue aceptado». Solo con el aviso de error (una cuenta no habilitada no es un error de quien escribe). */
+@media (prefers-reduced-motion: no-preference) {
+  .acceso__tarjeta:has(.aviso--error) {
+    animation: acceso-sacudida var(--duracion-lenta) var(--curva-estandar) both;
+  }
+}
+
+@keyframes acceso-sacudida {
+  15% { transform: translateX(-10px); }
+  35% { transform: translateX(10px); }
+  55% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+  90% { transform: translateX(-3px); }
+}
+
 .acceso__encabezado {
   display: grid;
   gap: var(--espacio-2);
@@ -1849,5 +1865,49 @@ button.sos__ubicacion:active .icono {
 
   .boton:active:not(:disabled) {
     transform: none;
+  }
+}
+
+/* ── Marcadores en movimiento (central y vigilancia; movimiento.js, 26/10/2026) ── */
+/* Marcadores: Leaflet los coloca con «transform», así que la entrada usa la propiedad «scale», que se suma sin moverlos. */
+.leaflet-marker-icon.marcador--entra {
+  animation: marcador-entra var(--duracion-lenta) var(--curva-salida) both;
+}
+
+@keyframes marcador-entra {
+  from { opacity: 0; scale: 0.4; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* Leaflet pone la opacidad en línea: la baja retirar() con setOpacity(0); aquí solo la transición. */
+.leaflet-marker-icon.marcador--sale {
+  scale: 0.8;
+  transition: opacity var(--duracion-rapida) var(--curva-entrada), scale var(--duracion-rapida) var(--curva-entrada);
+  pointer-events: none;
+}
+
+/* Solo mientras se desliza a su nueva posición: si la transición quedara puesta, el marcador se arrastraría al hacer zoom. */
+.leaflet-marker-icon.marcador--deslizando {
+  transition: transform calc(var(--duracion-lenta) * 2) var(--curva-estandar);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaflet-marker-icon.marcador--entra {
+    animation: none;
+  }
+}
+
+/* ── Cambio de página (movimiento, fase 4, 26/10/2026) ──
+   Entre páginas del panel (listado y detalle, un formulario y su resultado) la pantalla se funde en vez de parpadear en blanco.
+   Son View Transitions entre documentos: el navegador que no las conoce navega como siempre. Con movimiento reducido, nada. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--duracion-base);
+    animation-timing-function: var(--curva-estandar);
   }
 }
