@@ -62,8 +62,10 @@ public class CancelacionSosTests
     [InlineData(EstadosPublicos.EnAtencion, "SOS")]
     [InlineData(EstadosPublicos.Cerrado, "SOS")]
     [InlineData(EstadosPublicos.Cancelado, "SOS")]
-    [InlineData(EstadosPublicos.Recibido, "Reporte")]
-    public async Task CA03_SosAsignadoOPosterior_OUnReporte_NoOfreceCancelar(string estado, string origen)
+    // 26/10/2026: un reporte se retira solo antes de la decisión de la central.
+    [InlineData(EstadosPublicos.Admitido, "Reporte")]
+    [InlineData(EstadosPublicos.Derivado, "Reporte")]
+    public async Task CA03_SosAsignadoOPosterior_OUnReporteDecidido_NoOfreceCancelar(string estado, string origen)
     {
         var vm = await AbiertoAsync(estado, origen);
 

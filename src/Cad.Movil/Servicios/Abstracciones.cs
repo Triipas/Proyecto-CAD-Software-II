@@ -50,7 +50,9 @@ public interface IApiCad
     // HU30 — mis casos (solo datos públicos, DP05). El caso de otro ciudadano responde 404 (CA04).
     Task<ResultadoApi<List<MiCasoResumen>>> ConsultarMisCasosAsync(string token, CancellationToken ct);
     Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct);
-    // HU09: cancela un SOS propio pendiente; devuelve el caso actualizado.
+    // 26/10/2026: una foto (JPEG) del reporte propio, de 1 a MiReporte.Fotos.
+    Task<ResultadoApi<byte[]>> ConsultarFotoMiCasoAsync(string token, Guid casoId, int numero, CancellationToken ct);
+    // HU09: cancela un SOS propio pendiente (y, desde el 26/10/2026, retira un reporte sin decidir); devuelve el caso actualizado.
     Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct);
     // HU32: evalúa un caso propio cerrado; devuelve la evaluación registrada.
     Task<ResultadoApi<MiEvaluacion>> EvaluarCasoAsync(string token, Guid casoId, SolicitudEvaluacionCaso solicitud, CancellationToken ct);

@@ -102,6 +102,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         EstadoCaso.Recibido => SiguienteAccion.IniciarRevision,
         EstadoCaso.EnRevision => SiguienteAccion.Decidir,
         EstadoCaso.Descartada when Descartado is not null => SiguienteAccion.VerDescarte,
+        EstadoCaso.Cancelada when Reporte.Retiro is not null => SiguienteAccion.VerRetiro,
         EstadoCaso.Derivada or EstadoCaso.Descartada => SiguienteAccion.VerDecision,
         _ when Seguimiento?.Cierre is not null => SiguienteAccion.VerCierre,
         _ when Seguimiento is { EnAtencion: true } => SiguienteAccion.Cerrar,
@@ -120,6 +121,10 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
             if (Reporte.Estado is EstadoCaso.Derivada or EstadoCaso.Descartada)
                 return ProgresoCaso.Construir(
                     ["Recibido", "En revisión", EstadosCaso.Texto(Reporte.Estado)], [true, true, true], -1);
+            // Retirado por el ciudadano antes de la decisión (26/10/2026): la revisión pudo no haber empezado.
+            if (Reporte.Estado == EstadoCaso.Cancelada)
+                return ProgresoCaso.Construir(
+                    ["Recibido", "En revisión", EstadosCaso.Texto(Reporte.Estado)], [true, Reporte.RevisionIniciadaEn is not null, true], -1);
 
             var indice = Reporte.Estado switch
             {
@@ -150,7 +155,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         }
     }
 
-    public enum SiguienteAccion { IniciarRevision, Decidir, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerDecision, VerDescarte, SinAcciones }
+    public enum SiguienteAccion { IniciarRevision, Decidir, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerDecision, VerDescarte, VerRetiro, SinAcciones }
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct) =>
         await CargarAsync(id, ct) ? Page() : NotFound();

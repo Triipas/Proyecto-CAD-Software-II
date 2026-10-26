@@ -278,6 +278,17 @@ public sealed class ApiFalsa : IApiCad
         return Task.FromResult(RespuestaMiCaso(casoId));
     }
 
+    // ----- 26/10/2026: fotos del reporte propio -----
+    public Func<Guid, int, ResultadoApi<byte[]>> RespuestaFotoMiCaso { get; set; } =
+        (_, n) => new ResultadoApi<byte[]>.Correcto([0xFF, 0xD8, (byte)n, 0xFF, 0xD9]);
+    public ConcurrentQueue<(Guid CasoId, int Numero)> FotosConsultadas { get; } = new();
+
+    public Task<ResultadoApi<byte[]>> ConsultarFotoMiCasoAsync(string token, Guid casoId, int numero, CancellationToken ct)
+    {
+        FotosConsultadas.Enqueue((casoId, numero));
+        return Task.FromResult(RespuestaFotoMiCaso(casoId, numero));
+    }
+
     // ----- HU09: cancelar un SOS pendiente -----
     public Func<Guid, SolicitudCancelacionSos, ResultadoApi<MiCasoDetalle>> RespuestaCancelacion { get; set; } =
         (_, _) => new ResultadoApi<MiCasoDetalle>.Rechazado(404, "No encontrado", new Dictionary<string, string[]>());

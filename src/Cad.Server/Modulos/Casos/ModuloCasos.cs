@@ -85,6 +85,19 @@ public static class ModuloCasos
                 await consultar.DetalleAsync(contexto.User.IdUsuario(), id, ct) is { } detalle ? Results.Ok(detalle) : Results.NotFound())
             .RequireAuthorization(Politicas.Ciudadano);
 
+        // 26/10/2026 — una foto de un reporte propio, para verla en «Mi caso»; 404 si no es suyo o no existe (no se distingue).
+        // Sin caché: la foto es un dato del titular.
+        app.MapGet("/api/casos/mios/{id:guid}/fotos/{numero:int}", async (Guid id, int numero, HttpContext contexto,
+                Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
+            {
+                if (await consultar.FotoAsync(contexto.User.IdUsuario(), id, numero, ct) is not { } contenido)
+                    return Results.NotFound();
+                contexto.Response.Headers.CacheControl = "no-store, private";
+                contexto.Response.Headers.XContentTypeOptions = "nosniff";
+                return Results.File(contenido, "image/jpeg");
+            })
+            .RequireAuthorization(Politicas.Ciudadano);
+
         // HU09 — cancelar un SOS propio pendiente, con motivo: 200 con el caso actualizado (también ante un reenvío, sin cambiar
         // el motivo ni el momento ya registrados: CA08); 400 sin motivo (CA04); 409 si ya no está pendiente (CA03); 404 si no es
         // suyo o no existe, sin distinguirlos (CA05).
@@ -96,7 +109,7 @@ public static class ModuloCasos
                 {
                     ResultadoCancelacion.Cancelado or ResultadoCancelacion.YaCancelado => Results.Ok(await consultar.DetalleAsync(ciudadano, id, ct)),
                     ResultadoCancelacion.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),
-                    ResultadoCancelacion.Invalido i => Results.ValidationProblem(i.Errores, title: "No se canceló el SOS."),
+                    ResultadoCancelacion.Invalido i => Results.ValidationProblem(i.Errores, title: "No se registró la cancelación."),
                     _ => Results.NotFound(),
                 };
             })

@@ -276,6 +276,15 @@
                         <div><dt>Fecha y hora</dt><dd>@Local(descarte.DescartadoEn)</dd></div>
                     </dl>
                     break;
+                case Accion.VerRetiro:
+                    var retiro = r.Retiro!;
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Reporte retirado por el ciudadano</h2>
+                    <dl class="datos" data-retirado>
+                        <div><dt>Motivo del ciudadano</dt><dd>@retiro.Motivo</dd></div>
+                        <div><dt>Fecha y hora</dt><dd>@Local(retiro.En)</dd></div>
+                    </dl>
+                    <p class="texto-secundario">Lo retiró antes de la decisión de la central: ya no admite acciones.</p>
+                    break;
                 default:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Sin acciones pendientes</h2>
                     <p class="texto-secundario">El reporte no admite más acciones en el estado «@r.TextoEstado».</p>

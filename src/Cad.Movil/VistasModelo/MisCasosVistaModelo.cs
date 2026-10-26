@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cad.Contratos.Casos;
+using Cad.Contratos.Reportes;
 using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
@@ -159,10 +160,54 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     public IReadOnlyList<ElementoAvance> Avances =>
         caso?.Avances.Select(a => new ElementoAvance(Local(a.En), a.Estado, a.Detalle)).ToList() ?? [];
 
+    // Decisión del PO del 26/10/2026: lo que el ciudadano dio en su reporte, en solo lectura (no se edita), con sus fotos.
+    public bool HayReporte => caso?.Reporte is not null;
+    public string ReporteCategoria => caso?.Reporte?.Categoria ?? "";
+    public string ReporteDescripcion => caso?.Reporte?.Descripcion ?? "";
+    public string ReporteOcurrido => caso?.Reporte is { } r ? Local(r.OcurridoAproximadamenteEn) : "";
+    public string ReporteLugar => caso?.Reporte switch
+    {
+        { FuenteUbicacion: FuentesUbicacionHecho.Texto } => "Indicado con una referencia",
+        { Latitud: { } lat, Longitud: { } lon } r => (r.FuenteUbicacion == FuentesUbicacionHecho.PosicionActual
+            ? "Tu posición al reportar" : "Punto marcado en el mapa") + $" ({lat.ToString("0.00000", CultureInfo.InvariantCulture)}, {lon.ToString("0.00000", CultureInfo.InvariantCulture)})",
+        _ => "",
+    };
+    public string ReporteReferencia => caso?.Reporte?.Referencia ?? "";
+    public bool HayReferencia => ReporteReferencia.Length > 0;
+    public System.Collections.ObjectModel.ObservableCollection<FotoDelCaso> FotosReporte { get; } = [];
+    public bool HayFotosReporte => caso?.Reporte is { Fotos: > 0 };
+    public string TextoFotosReporte => caso?.Reporte?.Fotos switch
+    {
+        null or 0 => "No adjuntaste fotos.",
+        1 => "1 foto adjunta",
+        var n => $"{n} fotos adjuntas",
+    };
+
+    // Las fotos se piden una por una después del detalle; una que no llegue simplemente no se muestra.
+    private async Task CargarFotosAsync(string token)
+    {
+        FotosReporte.Clear();
+        for (var n = 1; n <= (caso?.Reporte?.Fotos ?? 0); n++)
+        {
+            if (await Api.ConsultarFotoMiCasoAsync(token, casoId, n, CancellationToken.None) is ResultadoApi<byte[]>.Correcto { Valor: { Length: > 0 } bytes })
+                FotosReporte.Add(new FotoDelCaso(n, bytes));
+        }
+    }
+
     // HU09 — cancelar un SOS propio mientras está pendiente (para su titular, «Recibido»: DP05), indicando el motivo (CA01, CA04).
     // Asignado o en un estado posterior ya no se ofrece; si cambió mientras tanto, el servidor lo rechaza (CA03).
+    // Decisión del PO del 26/10/2026: un reporte se retira igual, con motivo, mientras está «Recibido» o «En revisión».
     public const int MaximoMotivo = 500;
-    public bool PuedeCancelar => caso is { Origen: "SOS", Estado: EstadosPublicos.Recibido };
+    public bool EsReporte => caso is { Origen: "Reporte" };
+    public bool PuedeCancelar => caso is { Origen: "SOS", Estado: EstadosPublicos.Recibido }
+        or { Origen: "Reporte", Estado: EstadosPublicos.Recibido or EstadosPublicos.EnRevision };
+    public string TextoCancelar => EsReporte ? "Retirar este reporte" : "Cancelar este SOS";
+    public string AyudaCancelacion => EsReporte
+        ? "Solo se puede retirar mientras la central no haya decidido sobre él. Lo que reportaste no se borra: queda como retirado."
+        : "Solo se puede cancelar mientras la central no lo haya asignado. Si tienes un acompañamiento activo, sigue activo.";
+    public string IndicacionMotivo => EsReporte ? "Por qué retiras el reporte" : "Por qué ya no necesitas ayuda";
+    public string TextoConfirmarCancelacion => EsReporte ? "Confirmar el retiro" : "Confirmar la cancelación";
+    public string TextoNoCancelar => EsReporte ? "No retirar" : "No cancelar";
     public bool OfrecerCancelacion => PuedeCancelar && !formularioCancelacion;
     public bool FormularioCancelacion
     {
@@ -227,6 +272,7 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
             {
                 Mensaje = "";
                 caso = correcto.Valor;
+                await CargarFotosAsync(token);
             }
             else
             {
@@ -247,7 +293,10 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     {
         foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
                      nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion),
-                     nameof(PuedeEvaluar), nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado) })
+                     nameof(PuedeEvaluar), nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado),
+                     nameof(HayReporte), nameof(ReporteCategoria), nameof(ReporteDescripcion), nameof(ReporteOcurrido), nameof(ReporteLugar),
+                     nameof(ReporteReferencia), nameof(HayReferencia), nameof(HayFotosReporte), nameof(TextoFotosReporte), nameof(EsReporte),
+                     nameof(TextoCancelar), nameof(AyudaCancelacion), nameof(IndicacionMotivo), nameof(TextoConfirmarCancelacion), nameof(TextoNoCancelar) })
             Notificar(p);
     }
 
@@ -256,7 +305,7 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         var motivo = motivoCancelacion.Trim();
         if (motivo.Length == 0)
         {
-            ErrorMotivo = "Indica el motivo de la cancelación.";
+            ErrorMotivo = EsReporte ? "Indica el motivo del retiro." : "Indica el motivo de la cancelación.";
             return;
         }
         ErrorMotivo = "";
@@ -274,7 +323,7 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
                     FormularioCancelacion = false;
                     MotivoCancelacion = "";
                     Mensaje = "";
-                    Confirmacion = "Cancelaste el SOS. La central fue avisada.";
+                    Confirmacion = EsReporte ? "Retiraste el reporte. La central fue avisada." : "Cancelaste el SOS. La central fue avisada.";
                     break;
                 // CA03: la central ya lo asignó; se muestra el estado actual.
                 case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 409 } rechazo:
@@ -293,11 +342,12 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
                     SinExito(resultado, "No se encontró el caso.");
                     break;
                 case ResultadoApi<MiCasoDetalle>.Rechazado:
-                    Mensaje = "No se pudo cancelar el SOS. Inténtalo de nuevo.";
+                    Mensaje = EsReporte ? "No se pudo retirar el reporte. Inténtalo de nuevo." : "No se pudo cancelar el SOS. Inténtalo de nuevo.";
                     break;
                 default:
                     // Sin respuesta: se puede reintentar sin duplicar (el servidor registra una sola cancelación, CA08).
-                    Mensaje = "No hay respuesta del servidor: el SOS no se canceló. Inténtalo de nuevo.";
+                    Mensaje = EsReporte ? "No hay respuesta del servidor: el reporte no se retiró. Inténtalo de nuevo."
+                        : "No hay respuesta del servidor: el SOS no se canceló. Inténtalo de nuevo.";
                     break;
             }
             NotificarCaso();
@@ -369,4 +419,12 @@ public sealed record OpcionPuntuacion(int Valor, bool Elegida, ComandoAsincrono 
 {
     public string Texto => Valor.ToString(System.Globalization.CultureInfo.InvariantCulture);
     public string Descripcion => $"Puntuación {Valor} de 5{(Elegida ? ", elegida" : "")}";
+}
+
+// 26/10/2026: una foto del reporte propio, para verla en «Mi caso».
+public sealed class FotoDelCaso(int numero, byte[] contenido)
+{
+    public int Numero { get; } = numero;
+    public ImageSource Vista { get; } = ImageSource.FromStream(() => new MemoryStream(contenido));
+    public string DescripcionAccesible => $"Foto {Numero} que adjuntaste";
 }

@@ -112,12 +112,15 @@ public sealed class Caso
     }
 
     // HU09-CA01/CA03: el titular solo cancela un SOS «Pendiente»; asignado o en un estado posterior, ya no.
-    public bool PuedeCancelarse => Origen == OrigenCaso.Sos && Estado == EstadoCaso.Pendiente;
+    // HU09: un SOS se cancela mientras está pendiente. Decisión del PO del 26/10/2026: un reporte se retira mientras la central
+    // no lo haya decidido («Recibido» o «En revisión»); termina igual, como «Cancelada» con el motivo de su titular.
+    public bool PuedeCancelarse => Origen == OrigenCaso.Sos ? Estado == EstadoCaso.Pendiente
+        : Origen == OrigenCaso.Reporte && Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision;
 
     public void Cancelar()
     {
         if (!PuedeCancelarse)
-            throw new InvalidOperationException("Solo un SOS pendiente puede cancelarse.");
+            throw new InvalidOperationException("Solo un SOS pendiente o un reporte sin decidir puede cancelarse.");
         Estado = EstadoCaso.Cancelada;
     }
 

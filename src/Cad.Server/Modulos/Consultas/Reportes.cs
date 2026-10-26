@@ -43,6 +43,8 @@ public sealed record ReporteAdmitido(
     public bool ConPunto => Latitud is not null && Longitud is not null;
 }
 
+public sealed record RetiroVista(string Motivo, DateTimeOffset En);
+
 public sealed record DetalleReporteVista(
     Guid Id,
     EstadoCaso Estado,
@@ -68,7 +70,9 @@ public sealed record DetalleReporteVista(
     string? ContactoNombre = null,
     string? ContactoTelefono = null,
     // DP08 ampliada (26/10/2026): cuántas fotos adjuntó el ciudadano (se piden una por una, solo para el operador).
-    int Fotos = 0)
+    int Fotos = 0,
+    // Decisión del PO del 26/10/2026: el ciudadano retiró el reporte antes de la decisión, con su motivo.
+    RetiroVista? Retiro = null)
 {
     public bool PuedeIniciarRevision => Estado == EstadoCaso.Recibido;
     public bool PuedeCorregirCategoria => Estado == EstadoCaso.EnRevision;
@@ -134,12 +138,14 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
             .SingleOrDefaultAsync(ct);
 
         var fotos = await db.FotosReporte.AsNoTracking().CountAsync(f => f.CasoId == casoId, ct);
+        var retiro = await db.CancelacionesSos.AsNoTracking().Where(c => c.CasoId == casoId)
+            .Select(c => new RetiroVista(c.Motivo, c.CanceladaEn)).SingleOrDefaultAsync(ct);
 
         var (c, d) = (fila.caso, fila.detalle);
         return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Origen, c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
             d.OcurridoAproximadamenteEn, d.FuenteUbicacion, d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros,
             d.ReferenciaHecho, c.CategoriaId!.Value, categorias[c.CategoriaId!.Value], categorias[d.CategoriaOriginalId],
-            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono, fotos);
+            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono, fotos, retiro);
     }
 }
 
