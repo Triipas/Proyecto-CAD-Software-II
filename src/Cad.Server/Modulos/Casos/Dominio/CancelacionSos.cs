@@ -1,6 +1,7 @@
 namespace Cad.Server.Modulos.Casos.Dominio;
 
 // HU09-CA01 — cancelación de un SOS pendiente por su titular: motivo, fecha y hora. Una por caso (la clave es el caso).
+// Desde el 26/10/2026 registra también el retiro de un reporte sin decidir por su titular (mismo motivo obligatorio).
 public sealed class CancelacionSos
 {
     public const int MaximoMotivo = 500;

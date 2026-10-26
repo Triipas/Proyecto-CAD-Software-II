@@ -88,8 +88,24 @@ public sealed class ConsultarMisCasos(CadDbContext db)
 
         return new MiCasoDetalle(caso.Id, TextoOrigen(caso.Origen), caso.RegistradoEn, EstadoPublico(caso.Origen, caso.Estado),
             Resultado(caso.Estado, cierre?.ResultadoPublico, decision?.Tipo, decision?.Destino, decision?.Motivo, cancelacion?.Motivo),
-            avances.OrderBy(a => a.En).ToList(), evaluacion);
+            avances.OrderBy(a => a.En).ToList(), evaluacion, caso.Origen == OrigenCaso.Reporte ? await ReporteAsync(casoId, ct) : null);
     }
+
+    // 26/10/2026: lo que el titular dio en su reporte, tal como lo envió (solo lectura).
+    private async Task<MiReporte?> ReporteAsync(Guid casoId, CancellationToken ct) =>
+        await (from detalle in db.DetallesReporte.AsNoTracking()
+               join categoria in db.CategoriasIncidencia.AsNoTracking() on detalle.CategoriaOriginalId equals categoria.Id
+               where detalle.CasoId == casoId
+               select new MiReporte(categoria.Nombre, detalle.Descripcion, detalle.OcurridoAproximadamenteEn, detalle.FuenteUbicacion,
+                   detalle.LatitudHecho, detalle.LongitudHecho, detalle.ReferenciaHecho, db.FotosReporte.Count(f => f.CasoId == casoId)))
+            .SingleOrDefaultAsync(ct);
+
+    // 26/10/2026: una foto del reporte propio (1–3), o null si el caso no es del ciudadano o no tiene esa foto (no se distingue).
+    public Task<byte[]?> FotoAsync(Guid ciudadanoId, Guid casoId, int numero, CancellationToken ct) =>
+        (from foto in db.FotosReporte.AsNoTracking()
+         join caso in db.Casos.AsNoTracking() on foto.CasoId equals caso.Id
+         where foto.CasoId == casoId && foto.Numero == numero && caso.CiudadanoId == ciudadanoId
+         select foto.Contenido).SingleOrDefaultAsync(ct);
 
     public const string ResultadoDescarteCentral = "Descartado por la central.";
 

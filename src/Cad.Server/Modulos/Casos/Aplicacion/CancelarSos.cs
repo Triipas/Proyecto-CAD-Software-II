@@ -22,6 +22,7 @@ public abstract record ResultadoCancelacion
 public sealed class CancelarSos(CadDbContext db, TimeProvider reloj, INotificador notificador, ILogger<CancelarSos> registro)
 {
     public const string MotivoNoPendiente = "El SOS ya no está pendiente: la central lo asignó a un sereno y no se puede cancelar.";
+    public const string MotivoReporteDecidido = "La central ya decidió sobre el reporte: no se puede retirar.";
     public const string MotivoCambioConcurrente = "El SOS cambió mientras se cancelaba. Revisa su estado e inténtalo de nuevo.";
     private const int Intentos = 3;
 
@@ -29,13 +30,15 @@ public sealed class CancelarSos(CadDbContext db, TimeProvider reloj, INotificado
     {
         for (var intento = 1; ; intento++)
         {
-            var caso = await db.Casos.SingleOrDefaultAsync(c => c.Id == casoId && c.CiudadanoId == ciudadanoId && c.Origen == OrigenCaso.Sos, ct);
+            var caso = await db.Casos.SingleOrDefaultAsync(c => c.Id == casoId && c.CiudadanoId == ciudadanoId
+                && (c.Origen == OrigenCaso.Sos || c.Origen == OrigenCaso.Reporte), ct);
             if (caso is null)
                 return new ResultadoCancelacion.NoEncontrado();
             if (caso.Estado == EstadoCaso.Cancelada)
                 return new ResultadoCancelacion.YaCancelado(await db.CancelacionesSos.AsNoTracking().SingleAsync(c => c.CasoId == casoId, ct));
+            var esReporte = caso.Origen == OrigenCaso.Reporte;
             if (!caso.PuedeCancelarse)
-                return new ResultadoCancelacion.Rechazado(MotivoNoPendiente);
+                return new ResultadoCancelacion.Rechazado(esReporte ? MotivoReporteDecidido : MotivoNoPendiente);
 
             // CA01: el motivo es obligatorio.
             if (string.IsNullOrWhiteSpace(motivo))
@@ -47,7 +50,7 @@ public sealed class CancelarSos(CadDbContext db, TimeProvider reloj, INotificado
             caso.Cancelar();
             var cancelacion = CancelacionSos.Registrar(caso, motivo, ahora);
             db.CancelacionesSos.Add(cancelacion);
-            db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.SosCancelado, ciudadanoId, VisibilidadEvento.Publica, ahora));
+            db.EventosCaso.Add(EventoCaso.Registrar(caso, esReporte ? TipoEventoCaso.ReporteRetirado : TipoEventoCaso.SosCancelado, ciudadanoId, VisibilidadEvento.Publica, ahora));
             try
             {
                 await db.SaveChangesAsync(ct);
@@ -62,11 +65,14 @@ public sealed class CancelarSos(CadDbContext db, TimeProvider reloj, INotificado
                 continue;
             }
 
-            registro.LogInformation("SOS {CasoId} cancelado por su titular.", casoId);
-            // CA02: aviso a la central después de confirmar (la sección urgente lo retira y lo anuncia).
+            registro.LogInformation(esReporte ? "Reporte {CasoId} retirado por su titular." : "SOS {CasoId} cancelado por su titular.", casoId);
+            // CA02: aviso a la central después de confirmar (la sección urgente lo retira y lo anuncia; un reporte sale de «Reportes»).
             try
             {
-                await notificador.SosCanceladoAsync(casoId, CancellationToken.None);
+                if (esReporte)
+                    await notificador.CasoActualizadoAsync(casoId, CancellationToken.None);
+                else
+                    await notificador.SosCanceladoAsync(casoId, CancellationToken.None);
             }
             catch (Exception ex)
             {

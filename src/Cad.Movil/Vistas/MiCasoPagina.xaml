@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- HU30 — un caso propio: estado actual, avances públicos y resultado público (DP05). Sin responsables ni notas internas.
-     HU09 — cancelación de un SOS pendiente. HU32 — evaluación de un caso cerrado. -->
+     HU09 — cancelación de un SOS pendiente (y retiro de un reporte sin decidir, 26/10/2026). HU32 — evaluación de un caso cerrado.
+     26/10/2026 — lo que el ciudadano dio en su reporte, en solo lectura, con sus fotos. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
@@ -20,23 +21,22 @@
 
                     <v:Aviso Emergente="True" Tipo="exito" Texto="{Binding Confirmacion}" Mostrar="{Binding HayConfirmacion}" />
 
-                    <!-- HU09 — cancelar un SOS pendiente, con motivo obligatorio. No finaliza un acompañamiento activo. -->
-                    <Button Text="Cancelar este SOS" Style="{StaticResource BotonSecundario}" TextColor="{StaticResource ColorUrgente}" Command="{Binding MostrarCancelacion}"
-                            IsVisible="{Binding OfrecerCancelacion}" SemanticProperties.Hint="Muestra el formulario para cancelar el SOS" />
+                    <!-- HU09 — cancelar un SOS pendiente o retirar un reporte sin decidir, con motivo obligatorio. No finaliza un acompañamiento activo. -->
+                    <Button Text="{Binding TextoCancelar}" Style="{StaticResource BotonSecundario}" TextColor="{StaticResource ColorUrgente}" Command="{Binding MostrarCancelacion}"
+                            IsVisible="{Binding OfrecerCancelacion}" SemanticProperties.Hint="Muestra el formulario con el motivo" />
                     <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding FormularioCancelacion}">
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="Cancelar este SOS" Style="{StaticResource TituloSeccion}" />
-                            <Label Text="Solo se puede cancelar mientras la central no lo haya asignado. Si tienes un acompañamiento activo, sigue activo."
-                                   Style="{StaticResource TextoSecundario}" />
+                            <Label Text="{Binding TextoCancelar}" Style="{StaticResource TituloSeccion}" />
+                            <Label Text="{Binding AyudaCancelacion}" Style="{StaticResource TextoSecundario}" />
                             <Label Text="Motivo" Style="{StaticResource Etiqueta}" />
                             <Border Style="{StaticResource MarcoCampo}">
                                 <Editor Text="{Binding MotivoCancelacion}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoMotivo}"
-                                        Placeholder="Por qué ya no necesitas ayuda" AutoSize="Disabled" SemanticProperties.Description="Motivo de la cancelación" />
+                                        Placeholder="{Binding IndicacionMotivo}" AutoSize="Disabled" SemanticProperties.Description="Motivo" />
                             </Border>
                             <Label Text="{Binding ContadorMotivo}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
                             <Label Text="{Binding ErrorMotivo}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorMotivo}" />
-                            <Button Text="Confirmar la cancelación" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCancelacion}" />
-                            <Button Text="No cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding OcultarCancelacion}" />
+                            <Button Text="{Binding TextoConfirmarCancelacion}" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCancelacion}" />
+                            <Button Text="{Binding TextoNoCancelar}" Style="{StaticResource BotonSecundario}" Command="{Binding OcultarCancelacion}" />
                             <ActivityIndicator IsRunning="{Binding Cancelando}" IsVisible="{Binding Cancelando}" />
                         </VerticalStackLayout>
                     </Border>
@@ -46,6 +46,46 @@
                         <VerticalStackLayout Spacing="4">
                             <Label Text="Resultado" Style="{StaticResource TituloSeccion}" />
                             <Label Text="{Binding Resultado}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 26/10/2026 — lo que reportaste, tal como lo enviaste: solo lectura. -->
+                    <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayReporte}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Lo que reportaste" Style="{StaticResource TituloSeccion}" SemanticProperties.HeadingLevel="Level2" />
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Tipo de incidencia" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                <Label Text="{Binding ReporteCategoria}" Style="{StaticResource Etiqueta}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Qué ocurrió" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                <Label Text="{Binding ReporteDescripcion}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Cuándo ocurrió (aproximadamente)" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                <Label Text="{Binding ReporteOcurrido}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Dónde ocurrió" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                <Label Text="{Binding ReporteLugar}" />
+                                <Label Text="{Binding ReporteReferencia}" IsVisible="{Binding HayReferencia}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Fotos" Style="{StaticResource TextoSecundario}" FontSize="13" />
+                                <Label Text="{Binding TextoFotosReporte}" />
+                                <v:Mosaico Columnas="3" Espacio="8" BindableLayout.ItemsSource="{Binding FotosReporte}" IsVisible="{Binding HayFotosReporte}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:FotoDelCaso">
+                                            <Border HeightRequest="96" StrokeThickness="1" Stroke="{StaticResource ColorBorde}" Padding="0"
+                                                    SemanticProperties.Description="{Binding DescripcionAccesible}">
+                                                <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                                <Image Source="{Binding Vista}" Aspect="AspectFill" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </v:Mosaico>
+                            </VerticalStackLayout>
+                            <Label Text="Lo que enviaste no se puede modificar." Style="{StaticResource TextoSecundario}" FontSize="13" />
                         </VerticalStackLayout>
                     </Border>
 

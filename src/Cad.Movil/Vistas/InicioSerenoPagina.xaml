@@ -165,7 +165,7 @@
 
                 <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
 
-                <Label Text="MVP académico con datos simulados. Mantén la app abierta mientras estés operativo." Style="{StaticResource TextoSecundario}"
+                <Label Text="Mantén la app abierta mientras estés operativo." Style="{StaticResource TextoSecundario}"
                        FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>

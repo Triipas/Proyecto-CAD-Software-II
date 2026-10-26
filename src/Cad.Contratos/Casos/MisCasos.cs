@@ -5,7 +5,12 @@ namespace Cad.Contratos.Casos;
 public sealed record MiCasoResumen(Guid Id, string Origen, DateTimeOffset RegistradoEn, string Estado, string? Resultado);
 
 public sealed record MiCasoDetalle(Guid Id, string Origen, DateTimeOffset RegistradoEn, string Estado, string? Resultado,
-    IReadOnlyList<AvancePublico> Avances, MiEvaluacion? Evaluacion = null);
+    IReadOnlyList<AvancePublico> Avances, MiEvaluacion? Evaluacion = null, MiReporte? Reporte = null);
+
+// Decisión del PO del 26/10/2026: lo que el ciudadano dio en su reporte, para consultarlo en solo lectura. La categoría es la que
+// él eligió (la corrección del operador es interna); Fotos es cuántas adjuntó: cada una se pide aparte (1 a Fotos).
+public sealed record MiReporte(string Categoria, string Descripcion, DateTimeOffset OcurridoAproximadamenteEn, string FuenteUbicacion,
+    double? Latitud, double? Longitud, string? Referencia, int Fotos);
 
 // HU32: la evaluación que el titular registró de un caso cerrado (null si no lo evaluó).
 public sealed record MiEvaluacion(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn);

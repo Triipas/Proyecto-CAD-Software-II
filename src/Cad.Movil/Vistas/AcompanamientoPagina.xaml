@@ -60,7 +60,6 @@
                 </Border>
 
                 <Button Text="Volver al inicio" Style="{StaticResource BotonSecundario}" Command="{Binding Volver}" />
-                <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>
 

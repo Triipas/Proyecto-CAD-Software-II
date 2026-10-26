@@ -191,7 +191,6 @@
                 </VerticalStackLayout>
                 <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding VolverAIngresar}" IsVisible="{Binding SesionTerminada}" />
 
-                <Label Text="MVP académico con datos simulados. No es un canal oficial de emergencias." Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

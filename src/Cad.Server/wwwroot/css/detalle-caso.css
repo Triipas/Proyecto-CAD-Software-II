@@ -188,7 +188,7 @@
 /* DP08 ampliada: miniaturas de las fotos del reporte, que se abren en tamaño completo. */
 .fotos-reporte {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
   gap: var(--espacio-3);
   margin: 0;
   padding: 0;
@@ -208,7 +208,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* la foto completa, sin recortes */
 }
 
 /* Pares dato-valor en dos columnas dentro del contexto. */

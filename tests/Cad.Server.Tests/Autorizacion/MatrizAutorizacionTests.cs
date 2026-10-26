@@ -53,6 +53,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000"),
         // HU09 — cancelar un SOS propio pendiente. Sin cuerpo válido (o con un SOS inexistente o ajeno) el ciudadano llega al caso de
         // uso (400 o 404); el resto es rechazado antes, sin cancelar nada.
+        new("GET", "/api/casos/mios/{id:guid}/fotos/{numero:int}", "HU30 (fotos del reporte)", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/fotos/1"),
         new("POST", "/api/casos/mios/{id:guid}/cancelacion", "HU09", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/cancelacion"),
         // HU32 — evaluar un caso propio cerrado. Sin cuerpo válido (o con un caso inexistente o ajeno) el ciudadano llega al caso de
