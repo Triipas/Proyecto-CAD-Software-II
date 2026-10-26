@@ -28,7 +28,7 @@
         <div class="seguimiento__quien">
             <h2 class="seguimiento__nombre" id="seguimiento-titulo" tabindex="-1">@s.Ciudadano</h2>
             <p class="seguimiento__meta">
-                <span class="chip chip--@tono" data-estado-sesion>@estado</span>
+                <span class="chip chip--@tono" data-estado-sesion data-suave>@estado</span>
                 @if (s.Telefono is { } telefono)
                 {
                     <a class="seguimiento__telefono num" href="tel:@telefono.Replace(" ", "")">@telefono</a>
@@ -49,7 +49,7 @@
     <section class="seguimiento__siguiente" aria-labelledby="seguimiento-siguiente">
         @if (Model.PideAyuda && Model.SosEnCurso is { } caso)
         {
-            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Pidió ayuda: atiende su SOS</h3>
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente" data-suave>Pidió ayuda: atiende su SOS</h3>
             @if (Model.UltimaConfirmacion is { Respuesta: RespuestaBienestar.NecesitoAyuda, SosEnCurso: true } pedida && pedida.CasoId == caso)
             {
                 <p class="texto-secundario">Respondió «Necesito ayuda» a la confirmación de las @Formato.Hora(pedida.SolicitadaEn, zona, "HH:mm"). El SOS está en la cola de la central.</p>
@@ -63,7 +63,7 @@
         else if (s.AlgoNoEstaBien && s.UltimoEstado is { } alerta)
         {
             @* 26/10/2026: avisó por su cuenta que algo no está bien. No hay SOS: el operador decide cómo seguir. *@
-            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Avisó que algo no está bien</h3>
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente" data-suave>Avisó que algo no está bien</h3>
             <p class="texto-secundario">A las @Formato.Hora(alerta.InformadoEn, zona, "HH:mm"), sin pedir un SOS. Comunícate por teléfono o pide una confirmación de bienestar; deja de requerir atención cuando diga que está bien.</p>
             @if (s.Telefono is { } telefonoAlerta)
             {
@@ -80,13 +80,13 @@
         }
         else if (Model.AvisoAbierto is { } aviso)
         {
-            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Revisa el aviso: @aviso.TextoRegla.ToLowerInvariant()</h3>
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente" data-suave>Revisa el aviso: @aviso.TextoRegla.ToLowerInvariant()</h3>
             <p class="texto-secundario">Generado a las @Formato.Hora(aviso.GeneradoEn, zona, "HH:mm") · @aviso.TextoEstado@(aviso.Responsable is { } r ? $" ({r})" : "").</p>
             <a class="boton boton--principal" href="/panel/avisos/@aviso.Id" data-aviso="@aviso.Id">Revisar el aviso</a>
         }
         else if (s.Activa && !s.ConfirmacionPendiente)
         {
-            <h3 class="seguimiento__accion" id="seguimiento-siguiente">¿Cómo está @s.Ciudadano.Split(' ')[0]?</h3>
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente" data-suave>¿Cómo está @s.Ciudadano.Split(' ')[0]?</h3>
             <p class="texto-secundario">Verá «Estoy bien» y «Necesito ayuda»; solo «Necesito ayuda» emite un SOS.</p>
             <form method="post" asp-page="/Acompanamientos/Detalle" asp-route-id="@s.Id" asp-page-handler="SolicitarConfirmacion" data-formulario>
                 <input type="hidden" name="IdSolicitudConfirmacion" value="@Model.IdSolicitudConfirmacion" />
@@ -96,12 +96,12 @@
         }
         else if (s.Activa)
         {
-            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Esperando su respuesta</h3>
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente" data-suave>Esperando su respuesta</h3>
             <p class="texto-secundario" data-confirmacion-en-espera>Se le pidió una confirmación de bienestar@(Model.UltimaConfirmacion is { } c ? $" a las {Formato.Hora(c.SolicitadaEn, zona, "HH:mm")}" : ""). Si no responde en 2 minutos, se genera un aviso.</p>
         }
         else
         {
-            <h3 class="seguimiento__accion" id="seguimiento-siguiente">La sesión terminó</h3>
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente" data-suave>La sesión terminó</h3>
             <p class="texto-secundario">Su recorrido queda en el historial de sesiones.</p>
         }
     </section>

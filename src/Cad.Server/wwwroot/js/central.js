@@ -133,42 +133,10 @@
 
   // Fase 1 de movimiento (26/10/2026): los marcadores ya no se rehacen en cada aviso. El que sigue se queda (y se desliza si
   // cambió de posición), el que llega entra creciendo y el que se va se desvanece. Así el mapa no parpadea con cada aviso.
-  const DESLIZAR_MS = () => cadMovimiento.duracion("lenta") * 2;
   let mapaDibujado = false;
-
-  function deslizar(marcador, punto) {
-    const destino = L.latLng(punto);
-    if (marcador.getLatLng().equals(destino)) return;
-    const elemento = marcador.getElement();
-    if (!elemento || DESLIZAR_MS() === 0) {
-      marcador.setLatLng(destino);
-      return;
-    }
-    // La transición solo vale durante el deslizamiento: si quedara puesta, el marcador se arrastraría al hacer zoom.
-    elemento.classList.add("marcador--deslizando");
-    marcador.setLatLng(destino);
-    clearTimeout(marcador.finDeslizar);
-    marcador.finDeslizar = setTimeout(() => elemento.classList.remove("marcador--deslizando"), DESLIZAR_MS());
-  }
-
-  function entrar(marcador) {
-    if (!mapaDibujado) return;
-    const elemento = marcador.getElement();
-    elemento?.classList.add("marcador--entra");
-    elemento?.addEventListener("animationend", () => elemento.classList.remove("marcador--entra"), { once: true });
-  }
-
-  function retirar(marcador) {
-    const elemento = marcador.getElement();
-    const espera = cadMovimiento.duracion("rapida");
-    if (!elemento || espera === 0) {
-      marcador.remove();
-      return;
-    }
-    elemento.classList.add("marcador--sale");
-    marcador.setOpacity(0);
-    setTimeout(() => marcador.remove(), espera);
-  }
+  const { deslizarMarcador: deslizar, retirarMarcador: retirar } = cadMovimiento;
+  // En la carga inicial no se anima: solo lo que llega con la central abierta.
+  const entrar = (marcador) => { if (mapaDibujado) cadMovimiento.entrarMarcador(marcador); };
 
   function dibujarMarcadores() {
     const vigentes = new Set();

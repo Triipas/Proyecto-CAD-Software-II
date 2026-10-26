@@ -3,7 +3,8 @@
 //
 // actualizarRegion reemplaza el contenido de una región con el HTML que llegó del servidor sin rehacerla entera: conserva los
 // nodos que siguen ahí (el foco, la selección y el desplazamiento no se pierden) y solo cambia lo que cambió. Los elementos con
-// data-clave se reconocen aunque cambien de lugar. Con { animar: true }:
+// data-clave se reconocen aunque cambien de lugar, también de una lista a otra dentro de la región (un vigilado que pasa de «En
+// calma» a «Requieren atención» conserva su tarjeta). Con { animar: true }:
 // - los que entran suben 8 px; los que se van se desvanecen en su sitio; los que se mueven se deslizan a su sitio nuevo (FLIP);
 // - lo que está bajo el cursor o con el foco se queda donde estaba (se compensa el desplazamiento del contenedor), para que el
 //   operador no pulse otra tarjeta porque la lista se movió;
@@ -38,6 +39,9 @@
   const clave = (nodo) => (nodo.nodeType === Node.ELEMENT_NODE ? nodo.getAttribute("data-clave") : null);
   const mismoTipo = (a, b) => a.nodeType === b.nodeType && a.nodeName === b.nodeName && clave(a) === clave(b);
 
+  // Los elementos con clave de toda la región, para encontrarlos aunque cambien de lista. Solo vale durante un cambio.
+  let conClave = new Map();
+
   function parchar(viejo, nuevo) {
     if (viejo.nodeType !== Node.ELEMENT_NODE) {
       if (viejo.nodeValue !== nuevo.nodeValue) viejo.nodeValue = nuevo.nodeValue;
@@ -54,12 +58,27 @@
     parcharHijos(viejo, nuevo);
   }
 
-  function parcharHijos(padre, modelo) {
-    const conClave = new Map();
-    for (const hijo of padre.childNodes) {
-      const c = clave(hijo);
-      if (c) conClave.set(c, hijo);
+  // El primer hermano sin clave del mismo tipo desde «actual»: un espacio en blanco de más o un elemento que ya no está no
+  // hacen que todo lo que sigue se rehaga.
+  function parecido(actual, nuevo) {
+    for (let nodo = actual; nodo; nodo = nodo.nextSibling)
+      if (!clave(nodo) && mismoTipo(nodo, nuevo)) return nodo;
+    return null;
+  }
+
+  // Lo que entra nuevo puede traer dentro elementos con clave que ya estaban (en otra lista): esos se conservan.
+  function adoptar(nuevo) {
+    if (nuevo.nodeType !== Node.ELEMENT_NODE) return;
+    for (const el of nuevo.querySelectorAll("[data-clave]")) {
+      const existente = conClave.get(el.getAttribute("data-clave"));
+      if (!existente || !nuevo.contains(el)) continue;
+      conClave.delete(el.getAttribute("data-clave"));
+      el.replaceWith(existente);
+      parchar(existente, el);
     }
+  }
+
+  function parcharHijos(padre, modelo) {
     let actual = padre.firstChild;
     for (const nuevo of [...modelo.childNodes]) {
       const c = clave(nuevo);
@@ -67,13 +86,15 @@
       if (c) {
         existente = conClave.get(c) ?? null;
         conClave.delete(c);
-      } else if (actual && !clave(actual) && mismoTipo(actual, nuevo)) {
-        existente = actual;
+      } else {
+        existente = parecido(actual, nuevo);
       }
       if (!existente) {
+        adoptar(nuevo);
         padre.insertBefore(nuevo, actual);
         continue;
       }
+      // Uno que se quitó de otra lista antes de llegar aquí vuelve sin rehacerse.
       if (existente === actual) actual = actual.nextSibling;
       else padre.insertBefore(existente, actual);
       parchar(existente, nuevo);
@@ -129,7 +150,9 @@
 
     const plantilla = document.createElement("template");
     plantilla.innerHTML = html;
+    conClave = new Map([...antes].map(([c, { el }]) => [c, el]));
     parcharHijos(region, plantilla.content);
+    conClave = new Map();
     despues?.();
 
     if (enfocado && enfocado.isConnected && document.activeElement !== enfocado) enfocado.focus({ preventScroll: true });
@@ -178,5 +201,46 @@
     return { nuevos: nuevos.map((el) => el.getAttribute("data-clave")), quitados };
   }
 
-  window.cadMovimiento = { reducido: () => reducido.matches, duracion, curva, fijarCifra, actualizarRegion };
+  // ---------- Marcadores de Leaflet (la central y la vigilancia) ----------
+  // Un marcador que sigue se desliza a su nueva posición; el que llega entra creciendo; el que se va se desvanece. Las clases
+  // están en panel.css. La transición del deslizamiento solo vale mientras dura: si quedara puesta, el marcador se arrastraría
+  // al hacer zoom.
+  function deslizarMarcador(marcador, punto) {
+    const destino = L.latLng(punto);
+    if (marcador.getLatLng().equals(destino)) return;
+    const elemento = marcador.getElement();
+    const espera = duracion("lenta") * 2;
+    if (!elemento || espera === 0) {
+      marcador.setLatLng(destino);
+      return;
+    }
+    elemento.classList.add("marcador--deslizando");
+    marcador.setLatLng(destino);
+    clearTimeout(marcador.finDeslizar);
+    marcador.finDeslizar = setTimeout(() => elemento.classList.remove("marcador--deslizando"), espera);
+  }
+
+  function entrarMarcador(marcador) {
+    const elemento = marcador.getElement();
+    if (!elemento || duracion("lenta") === 0) return;
+    elemento.classList.add("marcador--entra");
+    elemento.addEventListener("animationend", () => elemento.classList.remove("marcador--entra"), { once: true });
+  }
+
+  // Leaflet pone la opacidad en línea: se baja con setOpacity y la clase da la transición.
+  function retirarMarcador(marcador) {
+    const elemento = marcador.getElement();
+    const espera = duracion("rapida");
+    if (!elemento || espera === 0) {
+      marcador.remove();
+      return;
+    }
+    elemento.classList.add("marcador--sale");
+    marcador.setOpacity(0);
+    setTimeout(() => marcador.remove(), espera);
+  }
+
+  window.cadMovimiento = {
+    reducido: () => reducido.matches, duracion, curva, fijarCifra, actualizarRegion, deslizarMarcador, entrarMarcador, retirarMarcador,
+  };
 })();

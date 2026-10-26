@@ -1,14 +1,16 @@
-// Movimiento de la central (fase 1, 26/10/2026): las listas y los marcadores se actualizan en su sitio. No cambia datos: simula
-// llegadas y salidas tocando el DOM antes de resincronizar con el servidor.
+// Movimiento de la central y de la vigilancia (fase 1, 26/10/2026): las listas y los marcadores se actualizan en su sitio. No
+// cambia datos: simula llegadas, salidas y cambios de grupo tocando el DOM antes de resincronizar con el servidor.
 import { test, expect } from '@playwright/test';
 import { sesion } from '../soporte/entorno.js';
 import { abrir, prepararPagina } from '../soporte/pagina.js';
 
 const REGIONES = '[data-region-lista], [data-region-reportes], [data-region-serenos]';
+const COLA = '[data-region-acompanamientos]';
 
-// Animaciones vivas dentro de las listas de la central (no cuenta el pulso de los marcadores ni el sonar).
-const animacionesEnListas = (pagina) => pagina.evaluate((regiones) =>
-  document.getAnimations().filter((a) => a.playState === 'running' && a.effect?.target?.closest?.(regiones)).length, REGIONES);
+// Animaciones de movimiento vivas dentro de las listas: las que lanza movimiento.js (no cuenta las de CSS, como el sonar).
+const animacionesEnListas = (pagina, regiones = REGIONES) => pagina.evaluate((selector) =>
+  document.getAnimations().filter((a) => a.playState === 'running' && !(a instanceof CSSAnimation) && !(a instanceof CSSTransition)
+    && a.effect?.target?.closest?.(selector)).length, regiones);
 
 async function abrirCentral(page) {
   await prepararPagina(page);
@@ -88,5 +90,52 @@ test.describe('Central: movimiento reducido', () => {
 
     expect(await animacionesEnListas(page)).toBe(0);
     expect(await page.locator('[data-region-reportes] [aria-hidden="true"][inert]').count()).toBe(0);
+  });
+});
+
+test.describe('Vigilancia: movimiento', () => {
+  test.use({ storageState: sesion('operador'), reducedMotion: 'no-preference' });
+
+  async function abrirVigilancia(page) {
+    await prepararPagina(page);
+    await abrir(page, '/panel/acompanamientos');
+    await expect(page.locator(`${COLA} [data-acompanamiento]`).first()).toBeVisible();
+  }
+
+  test('actualizar la cola sin cambios conserva tarjetas, sonar y marcadores', async ({ page }, info) => {
+    test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
+    await abrirVigilancia(page);
+    await page.evaluate((cola) => {
+      for (const el of document.querySelectorAll(`${cola} [data-acompanamiento], ${cola} .sonar, .marcador-acompanamiento`)) el.marcaPrueba = true;
+    }, COLA);
+    await page.evaluate(() => window.cadVigilancia.actualizar());
+
+    const rehechos = await page.evaluate((cola) =>
+      [...document.querySelectorAll(`${cola} [data-acompanamiento], ${cola} .sonar, .marcador-acompanamiento`)].filter((el) => !el.marcaPrueba).map((el) => el.className), COLA);
+    expect(rehechos).toEqual([]);
+    expect(await animacionesEnListas(page, COLA)).toBe(0);
+  });
+
+  test('quien cambia de grupo conserva su tarjeta y se desliza a su sitio', async ({ page }, info) => {
+    test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
+    await abrirVigilancia(page);
+    // La tarjeta se lleva a un grupo que el servidor no envía: al actualizar, vuelve al suyo.
+    const id = await page.evaluate((cola) => {
+      const tarjeta = document.querySelector(`${cola} [data-acompanamiento]`);
+      tarjeta.marcaPrueba = true;
+      const grupo = document.createElement('section');
+      grupo.innerHTML = '<h2>Grupo que ya no existe</h2><ul class="vigilados"></ul>';
+      document.querySelector(cola).append(grupo);
+      grupo.querySelector('ul').append(tarjeta);
+      return tarjeta.dataset.acompanamiento;
+    }, COLA);
+    await page.evaluate(() => window.cadVigilancia.actualizar());
+
+    const resultado = await page.evaluate(({ cola, id }) => {
+      const tarjeta = document.querySelector(`${cola} [data-acompanamiento="${id}"]`);
+      return { misma: tarjeta?.marcaPrueba === true, grupoFalso: !!document.querySelector(`${cola} h2`)?.textContent.includes('ya no existe') };
+    }, { cola: COLA, id });
+    expect(resultado).toEqual({ misma: true, grupoFalso: false });
+    expect(await animacionesEnListas(page, COLA)).toBeGreaterThan(0);
   });
 });

@@ -703,27 +703,6 @@
   to { opacity: 0; }
 }
 
-/* Marcadores: Leaflet los coloca con «transform», así que la entrada usa la propiedad «scale», que se suma sin moverlos. */
-.leaflet-marker-icon.marcador--entra {
-  animation: marcador-entra var(--duracion-lenta) var(--curva-salida) both;
-}
-
-@keyframes marcador-entra {
-  from { opacity: 0; scale: 0.4; }
-  to { opacity: 1; scale: 1; }
-}
-
-/* Leaflet pone la opacidad en línea: la baja retirar() con setOpacity(0); aquí solo la transición. */
-.leaflet-marker-icon.marcador--sale {
-  scale: 0.8;
-  transition: opacity var(--duracion-rapida) var(--curva-entrada), scale var(--duracion-rapida) var(--curva-entrada);
-  pointer-events: none;
-}
-
-/* Solo mientras se desliza a su nueva posición: si la transición quedara puesta, el marcador se arrastraría al hacer zoom. */
-.leaflet-marker-icon.marcador--deslizando {
-  transition: transform calc(var(--duracion-lenta) * 2) var(--curva-estandar);
-}
 
 @keyframes pulso-marcador {
   from { opacity: 0.7; transform: scale(1); }
@@ -852,7 +831,6 @@
   .linea-despacho,
   .etiqueta-despacho,
   .central .sos--llegada::before,
-  .leaflet-marker-icon.marcador--entra,
   .velo,
   .dialogo {
     animation: none;
