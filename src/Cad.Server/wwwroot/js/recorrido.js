@@ -89,5 +89,24 @@
   }
 
   dibujar(contenedor.dataset.puntos, contenedor.dataset.actual === "true");
+  // Una posición elegida en la línea de tiempo: el mapa va a ella y la señala con un anillo.
+  let elegida = null;
+  function mostrar(lat, lon) {
+    if (!mapa) return;
+    const punto = L.latLng(lat, lon);
+    elegida?.remove();
+    elegida = L.circleMarker(punto, { radius: 9, color, weight: 3, fillColor: "#FFFFFF", fillOpacity: 1, interactive: false }).addTo(mapa);
+    const margen = margenPanel();
+    mapa.flyToBounds(L.latLngBounds([punto, punto]), { ...margen, maxZoom: Math.max(mapa.getZoom(), 17), animate: !reducido.matches, duration: 0.6 });
+    anillo(punto, true);
+  }
+  document.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("[data-ver-posicion]");
+    if (!boton) return;
+    for (const fila of document.querySelectorAll(".posicion--elegida")) fila.classList.remove("posicion--elegida");
+    boton.closest("[data-posicion]")?.classList.add("posicion--elegida");
+    mostrar(Number(boton.dataset.lat), Number(boton.dataset.lon));
+  });
+
   window.CadRecorrido = { actualizar: dibujar };
 })();
