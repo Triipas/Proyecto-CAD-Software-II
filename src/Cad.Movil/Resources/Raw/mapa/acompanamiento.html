@@ -64,8 +64,16 @@
                     if (primera) {
                         primera = false;
                         mapa.fitBounds(linea.getBounds(), { ...margen, maxZoom: 17, animate: false });
-                    } else if (!mapa.getBounds().pad(-0.15).contains(ultimo)) {
-                        mapa.panTo(ultimo, { animate: !quieto });
+                        return;
+                    }
+                    // Se sigue la posición nueva solo si sale de la franja libre entre las tarjetas, y se la lleva al centro de esa
+                    // franja (no al de toda la pantalla, que queda tapado por el panel de abajo).
+                    const tamano = mapa.getSize();
+                    const punto = mapa.latLngToContainerPoint(ultimo);
+                    const libre = { izquierda: 32, arriba: config.arriba, derecha: tamano.x - 32, abajo: tamano.y - config.dock - 16 };
+                    if (punto.x < libre.izquierda || punto.x > libre.derecha || punto.y < libre.arriba || punto.y > libre.abajo) {
+                        const centro = L.point(tamano.x / 2, (libre.arriba + libre.abajo) / 2);
+                        mapa.panBy(punto.subtract(centro), { animate: !quieto });
                     }
                 },
             };

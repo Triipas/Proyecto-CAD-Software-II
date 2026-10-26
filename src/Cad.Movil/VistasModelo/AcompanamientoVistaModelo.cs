@@ -95,7 +95,9 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public EstadoAcompanamiento Estado => servicio.Estado;
     public bool MostrarInicio => servicio.Estado is EstadoAcompanamiento.SinSesion or EstadoAcompanamiento.NoConfirmado
         or EstadoAcompanamiento.Finalizado or EstadoAcompanamiento.Vencido or EstadoAcompanamiento.Iniciando;
-    public bool MostrarActivo => servicio.Activo;
+    // Con la sesión de la app vencida (401) ya no se transmite: se deja de mostrar «La central te acompaña» y se vuelve a la vista
+    // con el error y «Volver a ingresar» (al ingresar de nuevo, la app retoma el acompañamiento activo).
+    public bool MostrarActivo => servicio.Activo && !servicio.SesionTerminada;
     // Sin acompañamiento activo, la pantalla vuelve a ser el formulario de inicio (con cómo terminó el anterior).
     public bool MostrarFormulario => !MostrarActivo;
     // Se espera la respuesta de la central a una confirmación o a un aviso propio.

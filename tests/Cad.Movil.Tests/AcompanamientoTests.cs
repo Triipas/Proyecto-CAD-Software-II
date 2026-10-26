@@ -376,6 +376,24 @@ public class AcompanamientoTests
     }
 
     [Fact]
+    public async Task Activo_ConLaSesionDeLaAppVencida_DejaDeMostrarseAcompanadoYOfreceVolverAIngresar()
+    {
+        api.RespuestaPosicionAcompanamiento = _ => new ResultadoApi<SinContenido>.Rechazado(401, "Sesión vencida.", new Dictionary<string, string[]>());
+        var servicio = Servicio();
+        var vm = VistaModelo(servicio);
+
+        await servicio.IniciarAsync(true);
+        await Esperar(() => servicio.SesionTerminada, "el 401 del envío");
+
+        Assert.False(vm.MostrarActivo); // ya no dice «La central te acompaña»
+        Assert.True(vm.MostrarFormulario);
+        Assert.True(vm.HayEstado);
+        Assert.Contains("Vuelve a ingresar", vm.TextoEstado);
+        Assert.True(vm.SesionTerminada);
+        await servicio.DetenerAsync();
+    }
+
+    [Fact]
     public async Task Activo_LaActividadMuestraLoUltimoConLaCentral_YUnaSesionNuevaEmpiezaDeCero()
     {
         var servicio = Servicio();
