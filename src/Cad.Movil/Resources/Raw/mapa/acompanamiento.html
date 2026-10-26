@@ -37,7 +37,8 @@
             document.documentElement.style.setProperty("--dock", `${config.dock}px`);
             // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
             L.Control.Attribution.prototype.options.prefix = false;
-            const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+            // La app dice si el teléfono tiene las animaciones quitadas (el WebView puede no saberlo).
+            const quieto = config.reducido || matchMedia("(prefers-reduced-motion: reduce)").matches;
             const mapa = L.map("mapa", { zoomControl: false, attributionControl: true, zoomAnimation: !quieto, markerZoomAnimation: !quieto })
                 .setView([config.lat, config.lon], config.zoom);
             L.tileLayer(config.teselas, {
@@ -47,20 +48,46 @@
             // Las tarjetas flotan arriba y abajo: el recorrido se encuadra en la franja que queda libre entre ellas.
             const margen = { paddingTopLeft: [32, config.arriba], paddingBottomRight: [32, config.dock + 16] };
 
-            let linea = null, inicio = null, actual = null, primera = true;
+            // Movimiento (fase 3, 26/10/2026): la línea y los marcadores se conservan entre posiciones (antes se rehacían y el latido
+            // volvía a empezar); tu marcador se desliza hasta la posición nueva en vez de saltar.
+            let linea = null, inicio = null, actual = null, claseActual = "", primera = true, deslizando = null;
+            const deslizar = (marca, destino) => {
+                cancelAnimationFrame(deslizando);
+                const desde = marca.getLatLng(), hasta = L.latLng(destino);
+                if (quieto || desde.equals(hasta)) { marca.setLatLng(hasta); return; }
+                const comienzo = performance.now(), duracion = 700;
+                const paso = (ahora) => {
+                    const t = Math.min(1, (ahora - comienzo) / duracion), k = 1 - Math.pow(1 - t, 3);
+                    marca.setLatLng([desde.lat + (hasta.lat - desde.lat) * k, desde.lng + (hasta.lng - desde.lng) * k]);
+                    if (t < 1) deslizando = requestAnimationFrame(paso);
+                };
+                deslizando = requestAnimationFrame(paso);
+            };
+            const icono = (clase) => L.divIcon({ className: clase, html: "<span></span>", iconSize: [30, 30], iconAnchor: [15, 15] });
             window.cad = {
                 // puntos: [[lat, lon], …] de la más antigua a la más reciente; alDia: la transmisión funciona.
                 recorrido: (puntos, alDia) => {
-                    linea?.remove(); inicio?.remove(); actual?.remove();
-                    if (puntos.length === 0) return;
+                    if (puntos.length === 0) {
+                        linea?.remove(); inicio?.remove(); actual?.remove();
+                        linea = inicio = actual = null;
+                        return;
+                    }
                     const ultimo = puntos[puntos.length - 1];
-                    linea = L.polyline(puntos, { color: "#0D9488", weight: 5, opacity: 0.9, lineJoin: "round" }).addTo(mapa);
-                    if (puntos.length > 1)
-                        inicio = L.marker(puntos[0], { icon: L.divIcon({ className: "inicio", html: "", iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false }).addTo(mapa);
-                    actual = L.marker(ultimo, {
-                        icon: L.divIcon({ className: `marcador ${alDia ? "marcador--al-dia" : "marcador--gris"}`, html: "<span></span>", iconSize: [30, 30], iconAnchor: [15, 15] }),
-                        interactive: false,
-                    }).addTo(mapa);
+                    if (linea) linea.setLatLngs(puntos);
+                    else linea = L.polyline(puntos, { color: "#0D9488", weight: 5, opacity: 0.9, lineJoin: "round" }).addTo(mapa);
+                    if (puntos.length > 1) {
+                        if (inicio) inicio.setLatLng(puntos[0]);
+                        else inicio = L.marker(puntos[0], { icon: L.divIcon({ className: "inicio", html: "", iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false }).addTo(mapa);
+                    }
+                    const clase = `marcador ${alDia ? "marcador--al-dia" : "marcador--gris"}`;
+                    if (!actual) {
+                        actual = L.marker(ultimo, { icon: icono(clase), interactive: false }).addTo(mapa);
+                    } else {
+                        // Solo se cambia el ícono si cambió su aspecto: así el latido sigue sin cortarse.
+                        if (clase !== claseActual) actual.setIcon(icono(clase));
+                        deslizar(actual, ultimo);
+                    }
+                    claseActual = clase;
                     if (primera) {
                         primera = false;
                         mapa.fitBounds(linea.getBounds(), { ...margen, maxZoom: 17, animate: false });

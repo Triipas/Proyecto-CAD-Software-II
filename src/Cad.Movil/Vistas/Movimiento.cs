@@ -172,6 +172,50 @@ public static class Movimiento
         };
     }
 
+    // ---------- Listas (fase 3, 26/10/2026) ----------
+    // EntradaEscalonada (en un layout con BindableLayout): la primera vez que la lista se llena, sus elementos entran uno tras
+    // otro; después, lo que llega solo (un aviso nuevo) entra por su cuenta. Un refresco que rehace toda la lista no se anima.
+    // La entrada espera un momento: al llenarse la lista la pantalla está ocupada y una animación inmediata no se vería.
+    public static readonly BindableProperty EntradaEscalonadaProperty =
+        BindableProperty.CreateAttached("EntradaEscalonada", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarEntradaEscalonada);
+
+    public static bool GetEntradaEscalonada(BindableObject vista) => (bool)vista.GetValue(EntradaEscalonadaProperty);
+    public static void SetEntradaEscalonada(BindableObject vista, bool valor) => vista.SetValue(EntradaEscalonadaProperty, valor);
+
+    private const int EsperaLista = 80;
+
+    private static void AlCambiarEntradaEscalonada(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not Layout lista || !(bool)nuevo || (bool)anterior) return;
+        var llenada = false;
+        var rehaciendo = false;
+        var tanda = new List<VisualElement>();
+        lista.ChildAdded += (_, e) =>
+        {
+            if (e.Element is not VisualElement elemento || Reducido) return;
+            if (llenada)
+            {
+                // Una lista rehecha empieza vacía: su primer elemento llega solo. Esa tanda entera se muestra sin animar.
+                if (lista.Children.Count == 1)
+                {
+                    rehaciendo = true;
+                    lista.Dispatcher.Dispatch(() => rehaciendo = false);
+                }
+                if (rehaciendo) return;
+            }
+            elemento.Opacity = 0;
+            tanda.Add(elemento);
+            if (tanda.Count > 1) return;
+            lista.Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(EsperaLista), async () =>
+            {
+                var elementos = tanda.ToList();
+                tanda.Clear();
+                llenada = true;
+                await EntradaEscalonadaAsync(elementos);
+            });
+        };
+    }
+
     // Cambia el contenido de una vista sin salto: se apaga, se aplica el cambio y vuelve (p. ej. un chip que cambia de estado).
     public static async Task CruzarAsync(this VisualElement vista, Action cambio)
     {

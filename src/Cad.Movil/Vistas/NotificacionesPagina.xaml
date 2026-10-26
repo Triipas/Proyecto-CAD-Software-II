@@ -23,7 +23,7 @@
                         <Label Text="Te avisaremos aquí cuando cambie el estado de tus casos." Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Notificaciones}">
+                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Notificaciones}" v:Movimiento.EntradaEscalonada="True">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:ElementoNotificacion">
                                 <Grid>

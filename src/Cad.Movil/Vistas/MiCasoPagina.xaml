@@ -92,7 +92,7 @@
                             <Label Text="Avances" Style="{StaticResource TituloSeccion}" />
                             <Grid>
                                 <BoxView Color="{StaticResource ColorProgresoBorde}" WidthRequest="2" HorizontalOptions="Start" Margin="9,12,0,34" />
-                                <VerticalStackLayout Spacing="16" BindableLayout.ItemsSource="{Binding Avances}">
+                                <VerticalStackLayout Spacing="16" BindableLayout.ItemsSource="{Binding Avances}" v:Movimiento.EntradaEscalonada="True">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="vm:ElementoAvance">
                                             <Grid ColumnDefinitions="20,*" ColumnSpacing="12">

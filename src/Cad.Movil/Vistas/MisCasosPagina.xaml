@@ -27,7 +27,7 @@
                                Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Casos}">
+                    <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Casos}" v:Movimiento.EntradaEscalonada="True">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:ElementoMiCaso">
                                 <Grid>
