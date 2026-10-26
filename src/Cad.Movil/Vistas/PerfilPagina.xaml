@@ -102,8 +102,6 @@
                             <Button Grid.Column="2" Text="106&#10;SAMU" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="106"
                                     LineBreakMode="WordWrap" FontSize="15" Padding="4" SemanticProperties.Description="Llamar al 106, SAMU" />
                         </Grid>
-                        <Label Text="CAD Móvil es un MVP académico con datos simulados; no es un canal oficial de emergencias."
-                               Style="{StaticResource TextoSecundario}" FontSize="13" />
                     </VerticalStackLayout>
                 </Border>
 

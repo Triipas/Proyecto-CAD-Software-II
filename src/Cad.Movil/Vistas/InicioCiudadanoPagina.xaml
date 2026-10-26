@@ -140,11 +140,7 @@
         <!-- Abajo, en la zona del pulgar. -->
         <VerticalStackLayout VerticalOptions="End" Padding="12,0,12,14" Spacing="12" InputTransparent="True" CascadeInputTransparent="False">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <!-- Aviso obligatorio del MVP, siempre visible. -->
-                <Border StrokeThickness="0" StrokeShape="RoundRectangle 999" Padding="10,6" BackgroundColor="#EBFFFFFF"
-                        HorizontalOptions="Start" VerticalOptions="Center">
-                    <Label Text="MVP académico · datos simulados" FontSize="12" FontFamily="PublicSansMedium" TextColor="{StaticResource ColorTextoSecundario}" />
-                </Border>
+                <!-- 26/10/2026: sin el aviso «MVP académico · datos simulados» (pedido del usuario). -->
                 <Grid Grid.Column="1">
                     <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 999" Padding="14,0" HeightRequest="44">
                         <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
