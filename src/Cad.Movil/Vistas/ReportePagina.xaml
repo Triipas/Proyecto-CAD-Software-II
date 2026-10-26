@@ -166,6 +166,7 @@
                                             </Border>
                                             <Button Grid.Row="1" Text="Quitar" Style="{StaticResource BotonSecundario}" Padding="8,0" FontSize="13"
                                                     CommandParameter="{Binding .}"
+                                                    IsEnabled="{Binding Editable, Source={RelativeSource AncestorType={x:Type vm:ReporteVistaModelo}}, x:DataType=vm:ReporteVistaModelo}"
                                                     Command="{Binding QuitarFoto, Source={RelativeSource AncestorType={x:Type vm:ReporteVistaModelo}}, x:DataType=vm:ReporteVistaModelo}"
                                                     SemanticProperties.Description="{Binding DescripcionAccesible, StringFormat='Quitar {0}'}" />
                                         </Grid>

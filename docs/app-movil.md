@@ -100,6 +100,7 @@ Emulador Android 15 (`system-images;android-35;google_apis;x86_64`, AVD Pixel) c
 
 - `Vistas/ReportePagina.xaml` y `VistasModelo/ReporteVistaModelo.cs`: tipo (catálogo de `GET /api/reportes/categorias`), descripción (hasta 2000 caracteres), fecha y hora aproximadas (no futuras) y lugar del hecho. Arriba, la advertencia de usar el SOS ante peligro inmediato y «Ir al SOS».
 - Lugar del hecho: «Marcar en el mapa», «Usar mi posición actual» (único momento en que se lee la posición; el permiso se pide solo entonces) o «Escribir una referencia» (sin posición). El mapa es `Resources/Raw/mapa/reporte.html` con Leaflet 1.9.4 incluido (`leaflet.js`, `leaflet.css` y su licencia) y teselas de OpenStreetMap; un toque se comunica a la app con una navegación `cadmapa://punto?lat=…&lon=…` que se cancela.
+- Fotos (DP08 ampliada, [ADR-09](decisiones/ADR-09-fotos-del-reporte.md)): «Tomar una foto» y «Elegir de la galería», hasta tres, con miniatura y «Quitar». `Platforms/Android/Fotos.cs` (`FotosAndroid`) las vuelve a codificar como JPEG de hasta 1600 px y 1 MB, sin EXIF ni ubicación GPS; viajan en la misma solicitud del reporte ([captura](capturas/movil/84-reporte-tres-fotos.png), [registrado](capturas/movil/85-reporte-con-fotos-registrado.png)).
 - `Servicios/Reportes.cs` (`RegistradorReporte`): comprueba los datos, envía con un `IdSolicitud` y lo reutiliza en los reintentos (automáticos y «Reintentar el mismo reporte»), como el SOS. Confirma solo con la respuesta del servidor.
 
 ## Reporte admitido en el despacho (HU20-CA07, Sprint 3)
