@@ -1611,14 +1611,18 @@ a.boton {
   box-shadow: 0 0 0 1px var(--color-acompanamiento);
 }
 
-/* Desactualizada o sin conexión: gris y con borde discontinuo; nunca se confunde con la posición actual (HU38-CA03). */
-/* La «A» centrada: Leaflet fija el tamaño del icono, el texto ocupa todo el círculo. */
+/* 26/10/2026: un punto blanco al centro, sin letra, el mismo en la vigilancia, el seguimiento y el detalle. Leaflet fija el
+   tamaño del icono (30 px con el borde): el punto queda centrado. */
 .marcador-acompanamiento span {
   display: block;
-  width: 100%;
-  line-height: 26px;
-  text-align: center;
+  width: 10px;
+  height: 10px;
+  margin: 8px auto 0;
+  border-radius: 50%;
+  background: #FFFFFF;
 }
+
+/* Desactualizada o sin conexión: gris y con borde discontinuo; nunca se confunde con la posición actual (HU38-CA03). */
 
 .marcador-acompanamiento--desactualizado {
   background: var(--color-texto-secundario);

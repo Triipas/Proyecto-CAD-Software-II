@@ -20,25 +20,29 @@
     <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/acompanamientos.css" asp-append-version="true" />
 }
-<div class="vigilancia" data-sesion="@s.Id" data-activa="@(s.Activa ? "true" : "false")">
-    @if (s.PosicionesEliminadasEn is null)
-    {
-        @* El mapa no se vuelve a crear al actualizar: recorrido.js toma los puntos nuevos de data-puntos. *@
-        <div id="mapa-recorrido" class="mapa vigilancia__mapa" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"
-             data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-             data-puntos="@string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}"))"
-             data-actual="@(s.Posiciones.Count > 0 && s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
-    }
+@* 26/10/2026: la misma vigilancia en su modo «detalle». Al venir del seguimiento la página no se recarga: acompanamientos.js
+   trae solo la ficha de aquí y la pone en el panel, sobre el mismo mapa. Entrando directo (o sin JavaScript) se pinta entera. *@
+<div class="vigilancia" data-vigilancia data-modo="detalle">
+    <div id="mapa" class="mapa vigilancia__mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+         data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"></div>
     <aside class="vigilancia__panel vigilancia__panel--ancho" aria-label="Sesión de acompañamiento">
-        <div class="vigilancia__detalle">
-            <a class="seguimiento__volver" href="@(s.Activa ? $"/panel/acompanamientos?sesion={s.Id}" : "/panel/acompanamientos/historial")">
+        <div class="vigilancia__todas" data-modo-todas hidden>
+            <partial name="_VigilanciaTodas" model="@((ListaAcompanamientos?)null)" />
+        </div>
+        <div class="vigilancia__sesion" data-region-seguimiento hidden></div>
+        <div class="vigilancia__detalle" data-region-detalle data-sesion="@s.Id" data-activa="@(s.Activa ? "true" : "false")">
+            @* El recorrido que dibuja el mapa; se actualiza con las demás partes vivas. *@
+            <div hidden data-vivo="recorrido" data-recorrido
+                 data-puntos="@(s.PosicionesEliminadasEn is null ? string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}")) : "")"
+                 data-actual="@(s.Posiciones.Count > 0 && s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
+            <a class="seguimiento__volver" href="@(s.Activa ? $"/panel/acompanamientos?sesion={s.Id}" : "/panel/acompanamientos/historial")"@(s.Activa ? " data-volver-seguimiento" : "")>
                 <partial name="_Icono" model="@("izquierda")" />@(s.Activa ? "Volver a la vigilancia" : "Historial de sesiones")
             </a>
             @* 24/10/2026: con la sesión activa, las partes marcadas con data-vivo se actualizan solas (acompanamiento-detalle.js). *@
             <header class="cabecera-caso" data-vivo="cabecera">
                 <div class="cabecera-caso__fila">
                     <span class="etiqueta-acompanamiento etiqueta-acompanamiento--grande"><partial name="_Icono" model="@("ruta")" />Acompañamiento</span>
-                    <h1 class="titulo">@s.Ciudadano</h1>
+                    <h1 class="titulo" id="detalle-titulo" tabindex="-1">@s.Ciudadano</h1>
                     <span class="chip @(s.Activa ? (s.SinConexion ? "chip--advertencia" : "chip--acompanamiento") : "chip--neutro")" data-estado-sesion>@estado</span>
                 </div>
                 <p class="cabecera-caso__resumen">
@@ -129,52 +133,71 @@
                 }
                 else if (s.PosicionesEliminadasEn is null)
                 {
-                    <div class="tabla-contenedor" tabindex="0" role="region" aria-labelledby="leyenda-posiciones">
-                        <table class="tabla" data-posiciones>
-                            <caption id="leyenda-posiciones" tabindex="-1">@s.Posiciones.Count @(s.Posiciones.Count == 1 ? "posición" : "posiciones"), de la más reciente a la más antigua@(Model.Paginas > 1 ? $" · página {Model.Pagina} de {Model.Paginas}" : "")</caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">Obtenida</th>
-                                    <th scope="col">Precisión</th>
-                                    <th scope="col">Antigüedad</th>
-                                    <th scope="col">Coordenadas</th>
+                    @* 26/10/2026: las posiciones como línea de tiempo del recorrido, a la medida del panel: cada fila es un punto de la
+                       ruta (la más reciente arriba) y al elegirla el mapa va a esa posición. Sigue siendo una tabla para el lector de
+                       pantalla. *@
+                    <table class="posiciones" data-posiciones>
+                        <caption id="leyenda-posiciones" class="posiciones__titulo" tabindex="-1">
+                            <span class="num">@s.Posiciones.Count</span> @(s.Posiciones.Count == 1 ? "posición" : "posiciones"), de la más reciente a la más antigua@(Model.Paginas > 1 ? $" · página {Model.Pagina} de {Model.Paginas}" : "")
+                        </caption>
+                        <thead class="visualmente-oculto">
+                            <tr>
+                                <th scope="col">Obtenida y coordenadas</th>
+                                <th scope="col">Precisión</th>
+                                <th scope="col">Antigüedad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var (p, i) in Model.PosicionesDeLaPagina)
+                            {
+                                var actual = i == 0 && s.Activa && !p.Desactualizada && !s.SinConexion;
+                                var primera = i == s.Posiciones.Count - 1;
+                                <tr data-posicion data-desactualizada="@(p.Desactualizada ? "true" : "false")"
+                                    class="posicion@(actual ? " posicion--actual" : "")@(primera ? " posicion--inicio" : "")">
+                                    <td class="posicion__cuando">
+                                        @* Número de orden desde el inicio: no cambia al llegar posiciones nuevas, así el foco y la elegida sobreviven al refresco. *@
+                                        <button type="button" class="posicion__ver num" data-ver-posicion="@(s.Posiciones.Count - i)"
+                                                data-lat="@Formato.Numero(p.Latitud)" data-lon="@Formato.Numero(p.Longitud)">@Formato.Hora(p.ObtenidaEn, zona)<span class="visualmente-oculto">: ver en el mapa</span></button>
+                                        @if (actual)
+                                        {
+                                            <span class="posicion__etiqueta">· actual</span>
+                                        }
+                                        else if (primera)
+                                        {
+                                            <span class="posicion__etiqueta posicion__etiqueta--inicio">· inicio</span>
+                                        }
+                                        <span class="posicion__coordenadas num">@Formato.Numero(p.Latitud, "0.0000"), @Formato.Numero(p.Longitud, "0.0000")</span>
+                                    </td>
+                                    <td class="posicion__dato num">± @Formato.Numero(p.PrecisionMetros, "0") m</td>
+                                    @* Con la sesión activa, la antigüedad avanza cada segundo en el navegador (acompanamiento-detalle.js). *@
+                                    <td class="posicion__dato num">@if (s.Activa)
+                                        {
+                                            <span data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")">@Formato.Antiguedad(p.Antiguedad)</span>
+                                        }
+                                        else
+                                        {
+                                            @("—")
+                                        }@if (s.Activa && p.Desactualizada)
+                                        {
+                                            <span class="posicion__vieja">desactualizada</span>
+                                        }</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var (p, i) in Model.PosicionesDeLaPagina)
-                                {
-                                    var actual = i == 0 && s.Activa && !p.Desactualizada && !s.SinConexion;
-                                    <tr data-posicion data-desactualizada="@(p.Desactualizada ? "true" : "false")">
-                                        <td>@Formato.Hora(p.ObtenidaEn, zona) @(actual ? "· actual" : "")</td>
-                                        <td>± @Formato.Numero(p.PrecisionMetros, "0") m</td>
-                                        @* Con la sesión activa, la antigüedad avanza cada segundo en el navegador (acompanamiento-detalle.js). *@
-                                        <td>@if (s.Activa)
-                                            {
-                                                <span data-antiguedad data-desde="@p.ObtenidaEn.ToString("O")">@Formato.Antiguedad(p.Antiguedad)</span>
-                                            }
-                                            else
-                                            {
-                                                @("—")
-                                            }@(s.Activa && p.Desactualizada ? " · desactualizada" : "")</td>
-                                        <td class="tabla__coordenadas">@Formato.Numero(p.Latitud, "0.0000"),<br />@Formato.Numero(p.Longitud, "0.0000")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                        </tbody>
+                    </table>
                     @if (Model.Paginas > 1)
                     {
                         var desde = Model.PrimeraDeLaPagina + 1;
                         var hasta = Math.Min(Model.PrimeraDeLaPagina + DetalleModel.PosicionesPorPagina, s.Posiciones.Count);
-                        <nav class="paginacion" aria-label="Páginas de posiciones" data-paginacion>
+                        <nav class="paginacion posiciones__paginas" aria-label="Páginas de posiciones" data-paginacion>
                             @if (Model.Pagina > 1)
                             {
-                                <a class="boton boton--secundario boton--compacto" href="?pagina=@(Model.Pagina - 1)" data-pagina="@(Model.Pagina - 1)">← Más recientes</a>
+                                <a class="boton boton--secundario boton--compacto posiciones__anterior" href="?pagina=@(Model.Pagina - 1)" data-pagina="@(Model.Pagina - 1)">← Más recientes</a>
                             }
-                            <span class="texto-secundario">Posiciones @desde–@hasta de @s.Posiciones.Count</span>
+                            <span class="texto-secundario num posiciones__rango">Posiciones @desde–@hasta de @s.Posiciones.Count</span>
                             @if (Model.Pagina < Model.Paginas)
                             {
-                                <a class="boton boton--secundario boton--compacto" href="?pagina=@(Model.Pagina + 1)" data-pagina="@(Model.Pagina + 1)">Anteriores →</a>
+                                <a class="boton boton--secundario boton--compacto posiciones__siguiente" href="?pagina=@(Model.Pagina + 1)" data-pagina="@(Model.Pagina + 1)">Anteriores →</a>
                             }
                         </nav>
                     }
@@ -271,17 +294,12 @@
             </section>
         </div>
     </aside>
+    <partial name="_LeyendaVigilancia" />
 </div>
 
 @section Scripts {
-    @if (s.PosicionesEliminadasEn is null)
-    {
-        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
-        <script src="~/js/recorrido.js" asp-append-version="true"></script>
-    }
-    @if (s.Activa)
-    {
-        <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
-    }
+    <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/acompanamiento-detalle.js" asp-append-version="true"></script>
+    <script src="~/js/acompanamientos.js" asp-append-version="true"></script>
 }
