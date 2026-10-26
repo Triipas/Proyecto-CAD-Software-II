@@ -1,0 +1,14 @@
+@model Cad.Server.Panel.Pages.Acompanamientos.ListaAcompanamientos?
+@* Modo «todas» de la vigilancia: cabecera y cola por urgencia. En el detalle la lista llega vacía (no se ve) y la página la
+   pide al cargar, para volver a «todas» sin recargar el mapa. *@
+<header class="vigilancia__cabecera">
+    <h1 class="vigilancia__titulo">Acompañamientos activos</h1>
+    <a class="boton boton--secundario boton--compacto" href="/panel/acompanamientos/historial">Historial</a>
+    <p class="vigilancia__ayuda">No son SOS ni reportes: no se asignan ni generan despacho.</p>
+</header>
+<div class="vigilancia__lista" data-region-acompanamientos aria-live="polite">
+    @if (Model is not null)
+    {
+        <partial name="_ListaAcompanamientos" model="@Model" />
+    }
+</div>

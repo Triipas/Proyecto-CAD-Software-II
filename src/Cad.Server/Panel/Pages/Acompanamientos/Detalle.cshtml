@@ -20,25 +20,29 @@
     <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/acompanamientos.css" asp-append-version="true" />
 }
-<div class="vigilancia" data-sesion="@s.Id" data-activa="@(s.Activa ? "true" : "false")">
-    @if (s.PosicionesEliminadasEn is null)
-    {
-        @* El mapa no se vuelve a crear al actualizar: recorrido.js toma los puntos nuevos de data-puntos. *@
-        <div id="mapa-recorrido" class="mapa vigilancia__mapa" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"
-             data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-             data-puntos="@string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}"))"
-             data-actual="@(s.Posiciones.Count > 0 && s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
-    }
+@* 26/10/2026: la misma vigilancia en su modo «detalle». Al venir del seguimiento la página no se recarga: acompanamientos.js
+   trae solo la ficha de aquí y la pone en el panel, sobre el mismo mapa. Entrando directo (o sin JavaScript) se pinta entera. *@
+<div class="vigilancia" data-vigilancia data-modo="detalle">
+    <div id="mapa" class="mapa vigilancia__mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+         data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa del recorrido de la sesión"></div>
     <aside class="vigilancia__panel vigilancia__panel--ancho" aria-label="Sesión de acompañamiento">
-        <div class="vigilancia__detalle">
-            <a class="seguimiento__volver" href="@(s.Activa ? $"/panel/acompanamientos?sesion={s.Id}" : "/panel/acompanamientos/historial")">
+        <div class="vigilancia__todas" data-modo-todas hidden>
+            <partial name="_VigilanciaTodas" model="@((ListaAcompanamientos?)null)" />
+        </div>
+        <div class="vigilancia__sesion" data-region-seguimiento hidden></div>
+        <div class="vigilancia__detalle" data-region-detalle data-sesion="@s.Id" data-activa="@(s.Activa ? "true" : "false")">
+            @* El recorrido que dibuja el mapa; se actualiza con las demás partes vivas. *@
+            <div hidden data-vivo="recorrido" data-recorrido
+                 data-puntos="@(s.PosicionesEliminadasEn is null ? string.Join(";", s.Posiciones.Select(p => $"{Formato.Numero(p.Latitud)},{Formato.Numero(p.Longitud)}")) : "")"
+                 data-actual="@(s.Posiciones.Count > 0 && s.Activa && !s.Posiciones[0].Desactualizada && !s.SinConexion ? "true" : "false")"></div>
+            <a class="seguimiento__volver" href="@(s.Activa ? $"/panel/acompanamientos?sesion={s.Id}" : "/panel/acompanamientos/historial")"@(s.Activa ? " data-volver-seguimiento" : "")>
                 <partial name="_Icono" model="@("izquierda")" />@(s.Activa ? "Volver a la vigilancia" : "Historial de sesiones")
             </a>
             @* 24/10/2026: con la sesión activa, las partes marcadas con data-vivo se actualizan solas (acompanamiento-detalle.js). *@
             <header class="cabecera-caso" data-vivo="cabecera">
                 <div class="cabecera-caso__fila">
                     <span class="etiqueta-acompanamiento etiqueta-acompanamiento--grande"><partial name="_Icono" model="@("ruta")" />Acompañamiento</span>
-                    <h1 class="titulo">@s.Ciudadano</h1>
+                    <h1 class="titulo" id="detalle-titulo" tabindex="-1">@s.Ciudadano</h1>
                     <span class="chip @(s.Activa ? (s.SinConexion ? "chip--advertencia" : "chip--acompanamiento") : "chip--neutro")" data-estado-sesion>@estado</span>
                 </div>
                 <p class="cabecera-caso__resumen">
@@ -290,17 +294,12 @@
             </section>
         </div>
     </aside>
+    <partial name="_LeyendaVigilancia" />
 </div>
 
 @section Scripts {
-    @if (s.PosicionesEliminadasEn is null)
-    {
-        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
-        <script src="~/js/recorrido.js" asp-append-version="true"></script>
-    }
-    @if (s.Activa)
-    {
-        <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
-    }
+    <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/acompanamiento-detalle.js" asp-append-version="true"></script>
+    <script src="~/js/acompanamientos.js" asp-append-version="true"></script>
 }

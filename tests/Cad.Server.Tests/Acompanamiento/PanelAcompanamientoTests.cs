@@ -125,6 +125,29 @@ public class PanelAcompanamientoTests(FabricaCad fabrica)
         Assert.Contains("data-modo=\"todas\"", await operador.GetStringAsync($"/panel/acompanamientos?sesion={Guid.NewGuid()}"));
     }
 
+    // Modo «detalle» (26/10/2026): el detalle es la misma vigilancia sobre el mismo mapa; desde el seguimiento se abre sin
+    // recargar (la página trae solo su ficha), y la ficha lleva el recorrido que dibuja el mapa.
+    [Fact]
+    public async Task ElDetalle_EsLaVigilanciaEnModoDetalle_ConSuRecorridoYLaVueltaAlSeguimiento()
+    {
+        var (sesionId, app) = await SesionAsync();
+        await PosicionAsync(app, sesionId);
+        await PosicionAsync(app, sesionId);
+        var operador = await OperadorAsync();
+
+        var seguimiento = await operador.GetStringAsync($"/panel/acompanamientos?handler=Sesion&id={sesionId}");
+        Assert.Contains($"href=\"/panel/acompanamientos/{sesionId}\" data-ver-detalle", seguimiento);
+
+        var detalle = await operador.GetStringAsync($"/panel/acompanamientos/{sesionId}");
+        Assert.Contains("data-vigilancia data-modo=\"detalle\"", detalle);
+        Assert.Contains($"data-region-detalle data-sesion=\"{sesionId}\" data-activa=\"true\"", detalle);
+        Assert.Contains("data-region-acompanamientos", detalle); // la lista se pide al volver a «todas»
+        Assert.Equal(2, Regex.Match(detalle, @"data-recorrido\s+data-puntos=""([^""]*)""").Groups[1].Value.Split(';').Length);
+        Assert.Contains($"href=\"/panel/acompanamientos?sesion={sesionId}\" data-volver-seguimiento", detalle);
+        Assert.Contains("acompanamientos.js", detalle);
+        Assert.DoesNotContain("recorrido.js", detalle);
+    }
+
     // Pedir la confirmación desde el seguimiento vuelve al seguimiento de la misma persona.
     [Fact]
     public async Task PedirConfirmacionDesdeElSeguimiento_VuelveAlSeguimiento()

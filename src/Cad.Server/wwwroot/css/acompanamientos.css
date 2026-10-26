@@ -68,7 +68,8 @@
 }
 
 .vigilancia__todas[hidden],
-.vigilancia__sesion[hidden] {
+.vigilancia__sesion[hidden],
+.vigilancia__detalle[hidden] {
   display: none;
 }
 

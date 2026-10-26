@@ -59,6 +59,7 @@ public class DetalleModel(ConsultarAcompanamientos consultar, Modulos.Acompanami
     public string UrlTeselas => configuracion["Panel:Mapa:UrlTeselas"] ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
     public string CentroLatitud => configuracion.GetValue("Panel:Mapa:CentroLatitud", -16.3988).ToString(System.Globalization.CultureInfo.InvariantCulture);
     public string CentroLongitud => configuracion.GetValue("Panel:Mapa:CentroLongitud", -71.5369).ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public string Zoom => configuracion.GetValue("Panel:Mapa:Zoom", 12).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct)
     {
