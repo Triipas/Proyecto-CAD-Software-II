@@ -19,6 +19,10 @@
         .pin i { width: 10px; height: 10px; margin-top: -6px; transform: rotate(45deg); border-right: 3px solid #fff; border-bottom: 3px solid #fff; }
         .pin--sos b, .pin--sos i { background: #B42318; }
         .pin--reporte b, .pin--reporte i { background: #6D28D9; }
+        /* Movimiento (fase 2): el punto de un caso nuevo cae en su sitio. */
+        .pin--entra { animation: pin-cae 360ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes pin-cae { from { opacity: 0; transform: translateY(-14px); } }
+        @media (prefers-reduced-motion: reduce) { .pin--entra { animation: none; } }
     </style>
 </head>
 <body>
@@ -27,6 +31,8 @@
     <script>
         (() => {
             const config = /*CONFIG*/;
+            // Movimiento (fase 2, 26/10/2026): la app dice si el teléfono tiene las animaciones quitadas; el WebView puede no saberlo.
+            const reducido = config.reducido || matchMedia("(prefers-reduced-motion: reduce)").matches;
             // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
             L.Control.Attribution.prototype.options.prefix = false;
             const mapa = L.map("mapa", { zoomControl: false, attributionControl: true }).setView([config.lat, config.lon], config.zoom);
@@ -42,20 +48,58 @@
             // El mapa se crea oculto (sin despacho) o cambia de alto con el panel: al cambiar de tamaño, se recalcula y reencuadra.
             window.addEventListener("resize", () => { mapa.invalidateSize(false); if (!movido) verAmbos(); });
 
-            const icono = (tipo) => L.divIcon({
+            const icono = (tipo, entra = false) => L.divIcon({
                 className: "",
-                html: `<div class="pin pin--${tipo}"><b>${tipo === "sos" ? "SOS" : "&#9679;"}</b><i></i></div>`,
+                html: `<div class="pin pin--${tipo}${entra ? " pin--entra" : ""}"><b>${tipo === "sos" ? "SOS" : "&#9679;"}</b><i></i></div>`,
                 iconSize: [40, 44], iconAnchor: [20, 44],
             });
 
+            // Tu posición se desliza hasta la nueva en vez de saltar (cada pocos segundos llega una).
+            let deslizando = null;
+            const deslizar = (marca, destino) => {
+                cancelAnimationFrame(deslizando);
+                const desde = marca.getLatLng(), hasta = L.latLng(destino);
+                if (reducido || desde.equals(hasta)) { marca.setLatLng(hasta); return; }
+                const inicio = performance.now(), duracion = 700;
+                const paso = (ahora) => {
+                    const t = Math.min(1, (ahora - inicio) / duracion), k = 1 - Math.pow(1 - t, 3);
+                    marca.setLatLng([desde.lat + (hasta.lat - desde.lat) * k, desde.lng + (hasta.lng - desde.lng) * k]);
+                    if (t < 1) deslizando = requestAnimationFrame(paso);
+                };
+                deslizando = requestAnimationFrame(paso);
+            };
+
+            // La ruta nueva se dibuja desde tu posición hasta el caso. Mientras el mapa viaja queda oculta: al cambiar el zoom,
+            // Leaflet rehace el trazo y el largo medido antes ya no valdría.
+            const ocultarTrazo = (linea) => { const el = linea.getElement(); if (el) el.style.strokeDasharray = "0 100000"; };
+            const trazar = (linea) => {
+                const el = linea.getElement();
+                if (!el) return;
+                el.style.strokeDasharray = "";
+                if (reducido || !el.getTotalLength) return;
+                const largo = el.getTotalLength();
+                el.style.strokeDasharray = `${largo}`;
+                el.animate([{ strokeDashoffset: largo }, { strokeDashoffset: 0 }], { duration: 900, easing: "cubic-bezier(0.2, 0, 0, 1)" })
+                    .finished.finally(() => { el.style.strokeDasharray = ""; });
+            };
+
             // Encuadra el caso y al sereno (o el que exista) dejando margen para el panel inferior.
-            const verAmbos = () => {
+            // Con { animar }, el mapa viaja al nuevo encuadre (salvo con las animaciones quitadas); devuelve si va a moverse.
+            const verAmbos = ({ animar = false } = {}) => {
                 const puntos = [destino, yo].filter(Boolean).map((m) => m.getLatLng())
                     .concat(ruta ? ruta.getLatLngs() : []); // con ruta, que se vea entera aunque dé un rodeo
                 // Márgenes proporcionales al mapa: con el panel de cierre abierto el mapa es bajo y unos márgenes fijos alejarían la vista.
                 const t = mapa.getSize(), m = Math.round(Math.min(t.x, t.y) * 0.16);
-                if (puntos.length >= 2) mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [m, m + 12], paddingBottomRight: [m, m], maxZoom: 17 });
-                else if (puntos.length === 1) mapa.setView(puntos[0], 16);
+                const vuela = animar && !reducido;
+                const opciones = { paddingTopLeft: [m, m + 12], paddingBottomRight: [m, m], maxZoom: 17 };
+                if (puntos.length >= 2) {
+                    if (vuela) mapa.flyToBounds(L.latLngBounds(puntos), { ...opciones, duration: 0.8 });
+                    else mapa.fitBounds(L.latLngBounds(puntos), opciones);
+                } else if (puntos.length === 1) {
+                    if (vuela) mapa.flyTo(puntos[0], 16, { duration: 0.8 });
+                    else mapa.setView(puntos[0], 16);
+                } else return false;
+                return vuela;
             };
 
             window.cad = {
@@ -66,7 +110,7 @@
                         const color = COLORES[d.tipo] || COLORES.sos;
                         if (!destino) {
                             precision = L.circle([d.lat, d.lon], { radius: d.precision || 0, color, weight: 1.5, dashArray: "4 4", fillColor: color, fillOpacity: 0.12 }).addTo(mapa);
-                            destino = L.marker([d.lat, d.lon], { icon: icono(d.tipo), keyboard: false }).addTo(mapa);
+                            destino = L.marker([d.lat, d.lon], { icon: icono(d.tipo, encuadrado), keyboard: false }).addTo(mapa);
                         } else {
                             destino.setLatLng([d.lat, d.lon]).setIcon(icono(d.tipo));
                             precision.setLatLng([d.lat, d.lon]).setRadius(d.precision || 0).setStyle({ color, fillColor: color });
@@ -76,14 +120,17 @@
                     }
                     if (p) {
                         if (!yo) yo = L.circleMarker([p.lat, p.lon], { radius: 8, color: "#FFFFFF", weight: 3, fillColor: "#1D4ED8", fillOpacity: 1 }).addTo(mapa);
-                        else yo.setLatLng([p.lat, p.lon]);
+                        else deslizar(yo, [p.lat, p.lon]);
                     }
                     // Ruta por calles (calculada en la app): línea azul con borde blanco. Sin ruta, la línea recta punteada.
                     const r = datos.ruta;
+                    let rutaNueva = false;
                     if (r && r.length > 1) {
                         if (!ruta) {
+                            // Los puntos van del sereno al caso: la ruta se dibuja desde tu posición.
                             borde = L.polyline(r, { color: "#FFFFFF", weight: 9, opacity: 0.9, lineCap: "round", lineJoin: "round" }).addTo(mapa);
                             ruta = L.polyline(r, { color: "#1D4ED8", weight: 5, lineCap: "round", lineJoin: "round" }).addTo(mapa);
+                            rutaNueva = true;
                         } else { borde.setLatLngs(r); ruta.setLatLngs(r); }
                         if (destino) destino.setZIndexOffset(1000);
                     } else if (ruta) { mapa.removeLayer(ruta); mapa.removeLayer(borde); ruta = borde = null; }
@@ -98,9 +145,16 @@
                     // Solo se reencuadra cuando cambia el caso, aparece la posición del sereno o llega la primera ruta (o la primera vez):
                     // si el sereno movió el mapa, se respeta.
                     const clave = `${d ? `${d.lat},${d.lon}` : "sin-punto"}|${yo ? "con-sereno" : "sin-sereno"}|${ruta ? "con-ruta" : "sin-ruta"}`;
-                    if (!encuadrado || clave !== ultimo) { movido = false; verAmbos(); encuadrado = true; ultimo = clave; }
+                    // La primera vez el mapa se abre ya encuadrado; después, viaja al nuevo encuadre.
+                    let vuela = false;
+                    if (!encuadrado || clave !== ultimo) { movido = false; vuela = verAmbos({ animar: encuadrado }); encuadrado = true; ultimo = clave; }
+                    if (rutaNueva) {
+                        const lineas = [borde, ruta];
+                        if (vuela) { lineas.forEach(ocultarTrazo); mapa.once("moveend", () => lineas.forEach(trazar)); }
+                        else lineas.forEach(trazar);
+                    }
                 },
-                verAmbos: () => { movido = false; verAmbos(); },
+                verAmbos: () => { movido = false; verAmbos({ animar: true }); },
                 // Al volver a mostrarse el mapa (estaba oculto) Leaflet necesita recalcular su tamaño.
                 ajustar: () => setTimeout(() => { mapa.invalidateSize(false); if (!movido) verAmbos(); }, 200),
             };

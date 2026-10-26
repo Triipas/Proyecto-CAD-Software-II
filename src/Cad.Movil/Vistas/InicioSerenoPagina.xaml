@@ -33,7 +33,7 @@
         </Grid>
 
         <!-- Con despacho: encabezado compacto (una línea con el estado) y las etapas, que se pueden ocultar con un toque. -->
-        <Grid BackgroundColor="{StaticResource ColorMarino}" Padding="16,8,8,10" RowDefinitions="Auto,Auto" IsVisible="{Binding HayDespacho}">
+        <Grid x:Name="CabeceraDespacho" BackgroundColor="{StaticResource ColorMarino}" Padding="16,8,8,10" RowDefinitions="Auto,Auto" IsVisible="{Binding HayDespacho}">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
                 <Grid.GestureRecognizers><TapGestureRecognizer Command="{Binding AlternarEtapas}" /></Grid.GestureRecognizers>
                 <Grid VerticalOptions="Center">
@@ -44,7 +44,7 @@
                         <Label Text="Reporte" TextColor="White" FontFamily="PublicSansBold" FontSize="12" />
                     </Border>
                 </Grid>
-                <Label Grid.Column="1" Text="{Binding TextoEstadoCabecera}" TextColor="White" FontFamily="PublicSansSemiBold" FontSize="15"
+                <Label x:Name="EstadoCabecera" Grid.Column="1" Text="{Binding TextoEstadoCabecera}" TextColor="White" FontFamily="PublicSansSemiBold" FontSize="15"
                        VerticalOptions="Center" MaxLines="1" LineBreakMode="TailTruncation" />
                 <!-- Estado operativo: punto y texto corto. -->
                 <HorizontalStackLayout Grid.Column="2" Spacing="5" VerticalOptions="Center" SemanticProperties.Description="{Binding TextoEstado}">
@@ -64,7 +64,7 @@
                 </Grid>
             </Grid>
             <!-- Etapas del caso: barra verde si se cumplió; la etapa actual, en blanco. -->
-            <v:Mosaico Grid.Row="1" Columnas="4" Espacio="6" Margin="0,8,8,0" IsVisible="{Binding MostrarEtapas}" BindableLayout.ItemsSource="{Binding Etapas}">
+            <v:Mosaico x:Name="EtapasDespacho" Grid.Row="1" Columnas="4" Espacio="6" Margin="0,8,8,0" IsVisible="{Binding MostrarEtapas}" BindableLayout.ItemsSource="{Binding Etapas}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:EtapaDespacho">
                         <VerticalStackLayout Spacing="4" SemanticProperties.Description="{Binding Descripcion}">
@@ -208,7 +208,7 @@
             <!-- Panel desplegable (22/10/2026). Recogido: dónde, la distancia, la ruta y la acción de la etapa. Desplegado: lo que
                  registró la central, el cierre y el turno. El mapa nunca queda tapado del todo. Desde el 24/10/2026 el asa se arrastra
                  (el panel sigue al dedo y al soltar se queda recogido o desplegado); un toque sigue alternando. -->
-            <Border Grid.Row="1" Margin="0,-16,0,0" StrokeThickness="0" StrokeShape="RoundRectangle 22,22,0,0" BackgroundColor="{StaticResource ColorSuperficie}">
+            <Border x:Name="HojaDespacho" Grid.Row="1" Margin="0,-16,0,0" StrokeThickness="0" StrokeShape="RoundRectangle 22,22,0,0" BackgroundColor="{StaticResource ColorSuperficie}">
                 <Border.Shadow><Shadow Brush="#0B1F44" Offset="0,-8" Radius="22" Opacity="0.16" /></Border.Shadow>
                 <Grid RowDefinitions="Auto,*">
                     <!-- Asa: se arrastra (el panel sigue al dedo) o, con un toque, alterna entre recogido y desplegado. -->
@@ -284,14 +284,15 @@
 
                             <v:Aviso Emergente="True" Tipo="error" Texto="{Binding ErrorDespacho}" Mostrar="{Binding HayErrorDespacho}" />
 
-                            <!-- La acción de la etapa (HU22, HU23, HU24), en la zona del pulgar. -->
-                            <Button Text="Voy en camino" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarDesplazamiento}"
+                            <!-- La acción de la etapa (HU22, HU23, HU24), en la zona del pulgar. Movimiento (fase 2): al cambiar de etapa,
+                                 la acción nueva aparece subiendo; las que se registran en la central dicen «Enviando…» si tardan. -->
+                            <Button x:Name="BotonEnCamino" v:Movimiento.TextoEnvio="Enviando…" Text="Voy en camino" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarDesplazamiento}"
                                     IsVisible="{Binding PuedeConfirmarDesplazamiento}" SemanticProperties.Hint="Confirma a la central que te diriges a atender el caso" />
                             <!-- Rango de atención (24/10/2026): «Llegaste» dentro del rango; fuera, el motivo antes de iniciar. -->
-                            <v:Aviso Tipo="exito" Texto="Llegaste al lugar del caso. Inicia la atención cuando estés con el ciudadano." IsVisible="{Binding MostrarLlegaste}" />
-                            <Button Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
+                            <v:Aviso x:Name="AvisoLlegaste" Tipo="exito" Texto="Llegaste al lugar del caso. Inicia la atención cuando estés con el ciudadano." IsVisible="{Binding MostrarLlegaste}" />
+                            <Button x:Name="BotonIniciar" v:Movimiento.TextoEnvio="Enviando…" Text="Iniciar atención" Style="{StaticResource BotonPrincipal}" Command="{Binding IniciarAtencion}"
                                     IsVisible="{Binding MostrarBotonIniciar}" SemanticProperties.Hint="Registra que ya estás atendiendo el caso" />
-                            <VerticalStackLayout Spacing="10" IsVisible="{Binding MostrarMotivoInicio}">
+                            <VerticalStackLayout x:Name="ZonaMotivo" Spacing="10" IsVisible="{Binding MostrarMotivoInicio}">
                                 <v:Aviso Tipo="advertencia" Texto="{Binding TextoFueraDeRango}" />
                                 <Label Text="Motivo" Style="{StaticResource Etiqueta}" />
                                 <Border Style="{StaticResource MarcoCampo}">
@@ -306,15 +307,15 @@
                                     </Border>
                                 </VerticalStackLayout>
                                 <Label Text="{Binding ErrorMotivoInicio}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorMotivoInicio}" />
-                                <Button Text="Iniciar atención aquí" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarInicioFueraDeRango}"
+                                <Button v:Movimiento.TextoEnvio="Enviando…" Text="Iniciar atención aquí" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarInicioFueraDeRango}"
                                         SemanticProperties.Hint="Registra el inicio de la atención fuera del rango, con el motivo elegido" />
                                 <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarInicioFueraDeRango}" />
                             </VerticalStackLayout>
-                            <Button Text="Cerrar el caso" Style="{StaticResource BotonPrincipal}" Command="{Binding AbrirCierre}" IsVisible="{Binding PuedeAbrirCierre}" />
-                            <Button Text="Continuar el cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ExpandirPanel}" IsVisible="{Binding PuedeContinuarCierre}" />
+                            <Button x:Name="BotonCerrar" Text="Cerrar el caso" Style="{StaticResource BotonPrincipal}" Command="{Binding AbrirCierre}" IsVisible="{Binding PuedeAbrirCierre}" />
+                            <Button x:Name="BotonContinuarCierre" Text="Continuar el cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ExpandirPanel}" IsVisible="{Binding PuedeContinuarCierre}" />
 
                             <!-- HU24: cierre con tipificación final y resultado (obligatorios) y notas internas (opcionales). -->
-                            <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarFormularioCierre}">
+                            <VerticalStackLayout x:Name="FormularioCierre" Spacing="8" IsVisible="{Binding MostrarFormularioCierre}">
                                 <Label Text="Cierre del caso" Style="{StaticResource TituloSeccion}" />
                                 <Label Text="Tipificación final" Style="{StaticResource Etiqueta}" />
                                 <Border Style="{StaticResource MarcoCampo}">
@@ -334,7 +335,7 @@
                                 </Border>
                                 <Label Text="El ciudadano no verá estas notas." Style="{StaticResource TextoSecundario}" FontSize="13" />
                                 <Label Text="{Binding ErrorNotasCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNotasCierre}" />
-                                <Button Text="Confirmar cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCierre}" />
+                                <Button v:Movimiento.TextoEnvio="Enviando…" Text="Confirmar cierre" Style="{StaticResource BotonPrincipal}" Command="{Binding ConfirmarCierre}" />
                                 <Button Text="Cancelar" Style="{StaticResource BotonSecundario}" Command="{Binding CancelarCierre}" />
                             </VerticalStackLayout>
 

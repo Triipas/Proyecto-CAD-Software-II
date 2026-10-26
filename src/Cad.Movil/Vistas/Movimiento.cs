@@ -95,6 +95,83 @@ public static class Movimiento
         await Task.Delay((int)(Instantanea + Rapida));
     }
 
+    // Algo ya visible cambió (el estado del caso, la acción de la etapa): vuelve a aparecer subiendo 8 px, para que el cambio
+    // se note sin tener que leerlo todo de nuevo.
+    public static async Task ResaltarAsync(this VisualElement vista)
+    {
+        vista.CancelAnimations();
+        if (Reducido || !vista.IsVisible)
+        {
+            vista.Opacity = 1;
+            vista.TranslationY = 0;
+            return;
+        }
+        vista.Opacity = 0;
+        vista.TranslationY = Desplazamiento;
+        await Task.WhenAll(vista.FadeToAsync(1, Base, Salida), vista.TranslateToAsync(vista.TranslationX, 0, Base, Salida));
+    }
+
+    // ---------- Botones (fase 2, 26/10/2026) ----------
+    // Pulsable (los estilos BotonPrincipal y BotonSecundario lo activan): al tocar, el botón se hunde un poco y vuelve.
+    public static readonly BindableProperty PulsableProperty =
+        BindableProperty.CreateAttached("Pulsable", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarPulsable);
+
+    public static bool GetPulsable(BindableObject vista) => (bool)vista.GetValue(PulsableProperty);
+    public static void SetPulsable(BindableObject vista, bool valor) => vista.SetValue(PulsableProperty, valor);
+
+    private static void AlCambiarPulsable(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not Button boton) return;
+        boton.Pressed -= AlPresionar;
+        boton.Released -= AlSoltar;
+        if (!(bool)nuevo) return;
+        boton.Pressed += AlPresionar;
+        boton.Released += AlSoltar;
+    }
+
+    private static void AlPresionar(object? emisor, EventArgs e)
+    {
+        if (emisor is Button boton && !Reducido) _ = boton.ScaleToAsync(0.97, Instantanea, Salida);
+    }
+
+    private static void AlSoltar(object? emisor, EventArgs e)
+    {
+        if (emisor is not Button boton) return;
+        if (Reducido) boton.Scale = 1;
+        else _ = boton.ScaleToAsync(1, Rapida, Salida);
+    }
+
+    // TextoEnvio (las acciones que se registran en la central, como «Voy en camino»): al tocar, el teléfono vibra un instante y,
+    // si el envío tarda, el mismo botón dice «Enviando…» hasta que vuelve a estar disponible. Un envío rápido no cambia el texto.
+    public static readonly BindableProperty TextoEnvioProperty =
+        BindableProperty.CreateAttached("TextoEnvio", typeof(string), typeof(Movimiento), null, propertyChanged: AlCambiarTextoEnvio);
+
+    public static string? GetTextoEnvio(BindableObject vista) => (string?)vista.GetValue(TextoEnvioProperty);
+    public static void SetTextoEnvio(BindableObject vista, string? valor) => vista.SetValue(TextoEnvioProperty, valor);
+
+    private const int EsperaTextoEnvio = 150;
+
+    private static void AlCambiarTextoEnvio(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not Button boton || anterior is not null) return; // se engancha una sola vez
+        string? original = null;
+        boton.Clicked += async (_, _) =>
+        {
+            try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); }
+            catch (Exception) { /* sin vibración disponible */ }
+            await Task.Delay(EsperaTextoEnvio);
+            if (boton.IsEnabled || original is not null || GetTextoEnvio(boton) is not { Length: > 0 } texto) return;
+            original = boton.Text;
+            boton.Text = texto;
+        };
+        boton.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(Button.IsEnabled) || !boton.IsEnabled || original is null) return;
+            boton.Text = original;
+            original = null;
+        };
+    }
+
     // Cambia el contenido de una vista sin salto: se apaga, se aplica el cambio y vuelve (p. ej. un chip que cambia de estado).
     public static async Task CruzarAsync(this VisualElement vista, Action cambio)
     {

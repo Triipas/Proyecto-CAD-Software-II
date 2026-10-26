@@ -15,12 +15,17 @@ public partial class InicioSerenoPagina : ContentPage
     private readonly InicioSerenoVistaModelo vistaModelo;
     private readonly IConfiguracionServidor servidor;
     private bool mapaCargado, mapaListo;
+    // Movimiento (fase 2): para animar solo los cambios (la llegada de un despacho, el paso a otra etapa), no el estado inicial.
+    private bool habiaDespacho, habiaFormularioCierre;
+    private string? etapaAnterior;
 
     public InicioSerenoPagina(InicioSerenoVistaModelo vistaModelo, IConfiguracionServidor servidor, IReproductorSonidos sonidos)
     {
         InitializeComponent();
         BindingContext = this.vistaModelo = vistaModelo;
         this.servidor = servidor;
+        habiaDespacho = vistaModelo.HayDespacho;
+        etapaAnterior = vistaModelo.HayDespacho ? vistaModelo.EstadoDespacho : null;
         vistaModelo.PropertyChanged += AlCambiarVistaModelo;
         // Rango de atención (24/10/2026): al llegar al lugar del caso, un sonido, una vibración breve y el aviso al lector de pantalla.
         vistaModelo.Llegada += () =>
@@ -56,14 +61,67 @@ public partial class InicioSerenoPagina : ContentPage
             case nameof(InicioSerenoVistaModelo.Destino) or nameof(InicioSerenoVistaModelo.PosicionPropia) or nameof(InicioSerenoVistaModelo.RutaMapa):
                 await DibujarAsync();
                 break;
-            case nameof(InicioSerenoVistaModelo.HayDespacho) when vistaModelo.HayDespacho && mapaListo:
+            case nameof(InicioSerenoVistaModelo.HayDespacho):
+                var llego = vistaModelo.HayDespacho && !habiaDespacho;
+                habiaDespacho = vistaModelo.HayDespacho;
+                if (!vistaModelo.HayDespacho) etapaAnterior = null;
+                if (llego) PrepararEntrada();
                 // El mapa estaba oculto: Leaflet recalcula su tamaño al mostrarse.
-                await EjecutarAsync("window.cad && window.cad.ajustar()");
+                if (vistaModelo.HayDespacho && mapaListo) await EjecutarAsync("window.cad && window.cad.ajustar()");
+                break;
+            case nameof(InicioSerenoVistaModelo.EstadoDespacho) when vistaModelo.HayDespacho:
+                var cambio = etapaAnterior is not null && etapaAnterior != vistaModelo.EstadoDespacho;
+                etapaAnterior = vistaModelo.EstadoDespacho;
+                if (cambio) Dispatcher.Dispatch(ResaltarEtapa);
+                break;
+            case nameof(InicioSerenoVistaModelo.MostrarFormularioCierre):
+                // Se notifica con cada actualización del despacho: solo se anima cuando aparece.
+                if (vistaModelo.MostrarFormularioCierre && !habiaFormularioCierre) Dispatcher.Dispatch(() => _ = FormularioCierre.ResaltarAsync());
+                habiaFormularioCierre = vistaModelo.MostrarFormularioCierre;
+                break;
+            case nameof(InicioSerenoVistaModelo.MostrarMotivoInicio) when vistaModelo.MostrarMotivoInicio:
+                Dispatcher.Dispatch(() => _ = ZonaMotivo.ResaltarAsync());
                 break;
             case nameof(InicioSerenoVistaModelo.PanelExpandido):
                 AjustarPanel();
                 break;
         }
+    }
+
+    // Movimiento (fase 2, 26/10/2026): un despacho nuevo llega como una hoja que sube desde abajo, con una vibración (el sonido
+    // lo pone el servicio del despacho). Al reabrir la app con un despacho en curso, la hoja sube igual pero sin vibrar.
+    // Al aparecer el despacho la pantalla tiene mucho trabajo (arma el panel y muestra el mapa): una animación que empezara
+    // en ese momento terminaría antes de pintarse. Por eso la hoja se pone abajo de inmediato (el primer cuadro ya la muestra
+    // ahí) y sube un momento después.
+    private const int EsperaEntrada = 150;
+
+    private void PrepararEntrada()
+    {
+        if (vistaModelo.AvisoNuevoDespacho)
+        {
+            try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); }
+            catch (Exception) { /* sin vibración en este equipo */ }
+        }
+        if (Movimiento.Reducido) return;
+        HojaDespacho.TranslationY = Height > 0 ? Height * Recogido : 400;
+        CabeceraDespacho.Opacity = 0;
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(EsperaEntrada), EntrarDespacho);
+    }
+
+    private async void EntrarDespacho()
+    {
+        await Task.WhenAll(
+            HojaDespacho.TranslateToAsync(0, 0, Movimiento.Lenta, Movimiento.Salida),
+            CabeceraDespacho.FadeToAsync(1, Movimiento.Base, Movimiento.Salida));
+    }
+
+    // Paso a otra etapa (en camino, en atención…): el estado de la cabecera y la acción nueva aparecen subiendo, para que el
+    // sereno note el cambio sin leer todo el panel.
+    private void ResaltarEtapa()
+    {
+        _ = EstadoCabecera.ResaltarAsync();
+        foreach (var vista in new VisualElement[] { BotonEnCamino, AvisoLlegaste, BotonIniciar, BotonCerrar, BotonContinuarCierre })
+            if (vista.IsVisible) _ = vista.ResaltarAsync();
     }
 
     // Recogido, el panel ocupa como máximo algo menos de la mitad de la pantalla; desplegado (detalle o cierre) crece y el mapa se
@@ -125,7 +183,7 @@ public partial class InicioSerenoPagina : ContentPage
     // Leaflet va dentro de la página (sin CDN), como en el inicio del ciudadano. Las posiciones solo se dibujan aquí.
     private async Task CargarMapaAsync()
     {
-        var config = JsonSerializer.Serialize(new { lat = CentroLatitud, lon = CentroLongitud, zoom = Zoom, teselas = Teselas });
+        var config = JsonSerializer.Serialize(new { lat = CentroLatitud, lon = CentroLongitud, zoom = Zoom, teselas = Teselas, reducido = Movimiento.Reducido });
         var html = (await LeerAsync("mapa/despacho.html"))
             .Replace("/*LEAFLET_CSS*/", await LeerAsync("mapa/leaflet.css"))
             .Replace("/*CONFIG*/", config)

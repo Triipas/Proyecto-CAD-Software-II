@@ -4,7 +4,8 @@
      Los pesos se eligen por familia (PublicSansSemiBold, PublicSansBold), no con FontAttributes,
      para no sintetizar negritas. Radios: 8 controles, 12 superficies, 999 chips. -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    xmlns:v="clr-namespace:Cad.Movil.Vistas">
 
     <!-- ── Página ──────────────────────────────────────────────────────── -->
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
@@ -120,6 +121,8 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="52" />
+        <!-- Movimiento (fase 2): al tocar se hunde un poco y vuelve (Movimiento.Pulsable). -->
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -149,6 +152,8 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="48" />
+        <!-- Movimiento (fase 2): al tocar se hunde un poco y vuelve (Movimiento.Pulsable). -->
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
         <!-- Deshabilitado: texto y borde atenuados (el estado no depende solo del color: hay un texto que lo explica). -->
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
