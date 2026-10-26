@@ -90,6 +90,28 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
     public string? ResultadoEstado { get; private set; }
     public bool EstadoNoConfirmado { get; private set; }
 
+    // 26/10/2026 — rediseño de la pantalla: el recorrido que la central ya recibió de este teléfono (solo las posiciones que el
+    // servidor confirmó, de la más antigua a la más reciente) y lo que pasó entre el ciudadano y la central en esta sesión.
+    // Viven en memoria: tras reabrir la app empiezan de nuevo con lo que llegue desde entonces.
+    private readonly List<UbicacionSos> recorrido = [];
+    private readonly List<(DateTimeOffset Momento, string Texto)> actividad = [];
+    public IReadOnlyList<UbicacionSos> Recorrido { get { lock (bloqueo) return recorrido.ToList(); } }
+    public IReadOnlyList<(DateTimeOffset Momento, string Texto)> Actividad { get { lock (bloqueo) return actividad.ToList(); } }
+
+    private void Anotar(string texto)
+    {
+        lock (bloqueo) actividad.Add((reloj.GetUtcNow(), texto));
+    }
+
+    private void OlvidarSesion()
+    {
+        lock (bloqueo)
+        {
+            recorrido.Clear();
+            actividad.Clear();
+        }
+    }
+
     // HU34-CA01/CA08: tiempo restante según la hora del servidor; null si no hay sesión activa.
     public TimeSpan? Restante => Activo && Sesion is { } s
         ? Max(TimeSpan.Zero, s.VenceEn - (reloj.GetUtcNow() + desfase))
@@ -254,6 +276,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
     public async Task ReiniciarAsync()
     {
         estadoSinConfirmar = null;
+        OlvidarSesion();
         await DetenerEnvioAsync();
         DetenerReintento();
         Estado = EstadoAcompanamiento.SinSesion;
@@ -310,6 +333,8 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
 
     private void Aplicar(SesionAcompanamientoVista vista)
     {
+        if (Sesion?.Id != vista.Id)
+            OlvidarSesion(); // otra sesión: su recorrido y su actividad empiezan de cero
         Sesion = vista;
         desfase = vista.Ahora - reloj.GetUtcNow();
         Estado = vista.Estado switch
@@ -424,6 +449,11 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
         {
             case ResultadoApi<SinContenido>.Correcto:
                 UltimoEnvio = reloj.GetUtcNow();
+                lock (bloqueo)
+                {
+                    if (recorrido.Count == 0 || recorrido[^1].ObtenidaEn != posicion.ObtenidaEn)
+                        recorrido.Add(posicion);
+                }
                 Condicion = nueva is null
                     ? $"Sin posiciones nuevas: se envió la última disponible, obtenida a las {posicion.ObtenidaEn.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture)}."
                     : null;
@@ -543,6 +573,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
         if (Confirmacion is { } confirmacion && confirmacionAvisada != confirmacion.Id)
         {
             confirmacionAvisada = confirmacion.Id;
+            Anotar("La central te preguntó cómo estás.");
             ResultadoConfirmacion = null;
             ConfirmacionNoConfirmada = false;
             segundoPlano?.AvisarConfirmacion();
@@ -608,6 +639,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
                 case ResultadoApi<ConfirmacionBienestarVista>.Correcto correcto:
                     Confirmacion = null;
                     sosDeConfirmacion = null;
+                    Anotar(correcto.Valor.CasoId is null ? "Le respondiste: «Estoy bien»." : "Pediste ayuda: la central recibió tu SOS.");
                     ResultadoConfirmacion = correcto.Valor.CasoId is null
                         ? "Respondiste «Estoy bien». La central lo verá."
                         : "Pedido de ayuda registrado: la central recibió tu SOS.";
@@ -680,6 +712,13 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             switch (resultado)
             {
                 case ResultadoApi<EstadoInformadoVista>.Correcto:
+                    Anotar(estado switch
+                    {
+                        EstadosCiudadano.EstoyBien => "Avisaste: «Estoy bien».",
+                        EstadosCiudadano.AlgoNoEstaBien => "Avisaste: «Algo no está bien».",
+                        EstadosCiudadano.NecesitoAyuda => "Pediste ayuda: la central recibió tu SOS.",
+                        _ => "Avisaste que llegaste a tu destino.",
+                    });
                     estadoSinConfirmar = null;
                     ResultadoEstado = estado switch
                     {

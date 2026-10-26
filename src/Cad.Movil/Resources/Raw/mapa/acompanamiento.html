@@ -1,0 +1,83 @@
+<!doctype html>
+<!-- Acompañamiento del ciudadano (rediseño del 26/10/2026): el recorrido que la central ya recibió de este teléfono, con el mismo
+     marcador que ve el operador en la vigilancia (círculo con punto blanco y sonar mientras la posición está al día; gris si la
+     transmisión falla). Leaflet 1.9.4 incluido en la app (sin CDN). Los puntos los pone la app: esta página no lee la ubicación
+     ni la envía a ningún sitio. -->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>/*LEAFLET_CSS*/</style>
+    <style>
+        html, body, #mapa { height: 100%; margin: 0; background: #e3e9f1; }
+        .leaflet-tile-pane { filter: grayscale(1) sepia(0.2) hue-rotate(180deg) saturate(1.5) brightness(1.03) contrast(0.92); }
+        .leaflet-control-attribution { font: 10px/1.4 sans-serif; background: rgba(255,255,255,.75) !important; }
+        /* El panel de abajo ocupa la zona del pulgar: la atribución queda justo encima. */
+        .leaflet-bottom { bottom: var(--dock, 300px); }
+
+        .marcador { border-radius: 50%; background: #0D9488; border: 2px solid #fff; box-shadow: 0 0 0 1px #0D9488; box-sizing: border-box; }
+        .marcador span { display: block; width: 10px; height: 10px; margin: 8px auto 0; border-radius: 50%; background: #fff; }
+        .marcador--gris { background: #5C6E88; border-style: dashed; box-shadow: 0 0 0 1px #5C6E88; }
+        .marcador--al-dia::before, .marcador--al-dia::after {
+            content: ""; position: absolute; inset: -2px; border: 2px solid #0D9488; border-radius: 50%;
+            opacity: 0; pointer-events: none; animation: sonar 2.4s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+        }
+        .marcador--al-dia::after { animation-delay: 1.2s; }
+        @keyframes sonar { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 0; transform: scale(2.1); } }
+        .inicio { border: 3px solid #0D9488; border-radius: 50%; background: #fff; box-sizing: border-box; }
+        @media (prefers-reduced-motion: reduce) { .marcador--al-dia::before, .marcador--al-dia::after { animation: none; } }
+    </style>
+</head>
+<body>
+    <div id="mapa" role="img" aria-label="Mapa con el recorrido que recibió la central"></div>
+    <script>/*LEAFLET_JS*/</script>
+    <script>
+        (() => {
+            const config = /*CONFIG*/;
+            document.documentElement.style.setProperty("--dock", `${config.dock}px`);
+            // Sin la marca «Leaflet» (su licencia BSD-2 no la exige en pantalla); el crédito de OpenStreetMap sí se mantiene.
+            L.Control.Attribution.prototype.options.prefix = false;
+            const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+            const mapa = L.map("mapa", { zoomControl: false, attributionControl: true, zoomAnimation: !quieto, markerZoomAnimation: !quieto })
+                .setView([config.lat, config.lon], config.zoom);
+            L.tileLayer(config.teselas, {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            }).addTo(mapa);
+            // Las tarjetas flotan arriba y abajo: el recorrido se encuadra en la franja que queda libre entre ellas.
+            const margen = { paddingTopLeft: [32, config.arriba], paddingBottomRight: [32, config.dock + 16] };
+
+            let linea = null, inicio = null, actual = null, primera = true;
+            window.cad = {
+                // puntos: [[lat, lon], …] de la más antigua a la más reciente; alDia: la transmisión funciona.
+                recorrido: (puntos, alDia) => {
+                    linea?.remove(); inicio?.remove(); actual?.remove();
+                    if (puntos.length === 0) return;
+                    const ultimo = puntos[puntos.length - 1];
+                    linea = L.polyline(puntos, { color: "#0D9488", weight: 5, opacity: 0.9, lineJoin: "round" }).addTo(mapa);
+                    if (puntos.length > 1)
+                        inicio = L.marker(puntos[0], { icon: L.divIcon({ className: "inicio", html: "", iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false }).addTo(mapa);
+                    actual = L.marker(ultimo, {
+                        icon: L.divIcon({ className: `marcador ${alDia ? "marcador--al-dia" : "marcador--gris"}`, html: "<span></span>", iconSize: [30, 30], iconAnchor: [15, 15] }),
+                        interactive: false,
+                    }).addTo(mapa);
+                    if (primera) {
+                        primera = false;
+                        mapa.fitBounds(linea.getBounds(), { ...margen, maxZoom: 17, animate: false });
+                        return;
+                    }
+                    // Se sigue la posición nueva solo si sale de la franja libre entre las tarjetas, y se la lleva al centro de esa
+                    // franja (no al de toda la pantalla, que queda tapado por el panel de abajo).
+                    const tamano = mapa.getSize();
+                    const punto = mapa.latLngToContainerPoint(ultimo);
+                    const libre = { izquierda: 32, arriba: config.arriba, derecha: tamano.x - 32, abajo: tamano.y - config.dock - 16 };
+                    if (punto.x < libre.izquierda || punto.x > libre.derecha || punto.y < libre.arriba || punto.y > libre.abajo) {
+                        const centro = L.point(tamano.x / 2, (libre.arriba + libre.abajo) / 2);
+                        mapa.panBy(punto.subtract(centro), { animate: !quieto });
+                    }
+                },
+            };
+        })();
+    </script>
+</body>
+</html>

@@ -335,6 +335,86 @@ public class AcompanamientoTests
         Assert.Equal([Rutas.Ingreso], navegacion.Rutas);
     }
 
+    // ----- 26/10/2026: rediseño de la pantalla activa -----
+
+    [Fact]
+    public async Task Activo_ElLatidoYElRecorridoSoloMuestranLoQueLaCentralConfirmo()
+    {
+        var servicio = Servicio();
+        var vm = VistaModelo(servicio);
+        var cambios = 0;
+        vm.RecorridoCambio += () => cambios++;
+
+        await servicio.IniciarAsync(true);
+        await Esperar(() => servicio.Recorrido.Count == 1, "la primera posición confirmada");
+
+        Assert.True(vm.MostrarActivo);
+        Assert.False(vm.MostrarFormulario);
+        Assert.True(vm.LatidoAlDia);
+        Assert.Contains("Tu ubicación llegó a la central", vm.TextoLatido);
+        Assert.Equal(1, vm.ProgresoRestante, 2);
+        Assert.StartsWith("Quedan 30 min · hasta las ", vm.TextoRestante);
+        Assert.Equal("Iniciaste el acompañamiento.", Assert.Single(vm.Actividad).Texto);
+        Assert.True(cambios > 0); // el mapa se vuelve a dibujar
+        await servicio.DetenerAsync();
+    }
+
+    [Fact]
+    public async Task Activo_SinConexion_ElLatidoDiceLaCondicionYElRecorridoNoCrece()
+    {
+        api.RespuestaPosicionAcompanamiento = _ => new ResultadoApi<SinContenido>.SinRespuesta("Sin conexión.");
+        var servicio = Servicio();
+        var vm = VistaModelo(servicio);
+
+        await servicio.IniciarAsync(true);
+        await Esperar(() => api.PosicionesAcompanamiento.Count >= 1 && servicio.Condicion is not null, "el primer intento de envío");
+
+        Assert.False(vm.LatidoAlDia);
+        Assert.Contains("Sin conexión con el servidor", vm.TextoLatido);
+        Assert.Empty(servicio.Recorrido);
+        await servicio.DetenerAsync();
+    }
+
+    [Fact]
+    public async Task Activo_ConLaSesionDeLaAppVencida_DejaDeMostrarseAcompanadoYOfreceVolverAIngresar()
+    {
+        api.RespuestaPosicionAcompanamiento = _ => new ResultadoApi<SinContenido>.Rechazado(401, "Sesión vencida.", new Dictionary<string, string[]>());
+        var servicio = Servicio();
+        var vm = VistaModelo(servicio);
+
+        await servicio.IniciarAsync(true);
+        await Esperar(() => servicio.SesionTerminada, "el 401 del envío");
+
+        Assert.False(vm.MostrarActivo); // ya no dice «La central te acompaña»
+        Assert.True(vm.MostrarFormulario);
+        Assert.True(vm.HayEstado);
+        Assert.Contains("Vuelve a ingresar", vm.TextoEstado);
+        Assert.True(vm.SesionTerminada);
+        await servicio.DetenerAsync();
+    }
+
+    [Fact]
+    public async Task Activo_LaActividadMuestraLoUltimoConLaCentral_YUnaSesionNuevaEmpiezaDeCero()
+    {
+        var servicio = Servicio();
+        var vm = VistaModelo(servicio);
+        await servicio.IniciarAsync(true);
+        await Esperar(() => servicio.Recorrido.Count == 1, "la primera posición confirmada");
+
+        await servicio.InformarEstadoAsync(EstadosCiudadano.AlgoNoEstaBien);
+        await servicio.InformarEstadoAsync(EstadosCiudadano.EstoyBien);
+
+        Assert.Equal(["Avisaste: «Estoy bien».", "Avisaste: «Algo no está bien».", "Iniciaste el acompañamiento."],
+            vm.Actividad.Select(l => l.Texto));
+        await servicio.FinalizarAsync();
+        var otra = Guid.NewGuid();
+        api.RespuestaInicioAcompanamiento = _ => new ResultadoApi<SesionAcompanamientoVista>.Correcto(ApiFalsa.SesionActiva(reloj.GetUtcNow(), id: otra));
+        await servicio.IniciarAsync(true);
+
+        Assert.Equal("Iniciaste el acompañamiento.", Assert.Single(vm.Actividad).Texto);
+        await servicio.DetenerAsync();
+    }
+
     // ----- HU35 -----
 
     [Fact]

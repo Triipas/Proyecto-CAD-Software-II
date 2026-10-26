@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cad.Contratos.Acompanamiento;
+using Cad.Contratos.Sos;
 using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
@@ -94,7 +95,13 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public EstadoAcompanamiento Estado => servicio.Estado;
     public bool MostrarInicio => servicio.Estado is EstadoAcompanamiento.SinSesion or EstadoAcompanamiento.NoConfirmado
         or EstadoAcompanamiento.Finalizado or EstadoAcompanamiento.Vencido or EstadoAcompanamiento.Iniciando;
-    public bool MostrarActivo => servicio.Activo;
+    // Con la sesión de la app vencida (401) ya no se transmite: se deja de mostrar «La central te acompaña» y se vuelve a la vista
+    // con el error y «Volver a ingresar» (al ingresar de nuevo, la app retoma el acompañamiento activo).
+    public bool MostrarActivo => servicio.Activo && !servicio.SesionTerminada;
+    // Sin acompañamiento activo, la pantalla vuelve a ser el formulario de inicio (con cómo terminó el anterior).
+    public bool MostrarFormulario => !MostrarActivo;
+    // Se espera la respuesta de la central a una confirmación o a un aviso propio.
+    public bool Ocupado => servicio.RespondiendoConfirmacion || servicio.InformandoEstado;
     public bool PuedeIniciar => MostrarInicio && servicio.Estado != EstadoAcompanamiento.Iniciando;
     public string TextoBotonIniciar => servicio.Estado switch
     {
@@ -108,6 +115,41 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public string TextoActivo => servicio.Sesion is { } s
         ? $"Acompañamiento activo hasta las {s.VenceEn.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}. Termina solo a los 30 minutos; no se renueva."
         : "";
+
+    // 26/10/2026 — rediseño: lo que hace sentir acompañado sin prometer de más. El «latido» dice cuándo llegó la última posición
+    // a la central (solo lo que el servidor confirmó) y, si algo falla, la condición real (HU35-CA04). El tiempo pasa a segundo
+    // plano: una barra y la hora de fin.
+    public bool LatidoAlDia => servicio.Condicion is null && servicio.UltimoEnvio is not null;
+    public string TextoLatido => servicio.Condicion
+        ?? (servicio.UltimoEnvio is { } u ? $"Tu ubicación llegó a la central {Hace(reloj.GetUtcNow() - u)}." : "Enviando tu ubicación a la central…");
+    public double ProgresoRestante => servicio.Restante is { } r ? Math.Clamp(r / TimeSpan.FromMinutes(30), 0, 1) : 0;
+    public string TextoRestante => servicio.Restante is { } r && servicio.Sesion is { } s
+        ? $"Quedan {Math.Max(1, (int)Math.Ceiling(r.TotalMinutes))} min · hasta las {s.VenceEn.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}"
+        : "";
+
+    // Lo último entre el ciudadano y la central, lo más reciente primero (el inicio siempre está al final).
+    public IReadOnlyList<LineaActividad> Actividad
+    {
+        get
+        {
+            var lineas = servicio.Actividad.Select(a => new LineaActividad(Hora(a.Momento), a.Texto)).Reverse().Take(3).ToList();
+            if (servicio.Sesion is { } s && lineas.Count < 3)
+                lineas.Add(new LineaActividad(Hora(s.IniciadaEn), "Iniciaste el acompañamiento."));
+            return lineas;
+        }
+    }
+
+    // El recorrido que ya recibió la central, para el mapa de la pantalla.
+    public IReadOnlyList<UbicacionSos> Recorrido => servicio.Recorrido;
+    public event Action? RecorridoCambio;
+    private int puntosMostrados = -1;
+    private bool alDiaMostrado;
+
+    private static string Hora(DateTimeOffset momento) => momento.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+
+    private static string Hace(TimeSpan tiempo) => tiempo.TotalSeconds < 5 ? "hace un momento"
+        : tiempo.TotalSeconds < 60 ? $"hace {(int)tiempo.TotalSeconds} s"
+        : $"hace {(int)tiempo.TotalMinutes} min";
 
     // HU35-CA04: la condición real de la transmisión.
     public string TextoTransmision => servicio.Condicion
@@ -198,7 +240,13 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
             try
             {
                 while (await temporizador.WaitForNextTickAsync(propio.Token))
-                    await HiloPrincipal(() => Notificar(nameof(TiempoRestante)));
+                    await HiloPrincipal(() =>
+                    {
+                        Notificar(nameof(TiempoRestante));
+                        Notificar(nameof(TextoLatido));
+                        Notificar(nameof(ProgresoRestante));
+                        Notificar(nameof(TextoRestante));
+                    });
             }
             catch (OperationCanceledException) { }
         });
@@ -211,8 +259,15 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
                      nameof(TipoAvisoEstado), nameof(TextoEstado), nameof(SesionTerminada), nameof(HayMensajeInicio), nameof(MensajeInicio),
                      nameof(MostrarPermitir), nameof(MostrarAjustes), nameof(HayConfirmacion), nameof(TextoConfirmacion),
                      nameof(RespondiendoConfirmacion), nameof(HayResultadoConfirmacion), nameof(ResultadoConfirmacion), nameof(TipoResultadoConfirmacion),
-                     nameof(MostrarComoVas), nameof(InformandoEstado), nameof(HayResultadoEstado), nameof(ResultadoEstado), nameof(TipoResultadoEstado) })
+                     nameof(MostrarComoVas), nameof(InformandoEstado), nameof(HayResultadoEstado), nameof(ResultadoEstado), nameof(TipoResultadoEstado),
+                     nameof(MostrarFormulario), nameof(Ocupado), nameof(LatidoAlDia), nameof(TextoLatido), nameof(ProgresoRestante), nameof(TextoRestante), nameof(Actividad) })
             Notificar(p);
+        // El mapa solo se vuelve a dibujar si llegó una posición nueva o cambió el estado de la transmisión.
+        if (servicio.Recorrido.Count != puntosMostrados || LatidoAlDia != alDiaMostrado)
+        {
+            (puntosMostrados, alDiaMostrado) = (servicio.Recorrido.Count, LatidoAlDia);
+            RecorridoCambio?.Invoke();
+        }
         Iniciar.ActualizarDisponibilidad();
         Finalizar.ActualizarDisponibilidad();
         ResponderEstoyBien.ActualizarDisponibilidad();
@@ -225,3 +280,5 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     }
 
 }
+
+public sealed record LineaActividad(string Hora, string Texto);

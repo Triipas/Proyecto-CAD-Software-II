@@ -259,6 +259,21 @@
   background: var(--color-urgente);
 }
 
+/* 26/10/2026: el sonar de la inicial cabe entero en la tarjeta (que recorta lo que sale): se abre menos que en el mapa y la
+   inicial deja un margen alrededor: 40 px a 1,6 sobresalen 14 px y hay 16; en calma, 32 px a 1,45 sobresalen 9 y hay 12. */
+.vigilado .vigilado__avatar {
+  margin: var(--espacio-1); /* también sin sonar: todas las iniciales quedan alineadas */
+}
+
+.vigilado .sonar {
+  --sonar-escala: 1.6;
+}
+
+/* En calma, la tarjeta es más baja: la inicial (32 px) se abre un poco menos. */
+.vigilado--calma .sonar {
+  --sonar-escala: 1.45;
+}
+
 .vigilado--pideayuda .sonar::before,
 .vigilado--pideayuda .sonar::after {
   border-color: var(--color-urgente);
@@ -433,6 +448,7 @@
 }
 
 .seguimiento__avatar {
+  --sonar-escala: 1.6; /* 48 px a 1,6 sobresalen 16 px: caben en el margen de la ficha (20) */
   width: 3rem;
   height: 3rem;
   font-size: var(--texto-md);
