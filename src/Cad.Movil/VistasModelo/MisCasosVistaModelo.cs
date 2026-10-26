@@ -183,15 +183,24 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         var n => $"{n} fotos adjuntas",
     };
 
-    // Las fotos se piden una por una después del detalle; una que no llegue simplemente no se muestra.
+    // Las fotos se piden una por una después del detalle; una que no llegue simplemente no se muestra. Si otra carga empezó
+    // mientras tanto (al abrir la página y al deslizar para actualizar), solo la última reemplaza las fotos: no se duplican.
+    private int cargaFotos;
+
     private async Task CargarFotosAsync(string token)
     {
-        FotosReporte.Clear();
+        var esta = ++cargaFotos;
+        var fotos = new List<FotoDelCaso>();
         for (var n = 1; n <= (caso?.Reporte?.Fotos ?? 0); n++)
         {
             if (await Api.ConsultarFotoMiCasoAsync(token, casoId, n, CancellationToken.None) is ResultadoApi<byte[]>.Correcto { Valor: { Length: > 0 } bytes })
-                FotosReporte.Add(new FotoDelCaso(n, bytes));
+                fotos.Add(new FotoDelCaso(n, bytes));
         }
+        if (esta != cargaFotos)
+            return;
+        FotosReporte.Clear();
+        foreach (var foto in fotos)
+            FotosReporte.Add(foto);
     }
 
     // HU09 — cancelar un SOS propio mientras está pendiente (para su titular, «Recibido»: DP05), indicando el motivo (CA01, CA04).

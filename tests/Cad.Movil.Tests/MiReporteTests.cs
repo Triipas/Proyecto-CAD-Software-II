@@ -53,6 +53,19 @@ public class MiReporteTests
     }
 
     [Fact]
+    public async Task DosCargasALaVez_NoDuplicanLasFotos()
+    {
+        // Abrir la página y deslizar para actualizar casi a la vez (observado en el emulador el 26/10/2026).
+        api.DemoraFoto = TimeSpan.FromMilliseconds(30);
+        api.RespuestaMiCaso = _ => new ResultadoApi<MiCasoDetalle>.Correcto(Caso(EstadosPublicos.Recibido, Datos(fotos: 1)));
+        var vm = new MiCasoVistaModelo(api, sesiones, new NavegacionFalsa(), new RelojFijo(Ahora), Lima);
+
+        await Task.WhenAll(vm.CargarAsync(Id), vm.Actualizar.EjecutarAsync());
+
+        Assert.Equal([1], vm.FotosReporte.Select(f => f.Numero));
+    }
+
+    [Fact]
     public async Task SinFotosConReferencia_LoDice_YNoPideFotos()
     {
         var vm = await AbiertoAsync(reporte: Datos(fotos: 0, fuente: FuentesUbicacionHecho.Texto));
