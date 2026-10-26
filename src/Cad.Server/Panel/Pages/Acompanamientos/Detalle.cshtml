@@ -151,7 +151,8 @@
                                 <tr data-posicion data-desactualizada="@(p.Desactualizada ? "true" : "false")"
                                     class="posicion@(actual ? " posicion--actual" : "")@(primera ? " posicion--inicio" : "")">
                                     <td class="posicion__cuando">
-                                        <button type="button" class="posicion__ver num" data-ver-posicion
+                                        @* Número de orden desde el inicio: no cambia al llegar posiciones nuevas, así el foco y la elegida sobreviven al refresco. *@
+                                        <button type="button" class="posicion__ver num" data-ver-posicion="@(s.Posiciones.Count - i)"
                                                 data-lat="@Formato.Numero(p.Latitud)" data-lon="@Formato.Numero(p.Longitud)">@Formato.Hora(p.ObtenidaEn, zona)<span class="visualmente-oculto">: ver en el mapa</span></button>
                                         @if (actual)
                                         {

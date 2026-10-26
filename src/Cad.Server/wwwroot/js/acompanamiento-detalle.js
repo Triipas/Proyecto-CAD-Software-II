@@ -49,6 +49,7 @@
   // Cómo volver a encontrar el elemento con foco en la parte nueva.
   function huella(elemento) {
     if (elemento.id) return `#${CSS.escape(elemento.id)}`;
+    if (elemento.dataset.verPosicion) return `[data-ver-posicion="${CSS.escape(elemento.dataset.verPosicion)}"]`;
     if (elemento.dataset.pagina) return `[data-pagina="${CSS.escape(elemento.dataset.pagina)}"]`;
     if (elemento.matches("a[href]")) return `a[href="${CSS.escape(elemento.getAttribute("href"))}"]`;
     if (elemento.matches("button[type=submit]")) return "button[type=submit]";
@@ -66,9 +67,12 @@
         if (!reemplazo) continue;
         if (region.dataset.vivo !== forzar && aplazar(region)) { aplazadas++; continue; }
         const foco = region.contains(document.activeElement) ? huella(document.activeElement) : null;
+        const elegida = region.querySelector(".posicion--elegida [data-ver-posicion]")?.dataset.verPosicion;
         const importada = document.importNode(reemplazo, true);
         region.replaceWith(importada);
         if (foco) importada.querySelector(foco)?.focus({ preventScroll: true });
+        // La posición ubicada en el mapa sigue resaltada en su fila.
+        if (elegida) importada.querySelector(`[data-ver-posicion="${CSS.escape(elegida)}"]`)?.closest("[data-posicion]")?.classList.add("posicion--elegida");
       }
       const mapa = nuevo.getElementById("mapa-recorrido");
       if (mapa) window.CadRecorrido?.actualizar(mapa.dataset.puntos, mapa.dataset.actual === "true");
