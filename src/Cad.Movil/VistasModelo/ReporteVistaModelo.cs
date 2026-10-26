@@ -40,13 +40,17 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     private string mensajeDictado = "";
     private Dictionary<string, string> errores = [];
     private readonly IDictado dictado;
+    private readonly IFotosReporte fotos;
+    private string mensajeFotos = "";
+    private bool preparandoFotos;
 
     public ReporteVistaModelo(IApiCad api, RegistradorReporte registrador, IServicioUbicacion ubicacion, IAlmacenSesion sesiones,
-        INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null, IDictado? dictado = null)
+        INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null, IDictado? dictado = null, IFotosReporte? fotos = null)
     {
         (this.api, this.registrador, this.ubicacion, this.sesiones, this.navegacion, this.reloj) = (api, registrador, ubicacion, sesiones, navegacion, reloj);
         this.zona = zona ?? TimeZoneInfo.Local;
         this.dictado = dictado ?? new DictadoNoDisponible();
+        this.fotos = fotos ?? new FotosNoDisponibles();
 
         // Por defecto, el momento actual (el ciudadano lo ajusta si el hecho fue antes).
         var ahora = TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), this.zona);
@@ -68,7 +72,18 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         ElegirMapa = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Mapa, limpiarPunto: modo != ModoUbicacionHecho.Mapa); return Task.CompletedTask; }, () => Editable);
         QuitarPunto = new ComandoAsincrono(() => { CambiarModo(ModoUbicacionHecho.Texto, limpiarPunto: true); return Task.CompletedTask; }, () => Editable);
         UsarPosicionActual = new ComandoAsincrono(UsarPosicionActualAsync, () => Editable);
-        Enviar = new ComandoAsincrono(() => registrador.EnviarAsync(Datos()), () => Editable);
+        TomarFoto = new ComandoAsincrono(() => AgregarFotosAsync(async () => await this.fotos.TomarAsync() is { } foto ? [foto] : []),
+            () => Editable && PuedeAgregarFotos && this.fotos.PuedeTomar);
+        ElegirFotos = new ComandoAsincrono(() => AgregarFotosAsync(() => this.fotos.ElegirAsync(LimitesFotosReporte.Maximo - Fotos.Count)),
+            () => Editable && PuedeAgregarFotos);
+        QuitarFoto = new ComandoAsincrono<FotoAdjunta>(f =>
+        {
+            if (!Editable) return Task.CompletedTask;
+            Fotos.Remove(f);
+            Renumerar();
+            return Task.CompletedTask;
+        });
+        Enviar = new ComandoAsincrono(() => registrador.EnviarAsync(Datos()), () => Editable && !preparandoFotos);
         Reintentar = new ComandoAsincrono(() => registrador.ReintentarAsync(), () => registrador.PuedeReintentar);
         IrAlSos = new ComandoAsincrono(IrAlInicioAsync);
         VolverAIngresar = new ComandoAsincrono(async () => { sesiones.Cerrar(); await navegacion.IrAAsync(Rutas.Ingreso); });
@@ -116,6 +131,9 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     // Quita el punto (o cierra el mapa sin punto): el lugar vuelve a ser solo la referencia.
     public ComandoAsincrono QuitarPunto { get; }
     public ComandoAsincrono UsarPosicionActual { get; }
+    public ComandoAsincrono TomarFoto { get; }
+    public ComandoAsincrono ElegirFotos { get; }
+    public ComandoAsincrono<FotoAdjunta> QuitarFoto { get; }
     public ComandoAsincrono Enviar { get; }
     public ComandoAsincrono Reintentar { get; }
     public ComandoAsincrono IrAlSos { get; }
@@ -357,6 +375,67 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             Notificar(p);
     }
 
+    // ----- Fotos (DP08 ampliada, 26/10/2026): hasta tres, opcionales, ya sin metadatos -----
+    public System.Collections.ObjectModel.ObservableCollection<FotoAdjunta> Fotos { get; } = [];
+    public int MaximoFotos => LimitesFotosReporte.Maximo;
+    public bool PuedeAgregarFotos => Fotos.Count < LimitesFotosReporte.Maximo;
+    public bool HayFotos => Fotos.Count > 0;
+    public bool PuedeTomarFoto => fotos.PuedeTomar;
+    public bool PreparandoFotos { get => preparandoFotos; private set { if (Asignar(ref preparandoFotos, value)) ActualizarFotos(); } }
+    public string ContadorFotos => $"{Fotos.Count} de {LimitesFotosReporte.Maximo}";
+    public string MensajeFotos { get => mensajeFotos; private set { if (Asignar(ref mensajeFotos, value)) Notificar(nameof(HayMensajeFotos)); } }
+    public bool HayMensajeFotos => MensajeFotos.Length > 0;
+    public string ErrorFotos => errores.Where(e => e.Key.StartsWith("fotos", StringComparison.Ordinal)).Select(e => e.Value).FirstOrDefault() ?? "";
+    public bool HayErrorFotos => ErrorFotos.Length > 0;
+
+    private async Task AgregarFotosAsync(Func<Task<IReadOnlyList<byte[]>>> obtener)
+    {
+        if (!Editable || !PuedeAgregarFotos || preparandoFotos) return;
+        MensajeFotos = "";
+        PreparandoFotos = true;
+        try
+        {
+            var nuevas = await obtener();
+            var lugar = LimitesFotosReporte.Maximo - Fotos.Count;
+            foreach (var foto in nuevas.Take(lugar)) // el límite del selector es solo una sugerencia en Android
+                Fotos.Add(new FotoAdjunta(Fotos.Count + 1, foto));
+            if (nuevas.Count > lugar)
+                MensajeFotos = $"Solo se adjuntan {LimitesFotosReporte.Maximo} fotos; se dejaron fuera las demás.";
+        }
+        catch (FotoNoUsableException e)
+        {
+            MensajeFotos = e.Message;
+        }
+        catch (PermissionException)
+        {
+            MensajeFotos = "Sin permiso para usar la cámara. Puedes elegir una foto de la galería o enviar el reporte sin fotos.";
+        }
+        catch (Exception)
+        {
+            MensajeFotos = "No se pudo adjuntar la foto. Puedes intentarlo otra vez o enviar el reporte sin fotos.";
+        }
+        finally
+        {
+            PreparandoFotos = false;
+            ActualizarFotos();
+        }
+    }
+
+    private void Renumerar()
+    {
+        for (var n = 0; n < Fotos.Count; n++)
+            Fotos[n].Numero = n + 1;
+        ActualizarFotos();
+    }
+
+    private void ActualizarFotos()
+    {
+        foreach (var p in new[] { nameof(PuedeAgregarFotos), nameof(HayFotos), nameof(ContadorFotos), nameof(PreparandoFotos) })
+            Notificar(p);
+        foreach (var comando in new[] { TomarFoto, ElegirFotos, Enviar })
+            comando?.ActualizarDisponibilidad();
+    }
+
     // ----- Envío (CA01, CA02, CA08) -----
     public DatosReporte Datos()
     {
@@ -374,7 +453,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             ModoUbicacionHecho.PosicionActual => new UbicacionHecho(FuentesUbicacionHecho.PosicionActual, latitud, longitud, precision, referencia),
             _ => null,
         };
-        return new DatosReporte(categoria?.Id, descripcion, ocurrido, lugar);
+        return new DatosReporte(categoria?.Id, descripcion, ocurrido, lugar, Fotos.Select(f => f.Contenido).ToList());
     }
 
     public bool Enviando => registrador.Estado is EstadoReporte.Enviando;
@@ -423,13 +502,29 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         foreach (var p in new[] { nameof(Enviando), nameof(Editable), nameof(Registrado), nameof(PuedeReintentar), nameof(SesionTerminada),
                      nameof(HayEstado), nameof(TextoBotonEnviar), nameof(TipoAviso), nameof(TextoEstado),
                      nameof(ErrorCategoria), nameof(ErrorDescripcion), nameof(ErrorFecha), nameof(ErrorUbicacion),
-                     nameof(HayErrorCategoria), nameof(HayErrorDescripcion), nameof(HayErrorFecha), nameof(HayErrorUbicacion) })
+                     nameof(HayErrorCategoria), nameof(HayErrorDescripcion), nameof(HayErrorFecha), nameof(HayErrorUbicacion),
+                     nameof(ErrorFotos), nameof(HayErrorFotos) })
             Notificar(p);
-        foreach (var comando in new[] { ElegirMapa, QuitarPunto, UsarPosicionActual, Enviar, Reintentar, CambiarTipo, Dictar })
+        foreach (var comando in new[] { ElegirMapa, QuitarPunto, UsarPosicionActual, Enviar, Reintentar, CambiarTipo, Dictar, TomarFoto, ElegirFotos })
             comando.ActualizarDisponibilidad();
         if (Registrado && !regresoProgramado)
             VolverTrasRegistro();
     }
+}
+
+// DP08 ampliada: una foto adjunta (ya preparada: JPEG sin metadatos) con su miniatura.
+public sealed class FotoAdjunta(int numero, byte[] contenido) : VistaModeloBase
+{
+    private int numero = numero;
+
+    public byte[] Contenido { get; } = contenido;
+    public ImageSource Vista { get; } = ImageSource.FromStream(() => new MemoryStream(contenido));
+    public int Numero
+    {
+        get => numero;
+        set { if (Asignar(ref numero, value)) Notificar(nameof(DescripcionAccesible)); }
+    }
+    public string DescripcionAccesible => $"Foto {Numero}";
 }
 
 // Una casilla del mosaico de tipos. Sin icono conocido (servidor anterior al catálogo ampliado), el genérico.

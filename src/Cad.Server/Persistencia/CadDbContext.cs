@@ -30,6 +30,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<DescarteCaso> DescartesCaso => Set<DescarteCaso>();
     public DbSet<EvaluacionCaso> EvaluacionesCaso => Set<EvaluacionCaso>();
     public DbSet<DetalleReporte> DetallesReporte => Set<DetalleReporte>();
+    public DbSet<FotoReporte> FotosReporte => Set<FotoReporte>();
     public DbSet<CorreccionCategoria> CorreccionesCategoria => Set<CorreccionCategoria>();
     public DbSet<DecisionReporte> DecisionesReporte => Set<DecisionReporte>();
     public DbSet<NotificacionCiudadano> NotificacionesCiudadano => Set<NotificacionCiudadano>();
@@ -275,6 +276,20 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             detalle.HasOne<Caso>().WithOne().HasForeignKey<DetalleReporte>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
             // CA07: la categoría original también es del catálogo.
             detalle.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(d => d.CategoriaOriginalId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // DP08 ampliada: fotos del reporte (hasta tres por caso, numeradas 1–3 en el orden del ciudadano). La base de datos también
+        // limita el número y el tamaño; el contenido ya llega sin metadatos.
+        builder.Entity<FotoReporte>(foto =>
+        {
+            foto.ToTable("FotosReporte", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_FotosReporte_Numero", $"\"Numero\" BETWEEN 1 AND {Cad.Contratos.Reportes.LimitesFotosReporte.Maximo}");
+                tabla.HasCheckConstraint("CK_FotosReporte_Contenido",
+                    $"octet_length(\"Contenido\") BETWEEN 1 AND {Cad.Contratos.Reportes.LimitesFotosReporte.MaximoBytes}");
+            });
+            foto.HasKey(f => new { f.CasoId, f.Numero });
+            foto.HasOne<DetalleReporte>().WithMany().HasForeignKey(f => f.CasoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU14-CA03: correcciones de categoría (solo inserción), ambas del catálogo y con su responsable.

@@ -185,6 +185,32 @@
   font-size: var(--texto-xs);
 }
 
+/* DP08 ampliada: miniaturas de las fotos del reporte, que se abren en tamaño completo. */
+.fotos-reporte {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fotos-reporte__enlace {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+}
+
+.fotos-reporte__enlace img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* Pares dato-valor en dos columnas dentro del contexto. */
 .datos--en-linea > div {
   display: grid;

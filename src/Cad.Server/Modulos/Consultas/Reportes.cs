@@ -66,7 +66,9 @@ public sealed record DetalleReporteVista(
     // Reporte registrado por la central (23/10/2026): quién avisó y su teléfono, si los dio.
     bool DeLaCentral = false,
     string? ContactoNombre = null,
-    string? ContactoTelefono = null)
+    string? ContactoTelefono = null,
+    // DP08 ampliada (26/10/2026): cuántas fotos adjuntó el ciudadano (se piden una por una, solo para el operador).
+    int Fotos = 0)
 {
     public bool PuedeIniciarRevision => Estado == EstadoCaso.Recibido;
     public bool PuedeCorregirCategoria => Estado == EstadoCaso.EnRevision;
@@ -131,12 +133,21 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
                                   operador.Nombres + " " + operador.Apellidos, registro.DecididaEn))
             .SingleOrDefaultAsync(ct);
 
+        var fotos = await db.FotosReporte.AsNoTracking().CountAsync(f => f.CasoId == casoId, ct);
+
         var (c, d) = (fila.caso, fila.detalle);
         return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Origen, c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
             d.OcurridoAproximadamenteEn, d.FuenteUbicacion, d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros,
             d.ReferenciaHecho, c.CategoriaId!.Value, categorias[c.CategoriaId!.Value], categorias[d.CategoriaOriginalId],
-            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono);
+            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono, fotos);
     }
+}
+
+// DP08 ampliada: el contenido de una foto del reporte (1–3), o null si no existe. Solo la usa el detalle del panel (operador).
+public sealed class ConsultarFotoReporte(CadDbContext db)
+{
+    public Task<byte[]?> EjecutarAsync(Guid casoId, int numero, CancellationToken ct) =>
+        db.FotosReporte.AsNoTracking().Where(f => f.CasoId == casoId && f.Numero == numero).Select(f => f.Contenido).SingleOrDefaultAsync(ct);
 }
 
 // Reporte registrado por la central (23/10/2026): no tiene ciudadano; se nombra por quien avisó, si lo dio.

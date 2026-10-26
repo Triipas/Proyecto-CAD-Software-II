@@ -3,7 +3,9 @@ using Cad.Contratos.Reportes;
 namespace Cad.Movil.Servicios;
 
 // Datos del formulario de reporte tal como los dejó el ciudadano (HU10).
-public sealed record DatosReporte(Guid? CategoriaId, string? Descripcion, DateTimeOffset? OcurridoEn, UbicacionHecho? Ubicacion);
+// Fotos: ya preparadas por IFotosReporte (DP08 ampliada); opcionales.
+public sealed record DatosReporte(Guid? CategoriaId, string? Descripcion, DateTimeOffset? OcurridoEn, UbicacionHecho? Ubicacion,
+    IReadOnlyList<byte[]>? Fotos = null);
 
 public abstract record EstadoReporte
 {
@@ -69,6 +71,12 @@ public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, Tim
                 errores["ubicacion"] = $"La referencia admite hasta {MaximoReferencia} caracteres.";
                 break;
         }
+
+        // DP08 ampliada: hasta tres fotos de hasta 1 MB (la app ya las prepara así; el servidor lo vuelve a comprobar).
+        if (datos.Fotos is { Count: > LimitesFotosReporte.Maximo })
+            errores["fotos"] = $"Puedes adjuntar hasta {LimitesFotosReporte.Maximo} fotos.";
+        else if (datos.Fotos?.Any(f => f.Length is 0 or > LimitesFotosReporte.MaximoBytes) == true)
+            errores["fotos"] = "Cada foto admite hasta 1 MB. Quita la que no se pudo reducir.";
         return errores;
     }
 
@@ -86,8 +94,10 @@ public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, Tim
             }
 
             var ubicacion = datos.Ubicacion!;
+            // Las fotos viajan en la misma solicitud: un reintento reenvía exactamente los mismos bytes (CA08).
             pendiente = new SolicitudRegistroReporte(Guid.NewGuid(), datos.CategoriaId, datos.Descripcion!.Trim(), datos.OcurridoEn,
-                ubicacion with { Referencia = string.IsNullOrWhiteSpace(ubicacion.Referencia) ? null : ubicacion.Referencia.Trim() });
+                ubicacion with { Referencia = string.IsNullOrWhiteSpace(ubicacion.Referencia) ? null : ubicacion.Referencia.Trim() },
+                datos.Fotos is { Count: > 0 } fotos ? [.. fotos] : null);
             await EnviarPendienteAsync(ct);
         }
         finally
