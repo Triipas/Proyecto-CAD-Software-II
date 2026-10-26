@@ -1668,6 +1668,8 @@ a.boton {
   border-color: var(--mapa-acompanamiento);
 }
 
+/* 26/10/2026: cuánto se abre cada anillo lo decide cada lugar (--sonar-escala): en el mapa hay espacio; en una tarjeta, solo el
+   que dejan sus márgenes. */
 @keyframes sonar {
   0% {
     opacity: 0.6;
@@ -1675,7 +1677,7 @@ a.boton {
   }
   100% {
     opacity: 0;
-    transform: scale(2.1);
+    transform: scale(var(--sonar-escala, 2.1));
   }
 }
 
