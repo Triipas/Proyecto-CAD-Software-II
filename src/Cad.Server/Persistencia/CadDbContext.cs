@@ -40,6 +40,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.ConservacionRecorrido> ConservacionesRecorrido => Set<Modulos.Acompanamiento.Dominio.ConservacionRecorrido>();
     public DbSet<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar> ConfirmacionesBienestar => Set<Modulos.Acompanamiento.Dominio.ConfirmacionBienestar>();
+    public DbSet<Modulos.Acompanamiento.Dominio.EstadoInformado> EstadosInformados => Set<Modulos.Acompanamiento.Dominio.EstadoInformado>();
     public DbSet<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento> AvisosAcompanamiento => Set<Modulos.Acompanamiento.Dominio.AvisoAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.ActuacionAviso> ActuacionesAviso => Set<Modulos.Acompanamiento.Dominio.ActuacionAviso>();
     public DbSet<Modulos.Mediciones.MedicionPresentacion> MedicionesPresentacion => Set<Modulos.Mediciones.MedicionPresentacion>();
@@ -428,6 +429,22 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             confirmacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
             confirmacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.OperadorId).OnDelete(DeleteBehavior.Restrict);
             confirmacion.HasOne<Caso>().WithMany().HasForeignKey(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // 26/10/2026: estados que el ciudadano informa por su cuenta. Uno por pulsación (IdSolicitud) y solo «Necesito ayuda»
+        // lleva un SOS, también garantizado por la base de datos.
+        builder.Entity<Modulos.Acompanamiento.Dominio.EstadoInformado>(estado =>
+        {
+            estado.ToTable("EstadosInformados", tabla =>
+                tabla.HasCheckConstraint("CK_EstadosInformados_Sos",
+                    "(\"Estado\" = 'NecesitoAyuda' AND \"CasoId\" IS NOT NULL) OR (\"Estado\" <> 'NecesitoAyuda' AND \"CasoId\" IS NULL)"));
+            estado.HasKey(e => e.Id);
+            estado.Property(e => e.Estado).HasConversion<string>().HasMaxLength(20);
+            estado.HasIndex(e => new { e.CiudadanoId, e.IdSolicitud }).IsUnique();
+            estado.HasIndex(e => new { e.SesionId, e.InformadoEn });
+            estado.HasOne<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>().WithMany().HasForeignKey(e => e.SesionId).OnDelete(DeleteBehavior.Restrict);
+            estado.HasOne<Usuario>().WithMany().HasForeignKey(e => e.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
+            estado.HasOne<Caso>().WithMany().HasForeignKey(e => e.CasoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU42: avisos del acompañamiento. CA03: un aviso por condición (sesión, regla y clave), también en la base de datos. HU43:

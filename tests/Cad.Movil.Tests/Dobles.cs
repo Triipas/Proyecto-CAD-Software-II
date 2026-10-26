@@ -391,6 +391,20 @@ public sealed class ApiFalsa : IApiCad
                 respuesta.Respuesta == Cad.Contratos.Acompanamiento.RespuestasBienestar.NecesitoAyuda ? Guid.NewGuid() : null)));
     }
 
+    // ----- 26/10/2026: estado informado por el ciudadano -----
+    public Func<SolicitudEstadoAcompanamiento, ResultadoApi<EstadoInformadoVista>>? RespuestaEstado { get; set; }
+    public ConcurrentQueue<(Guid SesionId, SolicitudEstadoAcompanamiento Solicitud)> EstadosInformados { get; } = new();
+
+    public Task<ResultadoApi<EstadoInformadoVista>> InformarEstadoAcompanamientoAsync(string token, Guid sesionId, SolicitudEstadoAcompanamiento solicitud,
+        CancellationToken ct)
+    {
+        EstadosInformados.Enqueue((sesionId, solicitud));
+        return Task.FromResult(RespuestaEstado?.Invoke(solicitud) ?? new ResultadoApi<EstadoInformadoVista>.Correcto(
+            new EstadoInformadoVista(Guid.NewGuid(), solicitud.Estado!, DateTimeOffset.UtcNow,
+                solicitud.Estado == EstadosCiudadano.NecesitoAyuda ? Guid.NewGuid() : null,
+                solicitud.Estado == EstadosCiudadano.Llegue ? EstadosAcompanamiento.Finalizada : EstadosAcompanamiento.Activa)));
+    }
+
     public Task<ResultadoApi<RespuestaSos>> EmitirSosAsync(string token, SolicitudEmisionSos solicitud, CancellationToken ct)
     {
         SosEnviados.Enqueue(solicitud);

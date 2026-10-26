@@ -81,6 +81,9 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/api/acompanamiento/confirmaciones/00000000-0000-0000-0000-000000000000/presentacion"),
         new("POST", "/api/acompanamiento/confirmaciones/{id:guid}/respuesta", "HU41", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/acompanamiento/confirmaciones/00000000-0000-0000-0000-000000000000/respuesta"),
+        // 26/10/2026 — estado que el ciudadano informa por su cuenta (solo sobre sus sesiones).
+        new("POST", "/api/acompanamiento/{id:guid}/estado", "Estado del ciudadano", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/acompanamiento/00000000-0000-0000-0000-000000000000/estado"),
         // RNF02: resultados de la medición. Sin el parámetro «desde», el administrador recibe 400 (llega al endpoint).
         new("GET", "/api/mediciones/presentacion", "RNF02", Acceso.SoloRol, Roles.Administrador),
         new("GET", "/panel/ingresar", "HU02", Acceso.Publico),

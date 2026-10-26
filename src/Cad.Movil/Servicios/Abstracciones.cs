@@ -70,6 +70,9 @@ public interface IApiCad
     Task<ResultadoApi<ConfirmacionBienestarVista>> RegistrarPresentacionConfirmacionAsync(string token, Guid confirmacionId, CancellationToken ct);
     Task<ResultadoApi<ConfirmacionBienestarVista>> ResponderConfirmacionAsync(string token, Guid confirmacionId, SolicitudRespuestaBienestar respuesta,
         CancellationToken ct);
+    // 26/10/2026: estado que el ciudadano informa por su cuenta durante el acompañamiento.
+    Task<ResultadoApi<EstadoInformadoVista>> InformarEstadoAcompanamientoAsync(string token, Guid sesionId, SolicitudEstadoAcompanamiento solicitud,
+        CancellationToken ct);
 
     // HU18 — modo sereno.
     Task<ResultadoApi<RespuestaEstadoOperativo>> ConsultarEstadoOperativoAsync(string token, CancellationToken ct);

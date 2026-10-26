@@ -43,3 +43,20 @@ public static class RespuestasBienestar
     public const string EstoyBien = "EstoyBien";
     public const string NecesitoAyuda = "NecesitoAyuda";
 }
+
+// 26/10/2026 — estado que el ciudadano informa por su cuenta durante el acompañamiento (EstadosCiudadano). Con «NecesitoAyuda»,
+// el SOS que se emite si no tiene uno vigente, preparado como cualquier SOS (HU07, HU08); IdSolicitud se reutiliza en cada
+// reintento, así que un reenvío no registra otro estado ni emite otro SOS.
+public sealed record SolicitudEstadoAcompanamiento(Guid IdSolicitud, string? Estado, Cad.Contratos.Sos.SolicitudEmisionSos? Sos);
+
+// El estado registrado. EstadoSesion: cómo quedó la sesión (con «Llegue», finalizada); CasoId: el SOS de «NecesitoAyuda».
+public sealed record EstadoInformadoVista(Guid Id, string Estado, DateTimeOffset InformadoEn, Guid? CasoId, string EstadoSesion);
+
+public static class EstadosCiudadano
+{
+    public const string EstoyBien = "EstoyBien";
+    public const string AlgoNoEstaBien = "AlgoNoEstaBien";
+    public const string NecesitoAyuda = "NecesitoAyuda";
+    // Llegó a su destino: la sesión se finaliza.
+    public const string Llegue = "Llegue";
+}

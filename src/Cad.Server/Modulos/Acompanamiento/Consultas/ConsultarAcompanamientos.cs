@@ -13,8 +13,53 @@ public sealed record PosicionVista(double Latitud, double Longitud, double Preci
     TimeSpan Antiguedad, bool Desactualizada);
 
 // HU38: una sesión activa con su última posición. SinConexion (DP20): más del umbral sin recibir ningún envío del dispositivo.
+// 26/10/2026: Estados, lo que el ciudadano informó por su cuenta (del más reciente al más antiguo).
 public sealed record AcompanamientoActivo(Guid Id, string Ciudadano, string? Telefono, DateTimeOffset IniciadaEn, DateTimeOffset VenceEn,
-    DateTimeOffset? UltimoContactoEn, bool SinConexion, PosicionVista? Ultima, int Posiciones, ConfirmacionVista? UltimaConfirmacion = null);
+    DateTimeOffset? UltimoContactoEn, bool SinConexion, PosicionVista? Ultima, int Posiciones, ConfirmacionVista? UltimaConfirmacion = null,
+    IReadOnlyList<EstadoCiudadanoVista>? Estados = null)
+{
+    public EstadoCiudadanoVista? UltimoEstado => EstadoCiudadanoVista.Ultimo(Estados);
+    public bool AyudaInformadaEnCurso => EstadoCiudadanoVista.AyudaEnCurso(Estados);
+    public bool AlgoNoEstaBien => EstadoCiudadanoVista.AlgoNoEstaBien(Estados, UltimaConfirmacion);
+}
+
+// 26/10/2026 — un estado que el ciudadano informó por su cuenta (EstadoInformado). EstadoSos: el estado actual del SOS de
+// «Necesito ayuda», que el ciudadano puede cancelar o la central cerrar.
+public sealed record EstadoCiudadanoVista(Guid Id, EstadoCiudadano Estado, DateTimeOffset InformadoEn, Guid? CasoId, EstadoCaso? EstadoSos = null)
+{
+    public bool SosEnCurso => CasoId is not null && EstadoSos is not (EstadoCaso.Cancelada or EstadoCaso.Cerrada or EstadoCaso.Descartada);
+
+    public string Texto => Estado switch
+    {
+        EstadoCiudadano.EstoyBien => "Estoy bien",
+        EstadoCiudadano.AlgoNoEstaBien => "Algo no está bien",
+        EstadoCiudadano.NecesitoAyuda => "Necesito ayuda",
+        _ => "Llegué a mi destino",
+    };
+
+    public string? TextoSos => CasoId is null ? null : EstadoSos switch
+    {
+        EstadoCaso.Cancelada => "El ciudadano canceló el SOS.",
+        EstadoCaso.Cerrada => "El SOS ya se cerró.",
+        EstadoCaso.Descartada => "La central descartó el SOS.",
+        _ => null,
+    };
+
+    public static EstadoCiudadanoVista? Ultimo(IReadOnlyList<EstadoCiudadanoVista>? estados) => estados is { Count: > 0 } e ? e[0] : null;
+
+    // El último «Necesito ayuda» informado sigue con su SOS abierto: es una petición de ayuda en curso.
+    public static bool AyudaEnCurso(IReadOnlyList<EstadoCiudadanoVista>? estados) =>
+        estados?.FirstOrDefault(e => e.Estado == EstadoCiudadano.NecesitoAyuda) is { SosEnCurso: true };
+
+    // «Algo no está bien» requiere atención hasta que vuelva a decir que está bien: informándolo después (es otro estado más
+    // reciente) o respondiendo «Estoy bien» a una confirmación posterior.
+    public static bool AlgoNoEstaBien(IReadOnlyList<EstadoCiudadanoVista>? estados, ConfirmacionVista? ultimaConfirmacion)
+    {
+        if (Ultimo(estados) is not { Estado: EstadoCiudadano.AlgoNoEstaBien } inseguro)
+            return false;
+        return ultimaConfirmacion is not { Respuesta: RespuestaBienestar.EstoyBien, RespondidaEn: { } respondida } || respondida < inseguro.InformadoEn;
+    }
+}
 
 // HU40 y HU41: una confirmación de bienestar con quién la pidió, cuándo se presentó y la respuesta (con su SOS, si pidió ayuda).
 // EstadoSos (24/10/2026): el estado actual de ese SOS, porque el ciudadano puede cancelarlo después de pedir ayuda y la
@@ -54,9 +99,14 @@ public sealed record PaginaSesiones(IReadOnlyList<SesionTerminada> Sesiones, int
 // Recorrido de una sesión (activa o terminada), de la posición más reciente a la más antigua.
 public sealed record DetalleAcompanamiento(Guid Id, string Ciudadano, string? Telefono, EstadoSesion Estado, DateTimeOffset IniciadaEn,
     DateTimeOffset VenceEn, DateTimeOffset? CerradaEn, DateTimeOffset? UltimoContactoEn, bool SinConexion, IReadOnlyList<PosicionVista> Posiciones,
-    DateTimeOffset? PosicionesEliminadasEn = null, ConservacionVista? Conservacion = null, IReadOnlyList<ConfirmacionVista>? Confirmaciones = null)
+    DateTimeOffset? PosicionesEliminadasEn = null, ConservacionVista? Conservacion = null, IReadOnlyList<ConfirmacionVista>? Confirmaciones = null,
+    IReadOnlyList<EstadoCiudadanoVista>? Estados = null)
 {
     public bool ConfirmacionPendiente => Confirmaciones?.Any(c => c.Pendiente) == true;
+
+    public EstadoCiudadanoVista? UltimoEstado => EstadoCiudadanoVista.Ultimo(Estados);
+    public bool AyudaInformadaEnCurso => EstadoCiudadanoVista.AyudaEnCurso(Estados);
+    public bool AlgoNoEstaBien => Activa && EstadoCiudadanoVista.AlgoNoEstaBien(Estados, Confirmaciones is { Count: > 0 } c ? c[0] : null);
 
     public bool Activa => Estado == EstadoSesion.Activa;
 }
@@ -90,9 +140,11 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
         var ids = filas.Select(f => f.Id).ToList();
         var confirmaciones = (await ConfirmacionesAsync(c => ids.Contains(c.SesionId), ct))
             .GroupBy(c => c.SesionId).ToDictionary(g => g.Key, g => g.First().Vista);
+        var estados = (await EstadosAsync(e => ids.Contains(e.SesionId), ct))
+            .GroupBy(e => e.SesionId).ToDictionary(g => g.Key, g => (IReadOnlyList<EstadoCiudadanoVista>)g.Select(x => x.Vista).ToList());
         return filas.Select(f => new AcompanamientoActivo(f.Id, f.Ciudadano, f.PhoneNumber, f.IniciadaEn, f.VenceEn, f.UltimoContactoEn,
                 SinConexion(f.UltimoContactoEn, ahora), f.Ultima is null ? null : Vista(f.Ultima, ahora), f.Posiciones,
-                confirmaciones.GetValueOrDefault(f.Id)))
+                confirmaciones.GetValueOrDefault(f.Id), estados.GetValueOrDefault(f.Id)))
             .ToList();
     }
 
@@ -121,8 +173,19 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
         return new DetalleAcompanamiento(datos.Id, sesion.Ciudadano, sesion.PhoneNumber, datos.Estado, datos.IniciadaEn, datos.VenceEn, datos.CerradaEn,
             datos.UltimoContactoEn, activa && SinConexion(datos.UltimoContactoEn, ahora),
             posiciones.Select(p => Vista(p, referencia, activa)).ToList(), datos.PosicionesEliminadasEn, conservacion,
-            (await ConfirmacionesAsync(c => c.SesionId == id, ct)).Select(c => c.Vista).ToList());
+            (await ConfirmacionesAsync(c => c.SesionId == id, ct)).Select(c => c.Vista).ToList(),
+            (await EstadosAsync(e => e.SesionId == id, ct)).Select(e => e.Vista).ToList());
     }
+
+    // Estados que informó el ciudadano, del más reciente al más antiguo, con el estado actual de su SOS.
+    private async Task<List<(Guid SesionId, EstadoCiudadanoVista Vista)>> EstadosAsync(
+        System.Linq.Expressions.Expression<Func<EstadoInformado, bool>> filtro, CancellationToken ct) =>
+        (await db.EstadosInformados.AsNoTracking().Where(filtro)
+            .OrderByDescending(e => e.InformadoEn)
+            .Select(e => new { e.SesionId, Vista = new EstadoCiudadanoVista(e.Id, e.Estado, e.InformadoEn, e.CasoId,
+                db.Casos.Where(caso => caso.Id == e.CasoId).Select(caso => (EstadoCaso?)caso.Estado).FirstOrDefault()) })
+            .ToListAsync(ct))
+        .Select(x => (x.SesionId, x.Vista)).ToList();
 
     // HU40/HU41: confirmaciones de bienestar, de la más reciente a la más antigua, con el nombre del operador.
     private async Task<List<(Guid SesionId, ConfirmacionVista Vista)>> ConfirmacionesAsync(

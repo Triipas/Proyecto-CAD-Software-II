@@ -369,11 +369,13 @@
     dibujarRuta();
   }
 
-  // Un aviso de acompañamiento que aparece en la lista suena una vez (sonidos.js, si están activados). En el detalle la lista
-  // llega después de cargar: los avisos que ya había no suenan.
-  let avisosVistos = modo === "detalle" ? null : new Set([...region.querySelectorAll("[data-aviso]")].map((el) => el.dataset.aviso));
+  // Un aviso de acompañamiento que aparece en la lista suena una vez (sonidos.js, si están activados), y también lo que el
+  // ciudadano informa por su cuenta cuando es una señal de peligro («Algo no está bien», «Necesito ayuda»). En el detalle la
+  // lista llega después de cargar: lo que ya había no suena.
+  const alertas = () => [...region.querySelectorAll("[data-aviso], [data-alerta-ciudadano]")].map((el) => el.dataset.aviso ?? el.dataset.alertaCiudadano);
+  let avisosVistos = modo === "detalle" ? null : new Set(alertas());
   function avisarNuevos() {
-    const actuales = [...region.querySelectorAll("[data-aviso]")].map((el) => el.dataset.aviso);
+    const actuales = alertas();
     if (avisosVistos === null) { avisosVistos = new Set(actuales); return; }
     let hayNuevo = false;
     for (const aviso of actuales) {

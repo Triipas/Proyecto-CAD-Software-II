@@ -1,4 +1,5 @@
 using System.Globalization;
+using Cad.Contratos.Acompanamiento;
 using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
@@ -31,6 +32,10 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
         VolverAIngresar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Ingreso));
         ResponderEstoyBien = new ComandoAsincrono(() => servicio.ResponderConfirmacionAsync(necesitoAyuda: false), () => !servicio.RespondiendoConfirmacion);
         ResponderNecesitoAyuda = new ComandoAsincrono(() => servicio.ResponderConfirmacionAsync(necesitoAyuda: true), () => !servicio.RespondiendoConfirmacion);
+        InformarEstoyBien = Informar(EstadosCiudadano.EstoyBien);
+        InformarAlgoNoEstaBien = Informar(EstadosCiudadano.AlgoNoEstaBien);
+        InformarNecesitoAyuda = Informar(EstadosCiudadano.NecesitoAyuda);
+        InformarLlegue = Informar(EstadosCiudadano.Llegue);
         servicio.Cambio += () => _ = HiloPrincipal(Actualizar);
     }
 
@@ -45,6 +50,21 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public ComandoAsincrono VolverAIngresar { get; }
     public ComandoAsincrono ResponderEstoyBien { get; }
     public ComandoAsincrono ResponderNecesitoAyuda { get; }
+    public ComandoAsincrono InformarEstoyBien { get; }
+    public ComandoAsincrono InformarAlgoNoEstaBien { get; }
+    public ComandoAsincrono InformarNecesitoAyuda { get; }
+    public ComandoAsincrono InformarLlegue { get; }
+
+    private ComandoAsincrono Informar(string estado) =>
+        new(() => servicio.InformarEstadoAsync(estado), () => servicio.Activo && !servicio.InformandoEstado);
+
+    // 26/10/2026 — «¿Cómo vas?»: el ciudadano avisa a la central sin esperar a que le pregunte. Mientras la central espera una
+    // confirmación, se muestra esa (tiene las mismas respuestas).
+    public bool MostrarComoVas => servicio.Activo && servicio.Confirmacion is null;
+    public bool InformandoEstado => servicio.InformandoEstado;
+    public bool HayResultadoEstado => servicio.ResultadoEstado is not null;
+    public string ResultadoEstado => servicio.ResultadoEstado ?? "";
+    public string TipoResultadoEstado => servicio.EstadoNoConfirmado ? "error" : "exito";
 
     // HU41-CA01: la confirmación que pidió la central, con sus dos respuestas.
     public bool HayConfirmacion => servicio.Confirmacion is not null;
@@ -190,12 +210,15 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
                      nameof(TiempoRestante), nameof(TextoActivo), nameof(TextoTransmision), nameof(TipoAvisoTransmision), nameof(HayEstado),
                      nameof(TipoAvisoEstado), nameof(TextoEstado), nameof(SesionTerminada), nameof(HayMensajeInicio), nameof(MensajeInicio),
                      nameof(MostrarPermitir), nameof(MostrarAjustes), nameof(HayConfirmacion), nameof(TextoConfirmacion),
-                     nameof(RespondiendoConfirmacion), nameof(HayResultadoConfirmacion), nameof(ResultadoConfirmacion), nameof(TipoResultadoConfirmacion) })
+                     nameof(RespondiendoConfirmacion), nameof(HayResultadoConfirmacion), nameof(ResultadoConfirmacion), nameof(TipoResultadoConfirmacion),
+                     nameof(MostrarComoVas), nameof(InformandoEstado), nameof(HayResultadoEstado), nameof(ResultadoEstado), nameof(TipoResultadoEstado) })
             Notificar(p);
         Iniciar.ActualizarDisponibilidad();
         Finalizar.ActualizarDisponibilidad();
         ResponderEstoyBien.ActualizarDisponibilidad();
         ResponderNecesitoAyuda.ActualizarDisponibilidad();
+        foreach (var comando in new[] { InformarEstoyBien, InformarAlgoNoEstaBien, InformarNecesitoAyuda, InformarLlegue })
+            comando.ActualizarDisponibilidad();
         // HU41-CA01: se registra la presentación cuando la pantalla la muestra.
         if (visible && HayConfirmacion)
             _ = servicio.RegistrarPresentacionAsync();

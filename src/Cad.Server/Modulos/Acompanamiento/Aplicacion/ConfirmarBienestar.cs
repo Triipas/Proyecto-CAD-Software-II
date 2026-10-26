@@ -147,25 +147,9 @@ public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, Tim
             Guid? casoId = null;
             if (respuesta == RespuestaBienestar.NecesitoAyuda)
             {
-                // CA04: un SOS propio vigente se vincula, sin crear otro. CA03: si no hay, se emite con el flujo de HU07/HU08; su
-                // IdSolicitud hace que un reenvío devuelva el mismo SOS (CA07, DP14).
-                var vigente = await db.Casos.AsNoTracking()
-                    .Where(c => c.CiudadanoId == ciudadanoId && c.Origen == OrigenCaso.Sos && EstadosSosVigente.Contains(c.Estado))
-                    .OrderByDescending(c => c.RegistradoEn).Select(c => (Guid?)c.Id).FirstOrDefaultAsync(ct);
-                if (vigente is null)
-                {
-                    switch (await emitirSos.EjecutarAsync(ciudadanoId, solicitud.Sos!, ct))
-                    {
-                        case ResultadoEmisionSos.Registrado r:
-                            vigente = r.Caso.Id;
-                            break;
-                        case ResultadoEmisionSos.YaRegistrado r:
-                            vigente = r.Caso.Id;
-                            break;
-                        case ResultadoEmisionSos.Invalido i:
-                            return new ResultadoRespuestaBienestar.Invalida(i.Errores);
-                    }
-                }
+                var (vigente, errores) = await SosVigenteOEmitirAsync(ciudadanoId, solicitud.Sos!, ct);
+                if (errores is not null)
+                    return new ResultadoRespuestaBienestar.Invalida(errores);
                 casoId = vigente;
                 // EmitirSos usa este mismo contexto (y lo limpia ante un reintento simultáneo): se vuelve a leer la confirmación.
                 db.ChangeTracker.Clear();
@@ -190,6 +174,26 @@ public sealed class ConfirmarBienestar(CadDbContext db, EmitirSos emitirSos, Tim
             await AvisarAsync(confirmacion.SesionId);
             return new ResultadoRespuestaBienestar.Registrada(confirmacion);
         }
+    }
+
+    // HU41-CA04: un SOS propio vigente se vincula, sin crear otro. CA03: si no hay, se emite con el flujo de HU07/HU08; su
+    // IdSolicitud hace que un reenvío devuelva el mismo SOS (CA07, DP14). También lo usa «Necesito ayuda» informado por el
+    // ciudadano por su cuenta (InformarEstado). Devuelve el SOS, o los errores de una solicitud de SOS inválida.
+    public async Task<(Guid? CasoId, Dictionary<string, string[]>? Errores)> SosVigenteOEmitirAsync(Guid ciudadanoId,
+        Cad.Contratos.Sos.SolicitudEmisionSos sos, CancellationToken ct)
+    {
+        var vigente = await db.Casos.AsNoTracking()
+            .Where(c => c.CiudadanoId == ciudadanoId && c.Origen == OrigenCaso.Sos && EstadosSosVigente.Contains(c.Estado))
+            .OrderByDescending(c => c.RegistradoEn).Select(c => (Guid?)c.Id).FirstOrDefaultAsync(ct);
+        if (vigente is not null)
+            return (vigente, null);
+        return await emitirSos.EjecutarAsync(ciudadanoId, sos, ct) switch
+        {
+            ResultadoEmisionSos.Registrado r => (r.Caso.Id, null),
+            ResultadoEmisionSos.YaRegistrado r => (r.Caso.Id, null),
+            ResultadoEmisionSos.Invalido i => (null, i.Errores),
+            _ => throw new InvalidOperationException("Resultado de la emisión del SOS no contemplado."),
+        };
     }
 
     // 24/10/2026: después del COMMIT, la central vuelve a leer la sesión. Un fallo del canal no afecta al registro.

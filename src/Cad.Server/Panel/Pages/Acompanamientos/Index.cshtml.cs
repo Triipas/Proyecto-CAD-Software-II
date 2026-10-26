@@ -67,7 +67,9 @@ public sealed record ListaAcompanamientos(IReadOnlyList<AcompanamientoActivo> Se
     public IReadOnlyList<AvisoVista> AvisosSinSesion => Avisos?.Where(a => Sesiones.All(s => s.Id != a.SesionId)).ToList() ?? [];
 
     public Atencion AtencionDe(AcompanamientoActivo s) =>
-        s.UltimaConfirmacion is { Respuesta: Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda, SosEnCurso: true } ? Atencion.PideAyuda
+        s.UltimaConfirmacion is { Respuesta: Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda, SosEnCurso: true } || s.AyudaInformadaEnCurso
+            ? Atencion.PideAyuda
+        : s.AlgoNoEstaBien ? Atencion.AlgoNoEstaBien
         : AvisosDe(s.Id).Count > 0 ? Atencion.Aviso
         : s.SinConexion ? Atencion.SinConexion
         : s.Ultima is { Desactualizada: true } ? Atencion.Desactualizada
@@ -80,7 +82,9 @@ public sealed record ListaAcompanamientos(IReadOnlyList<AcompanamientoActivo> Se
     public int RequierenAtencion => Sesiones.Count(s => AtencionDe(s) != Atencion.Calma);
 }
 
-public enum Atencion { Calma, Desactualizada, SinConexion, Aviso, PideAyuda }
+// 26/10/2026: «AlgoNoEstaBien» (el ciudadano informó «Algo no está bien») va justo antes de «Pidió ayuda»: no hay SOS, pero
+// es el propio ciudadano quien avisa del peligro.
+public enum Atencion { Calma, Desactualizada, SinConexion, Aviso, AlgoNoEstaBien, PideAyuda }
 
 // Modo «sesión»: la ficha de la persona que se sigue, con lo necesario para decidir la siguiente acción.
 public sealed record SeguimientoSesion(DetalleAcompanamiento Sesion, IReadOnlyList<AvisoVista> Avisos, TimeZoneInfo ZonaHoraria, TimeSpan Umbral,
@@ -90,7 +94,13 @@ public sealed record SeguimientoSesion(DetalleAcompanamiento Sesion, IReadOnlyLi
     public bool PosicionActual => Sesion.Activa && Ultima is { Desactualizada: false } && !Sesion.SinConexion;
     public ConfirmacionVista? UltimaConfirmacion => Sesion.Confirmaciones is { Count: > 0 } c ? c[0] : null;
     public AvisoVista? AvisoAbierto => Avisos.FirstOrDefault(a => a.Estado != Modulos.Acompanamiento.Dominio.EstadoAviso.Resuelto);
-    public bool PideAyuda => UltimaConfirmacion is { Respuesta: Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda, SosEnCurso: true };
+    public bool PideAyuda => UltimaConfirmacion is { Respuesta: Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda, SosEnCurso: true }
+        || Sesion.AyudaInformadaEnCurso;
+
+    // El SOS de la petición de ayuda en curso: el de la confirmación o el que informó el ciudadano por su cuenta.
+    public Guid? SosEnCurso => UltimaConfirmacion is { Respuesta: Modulos.Acompanamiento.Dominio.RespuestaBienestar.NecesitoAyuda, SosEnCurso: true } c
+        ? c.CasoId
+        : Sesion.Estados?.FirstOrDefault(e => e.Estado == Modulos.Acompanamiento.Dominio.EstadoCiudadano.NecesitoAyuda && e.SosEnCurso)?.CasoId;
 }
 
 public static class Formato

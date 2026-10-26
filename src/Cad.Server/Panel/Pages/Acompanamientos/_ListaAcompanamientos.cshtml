@@ -75,6 +75,9 @@ else
                                 case Atencion.PideAyuda:
                                     <span class="chip chip--urgente vigilado__motivo"><partial name="_Icono" model="@("urgente")" />Pidió ayuda · SOS abierto</span>
                                     break;
+                                case Atencion.AlgoNoEstaBien:
+                                    <span class="chip chip--advertencia vigilado__motivo" data-algo-no-esta-bien><partial name="_Icono" model="@("advertencia")" />Avisó que algo no está bien</span>
+                                    break;
                                 case Atencion.Aviso when p is not { Desactualizada: true }:
                                     <span class="chip chip--advertencia vigilado__motivo"><partial name="_Icono" model="@("advertencia")" />@avisos[0].TextoRegla</span>
                                     break;
@@ -120,6 +123,22 @@ else
                                     @if (confirmacion.CasoId is { } caso)
                                     {
                                         <a class="vigilado__enlace" href="/panel/central/sos/@caso">Ver el SOS</a>
+                                    }
+                                </p>
+                            }
+                            @* 26/10/2026: lo último que el ciudadano informó por su cuenta. Un aviso nuevo de peligro suena una vez. *@
+                            @if (s.UltimoEstado is { } informado)
+                            {
+                                var alerta = informado.Estado is EstadoCiudadano.AlgoNoEstaBien || informado is { Estado: EstadoCiudadano.NecesitoAyuda, SosEnCurso: true };
+                                <p class="vigilado__dato" data-estado-informado="@informado.Estado" data-alerta-ciudadano="@(alerta ? informado.Id : null)">
+                                    Informó (@Formato.Hora(informado.InformadoEn, Model.ZonaHoraria, "HH:mm")): <strong>@informado.Texto</strong>
+                                    @if (informado.TextoSos is { } textoSos)
+                                    {
+                                        <span data-estado-sos>@textoSos</span>
+                                    }
+                                    @if (informado.CasoId is { } casoInformado)
+                                    {
+                                        <a class="vigilado__enlace" href="/panel/central/sos/@casoInformado">Ver el SOS</a>
                                     }
                                 </p>
                             }
