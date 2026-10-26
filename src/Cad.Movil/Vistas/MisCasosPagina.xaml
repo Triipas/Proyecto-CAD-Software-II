@@ -27,6 +27,9 @@
                                Style="{StaticResource TextoSecundario}" HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
 
+                    <!-- Movimiento (fase 4): mientras llega la primera respuesta, la forma de la lista en lugar de una pantalla vacía. -->
+                    <v:Esqueleto IsVisible="{Binding PrimeraCarga}" />
+
                     <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Casos}" v:Movimiento.EntradaEscalonada="True">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:ElementoMiCaso">

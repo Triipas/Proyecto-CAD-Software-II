@@ -21,7 +21,7 @@
             </Grid>
 
             <VerticalStackLayout Padding="16,0,16,32" Spacing="16" MaximumWidthRequest="480" Margin="0,-40,0,0">
-                <Border Style="{StaticResource Superficie}" Padding="20">
+                <Border Style="{StaticResource Superficie}" Padding="20" v:Movimiento.SacudirAl="{Binding Mensaje}">
                     <Border.Shadow>
                         <Shadow Brush="#0B1F44" Offset="0,10" Radius="24" Opacity="0.16" />
                     </Border.Shadow>

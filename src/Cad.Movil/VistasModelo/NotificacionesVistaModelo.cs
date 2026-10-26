@@ -39,12 +39,15 @@ public sealed class NotificacionesVistaModelo : ConsultaCiudadanoVistaModelo
         _ => $"{noLeidas} notificaciones sin leer.",
     };
     public bool SinNotificaciones => consultado && notificaciones.Count == 0 && !HayMensaje;
+    // Movimiento (fase 4): mientras llega la primera respuesta se muestra el esqueleto de la lista (no en los refrescos).
+    public bool PrimeraCarga => Cargando && !consultado;
 
     public Task AlAparecerAsync() => ActualizarAsync();
 
     private async Task ActualizarAsync()
     {
         Cargando = true;
+        Notificar(nameof(PrimeraCarga));
         try
         {
             if (await TokenAsync() is not { } token)
@@ -67,6 +70,7 @@ public sealed class NotificacionesVistaModelo : ConsultaCiudadanoVistaModelo
         finally
         {
             Cargando = false;
+            Notificar(nameof(PrimeraCarga));
         }
     }
 

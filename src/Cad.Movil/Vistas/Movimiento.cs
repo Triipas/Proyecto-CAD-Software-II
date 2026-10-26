@@ -172,6 +172,83 @@ public static class Movimiento
         };
     }
 
+    // ---------- Transversal (fase 4, 26/10/2026) ----------
+    // Sacudida corta de lado a lado: «esto no fue aceptado» (un PIN o un código incorrecto), con una vibración.
+    public static async Task SacudirAsync(this VisualElement vista)
+    {
+        try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); }
+        catch (Exception) { /* sin vibración disponible */ }
+        if (Reducido) return;
+        vista.AbortAnimation("sacudir");
+        var tramos = new (double hasta, double fin)[] { (-10, 0.15), (10, 0.35), (-7, 0.55), (7, 0.75), (-3, 0.9), (0, 1) };
+        var animacion = new Animation();
+        double desde = 0, inicio = 0;
+        foreach (var (hasta, fin) in tramos)
+        {
+            animacion.Add(inicio, fin, new Animation(v => vista.TranslationX = v, desde, hasta, Estandar));
+            (desde, inicio) = (hasta, fin);
+        }
+        var listo = new TaskCompletionSource();
+        animacion.Commit(vista, "sacudir", length: Lenta, finished: (_, _) => { vista.TranslationX = 0; listo.TrySetResult(); });
+        await listo.Task;
+    }
+
+    // SacudirAl="{Binding Mensaje}": la vista se sacude cada vez que llega un mensaje de error nuevo (no al vaciarse).
+    public static readonly BindableProperty SacudirAlProperty =
+        BindableProperty.CreateAttached("SacudirAl", typeof(string), typeof(Movimiento), null, propertyChanged: (vista, _, nuevo) =>
+        {
+            if (vista is VisualElement elemento && nuevo is string { Length: > 0 } && elemento.Handler is not null)
+                _ = elemento.SacudirAsync();
+        });
+
+    public static string? GetSacudirAl(BindableObject vista) => (string?)vista.GetValue(SacudirAlProperty);
+    public static void SetSacudirAl(BindableObject vista, string? valor) => vista.SetValue(SacudirAlProperty, valor);
+
+    // Aparecer: lo que se muestra con la pantalla ya abierta (un aviso, un error de un campo) entra subiendo en vez de saltar.
+    // Al ocultarse desaparece de inmediato: la visibilidad la decide el enlace de datos, que no espera a una animación.
+    public static readonly BindableProperty AparecerProperty =
+        BindableProperty.CreateAttached("Aparecer", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarAparecer);
+
+    public static bool GetAparecer(BindableObject vista) => (bool)vista.GetValue(AparecerProperty);
+    public static void SetAparecer(BindableObject vista, bool valor) => vista.SetValue(AparecerProperty, valor);
+
+    private static void AlCambiarAparecer(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not VisualElement elemento || !(bool)nuevo || (bool)anterior) return;
+        elemento.PropertyChanged += (_, e) =>
+        {
+            // Solo si la pantalla ya está armada: lo que viene visible al abrirla entra con la pantalla.
+            if (e.PropertyName != nameof(VisualElement.IsVisible) || !elemento.IsVisible || elemento.Handler is null) return;
+            elemento.Dispatcher.Dispatch(() => _ = elemento.ResaltarAsync());
+        };
+    }
+
+    // EntradaPagina (todas las pantallas, desde el estilo de ContentPage): al abrirse, el contenido termina de aparecer subiendo
+    // 8 px. Empieza a media opacidad (nunca en blanco: un cuadro vacío al cambiar de pestaña se ve como un parpadeo) y se anima un
+    // momento después, cuando la pantalla ya terminó de armarse (antes, la animación no llegaría a verse).
+    public static readonly BindableProperty EntradaPaginaProperty =
+        BindableProperty.CreateAttached("EntradaPagina", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarEntradaPagina);
+
+    public static bool GetEntradaPagina(BindableObject vista) => (bool)vista.GetValue(EntradaPaginaProperty);
+    public static void SetEntradaPagina(BindableObject vista, bool valor) => vista.SetValue(EntradaPaginaProperty, valor);
+
+    private const int EsperaPagina = 60;
+
+    private static void AlCambiarEntradaPagina(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not ContentPage pagina || !(bool)nuevo || (bool)anterior) return;
+        pagina.Appearing += (_, _) =>
+        {
+            if (Reducido || pagina.Content is not { } contenido) return;
+            contenido.CancelAnimations();
+            contenido.Opacity = 0.5;
+            contenido.TranslationY = Desplazamiento;
+            pagina.Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(EsperaPagina), () => _ = Task.WhenAll(
+                contenido.FadeToAsync(1, Base, Salida),
+                contenido.TranslateToAsync(contenido.TranslationX, 0, Base, Salida)));
+        };
+    }
+
     // ---------- Listas (fase 3, 26/10/2026) ----------
     // EntradaEscalonada (en un layout con BindableLayout): la primera vez que la lista se llena, sus elementos entran uno tras
     // otro; después, lo que llega solo (un aviso nuevo) entra por su cuenta. Un refresco que rehace toda la lista no se anima.

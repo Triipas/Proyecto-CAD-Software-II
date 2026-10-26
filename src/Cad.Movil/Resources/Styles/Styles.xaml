@@ -11,6 +11,8 @@
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{StaticResource ColorFondo}" />
         <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        <!-- Movimiento (fase 4): cada pantalla entra subiendo 8 px (Movimiento.EntradaPagina). -->
+        <Setter Property="v:Movimiento.EntradaPagina" Value="True" />
     </Style>
 
     <!-- ── Texto ───────────────────────────────────────────────────────── -->
@@ -56,6 +58,8 @@
     <Style x:Key="ErrorCampo" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="TextColor" Value="{StaticResource ColorError}" />
+        <!-- Movimiento (fase 4): el error de un campo aparece subiendo, no de golpe. -->
+        <Setter Property="v:Movimiento.Aparecer" Value="True" />
     </Style>
 
     <!-- ── Campos ──────────────────────────────────────────────────────── -->

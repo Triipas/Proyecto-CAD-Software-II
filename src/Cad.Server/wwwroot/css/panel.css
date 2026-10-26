@@ -414,6 +414,22 @@ html {
   }
 }
 
+/* Movimiento (fase 4, 26/10/2026): si vuelve con credenciales incorrectas, la tarjeta no entra de nuevo: se sacude, como
+   «esto no fue aceptado». Solo con el aviso de error (una cuenta no habilitada no es un error de quien escribe). */
+@media (prefers-reduced-motion: no-preference) {
+  .acceso__tarjeta:has(.aviso--error) {
+    animation: acceso-sacudida var(--duracion-lenta) var(--curva-estandar) both;
+  }
+}
+
+@keyframes acceso-sacudida {
+  15% { transform: translateX(-10px); }
+  35% { transform: translateX(10px); }
+  55% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+  90% { transform: translateX(-3px); }
+}
+
 .acceso__encabezado {
   display: grid;
   gap: var(--espacio-2);
@@ -1878,5 +1894,20 @@ button.sos__ubicacion:active .icono {
 @media (prefers-reduced-motion: reduce) {
   .leaflet-marker-icon.marcador--entra {
     animation: none;
+  }
+}
+
+/* ── Cambio de página (movimiento, fase 4, 26/10/2026) ──
+   Entre páginas del panel (listado y detalle, un formulario y su resultado) la pantalla se funde en vez de parpadear en blanco.
+   Son View Transitions entre documentos: el navegador que no las conoce navega como siempre. Con movimiento reducido, nada. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--duracion-base);
+    animation-timing-function: var(--curva-estandar);
   }
 }

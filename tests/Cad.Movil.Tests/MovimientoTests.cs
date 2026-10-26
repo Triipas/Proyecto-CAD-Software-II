@@ -1,4 +1,6 @@
+using Cad.Movil.Servicios;
 using Cad.Movil.Vistas;
+using Cad.Movil.VistasModelo;
 using Microsoft.Maui;
 
 namespace Cad.Movil.Tests;
@@ -46,5 +48,42 @@ public class MovimientoTests
         var lineal = Movimiento.Curva(0, 0, 1, 1);
         foreach (var x in new[] { 0.1, 0.25, 0.5, 0.75, 0.9 })
             Assert.Equal(x, lineal.Ease(x), 4);
+    }
+
+    // Fase 4: el esqueleto de la lista se ve solo mientras llega la primera respuesta, no en los refrescos.
+    [Fact]
+    public async Task Mis_casos_muestra_el_esqueleto_solo_en_la_primera_carga()
+    {
+        var api = new ApiFalsa();
+        var vm = new MisCasosVistaModelo(api, new SesionesFalsas { Sesion = new SesionApp("token-ficticio", "Ciudadano", DateTimeOffset.UtcNow.AddHours(8)) },
+            new NavegacionFalsa(), TimeProvider.System);
+        bool? durante = null;
+        api.RespuestaMisCasos = () => { durante = vm.PrimeraCarga; return new ResultadoApi<List<Cad.Contratos.Casos.MiCasoResumen>>.Correcto([]); };
+
+        Assert.False(vm.PrimeraCarga);
+        await vm.AlAparecerAsync();
+        Assert.True(durante);
+        Assert.False(vm.PrimeraCarga);
+
+        await vm.AlAparecerAsync();
+        Assert.False(durante);
+    }
+
+    [Fact]
+    public async Task Avisos_muestra_el_esqueleto_solo_en_la_primera_carga()
+    {
+        var api = new ApiFalsa();
+        var vm = new NotificacionesVistaModelo(api, new SesionesFalsas { Sesion = new SesionApp("token-ficticio", "Ciudadano", DateTimeOffset.UtcNow.AddHours(8)) },
+            new NavegacionFalsa(), TimeProvider.System);
+        bool? durante = null;
+        var anterior = api.RespuestaBandeja;
+        api.RespuestaBandeja = () => { durante = vm.PrimeraCarga; return anterior(); };
+
+        await vm.AlAparecerAsync();
+        Assert.True(durante);
+        Assert.False(vm.PrimeraCarga);
+
+        await vm.AlAparecerAsync();
+        Assert.False(durante);
     }
 }

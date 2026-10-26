@@ -35,6 +35,8 @@ public sealed class Aviso : Border
         grid.Add(texto, 1);
         Content = grid;
         SemanticProperties.SetHeadingLevel(this, SemanticHeadingLevel.None);
+        // Movimiento (fase 4): un aviso de estado que se muestra con la pantalla abierta entra subiendo.
+        Movimiento.SetAparecer(this, true);
         Actualizar();
     }
 
