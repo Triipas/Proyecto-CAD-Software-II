@@ -73,6 +73,7 @@
     <main class="pagina @ViewData["ClasePagina"]">
         @RenderBody()
     </main>
+    <script src="~/js/movimiento.js" asp-append-version="true"></script>
     <script src="~/js/sonidos.js" asp-append-version="true"></script>
     <script src="~/js/formulario.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

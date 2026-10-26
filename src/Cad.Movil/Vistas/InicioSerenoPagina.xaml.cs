@@ -84,8 +84,8 @@ public partial class InicioSerenoPagina : ContentPage
         var contenido = PanelDespacho.Content?.Height ?? tope;
         var destino = Math.Min(tope, contenido > 0 ? contenido : tope);
         PanelDespacho.MaximumHeightRequest = Math.Max(tope, PanelDespacho.HeightRequest);
-        new Animation(v => PanelDespacho.HeightRequest = v, PanelDespacho.HeightRequest, destino, Easing.CubicOut)
-            .Commit(this, "panel", length: 180, finished: (_, cancelado) =>
+        new Animation(v => PanelDespacho.HeightRequest = v, PanelDespacho.HeightRequest, destino, Movimiento.Salida)
+            .Commit(this, "panel", length: Movimiento.Rapida, finished: (_, cancelado) =>
             {
                 if (cancelado) return;
                 PanelDespacho.HeightRequest = -1;
