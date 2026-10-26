@@ -45,7 +45,7 @@ El PO aceptó las propuestas de la planificación. DP08, DP17 y DP21 aparecen en
 |---|---|---|
 | E1 — Trabajo sin integrar | Commit y PR del cierre documental de los Sprints 1 y 2; el PR #19 (push en la app) se fusiona antes de desplegar el Sprint 3. | — |
 | E2 — Fechas | Las fija el PO; sin fijar al 14/10/2026. | — |
-| DP08 — datos del reporte (HU10) | La fecha y hora aproximadas del hecho son obligatorias y no pueden ser futuras; la descripción tiene un límite técnico de 2000 caracteres; sin adjuntos en el MVP. | S3-T01. |
+| DP08 — datos del reporte (HU10) | La fecha y hora aproximadas del hecho son obligatorias y no pueden ser futuras; la descripción tiene un límite técnico de 2000 caracteres; sin adjuntos en el MVP. **Ampliada el 26/10/2026:** hasta tres fotos JPEG sin metadatos, solo para el operador ([ADR-09](decisiones/ADR-09-fotos-del-reporte.md)). | S3-T01. |
 | DP17 — búsqueda de casos (HU26, HU25) | El filtro de fechas se aplica a la fecha de registro; sin filtros, los casos más recientes primero, de 50 en 50. | S3-T03. |
 | DP21 — admisión y derivación (HU15, HU16) | El motivo (admitir, derivar, descartar) es texto libre obligatorio; el destino de la derivación es texto libre, sin catálogo de entidades. | S3-T06, S3-T07, S3-T09. |
 | DP05 — qué ve el ciudadano (HU17, HU30, HU31) | Estados públicos: «Recibido», «En revisión», «Admitido», «En atención» (agrupa Asignada, En camino y En atención), «Cerrado», «Derivado» y «Descartado». Son visibles el resultado público, el destino de la derivación y el motivo del descarte. Nunca: notas internas, intentos de contacto, operador ni sereno. Cada cambio de estado público genera una notificación. | S3-T09, S3-T13, S3-T14. |

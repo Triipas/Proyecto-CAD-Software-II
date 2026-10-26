@@ -155,6 +155,17 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct) =>
         await CargarAsync(id, ct) ? Page() : NotFound();
 
+    // DP08 ampliada (26/10/2026): una foto del reporte, solo para el operador (la política de la página). No se guarda en
+    // cachés ni se interpreta como otro tipo de contenido.
+    public async Task<IActionResult> OnGetFotoAsync(Guid id, int numero, [FromServices] ConsultarFotoReporte consultarFoto, CancellationToken ct)
+    {
+        if (await consultarFoto.EjecutarAsync(id, numero, ct) is not { } contenido)
+            return NotFound();
+        Response.Headers.CacheControl = "no-store, private";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        return File(contenido, "image/jpeg");
+    }
+
     // CA01, CA02 y CA05.
     public async Task<IActionResult> OnPostIniciarRevisionAsync(Guid id, CancellationToken ct)
     {

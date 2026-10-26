@@ -142,6 +142,25 @@ public sealed class DictadoNoDisponible : IDictado
     public Task<string?> DictarAsync() => Task.FromResult<string?>(null);
 }
 
+// DP08 ampliada (26/10/2026): fotos del reporte. La app las entrega ya preparadas: JPEG vuelto a codificar (lado mayor de
+// 1600 px, sin EXIF ni la ubicación GPS de la cámara), de hasta 1 MB. Null o vacío si el ciudadano cancela; FotoNoUsable si
+// el archivo no se pudo leer como imagen.
+public interface IFotosReporte
+{
+    bool PuedeTomar { get; }
+    Task<byte[]?> TomarAsync();
+    Task<IReadOnlyList<byte[]>> ElegirAsync(int maximo);
+}
+
+public sealed class FotoNoUsableException(string mensaje) : Exception(mensaje);
+
+public sealed class FotosNoDisponibles : IFotosReporte
+{
+    public bool PuedeTomar => false;
+    public Task<byte[]?> TomarAsync() => Task.FromResult<byte[]?>(null);
+    public Task<IReadOnlyList<byte[]>> ElegirAsync(int maximo) => Task.FromResult<IReadOnlyList<byte[]>>([]);
+}
+
 // Respuesta correcta sin cuerpo que leer (p. ej., 201 al registrar una posición).
 public sealed record SinContenido;
 

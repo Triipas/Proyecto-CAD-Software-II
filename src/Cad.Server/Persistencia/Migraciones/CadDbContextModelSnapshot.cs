@@ -957,6 +957,31 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("EventosCaso", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.FotoReporte", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer");
+
+                    b.Property<byte[]>("Contenido")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTimeOffset>("RegistradaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("CasoId", "Numero");
+
+                    b.ToTable("FotosReporte", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_FotosReporte_Contenido", "octet_length(\"Contenido\") BETWEEN 1 AND 1048576");
+
+                            t.HasCheckConstraint("CK_FotosReporte_Numero", "\"Numero\" BETWEEN 1 AND 3");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.InicioAtencion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1969,6 +1994,15 @@ namespace Cad.Server.Persistencia.Migraciones
                         .IsRequired();
 
                     b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.FotoReporte", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.DetalleReporte", null)
                         .WithMany()
                         .HasForeignKey("CasoId")
                         .OnDelete(DeleteBehavior.Restrict)

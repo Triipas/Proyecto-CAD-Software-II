@@ -22,6 +22,7 @@ public static class ModuloCasos
         services.AddScoped<Modulos.Consultas.BandejaCiudadano>();
         services.AddScoped<Modulos.Consultas.ConsultarReportes>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleReporte>();
+        services.AddScoped<Modulos.Consultas.ConsultarFotoReporte>();
         services.AddScoped<RegistrarIntentoContacto>();
         services.AddScoped<AsignarCaso>();
         services.AddScoped<ClasificarCaso>();

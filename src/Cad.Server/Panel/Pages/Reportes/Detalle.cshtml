@@ -392,6 +392,33 @@
             </dl>
         </section>
 
+        @if (!r.DeLaCentral)
+        {
+            @* DP08 ampliada (26/10/2026): fotos que adjuntó el ciudadano, ya sin metadatos; solo las ve el operador. *@
+            <section class="superficie seccion-caso" aria-labelledby="titulo-fotos" data-fotos-reporte="@r.Fotos">
+                <h2 id="titulo-fotos" class="seccion-caso__titulo">Fotos del ciudadano</h2>
+                @if (r.Fotos == 0)
+                {
+                    <p class="texto-secundario" data-sin-fotos>El ciudadano no adjuntó fotos.</p>
+                }
+                else
+                {
+                    <ul class="fotos-reporte" role="list">
+                        @for (var n = 1; n <= r.Fotos; n++)
+                        {
+                            var url = $"/panel/reportes/{r.Id}?handler=Foto&numero={n}";
+                            <li>
+                                <a href="@url" target="_blank" rel="noopener" class="fotos-reporte__enlace" data-foto="@n">
+                                    <img src="@url" alt="Foto @n de @r.Fotos adjuntada por el ciudadano" decoding="async" />
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                    <p class="texto-secundario detalle-caso__nota">Tócala para verla en tamaño completo. Son fotos del ciudadano: no confirman por sí solas lo ocurrido.</p>
+                }
+            </section>
+        }
+
         <section class="superficie seccion-caso" aria-labelledby="titulo-lugar">
             <h2 id="titulo-lugar" class="seccion-caso__titulo">Ubicación del hecho</h2>
             @if (r.ConPunto)
