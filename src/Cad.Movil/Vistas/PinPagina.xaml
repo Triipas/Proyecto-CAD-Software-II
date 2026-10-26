@@ -18,6 +18,29 @@
             <Setter Property="BackgroundColor" Value="{StaticResource ColorSuperficie}" />
             <Setter Property="BorderColor" Value="{StaticResource ColorBorde}" />
             <Setter Property="BorderWidth" Value="1" />
+            <!-- Movimiento (26/10/2026): la tecla responde al dedo como una tecla física: se hunde, vibra y se tiñe de azul mientras
+                 está presionada (Movimiento.Tecla). -->
+            <Setter Property="v:Movimiento.Tecla" Value="True" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+                        <VisualState x:Name="Pressed">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorTenue}" />
+                                <Setter Property="BorderColor" Value="{StaticResource ColorPrimario}" />
+                                <Setter Property="TextColor" Value="{StaticResource ColorPrimario}" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Disabled">
+                            <VisualState.Setters>
+                                <Setter Property="TextColor" Value="{StaticResource ColorTextoSecundario}" />
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorFondo}" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
         </Style>
     </ContentPage.Resources>
 
@@ -27,7 +50,7 @@
 
             <VerticalStackLayout Padding="16,24,16,32" Spacing="20" MaximumWidthRequest="420">
                 <!-- Seis puntos: lleno = dígito escrito. -->
-                <HorizontalStackLayout HorizontalOptions="Center" Spacing="16" BindableLayout.ItemsSource="{Binding Puntos}" v:Movimiento.SacudirAl="{Binding Mensaje}"
+                <HorizontalStackLayout x:Name="PuntosPin" HorizontalOptions="Center" Spacing="16" BindableLayout.ItemsSource="{Binding Puntos}" v:Movimiento.SacudirAl="{Binding Mensaje}"
                                        SemanticProperties.Description="Dígitos del PIN escritos">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="x:Boolean">
@@ -56,7 +79,7 @@
                     <Button Grid.Row="2" Grid.Column="1" Text="8" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="8" />
                     <Button Grid.Row="2" Grid.Column="2" Text="9" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="9" />
                     <Button Grid.Row="3" Grid.Column="1" Text="0" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="0" />
-                    <Button Grid.Row="3" Grid.Column="2" Text="Borrar" Style="{StaticResource BotonTerciario}" Command="{Binding Borrar}"
+                    <Button Grid.Row="3" Grid.Column="2" Text="Borrar" Style="{StaticResource BotonTerciario}" Command="{Binding Borrar}" v:Movimiento.Tecla="True"
                             HeightRequest="64" SemanticProperties.Description="Borrar el último dígito" />
                 </Grid>
 

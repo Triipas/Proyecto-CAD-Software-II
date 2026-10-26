@@ -141,6 +141,33 @@ public static class Movimiento
         else _ = boton.ScaleToAsync(1, Rapida, Salida);
     }
 
+    // Tecla (el teclado del PIN): como una tecla física. Al tocarla el teléfono da un golpe de vibración corto y la tecla se
+    // hunde más que un botón común; al soltarla vuelve. El color de «presionada» lo da el estado visual del estilo. Con las
+    // animaciones del teléfono quitadas queda la vibración y el color, sin movimiento.
+    public static readonly BindableProperty TeclaProperty =
+        BindableProperty.CreateAttached("Tecla", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarTecla);
+
+    public static bool GetTecla(BindableObject vista) => (bool)vista.GetValue(TeclaProperty);
+    public static void SetTecla(BindableObject vista, bool valor) => vista.SetValue(TeclaProperty, valor);
+
+    private static void AlCambiarTecla(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not Button boton) return;
+        boton.Pressed -= AlPresionarTecla;
+        boton.Released -= AlSoltar;
+        if (!(bool)nuevo) return;
+        boton.Pressed += AlPresionarTecla;
+        boton.Released += AlSoltar;
+    }
+
+    private static void AlPresionarTecla(object? emisor, EventArgs e)
+    {
+        if (emisor is not Button boton) return;
+        try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); }
+        catch (Exception) { /* sin vibración disponible: queda la respuesta visual */ }
+        if (!Reducido) _ = boton.ScaleToAsync(0.94, Instantanea, Salida);
+    }
+
     // TextoEnvio (las acciones que se registran en la central, como «Voy en camino»): al tocar, el teléfono vibra un instante y,
     // si el envío tarda, el mismo botón dice «Enviando…» hasta que vuelve a estar disponible. Un envío rápido no cambia el texto.
     public static readonly BindableProperty TextoEnvioProperty =
