@@ -228,10 +228,7 @@
   box-shadow: inset 0 0 0 1px var(--color-primario), var(--sombra-2);
 }
 
-/* SOS nuevo: entra con un desplazamiento corto y queda marcado hasta que alguien lo mira. */
-.central .sos--nuevo {
-  animation: sos-entra var(--duracion-base) var(--curva-salida) both;
-}
+/* SOS nuevo: queda marcado hasta que alguien lo mira. La entrada (8 px desde abajo) la hace movimiento.js al llegar. */
 
 .central .sos--nuevo .sos__cabecera::after {
   content: "Nuevo";
@@ -689,9 +686,43 @@
   gap: var(--espacio-2);
 }
 
-@keyframes sos-entra {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: none; }
+/* ── Movimiento de la central (fase 1, 26/10/2026) ───────── */
+/* Reporte que llega con la central abierta: un anillo azul que se apaga solo (solo opacidad). */
+.central .sos--llegada::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 2px solid var(--color-primario);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: llegada-apaga 1.5s var(--curva-estandar) both;
+}
+
+@keyframes llegada-apaga {
+  0%, 40% { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Marcadores: Leaflet los coloca con «transform», así que la entrada usa la propiedad «scale», que se suma sin moverlos. */
+.leaflet-marker-icon.marcador--entra {
+  animation: marcador-entra var(--duracion-lenta) var(--curva-salida) both;
+}
+
+@keyframes marcador-entra {
+  from { opacity: 0; scale: 0.4; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* Leaflet pone la opacidad en línea: la baja retirar() con setOpacity(0); aquí solo la transición. */
+.leaflet-marker-icon.marcador--sale {
+  scale: 0.8;
+  transition: opacity var(--duracion-rapida) var(--curva-entrada), scale var(--duracion-rapida) var(--curva-entrada);
+  pointer-events: none;
+}
+
+/* Solo mientras se desliza a su nueva posición: si la transición quedara puesta, el marcador se arrastraría al hacer zoom. */
+.leaflet-marker-icon.marcador--deslizando {
+  transition: transform calc(var(--duracion-lenta) * 2) var(--curva-estandar);
 }
 
 @keyframes pulso-marcador {
@@ -820,10 +851,15 @@
 @media (prefers-reduced-motion: reduce) {
   .linea-despacho,
   .etiqueta-despacho,
-  .central .sos--nuevo,
+  .central .sos--llegada::before,
+  .leaflet-marker-icon.marcador--entra,
   .velo,
   .dialogo {
     animation: none;
+  }
+
+  .central .sos--llegada::before {
+    opacity: 0;
   }
 
   /* Sin pulso: un anillo fijo marca el SOS sin abrir. */

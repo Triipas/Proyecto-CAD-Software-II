@@ -19,13 +19,13 @@
             @foreach (var sos in Model.Pendientes)
             {
                 var local = TimeZoneInfo.ConvertTime(sos.RegistradoEn, Model.ZonaHoraria);
-                <li class="sos" id="sos-@sos.Id" tabindex="-1" data-sos="@sos.Id" data-ciudadano="@sos.Ciudadano"
+                <li class="sos" id="sos-@sos.Id" tabindex="-1" data-clave="@sos.Id" data-sos="@sos.Id" data-ciudadano="@sos.Ciudadano"
                     data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)"
                     data-precision="@sos.PrecisionMetros?.ToString("0", inv)" data-hora="@local.ToString("HH:mm", inv)"
                     data-clase="@(sos.Tipo ?? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar)" data-detalle="/panel/central/sos/@sos.Id">
                     <div class="sos__cabecera">
                         <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@sos.Origen</span>
-                        <span class="sos__estado">@sos.Estado</span>
+                        <span class="sos__estado" data-suave>@sos.Estado</span>
                         <time class="sos__hora" datetime="@sos.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm:ss", inv)</time>
                     </div>
                     @* 24/10/2026: la tarjeta entera es el botón que elige el caso (el del nombre, extendido a toda la tarjeta):
@@ -33,7 +33,7 @@
                     <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-sos aria-pressed="false"
                             aria-describedby="sos-@sos.Id-tipo sos-@sos.Id-lugar">@sos.Ciudadano<span class="visualmente-oculto">: elegir este SOS para asignarlo</span></button>
                     @* HU13-CA03: el tipo se muestra siempre; sin clasificar, «Tipo por determinar». *@
-                    <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" id="sos-@sos.Id-tipo" data-tipo>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
+                    <p class="sos__tipo@(sos.Tipo is null ? " sos__tipo--pendiente" : "")" id="sos-@sos.Id-tipo" data-tipo data-suave>@(sos.Tipo is null ? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar : $"Tipo: {sos.Tipo}")</p>
                     @if (sos.UbicacionDisponible)
                     {
                         <p class="sos__dato-ubicacion" id="sos-@sos.Id-lugar">
