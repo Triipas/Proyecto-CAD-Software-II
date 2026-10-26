@@ -108,6 +108,29 @@ public class EstadoCiudadanoTests(FabricaCad fabrica)
             new SolicitudRespuestaBienestar(RespuestasBienestar.EstoyBien, null))).StatusCode);
 
         Assert.Contains("data-atencion=\"Calma\"", await TarjetaAsync(operador, ciudadano.SesionId));
+
+        // Pedir otra confirmación después no reabre el aviso que ya despejó con su «Estoy bien».
+        Assert.IsType<ResultadoSolicitudBienestar.Solicitada>(await fabrica.ConServiciosAsync(s =>
+            s.GetRequiredService<ConfirmarBienestar>().SolicitarAsync(ciudadano.SesionId, operadorId, Guid.NewGuid(), CancellationToken.None)));
+        Assert.Contains("data-atencion=\"Calma\"", await TarjetaAsync(operador, ciudadano.SesionId));
+        Assert.DoesNotContain("data-algo-no-esta-bien", await operador.GetStringAsync($"/panel/acompanamientos/{ciudadano.SesionId}"));
+    }
+
+    [Fact]
+    public async Task LaMismaSolicitudEnOtraSesion_NoSeTomaComoReenvio()
+    {
+        var ciudadano = await AcompanamientoAsync();
+        var idSolicitud = Guid.NewGuid();
+        Assert.Equal(HttpStatusCode.OK, (await InformarAsync(ciudadano, EstadosCiudadano.NecesitoAyuda, idSolicitud, Sos())).StatusCode);
+        await ciudadano.App.PostAsync($"/api/acompanamiento/{ciudadano.SesionId}/finalizacion", null);
+        var nueva = (await (await ciudadano.App.PostAsJsonAsync("/api/acompanamiento", new SolicitudInicioAcompanamiento(Guid.NewGuid(), true, true)))
+            .Content.ReadFromJsonAsync<SesionAcompanamientoVista>())!.Id;
+
+        var respuesta = await ciudadano.App.PostAsJsonAsync($"/api/acompanamiento/{nueva}/estado",
+            new SolicitudEstadoAcompanamiento(idSolicitud, EstadosCiudadano.NecesitoAyuda, Sos()));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Equal(0, await fabrica.ConBaseDatosAsync(db => db.EstadosInformados.CountAsync(e => e.SesionId == nueva)));
     }
 
     [Fact]

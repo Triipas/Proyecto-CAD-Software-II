@@ -91,6 +91,43 @@ public class EstadoCiudadanoTests
     }
 
     [Fact]
+    public async Task Llegue_DejaDeCompartirLaUbicacionAntesDeEsperarLaRespuesta()
+    {
+        var (servicio, _) = await ActivoAsync();
+        bool? transmitiaAlAvisar = null;
+        api.RespuestaEstado = s =>
+        {
+            transmitiaAlAvisar = servicio.Transmitiendo;
+            return new ResultadoApi<EstadoInformadoVista>.SinRespuesta("TaskCanceledException");
+        };
+
+        await servicio.InformarEstadoAsync(EstadosCiudadano.Llegue);
+
+        Assert.False(transmitiaAlAvisar);
+        Assert.Contains(sesionId, api.Finalizaciones);
+    }
+
+    [Fact]
+    public async Task UnAvisoSinConfirmar_NoSeReutilizaEnOtraSesion()
+    {
+        var (servicio, _) = await ActivoAsync();
+        api.RespuestaEstado = _ => new ResultadoApi<EstadoInformadoVista>.SinRespuesta("HttpRequestException");
+        await servicio.InformarEstadoAsync(EstadosCiudadano.NecesitoAyuda);
+        await servicio.FinalizarAsync();
+        var otra = Guid.NewGuid();
+        api.RespuestaInicioAcompanamiento = _ => new ResultadoApi<SesionAcompanamientoVista>.Correcto(ApiFalsa.SesionActiva(reloj.GetUtcNow(), id: otra));
+        await servicio.IniciarAsync(true);
+
+        await servicio.InformarEstadoAsync(EstadosCiudadano.NecesitoAyuda);
+
+        var envios = api.EstadosInformados.ToList();
+        Assert.Equal((sesionId, otra), (envios[0].SesionId, envios[1].SesionId));
+        Assert.NotEqual(envios[0].Solicitud.IdSolicitud, envios[1].Solicitud.IdSolicitud);
+        Assert.NotEqual(envios[0].Solicitud.Sos!.IdSolicitud, envios[1].Solicitud.Sos!.IdSolicitud);
+        await servicio.DetenerAsync();
+    }
+
+    [Fact]
     public async Task Llegue_SinConexion_DejaDeCompartirLaUbicacionIgual()
     {
         var (servicio, vm) = await ActivoAsync();

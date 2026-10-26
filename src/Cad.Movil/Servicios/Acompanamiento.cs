@@ -82,9 +82,10 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
     public bool RespondiendoConfirmacion { get; private set; }
 
     // 26/10/2026 — lo que el ciudadano informa por su cuenta («¿Cómo vas?»). Sin respuesta del servidor, el reintento de la misma
-    // opción reutiliza la misma solicitud (y el mismo SOS con «Necesito ayuda»): no se registra dos veces.
+    // opción en la misma sesión reutiliza la misma solicitud (y el mismo SOS con «Necesito ayuda»): no se registra dos veces. Una
+    // sesión nueva (o salir de la app) empieza de cero.
     private readonly SemaphoreSlim informe = new(1, 1);
-    private SolicitudEstadoAcompanamiento? estadoSinConfirmar;
+    private (Guid Sesion, SolicitudEstadoAcompanamiento Solicitud)? estadoSinConfirmar;
     public bool InformandoEstado { get; private set; }
     public string? ResultadoEstado { get; private set; }
     public bool EstadoNoConfirmado { get; private set; }
@@ -252,6 +253,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
     // enviará en el próximo ingreso.
     public async Task ReiniciarAsync()
     {
+        estadoSinConfirmar = null;
         await DetenerEnvioAsync();
         DetenerReintento();
         Estado = EstadoAcompanamiento.SinSesion;
@@ -646,15 +648,23 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
         await informe.WaitAsync(ct);
         InformandoEstado = true;
         Notificar();
-        var finalizar = false;
+        // «Llegué»: deja de compartir su ubicación al instante, sin esperar a la red, y el cierre queda guardado para reenviarse
+        // (HU36-CA01/CA03) aunque el aviso no llegue o se cancele. Después se finaliza en cualquier caso.
+        var finalizar = estado == EstadosCiudadano.Llegue;
+        if (finalizar)
+        {
+            await DetenerEnvioAsync();
+            ultimaPosicion = null;
+            almacen.Guardar(ClaveCierrePendiente, sesion.Id.ToString());
+        }
         try
         {
             if (await TokenAsync() is not { } token)
                 return;
-            var solicitud = estadoSinConfirmar is { } previa && previa.Estado == estado
-                ? previa
+            var solicitud = estadoSinConfirmar is { } previa && previa.Sesion == sesion.Id && previa.Solicitud.Estado == estado
+                ? previa.Solicitud
                 : new SolicitudEstadoAcompanamiento(Guid.NewGuid(), estado, estado == EstadosCiudadano.NecesitoAyuda ? await PrepararSosAsync(ct) : null);
-            estadoSinConfirmar = solicitud;
+            estadoSinConfirmar = (sesion.Id, solicitud);
 
             ResultadoApi<EstadoInformadoVista> resultado;
             try
@@ -678,7 +688,6 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
                         EstadosCiudadano.NecesitoAyuda => "Pedido de ayuda registrado: la central recibió tu SOS.",
                         _ => "Avisaste que llegaste a tu destino.",
                     };
-                    finalizar = estado == EstadosCiudadano.Llegue;
                     break;
                 case ResultadoApi<EstadoInformadoVista>.Rechazado { Estado: 401 }:
                     MarcarSesionTerminada();
@@ -696,8 +705,6 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
                         EstadosCiudadano.Llegue => "Sin respuesta del servidor: tu llegada no llegó a la central. Igual dejas de compartir tu ubicación.",
                         _ => "Sin respuesta del servidor: tu aviso no llegó a la central. Vuelve a intentarlo.",
                     };
-                    // Llegó a su destino: deja de compartir su ubicación aunque no haya conexión (el cierre se reenvía, HU36-CA03).
-                    finalizar = estado == EstadosCiudadano.Llegue;
                     break;
             }
         }
@@ -706,9 +713,9 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             InformandoEstado = false;
             informe.Release();
             Notificar();
+            if (finalizar)
+                await FinalizarAsync(CancellationToken.None);
         }
-        if (finalizar)
-            await FinalizarAsync(ct);
     }
 
     // HU08 en el flujo SOS de «Necesito ayuda»: la posición actual, leída tras la pulsación y como mucho 10 s; una anterior a la

@@ -16,11 +16,11 @@ public sealed record PosicionVista(double Latitud, double Longitud, double Preci
 // 26/10/2026: Estados, lo que el ciudadano informó por su cuenta (del más reciente al más antiguo).
 public sealed record AcompanamientoActivo(Guid Id, string Ciudadano, string? Telefono, DateTimeOffset IniciadaEn, DateTimeOffset VenceEn,
     DateTimeOffset? UltimoContactoEn, bool SinConexion, PosicionVista? Ultima, int Posiciones, ConfirmacionVista? UltimaConfirmacion = null,
-    IReadOnlyList<EstadoCiudadanoVista>? Estados = null)
+    IReadOnlyList<EstadoCiudadanoVista>? Estados = null, IReadOnlyList<ConfirmacionVista>? Confirmaciones = null)
 {
     public EstadoCiudadanoVista? UltimoEstado => EstadoCiudadanoVista.Ultimo(Estados);
     public bool AyudaInformadaEnCurso => EstadoCiudadanoVista.AyudaEnCurso(Estados);
-    public bool AlgoNoEstaBien => EstadoCiudadanoVista.AlgoNoEstaBien(Estados, UltimaConfirmacion);
+    public bool AlgoNoEstaBien => EstadoCiudadanoVista.AlgoNoEstaBien(Estados, Confirmaciones);
 }
 
 // 26/10/2026 — un estado que el ciudadano informó por su cuenta (EstadoInformado). EstadoSos: el estado actual del SOS de
@@ -52,12 +52,12 @@ public sealed record EstadoCiudadanoVista(Guid Id, EstadoCiudadano Estado, DateT
         estados?.FirstOrDefault(e => e.Estado == EstadoCiudadano.NecesitoAyuda) is { SosEnCurso: true };
 
     // «Algo no está bien» requiere atención hasta que vuelva a decir que está bien: informándolo después (es otro estado más
-    // reciente) o respondiendo «Estoy bien» a una confirmación posterior.
-    public static bool AlgoNoEstaBien(IReadOnlyList<EstadoCiudadanoVista>? estados, ConfirmacionVista? ultimaConfirmacion)
+    // reciente) o respondiendo «Estoy bien» a cualquier confirmación después del aviso (pedir otra luego no lo reabre).
+    public static bool AlgoNoEstaBien(IReadOnlyList<EstadoCiudadanoVista>? estados, IEnumerable<ConfirmacionVista>? confirmaciones)
     {
-        if (Ultimo(estados) is not { Estado: EstadoCiudadano.AlgoNoEstaBien } inseguro)
+        if (Ultimo(estados) is not { Estado: EstadoCiudadano.AlgoNoEstaBien } aviso)
             return false;
-        return ultimaConfirmacion is not { Respuesta: RespuestaBienestar.EstoyBien, RespondidaEn: { } respondida } || respondida < inseguro.InformadoEn;
+        return confirmaciones?.Any(c => c is { Respuesta: RespuestaBienestar.EstoyBien, RespondidaEn: { } respondida } && respondida > aviso.InformadoEn) != true;
     }
 }
 
@@ -106,7 +106,7 @@ public sealed record DetalleAcompanamiento(Guid Id, string Ciudadano, string? Te
 
     public EstadoCiudadanoVista? UltimoEstado => EstadoCiudadanoVista.Ultimo(Estados);
     public bool AyudaInformadaEnCurso => EstadoCiudadanoVista.AyudaEnCurso(Estados);
-    public bool AlgoNoEstaBien => Activa && EstadoCiudadanoVista.AlgoNoEstaBien(Estados, Confirmaciones is { Count: > 0 } c ? c[0] : null);
+    public bool AlgoNoEstaBien => Activa && EstadoCiudadanoVista.AlgoNoEstaBien(Estados, Confirmaciones);
 
     public bool Activa => Estado == EstadoSesion.Activa;
 }
@@ -139,12 +139,12 @@ public sealed class ConsultarAcompanamientos(CadDbContext db, GestionarAcompanam
                           .ToListAsync(ct);
         var ids = filas.Select(f => f.Id).ToList();
         var confirmaciones = (await ConfirmacionesAsync(c => ids.Contains(c.SesionId), ct))
-            .GroupBy(c => c.SesionId).ToDictionary(g => g.Key, g => g.First().Vista);
+            .GroupBy(c => c.SesionId).ToDictionary(g => g.Key, g => (IReadOnlyList<ConfirmacionVista>)g.Select(x => x.Vista).ToList());
         var estados = (await EstadosAsync(e => ids.Contains(e.SesionId), ct))
             .GroupBy(e => e.SesionId).ToDictionary(g => g.Key, g => (IReadOnlyList<EstadoCiudadanoVista>)g.Select(x => x.Vista).ToList());
         return filas.Select(f => new AcompanamientoActivo(f.Id, f.Ciudadano, f.PhoneNumber, f.IniciadaEn, f.VenceEn, f.UltimoContactoEn,
                 SinConexion(f.UltimoContactoEn, ahora), f.Ultima is null ? null : Vista(f.Ultima, ahora), f.Posiciones,
-                confirmaciones.GetValueOrDefault(f.Id), estados.GetValueOrDefault(f.Id)))
+                confirmaciones.GetValueOrDefault(f.Id)?[0], estados.GetValueOrDefault(f.Id), confirmaciones.GetValueOrDefault(f.Id)))
             .ToList();
     }
 

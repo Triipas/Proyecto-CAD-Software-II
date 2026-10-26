@@ -42,7 +42,7 @@ public sealed class InformarEstado(CadDbContext db, ConfirmarBienestar confirmar
         if (solicitud.IdSolicitud == Guid.Empty)
             return new ResultadoEstadoInformado.Invalido(new() { ["idSolicitud"] = ["Falta el identificador de la solicitud."] });
 
-        if (await RepetidoAsync(ciudadanoId, solicitud.IdSolicitud, ct) is { } repetido)
+        if (await RepetidoAsync(ciudadanoId, sesionId, solicitud.IdSolicitud, ct) is { } repetido)
             return repetido;
         if (await gestionar.DelTitularAsync(ciudadanoId, sesionId, ct) is null)
             return new ResultadoEstadoInformado.NoEncontrada();
@@ -82,7 +82,7 @@ public sealed class InformarEstado(CadDbContext db, ConfirmarBienestar confirmar
                 // La misma pulsación llegó dos veces a la vez: solo una se registra.
                 await transaccion.RollbackAsync(ct);
                 db.ChangeTracker.Clear();
-                return await RepetidoAsync(ciudadanoId, solicitud.IdSolicitud, ct)
+                return await RepetidoAsync(ciudadanoId, sesionId, solicitud.IdSolicitud, ct)
                     ?? throw new InvalidOperationException("Violación de unicidad sin un estado repetido.", ex);
             }
         }
@@ -96,11 +96,15 @@ public sealed class InformarEstado(CadDbContext db, ConfirmarBienestar confirmar
         return new ResultadoEstadoInformado.Registrado(registrado, sesion);
     }
 
-    private async Task<ResultadoEstadoInformado?> RepetidoAsync(Guid ciudadanoId, Guid idSolicitud, CancellationToken ct)
+    // Un reenvío de la misma pulsación devuelve lo registrado; la misma solicitud con otra sesión no es un reenvío y se rechaza
+    // (no se hace pasar el aviso o el SOS de una sesión anterior por uno de esta).
+    private async Task<ResultadoEstadoInformado?> RepetidoAsync(Guid ciudadanoId, Guid sesionId, Guid idSolicitud, CancellationToken ct)
     {
         var estado = await db.EstadosInformados.AsNoTracking().SingleOrDefaultAsync(e => e.CiudadanoId == ciudadanoId && e.IdSolicitud == idSolicitud, ct);
         if (estado is null)
             return null;
+        if (estado.SesionId != sesionId)
+            return new ResultadoEstadoInformado.Invalido(new() { ["idSolicitud"] = ["Esta solicitud ya se usó en otro acompañamiento."] });
         var sesion = await db.SesionesAcompanamiento.AsNoTracking().SingleAsync(s => s.Id == estado.SesionId, ct);
         return new ResultadoEstadoInformado.YaRegistrado(estado, sesion);
     }
