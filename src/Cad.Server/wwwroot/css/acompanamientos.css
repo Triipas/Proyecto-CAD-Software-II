@@ -210,6 +210,12 @@
   background: var(--color-urgente-fondo);
 }
 
+/* 26/10/2026: el ciudadano avisó que algo no está bien: sin SOS, pero más que un aviso de la regla. */
+.vigilado--algonoestabien {
+  border-color: var(--color-advertencia-borde);
+  background: var(--color-advertencia-fondo);
+}
+
 .vigilado--aviso,
 .vigilado--sinconexion,
 .vigilado--desactualizada {

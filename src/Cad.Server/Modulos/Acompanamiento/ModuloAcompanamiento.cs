@@ -15,6 +15,7 @@ public static class ModuloAcompanamiento
         services.AddHostedService<VencimientoAcompanamientos>();
         services.AddScoped<ConservarRecorridos>();
         services.AddScoped<ConfirmarBienestar>();
+        services.AddScoped<InformarEstado>();
         services.AddScoped<EvaluarAvisos>();
         services.AddHostedService<EvaluacionAvisos>();
         services.AddScoped<AtenderAvisos>();
@@ -104,6 +105,22 @@ public static class ModuloAcompanamiento
                 _ => Results.NotFound(),
             });
 
+        // 26/10/2026 — el ciudadano informa cómo va, por su cuenta: 200 con el estado registrado (también ante un reenvío de la
+        // misma pulsación); 400 sin estado válido o, con «Necesito ayuda», sin la solicitud del SOS; 409 con la sesión cerrada
+        // (salvo «Necesito ayuda», que se acepta igual); 404 sesión ajena o inexistente.
+        acompanamiento.MapPost("/{id:guid}/estado", async (Guid id, SolicitudEstadoAcompanamiento solicitud, HttpContext contexto,
+                InformarEstado informar, CancellationToken ct) =>
+            await informar.InformarAsync(contexto.User.IdUsuario(), id, solicitud, ct) switch
+            {
+                ResultadoEstadoInformado.Registrado r => Results.Ok(Vista(r.Estado, r.Sesion)),
+                ResultadoEstadoInformado.YaRegistrado r => Results.Ok(Vista(r.Estado, r.Sesion)),
+                ResultadoEstadoInformado.SesionCerrada c => Results.Problem(
+                    title: "El acompañamiento ya terminó: tu estado no se registró.", statusCode: StatusCodes.Status409Conflict,
+                    extensions: new Dictionary<string, object?> { ["estado"] = Texto(c.Sesion.Estado) }),
+                ResultadoEstadoInformado.Invalido i => Results.ValidationProblem(i.Errores, title: "No se registró tu estado."),
+                _ => Results.NotFound(),
+            });
+
         return app;
     }
 
@@ -112,6 +129,17 @@ public static class ModuloAcompanamiento
 
     private static ConfirmacionBienestarVista Vista(ConfirmacionBienestar c) =>
         new(c.Id, c.SolicitadaEn, c.PresentadaEn, c.Respuesta is { } r ? Texto(r) : null, c.RespondidaEn, c.CasoId);
+
+    public static string Texto(EstadoCiudadano estado) => estado switch
+    {
+        EstadoCiudadano.EstoyBien => EstadosCiudadano.EstoyBien,
+        EstadoCiudadano.AlgoNoEstaBien => EstadosCiudadano.AlgoNoEstaBien,
+        EstadoCiudadano.NecesitoAyuda => EstadosCiudadano.NecesitoAyuda,
+        _ => EstadosCiudadano.Llegue,
+    };
+
+    private static EstadoInformadoVista Vista(EstadoInformado e, SesionAcompanamiento sesion) =>
+        new(e.Id, Texto(e.Estado), e.InformadoEn, e.CasoId, Texto(sesion.Estado));
 
     public static string Texto(EstadoSesion estado) => estado switch
     {

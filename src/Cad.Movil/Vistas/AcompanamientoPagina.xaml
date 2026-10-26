@@ -57,6 +57,27 @@
                 </Border>
                 <v:Aviso Emergente="True" Tipo="{Binding TipoResultadoConfirmacion}" Texto="{Binding ResultadoConfirmacion}" Mostrar="{Binding HayResultadoConfirmacion}" />
 
+                <!-- 26/10/2026: el ciudadano avisa cómo va sin esperar a que la central pregunte. «Necesito ayuda» emite un SOS (o usa el que
+                     ya tengas); «Algo no está bien» no, pero la central te tiene en seguimiento; «Llegué» finaliza el acompañamiento. -->
+                <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarComoVas}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="¿Cómo vas?" FontAttributes="Bold" FontSize="20" SemanticProperties.HeadingLevel="Level2" />
+                        <Label Text="Avisa a la central sin esperar a que te pregunte." Style="{StaticResource TextoSecundario}" />
+                        <Button Text="Necesito ayuda" Style="{StaticResource BotonPrincipal}" BackgroundColor="{StaticResource ColorError}"
+                                Command="{Binding InformarNecesitoAyuda}" SemanticProperties.Hint="Emite un SOS a la central" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Button Text="Estoy bien" Style="{StaticResource BotonSecundario}" Command="{Binding InformarEstoyBien}"
+                                    SemanticProperties.Hint="Avisa a la central de que estás bien. El acompañamiento sigue activo" />
+                            <Button Grid.Column="1" Text="Algo no está bien" Style="{StaticResource BotonSecundario}" Command="{Binding InformarAlgoNoEstaBien}"
+                                    SemanticProperties.Hint="Avisa a la central sin emitir un SOS: te tendrá en seguimiento" />
+                        </Grid>
+                        <Button Text="Llegué a mi destino" Style="{StaticResource BotonSecundario}" Command="{Binding InformarLlegue}"
+                                SemanticProperties.Hint="Avisa tu llegada y finaliza el acompañamiento" />
+                        <ActivityIndicator IsRunning="{Binding InformandoEstado}" IsVisible="{Binding InformandoEstado}" />
+                    </VerticalStackLayout>
+                </Border>
+                <v:Aviso Emergente="True" Tipo="{Binding TipoResultadoEstado}" Texto="{Binding ResultadoEstado}" Mostrar="{Binding HayResultadoEstado}" />
+
                 <!-- HU34-CA01/CA08: estado activo, tiempo restante y control de finalización; HU35-CA04: condición real. -->
                 <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding MostrarActivo}">
                     <VerticalStackLayout Spacing="12">

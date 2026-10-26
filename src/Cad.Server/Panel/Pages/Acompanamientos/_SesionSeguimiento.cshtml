@@ -47,11 +47,36 @@
 
     @* La siguiente acción: lo más urgente de esta persona, una sola cosa a la vez. *@
     <section class="seguimiento__siguiente" aria-labelledby="seguimiento-siguiente">
-        @if (Model.PideAyuda && Model.UltimaConfirmacion?.CasoId is { } caso)
+        @if (Model.PideAyuda && Model.SosEnCurso is { } caso)
         {
             <h3 class="seguimiento__accion" id="seguimiento-siguiente">Pidió ayuda: atiende su SOS</h3>
-            <p class="texto-secundario">Respondió «Necesito ayuda» a la confirmación de las @Formato.Hora(Model.UltimaConfirmacion.SolicitadaEn, zona, "HH:mm"). El SOS está en la cola de la central.</p>
+            @if (Model.UltimaConfirmacion is { Respuesta: RespuestaBienestar.NecesitoAyuda, SosEnCurso: true } pedida && pedida.CasoId == caso)
+            {
+                <p class="texto-secundario">Respondió «Necesito ayuda» a la confirmación de las @Formato.Hora(pedida.SolicitadaEn, zona, "HH:mm"). El SOS está en la cola de la central.</p>
+            }
+            else
+            {
+                <p class="texto-secundario">Pulsó «Necesito ayuda» desde su acompañamiento. El SOS está en la cola de la central.</p>
+            }
             <a class="boton boton--peligro" href="/panel/central/sos/@caso"><partial name="_Icono" model="@("urgente")" />Abrir el SOS</a>
+        }
+        else if (s.AlgoNoEstaBien && s.UltimoEstado is { } alerta)
+        {
+            @* 26/10/2026: avisó por su cuenta que algo no está bien. No hay SOS: el operador decide cómo seguir. *@
+            <h3 class="seguimiento__accion" id="seguimiento-siguiente">Avisó que algo no está bien</h3>
+            <p class="texto-secundario">A las @Formato.Hora(alerta.InformadoEn, zona, "HH:mm"), sin pedir un SOS. Comunícate por teléfono o pide una confirmación de bienestar; deja de requerir atención cuando diga que está bien.</p>
+            @if (s.Telefono is { } telefonoAlerta)
+            {
+                <a class="boton boton--principal" href="tel:@telefonoAlerta.Replace(" ", "")">Llamar al @telefonoAlerta</a>
+            }
+            @if (s.Activa && !s.ConfirmacionPendiente)
+            {
+                <form method="post" asp-page="/Acompanamientos/Detalle" asp-route-id="@s.Id" asp-page-handler="SolicitarConfirmacion" data-formulario>
+                    <input type="hidden" name="IdSolicitudConfirmacion" value="@Model.IdSolicitudConfirmacion" />
+                    <input type="hidden" name="Volver" value="lista" />
+                    <button type="submit" class="boton boton--secundario" data-texto-carga="Solicitando…">Pedir confirmación de bienestar</button>
+                </form>
+            }
         }
         else if (Model.AvisoAbierto is { } aviso)
         {
@@ -100,6 +125,13 @@
                 }
             </dd>
         </div>
+        @if (s.UltimoEstado is { } informado)
+        {
+            <div>
+                <dt>Informó por su cuenta</dt>
+                <dd data-estado-informado="@informado.Estado"><strong>@informado.Texto</strong> <span class="texto-secundario num">· @Formato.Hora(informado.InformadoEn, zona, "HH:mm")</span></dd>
+            </div>
+        }
         <div>
             <dt>Último envío</dt>
             <dd>

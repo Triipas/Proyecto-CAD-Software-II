@@ -41,16 +41,17 @@ public class PanelAcompanamientoTests(FabricaCad fabrica)
     {
         await using var operador = await fabrica.OperadorEnCentralAsync();
         var (sesionId, app) = await SesionAsync();
-        Assert.True(await CentralDePrueba.EsperarAsync(() => operador.AvisosAcompanamientos.Contains(sesionId)), "aviso del inicio");
+        // El servidor de pruebas es compartido: la central también recibe los avisos de otras pruebas; solo cuentan los de esta sesión.
+        int Avisos() => operador.AvisosAcompanamientos.Count(id => id == sesionId);
+        Assert.True(await CentralDePrueba.EsperarAsync(() => Avisos() > 0), "aviso del inicio");
 
-        var antes = operador.AvisosAcompanamientos.Count;
+        var antes = Avisos();
         await PosicionAsync(app, sesionId);
-        Assert.True(await CentralDePrueba.EsperarAsync(() => operador.AvisosAcompanamientos.Count > antes), "aviso de la posición");
+        Assert.True(await CentralDePrueba.EsperarAsync(() => Avisos() > antes), "aviso de la posición");
 
-        antes = operador.AvisosAcompanamientos.Count;
+        antes = Avisos();
         await app.PostAsync($"/api/acompanamiento/{sesionId}/finalizacion", null);
-        Assert.True(await CentralDePrueba.EsperarAsync(() => operador.AvisosAcompanamientos.Count > antes), "aviso del cierre");
-        Assert.All(operador.AvisosAcompanamientos, id => Assert.Equal(sesionId, id));
+        Assert.True(await CentralDePrueba.EsperarAsync(() => Avisos() > antes), "aviso del cierre");
     }
 
     [Fact]

@@ -28,6 +28,8 @@ public sealed class PerfilVistaModelo : VistaModeloBase
 
     // La pantalla lo sustituye por un diálogo del sistema; en las pruebas responde sí.
     public Func<Task<bool>> ConfirmarCierre { get; set; } = () => Task.FromResult(true);
+    // 26/10/2026: con un acompañamiento en curso, el diálogo avisa que se finalizará.
+    public Func<Task<bool>> ConfirmarCierreConAcompanamiento { get; set; } = () => Task.FromResult(true);
 
     public string Iniciales => perfil is null ? "" :
         $"{perfil.Nombres.Trim().FirstOrDefault()}{perfil.Apellidos.Trim().FirstOrDefault()}".ToUpper(CultureInfo.CurrentCulture);
@@ -89,16 +91,21 @@ public sealed class PerfilVistaModelo : VistaModeloBase
         return navegacion.IrAAsync(Rutas.Pin);
     }
 
-    // Sin sesión, pedir ayuda vuelve a exigir el PIN: por eso se confirma. Con un acompañamiento activo, primero se finaliza.
+    // Sin sesión, pedir ayuda vuelve a exigir el PIN: por eso se confirma. 26/10/2026: con un acompañamiento en curso, el
+    // diálogo avisa que se finalizará y, si acepta, se finaliza como con «Finalizar acompañamiento» (HU36): deja de compartir
+    // su ubicación al instante y el cierre llega a la central, para que no lo vea «Sin conexión». Sin conexión, el cierre queda
+    // guardado y se envía en el próximo ingreso (si ingresa otra cuenta, el servidor lo rechaza y se descarta); mientras tanto,
+    // el servidor la cierra sola a los 30 minutos (HU37).
     private async Task CerrarSesionAsync()
     {
-        if (acompanamiento?.Estado is EstadoAcompanamiento.Activo or EstadoAcompanamiento.CierrePendiente or EstadoAcompanamiento.Finalizando)
+        var enCurso = acompanamiento?.Estado is EstadoAcompanamiento.Activo or EstadoAcompanamiento.CierrePendiente or EstadoAcompanamiento.Finalizando;
+        if (!await (enCurso ? ConfirmarCierreConAcompanamiento() : ConfirmarCierre()))
+            return;
+        if (acompanamiento?.Estado == EstadoAcompanamiento.Activo)
         {
-            (TipoMensaje, Mensaje) = ("advertencia", "Finaliza tu acompañamiento antes de cerrar sesión.");
-            return;
+            (TipoMensaje, Mensaje) = ("informacion", "Finalizando tu acompañamiento…");
+            await acompanamiento.FinalizarAsync();
         }
-        if (!await ConfirmarCierre())
-            return;
         if (acompanamiento is not null)
             await acompanamiento.ReiniciarAsync();
         // Un SOS pendiente de reintento no puede reenviarse luego con la sesión de otra persona.

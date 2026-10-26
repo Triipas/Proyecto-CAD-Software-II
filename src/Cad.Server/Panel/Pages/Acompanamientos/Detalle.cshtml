@@ -61,6 +61,13 @@
             @* HU40 y HU41 — confirmación de bienestar: se pide durante una sesión activa, sin crear un SOS ni un despacho. *@
             <section class="superficie seccion-caso@(s.Activa ? " siguiente" : "")" aria-labelledby="titulo-bienestar" data-bienestar data-vivo="bienestar">
                 <h2 id="titulo-bienestar" class="@(s.Activa ? "siguiente__titulo" : "seccion-caso__titulo")">Confirmación de bienestar</h2>
+                @if (s.AlgoNoEstaBien && s.UltimoEstado is { } alerta)
+                {
+                    <div class="aviso aviso--advertencia" data-algo-no-esta-bien>
+                        <partial name="_Icono" model="@("advertencia")" />
+                        <p class="aviso__texto">A las @Formato.Hora(alerta.InformadoEn, zona, "HH:mm") avisó que algo no está bien, sin pedir un SOS. Requiere atención hasta que diga que está bien.</p>
+                    </div>
+                }
                 @if (Model.ErrorConfirmacion is { } errorConfirmacion)
                 {
                     <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar data-error-confirmacion>
@@ -114,6 +121,33 @@
                 else if (!s.Activa)
                 {
                     <p class="texto-secundario">No se pidieron confirmaciones en esta sesión.</p>
+                }
+                @* 26/10/2026: lo que el ciudadano informó por su cuenta, sin que se lo pidieran. *@
+                @if (s.Estados is { Count: > 0 } informados)
+                {
+                    <h3 class="seguimiento__subtitulo">Lo que informó por su cuenta</h3>
+                    <ol class="historial" data-estados-informados>
+                        @foreach (var informado in informados)
+                        {
+                            var peligro = informado.Estado is EstadoCiudadano.AlgoNoEstaBien || informado is { Estado: EstadoCiudadano.NecesitoAyuda, SosEnCurso: true };
+                            <li class="historial__elemento" data-estado-informado="@informado.Estado">
+                                <p class="historial__cabecera">
+                                    <span class="estado @(peligro ? "estado--sin-contacto" : informado.Estado == EstadoCiudadano.NecesitoAyuda ? "estado--inactiva" : "estado--activa")">@informado.Texto</span>
+                                    <span class="texto-secundario">A las @Formato.Hora(informado.InformadoEn, zona)</span>
+                                </p>
+                                @if (informado.CasoId is { } casoInformado)
+                                {
+                                    <p class="historial__texto">
+                                        @if (informado.TextoSos is { } textoSos)
+                                        {
+                                            <span data-estado-sos>@textoSos</span>
+                                        }
+                                        <a href="/panel/central/sos/@casoInformado">Ver el SOS</a>
+                                    </p>
+                                }
+                            </li>
+                        }
+                    </ol>
                 }
             </section>
 

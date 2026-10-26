@@ -251,6 +251,47 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.EstadoInformado", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CiudadanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("IdSolicitud")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("InformadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SesionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CasoId");
+
+                    b.HasIndex("CiudadanoId", "IdSolicitud")
+                        .IsUnique();
+
+                    b.HasIndex("SesionId", "InformadoEn");
+
+                    b.ToTable("EstadosInformados", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EstadosInformados_Sos", "(\"Estado\" = 'NecesitoAyuda' AND \"CasoId\" IS NOT NULL) OR (\"Estado\" <> 'NecesitoAyuda' AND \"CasoId\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.PosicionAcompanamiento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1710,6 +1751,26 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Acompanamiento.Dominio.SesionAcompanamiento", null)
                         .WithOne()
                         .HasForeignKey("Cad.Server.Modulos.Acompanamiento.Dominio.ConservacionRecorrido", "SesionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Acompanamiento.Dominio.EstadoInformado", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("CiudadanoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Acompanamiento.Dominio.SesionAcompanamiento", null)
+                        .WithMany()
+                        .HasForeignKey("SesionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

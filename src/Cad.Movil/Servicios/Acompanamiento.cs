@@ -81,6 +81,15 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
     public bool ConfirmacionNoConfirmada { get; private set; }
     public bool RespondiendoConfirmacion { get; private set; }
 
+    // 26/10/2026 — lo que el ciudadano informa por su cuenta («¿Cómo vas?»). Sin respuesta del servidor, el reintento de la misma
+    // opción en la misma sesión reutiliza la misma solicitud (y el mismo SOS con «Necesito ayuda»): no se registra dos veces. Una
+    // sesión nueva (o salir de la app) empieza de cero.
+    private readonly SemaphoreSlim informe = new(1, 1);
+    private (Guid Sesion, SolicitudEstadoAcompanamiento Solicitud)? estadoSinConfirmar;
+    public bool InformandoEstado { get; private set; }
+    public string? ResultadoEstado { get; private set; }
+    public bool EstadoNoConfirmado { get; private set; }
+
     // HU34-CA01/CA08: tiempo restante según la hora del servidor; null si no hay sesión activa.
     public TimeSpan? Restante => Activo && Sesion is { } s
         ? Max(TimeSpan.Zero, s.VenceEn - (reloj.GetUtcNow() + desfase))
@@ -244,6 +253,7 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
     // enviará en el próximo ingreso.
     public async Task ReiniciarAsync()
     {
+        estadoSinConfirmar = null;
         await DetenerEnvioAsync();
         DetenerReintento();
         Estado = EstadoAcompanamiento.SinSesion;
@@ -626,6 +636,85 @@ public sealed class ServicioAcompanamiento(IApiCad api, IServicioUbicacion ubica
             RespondiendoConfirmacion = false;
             respuesta.Release();
             Notificar();
+        }
+    }
+
+    // 26/10/2026: el ciudadano avisa cómo va sin que la central lo pida. «Necesito ayuda» emite un SOS (o usa el vigente) y solo
+    // se confirma cuando responde el servidor; «Llegué» avisa la llegada y finaliza el acompañamiento, también sin conexión.
+    public async Task InformarEstadoAsync(string estado, CancellationToken ct = default)
+    {
+        if (Sesion is not { } sesion || !Activo)
+            return;
+        await informe.WaitAsync(ct);
+        InformandoEstado = true;
+        Notificar();
+        // «Llegué»: deja de compartir su ubicación al instante, sin esperar a la red, y el cierre queda guardado para reenviarse
+        // (HU36-CA01/CA03) aunque el aviso no llegue o se cancele. Después se finaliza en cualquier caso.
+        var finalizar = estado == EstadosCiudadano.Llegue;
+        if (finalizar)
+        {
+            await DetenerEnvioAsync();
+            ultimaPosicion = null;
+            almacen.Guardar(ClaveCierrePendiente, sesion.Id.ToString());
+        }
+        try
+        {
+            if (await TokenAsync() is not { } token)
+                return;
+            var solicitud = estadoSinConfirmar is { } previa && previa.Sesion == sesion.Id && previa.Solicitud.Estado == estado
+                ? previa.Solicitud
+                : new SolicitudEstadoAcompanamiento(Guid.NewGuid(), estado, estado == EstadosCiudadano.NecesitoAyuda ? await PrepararSosAsync(ct) : null);
+            estadoSinConfirmar = (sesion.Id, solicitud);
+
+            ResultadoApi<EstadoInformadoVista> resultado;
+            try
+            {
+                resultado = await api.InformarEstadoAcompanamientoAsync(token, sesion.Id, solicitud, ct);
+            }
+            catch (Exception e) when (!ct.IsCancellationRequested)
+            {
+                resultado = new ResultadoApi<EstadoInformadoVista>.SinRespuesta(e.GetType().Name);
+            }
+
+            EstadoNoConfirmado = false;
+            switch (resultado)
+            {
+                case ResultadoApi<EstadoInformadoVista>.Correcto:
+                    estadoSinConfirmar = null;
+                    ResultadoEstado = estado switch
+                    {
+                        EstadosCiudadano.EstoyBien => "Avisaste a la central que estás bien.",
+                        EstadosCiudadano.AlgoNoEstaBien => "La central sabe que algo no está bien y te tiene en seguimiento. Si estás en peligro, pulsa «Necesito ayuda».",
+                        EstadosCiudadano.NecesitoAyuda => "Pedido de ayuda registrado: la central recibió tu SOS.",
+                        _ => "Avisaste que llegaste a tu destino.",
+                    };
+                    break;
+                case ResultadoApi<EstadoInformadoVista>.Rechazado { Estado: 401 }:
+                    MarcarSesionTerminada();
+                    break;
+                case ResultadoApi<EstadoInformadoVista>.Rechazado rechazo:
+                    estadoSinConfirmar = null;
+                    ResultadoEstado = rechazo.Estado == 409 ? rechazo.Mensaje : $"No se registró tu aviso: {rechazo.Mensaje}";
+                    EstadoNoConfirmado = true;
+                    break;
+                default:
+                    EstadoNoConfirmado = true;
+                    ResultadoEstado = estado switch
+                    {
+                        EstadosCiudadano.NecesitoAyuda => "Sin respuesta del servidor: tu pedido de ayuda NO está confirmado. Vuelve a intentarlo o pulsa el botón SOS.",
+                        EstadosCiudadano.Llegue => "Sin respuesta del servidor: tu llegada no llegó a la central. Igual dejas de compartir tu ubicación.",
+                        _ => "Sin respuesta del servidor: tu aviso no llegó a la central. Vuelve a intentarlo.",
+                    };
+                    break;
+            }
+        }
+        finally
+        {
+            InformandoEstado = false;
+            informe.Release();
+            Notificar();
+            if (finalizar)
+                await FinalizarAsync(CancellationToken.None);
         }
     }
 
