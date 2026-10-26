@@ -56,10 +56,10 @@ else
                     var gris = s.SinConexion || p is { Desactualizada: true } || p is null;
                     var atencion = Model.AtencionDe(s);
                     var avisos = Model.AvisosDe(s.Id);
-                    <li class="vigilado vigilado--@atencion.ToString().ToLowerInvariant()" data-clave="@s.Id" data-acompanamiento="@s.Id" data-ciudadano="@s.Ciudadano"
+                    <li class="vigilado vigilado--@atencion.ToString().ToLowerInvariant()" data-acompanamiento="@s.Id" data-ciudadano="@s.Ciudadano"
                         data-atencion="@atencion" data-sin-conexion="@(s.SinConexion ? "true" : "false")"
                         data-lat="@(p is null ? null : Formato.Numero(p.Latitud))" data-lon="@(p is null ? null : Formato.Numero(p.Longitud))"
-                        data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")">
+                        data-desactualizada="@(p is { Desactualizada: true } ? "true" : "false")" data-clave="@s.Id">
                         @* Sonar mientras su posición está al día; desfasado por sesión para que no laten a la vez. *@
                         <span class="vigilado__avatar@(gris ? " vigilado__avatar--gris" : " sonar")" aria-hidden="true"
                               style="--desfase: -@(Math.Abs(s.Id.GetHashCode() % 24) * 100)ms">@Iniciales(s.Ciudadano)</span>

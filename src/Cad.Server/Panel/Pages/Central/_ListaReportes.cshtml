@@ -16,10 +16,10 @@
             @foreach (var reporte in Model.Admitidos)
             {
                 var local = TimeZoneInfo.ConvertTime(reporte.AdmitidoEn, Model.ZonaHoraria);
-                <li class="sos sos--reporte" id="sos-@reporte.Id" tabindex="-1" data-clave="@reporte.Id" data-sos="@reporte.Id" data-origen="Reporte"
+                <li class="sos sos--reporte" id="sos-@reporte.Id" tabindex="-1" data-sos="@reporte.Id" data-origen="Reporte"
                     data-ciudadano="@reporte.Ciudadano" data-categoria="@reporte.Categoria"
                     data-lat="@reporte.Latitud?.ToString(inv)" data-lon="@reporte.Longitud?.ToString(inv)"
-                    data-hora="@local.ToString("HH:mm", inv)" data-detalle="/panel/reportes/@reporte.Id">
+                    data-hora="@local.ToString("HH:mm", inv)" data-detalle="/panel/reportes/@reporte.Id" data-clave="@reporte.Id">
                     <div class="sos__cabecera">
                         <span class="etiqueta-reporte">Reporte</span>
                         <span class="sos__estado">@Cad.Server.Modulos.Casos.Dominio.EstadosCaso.ReporteAdmitido</span>

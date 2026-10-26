@@ -17,11 +17,11 @@
         <ul class="lista-serenos">
             @foreach (var sereno in Model.Serenos)
             {
-                <li class="sereno @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1" data-clave="@sereno.Id"
+                <li class="sereno @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
                     data-sereno="@sereno.Id" data-nombre="@sereno.Nombre"
                     data-disponible="@(sereno.Disponible ? "true" : "false")"
                     data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)" data-caso="@sereno.CasoAsignadoId"
-                    data-hora="@(sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "")">
+                    data-hora="@(sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "")" data-clave="@sereno.Id">
                     <div class="sereno__cabecera">
                         <span class="sereno__nombre">@sereno.Nombre</span>
                         <span class="estado @(sereno.Operativo ? "estado--activa" : "estado--inactiva")" data-suave>

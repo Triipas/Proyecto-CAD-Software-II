@@ -5,8 +5,8 @@
 <ul class="visualmente-oculto" data-casos-mapa data-total="@Model.Count">
     @foreach (var c in Model)
     {
-        <li data-clave="@c.Id" data-caso-mapa="@c.Id" data-origen="@c.TextoOrigen" data-estado="@c.TextoEstado" data-detalle="@c.Detalle"
-            data-ciudadano="@c.Ciudadano" data-lat="@c.Latitud.ToString(CultureInfo.InvariantCulture)" data-lon="@c.Longitud.ToString(CultureInfo.InvariantCulture)">
+        <li data-caso-mapa="@c.Id" data-origen="@c.TextoOrigen" data-estado="@c.TextoEstado" data-detalle="@c.Detalle"
+            data-ciudadano="@c.Ciudadano" data-lat="@c.Latitud.ToString(CultureInfo.InvariantCulture)" data-lon="@c.Longitud.ToString(CultureInfo.InvariantCulture)" data-clave="@c.Id">
             @c.TextoOrigen · @c.TextoEstado · @c.Id
         </li>
     }
