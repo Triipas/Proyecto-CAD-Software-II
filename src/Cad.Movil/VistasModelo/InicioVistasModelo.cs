@@ -35,7 +35,9 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         Reintentar = new ComandoAsincrono(() => emisor.ReintentarAsync(), () => emisor.PuedeReintentar);
         PermitirUbicacion = new ComandoAsincrono(PermitirUbicacionAsync);
         AbrirAjustes = new ComandoAsincrono(() => { abrirAjustes(); return Task.CompletedTask; });
-        Salir = new ComandoAsincrono(SalirAsync, () => !AcompanamientoEnCurso);
+        // «Volver a ingresar» (la sesión de la app ya venció): siempre disponible. El acompañamiento no se finaliza; sin sesión no
+        // puede transmitir y, al volver a ingresar, la app retoma la sesión activa.
+        Salir = new ComandoAsincrono(SalirAsync);
         Acompanar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Acompanamiento));
         Reportar = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Reporte));
         VerMisCasos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisCasos));

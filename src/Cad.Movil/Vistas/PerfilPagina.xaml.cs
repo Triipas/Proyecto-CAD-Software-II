@@ -13,6 +13,9 @@ public partial class PerfilPagina : ContentPage
         // Sin sesión, pedir ayuda vuelve a exigir el PIN: se avisa antes de cerrar.
         vistaModelo.ConfirmarCierre = () => DisplayAlertAsync("¿Cerrar sesión?",
             "Para volver a pedir ayuda tendrás que ingresar tu PIN.", "Cerrar sesión", "Cancelar");
+        vistaModelo.ConfirmarCierreConAcompanamiento = () => DisplayAlertAsync("¿Finalizar el acompañamiento y cerrar sesión?",
+            "Tienes un acompañamiento activo. Si cierras sesión, se finalizará y dejarás de compartir tu ubicación con la central. Para volver a pedir ayuda tendrás que ingresar tu PIN.",
+            "Finalizar y cerrar sesión", "Cancelar");
     }
 
     protected override async void OnAppearing()

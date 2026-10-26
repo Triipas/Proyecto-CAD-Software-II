@@ -259,22 +259,80 @@ public class AcompanamientoTests
         await servicio.DetenerAsync();
     }
 
+    // 26/10/2026: «Volver a ingresar» (la sesión de la app venció) ya no se bloquea con un acompañamiento en curso: sin sesión no
+    // puede transmitir y, al volver a ingresar, se retoma.
     [Fact]
-    public async Task HU34_CA08_ElInicioMuestraElAcompanamientoActivoYNoPermiteSalir()
+    public async Task HU34_CA08_ElInicioMuestraElAcompanamientoActivo_YVolverAIngresarSiguePermitido()
     {
         var servicio = Servicio();
         var inicio = new InicioCiudadanoVistaModelo(new EmisorSos(api, ubicacion, sesiones, reloj), new PreparacionUbicacion(ubicacion),
             sesiones, new NavegacionFalsa(), () => { }, null, servicio) { HiloPrincipal = a => { a(); return Task.CompletedTask; } };
-        Assert.True(inicio.Salir.CanExecute(null));
 
         await servicio.IniciarAsync(true);
 
         Assert.True(inicio.AcompanamientoEnCurso);
         Assert.Contains("Quedan 30 min", inicio.TextoAcompanamiento);
-        Assert.False(inicio.Salir.CanExecute(null));
+        Assert.True(inicio.Salir.CanExecute(null));
         await servicio.FinalizarAsync();
         Assert.False(inicio.AcompanamientoEnCurso);
-        Assert.True(inicio.Salir.CanExecute(null));
+    }
+
+    // ----- 26/10/2026: cerrar sesión con un acompañamiento en curso -----
+
+    private PerfilVistaModelo Perfil(ServicioAcompanamiento servicio, NavegacionFalsa navegacion) =>
+        new(api, sesiones, navegacion, new FlujoIngresoCelular(api, sesiones, new DispositivosFalsos(), navegacion, reloj), servicio);
+
+    [Fact]
+    public async Task CerrarSesionConAcompanamiento_PideConfirmarYCancelarNoCambiaNada()
+    {
+        var servicio = Servicio();
+        await servicio.IniciarAsync(true);
+        var navegacion = new NavegacionFalsa();
+        var comun = 0;
+        var perfil = Perfil(servicio, navegacion);
+        perfil.ConfirmarCierre = () => { comun++; return Task.FromResult(true); };
+        perfil.ConfirmarCierreConAcompanamiento = () => Task.FromResult(false);
+
+        await perfil.CerrarSesion.EjecutarAsync();
+
+        Assert.Equal(0, comun); // se usa el diálogo que avisa del acompañamiento
+        Assert.True(servicio.Activo);
+        Assert.Empty(api.Finalizaciones);
+        Assert.NotNull(sesiones.Sesion);
+        Assert.Empty(navegacion.Rutas);
+        await servicio.DetenerAsync();
+    }
+
+    [Fact]
+    public async Task CerrarSesionConAcompanamiento_AlConfirmar_LoFinalizaYCierraLaSesion()
+    {
+        var servicio = Servicio();
+        await servicio.IniciarAsync(true);
+        var navegacion = new NavegacionFalsa();
+
+        await Perfil(servicio, navegacion).CerrarSesion.EjecutarAsync();
+
+        Assert.Contains(sesionId, api.Finalizaciones); // la central no lo ve «Sin conexión»
+        Assert.False(servicio.Transmitiendo);
+        Assert.False(almacen.Valores.ContainsKey(ServicioAcompanamiento.ClaveCierrePendiente));
+        Assert.Null(sesiones.Sesion);
+        Assert.Equal([Rutas.Ingreso], navegacion.Rutas);
+    }
+
+    [Fact]
+    public async Task CerrarSesionConAcompanamiento_SinConexion_CierraIgualYGuardaElCierre()
+    {
+        var servicio = Servicio();
+        await servicio.IniciarAsync(true);
+        api.RespuestaFinalizacion = _ => new ResultadoApi<SesionAcompanamientoVista>.SinRespuesta("Sin conexión.");
+        var navegacion = new NavegacionFalsa();
+
+        await Perfil(servicio, navegacion).CerrarSesion.EjecutarAsync();
+
+        Assert.False(servicio.Transmitiendo);
+        Assert.Equal(sesionId.ToString(), almacen.Valores[ServicioAcompanamiento.ClaveCierrePendiente]); // se envía al volver a ingresar
+        Assert.Null(sesiones.Sesion);
+        Assert.Equal([Rutas.Ingreso], navegacion.Rutas);
     }
 
     // ----- HU35 -----
