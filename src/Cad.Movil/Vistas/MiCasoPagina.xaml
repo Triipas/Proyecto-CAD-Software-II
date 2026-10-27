@@ -99,6 +99,7 @@
                     <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayEvaluacion}">
                         <VerticalStackLayout Spacing="4">
                             <Label Text="{Binding TextoEvaluacion}" FontAttributes="Bold" />
+                            <Label Text="{Binding MotivosRegistrados}" IsVisible="{Binding HayMotivosRegistrados}" />
                             <Label Text="{Binding ComentarioRegistrado}" />
                         </VerticalStackLayout>
                     </Border>
@@ -120,6 +121,22 @@
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </HorizontalStackLayout>
+                            <!-- 27/10/2026: por qué evalúa así (opcional, varias opciones); aparece al elegir la puntuación. -->
+                            <Label Text="{Binding TituloMotivosEvaluacion}" Style="{StaticResource Etiqueta}" IsVisible="{Binding HayOpcionesMotivoEvaluacion}" />
+                            <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding OpcionesMotivoEvaluacion}" IsVisible="{Binding HayOpcionesMotivoEvaluacion}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:OpcionMotivoEvaluacion">
+                                        <Button Text="{Binding Texto}" Command="{Binding Alternar}" Margin="0,0,8,8" Padding="14,0" HeightRequest="48"
+                                                Style="{StaticResource BotonSecundario}" SemanticProperties.Description="{Binding Descripcion}">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button" Binding="{Binding Elegida}" Value="True">
+                                                    <Setter Property="Style" Value="{StaticResource BotonPrincipal}" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
                             <Label Text="Comentario (opcional)" Style="{StaticResource Etiqueta}" />
                             <Border Style="{StaticResource MarcoCampo}">
                                 <Editor Text="{Binding Comentario}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoComentario}"

@@ -389,6 +389,21 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Analitica.ActividadCiudadano", b =>
+                {
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Dia")
+                        .HasColumnType("date");
+
+                    b.HasKey("UsuarioId", "Dia");
+
+                    b.HasIndex("Dia");
+
+                    b.ToTable("ActividadesCiudadano", (string)null);
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Analitica.PercepcionZona", b =>
                 {
                     b.Property<DateTimeOffset>("Hora")
@@ -987,6 +1002,10 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<Guid>("IdSolicitud")
                         .HasColumnType("uuid");
 
+                    b.PrimitiveCollection<string[]>("Motivos")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.Property<int>("Puntuacion")
                         .HasColumnType("integer");
 
@@ -996,6 +1015,8 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.ToTable("EvaluacionesCaso", null, t =>
                         {
+                            t.HasCheckConstraint("CK_EvaluacionesCaso_Motivos", "\"Motivos\" <@ ARRAY['LlegaronRapido', 'BuenTrato', 'Resolvieron', 'MeInformaron', 'Tardaron', 'MalTrato', 'NoResolvieron', 'NoMeInformaron']::text[]");
+
                             t.HasCheckConstraint("CK_EvaluacionesCaso_Puntuacion", "\"Puntuacion\" IS NOT NULL AND \"Puntuacion\" BETWEEN 1 AND 5");
                         });
                 });
@@ -1922,6 +1943,15 @@ namespace Cad.Server.Persistencia.Migraciones
                         .WithMany()
                         .HasForeignKey("CiudadanoId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Analitica.ActividadCiudadano", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

@@ -13,7 +13,8 @@ public sealed record MiReporte(string Categoria, string Descripcion, DateTimeOff
     double? Latitud, double? Longitud, string? Referencia, int Fotos);
 
 // HU32: la evaluación que el titular registró de un caso cerrado (null si no lo evaluó).
-public sealed record MiEvaluacion(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn);
+// Motivos (27/10/2026): códigos de MotivosEvaluacion; opcionales en el tipo para que un cliente anterior siga leyéndolo.
+public sealed record MiEvaluacion(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn, IReadOnlyList<string>? Motivos = null);
 
 // Un cambio de estado público, con su momento y, cuando DP05 lo permite, un detalle (destino o motivo del descarte).
 public sealed record AvancePublico(DateTimeOffset En, string Estado, string? Detalle);
@@ -39,4 +40,5 @@ public sealed record SolicitudCancelacionSos(string? Motivo, string? MotivoCodig
 
 // HU32 — evaluación voluntaria de un caso propio cerrado: puntuación de 1 a 5 (CA02) y comentario opcional (CA01).
 // IdSolicitud: lo genera la app por evaluación y lo reutiliza en cada reintento técnico.
-public sealed record SolicitudEvaluacionCaso(Guid IdSolicitud, int? Puntuacion, string? Comentario);
+// Motivos (27/10/2026): opcionales, códigos de MotivosEvaluacion (una app anterior no los envía).
+public sealed record SolicitudEvaluacionCaso(Guid IdSolicitud, int? Puntuacion, string? Comentario, IReadOnlyList<string>? Motivos = null);
