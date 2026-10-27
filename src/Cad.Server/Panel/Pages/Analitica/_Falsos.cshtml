@@ -3,8 +3,9 @@
     var (m, v) = Model;
     var indice = v.Actual;
     var minimo = m.Opciones.MinimoParaPercentiles;
-    // Descartes de reportes anteriores al catálogo (27/10/2026): no se cuentan como falsos ni como verdaderos.
-    var sinRegistrar = v.Embudo.MotivosDescarte.FirstOrDefault(c => c.Codigo == ConsultarEmbudoReportes.SinRegistrar)?.Veces ?? 0;
+    // Descartes de reportes anteriores al catálogo (27/10/2026): no se cuentan como falsos ni como verdaderos. Se cuentan entre las
+    // mismas decisiones del índice (por fecha de decisión), no en el embudo (por fecha de registro).
+    var sinRegistrar = indice.ReportesDescartadosSinMotivo;
     var categorias = indice.PorCategoria.Where(c => c.Decididos > 0).OrderByDescending(c => c.Decididos).Take(6).ToList();
     var peor = indice.PorCategoria.Where(c => c.Decididos >= minimo && c.Falsos > 0).OrderByDescending(c => c.Porcentaje).FirstOrDefault();
     static string UnoDeCada(double porcentaje) => $"1 de cada {Math.Max(1, (int)Math.Round(100 / porcentaje))}";

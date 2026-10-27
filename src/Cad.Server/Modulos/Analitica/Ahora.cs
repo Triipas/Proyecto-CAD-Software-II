@@ -25,7 +25,7 @@ public sealed class ConsultarTiemposPorEtapa(CadDbContext db)
     // El primer momento de cada marca del caso (nulo si no pasó).
     public sealed record Marcas(Guid Id, OrigenCaso Origen, string? Prioridad, DateTimeOffset Registro, DateTimeOffset? Presentado, DateTimeOffset? Abierto,
         DateTimeOffset? Contacto, DateTimeOffset? Revision, DateTimeOffset? Decision, DateTimeOffset? Admision, DateTimeOffset? Asignacion,
-        DateTimeOffset? EnCamino, DateTimeOffset? Atencion, DateTimeOffset? Cierre);
+        DateTimeOffset? EnCamino, DateTimeOffset? Atencion, DateTimeOffset? Cierre, EstadoCaso Estado);
 
     private static readonly (string Etapa, Func<Marcas, DateTimeOffset?> Desde, Func<Marcas, DateTimeOffset?> Hasta)[] EtapasSos =
     [
@@ -85,7 +85,7 @@ public sealed class ConsultarTiemposPorEtapa(CadDbContext db)
     internal static async Task<List<Marcas>> MarcasAsync(CadDbContext db, PeriodoAnalitica periodo, CancellationToken ct)
     {
         var casos = await db.Casos.AsNoTracking().Where(c => c.RegistradoEn >= periodo.Desde && c.RegistradoEn < periodo.Hasta)
-            .Select(c => new { c.Id, c.Origen, c.Prioridad, c.RegistradoEn, c.PresentadoEnCentralEn, c.AbiertoEnCentralEn })
+            .Select(c => new { c.Id, c.Origen, c.Prioridad, c.RegistradoEn, c.PresentadoEnCentralEn, c.AbiertoEnCentralEn, c.Estado })
             .ToListAsync(ct);
         var ids = casos.Select(c => c.Id).ToList();
         var primeros = (await db.EventosCaso.AsNoTracking().Where(e => ids.Contains(e.CasoId))
@@ -104,7 +104,7 @@ public sealed class ConsultarTiemposPorEtapa(CadDbContext db)
             Primero(c.Id, TipoEventoCaso.CasoAsignado),
             Primero(c.Id, TipoEventoCaso.DesplazamientoConfirmado),
             Primero(c.Id, TipoEventoCaso.AtencionIniciada),
-            Primero(c.Id, TipoEventoCaso.CasoCerrado))).ToList();
+            Primero(c.Id, TipoEventoCaso.CasoCerrado), c.Estado)).ToList();
     }
 }
 
@@ -180,7 +180,7 @@ public sealed record FalsosCategoria(string Categoria, int Decididos, int Falsos
 
 public sealed record IndiceFalsos(int ReportesDecididos, int ReportesFalsos, IReadOnlyList<FalsosCategoria> PorCategoria,
     int Sos, int SosDescartadosPorFalsos, int SosActivacionAccidental, int SosFalsaAlarmaAlCerrar,
-    IReadOnlyList<ConteoCodigo> MotivosDescarte, IReadOnlyList<ConteoCodigo> MotivosCancelacion)
+    IReadOnlyList<ConteoCodigo> MotivosDescarte, IReadOnlyList<ConteoCodigo> MotivosCancelacion, int ReportesDescartadosSinMotivo = 0)
 {
     public double? PorcentajeReportesFalsos => ReportesDecididos == 0 ? null : 100.0 * ReportesFalsos / ReportesDecididos;
     public double? PorcentajeSosFalsos => Sos == 0 ? null : 100.0 * SosDescartadosPorFalsos / Sos;
@@ -196,7 +196,13 @@ public sealed class ConsultarIndiceFalsos(CadDbContext db)
                                 join detalle in db.DetallesReporte.AsNoTracking() on d.CasoId equals detalle.CasoId
                                 join caso in db.Casos.AsNoTracking() on d.CasoId equals caso.Id
                                 where d.DecididaEn >= periodo.Desde && d.DecididaEn < periodo.Hasta && detalle.RegistradoPorOperadorId == null
-                                select new { Falso = d.Tipo == TipoDecisionReporte.Descarte && d.MotivoCodigo == MotivosDescarte.FalsoOMalintencionado, caso.CategoriaId })
+                                select new
+                                {
+                                    Falso = d.Tipo == TipoDecisionReporte.Descarte && d.MotivoCodigo == MotivosDescarte.FalsoOMalintencionado,
+                                    // Descartes anteriores al catálogo (27/10/2026): pueden ser falsos y el índice sería un mínimo.
+                                    SinMotivo = d.Tipo == TipoDecisionReporte.Descarte && d.MotivoCodigo == null,
+                                    caso.CategoriaId,
+                                })
                                .ToListAsync(ct);
 
         var sos = await db.Casos.AsNoTracking()
@@ -220,7 +226,7 @@ public sealed class ConsultarIndiceFalsos(CadDbContext db)
             descartes.Count(m => m == MotivosDescarte.FalsoOMalintencionado),
             descartes.Count(m => m == MotivosDescarte.ActivacionAccidental) + cancelaciones.Count(m => m == MotivosCancelacion.PorError),
             falsasAlarmas,
-            Contar(descartes, MotivosDescarte.Todos), Contar(cancelaciones, MotivosCancelacion.Todos));
+            Contar(descartes, MotivosDescarte.Todos), Contar(cancelaciones, MotivosCancelacion.Todos), decisiones.Count(d => d.SinMotivo));
     }
 }
 

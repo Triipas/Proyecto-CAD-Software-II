@@ -102,6 +102,25 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task Tiempo_UnSosDescartadoTrasLaAtencion_NoEntraEnLaMuestra()
+    {
+        await SosAtendidosAsync(6, 9, 11);
+        var ciudadano = (await fabrica.CrearAsync(Roles.Ciudadano)).Id;
+        var sereno = (await fabrica.CrearAsync(Roles.Sereno)).Id;
+        var descartado = Caso.EmitirSos(ciudadano, Guid.NewGuid(), null, Local(6, 10, 10));
+        descartado.Asignar(); descartado.ConfirmarDesplazamiento(); descartado.IniciarAtencion(); descartado.Descartar();
+        await Guardar(db =>
+        {
+            db.Casos.Add(descartado);
+            db.EventosCaso.Add(EventoCaso.Registrar(descartado, TipoEventoCaso.AtencionIniciada, sereno, VisibilidadEvento.Interna, descartado.RegistradoEn.AddMinutes(40)));
+        });
+
+        var html = await (await OperadorAsync()).GetStringAsync($"/panel/analitica/tiempo?{Rango(6, 1, 28)}");
+
+        Assert.Contains("data-casos=\"2\"", html);
+    }
+
+    [Fact]
     public async Task ColumnaDePreguntas_MarcaLaActualYEnlazaLasSiete()
     {
         var html = await (await OperadorAsync()).GetStringAsync($"/panel/analitica/falsos?{Rango(1, 1, 7)}");

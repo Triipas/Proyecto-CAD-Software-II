@@ -156,7 +156,9 @@
 
   if (typeof signalR === "undefined") { estado("desconectado"); return; }
   const conexion = new signalR.HubConnectionBuilder().withUrl("/hubs/central").withAutomaticReconnect().build();
-  for (const evento of ["CasoActualizado", "SosRecibido", "SerenoActualizado"]) conexion.on(evento, pedir);
+  // Un SOS cancelado y los cambios de un acompañamiento (o un aviso nuevo) también cambian lo que muestra «Ahora».
+  for (const evento of ["CasoActualizado", "SosRecibido", "SosCancelado", "SerenoActualizado", "AcompanamientoActualizado"])
+    conexion.on(evento, pedir);
   conexion.onreconnecting(() => estado("desconectado"));
   conexion.onreconnected(() => { estado("conectado"); actualizar(); });
   conexion.onclose(() => estado("desconectado"));

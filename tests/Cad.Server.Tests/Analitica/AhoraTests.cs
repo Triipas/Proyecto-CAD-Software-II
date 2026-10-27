@@ -165,6 +165,28 @@ public class AhoraTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task IndiceDeFalsos_DescartesSinMotivo_SeCuentanPorFechaDeDecision()
+    {
+        var (ciudadano, operador, _) = await PersonasAsync();
+        // Registrado antes del periodo y descartado dentro, sin motivo (anterior al catálogo): cuenta. El registrado dentro y
+        // descartado después, no.
+        var antes = Reporte(ciudadano, Local(3, 5, 9));
+        var despues = Reporte(ciudadano, Local(3, 12, 9));
+        await Guardar(db =>
+        {
+            db.Casos.AddRange(antes.Item1, despues.Item1);
+            db.DetallesReporte.AddRange(antes.Item2, despues.Item2);
+            db.DecisionesReporte.AddRange(
+                DecisionReporte.Registrar(antes.Item1, TipoDecisionReporte.Descarte, "Motivo ficticio", null, null, operador, Local(3, 11, 9), null, null),
+                DecisionReporte.Registrar(despues.Item1, TipoDecisionReporte.Descarte, "Motivo ficticio", null, null, operador, Local(3, 20, 9), null, null));
+        });
+
+        var i = await Servicio(s => s.GetRequiredService<ConsultarIndiceFalsos>().EjecutarAsync(new PeriodoAnalitica(Local(3, 10, 0), Local(3, 17, 0), Lima), CancellationToken.None));
+
+        Assert.Equal((1, 0, 1), (i.ReportesDecididos, i.ReportesFalsos, i.ReportesDescartadosSinMotivo));
+    }
+
+    [Fact]
     public async Task FotoDelMomento_CuentaElSosPendienteSinAbrirYAtascado()
     {
         var ciudadano = (await fabrica.CrearAsync(Roles.Ciudadano)).Id;

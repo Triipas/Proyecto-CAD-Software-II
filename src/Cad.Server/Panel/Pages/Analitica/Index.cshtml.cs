@@ -174,10 +174,12 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         var anterior = await cache.ObtenerAsync(Clave("respuesta", Anterior), () => S<ConsultarRespuestaPorZona>().EjecutarAsync(Anterior, false, ct));
         var prioridad = Prioridad is { Length: > 0 } && Cad.Contratos.Casos.Catalogo.Contiene(Cad.Contratos.Casos.PrioridadesCaso.Todas, Prioridad) ? Prioridad : null;
         Prioridad = prioridad;
-        // Cada respuesta del periodo: con pocos casos se dibuja cada una en lugar de medianas.
+        // Cada respuesta del periodo: con pocos casos se dibuja cada una en lugar de medianas. Sin cancelados ni descartados,
+        // como el mapa por zona y la comparación con el periodo anterior (ConsultarRespuestaPorZona).
         var marcas = await ConsultarTiemposPorEtapa.MarcasAsync(HttpContext.RequestServices.GetRequiredService<Persistencia.CadDbContext>(), Rango, ct);
         var respuestas = marcas
-            .Where(m => Modulos.Casos.Dominio.OrigenesCaso.SeAtiendeComoSos(m.Origen) && m.Atencion is not null && (prioridad is null || m.Prioridad == prioridad))
+            .Where(m => Modulos.Casos.Dominio.OrigenesCaso.SeAtiendeComoSos(m.Origen) && m.Atencion is not null && (prioridad is null || m.Prioridad == prioridad)
+                && !ConsultarRespuestaPorZona.Excluidos.Contains(m.Estado))
             .Select(m => (m.Atencion!.Value - m.Registro).TotalMinutes).Order().ToList();
         return new VistaTiempo(grupos, zonas, anterior.Total, respuestas, await S<ConsultarCasosAtascados>().EjecutarAsync(ct), prioridad);
     }
