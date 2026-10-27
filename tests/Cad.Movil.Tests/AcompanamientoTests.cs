@@ -355,6 +355,11 @@ public class AcompanamientoTests
         Assert.Equal(1, vm.ProgresoRestante, 2);
         Assert.StartsWith("Quedan 30 min · hasta las ", vm.TextoRestante);
         Assert.Equal("Iniciaste el acompañamiento.", Assert.Single(vm.Actividad).Texto);
+        // Acomodo del 26/10/2026: la tarjeta de arriba en una fila y lo último con la central en una línea.
+        Assert.Equal("30 min", vm.MinutosRestantes);
+        Assert.StartsWith("hasta ", vm.HoraFin);
+        Assert.Equal("Iniciaste el acompañamiento.", vm.UltimaActividad?.Texto);
+        Assert.True(vm.HayActividad);
         Assert.True(cambios > 0); // el mapa se vuelve a dibujar
         await servicio.DetenerAsync();
     }
@@ -406,6 +411,7 @@ public class AcompanamientoTests
 
         Assert.Equal(["Avisaste: «Estoy bien».", "Avisaste: «Algo no está bien».", "Iniciaste el acompañamiento."],
             vm.Actividad.Select(l => l.Texto));
+        Assert.Equal("Avisaste: «Estoy bien».", vm.UltimaActividad?.Texto); // lo más reciente
         await servicio.FinalizarAsync();
         var otra = Guid.NewGuid();
         api.RespuestaInicioAcompanamiento = _ => new ResultadoApi<SesionAcompanamientoVista>.Correcto(ApiFalsa.SesionActiva(reloj.GetUtcNow(), id: otra));

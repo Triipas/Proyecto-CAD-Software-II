@@ -21,6 +21,11 @@ public sealed class EncabezadoPagina : ContentView
     public static readonly BindableProperty TextoVolverProperty =
         BindableProperty.Create(nameof(TextoVolver), typeof(string), typeof(EncabezadoPagina), "Volver", propertyChanged: (b, _, n) => ((EncabezadoPagina)b).textoVolver.Text = (string)n);
 
+    // Acomodo del 26/10/2026: en una sola fila, «Volver» y el título más chico, para pantallas donde manda el contenido (p. ej., el
+    // mapa del acompañamiento activo). Sin ayuda.
+    public static readonly BindableProperty CompactoProperty =
+        BindableProperty.Create(nameof(Compacto), typeof(bool), typeof(EncabezadoPagina), false, propertyChanged: (b, _, n) => ((EncabezadoPagina)b).Acomodar((bool)n));
+
     // Opcional: qué hace «Volver» (p. ej., volver al paso anterior de la misma página). Sin comando, vuelve a la pantalla anterior.
     public static readonly BindableProperty ComandoVolverProperty =
         BindableProperty.Create(nameof(ComandoVolver), typeof(System.Windows.Input.ICommand), typeof(EncabezadoPagina));
@@ -72,6 +77,24 @@ public sealed class EncabezadoPagina : ContentView
         var grid = (Grid)Content;
         grid.Add(titulo, 0, 1);
         grid.Add(ayuda, 0, 2);
+    }
+
+    public bool Compacto { get => (bool)GetValue(CompactoProperty); set => SetValue(CompactoProperty, value); }
+
+    // Se fija una vez, desde el XAML de la página.
+    private void Acomodar(bool compacto)
+    {
+        if (!compacto)
+            return;
+        var grid = (Grid)Content;
+        grid.Remove(titulo);
+        grid.ColumnDefinitions = [new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star)];
+        grid.Padding = new Thickness(16, 6, 20, 8);
+        grid.Add(titulo, 1, 0);
+        titulo.FontSize = 20;
+        titulo.VerticalOptions = LayoutOptions.Center;
+        textoVolver.IsVisible = false; // la flecha basta: el título dice dónde estás
+        ayuda.IsVisible = false;
     }
 
     public string Titulo { get => (string)GetValue(TituloProperty); set => SetValue(TituloProperty, value); }
