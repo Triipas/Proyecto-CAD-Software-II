@@ -96,6 +96,10 @@ public sealed class Regla
     private static string E(string texto) => WebUtility.HtmlEncode(texto);
     private static string N(double v) => v.ToString("0.#", CultureInfo.InvariantCulture);
 
+    // Un rótulo centrado en su valor se sale de la regla en los extremos: ahí se alinea hacia adentro.
+    private static string Ancla(double x) =>
+        x < 80 ? " style=\"text-anchor:start\"" : x > Ancho - 80 ? " style=\"text-anchor:end\"" : "";
+
     public IHtmlContent Dibujar(string descripcion)
     {
         const int Eje = 104, Alto = 150;
@@ -104,7 +108,8 @@ public sealed class Regla
         {
             s.Append($"<rect class=\"regla__banda\" x=\"{N(X(desde))}\" y=\"{Eje - 70}\" width=\"{N(X(hasta) - X(desde))}\" height=\"80\"/>");
             s.Append($"<line class=\"regla__objetivo\" x1=\"{N(X(hasta))}\" y1=\"{Eje - 70}\" x2=\"{N(X(hasta))}\" y2=\"{Eje + 10}\"/>");
-            s.Append($"<text class=\"regla__texto-banda\" x=\"{N(X(desde) + 8)}\" y=\"{Eje - 6}\">{E(texto)}</text>");
+            // Sin tramos, el texto va arriba de la banda: abajo chocaría con los puntos cercanos al cero.
+            s.Append($"<text class=\"regla__texto-banda\" x=\"{N(X(desde) + 8)}\" y=\"{(Tramos.Count == 0 ? Eje - 54 : Eje - 6)}\">{E(texto)}</text>");
         }
         var inicio = 0.0;
         foreach (var (nombre, valor, color) in Tramos)
@@ -123,22 +128,22 @@ public sealed class Regla
             s.Append($"<line class=\"regla__marca\" x1=\"{N(X(v))}\" y1=\"{Eje}\" x2=\"{N(X(v))}\" y2=\"{Eje + 5}\"/><text class=\"regla__escala\" x=\"{N(X(v))}\" y=\"{Eje + 19}\">{E(rotulo)}</text>");
         }
         foreach (var (valor, rotulo) in Anteriores)
-            s.Append($"<path class=\"regla__anterior\" d=\"M{N(X(valor))} {Eje - 76} l-5 -8 h10 z\"><title>{E(rotulo)}</title></path><text class=\"regla__anterior-texto\" x=\"{N(X(valor))}\" y=\"{Eje - 88}\">{E(rotulo)}</text>");
+            s.Append($"<path class=\"regla__anterior\" d=\"M{N(X(valor))} {Eje - 76} l-5 -8 h10 z\"><title>{E(rotulo)}</title></path><text class=\"regla__anterior-texto\" x=\"{N(X(valor))}\" y=\"{Eje - 88}\"{Ancla(X(valor))}>{E(rotulo)}</text>");
         var alturas = new[] { 30, 46 };
         for (var i = 0; i < Puntos.Count; i++)
         {
             var (valor, rotulo, alerta) = Puntos[i];
             var y = Eje - alturas[i % 2];
             s.Append($"<line class=\"regla__guia\" x1=\"{N(X(valor))}\" y1=\"{y + 4}\" x2=\"{N(X(valor))}\" y2=\"{Eje}\"/>");
-            s.Append($"<circle class=\"regla__punto{(alerta ? " regla__punto--alerta" : "")}\" cx=\"{N(X(valor))}\" cy=\"{Eje}\" r=\"7\"/><text class=\"regla__rotulo\" x=\"{N(X(valor))}\" y=\"{y}\">{E(rotulo)}</text>");
+            s.Append($"<circle class=\"regla__punto{(alerta ? " regla__punto--alerta" : "")}\" cx=\"{N(X(valor))}\" cy=\"{Eje}\" r=\"7\"/><text class=\"regla__rotulo\" x=\"{N(X(valor))}\" y=\"{y}\"{Ancla(X(valor))}>{E(rotulo)}</text>");
         }
         foreach (var (valor, lleno, rotulo, sub) in Marcas)
         {
             s.Append($"<line class=\"regla__linea\" x1=\"{N(X(valor))}\" y1=\"{Eje - 64}\" x2=\"{N(X(valor))}\" y2=\"{Eje}\"/>");
             s.Append($"<circle class=\"regla__marcador{(lleno ? " regla__marcador--lleno" : "")}\" cx=\"{N(X(valor))}\" cy=\"{Eje}\" r=\"8\"/>");
-            s.Append($"<text class=\"regla__valor\" x=\"{N(X(valor))}\" y=\"{Eje + 38}\">{E(rotulo)}</text>");
+            s.Append($"<text class=\"regla__valor\" x=\"{N(X(valor))}\" y=\"{Eje + 38}\"{Ancla(X(valor))}>{E(rotulo)}</text>");
             if (sub is not null)
-                s.Append($"<text class=\"regla__sub\" x=\"{N(X(valor))}\" y=\"{Eje + 44 + 10}\">{E(sub)}</text>");
+                s.Append($"<text class=\"regla__sub\" x=\"{N(X(valor))}\" y=\"{Eje + 44 + 10}\"{Ancla(X(valor))}>{E(sub)}</text>");
         }
         return new HtmlString(s.Append("</svg>").ToString());
     }

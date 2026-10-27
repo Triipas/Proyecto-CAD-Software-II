@@ -50,7 +50,7 @@ else
         <div class="respuesta__cabecera">
             @if (n < minimo)
             {
-                <h2 class="respuesta__titular" id="respuesta-tiempo">En @m.TextoPeriodo se midieron @Formato.Plural(n, "SOS", "SOS")@textoPrioridad; @dentro @(dentro == 1 ? "se atendió" : "se atendieron") dentro de los @objetivo min.</h2>
+                <h2 class="respuesta__titular" id="respuesta-tiempo">En @m.TextoPeriodo @(n == 1 ? "se midió" : "se midieron") @Formato.Plural(n, "SOS", "SOS")@(textoPrioridad); @dentro @(dentro == 1 ? "se atendió" : "se atendieron") dentro de los @objetivo min.</h2>
                 <p class="respuesta__lectura">Con tan pocos casos, una mediana o un p90 engañarían: la regla muestra cada SOS en su lugar.</p>
             }
             else

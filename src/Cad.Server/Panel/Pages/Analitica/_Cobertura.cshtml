@@ -28,17 +28,17 @@ else
 {
     <div class="cobertura-a">
         <section class="tarjeta-a mapa-protagonista" aria-label="Mapa de cobertura">
-            @if (c.Zonas.Count == 0)
-            {
-                <p class="tarjeta-a__vacia mapa-protagonista__vacio">Ninguna zona llega a 3 incidencias en el periodo. Para cuidar la privacidad, una zona con menos casos no se muestra sola.</p>
-            }
-            else
+            @if (c.Zonas.Count > 0)
             {
                 <div class="mapa-a mapa-a--grande" id="mapa-zonas" role="region" aria-label="Mapa: porcentaje del tiempo con un sereno cerca, por zona" tabindex="0"
                      data-teselas="@m.UrlTeselas" data-escala="cobertura"><script type="application/json" data-zonas>@Html.Raw(zonasJson)</script><script type="application/json" data-serenos>@Html.Raw(serenosJson)</script></div>
             }
-            <div class="respuesta flotante-a" data-respuesta="cobertura">
-                @if (sinCubrir.Count == 0)
+            <div class="@(c.Zonas.Count == 0 ? "respuesta" : "respuesta flotante-a")" data-respuesta="cobertura">
+                @if (c.Zonas.Count == 0)
+                {
+                    <h2 class="respuesta__titular" id="respuesta-cobertura">Hubo un sereno disponible y ubicado <em>el @Formato.Porcentaje(c.PorcentajeConAlguno, 0) del tiempo</em>.</h2>
+                }
+                else if (sinCubrir.Count == 0)
                 {
                     <h2 class="respuesta__titular" id="respuesta-cobertura">Todas las zonas con incidencias tuvieron <em>un sereno cerca</em> la mayor parte del tiempo.</h2>
                 }
@@ -46,7 +46,14 @@ else
                 {
                     <h2 class="respuesta__titular" id="respuesta-cobertura">@(sinCubrir.Count == 1 ? "Una zona pasa" : $"{sinCubrir.Count} zonas pasan") más de la mitad del tiempo <em>sin un sereno cerca</em>.</h2>
                 }
-                <p class="respuesta__lectura">Hubo al menos un sereno disponible y ubicado el @Formato.Porcentaje(c.PorcentajeConAlguno, 0) del tiempo@(brecha is null ? "." : $"; la peor franja es de {franja.Min()} a {franja.Max() + 1} h.")</p>
+                @if (c.Zonas.Count == 0)
+                {
+                    <p class="respuesta__lectura">Ninguna zona llega a 3 incidencias en el periodo: para cuidar la privacidad, una zona con menos casos no se muestra sola.@(brecha is null ? "" : $" La peor franja es de {franja.Min()} a {franja.Max() + 1} h.")</p>
+                }
+                else
+                {
+                    <p class="respuesta__lectura">Hubo al menos un sereno disponible y ubicado el @Formato.Porcentaje(c.PorcentajeConAlguno, 0) del tiempo@(brecha is null ? "." : $"; la peor franja es de {franja.Min()} a {franja.Max() + 1} h.")</p>
+                }
             </div>
             @if (c.Zonas.Count > 0)
             {

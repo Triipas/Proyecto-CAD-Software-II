@@ -28,7 +28,13 @@ else
         <div class="respuesta__cabecera">
             @if (alertas.Count == 0 && tramos.All(t => t.Bien != false))
             {
-                <h2 class="respuesta__titular" id="respuesta-sistema">El sistema responde @("bien")@if (s.PresentacionP50Segundos is not null) {<text>: un SOS aparece en la central en <em>@tramos[1].Texto</em></text>}@if (s.PorcentajePushEnviadas is { } envio) {<text>@(s.PresentacionP50Segundos is null ? ": el" : " y el") <em>@Formato.Porcentaje(envio, 0)</em> de los avisos llega al sereno</text>}.</h2>
+                // Lo medido de la cadena, en una frase: hasta dos tramos con dato (los valores son cifras formateadas).
+                var partes = new List<string>();
+                if (s.PresentacionP50Segundos is not null) partes.Add($"un SOS aparece en la central en <em>{tramos[1].Texto}</em>");
+                if (s.AperturaP50Segundos is not null) partes.Add($"{(partes.Count == 0 ? "un operador abre un SOS" : "se abre")} a los <em>{tramos[2].Texto}</em>");
+                if (s.PorcentajePushEnviadas is { } envio) partes.Add($"el <em>{Formato.Porcentaje(envio, 0)}</em> de los avisos llega al sereno");
+                partes = partes.Take(2).ToList();
+                <h2 class="respuesta__titular" id="respuesta-sistema">El sistema responde bien@(Html.Raw(partes.Count == 0 ? "" : ": " + string.Join(" y ", partes))).</h2>
             }
             else
             {

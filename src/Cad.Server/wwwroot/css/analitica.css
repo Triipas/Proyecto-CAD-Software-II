@@ -13,6 +13,8 @@
   grid-template-columns: 18.25rem minmax(0, 1fr);
   min-height: calc(100vh - 3.75rem);
   font-variant-numeric: tabular-nums;
+  /* El blanco de la columna de preguntas llega hasta el final aunque la página sea más alta que la pantalla. */
+  background: linear-gradient(90deg, var(--color-superficie) 18.25rem, var(--color-borde) 18.25rem 18.3125rem, transparent 18.3125rem);
 
   /* Rampa secuencial (un solo tono, de claro a oscuro) y tonos de las partes. */
   --rampa-1: #E6EEFD;
@@ -37,8 +39,6 @@
   flex-direction: column;
   gap: 0.125rem;
   padding: var(--espacio-6) var(--espacio-3) var(--espacio-4);
-  background: var(--color-superficie);
-  border-right: 1px solid var(--color-borde);
   overflow-y: auto;
 }
 
@@ -335,6 +335,12 @@
   align-items: baseline;
   gap: var(--espacio-3);
   margin-bottom: var(--espacio-2);
+}
+
+.tarjeta-a__cabecera--separada {
+  margin-top: var(--espacio-5);
+  padding-top: var(--espacio-4);
+  border-top: 1px solid var(--color-borde);
 }
 
 .tarjeta-a__nota {
@@ -1358,7 +1364,7 @@ a.fila-a__cifra {
 
 .senal-a {
   display: grid;
-  grid-template-columns: 1.5rem minmax(14rem, 1.1fr) minmax(0, 1.4fr) 4rem;
+  grid-template-columns: 1.5rem minmax(14rem, 1.1fr) minmax(0, 1.4fr) 5rem;
   gap: var(--espacio-3);
   align-items: center;
   padding: var(--espacio-2) 0;
@@ -1382,6 +1388,7 @@ a.fila-a__cifra {
 
 .senal-a__valor {
   text-align: right;
+  white-space: nowrap;
   font-size: var(--texto-md);
 }
 
@@ -1458,6 +1465,7 @@ a.fila-a__cifra {
 @media (max-width: 68rem) {
   .analitica {
     grid-template-columns: 15rem minmax(0, 1fr);
+    background: linear-gradient(90deg, var(--color-superficie) 15rem, var(--color-borde) 15rem 15.0625rem, transparent 15.0625rem);
   }
 
   .analitica__trabajo {
