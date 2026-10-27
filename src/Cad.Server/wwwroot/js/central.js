@@ -73,8 +73,9 @@
   }
 
   // Al tocar un caso en el mapa se centra en la franja libre, sin cambiar el zoom (24/10/2026).
+  // En el cuadro siguiente: el globo se abre después de este clic y su ajuste automático cortaba el centrado (27/10/2026).
   function centrar(marcador) {
-    mapa.panTo(centroLibre(marcador.getLatLng(), mapa.getZoom()), { animate: !reducido.matches, duration: 0.5 });
+    requestAnimationFrame(() => mapa.panTo(centroLibre(marcador.getLatLng(), mapa.getZoom()), { animate: !reducido.matches, duration: 0.5 }));
   }
 
   function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
