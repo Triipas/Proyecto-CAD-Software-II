@@ -22,8 +22,8 @@
   // SOS llegados en vivo que nadie ha abierto todavía: su tarjeta y su marcador quedan marcados (pulso).
   const nuevos = new Set();
   const reducido = matchMedia("(prefers-reduced-motion: reduce)");
-  const SIRENA = '<svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 18v-5a6 6 0 0 1 12 0v5"/><path d="M4 18h16v3H4zM12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/></svg>';
-  const escudo = (disponible) => `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path d="M16 2 30 8v9c0 9-6 15-14 17C8 32 2 26 2 17V8z" fill="${disponible ? "var(--mapa-sereno)" : "var(--mapa-sereno-no-disponible)"}" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`;
+  // Los marcadores (forma, icono y ancla) los define marcadores.js, comunes con los mapas de detalle.
+  const { SIRENA, DOCUMENTO, escudo } = window.cadMarcadores;
 
   // ---------- Mapa base mínimo (Leaflet + OpenStreetMap) ----------
   // El zoom va abajo a la derecha: arriba a la izquierda lo taparía la cola de trabajo.
@@ -155,7 +155,7 @@
       if (item.dataset.origen === "Reporte") {
         const texto = `Reporte admitido de ${item.dataset.ciudadano}`;
         const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-          icon: L.divIcon({ className: "marcador-reporte", html: "", iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -18] }),
+          icon: L.divIcon(cadMarcadores.caso(true)),
           title: texto,
           alt: texto,
           keyboard: true,
@@ -169,7 +169,7 @@
         continue;
       }
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: `marcador-sos${nuevos.has(id) ? " marcador-sos--pulso" : ""}`, html: SIRENA, iconSize: [36, 32], iconAnchor: [18, 16], popupAnchor: [0, -22] }),
+        icon: L.divIcon(cadMarcadores.caso(false, nuevos.has(id) ? "marcador-sos--pulso" : "")),
         title: `SOS de ${item.dataset.ciudadano}`,
         alt: `SOS de ${item.dataset.ciudadano}`,
         keyboard: true,
@@ -270,7 +270,7 @@
       if (vinculados.get(id)?.enElLugar) continue; // lo dibuja el marcador conjunto con su sereno
       const reporte = item.dataset.origen === "Reporte";
       const revision = item.dataset.estado === "Recibido" || item.dataset.estado === "En revisión";
-      const clase = `${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
+      const clase = `marcador-caso--en-curso${revision ? " marcador-caso--revision" : ""}`;
       const texto = `${item.dataset.origen} · ${item.dataset.estado} · ${item.dataset.ciudadano}`;
       const sereno = vinculados.get(id); // el sereno asignado, si tiene ubicación
       const detalle = ficha({
@@ -287,7 +287,7 @@
       }
       existente?.remove();
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({ className: clase, html: reporte ? "" : SIRENA, iconSize: reporte ? [26, 26] : [36, 32], iconAnchor: reporte ? [13, 13] : [18, 16], popupAnchor: [0, reporte ? -18 : -22] }),
+        icon: L.divIcon(cadMarcadores.caso(reporte, clase)),
         title: texto,
         alt: texto,
         keyboard: true,
@@ -421,9 +421,9 @@
     return L.marker(v.puntoCaso, {
       icon: L.divIcon({
         className: `marcador-conjunto marcador-conjunto--${reporte ? "reporte" : "sos"}`,
-        html: `<span class="conjunto__caso ${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso">${reporte ? "" : SIRENA}</span>`
+        html: `<span class="conjunto__caso ${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso">${reporte ? DOCUMENTO : SIRENA}</span>`
           + `<span class="conjunto__sereno marcador-sereno">${escudo(disponible)}</span><span class="conjunto__etiqueta">En el lugar</span>`,
-        iconSize: [40, 36], iconAnchor: [20, 18], popupAnchor: [0, -24],
+        iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -24],
       }),
       title: texto,
       alt: texto,
@@ -465,10 +465,7 @@
       }
       const texto = `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
       const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon({
-          className: `marcador-sereno${disponible ? "" : " marcador-sereno--no-disponible"}`,
-          html: escudo(disponible), iconSize: [30, 34], iconAnchor: [15, 17], popupAnchor: [0, -22],
-        }),
+        icon: L.divIcon(cadMarcadores.sereno(disponible)),
         title: texto,
         alt: texto,
         keyboard: true,
