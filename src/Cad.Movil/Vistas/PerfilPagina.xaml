@@ -49,7 +49,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding IrAMisDatos}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding IrAMisDatos}"
                             SemanticProperties.Description="{Binding TextoDatos, StringFormat='Mis datos. {0}'}" />
                 </Grid>
 
@@ -67,7 +67,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding CambiarPin}" SemanticProperties.Description="Cambiar mi PIN" />
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding CambiarPin}" SemanticProperties.Description="Cambiar mi PIN" />
                 </Grid>
                 <Border Style="{StaticResource Mosaico}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">

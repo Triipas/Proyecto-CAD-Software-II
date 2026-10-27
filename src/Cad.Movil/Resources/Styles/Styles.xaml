@@ -165,7 +165,10 @@
                     <VisualState x:Name="Normal" />
                     <VisualState x:Name="Pressed">
                         <VisualState.Setters>
+                            <!-- Como una tecla del PIN (26/10/2026): fondo tenue, borde y texto en azul de acción. -->
                             <Setter Property="BackgroundColor" Value="{StaticResource ColorTenue}" />
+                            <Setter Property="BorderColor" Value="{StaticResource ColorPrimario}" />
+                            <Setter Property="TextColor" Value="{StaticResource ColorPrimario}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Disabled">
@@ -188,6 +191,26 @@
         <Setter Property="FontSize" Value="15" />
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="CornerRadius" Value="8" />
+        <!-- Como una tecla del PIN (26/10/2026): vibra, se hunde y se tiñe mientras se presiona. -->
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource ColorTenue}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="TextColor" Value="{StaticResource ColorTextoSecundario}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
     </Style>
 
     <!-- SOS y acciones urgentes: siempre con el texto «SOS» o un verbo explícito. -->
@@ -198,6 +221,8 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinimumHeightRequest" Value="52" />
+        <!-- Como una tecla del PIN (26/10/2026): vibra y se hunde; el color de «presionado» es el rojo oscuro. -->
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -262,6 +287,19 @@
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="MinimumHeightRequest" Value="44" />
         <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="v:Movimiento.Pulsable" Value="True" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="#1A3366" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
     </Style>
 
     <!-- Píldora de estado sobre el marino (ubicación lista, operativo): fondo translúcido y texto claro. -->

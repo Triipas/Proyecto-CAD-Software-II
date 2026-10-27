@@ -59,7 +59,7 @@
                 </HorizontalStackLayout>
                 <Grid Grid.Column="3" WidthRequest="44" HeightRequest="44">
                     <v:Icono Nombre="{Binding IconoEtapas}" Color="White" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding AlternarEtapas}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding AlternarEtapas}"
                             SemanticProperties.Description="Mostrar u ocultar las etapas del caso" />
                 </Grid>
             </Grid>
@@ -195,7 +195,7 @@
                 <v:Aviso Tipo="advertencia" VerticalOptions="Start" Margin="12" IsVisible="{Binding SinPuntoEnMapa}"
                          Texto="Este caso no tiene un punto en el mapa: guíate por la referencia y lo que registró la central." />
                 <Border VerticalOptions="End" HorizontalOptions="End" Margin="12,0,12,28" Padding="14,0" HeightRequest="44" StrokeThickness="0"
-                        StrokeShape="RoundRectangle 22" BackgroundColor="{StaticResource ColorSuperficie}">
+                        StrokeShape="RoundRectangle 22" BackgroundColor="{StaticResource ColorSuperficie}" v:Movimiento.Tocable="True">
                     <Border.Shadow><Shadow Brush="#0B1F44" Offset="0,4" Radius="12" Opacity="0.18" /></Border.Shadow>
                     <Border.GestureRecognizers><TapGestureRecognizer Tapped="AlVerAmbos" /></Border.GestureRecognizers>
                     <HorizontalStackLayout Spacing="6" VerticalOptions="Center" SemanticProperties.Description="Ver el caso y tu posición en el mapa">
@@ -245,7 +245,7 @@
 
                             <!-- Lo que registró la central: una línea; al tocar, todo el detalle (con el panel desplegado). -->
                             <Border Padding="12,10" StrokeThickness="1" Stroke="{StaticResource ColorBorde}" StrokeShape="RoundRectangle 14"
-                                    BackgroundColor="{StaticResource ColorFondo}">
+                                    BackgroundColor="{StaticResource ColorFondo}" v:Movimiento.Tocable="True">
                                 <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding VerInformacion}" /></Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" SemanticProperties.Description="Lo que registró la central"
                                       SemanticProperties.Hint="Muestra u oculta el detalle del caso">

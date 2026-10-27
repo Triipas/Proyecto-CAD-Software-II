@@ -47,6 +47,7 @@ public sealed class EncabezadoPagina : ContentView
             else await Shell.Current.GoToAsync("..");
         };
         SemanticProperties.SetDescription(boton, "Volver a la pantalla anterior");
+        Movimiento.SetTarjeta(boton, true); // vibra y se hunde como el resto de los botones (26/10/2026)
         volver = new Grid
         {
             HorizontalOptions = LayoutOptions.Start,
