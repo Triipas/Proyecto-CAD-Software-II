@@ -58,6 +58,10 @@ public static class ModuloAnalitica
         services.AddScoped<ConsultarCasosAtascados>();
         services.AddScoped<ConsultarDemandaEsperada>();
         services.AddScoped<GenerarInformePeriodo>();
+        services.AddScoped<ConsultarTiemposPorEtapa>();
+        services.AddScoped<ConsultarEmbudoReportes>();
+        services.AddScoped<ConsultarIndiceFalsos>();
+        services.AddScoped<ConsultarAhora>();
         return services;
     }
 }

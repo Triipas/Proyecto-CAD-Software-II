@@ -70,7 +70,7 @@ public sealed record InformePeriodo(PeriodoAnalitica Periodo, PeriodoAnalitica A
 }
 
 public sealed class GenerarInformePeriodo(CadDbContext db, ConsultarRespuestaPorZona respuesta, ConsultarEvaluaciones evaluaciones,
-    ConsultarPuntosCriticos puntos)
+    ConsultarPuntosCriticos puntos, ConsultarIndiceFalsos falsos)
 {
     public async Task<InformePeriodo> EjecutarAsync(PeriodoAnalitica periodo, CancellationToken ct)
     {
@@ -96,12 +96,8 @@ public sealed class GenerarInformePeriodo(CadDbContext db, ConsultarRespuestaPor
             .Select(c => c.ResultadoAtencion!).ToListAsync(ct);
         string[] efectivos = [ResultadosAtencion.ResueltoEnElLugar, ResultadosAtencion.EntregadoAPnp, ResultadosAtencion.Derivado];
 
-        var decisiones = await (from d in db.DecisionesReporte.AsNoTracking()
-                                join detalle in db.DetallesReporte.AsNoTracking() on d.CasoId equals detalle.CasoId
-                                where d.DecididaEn >= p.Desde && d.DecididaEn < p.Hasta && detalle.RegistradoPorOperadorId == null
-                                select d.MotivoCodigo).ToListAsync(ct);
-        var descartesFalsos = await db.DescartesCaso.AsNoTracking()
-            .CountAsync(d => d.DescartadoEn >= p.Desde && d.DescartadoEn < p.Hasta && d.MotivoCodigo == MotivosDescarte.FalsoOMalintencionado, ct);
+        // El mismo índice que el bloque «Ahora» (ConsultarIndiceFalsos): el informe y el dashboard nunca dan dos cifras distintas.
+        var indice = await falsos.EjecutarAsync(p, ct);
         var evaluacion = await evaluaciones.EjecutarAsync(p, ct);
         var evaluadas = evaluacion.Distribucion.Sum(d => d.Evaluaciones);
         var acompanamientos = await db.SesionesAcompanamiento.AsNoTracking().CountAsync(s => s.IniciadaEn >= p.Desde && s.IniciadaEn < p.Hasta, ct);
@@ -119,8 +115,9 @@ public sealed class GenerarInformePeriodo(CadDbContext db, ConsultarRespuestaPor
             new("Resultados", "Efectividad de la atención", "%", Porcentaje(cierres.Count(efectivos.Contains), cierres.Count)),
             new("Resultados", "Atenciones sin hallazgo", "%", Porcentaje(cierres.Count(c => c == ResultadosAtencion.SinHallazgo), cierres.Count)),
             new("Resultados", "Falsas alarmas al cerrar", "%", Porcentaje(cierres.Count(c => c == ResultadosAtencion.FalsaAlarma), cierres.Count)),
-            new("Veracidad", "Índice de reportes falsos", "%", Porcentaje(decisiones.Count(m => m == MotivosDescarte.FalsoOMalintencionado), decisiones.Count)),
-            new("Veracidad", "Casos descartados por falsos", "casos", descartesFalsos + decisiones.Count(m => m == MotivosDescarte.FalsoOMalintencionado)),
+            new("Veracidad", "Índice de reportes falsos", "%", indice.PorcentajeReportesFalsos),
+            new("Veracidad", "Casos descartados por falsos", "casos", indice.SosDescartadosPorFalsos + indice.ReportesFalsos),
+            new("Veracidad", "SOS por activación accidental", "%", indice.PorcentajeSosAccidentales),
             new("Veracidad", "SOS cancelados por el ciudadano", "%", Porcentaje(sos.Count(c => c.Estado == EstadoCaso.Cancelada), sos.Count)),
             new("Servicio", "Casos cerrados evaluados", "%", evaluacion.Cerrados == 0 ? null : evaluacion.PorcentajeEvaluados),
             new("Servicio", "Evaluación promedio", "de 5", evaluadas == 0 ? null : evaluacion.Distribucion.Sum(d => d.Puntuacion * d.Evaluaciones) / (double)evaluadas),
