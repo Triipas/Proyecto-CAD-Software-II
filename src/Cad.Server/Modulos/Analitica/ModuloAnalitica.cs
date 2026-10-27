@@ -36,6 +36,11 @@ public sealed class OpcionesAnalitica
     public int UmbralEnAtencionMinutos { get; set; } = 60;
     public int UmbralRecibidoMinutos { get; set; } = 15;
     public int UmbralEnRevisionMinutos { get; set; } = 30;
+
+    // Dashboard (27/10/2026): el objetivo de respuesta a un SOS que dibuja la regla, provisional hasta que el PO lo fije, y desde
+    // cuántos casos se dan medianas y p90 (con menos, se muestra cada caso: un percentil de tres casos engaña).
+    public int ObjetivoRespuestaSosMinutos { get; set; } = 15;
+    public int MinimoParaPercentiles { get; set; } = 5;
 }
 
 public static class ModuloAnalitica
@@ -62,6 +67,8 @@ public static class ModuloAnalitica
         services.AddScoped<ConsultarEmbudoReportes>();
         services.AddScoped<ConsultarIndiceFalsos>();
         services.AddScoped<ConsultarAhora>();
+        services.AddMemoryCache();
+        services.AddSingleton<CacheAnalitica>();
         return services;
     }
 }

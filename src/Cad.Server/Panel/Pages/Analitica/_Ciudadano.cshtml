@@ -1,0 +1,148 @@
+@model (IndexModel M, IndexModel.VistaCiudadano V)
+@{
+    var (m, v) = Model;
+    var e = v.Evaluaciones;
+    var minimo = m.Opciones.MinimoParaPercentiles;
+    var promedio = e.Evaluados == 0 ? 0 : Ciudadano.Promedio(e);
+    var maxNota = Math.Max(1, e.Distribucion.Select(d => d.Evaluaciones).DefaultIfEmpty(0).Max());
+    // La nota baja viene de la demora cuando los que calificaron mal esperaron claramente más que los que calificaron bien.
+    var porDemora = e.RespuestaP50Bajas is { } b && e.RespuestaP50Altas is { } a && b >= a * 1.3 && b - a >= 3;
+    var falloPrincipal = e.MotivosBajas.OrderByDescending(x => x.Veces).FirstOrDefault();
+    var peorTramo = e.PorTiempoDeRespuesta.Where(t => t.Evaluaciones > 0).OrderByDescending(t => t.PorcentajeBajas).FirstOrDefault();
+    string Pct(double x) => x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+    var cohortes = v.Adopcion.Cohortes.Where(c => c.Registrados > 0).TakeLast(4).ToList();
+    var canales = v.Adopcion.Canales.Where(c => c.Reportes > 0).OrderByDescending(c => c.Reportes).ToList();
+    var totalCanales = canales.Sum(c => c.Reportes);
+    var demora = v.Reportes.DemoraTotal;
+}
+<section class="tarjeta-a respuesta" aria-labelledby="respuesta-ciudadano" data-respuesta="ciudadano" data-evaluados="@e.Evaluados">
+    @if (e.Evaluados == 0)
+    {
+        <div class="respuesta__cabecera">
+            <h2 class="respuesta__titular" id="respuesta-ciudadano">Nadie evaluó la atención en @m.TextoPeriodo.</h2>
+            <p class="respuesta__lectura">@(e.Cerrados == 0 ? "No se cerró ningún caso en el periodo." : $"Se cerraron {Formato.Plural(e.Cerrados, "caso", "casos")}, pero ninguno tiene evaluación del ciudadano todavía.") Abajo, cómo usan la app y por dónde llegan los reportes.</p>
+        </div>
+    }
+    else
+    {
+        <div class="respuesta__cabecera">
+            <h2 class="respuesta__titular" id="respuesta-ciudadano">Califican la atención con <em>@Formato.Decimal(promedio) de 5</em>@if (e.Evaluados < minimo) {<text>.</text>} else if (porDemora) {<text>;<br />las notas bajas vienen de la demora.</text>} else if (falloPrincipal is not null) {<text>; lo que más falla: «@falloPrincipal.Texto».</text>} else {<text>.</text>}</h2>
+            <p class="respuesta__lectura">A la izquierda, cómo califican (@Formato.Porcentaje(e.PorcentajeEvaluados, 0) de los casos cerrados se evaluó). A la derecha, la parte de notas bajas (1 a 3) según cuánto tardamos en llegar.</p>
+        </div>
+        <div class="ciudadano-a">
+            <div>
+                <div class="notas-a" aria-hidden="true">
+                    @for (var nota = 1; nota <= 5; nota++)
+                    {
+                        var n = e.Distribucion.FirstOrDefault(d => d.Puntuacion == nota)?.Evaluaciones ?? 0;
+                        <div class="notas-a__columna">
+                            <span class="notas-a__cifra">@n</span>
+                            <span class="notas-a__barra @(nota <= ConsultarEvaluaciones.UltimaBaja ? "notas-a__barra--baja" : "notas-a__barra--alta")" style="height:@Pct(Math.Max(n * 100.0 / maxNota, 3))%"></span>
+                            <span class="notas-a__estrellas">@(new string('★', nota))</span>
+                        </div>
+                    }
+                </div>
+                <table class="visualmente-oculto">
+                    <caption>Evaluaciones por puntuación</caption>
+                    <thead><tr><th>Puntuación</th><th>Evaluaciones</th></tr></thead>
+                    <tbody>@for (var nota = 1; nota <= 5; nota++) { <tr><td>@nota de 5</td><td>@(e.Distribucion.FirstOrDefault(d => d.Puntuacion == nota)?.Evaluaciones ?? 0)</td></tr> }</tbody>
+                </table>
+                <ul class="leyenda-a">
+                    <li><i class="leyenda-a__baja"></i>Notas bajas (1 a 3)</li>
+                    <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Notas altas (4 y 5)</li>
+                    <li>@Formato.Plural(e.Evaluados, "evaluación", "evaluaciones") de @Formato.Plural(e.Cerrados, "caso cerrado", "casos cerrados")</li>
+                </ul>
+            </div>
+            <div>
+                @if (e.Evaluados < minimo)
+                {
+                    <div class="aviso aviso--informacion aviso-a"><partial name="_Icono" model="@("informacion")" />
+                        <div><p class="aviso__titulo">Pocas evaluaciones para sacar conclusiones</p><p class="aviso__texto">Con menos de @minimo evaluaciones no se cruza la nota con el tiempo de respuesta: un solo caso movería todo el porcentaje.</p></div>
+                    </div>
+                }
+                else
+                {
+                    <ul class="tramos-a">
+                        @foreach (var t in e.PorTiempoDeRespuesta)
+                        {
+                            var peor = t == peorTramo && t.PorcentajeBajas >= 50;
+                            <li class="tramo-a" data-tramo="@t.Tramo" data-evaluaciones="@t.Evaluaciones">
+                                <span>@t.Tramo</span>
+                                <span class="tramo-a__pista" aria-hidden="true"><i class="@(peor ? "tramo-a__barra tramo-a__barra--peor" : "tramo-a__barra")" style="width:@Pct(t.PorcentajeBajas)%"></i></span>
+                                <b>@(t.Evaluaciones == 0 ? "—" : Formato.Porcentaje(t.PorcentajeBajas, 0))</b>
+                            </li>
+                        }
+                    </ul>
+                    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Notas bajas según el tiempo de respuesta (del registro al inicio de la atención).@if (peorTramo is { PorcentajeBajas: >= 50 }) {<text> Con @peorTramo.Tramo.ToLowerInvariant(), @Formato.Porcentaje(peorTramo.PorcentajeBajas, 0) califica mal.</text>}</p>
+                }
+            </div>
+        </div>
+    }
+</section>
+
+<div class="rejilla-a rejilla-a--tres">
+    <section class="tarjeta-a" aria-labelledby="titulo-motivos">
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-motivos">Por qué califican así</h3><span class="tarjeta-a__nota">puede marcar varios</span></div>
+        @if (e.MotivosBajas.Count + e.MotivosAltas.Count == 0)
+        {
+            <p class="tarjeta-a__vacia">Sin motivos marcados en el periodo. Los motivos se registran desde el 27/10/2026.</p>
+        }
+        else
+        {
+            @foreach (var (titulo, motivos) in new[] { ("Lo que falló (notas bajas)", e.MotivosBajas), ("Lo que estuvo bien (notas altas)", e.MotivosAltas) })
+            {
+                if (motivos.Count == 0) { continue; }
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">@titulo</p>
+                <ul class="motivos-a">
+                    @foreach (var x in motivos.OrderByDescending(x => x.Veces))
+                    {
+                        <li class="motivo-a" data-motivo="@x.Codigo">@x.Texto <b>@x.Veces</b></li>
+                    }
+                </ul>
+            }
+        }
+    </section>
+    <section class="tarjeta-a" aria-labelledby="titulo-vuelven">
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-vuelven">¿Vuelven a usar la app?</h3><span class="tarjeta-a__nota">por semana de registro</span></div>
+        @if (cohortes.Count == 0)
+        {
+            <p class="tarjeta-a__vacia">Nadie se registró en la app en el periodo.</p>
+        }
+        else
+        {
+            <table class="tabla-a tabla-a--cohortes">
+                <thead><tr><th scope="col">Semana</th><th scope="col" class="tabla-a__num">Registros</th><th scope="col" class="tabla-a__num">La usaron</th><th scope="col" class="tabla-a__num">Volvieron</th></tr></thead>
+                <tbody>
+                    @foreach (var c in cohortes)
+                    {
+                        var usaron = 100.0 * c.UsaronAlgunaVez / c.Registrados;
+                        var volvieron = 100.0 * c.VolvieronOtraSemana / c.Registrados;
+                        <tr data-cohorte="@c.Semana.ToString("yyyy-MM-dd")">
+                            <th scope="row">@c.Semana.ToString("d MMM", new System.Globalization.CultureInfo("es-PE"))</th>
+                            <td class="tabla-a__num">@c.Registrados</td>
+                            <td class="tabla-a__num celda-a @(usaron > 55 ? "celda-a--oscura" : "")" style="--intensidad:@Pct(usaron / 100)">@Formato.Porcentaje(usaron, 0)</td>
+                            <td class="tabla-a__num celda-a @(volvieron > 55 ? "celda-a--oscura" : "")" style="--intensidad:@Pct(volvieron / 100)">@Formato.Porcentaje(volvieron, 0)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">La semana en curso aún no puede tener «volvieron».</p>
+        }
+    </section>
+    <section class="tarjeta-a" aria-labelledby="titulo-canales">
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-canales">Por dónde llegan los reportes</h3><span class="tarjeta-a__nota">@totalCanales en el periodo</span></div>
+        @if (totalCanales == 0)
+        {
+            <p class="tarjeta-a__vacia">Sin reportes con canal registrado en el periodo (el canal se registra desde el 27/10/2026).</p>
+        }
+        else
+        {
+            var clases = new[] { "barra100__a", "barra100__b", "barra100__c", "barra100__d", "barra100__e" };
+            <partial name="_Barra100" model="@((IReadOnlyList<(string, int, string)>)canales.Select((c, i) => (c.Texto, c.Reportes, clases[Math.Min(i, clases.Length - 1)])).ToList(), totalCanales)" />
+        }
+        <ul class="filas-a">
+            <li class="fila-a fila-a--dos"><span>Del hecho al reporte, mediana</span><span class="fila-a__cifra">@Formato.Horas(demora.HorasP50)</span></li>
+            <li class="fila-a fila-a--dos"><span>Reportado en la primera hora</span><span class="fila-a__cifra">@(demora.Reportes == 0 ? "—" : Formato.Porcentaje(demora.PorcentajeEnLaPrimeraHora, 0))</span></li>
+        </ul>
+    </section>
+</div>

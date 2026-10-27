@@ -1,0 +1,20 @@
+@model Cad.Server.Panel.Pages.Analitica.Vacio
+@* Estado vacío: dice qué falta y ofrece qué probar; nunca un 0 inventado. *@
+<section class="tarjeta-a vacio-a" aria-labelledby="titulo-vacio" data-estado="vacio">
+    <span class="vacio-a__ilustracion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M4 10h16M9 14h6" /></svg></span>
+    <h2 class="vacio-a__titulo" id="titulo-vacio">@Model.Titulo</h2>
+    <p class="vacio-a__texto">@Model.Texto</p>
+    @if (Model.Acciones.Count > 0)
+    {
+        <div class="vacio-a__acciones">
+            @foreach (var (texto, enlace, principal) in Model.Acciones)
+            {
+                <a class="boton @(principal ? "boton--principal" : "boton--secundario")" href="@enlace">@texto</a>
+            }
+        </div>
+    }
+    @if (Model.Nota is { } nota)
+    {
+        <p class="vacio-a__nota">@nota</p>
+    }
+</section>

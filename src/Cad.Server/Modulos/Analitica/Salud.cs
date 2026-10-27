@@ -71,7 +71,8 @@ public sealed record CasoAtascado(Guid CasoId, OrigenCaso Origen, EstadoCaso Est
 
 public sealed record EtapaAbierta(EstadoCaso Estado, bool Reporte, int Casos, int Atascados);
 
-public sealed record CasosAtascados(IReadOnlyList<CasoAtascado> Atascados, IReadOnlyList<EtapaAbierta> PorEtapa);
+// Abiertos: todos los casos abiertos con su tiempo en la etapa (el dashboard los dibuja como puntos sobre su carril).
+public sealed record CasosAtascados(IReadOnlyList<CasoAtascado> Atascados, IReadOnlyList<EtapaAbierta> PorEtapa, IReadOnlyList<CasoAtascado> Abiertos);
 
 public sealed class ConsultarCasosAtascados(CadDbContext db, TimeProvider reloj, IOptions<OpcionesAnalitica> opciones)
 {
@@ -127,6 +128,7 @@ public sealed class ConsultarCasosAtascados(CadDbContext db, TimeProvider reloj,
             filas.Where(f => f.Minutos > f.UmbralMinutos).OrderByDescending(f => f.VecesElUmbral).ToList(),
             filas.GroupBy(f => (f.Estado, Reporte: f.Origen == OrigenCaso.Reporte)).OrderBy(g => Array.IndexOf(Abiertos, g.Key.Estado))
                 .Select(g => new EtapaAbierta(g.Key.Estado, g.Key.Reporte, g.Count(), g.Count(f => f.Minutos > f.UmbralMinutos)))
-                .ToList());
+                .ToList(),
+            filas);
     }
 }

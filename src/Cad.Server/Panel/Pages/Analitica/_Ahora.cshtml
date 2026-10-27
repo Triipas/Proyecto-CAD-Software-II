@@ -1,0 +1,115 @@
+@model (IndexModel M, IndexModel.VistaAhora V)
+@using Cad.Server.Modulos.Casos.Dominio
+@{
+    var (m, v) = Model;
+    var foto = v.Foto;
+    var abiertos = v.Casos.Abiertos;
+    var atascados = v.Casos.Atascados.Count;
+    // Un carril por etapa, en el orden del recorrido; las etapas sin casos también se ven (vacías), para leer el tablero entero.
+    var carriles = new (string Grupo, EstadoCaso Estado, bool Reporte, string Nombre)[]
+    {
+        ("sos", EstadoCaso.Pendiente, false, "Pendiente de despacho"),
+        ("sos", EstadoCaso.Asignada, false, "Asignado, sin salir"),
+        ("sos", EstadoCaso.EnCamino, false, "En camino"),
+        ("sos", EstadoCaso.EnAtencion, false, "En atención"),
+        ("reporte", EstadoCaso.Recibido, true, "Recibido, sin revisar"),
+        ("reporte", EstadoCaso.EnRevision, true, "En revisión"),
+        ("reporte", EstadoCaso.Pendiente, true, "Admitido, sin asignar"),
+        ("reporte", EstadoCaso.Asignada, true, "Asignado, sin salir"),
+        ("reporte", EstadoCaso.EnCamino, true, "En camino"),
+        ("reporte", EstadoCaso.EnAtencion, true, "En atención"),
+    };
+    var esperados = abiertos.GroupBy(a => (a.Estado, a.Origen == OrigenCaso.Reporte)).ToDictionary(g => g.Key, g => g.First().UmbralMinutos);
+    int Esperado(EstadoCaso estado, bool reporte) => esperados.TryGetValue((estado, reporte), out var u) ? u : estado switch
+    {
+        EstadoCaso.Pendiente => reporte ? m.Opciones.UmbralReporteAdmitidoMinutos : m.Opciones.UmbralSosPendienteMinutos,
+        EstadoCaso.Asignada => m.Opciones.UmbralAsignadaMinutos,
+        EstadoCaso.EnCamino => m.Opciones.UmbralEnCaminoMinutos,
+        EstadoCaso.Recibido => m.Opciones.UmbralRecibidoMinutos,
+        EstadoCaso.EnRevision => m.Opciones.UmbralEnRevisionMinutos,
+        _ => m.Opciones.UmbralEnAtencionMinutos,
+    };
+    var hora = TimeZoneInfo.ConvertTime(foto.En, m.ZonaHoraria).ToString("HH:mm:ss");
+}
+<div class="region-ahora" data-region-ahora data-actualizado="@hora">
+    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-ahora" data-respuesta="ahora">
+        <div class="respuesta__cabecera">
+            @if (abiertos.Count == 0)
+            {
+                <h2 class="respuesta__titular" id="respuesta-ahora">No hay casos abiertos en este momento.</h2>
+                <p class="respuesta__lectura">Cuando entre un SOS o un reporte aparecerá aquí, en su etapa, sin recargar la página.</p>
+            }
+            else
+            {
+                <h2 class="respuesta__titular" id="respuesta-ahora">Hay <em>@Formato.Plural(abiertos.Count, "caso abierto", "casos abiertos")</em>@(atascados == 0 ? "; todos van a tiempo." : $"; {atascados} {(atascados == 1 ? "lleva" : "llevan")} más tiempo del esperado en su etapa.")</h2>
+                <p class="respuesta__lectura">Cada punto es un caso, puesto según cuánto lleva en su etapa. La franja verde es el tiempo esperado; un punto ámbar ya la pasó y muestra sus minutos.</p>
+            }
+        </div>
+        <div class="carriles-a">
+            @foreach (var grupo in carriles.GroupBy(c => c.Grupo))
+            {
+                <p class="carriles-a__grupo">@(grupo.Key == "sos" ? "SOS y casos urgentes" : "Reportes")</p>
+                @foreach (var c in grupo)
+                {
+                    var minutos = abiertos.Where(a => a.Estado == c.Estado && (a.Origen == OrigenCaso.Reporte) == c.Reporte).Select(a => a.Minutos).ToList();
+                    // Los reportes ya asignados solo aparecen si hay alguno: su carril vacío no dice nada.
+                    if (c.Reporte && c.Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion && minutos.Count == 0) { continue; }
+                    var esperado = Esperado(c.Estado, c.Reporte);
+                    var tarde = minutos.Count(x => x > esperado);
+                    <div class="carril-a" data-etapa="@c.Estado" data-reporte="@c.Reporte.ToString().ToLowerInvariant()" data-casos="@minutos.Count" data-atascados="@tarde">
+                        <span class="carril-a__nombre">
+                            @if (c.Estado is EstadoCaso.Pendiente && !c.Reporte) { <span class="chip chip--urgente">SOS</span> }
+                            @if (c.Estado is EstadoCaso.Recibido) { <span class="chip chip--reporte">Reporte</span> }
+                            @c.Nombre
+                        </span>
+                        <span class="carril-a__numero">@minutos.Count</span>
+                        @Regla.Carril(minutos, esperado, $"{c.Nombre}: {minutos.Count} casos, {tarde} con más de {esperado} minutos")
+                    </div>
+                }
+            }
+            <ul class="leyenda-a">
+                <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Caso a tiempo</li>
+                <li><i class="leyenda-a__atascado"></i>Atascado (minutos en la etapa)</li>
+                <li><i class="leyenda-a__banda"></i>Tiempo esperado (provisional)</li>
+            </ul>
+        </div>
+    </section>
+
+    <div class="rejilla-a rejilla-a--dos">
+        <section class="tarjeta-a" aria-labelledby="titulo-serenos">
+            <h3 id="titulo-serenos">Serenos ahora</h3>
+            @{
+                var conCaso = Math.Max(0, foto.SerenosOperativos - foto.SerenosDisponibles);
+            }
+            @if (foto.SerenosOperativos == 0)
+            {
+                <p class="tarjeta-a__vacia">No hay serenos operativos en este momento.</p>
+            }
+            else
+            {
+                <div class="serenos-a" aria-hidden="true">
+                    <span class="serenos-a__libres" style="flex:@foto.SerenosDisponibles"></span>
+                    <span class="serenos-a__ocupados" style="flex:@conCaso"></span>
+                </div>
+                <ul class="leyenda-a leyenda-a--compacta">
+                    <li><i class="leyenda-a__sereno-libre"></i>@Formato.Plural(foto.SerenosDisponibles, "disponible", "disponibles")</li>
+                    <li><i class="leyenda-a__sereno-ocupado"></i>@conCaso con caso</li>
+                </ul>
+            }
+            <p class="tarjeta-a__nota">El mapa de la central muestra dónde está cada uno.</p>
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-viene">
+            <h3 id="titulo-viene">Lo que viene y lo pendiente</h3>
+            <ul class="filas-a">
+                <li class="fila-a"><span class="tarjeta-a__nota">Esta hora</span><span>Casos esperados, según las 4 semanas anteriores</span>
+                    <span class="fila-a__cifra">@(v.EstaHora is { } h ? (h.Minimo == h.Maximo ? $"{h.Minimo}" : $"{h.Minimo} a {h.Maximo}") : "—")</span></li>
+                <li class="fila-a"><span class="tarjeta-a__nota">Acompañamientos</span><span>@Formato.Plural(foto.AcompanamientosActivos, "activo", "activos") · @Formato.Plural(foto.AvisosSinAtender, "aviso sin atender", "avisos sin atender")</span>
+                    <span class="fila-a__cifra @(foto.AvisosSinAtender > 0 ? "fila-a__cifra--aviso" : "")">@(foto.AvisosSinAtender > 0 ? $"▲ {foto.AvisosSinAtender}" : "✓ 0")</span></li>
+                <li class="fila-a"><span class="tarjeta-a__nota">SOS sin abrir</span><span>Nadie abrió todavía su detalle</span>
+                    <span class="fila-a__cifra @(foto.SosSinAbrir > 0 ? "fila-a__cifra--aviso" : "")">@(foto.SosSinAbrir > 0 ? $"▲ {foto.SosSinAbrir}" : "✓ 0")</span></li>
+                <li class="fila-a"><span class="tarjeta-a__nota">Reportes</span><span>@Formato.Plural(foto.ReportesPorRevisar, "por revisar", "por revisar") · el más antiguo @Formato.Minutos(foto.ReporteMasAntiguoMinutos)</span>
+                    <a class="fila-a__cifra" href="/panel/reportes">Ver</a></li>
+            </ul>
+        </section>
+    </div>
+</div>

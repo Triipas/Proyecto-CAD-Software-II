@@ -1,0 +1,182 @@
+@model (IndexModel M, IndexModel.VistaTiempo V)
+@using System.Text.Json
+@{
+    var (m, v) = Model;
+    var objetivo = m.Opciones.ObjetivoRespuestaSosMinutos;
+    var minimo = m.Opciones.MinimoParaPercentiles;
+    var grupo = v.Grupos.FirstOrDefault(g => g.Origen == ConsultarTiemposPorEtapa.Sos && g.Prioridad == v.Prioridad);
+    EtapaTiempo? Etapa(string nombre) => grupo?.Etapas.FirstOrDefault(e => e.Etapa == nombre);
+    var n = v.Respuestas.Count;
+    var p50 = Estadistica.Percentil(v.Respuestas, 0.5);
+    var p90 = Estadistica.Percentil(v.Respuestas, 0.9);
+    var anterior = v.Prioridad is null ? v.TotalAnterior : null;
+    var textoPrioridad = v.Prioridad is { } pr ? $" de prioridad {pr.ToLowerInvariant()}" : "";
+
+    // El recorrido de un SOS típico: cada tramo dura la mediana de su etapa (contacto, despacho, salida, en camino).
+    var contacto = Etapa("Hasta el primer contacto")?.P50Minutos;
+    var despacho = Etapa("Hasta el despacho")?.P50Minutos;
+    var tramos = new List<(string, double, string)>();
+    if (contacto is { } c) tramos.Add(("Contacto", c, "#BFD2F8"));
+    if (despacho is { } d) tramos.Add(("Despacho", Math.Max(0, d - (contacto ?? 0)), "#9DB9F4"));
+    if (Etapa("Del despacho a «En camino»")?.P50Minutos is { } salida) tramos.Add(("Salida", salida, "#7FA3EF"));
+    if (Etapa("De «En camino» a la atención")?.P50Minutos is { } camino) tramos.Add(("En camino", camino, "#3F6FE0"));
+    var masLargo = tramos.Count == 0 ? default : tramos.MaxBy(t => t.Item2);
+    var sumaTramos = tramos.Sum(t => t.Item2);
+    var maximo = Math.Ceiling(new[] { p90 ?? 0, objetivo * 2.0, anterior?.RespuestaP90 ?? 0, v.Respuestas.DefaultIfEmpty(0).Max(), sumaTramos }.Max() / 5) * 5 + 5;
+
+    var prioridades = v.Grupos.Where(g => g.Origen == ConsultarTiemposPorEtapa.Sos && g.Prioridad is not null)
+        .Select(g => (g.Prioridad!, g.Etapas.Single(e => e.Etapa.StartsWith("Respuesta"))))
+        .ToList();
+    var atascados = v.Casos.Atascados.Where(a => a.Origen != Cad.Server.Modulos.Casos.Dominio.OrigenCaso.Reporte).Take(4).ToList();
+    var zonasJson = JsonSerializer.Serialize(v.Zonas.Zonas.Where(z => z.Tiempos.RespuestaP90 is not null).Select(z => new
+    {
+        sur = z.Sur, oeste = z.Oeste, norte = z.Norte, este = z.Este, valor = Math.Round(z.Tiempos.RespuestaP90!.Value, 1),
+        nombre = m.Zonas.Nombre(z.Sur, z.Oeste), casos = z.Tiempos.Casos,
+    }));
+}
+@if (n == 0)
+{
+    var acciones = new List<(string, string, bool)>();
+    if (m.Periodo != "30") acciones.Add(("Ver los últimos 30 días", m.Enlace(periodo: "30"), true));
+    if (v.Prioridad is not null) acciones.Add(("Quitar el filtro de prioridad", Url.Page("/Analitica/Index", new { pregunta = "tiempo", periodo = m.Periodo, desde = m.Periodo == "rango" ? m.Desde : null, hasta = m.Periodo == "rango" ? m.Hasta : null })!, acciones.Count == 0));
+    <partial name="_Vacio" model="@(new Vacio($"No hubo SOS{textoPrioridad} atendidos en {m.TextoPeriodo}.",
+        "Por eso no hay tiempos que mostrar. Puede ser una buena noticia, o un filtro muy estrecho: prueba con otro periodo.", acciones,
+        v.Prioridad is null ? null : "La prioridad se registra desde el 27/10/2026: los SOS anteriores aparecen como «Sin registrar»."))" />
+}
+else
+{
+    var dentro = v.Respuestas.Count(r => r <= objetivo);
+    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-tiempo" data-respuesta="tiempo" data-casos="@n">
+        <div class="respuesta__cabecera">
+            @if (n < minimo)
+            {
+                <h2 class="respuesta__titular" id="respuesta-tiempo">En @m.TextoPeriodo se midieron @Formato.Plural(n, "SOS", "SOS")@textoPrioridad; @dentro @(dentro == 1 ? "se atendió" : "se atendieron") dentro de los @objetivo min.</h2>
+                <p class="respuesta__lectura">Con tan pocos casos, una mediana o un p90 engañarían: la regla muestra cada SOS en su lugar.</p>
+            }
+            else
+            {
+                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>; el 10 % más lento tardó @Formato.Minutos(p90).</h2>
+                <p class="respuesta__lectura">
+                    La regla es el recorrido de un SOS típico: cada tramo dura lo que su etapa.
+                    @if (masLargo.Item1 is { } nombreLargo && sumaTramos > 0 && masLargo.Item2 / sumaTramos >= 0.4)
+                    {
+                        <text>«@nombreLargo» se lleva @Formato.Porcentaje(masLargo.Item2 / sumaTramos * 100, 0) del tiempo.</text>
+                    }
+                    @if (anterior?.RespuestaP50 is not null)
+                    {
+                        <text>Los triángulos grises marcan @m.TextoAnterior.</text>
+                    }
+                </p>
+            }
+        </div>
+        <div class="respuesta__visual">
+            @if (n < minimo)
+            {
+                @(new Regla
+                {
+                    Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
+                    Banda = (0, objetivo, $"Objetivo provisional ≤ {objetivo} min"),
+                    Puntos = v.Respuestas.Select(r => (r, Formato.Minutos(r), r > objetivo)).ToList(),
+                }.Dibujar($"Cada SOS medido: {string.Join(", ", v.Respuestas.Select(r => Formato.Minutos(r)))}"))
+                <div class="aviso aviso--informacion aviso-a"><partial name="_Icono" model="@("informacion")" /><div><p class="aviso__titulo">Pocos casos para dar porcentajes</p><p class="aviso__texto">Las medianas y los p90 aparecen desde @minimo casos. Para ver tendencias, mira un periodo más largo.</p></div>
+                    @if (m.Periodo is "hoy" or "rango") { <a class="boton boton--secundario boton--compacto aviso-a__accion" href="@m.Enlace(periodo: "7")">Ver 7 días</a> }</div>
+            }
+            else
+            {
+                var anteriores = new List<(double, string)>();
+                if (anterior?.RespuestaP50 is { } a50) anteriores.Add((a50, $"antes {Formato.Minutos(a50)}"));
+                if (anterior?.RespuestaP90 is { } a90) anteriores.Add((a90, $"antes {Formato.Minutos(a90)}"));
+                @(new Regla
+                {
+                    Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
+                    Banda = (0, objetivo, $"Objetivo provisional ≤ {objetivo} min"),
+                    Tramos = tramos,
+                    Marcas = [(p50!.Value, true, Formato.Minutos(p50), "la mitad"), (p90!.Value, false, Formato.Minutos(p90), "9 de cada 10")],
+                    Anteriores = anteriores,
+                }.Dibujar($"Regla del tiempo de respuesta: mediana {Formato.Minutos(p50)}, p90 {Formato.Minutos(p90)}, objetivo {objetivo} minutos"))
+                <ul class="leyenda-a">
+                    <li><i class="leyenda-a__tramo"></i>Etapas (mediana de cada una)</li>
+                    <li><i class="leyenda-a__lleno"></i>La mitad de los SOS</li>
+                    <li><i class="leyenda-a__hueco"></i>9 de cada 10</li>
+                    <li><i class="leyenda-a__banda"></i>Objetivo provisional (lo fija el PO)</li>
+                    <li>@Formato.Plural(n, "SOS medido", "SOS medidos")</li>
+                </ul>
+            }
+        </div>
+    </section>
+
+    <div class="rejilla-a rejilla-a--dos">
+        <section class="tarjeta-a" aria-labelledby="titulo-zonas">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas">¿Dónde tardamos más?</h3><span class="tarjeta-a__nota">p90 de respuesta por zona · 3 o más casos</span></div>
+            @if (v.Zonas.Zonas.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">Ninguna zona llega a 3 casos en el periodo. Para cuidar la privacidad, una zona con menos casos no se muestra sola.</p>
+            }
+            else
+            {
+                <div class="mapa-a" id="mapa-zonas" role="region" aria-label="Mapa: p90 de respuesta por zona" tabindex="0"
+                     data-teselas="@m.UrlTeselas" data-escala="minutos" data-objetivo="@objetivo"><script type="application/json" data-zonas>@Html.Raw(zonasJson)</script></div>
+                <div class="rampa-a" aria-hidden="true"><span>Más rápido</span><i></i><span>Más lento</span></div>
+                <table class="visualmente-oculto">
+                    <caption>p90 de respuesta por zona</caption>
+                    <thead><tr><th>Zona</th><th>Casos</th><th>p90</th></tr></thead>
+                    <tbody>@foreach (var z in v.Zonas.Zonas) { <tr><td>@m.Zonas.Nombre(z.Sur, z.Oeste)</td><td>@z.Tiempos.Casos</td><td>@Formato.Minutos(z.Tiempos.RespuestaP90)</td></tr> }</tbody>
+                </table>
+            }
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-prioridad">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-prioridad">¿Llegamos antes a lo grave?</h3><span class="tarjeta-a__nota">● mediana · ○ p90 · ┆ objetivo</span></div>
+            @if (prioridades.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">Aún no hay SOS con prioridad en el periodo (se registra al clasificar, desde el 27/10/2026).</p>
+            }
+            else
+            {
+                <ul class="prioridades-a">
+                    @foreach (var (codigo, etapa) in prioridades)
+                    {
+                        var escala = Math.Max(maximo, (etapa.P90Minutos ?? 0) + 5);
+                        double P(double? x) => Math.Min(100, (x ?? 0) / escala * 100);
+                        var nombre = codigo == ConsultarTiemposPorEtapa.SinRegistrar ? "Sin registrar" : codigo;
+                        <li class="prioridad-a" data-prioridad="@codigo">
+                            <span class="prioridad-a__nombre">@nombre <span class="tarjeta-a__nota">· @etapa.Casos</span></span>
+                            @if (etapa.Casos >= minimo && etapa.P50Minutos is not null)
+                            {
+                                <span class="prioridad-a__pista" aria-hidden="true">
+                                    <span class="prioridad-a__objetivo" style="left:@(P(objetivo).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                    <span class="prioridad-a__rango" style="left:@(P(etapa.P50Minutos).ToString(System.Globalization.CultureInfo.InvariantCulture))%;width:@((P(etapa.P90Minutos) - P(etapa.P50Minutos)).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                    <span class="prioridad-a__p50" style="left:@(P(etapa.P50Minutos).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                    <span class="prioridad-a__p90" style="left:@(P(etapa.P90Minutos).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                </span>
+                                <span class="prioridad-a__valor"><b>@Formato.Minutos(etapa.P50Minutos)</b> · @Formato.Minutos(etapa.P90Minutos)</span>
+                            }
+                            else
+                            {
+                                <span class="prioridad-a__pista prioridad-a__pista--vacia" aria-hidden="true"></span>
+                                <span class="prioridad-a__valor">@(etapa.Casos == 0 ? "sin atendidos" : "pocos casos")</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            <div class="tarjeta-a__cabecera tarjeta-a__cabecera--separada"><h3>Atascados ahora</h3><span class="tarjeta-a__nota">más tiempo del esperado en su etapa</span></div>
+            @if (atascados.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">Ningún SOS lleva más de lo esperado en su etapa.</p>
+            }
+            else
+            {
+                <ul class="filas-a">
+                    @foreach (var a in atascados)
+                    {
+                        <li class="fila-a">
+                            <span class="chip chip--urgente">SOS</span>
+                            <a href="/panel/central/sos/@a.CasoId">@Cad.Server.Modulos.Casos.Dominio.EstadosCaso.Texto(a.Estado)</a>
+                            <span class="fila-a__cifra fila-a__cifra--aviso">@Formato.Minutos(a.Minutos) <small>/ @a.UmbralMinutos min</small></span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+}
