@@ -163,10 +163,11 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         }
     }
 
-    public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct)
+    public async Task<IActionResult> OnGetAsync(Guid id, [FromServices] Modulos.Analitica.MarcasCentral marcas, CancellationToken ct)
     {
         if (!await CargarAsync(id, ct))
             return NotFound();
+        await marcas.AbiertoAsync(id, ct); // la primera vez que la central abre el caso (analítica, 27/10/2026)
         // Identificadores de envío: un reenvío del mismo formulario no duplica el intento ni la asignación.
         Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
         Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };

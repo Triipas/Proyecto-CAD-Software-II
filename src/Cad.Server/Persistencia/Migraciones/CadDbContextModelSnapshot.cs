@@ -404,6 +404,35 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("ActividadesCiudadano", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Analitica.EnvioPush", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EnviadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Resultado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EnviadoEn");
+
+                    b.HasIndex("SerenoId");
+
+                    b.ToTable("EnviosPush", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EnviosPush_Resultado", "\"Resultado\" IN ('Enviada', 'TokenInvalido', 'NoEnviada', 'SinDispositivo')");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Analitica.PercepcionZona", b =>
                 {
                     b.Property<DateTimeOffset>("Hora")
@@ -515,6 +544,9 @@ namespace Cad.Server.Persistencia.Migraciones
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AbiertoEnCentralEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid?>("CategoriaId")
                         .HasColumnType("uuid");
 
@@ -552,6 +584,9 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.Property<double?>("PrecisionMetros")
                         .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset?>("PresentadoEnCentralEn")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Prioridad")
                         .HasMaxLength(30)
@@ -1951,6 +1986,15 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Analitica.EnvioPush", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
