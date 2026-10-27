@@ -395,11 +395,6 @@
   display: none;
 }
 
-/* Lugar del hecho de un reporte: violeta, como su marcador en la central. */
-.marcador-hecho--reporte span {
-  background: var(--color-reporte);
-}
-
 /* ── Al abrir el detalle: la línea se traza paso a paso y el paso actual se marca ── */
 .progreso__paso--hecho::before,
 .progreso__paso--actual::before,
