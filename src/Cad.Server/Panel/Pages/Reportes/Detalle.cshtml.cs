@@ -43,6 +43,14 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Reasignacion.IdSolicitud == Guid.Empty ? new FormularioReasignacion { IdSolicitud = Guid.NewGuid() } : Reasignacion,
         ErroresReasignacion, ErrorReasignacion);
     public string? ErrorDescarte { get; private set; }
+    public string? ErrorAsignacion { get; private set; }
+
+    // Asignación desde este detalle (27/10/2026): los serenos disponibles con su última ubicación.
+    public IReadOnlyList<SerenoParaReasignar> SerenosParaAsignar => SerenosDisponibles
+        .Select(s => new SerenoParaReasignar(s.Id, s.Nombre, s.UltimaPosicionEn is { } h
+            ? $"última ubicación a las {TimeZoneInfo.ConvertTime(h, ZonaHoraria):HH:mm}" : "ubicación no disponible"))
+        .ToList();
+    public Guid IdAsignacion => Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud;
     public string? ErrorMotivoDescarte { get; private set; }
 
     // Descarte por la central (un reporte recibido o en revisión se descarta con su decisión, HU17).
@@ -148,7 +156,9 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
                 indice == 6,
             ];
             // Los pasos que son estados se llaman como el estado: el chip y el paso marcado dicen lo mismo (24/10/2026).
-            string[] textos = [EstadosCaso.Texto(EstadoCaso.Recibido), EstadosCaso.Texto(EstadoCaso.EnRevision), EstadosCaso.ReporteAdmitido,
+            // 27/10/2026: mientras no hay decisión, el tercer paso es «Decisión» (todavía no se sabe si será admitido).
+            var tercero = Reporte.Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision ? "Decisión" : EstadosCaso.ReporteAdmitido;
+            string[] textos = [EstadosCaso.Texto(EstadoCaso.Recibido), EstadosCaso.Texto(EstadoCaso.EnRevision), tercero,
                 EstadosCaso.Texto(EstadoCaso.Asignada), EstadosCaso.Texto(EstadoCaso.EnCamino), EstadosCaso.Texto(EstadoCaso.EnAtencion),
                 EstadosCaso.Texto(Reporte.Estado == EstadoCaso.Cancelada ? EstadoCaso.Cancelada : EstadoCaso.Cerrada)];
             return ProgresoCaso.Construir(textos, hechos, indice < 6 ? indice + 1 : -1);
@@ -233,10 +243,30 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         }
     }
 
-    // HU20-CA07: un reporte admitido se asigna desde la central con las mismas reglas que un SOS. Vuelve a la central.
+    // HU20-CA07: un reporte admitido se asigna con las mismas reglas que un SOS. Desde la central vuelve a ella; desde este
+    // detalle (Volver = "detalle", 27/10/2026) vuelve al reporte.
     public async Task<IActionResult> OnPostAsignarAsync(Guid id, CancellationToken ct)
     {
-        switch (await asignar.EjecutarAsync(id, Asignacion.SerenoId, User.IdUsuario(), Asignacion.IdSolicitud, ct))
+        var resultado = await asignar.EjecutarAsync(id, Asignacion.SerenoId, User.IdUsuario(), Asignacion.IdSolicitud, ct);
+        if (Asignacion.Volver == "detalle")
+        {
+            switch (resultado)
+            {
+                case ResultadoAsignacion.Asignado or ResultadoAsignacion.YaAsignado:
+                    TempData[SonidoPanel.Clave] = SonidoPanel.CasoAsignado;
+                    return Hecho(id, "Reporte asignado.", "El sereno recibió el despacho y ya no figura como disponible.");
+                case ResultadoAsignacion.CasoNoEncontrado:
+                    return NotFound();
+                default:
+                    if (!await CargarAsync(id, ct))
+                        return NotFound();
+                    ErrorAsignacion = (resultado as ResultadoAsignacion.Rechazado)?.Motivo
+                        ?? (resultado as ResultadoAsignacion.Invalido)?.Motivo ?? "No se pudo asignar el reporte.";
+                    Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid(), Volver = "detalle" };
+                    return Page();
+            }
+        }
+        switch (resultado)
         {
             case ResultadoAsignacion.Asignado or ResultadoAsignacion.YaAsignado:
                 TempData[nameof(Central.IndexModel.Mensaje)] = "Reporte asignado.";
@@ -296,7 +326,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
 
     // El aviso ya muestra el estado; aquí, solo lo que sigue.
     private static string QueSigue(string estado) => estado == "Pendiente"
-        ? "Asígnalo a un sereno disponible desde la central."
+        ? "Ya puedes asignarlo a un sereno disponible desde aquí."
         : "Es un estado final.";
 
     // Descarte por la central (23/10/2026): un reporte admitido falso o erróneo termina como «Descartada», con motivo obligatorio.
@@ -355,7 +385,8 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
-        SerenosDisponibles = Seguimiento?.Asignacion is { FinalizadaEn: null }
+        // 27/10/2026: también admitido (Pendiente), para asignarlo desde aquí sin ir a la central.
+        SerenosDisponibles = Seguimiento?.Asignacion is { FinalizadaEn: null } || reporte.Estado == EstadoCaso.Pendiente
             ? (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList()
             : [];
         Descartado = reporte.Estado == EstadoCaso.Descartada ? await consultarDescarte.EjecutarAsync(id, ct) : null;

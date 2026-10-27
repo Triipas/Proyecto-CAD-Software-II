@@ -82,6 +82,17 @@
   color: var(--color-marino);
 }
 
+/* Quién reportó (detalle del reporte): dato secundario junto al título. */
+.consola__quien {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.consola__quien strong {
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
 /* Cronómetro: cuánto lleva el caso. Mientras espera a la central sube de tono (data-nivel lo pone consola.js). */
 .consola__cronometro {
   display: inline-flex;
@@ -148,22 +159,22 @@
   background: var(--color-texto-terciario);
 }
 
-.consola__vivo[data-estado="conectado"] {
+.consola__vivo[data-conexion="conectado"] {
   color: var(--color-exito);
 }
 
-.consola__vivo[data-estado="conectado"] .consola__punto {
+.consola__vivo[data-conexion="conectado"] .consola__punto {
   background: var(--color-exito);
   box-shadow: 0 0 0 3px var(--color-exito-fondo);
 }
 
-.consola__vivo[data-estado="reconectando"],
-.consola__vivo[data-estado="desconectado"] {
+.consola__vivo[data-conexion="reconectando"],
+.consola__vivo[data-conexion="desconectado"] {
   color: var(--color-advertencia);
 }
 
-.consola__vivo[data-estado="reconectando"] .consola__punto,
-.consola__vivo[data-estado="desconectado"] .consola__punto {
+.consola__vivo[data-conexion="reconectando"] .consola__punto,
+.consola__vivo[data-conexion="desconectado"] .consola__punto {
   background: var(--color-advertencia);
 }
 
@@ -517,6 +528,18 @@
 
 .consola__expediente [data-tiempos] > .texto-secundario {
   font-size: var(--texto-xs);
+}
+
+/* Sin marcas de tiempo todavía: una línea en lugar de «No disponible» repetido. */
+.tiempos--sin-marcas > .datos,
+.tiempos--sin-marcas > .texto-secundario {
+  display: none;
+}
+
+.tiempos__pendiente {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
 }
 
 /* El mapa es el dato principal del expediente: más alto y sin marco propio (vive dentro de la sección). */

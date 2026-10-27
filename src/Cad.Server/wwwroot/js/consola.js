@@ -62,7 +62,7 @@
 
   const estadoVivo = (estado, textoEstado) => {
     if (!vivo) return;
-    vivo.dataset.estado = estado;
+    vivo.dataset.conexion = estado;
     vivo.querySelector("[data-texto]").textContent = textoEstado;
   };
 
@@ -100,7 +100,9 @@
     }
     const estadoAntes = document.querySelector(".consola__barra [data-estado]")?.textContent.trim();
     // Lo que no tiene controles ni mapa se actualiza en su sitio.
-    for (const selector of [".consola__barra .consola__ancho > :not(.consola__acciones)", ".consola__pasos", "[aria-labelledby='titulo-clasificacion']", "[data-tiempos]"]) {
+    // Cada página dice qué partes de su expediente se refrescan (data-regiones en la barra); lo demás es común.
+    const propias = (barra.dataset.regiones ?? "[aria-labelledby='titulo-clasificacion'],[data-tiempos]").split(",");
+    for (const selector of [".consola__barra .consola__titular", ".consola__pasos", ...propias]) {
       const actuales = document.querySelectorAll(selector);
       const nuevos = documento.querySelectorAll(selector);
       actuales.forEach((actual, i) => {
@@ -113,14 +115,14 @@
     const aviso = document.querySelector("[data-caso-cambio]");
     if (aviso) {
       aviso.querySelector("[data-texto]").textContent = cancelado
-        ? "El ciudadano canceló este SOS mientras escribías. Lo que escribiste no se registró."
+        ? barra.dataset.textoCancelado ?? "El ciudadano canceló este SOS mientras escribías. Lo que escribiste no se registró."
         : estado && estado !== estadoAntes
           ? `El caso pasó a «${estado}» mientras escribías. Revisa los cambios antes de registrar.`
           : "Otro operador registró una novedad en este caso mientras escribías. Revisa los cambios antes de registrar.";
       aviso.dataset.tono = cancelado ? "urgente" : "informacion";
       aviso.hidden = false;
     }
-    anunciar(cancelado ? "El ciudadano canceló este SOS." : estado && estado !== estadoAntes ? `El caso pasó a ${estado}.` : "Hay una novedad en este caso.");
+    anunciar(cancelado ? "El ciudadano canceló el caso." : estado && estado !== estadoAntes ? `El caso pasó a ${estado}.` : "Hay una novedad en este caso.");
   }
 
   // Al volver de una recarga automática, se conserva el lugar.

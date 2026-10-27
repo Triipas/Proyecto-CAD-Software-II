@@ -1,7 +1,16 @@
 @model Cad.Server.Modulos.Consultas.TiemposCaso
 @* HU28 — tiempos del caso con las marcas registradas (DP18: por caso, sin promedios). *@
-<section class="superficie" aria-labelledby="titulo-tiempos" data-tiempos>
+@{
+    // 27/10/2026: sin ninguna marca todavía, una sola línea en vez de «No disponible» repetido (los datos siguen en el HTML).
+    var sinMarcas = Model.EsSos ? Model.Respuesta == Cad.Server.Modulos.Consultas.TiemposCaso.NoDisponible
+        : Model.HastaDecision == Cad.Server.Modulos.Consultas.TiemposCaso.NoDisponible && Model.HastaAtencion == Cad.Server.Modulos.Consultas.TiemposCaso.NoDisponible;
+}
+<section class="superficie@(sinMarcas ? " tiempos--sin-marcas" : "")" aria-labelledby="titulo-tiempos" data-tiempos>
     <h2 id="titulo-tiempos" class="central__titulo">Tiempos del caso</h2>
+    @if (sinMarcas)
+    {
+        <p class="tiempos__pendiente">@(Model.EsSos ? "Se medirá cuando se inicie la atención." : "Se medirán al decidir el reporte y al iniciar la atención.")</p>
+    }
     <dl class="datos">
         @if (Model.EsSos)
         {
