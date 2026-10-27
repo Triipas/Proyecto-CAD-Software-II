@@ -13,7 +13,7 @@
             <p class="ficha__telefono">
                 @if (Model.Telefono is { Length: > 0 } telefono)
                 {
-                    <span class="visualmente-oculto">Teléfono registrado: </span><a class="datos__telefono" href="tel:@telefono">@telefono</a>
+                    <span class="visualmente-oculto">Teléfono registrado: </span><a class="datos__telefono" href="tel:@telefono">@(telefono.Length == 9 ? $"{telefono[..3]} {telefono[3..6]} {telefono[6..]}" : telefono)</a>
                     @if (Model.TelefonoVerificado)
                     {
                         <span> · verificado</span>
@@ -27,10 +27,10 @@
         </div>
     </div>
     <dl class="datos datos--en-linea">
-        <div><dt>Documento</dt><dd>@(Model.Documento ?? "No registrado")</dd></div>
-        <div><dt>Edad</dt><dd>@(Model.Edad is { } edad ? $"{edad} años" : "No registrada")</dd></div>
-        <div><dt>Dirección</dt><dd>@(Model.Direccion ?? "No registrada")</dd></div>
-        <div>
+        <div class="@(Model.Documento is null ? "dato--vacio" : null)"><dt>Documento</dt><dd>@(Model.Documento ?? "No registrado")</dd></div>
+        <div class="@(Model.Edad is null ? "dato--vacio" : null)"><dt>Edad</dt><dd>@(Model.Edad is { } edad ? $"{edad} años" : "No registrada")</dd></div>
+        <div class="@(Model.Direccion is null ? "dato--vacio" : null)"><dt>Dirección</dt><dd>@(Model.Direccion ?? "No registrada")</dd></div>
+        <div class="@(Model.TieneContacto ? null : "dato--vacio")">
             <dt>Contacto de emergencia</dt>
             <dd data-contacto-emergencia>
                 @if (Model.TieneContacto)
