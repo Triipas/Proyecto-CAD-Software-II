@@ -237,6 +237,14 @@ public sealed class DesactivarCuentaInstitucional(CadDbContext db, UserManager<U
                 db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.AsignacionCancelada, administradorId, VisibilidadEvento.Interna, ahora));
             }
 
+            // 27/10/2026: un sereno desactivado deja de estar operativo, y el cambio queda en su historial (analítica de
+            // disponibilidad). Al reactivarse, vuelve a activar su estado desde la app.
+            if (await db.EstadosSereno.SingleOrDefaultAsync(e => e.SerenoId == id, ct) is { Operativo: true } estado)
+            {
+                estado.Cambiar(false, ahora);
+                db.CambiosEstadoSereno.Add(Modulos.Serenos.Dominio.CambioEstadoSereno.Registrar(estado));
+            }
+
             usuario.Activo = false;
             // Sello nuevo = sesiones abiertas revocadas. UpdateSecurityStampAsync guarda también la asignación y el caso
             // (mismo contexto de datos): una sola transacción.
