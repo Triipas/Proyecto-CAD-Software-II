@@ -63,7 +63,7 @@ public class MisCasosTests(FabricaCad fabrica)
         await Servicio(s => s.GetRequiredService<AvanzarCaso>().EjecutarAsync(id, Avance.IniciarAtencion, sereno.Id, ActorAvance.Sereno, CancellationToken.None, enElLugar));
         if (cerrar)
             Assert.IsType<ResultadoCierre.Cerrado>(await Servicio(s => s.GetRequiredService<CerrarCaso>().EjecutarAsync(id,
-                new DatosCierre(Robo, "Se recuperó el objeto y se orientó al ciudadano", "Nota interna ficticia reservada"), sereno.Id,
+                new DatosCierre(Robo, "ResueltoEnElLugar", "Se recuperó el objeto y se orientó al ciudadano", "Nota interna ficticia reservada"), sereno.Id,
                 ActorAvance.Sereno, CancellationToken.None)));
         return sereno;
     }
@@ -109,7 +109,7 @@ public class MisCasosTests(FabricaCad fabrica)
         Assert.Equal(EstadosPublicos.Recibido, await Estado());
         await Revisar(reporte, operador.Id);
         Assert.Equal(EstadosPublicos.EnRevision, await Estado());
-        await Decidir(reporte, operador.Id, new DatosDecision(TipoDecisionReporte.Admision, "Motivo de admisión reservado"));
+        await Decidir(reporte, operador.Id, new DatosDecision(TipoDecisionReporte.Admision, "Motivo de admisión reservado", Prioridad: "Media", Heridos: "No"));
         Assert.Equal(EstadosPublicos.Admitido, await Estado());
         await AtenderYCerrar(reporte, cerrar: false); // asignado → en camino → en atención: un solo estado público
         Assert.Equal(EstadosPublicos.EnAtencion, await Estado());
@@ -157,9 +157,9 @@ public class MisCasosTests(FabricaCad fabrica)
         var operador = await OperadorAsync();
         await Revisar(derivado, operador.Id);
         await Decidir(derivado, operador.Id, new DatosDecision(TipoDecisionReporte.Derivacion, "Motivo de derivación reservado",
-            "Comisaría ficticia", "Acción realizada reservada"));
+            "Otro", "Acción realizada reservada", "Comisaría ficticia"));
         await Revisar(descartado, operador.Id);
-        await Decidir(descartado, operador.Id, new DatosDecision(TipoDecisionReporte.Descarte, "Es un duplicado"));
+        await Decidir(descartado, operador.Id, new DatosDecision(TipoDecisionReporte.Descarte, "Es un duplicado", MotivoDescarte: "Duplicado"));
 
         var d1 = (await app.GetFromJsonAsync<MiCasoDetalle>($"{Ruta}/{derivado}"))!;
         var d2 = (await app.GetFromJsonAsync<MiCasoDetalle>($"{Ruta}/{descartado}"))!;
@@ -234,7 +234,7 @@ public class MisCasosTests(FabricaCad fabrica)
         var reporte = await ReporteAsync(app);
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await Revisar(reporte, operador.Id);
-        await Decidir(reporte, operador.Id, new DatosDecision(TipoDecisionReporte.Admision, "Motivo de admisión reservado"));
+        await Decidir(reporte, operador.Id, new DatosDecision(TipoDecisionReporte.Admision, "Motivo de admisión reservado", Prioridad: "Media", Heridos: "No"));
         var sereno = await AtenderYCerrar(reporte);
         var sos = await SosAsync(app);
         await Servicio(s => s.GetRequiredService<RegistrarIntentoContacto>().EjecutarAsync(sos, operador.Id,

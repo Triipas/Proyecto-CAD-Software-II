@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
@@ -26,7 +27,7 @@ public sealed class DescartarCaso(CadDbContext db, TimeProvider reloj, INotifica
     public const string MotivoCambioConcurrente = "El caso cambió mientras se descartaba. Revisa su estado e inténtalo de nuevo.";
     private const int Intentos = 3;
 
-    public async Task<ResultadoDescarte> EjecutarAsync(Guid casoId, string? motivo, Guid operadorId, CancellationToken ct)
+    public async Task<ResultadoDescarte> EjecutarAsync(Guid casoId, string? motivoCodigo, string? motivo, Guid operadorId, CancellationToken ct)
     {
         for (var intento = 1; ; intento++)
         {
@@ -38,6 +39,9 @@ public sealed class DescartarCaso(CadDbContext db, TimeProvider reloj, INotifica
             if (!caso.PuedeDescartarse)
                 return new ResultadoDescarte.Rechazado(caso.Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision ? MotivoEnRevision : MotivoNoDescartable);
 
+            // 27/10/2026: el motivo del catálogo (base del índice de casos falsos) y su detalle por escrito.
+            if (!Catalogo.Contiene(MotivosDescarte.Todos, motivoCodigo))
+                return new ResultadoDescarte.Invalido(new() { ["motivoCodigo"] = ["Elige el motivo del descarte."] });
             if (string.IsNullOrWhiteSpace(motivo))
                 return new ResultadoDescarte.Invalido(new() { ["motivo"] = ["Indica por qué se descarta el caso."] });
             if (motivo.Trim().Length > DescarteCaso.MaximoMotivo)
@@ -48,7 +52,7 @@ public sealed class DescartarCaso(CadDbContext db, TimeProvider reloj, INotifica
             var asignacion = await db.Asignaciones.SingleOrDefaultAsync(a => a.CasoId == casoId && a.Vigente, ct);
             caso.Descartar();
             asignacion?.Finalizar(ahora);
-            var descarte = DescarteCaso.Registrar(caso, estadoPrevio, operadorId, motivo, ahora);
+            var descarte = DescarteCaso.Registrar(caso, estadoPrevio, operadorId, motivoCodigo!, motivo, ahora);
             db.DescartesCaso.Add(descarte);
             db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.CasoDescartado, operadorId, VisibilidadEvento.Interna, ahora));
             try

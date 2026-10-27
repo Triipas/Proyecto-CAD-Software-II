@@ -162,13 +162,25 @@ public sealed class Caso
 
     public bool Clasificado => CategoriaId is not null;
 
+    // 27/10/2026 — prioridad y personas heridas (Cad.Contratos.Casos.PrioridadesCaso y PersonasHeridas): el operador las
+    // registra al clasificar un SOS o al admitir un reporte. Nulas en los casos anteriores y en los aún sin decidir.
+    public string? Prioridad { get; private set; }
+    public string? Heridos { get; private set; }
+
+    public void Priorizar(string prioridad, string heridos)
+    {
+        Prioridad = prioridad;
+        Heridos = heridos;
+    }
+
     // CA01: un SOS sin tipo se clasifica con responsable, fecha y hora. Reclasificar no está definido en HU13:
     // se rechaza hasta que el PO lo decida (no se añade una regla que la HU no tiene).
-    public void Clasificar(Guid categoriaId, Guid operadorId, DateTimeOffset ahora)
+    public void Clasificar(Guid categoriaId, string prioridad, string heridos, Guid operadorId, DateTimeOffset ahora)
     {
         if (Clasificado)
             throw new InvalidOperationException("El caso ya está clasificado.");
         CategoriaId = categoriaId;
+        Priorizar(prioridad, heridos);
         ClasificadoPor = operadorId;
         ClasificadoEn = ahora;
     }

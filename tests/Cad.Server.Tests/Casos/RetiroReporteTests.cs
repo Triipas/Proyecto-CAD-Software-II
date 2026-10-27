@@ -128,7 +128,7 @@ public class RetiroReporteTests(FabricaCad fabrica)
         var (app, id) = await ReporteAsync();
         var operador = await RevisarAsync(id);
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<DecidirReporte>()
-            .EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Corresponde (ficticio)"), operador.Id, CancellationToken.None));
+            .EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Corresponde (ficticio)", Prioridad: "Media", Heridos: "No"), operador.Id, CancellationToken.None));
 
         var respuesta = await RetirarAsync(app, id);
 

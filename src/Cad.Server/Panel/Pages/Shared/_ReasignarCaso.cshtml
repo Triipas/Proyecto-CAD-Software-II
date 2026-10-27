@@ -32,13 +32,15 @@
             {
                 <p id="Reasignacion_SerenoId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorSereno</span></p>
             }
+            <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Reasignacion_MotivoCodigo", "Reasignacion.MotivoCodigo", "Motivo",
+                Cad.Contratos.Casos.MotivosReasignacion.Todos, Model.Formulario.MotivoCodigo, Model.ErrorDe("motivoCodigo")))" />
             <div class="campo">
-                <label class="campo__etiqueta" for="Reasignacion_Motivo">Motivo</label>
-                <textarea class="campo__control campo__control--texto" id="Reasignacion_Motivo" name="Reasignacion.Motivo" rows="2" required
+                <label class="campo__etiqueta" for="Reasignacion_Motivo">Detalle (opcional)</label>
+                <textarea class="campo__control campo__control--texto" id="Reasignacion_Motivo" name="Reasignacion.Motivo" rows="2"
                           maxlength="@Cad.Server.Modulos.Casos.Dominio.Reasignacion.MaximoMotivo"
                           aria-invalid="@(Model.ErrorDe("motivo") is null ? null : "true")"
                           aria-describedby="Reasignacion_Motivo-ayuda@(Model.ErrorDe("motivo") is null ? "" : " Reasignacion_Motivo-error")">@Model.Formulario.Motivo</textarea>
-                <p id="Reasignacion_Motivo-ayuda" class="campo__ayuda">Por ejemplo: el sereno se desactivó; otro sereno está más cerca; el sereno no responde.</p>
+                <p id="Reasignacion_Motivo-ayuda" class="campo__ayuda">Obligatorio si elegiste «Otro motivo».</p>
                 @if (Model.ErrorDe("motivo") is { } errorMotivo)
                 {
                     <p id="Reasignacion_Motivo-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorMotivo</span></p>

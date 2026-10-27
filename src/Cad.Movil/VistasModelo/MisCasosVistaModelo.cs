@@ -138,6 +138,7 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
 
     private bool formularioCancelacion, cancelando;
     private string motivoCancelacion = "", errorMotivo = "", confirmacion = "";
+    private Cad.Contratos.Casos.OpcionCatalogo? motivoElegido;
 
     public MiCasoVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null)
         : base(api, sesiones, navegacion, reloj, zona)
@@ -223,6 +224,10 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         get => formularioCancelacion && PuedeCancelar;
         private set { Asignar(ref formularioCancelacion, value); Notificar(nameof(OfrecerCancelacion)); }
     }
+    // 27/10/2026: el motivo se elige de una lista (compartida con el servidor); escribirlo solo hace falta con «Otro motivo».
+    public IReadOnlyList<Cad.Contratos.Casos.OpcionCatalogo> OpcionesMotivo => Cad.Contratos.Casos.MotivosCancelacion.Todos;
+    public Cad.Contratos.Casos.OpcionCatalogo? MotivoElegido { get => motivoElegido; set { Asignar(ref motivoElegido, value); Notificar(nameof(EtiquetaDetalleMotivo)); } }
+    public string EtiquetaDetalleMotivo => motivoElegido?.Codigo == Cad.Contratos.Casos.MotivosCancelacion.Otro ? "Cuéntanos el motivo" : "Detalle (opcional)";
     public string MotivoCancelacion { get => motivoCancelacion; set { Asignar(ref motivoCancelacion, value ?? ""); Notificar(nameof(ContadorMotivo)); } }
     public string ContadorMotivo => $"{motivoCancelacion.Length}/{MaximoMotivo}";
     public string ErrorMotivo { get => errorMotivo; private set { Asignar(ref errorMotivo, value); Notificar(nameof(HayErrorMotivo)); } }
@@ -312,7 +317,12 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     private async Task CancelarAsync()
     {
         var motivo = motivoCancelacion.Trim();
-        if (motivo.Length == 0)
+        if (motivoElegido is null)
+        {
+            ErrorMotivo = EsReporte ? "Elige el motivo del retiro." : "Elige el motivo de la cancelación.";
+            return;
+        }
+        if (motivo.Length == 0 && motivoElegido.Codigo == Cad.Contratos.Casos.MotivosCancelacion.Otro)
         {
             ErrorMotivo = EsReporte ? "Indica el motivo del retiro." : "Indica el motivo de la cancelación.";
             return;
@@ -324,13 +334,14 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         Cancelando = true;
         try
         {
-            var resultado = await Api.CancelarSosAsync(token, casoId, new SolicitudCancelacionSos(motivo), CancellationToken.None);
+            var resultado = await Api.CancelarSosAsync(token, casoId, new SolicitudCancelacionSos(motivo.Length == 0 ? null : motivo, motivoElegido.Codigo), CancellationToken.None);
             switch (resultado)
             {
                 case ResultadoApi<MiCasoDetalle>.Correcto correcto:
                     caso = correcto.Valor;
                     FormularioCancelacion = false;
                     MotivoCancelacion = "";
+                    MotivoElegido = null;
                     Mensaje = "";
                     Confirmacion = EsReporte ? "Retiraste el reporte. La central fue avisada." : "Cancelaste el SOS. La central fue avisada.";
                     break;
@@ -341,7 +352,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
                     Mensaje = rechazo.Mensaje;
                     break;
                 case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 400 } invalido:
-                    ErrorMotivo = invalido.Errores.TryGetValue("motivo", out var errores) && errores.Length > 0 ? errores[0] : invalido.Mensaje;
+                    ErrorMotivo = (invalido.Errores.TryGetValue("motivoCodigo", out var errores) || invalido.Errores.TryGetValue("motivo", out errores))
+                        && errores.Length > 0 ? errores[0] : invalido.Mensaje;
                     break;
                 case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 404 }:
                     caso = null;

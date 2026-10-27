@@ -102,6 +102,15 @@
                 <div><dt>Destino</dt><dd data-destino>@destino</dd></div>
                 <div><dt>Acción realizada</dt><dd class="datos__texto">@d.Accion</dd></div>
             }
+            @if (d.TextoMotivoDescarte is { } motivoDescarte)
+            {
+                <div><dt>Motivo del descarte</dt><dd data-motivo-descarte>@motivoDescarte</dd></div>
+            }
+            @if (d.Tipo == TipoDecisionReporte.Admision && d.TextoPrioridad is { } prioridad)
+            {
+                <div><dt>Prioridad</dt><dd data-prioridad>@prioridad</dd></div>
+                <div><dt>Personas heridas</dt><dd data-heridos>@d.TextoHeridos</dd></div>
+            }
             <div><dt>Motivo</dt><dd class="datos__texto" data-motivo>@d.Motivo</dd></div>
             <div><dt>Decidido por</dt><dd>@d.Operador</dd></div>
             <div><dt>Fecha y hora</dt><dd>@Local(d.En)</dd></div>
@@ -245,15 +254,25 @@
                             <p id="ayuda-derivacion" class="campo__ayuda decision__ayuda decision__ayuda--derivacion">Derivar a otra entidad: es solo un registro, el sistema no envía nada.</p>
                             <p id="ayuda-descarte" class="campo__ayuda decision__ayuda decision__ayuda--descarte">Descartar: el reporte no se atiende y queda en el historial.</p>
                         </fieldset>
+                        @* 27/10/2026: cada decisión registra lo suyo de un catálogo (lo cuenta la analítica): al admitir, la prioridad y
+                           si hay heridos; al descartar, el motivo; al derivar, el destino. Solo se muestra el de la decisión elegida. *@
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_Prioridad", "Decision.Prioridad", "Prioridad",
+                            Cad.Contratos.Casos.PrioridadesCaso.Todas, Model.Decision.Prioridad, Model.ErrorDecisionDe("prioridad"), Clase: "campo--admision"))" />
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_Heridos", "Decision.Heridos", "¿Hay personas heridas?",
+                            Cad.Contratos.Casos.PersonasHeridas.Todas, Model.Decision.Heridos, Model.ErrorDecisionDe("heridos"), Clase: "campo--admision"))" />
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_MotivoDescarte", "Decision.MotivoDescarte", "Motivo del descarte",
+                            Cad.Contratos.Casos.MotivosDescarte.Todos, Model.Decision.MotivoDescarte, Model.ErrorDecisionDe("motivoDescarte"), Clase: "campo--descarte"))" />
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_Destino", "Decision.Destino", "Destino",
+                            Cad.Contratos.Casos.DestinosDerivacion.Todos, Model.Decision.Destino, Model.ErrorDecisionDe("destino"), Clase: "campo--derivacion"))" />
                         @foreach (var (campo, etiqueta, ayuda, valor, multilinea, maximo) in new[]
                         {
+                            ("DetalleDestino", "Entidad u oficina (opcional)", "Precisa el destino, por ejemplo la comisaría. Obligatorio si elegiste «Otra entidad».", Model.Decision.DetalleDestino, false, DecisionReporte.MaximoDestino),
                             ("Motivo", "Motivo", "Obligatorio en las tres decisiones. En un descarte es la justificación.", Model.Decision.Motivo, true, DecisionReporte.MaximoMotivo),
-                            ("Destino", "Destino (solo para derivar)", "Entidad o área a la que se deriva. Obligatorio al derivar.", Model.Decision.Destino, false, DecisionReporte.MaximoDestino),
                             ("Accion", "Acción realizada (solo para derivar)", "Por ejemplo, cómo se comunicó el caso. Obligatoria al derivar.", Model.Decision.Accion, true, DecisionReporte.MaximoAccion),
                         })
                         {
                             var id = $"Decision_{campo}";
-                            var error = Model.ErrorDecisionDe(campo.ToLowerInvariant());
+                            var error = Model.ErrorDecisionDe(char.ToLowerInvariant(campo[0]) + campo[1..]);
                             var descrito = error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda";
                             <div class="campo@(campo == "Motivo" ? "" : " campo--derivacion")">
                                 <label class="campo__etiqueta" for="@id">@etiqueta</label>
@@ -364,8 +383,12 @@
                                 <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
                             }
                         </div>
+                        @* 27/10/2026: cómo terminó la atención, del catálogo (lo cuenta la analítica). *@
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Cierre_ResultadoAtencion", "Cierre.ResultadoAtencion", "Cómo terminó la atención",
+                            Cad.Contratos.Casos.ResultadosAtencion.Todos, Model.Cierre.ResultadoAtencion, Model.ErrorCierreDe("resultadoAtencion"),
+                            "Solo lo ve el personal autorizado."))" />
                         <div class="campo">
-                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado para el ciudadano</label>
                             <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
                                       maxlength="@CierreCaso.MaximoResultado"
                                       aria-invalid="@(errorResultado is null ? null : "true")"
@@ -398,6 +421,7 @@
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Atención cerrada</h2>
                     <dl class="datos" data-cierre>
                         <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                        <div><dt>Cómo terminó</dt><dd data-resultado-atencion>@cierre.ComoTermino</dd></div>
                         <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
                         <div><dt>Notas internas (solo personal autorizado)</dt><dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd></div>
                         <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
@@ -417,6 +441,10 @@
                     var descarte = Model.Descartado!;
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Reporte descartado por la central</h2>
                     <dl class="datos" data-descartado>
+                        @if (descarte.TextoMotivo is { } motivoDescarte)
+                        {
+                            <div><dt>Motivo del descarte</dt><dd data-motivo-descarte>@motivoDescarte</dd></div>
+                        }
                         <div><dt>Motivo (solo personal autorizado)</dt><dd>@descarte.Motivo</dd></div>
                         <div><dt>Estaba</dt><dd>@descarte.EstadoPrevio</dd></div>
                         <div><dt>Descartado por</dt><dd>@descarte.Operador</dd></div>

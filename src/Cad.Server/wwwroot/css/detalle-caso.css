@@ -391,7 +391,10 @@
   display: block;
 }
 
-.formulario:has(input[name="Decision.Tipo"]:checked:not([value="Derivacion"])) .campo--derivacion {
+/* Cada decisión muestra solo sus campos (27/10/2026: la admisión, su prioridad; el descarte, su motivo del catálogo). */
+.formulario:has(input[name="Decision.Tipo"]:checked:not([value="Derivacion"])) .campo--derivacion,
+.formulario:has(input[name="Decision.Tipo"]:checked:not([value="Admision"])) .campo--admision,
+.formulario:has(input[name="Decision.Tipo"]:checked:not([value="Descarte"])) .campo--descarte {
   display: none;
 }
 

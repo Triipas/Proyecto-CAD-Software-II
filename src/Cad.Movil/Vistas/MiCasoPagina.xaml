@@ -6,6 +6,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
+             xmlns:cc="clr-namespace:Cad.Contratos.Casos;assembly=Cad.Contratos"
              x:Class="Cad.Movil.Vistas.MiCasoPagina"
              x:DataType="vm:MiCasoVistaModelo"
              Title="Mi caso">
@@ -30,8 +31,13 @@
                             <Label Text="{Binding AyudaCancelacion}" Style="{StaticResource TextoSecundario}" />
                             <Label Text="Motivo" Style="{StaticResource Etiqueta}" />
                             <Border Style="{StaticResource MarcoCampo}">
+                                <Picker Title="Elige un motivo" ItemsSource="{Binding OpcionesMotivo}" SelectedItem="{Binding MotivoElegido}"
+                                        ItemDisplayBinding="{Binding Texto, x:DataType=cc:OpcionCatalogo}" SemanticProperties.Description="Motivo" />
+                            </Border>
+                            <Label Text="{Binding EtiquetaDetalleMotivo}" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
                                 <Editor Text="{Binding MotivoCancelacion}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoMotivo}"
-                                        Placeholder="{Binding IndicacionMotivo}" AutoSize="Disabled" SemanticProperties.Description="Motivo" />
+                                        Placeholder="{Binding IndicacionMotivo}" AutoSize="Disabled" SemanticProperties.Description="Detalle del motivo" />
                             </Border>
                             <Label Text="{Binding ContadorMotivo}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
                             <Label Text="{Binding ErrorMotivo}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorMotivo}" />

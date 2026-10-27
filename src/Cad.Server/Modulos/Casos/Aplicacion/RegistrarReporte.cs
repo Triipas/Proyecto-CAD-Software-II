@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Contratos.Reportes;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
@@ -5,6 +6,9 @@ using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Casos.Aplicacion;
+
+// Reporte registrado por la central: canal de entrada, prioridad y heridos (27/10/2026) y, si los dio, quién avisó.
+public sealed record DatosReporteCentral(string? Canal, string? Prioridad, string? Heridos, string? ContactoNombre, string? ContactoTelefono);
 
 public abstract record ResultadoRegistroReporte
 {
@@ -70,8 +74,9 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
     public const string MotivoAdmisionCentral = "Registrado por la central: no requiere revisión.";
 
     public async Task<ResultadoRegistroReporte> RegistrarDeLaCentralAsync(Guid operadorId, SolicitudRegistroReporte solicitud,
-        string? contactoNombre, string? contactoTelefono, CancellationToken ct)
+        DatosReporteCentral datos, CancellationToken ct)
     {
+        var (contactoNombre, contactoTelefono) = (datos.ContactoNombre, datos.ContactoTelefono);
         if (solicitud.IdSolicitud == Guid.Empty)
             return new ResultadoRegistroReporte.Invalido(new() { ["idSolicitud"] = ["Falta el identificador de la solicitud."] });
         if (await BuscarDeLaCentralAsync(solicitud.IdSolicitud, ct) is { } existente)
@@ -85,15 +90,23 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
             errores["contactoNombre"] = [$"El nombre admite hasta {DetalleReporte.MaximoContactoNombre} caracteres."];
         if (telefono is not null && (telefono.Length > DetalleReporte.MaximoContactoTelefono || !telefono.All(c => char.IsDigit(c) || c is ' ' or '+' or '-')))
             errores["contactoTelefono"] = ["Escribe el teléfono solo con números (puede llevar +, espacios o guiones)."];
+        // 27/10/2026: por dónde llegó, y la prioridad y los heridos de su admisión (como en la revisión de un reporte).
+        if (!Catalogo.Contiene(CanalesEntrada.DeLaCentral, datos.Canal))
+            errores["canal"] = ["Elige por dónde llegó el reporte."];
+        if (!Catalogo.Contiene(PrioridadesCaso.Todas, datos.Prioridad))
+            errores["prioridad"] = ["Elige la prioridad del caso."];
+        if (!Catalogo.Contiene(PersonasHeridas.Todas, datos.Heridos))
+            errores["heridos"] = ["Indica si hay personas heridas (o que no se sabe)."];
         if (errores.Count > 0)
             return new ResultadoRegistroReporte.Invalido(errores);
 
         var caso = Caso.RegistrarReporteDeLaCentral(operadorId, solicitud.IdSolicitud, solicitud.CategoriaId!.Value, ahora);
+        caso.Priorizar(datos.Prioridad!, datos.Heridos!);
         var u = ubicacion!;
         db.Casos.Add(caso);
         db.DetallesReporte.Add(DetalleReporte.Registrar(caso, caso.CategoriaId!.Value, descripcion!,
             solicitud.OcurridoAproximadamenteEn!.Value.ToUniversalTime(), u.Fuente, u.Latitud, u.Longitud, u.Precision, u.Referencia,
-            operadorId, nombre, telefono));
+            operadorId, nombre, telefono, datos.Canal!));
         db.DecisionesReporte.Add(DecisionReporte.Registrar(caso, TipoDecisionReporte.Admision, MotivoAdmisionCentral, null, null, operadorId, ahora));
         db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteRegistrado, operadorId, VisibilidadEvento.Interna, ahora));
         db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteAdmitido, operadorId, VisibilidadEvento.Interna, ahora));

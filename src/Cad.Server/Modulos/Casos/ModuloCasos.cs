@@ -105,7 +105,7 @@ public static class ModuloCasos
                 Modulos.Consultas.ConsultarMisCasos consultar, CancellationToken ct) =>
             {
                 var ciudadano = contexto.User.IdUsuario();
-                return await cancelar.EjecutarAsync(ciudadano, id, solicitud.Motivo, ct) switch
+                return await cancelar.EjecutarAsync(ciudadano, id, solicitud.MotivoCodigo, solicitud.Motivo, ct) switch
                 {
                     ResultadoCancelacion.Cancelado or ResultadoCancelacion.YaCancelado => Results.Ok(await consultar.DetalleAsync(ciudadano, id, ct)),
                     ResultadoCancelacion.Rechazado r => Results.Problem(title: r.Motivo, statusCode: StatusCodes.Status409Conflict),

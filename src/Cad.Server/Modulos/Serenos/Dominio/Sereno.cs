@@ -27,6 +27,21 @@ public sealed class EstadoSereno
     private static DateTimeOffset AMicrosegundos(DateTimeOffset momento) => momento.AddTicks(-(momento.Ticks % 10));
 }
 
+// 27/10/2026 — historial de los cambios del estado operativo (EstadoSereno guarda solo el último). Solo inserción: con él y las
+// asignaciones se sabe cuántos serenos estaban operativos y disponibles en cualquier momento pasado (analítica).
+public sealed class CambioEstadoSereno
+{
+    public Guid Id { get; private set; }
+    public Guid SerenoId { get; private set; }
+    public bool Operativo { get; private set; }
+    public DateTimeOffset CambiadoEn { get; private set; }
+
+    private CambioEstadoSereno() { } // EF Core
+
+    public static CambioEstadoSereno Registrar(EstadoSereno estado) =>
+        new() { Id = Guid.CreateVersion7(), SerenoId = estado.SerenoId, Operativo = estado.Operativo, CambiadoEn = estado.CambiadoEn };
+}
+
 // HU18-CA01 — posición recibida mientras el sereno está operativo. Solo inserción.
 public sealed class PosicionSereno
 {

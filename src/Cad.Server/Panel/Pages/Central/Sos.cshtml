@@ -227,8 +227,12 @@
                                 <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
                             }
                         </div>
+                        @* 27/10/2026: cómo terminó la atención, del catálogo (lo cuenta la analítica). *@
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Cierre_ResultadoAtencion", "Cierre.ResultadoAtencion", "Cómo terminó la atención",
+                            Cad.Contratos.Casos.ResultadosAtencion.Todos, Model.Cierre.ResultadoAtencion, Model.ErrorCierreDe("resultadoAtencion"),
+                            "Solo lo ve el personal autorizado."))" />
                         <div class="campo">
-                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado para el ciudadano</label>
                             <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
                                       maxlength="@Cad.Server.Modulos.Casos.Dominio.CierreCaso.MaximoResultado"
                                       aria-invalid="@(errorResultado is null ? null : "true")"
@@ -262,6 +266,7 @@
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Atención cerrada</h2>
                     <dl class="datos" data-cierre>
                         <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                        <div><dt>Cómo terminó</dt><dd data-resultado-atencion>@cierre.ComoTermino</dd></div>
                         <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
                         <div>
                             <dt>Notas internas (solo personal autorizado)</dt>
@@ -280,6 +285,10 @@
                     @if (Model.Descartado is { } descarte)
                     {
                         <dl class="datos" data-descartado>
+                            @if (descarte.TextoMotivo is { } motivoDescarte)
+                            {
+                                <div><dt>Motivo del descarte</dt><dd data-motivo-descarte>@motivoDescarte</dd></div>
+                            }
                             <div><dt>Motivo (solo personal autorizado)</dt><dd>@descarte.Motivo</dd></div>
                             <div><dt>Estaba</dt><dd>@descarte.EstadoPrevio</dd></div>
                             <div><dt>Descartado por</dt><dd>@descarte.Operador</dd></div>
@@ -455,6 +464,14 @@
             {
                 <dl class="datos datos--en-linea">
                     <div><dt>Tipo</dt><dd data-tipo>@clasificacion.Categoria</dd></div>
+                    @if (clasificacion.TextoPrioridad is { } prioridad)
+                    {
+                        <div><dt>Prioridad</dt><dd data-prioridad>@prioridad</dd></div>
+                    }
+                    @if (clasificacion.TextoHeridos is { } heridos)
+                    {
+                        <div><dt>Personas heridas</dt><dd data-heridos>@heridos</dd></div>
+                    }
                     <div><dt>Clasificado por</dt><dd>@clasificacion.Operador</dd></div>
                     <div><dt>Fecha y hora</dt><dd>@Local(clasificacion.ClasificadoEn)</dd></div>
                 </dl>

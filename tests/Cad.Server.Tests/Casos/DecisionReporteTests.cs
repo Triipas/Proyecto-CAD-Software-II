@@ -58,7 +58,11 @@ public class DecisionReporteTests(FabricaCad fabrica)
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, Ruta(id)),
         };
         if (motivo is not null) campos["Decision.Motivo"] = motivo;
-        if (destino is not null) campos["Decision.Destino"] = destino;
+        // 27/10/2026: el destino es un código del catálogo; un texto libre de la prueba va como «Otra entidad» con su detalle.
+        if (!string.IsNullOrWhiteSpace(destino)) (campos["Decision.Destino"], campos["Decision.DetalleDestino"]) = ("Otro", destino);
+        else if (destino is not null) campos["Decision.Destino"] = destino;
+        if (tipo == "Admision") (campos["Decision.Prioridad"], campos["Decision.Heridos"]) = ("Media", "No");
+        if (tipo == "Descarte") campos["Decision.MotivoDescarte"] = "Duplicado";
         if (accion is not null) campos["Decision.Accion"] = accion;
         return await navegador.PostAsync($"{Ruta(id)}?handler=Decidir", new FormUrlEncodedContent(campos));
     }
@@ -211,7 +215,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
             .ReadFromJsonAsync<RespuestaReporte>())!.Id;
         var operador = await fabrica.CrearAsync(Roles.Operador);
 
-        var resultado = await DecidirDirectoAsync(recibido, new DatosDecision(TipoDecisionReporte.Admision, "Motivo"), operador.Id);
+        var resultado = await DecidirDirectoAsync(recibido, new DatosDecision(TipoDecisionReporte.Admision, "Motivo", Prioridad: "Media", Heridos: "No"), operador.Id);
 
         Assert.Equal(DecidirReporte.MotivoNoEnRevision, Assert.IsType<ResultadoDecision.Rechazado>(resultado).Motivo);
         Assert.Equal(EstadoCaso.Recibido, (await CasoAsync(recibido)).Estado);
@@ -242,8 +246,8 @@ public class DecisionReporteTests(FabricaCad fabrica)
         var b = await fabrica.CrearAsync(Roles.Operador);
 
         var resultado = await ConOtroOperadorAsync(
-            otro => otro.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Descarte, "No corresponde"), b.Id, CancellationToken.None),
-            propio => propio.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Corresponde"), a.Id, CancellationToken.None));
+            otro => otro.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Descarte, "No corresponde", MotivoDescarte: "Duplicado"), b.Id, CancellationToken.None),
+            propio => propio.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Corresponde", Prioridad: "Media", Heridos: "No"), a.Id, CancellationToken.None));
 
         Assert.Contains("ya fue descartado por", Assert.IsType<ResultadoDecision.Rechazado>(resultado).Motivo);
         var decision = Assert.Single(await DecisionesAsync(id));
@@ -259,7 +263,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
         var tipos = new[] { TipoDecisionReporte.Admision, TipoDecisionReporte.Derivacion, TipoDecisionReporte.Descarte };
 
         var resultados = await Task.WhenAll(operadores.Select((o, i) => DecidirDirectoAsync(id,
-            new DatosDecision(tipos[i % 3], "Motivo", "Comisaría", "Llamada"), o.Id)));
+            new DatosDecision(tipos[i % 3], "Motivo", "Otro", "Llamada", "Comisaría", "Media", "No", "Duplicado"), o.Id)));
 
         Assert.Single(resultados, r => r is ResultadoDecision.Registrado);
         var decision = Assert.Single(await DecisionesAsync(id));
