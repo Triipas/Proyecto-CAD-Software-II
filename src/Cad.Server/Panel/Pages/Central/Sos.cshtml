@@ -5,11 +5,34 @@
 @{
     ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "Verificar SOS";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
+    ViewData["ClasePagina"] = "pagina--consola";
     var inv = CultureInfo.InvariantCulture;
     var sos = Model.Sos;
     var siguiente = Model.Siguiente;
     string Local(DateTimeOffset momento) => TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm:ss", inv);
     var primerNombre = sos.Ciudadano.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? sos.Ciudadano;
+    // Consola de incidente (27/10/2026): cuánto lleva abierto el caso, en la barra. Un caso terminado no lo muestra.
+    var abierto = siguiente is not (Accion.VerCierre or Accion.VerCancelacion or Accion.VerDescarte);
+    // Hora corta: solo la hora si es de hoy; si no, el día y la hora (el detalle completo sigue en cada sección).
+    string Corta(DateTimeOffset momento)
+    {
+        var local = TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria);
+        var hoy = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Model.ZonaHoraria).Date;
+        return local.Date == hoy ? $"hoy, {local.ToString("HH:mm", inv)}" : local.ToString("dd/MM HH:mm", inv);
+    }
+    // El cronómetro sube de tono solo mientras el SOS espera a la central (antes de asignarlo).
+    var esperaCentral = siguiente is Accion.Contactar or Accion.Clasificar or Accion.Asignar;
+    var fase = siguiente switch
+    {
+        Accion.Contactar or Accion.Clasificar => "Verificación",
+        Accion.Asignar => "Despacho",
+        _ => "Atención",
+    };
+    var terminado = siguiente is Accion.VerCierre or Accion.VerCancelacion or Accion.VerDescarte;
+    string Transcurrido(TimeSpan t) => t.TotalMinutes < 1 ? "hace menos de 1 min"
+        : t.TotalHours < 1 ? $"hace {(int)t.TotalMinutes} min"
+        : t.TotalDays < 1 ? $"hace {(int)t.TotalHours} h {t.Minutes} min"
+        : $"hace {(int)t.TotalDays} d {t.Hours} h";
 
     // «Otras acciones»: lo que también se puede hacer ahora, además de la siguiente acción.
     var intentoComoOtra = siguiente != Accion.Contactar && siguiente is not (Accion.VerCierre or Accion.VerCancelacion or Accion.VerDescarte);
@@ -24,23 +47,39 @@
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/consola.css" asp-append-version="true" />
 }
 
-<p><a class="enlace-volver" href="/panel/central">← Central de monitoreo</a></p>
-
-<header class="cabecera-caso">
-    <div class="cabecera-caso__fila">
-        <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@(sos.EsCasoUrgente ? "Caso urgente" : "SOS")</span>
-        <h1 class="titulo">@sos.Ciudadano</h1>
+<header class="consola__barra" data-caso="@sos.Id" data-origen-estado="@sos.Origen @sos.Estado">
+    <div class="consola__ancho">
+        <a class="consola__volver" href="/panel/central" aria-label="Volver a la central de monitoreo" title="Central de monitoreo">
+            <partial name="_Icono" model="@("izquierda")" />
+        </a>
+        <div class="consola__titular">
+            <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@(sos.EsCasoUrgente ? "Caso urgente" : "SOS")</span>
+            <h1 class="consola__titulo">@sos.Ciudadano</h1>
+            <span data-estado><partial name="_ChipEstado" model="@((sos.Estado, true))" /></span>
+            @if (abierto)
+            {
+                <span class="consola__cronometro" data-transcurrido="@sos.RegistradoEn.ToString("O", inv)" data-escala="@(esperaCentral ? "true" : null)" data-nivel="0"
+                      title="Registrado el @Local(sos.RegistradoEn)">
+                    <partial name="_Icono" model="@("reloj")" />
+                    <span>@(esperaCentral ? "Sin despachar" : "Abierto")</span>
+                    <strong data-texto>@Transcurrido(DateTimeOffset.UtcNow - sos.RegistradoEn)</strong>
+                </span>
+            }
+        </div>
+        <div class="consola__acciones">
+            <a class="consola__otro-sos" href="/panel/central" data-otro-sos hidden>
+                <partial name="_Icono" model="@("urgente")" />Nuevo SOS en la central
+            </a>
+            <span class="consola__vivo" data-vivo data-conexion="conectando"><span class="consola__punto" aria-hidden="true"></span><span data-texto>Conectando…</span></span>
+            <a class="boton boton--secundario boton--compacto" href="/panel/casos/@sos.Id/historial">
+                <partial name="_Icono" model="@("reloj")" />Historial
+            </a>
+        </div>
     </div>
-    <p class="cabecera-caso__resumen">
-        <strong>@sos.Origen @sos.Estado</strong> · Registrado el @Local(sos.RegistradoEn) · <a href="/panel/casos/@sos.Id/historial">Ver el historial del caso</a>
-    </p>
-    @if (sos.EsCasoUrgente)
-    {
-        <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
-    }
-    <partial name="_ProgresoCaso" model="Model.Pasos" />
+    <p class="visualmente-oculto" role="status" data-anuncio></p>
 </header>
 
 @if (Model.Mensaje is not null)
@@ -73,29 +112,70 @@
     </div>
 }
 
-<div class="detalle-caso">
-    <div class="detalle-caso__principal">
-        <section class="superficie siguiente" aria-labelledby="titulo-siguiente">
+<div class="consola consola__ancho">
+    <div class="consola__pasos">
+        <partial name="_ProgresoCaso" model="Model.Pasos" />
+        <dl class="consola__resumen">
+            <div><dt>Registrado</dt><dd><time datetime="@sos.RegistradoEn.ToString("O", inv)">@Corta(sos.RegistradoEn)</time></dd></div>
+            @if (sos.Clasificacion is { } clasificado)
+            {
+                <div><dt>Tipificación</dt><dd>@clasificado.Categoria</dd></div>
+            }
+            @if (sos.Asignacion is { FinalizadaEn: null } enCurso)
+            {
+                <div><dt>Sereno</dt><dd>@enCurso.Sereno</dd></div>
+            }
+            <div><dt>Intentos de contacto</dt><dd>@sos.Intentos.Count</dd></div>
+            <div><dt>Identificador</dt><dd title="@sos.Id">@sos.Id.ToString()[..8].ToUpperInvariant()</dd></div>
+        </dl>
+    </div>
+
+    <div class="consola__trabajo">
+        <div class="aviso consola__cambio" role="alert" data-caso-cambio data-tono="informacion" hidden>
+            <partial name="_Icono" model="@("informacion")" />
+            <p class="aviso__texto" data-texto></p>
+            <button type="button" class="boton boton--secundario boton--compacto" data-recargar>Ver los cambios</button>
+        </div>
+        @if (sos.EsCasoUrgente)
+        {
+            <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
+        }
+
+        <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente">
             @switch (siguiente)
             {
                 case Accion.Contactar:
                     <div class="siguiente__cabecera">
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Llama a @primerNombre y registra el resultado del contacto</h2>
-                        <span class="siguiente__paso">Paso 1 de 3</span>
+                        <span class="siguiente__paso">@fase</span>
                     </div>
                     <partial name="_SosIntento" model="Model" />
+                    @if (asignarComoOtra && Model.SerenosDisponibles.Count > 0)
+                    {
+                        <p class="siguiente__atajo">
+                            <span>¿Es urgente? Puedes despachar a un sereno ahora y verificar después.</span>
+                            <button type="button" class="boton boton--secundario boton--compacto" data-ir-a="titulo-asignar-directo">Despachar ahora</button>
+                        </p>
+                    }
                     break;
                 case Accion.Clasificar:
                     <div class="siguiente__cabecera">
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Clasifica el SOS según lo que contó @primerNombre</h2>
-                        <span class="siguiente__paso">Paso 2 de 3</span>
+                        <span class="siguiente__paso">@fase</span>
                     </div>
                     <partial name="_SosClasificar" model="Model" />
+                    @if (asignarComoOtra && Model.SerenosDisponibles.Count > 0)
+                    {
+                        <p class="siguiente__atajo">
+                            <span>¿Es urgente? Puedes despachar a un sereno ahora y verificar después.</span>
+                            <button type="button" class="boton boton--secundario boton--compacto" data-ir-a="titulo-asignar-directo">Despachar ahora</button>
+                        </p>
+                    }
                     break;
                 case Accion.Asignar:
                     <div class="siguiente__cabecera">
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Elige al sereno que atenderá el caso</h2>
-                        <span class="siguiente__paso">Paso 3 de 3</span>
+                        <span class="siguiente__paso">@fase</span>
                     </div>
                     <partial name="_SosAsignar" model="Model" />
                     break;
@@ -222,7 +302,7 @@
                     @if (asignarComoOtra)
                     {
                         <section aria-labelledby="titulo-asignar-directo">
-                            <h3 id="titulo-asignar-directo" class="otras-acciones__titulo">Asignar sin @(siguiente == Accion.Contactar ? "verificar" : "clasificar")</h3>
+                            <h3 id="titulo-asignar-directo" class="otras-acciones__titulo">Despachar ahora, sin @(siguiente == Accion.Contactar ? "verificar" : "clasificar")</h3>
                             <partial name="_SosAsignar" model="Model" />
                         </section>
                     }
@@ -335,12 +415,7 @@
         }
     </div>
 
-    <aside class="detalle-caso__contexto" aria-label="Contexto del caso">
-        @if (Model.Ficha is { } ficha)
-        {
-            <partial name="_FichaCiudadano" model="ficha" />
-        }
-
+    <aside class="detalle-caso__contexto consola__expediente" aria-label="Expediente del caso">
         <section class="superficie seccion-caso" aria-labelledby="titulo-ubicacion">
             <h2 id="titulo-ubicacion" class="seccion-caso__titulo">Ubicación del dispositivo</h2>
             @if (sos.UbicacionDisponible)
@@ -366,6 +441,13 @@
             }
             <p class="texto-secundario detalle-caso__nota">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
         </section>
+
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
+
+
 
         <section class="superficie seccion-caso" aria-labelledby="titulo-clasificacion">
             <h2 id="titulo-clasificacion" class="seccion-caso__titulo">Clasificación</h2>
@@ -394,6 +476,8 @@
 
 @section Scripts {
     <script src="~/js/llamar.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/consola.js" asp-append-version="true"></script>
     @if (sos.UbicacionDisponible)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>

@@ -559,3 +559,323 @@
   margin: 0;
   color: var(--color-texto-secundario);
 }
+
+/* ══ Rediseño de los detalles (27/10/2026): SOS, reporte e historial ══════════════════════════════════════════════════
+   El contexto deja de ser una pila de tarjetas: es un solo panel con secciones separadas por una línea (como la ficha de la
+   vigilancia). La cabecera lleva el estado
+   como chip y el historial como acción a la derecha. */
+
+/* ── Cabecera ─────────────────────────────────────────── */
+.cabecera-caso__principal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espacio-3) var(--espacio-6);
+}
+
+.cabecera-caso__principal > div {
+  display: grid;
+  gap: var(--espacio-2);
+  min-width: 0;
+}
+
+.cabecera-caso__resumen {
+  font-variant-numeric: tabular-nums;
+}
+
+.cabecera-caso__accion {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.cabecera-caso__accion .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ── Contexto: un solo panel ──────────────────────────── */
+.detalle-caso__contexto {
+  gap: 0;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.detalle-caso__contexto > .superficie,
+.detalle-caso__contexto > .seccion-caso {
+  gap: var(--espacio-3);
+  padding: var(--espacio-5);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.detalle-caso__contexto > * + * {
+  border-top: var(--grosor-borde) solid var(--color-borde) !important;
+}
+
+.detalle-caso__contexto .seccion-caso__titulo,
+.detalle-caso__contexto .central__titulo {
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+}
+
+.detalle-caso__contexto .datos--en-linea > div {
+  grid-template-columns: 8.5rem 1fr;
+}
+
+.detalle-caso__contexto .datos--en-linea dt {
+  font-size: var(--texto-sm);
+}
+
+.detalle-caso__contexto .aviso {
+  margin: var(--espacio-4);
+}
+
+.detalle-caso__contexto .aviso + * {
+  border-top: 0 !important;
+}
+
+@media (min-width: 64rem) {
+  .detalle-caso {
+    grid-template-columns: minmax(0, 1.6fr) minmax(21rem, 1fr);
+    gap: var(--espacio-6);
+  }
+}
+
+/* ── Ficha del ciudadano ──────────────────────────────── */
+.ficha {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.ficha__avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-marino-elevado);
+}
+
+.ficha__datos {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ficha__nombre {
+  margin: 0;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-marino);
+  overflow-wrap: anywhere;
+}
+
+.ficha__telefono {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha__telefono .datos__telefono {
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+}
+
+.historial--linea .historial__texto > strong:first-child {
+  margin-right: var(--espacio-1);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-neutro);
+}
+
+/* ── Hecho reportado (columna principal del reporte) ──── */
+.hecho {
+  display: grid;
+  gap: var(--espacio-4);
+}
+
+.hecho__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espacio-2) var(--espacio-4);
+}
+
+.hecho__cuando {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+  font-variant-numeric: tabular-nums;
+}
+
+.hecho__descripcion {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--texto-md);
+  line-height: 1.6;
+  color: var(--color-texto);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hecho__fotos {
+  display: grid;
+  gap: var(--espacio-2);
+  padding-top: var(--espacio-4);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.hecho__subtitulo {
+  margin: 0;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-texto);
+}
+
+.hecho .fotos-reporte {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+
+.fotos-reporte__enlace {
+  transition: border-color var(--duracion-rapida) ease, box-shadow var(--duracion-rapida) ease;
+}
+
+.fotos-reporte__enlace:hover {
+  border-color: var(--color-borde-control);
+  box-shadow: var(--sombra-1);
+}
+
+/* ── Historial: la hora en su columna, el actor debajo ─ */
+.historial--linea .historial__elemento {
+  display: grid;
+  grid-template-columns: 6.5rem 1.75rem minmax(0, 1fr);
+  column-gap: 0;
+  row-gap: 2px;
+  padding: 0 0 var(--espacio-5);
+}
+
+.historial--linea .historial__cabecera {
+  display: contents;
+}
+
+.historial--linea .historial__elemento > * {
+  grid-column: 3;
+}
+
+.historial--linea .historial__cabecera > time {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  display: grid;
+  align-content: start;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: var(--espacio-3);
+}
+
+.historial__hora {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-texto);
+}
+
+.historial__fecha {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.historial--linea .historial__actuacion {
+  grid-column: 3;
+  font-size: var(--texto-md);
+}
+
+.historial--linea .historial__responsable {
+  grid-column: 3;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.historial--linea .historial__texto {
+  grid-column: 3;
+  margin-top: var(--espacio-1);
+  max-width: 68ch;
+  color: var(--color-texto);
+}
+
+/* El nodo y el trazo, en la columna del medio. */
+.historial--linea .historial__elemento::after {
+  left: calc(6.5rem + 0.4375rem);
+  top: 0.3125rem;
+}
+
+.historial--linea .historial__elemento::before {
+  left: calc(6.5rem + 0.8125rem);
+  top: 1.375rem;
+}
+
+.historial__interna {
+  display: inline-flex;
+  align-items: center;
+  margin-right: var(--espacio-2);
+  padding: 0 var(--espacio-2);
+  border: 1px solid var(--color-neutro-borde);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  line-height: 1.375rem;
+  color: var(--color-neutro);
+  background: var(--color-neutro-fondo);
+}
+
+.resumen-caso {
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+@media (max-width: 47.5rem) {
+  .historial--linea .historial__elemento {
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+  }
+
+  .historial--linea .historial__elemento > *,
+  .historial--linea .historial__actuacion,
+  .historial--linea .historial__responsable,
+  .historial--linea .historial__texto {
+    grid-column: 2;
+  }
+
+  .historial--linea .historial__cabecera > time {
+    grid-column: 2;
+    grid-row: auto;
+    display: flex;
+    gap: var(--espacio-2);
+    text-align: left;
+    padding: 0;
+    order: 2;
+  }
+
+  .historial--linea .historial__elemento::after {
+    left: 0.4375rem;
+  }
+
+  .historial--linea .historial__elemento::before {
+    left: 0.8125rem;
+  }
+
+  .cabecera-caso__accion {
+    width: 100%;
+    justify-content: center;
+  }
+}

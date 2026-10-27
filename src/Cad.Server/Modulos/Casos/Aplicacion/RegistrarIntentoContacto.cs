@@ -17,7 +17,8 @@ public abstract record ResultadoIntentoContacto
 
 // HU12 — Contactar al ciudadano y registrar la verificación del SOS (S2-T01).
 // La autorización (solo operador, CA08) la aplica la política de la página que llama a este caso de uso.
-public sealed class RegistrarIntentoContacto(CadDbContext db, TimeProvider reloj, ILogger<RegistrarIntentoContacto> registro)
+public sealed class RegistrarIntentoContacto(CadDbContext db, TimeProvider reloj, ILogger<RegistrarIntentoContacto> registro,
+    Compartido.INotificador notificador)
 {
     // CA02/CA03: solo estos tres valores, escritos exactamente así. No se usa Enum.TryParse,
     // que aceptaría números u otras grafías.
@@ -61,6 +62,7 @@ public sealed class RegistrarIntentoContacto(CadDbContext db, TimeProvider reloj
 
         // Sin la información ni la referencia en el registro: pueden contener datos personales.
         registro.LogInformation("Intento de contacto {Resultado} registrado en el caso {CasoId}.", resultado, casoId);
+        await AvisarAsync(casoId);
         return new ResultadoIntentoContacto.Registrado(intento);
     }
 
@@ -81,4 +83,17 @@ public sealed class RegistrarIntentoContacto(CadDbContext db, TimeProvider reloj
 
     private Task<IntentoContacto?> BuscarAsync(Guid casoId, Guid idSolicitud, CancellationToken ct) =>
         db.IntentosContacto.AsNoTracking().SingleOrDefaultAsync(i => i.CasoId == casoId && i.IdSolicitud == idSolicitud, ct);
+
+    // 27/10/2026: después del COMMIT, para que otro operador con el mismo caso abierto (consola de incidente) vea el intento.
+    private async Task AvisarAsync(Guid casoId)
+    {
+        try
+        {
+            await notificador.CasoActualizadoAsync(casoId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            registro.LogError(ex, "No se pudo avisar a la central del intento de contacto en el caso {CasoId}; se mostrará al resincronizar.", casoId);
+        }
+    }
 }

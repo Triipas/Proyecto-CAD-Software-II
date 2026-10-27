@@ -162,6 +162,31 @@ public class DecisionReporteTests(FabricaCad fabrica)
         Assert.DoesNotContain(id, central.Avisos); // no es un SOS: sin aviso sonoro de atención urgente
     }
 
+    // Consola de incidente (27/10/2026): el reporte admitido se asigna desde su propio detalle y se vuelve a él.
+    [Fact]
+    public async Task HU20_CA07_DesdeElDetalle_SeAsignaSinIrALaCentral_YVuelveAlReporte()
+    {
+        var id = await EnRevisionAsync();
+        var (operador, _) = await OperadorAsync();
+        await DecidirAsync(operador, id, "Admision", "Corresponde atenderlo");
+        var (_, sereno) = await SerenoOperativoAsync();
+
+        var detalle = await operador.GetStringAsync(Ruta(id));
+        Assert.Contains($"value=\"{sereno.Id}\"", detalle); // el sereno disponible se ofrece en el detalle
+        var respuesta = await operador.PostAsync($"{Ruta(id)}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Asignacion.SerenoId"] = sereno.Id.ToString(),
+            ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(),
+            ["Asignacion.Volver"] = "detalle",
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, Ruta(id)),
+        }));
+
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Equal(Ruta(id), respuesta.Headers.Location!.OriginalString);
+        Assert.Equal(EstadoCaso.Asignada, (await CasoAsync(id)).Estado);
+        Assert.Contains("Reporte asignado.", await operador.GetStringAsync(Ruta(id)));
+    }
+
     [Fact]
     public async Task HU20_CA07_UnReporteAdmitidoSinPunto_TambienSeAsigna_YElSerenoVeLaReferencia()
     {
