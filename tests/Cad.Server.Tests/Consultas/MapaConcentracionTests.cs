@@ -120,6 +120,8 @@ public class MapaConcentracionTests(FabricaCad fabrica)
     {
         var zona = ZonaNueva();
         var desde = DateTimeOffset.UtcNow.AddSeconds(-1);
+        // La prueba anterior pudo dejar un caso sin ubicación en el último segundo: se compara con lo que ya había.
+        var sinUbicacionAntes = (await MapaAsync(desde)).SinUbicacion;
         var app = await CiudadanoAsync();
         var cancelado = await SosAsync(app, zona);
         Assert.Equal(HttpStatusCode.OK, (await app.PostAsJsonAsync($"/api/casos/mios/{cancelado}/cancelacion", new SolicitudCancelacionSos("Falsa alarma"))).StatusCode);
@@ -134,7 +136,7 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         Assert.Equal(1, En(mapa, zona, OrigenCaso.Sos));
         // El derivado sí es una incidencia (CA03 solo excluye «Cancelada» y «Descartada»).
         Assert.Equal(1, En(mapa, zona, OrigenCaso.Reporte));
-        Assert.Equal(0, mapa.SinUbicacion);
+        Assert.Equal(sinUbicacionAntes, mapa.SinUbicacion);
     }
 
     [Fact]

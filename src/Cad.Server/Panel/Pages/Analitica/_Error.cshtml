@@ -1,0 +1,11 @@
+@model (Cad.Server.Panel.Pages.Analitica.Preguntas.Definicion Pregunta, string Referencia, string Enlace)
+@* Error de cálculo: solo se apaga esta pregunta; las demás de la columna siguen disponibles. *@
+<section class="tarjeta-a vacio-a vacio-a--error" aria-labelledby="titulo-error" role="alert" data-estado="error">
+    <span class="vacio-a__ilustracion" aria-hidden="true"><partial name="_Icono" model="@("advertencia")" /></span>
+    <h2 class="vacio-a__titulo" id="titulo-error">No se pudo responder «@Model.Pregunta.Titulo»</h2>
+    <p class="vacio-a__texto">El cálculo tardó demasiado o la base de datos no respondió. Las demás preguntas siguen disponibles. Si se repite, prueba con un periodo más corto.</p>
+    <div class="vacio-a__acciones">
+        <a class="boton boton--principal" href="@Model.Enlace">Reintentar</a>
+    </div>
+    <p class="vacio-a__nota">Referencia para soporte: @Model.Referencia</p>
+</section>

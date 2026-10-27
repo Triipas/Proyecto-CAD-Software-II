@@ -1,0 +1,85 @@
+@model (IndexModel M, IndexModel.VistaSistema V)
+@{
+    var (m, v) = Model;
+    var s = v.Salud;
+    var senales = Sistema.Senales(s);
+    var alertas = senales.Where(x => !x.Bien).ToList();
+    // La cadena de un SOS, tramo a tramo. El tramo de la app al servidor no se mide: el SOS se registra al llegar.
+    const double PresentacionAceptable = 5, AperturaAceptable = 60;
+    var tramos = new (string Texto, bool? Bien, string Ayuda)[]
+    {
+        ("no se mide", null, "El SOS se registra al llegar al servidor"),
+        (s.PresentacionP50Segundos is { } p ? Formato.Minutos(p / 60) : "sin datos", s.PresentacionP50Segundos is { } p2 ? p2 <= PresentacionAceptable : null, $"Mediana del registro a verse en la central abierta · aceptable: {PresentacionAceptable} s o menos"),
+        (s.AperturaP50Segundos is { } q ? Formato.Minutos(q / 60) : "sin datos", s.AperturaP50Segundos is { } q2 ? q2 <= AperturaAceptable : null, $"Mediana del registro a que un operador abre el detalle · aceptable: {AperturaAceptable} s o menos"),
+        (s.PorcentajePushEnviadas is { } e ? $"{Formato.Porcentaje(e, 0)} llega" : "sin datos", s.PorcentajePushEnviadas is { } e2 ? e2 >= 95 : null, "Avisos push al sereno entregados al servicio de notificaciones · aceptable: más del 95 %"),
+    };
+    var nodos = new[] { ("App del ciudadano", "emite el SOS"), ("Servidor", "lo registra"), ("Central", "lo muestra"), ("Operador", "lo abre"), ("App del sereno", "recibe el despacho") };
+    var sinDatos = s.Sos == 0 && s.PorcentajePushEnviadas is null && s.IniciosAtencion == 0;
+}
+@if (sinDatos)
+{
+    <partial name="_Vacio" model="@(new Vacio($"No hubo SOS, avisos ni atenciones en {m.TextoPeriodo}.",
+        "Las señales del sistema se miden sobre lo que pasó: sin SOS no hay cadena que medir. Prueba con un periodo más largo.",
+        m.Periodo == "30" ? [] : [("Ver los últimos 30 días", m.Enlace(periodo: "30"), true)]))" />
+}
+else
+{
+    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-sistema" data-respuesta="sistema" data-alertas="@alertas.Count">
+        <div class="respuesta__cabecera">
+            @if (alertas.Count == 0 && tramos.All(t => t.Bien != false))
+            {
+                // Lo medido de la cadena, en una frase: hasta dos tramos con dato (los valores son cifras formateadas).
+                var partes = new List<string>();
+                if (s.PresentacionP50Segundos is not null) partes.Add($"un SOS aparece en la central en <em>{tramos[1].Texto}</em>");
+                if (s.AperturaP50Segundos is not null) partes.Add($"{(partes.Count == 0 ? "un operador abre un SOS" : "se abre")} a los <em>{tramos[2].Texto}</em>");
+                if (s.PorcentajePushEnviadas is { } envio) partes.Add($"el <em>{Formato.Porcentaje(envio, 0)}</em> de los avisos llega al sereno");
+                partes = partes.Take(2).ToList();
+                <h2 class="respuesta__titular" id="respuesta-sistema">El sistema responde bien@(Html.Raw(partes.Count == 0 ? "" : ": " + string.Join(" y ", partes))).</h2>
+            }
+            else
+            {
+                var malos = alertas.Count + tramos.Count(t => t.Bien == false);
+                <h2 class="respuesta__titular" id="respuesta-sistema">Hay que mirar <em>@Formato.Plural(malos, "señal", "señales")</em>@(alertas.FirstOrDefault() is { } primera ? $": {primera.Nombre.ToLowerInvariant()} está en {primera.Texto}." : ": la cadena del SOS tarda más de lo aceptable.")</h2>
+            }
+            <p class="respuesta__lectura">La cadena de un SOS, paso a paso, con lo que tarda o lo que llega en cada tramo (medianas del periodo). Verde: dentro de lo aceptable.</p>
+        </div>
+        <ol class="cadena-a">
+            @for (var i = 0; i < nodos.Length; i++)
+            {
+                <li class="cadena-a__nodo"><b>@nodos[i].Item1</b><span>@nodos[i].Item2</span></li>
+                @if (i < tramos.Length)
+                {
+                    var t = tramos[i];
+                    <li class="cadena-a__tramo @(t.Bien switch { true => "cadena-a__tramo--bien", false => "cadena-a__tramo--alerta", _ => "" })" title="@t.Ayuda" data-tramo="@i">
+                        <span class="cadena-a__flecha" aria-hidden="true"></span>
+                        <span class="cadena-a__valor">@(t.Bien == false ? "▲ " : "")@t.Texto</span>
+                        <span class="visualmente-oculto">@t.Ayuda@(t.Bien switch { true => " (dentro de lo aceptable)", false => " (fuera de lo aceptable)", _ => "" })</span>
+                    </li>
+                }
+            }
+        </ol>
+    </section>
+
+    <section class="tarjeta-a" aria-labelledby="titulo-senales">
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-senales">Señales de los datos</h3><span class="tarjeta-a__nota">● valor del periodo · franja verde: aceptable (provisional)</span></div>
+        <ul class="senales-a">
+            @foreach (var x in senales)
+            {
+                <li class="senal-a @(x.Bien ? "" : "senal-a--alerta")" data-senal="@x.Nombre" data-bien="@x.Bien.ToString().ToLowerInvariant()">
+                    <span class="senal-a__estado" aria-hidden="true">@(x.Valor is null ? "–" : x.Bien ? "✓" : "▲")</span>
+                    <span><span class="senal-a__nombre">@x.Nombre</span><br /><span class="tarjeta-a__nota">@x.Ayuda</span></span>
+                    @Sistema.Regla(x)
+                    <b class="senal-a__valor">@x.Texto<span class="visualmente-oculto">@(x.Valor is null ? "" : x.Bien ? ", dentro de lo aceptable" : ", fuera de lo aceptable")</span></b>
+                </li>
+            }
+        </ul>
+        @foreach (var x in alertas)
+        {
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque senal-a__nota">▲ Hay que mirarlo: @x.Nombre.ToLowerInvariant() está en @x.Texto (@x.Ayuda).</p>
+        }
+        @if (s.PrecisionP50Metros is { } precision)
+        {
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Precisión del GPS en los SOS: mediana @Formato.Decimal(precision, 0) m, el 10 % peor más de @Formato.Decimal(s.PrecisionP90Metros ?? precision, 0) m.</p>
+        }
+    </section>
+}

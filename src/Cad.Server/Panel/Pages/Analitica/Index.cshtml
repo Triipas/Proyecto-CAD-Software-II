@@ -1,0 +1,131 @@
+@page "/panel/analitica/{pregunta?}"
+@model Cad.Server.Panel.Pages.Analitica.IndexModel
+@{
+    ViewData["Title"] = $"Analítica · {Model.Actual.Titulo}";
+    ViewData["ClasePagina"] = "pagina--analitica";
+    var enVivo = Model.Actual.Clave == "ahora";
+}
+@section Estilos {
+    @if (Model.Actual.Clave is "tiempo" or "cobertura" or "repite")
+    {
+        <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
+    }
+    <link rel="stylesheet" href="~/css/analitica.css" asp-append-version="true" />
+}
+<div class="analitica" data-analitica="@Model.Actual.Clave">
+    @* La columna de preguntas: cada una con su dato del periodo y su estado (icono y texto, nunca solo color). *@
+    <nav class="preguntas" aria-label="Preguntas de la analítica">
+        <h1 class="preguntas__titulo">Analítica</h1>
+        <p class="preguntas__ayuda">Elige una pregunta: la respuesta va primero, la evidencia debajo.</p>
+        <ul class="preguntas__lista">
+            @foreach (var p in Preguntas.Todas)
+            {
+                var resumen = Model.Resumenes.GetValueOrDefault(p.Clave);
+                <li>
+                    <a class="pregunta" href="@Model.Enlace(p.Clave)" aria-current="@(p.Clave == Model.Actual.Clave ? "page" : null)" data-pregunta="@p.Clave">
+                        <span class="pregunta__icono">@Preguntas.Icono(p)</span>
+                        <span class="pregunta__titulo">@p.Titulo</span>
+                        <span class="pregunta__dato @(resumen?.Tono is { Length: > 0 } tono ? $"pregunta__dato--{tono}" : "")">@(resumen?.Texto ?? "")</span>
+                    </a>
+                </li>
+            }
+        </ul>
+        <div class="preguntas__pie">
+            <a class="boton boton--secundario boton--compacto" href="@Model.EnlaceInforme()" data-informe>
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" /></svg>
+                Informe del periodo (CSV)
+            </a>
+            <span>MVP académico · datos simulados</span>
+        </div>
+    </nav>
+
+    <div class="analitica__trabajo">
+        @if (enVivo)
+        {
+            <div class="filtros-analitica">
+                <span class="vivo-analitica" data-vivo data-conexion="conectando" role="status"><span class="vivo-analitica__punto" aria-hidden="true"></span><span data-texto>Conectando…</span></span>
+                <a class="boton boton--secundario boton--compacto filtros-analitica__accion" href="/panel/central">Abrir la central</a>
+            </div>
+        }
+        else
+        {
+            @* Periodo: hoy, 7 días, 30 días o un rango. Enlaces y formularios GET: la selección queda en la dirección. *@
+            <div class="filtros-analitica" data-filtros>
+                <div class="segmentado" role="group" aria-label="Periodo">
+                    @foreach (var (valor, texto) in new[] { ("hoy", "Hoy"), ("7", "7 días"), ("30", "30 días") })
+                    {
+                        <a class="segmentado__opcion" href="@Model.Enlace(periodo: valor)" aria-current="@(Model.Periodo == valor ? "true" : null)">@texto</a>
+                    }
+                </div>
+                <details class="rango" open="@(Model.Periodo == "rango")">
+                    <summary class="segmentado__opcion rango__abrir" aria-current="@(Model.Periodo == "rango" ? "true" : null)">Personalizado</summary>
+                    <form class="rango__campos" method="get" action="@Url.Page("/Analitica/Index", new { pregunta = Model.Actual.Clave })">
+                        <input type="hidden" name="periodo" value="rango" />
+                        <label class="rango__campo">Desde <input class="campo__control" type="date" name="desde" value="@Model.Desde" required /></label>
+                        <label class="rango__campo">Hasta <input class="campo__control" type="date" name="hasta" value="@Model.Hasta" required /></label>
+                        @if (Model.Prioridad is { } prioridadRango)
+                        {
+                            <input type="hidden" name="prioridad" value="@prioridadRango" />
+                        }
+                        <button type="submit" class="boton boton--principal boton--compacto">Ver</button>
+                    </form>
+                </details>
+                @if (Model.Actual.Clave == "tiempo")
+                {
+                    <form method="get" action="@Url.Page("/Analitica/Index", new { pregunta = Model.Actual.Clave })" class="filtro-select">
+                        <input type="hidden" name="periodo" value="@Model.Periodo" />
+                        @if (Model.Periodo == "rango")
+                        {
+                            <input type="hidden" name="desde" value="@Model.Desde" />
+                            <input type="hidden" name="hasta" value="@Model.Hasta" />
+                        }
+                        <label class="visualmente-oculto" for="filtro-prioridad">Prioridad</label>
+                        <select id="filtro-prioridad" class="campo__control campo__control--seleccion" name="prioridad" data-enviar-al-cambiar>
+                            <option value="">Prioridad: todas</option>
+                            @foreach (var o in Cad.Contratos.Casos.PrioridadesCaso.Todas)
+                            {
+                                <option value="@o.Codigo" selected="@(Model.Prioridad == o.Codigo)">Prioridad: @o.Codigo.ToLowerInvariant()</option>
+                            }
+                        </select>
+                        <noscript><button type="submit" class="boton boton--secundario boton--compacto">Ver</button></noscript>
+                    </form>
+                }
+                <span class="filtros-analitica__periodo">Comparado con @Model.TextoAnterior</span>
+            </div>
+            @if (Model.ErrorPeriodo is { } errorPeriodo)
+            {
+                <div class="aviso aviso--advertencia" role="status"><partial name="_Icono" model="@("advertencia")" /><div><p class="aviso__texto">@errorPeriodo</p></div></div>
+            }
+        }
+
+        @if (Model.Error is { } referencia)
+        {
+            <partial name="_Error" model="@(Model.Actual, referencia, Model.Enlace())" />
+        }
+        else
+        {
+            switch (Model.Vista)
+            {
+                case IndexModel.VistaAhora v: <partial name="_Ahora" model="(Model, v)" /> break;
+                case IndexModel.VistaTiempo v: <partial name="_Tiempo" model="(Model, v)" /> break;
+                case IndexModel.VistaFalsos v: <partial name="_Falsos" model="(Model, v)" /> break;
+                case IndexModel.VistaCobertura v: <partial name="_Cobertura" model="(Model, v)" /> break;
+                case IndexModel.VistaRepite v: <partial name="_Repite" model="(Model, v)" /> break;
+                case IndexModel.VistaCiudadano v: <partial name="_Ciudadano" model="(Model, v)" /> break;
+                case IndexModel.VistaSistema v: <partial name="_Sistema" model="(Model, v)" /> break;
+            }
+        }
+        <p class="analitica__mvp">MVP académico · datos simulados · no es un canal oficial de emergencias</p>
+    </div>
+</div>
+@section Scripts {
+    @if (Model.Actual.Clave is "tiempo" or "cobertura" or "repite")
+    {
+        <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+    }
+    @if (enVivo)
+    {
+        <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    }
+    <script src="~/js/analitica.js" asp-append-version="true"></script>
+}

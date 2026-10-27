@@ -20,7 +20,7 @@ public sealed record RespuestaPorZona(IReadOnlyList<ZonaRespuesta> Zonas, Tiempo
 public sealed class ConsultarRespuestaPorZona(CadDbContext db, TimeProvider reloj, IOptions<OpcionesAnalitica> opciones)
 {
     // Un caso cancelado por su titular o descartado por la central no se atendió: sus tiempos no son de respuesta.
-    private static readonly EstadoCaso[] Excluidos = [EstadoCaso.Cancelada, EstadoCaso.Descartada];
+    internal static readonly EstadoCaso[] Excluidos = [EstadoCaso.Cancelada, EstadoCaso.Descartada];
 
     public async Task<RespuestaPorZona> EjecutarAsync(PeriodoAnalitica periodo, bool reportes, CancellationToken ct)
     {
