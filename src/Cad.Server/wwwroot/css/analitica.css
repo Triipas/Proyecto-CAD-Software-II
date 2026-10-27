@@ -428,6 +428,11 @@
   color: var(--color-primario);
 }
 
+/* Una tabla no respeta height: 1px y alargaba la página con sus filas ocultas: como bloque, sí se recorta. */
+table.visualmente-oculto {
+  display: block;
+}
+
 .chip--reporte {
   color: var(--color-reporte);
   background: var(--color-reporte-fondo);
@@ -815,8 +820,9 @@ a.fila-a__cifra {
   border-radius: 0;
 }
 
-.mapa-protagonista__vacio {
-  padding: 12rem var(--espacio-6) var(--espacio-6);
+/* Sin zonas que dibujar no hay mapa: la respuesta ocupa solo lo suyo. */
+.mapa-protagonista:not(:has(.mapa-a)) {
+  align-self: start;
 }
 
 .flotante-a {
