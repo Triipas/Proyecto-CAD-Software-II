@@ -29,13 +29,21 @@
 <p><a class="enlace-volver" href="/panel/central">← Central de monitoreo</a></p>
 
 <header class="cabecera-caso">
-    <div class="cabecera-caso__fila">
-        <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@(sos.EsCasoUrgente ? "Caso urgente" : "SOS")</span>
-        <h1 class="titulo">@sos.Ciudadano</h1>
+    @* Rediseño del 27/10/2026: el estado como chip junto al título y el historial como acción a la derecha. *@
+    <div class="cabecera-caso__principal">
+        <div>
+            <div class="cabecera-caso__fila">
+                <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@(sos.EsCasoUrgente ? "Caso urgente" : "SOS")</span>
+                <h1 class="titulo">@sos.Ciudadano</h1>
+            </div>
+            <p class="cabecera-caso__resumen">
+                <strong>@sos.Origen @sos.Estado</strong> · Registrado el @Local(sos.RegistradoEn)@(sos.Clasificacion is { } clasificado ? $" · {clasificado.Categoria}" : "")
+            </p>
+        </div>
+        <a class="boton boton--secundario boton--compacto cabecera-caso__accion" href="/panel/casos/@sos.Id/historial">
+            <partial name="_Icono" model="@("reloj")" />Historial del caso
+        </a>
     </div>
-    <p class="cabecera-caso__resumen">
-        <strong>@sos.Origen @sos.Estado</strong> · Registrado el @Local(sos.RegistradoEn) · <a href="/panel/casos/@sos.Id/historial">Ver el historial del caso</a>
-    </p>
     @if (sos.EsCasoUrgente)
     {
         <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>

@@ -42,10 +42,12 @@
                 @foreach (var entrada in h.Entradas)
                 {
                     <li class="historial__elemento@(entrada.Interna ? " historial__elemento--interna" : "")" data-actuacion>
+                        @{ var momento = TimeZoneInfo.ConvertTime(entrada.En, Model.ZonaHoraria); }
                         <p class="historial__cabecera">
                             <span class="historial__actuacion">@entrada.Actuacion</span>
-                            <time datetime="@entrada.En.ToString("O", inv)">@Local(entrada.En)</time>
-                            <span class="texto-secundario">· @entrada.Responsable</span>
+                            @* Rediseño del 27/10/2026: la hora en su columna, a la izquierda del trazo; la fecha debajo. *@
+                            <time datetime="@entrada.En.ToString("O", inv)"><span class="historial__hora">@momento.ToString("HH:mm:ss", inv)</span> <span class="historial__fecha">@momento.ToString("dd/MM/yyyy", inv)</span></time>
+                            <span class="historial__responsable">· @entrada.Responsable</span>
                         </p>
                         @if (entrada.Detalle is not null)
                         {
