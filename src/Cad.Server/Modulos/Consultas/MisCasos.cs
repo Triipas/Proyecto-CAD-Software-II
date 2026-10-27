@@ -58,7 +58,7 @@ public sealed class ConsultarMisCasos(CadDbContext db)
         var descartadoEn = await db.DescartesCaso.AsNoTracking().Where(d => d.CasoId == casoId)
             .Select(d => (DateTimeOffset?)d.DescartadoEn).SingleOrDefaultAsync(ct);
         var evaluacion = await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
-            .Select(e => new MiEvaluacion(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct);
+            .Select(e => new MiEvaluacion(e.Puntuacion, e.Comentario, e.EvaluadaEn, e.Motivos)).SingleOrDefaultAsync(ct);
         var revision = await db.EventosCaso.AsNoTracking()
             .Where(e => e.CasoId == casoId && e.Tipo == TipoEventoCaso.RevisionIniciada)
             .Select(e => (DateTimeOffset?)e.OcurridoEn).FirstOrDefaultAsync(ct);

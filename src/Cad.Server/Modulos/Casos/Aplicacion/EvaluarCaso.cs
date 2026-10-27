@@ -43,10 +43,14 @@ public sealed class EvaluarCaso(CadDbContext db, TimeProvider reloj, ILogger<Eva
             errores["puntuacion"] = [$"Elige una puntuación de {EvaluacionCaso.PuntuacionMinima} a {EvaluacionCaso.PuntuacionMaxima}."];
         if (solicitud.Comentario?.Trim().Length > EvaluacionCaso.MaximoComentario)
             errores["comentario"] = [$"El comentario admite hasta {EvaluacionCaso.MaximoComentario} caracteres."];
+        // 27/10/2026: los motivos, opcionales, solo del catálogo.
+        if (solicitud.Motivos?.Any(m => !Cad.Contratos.Casos.Catalogo.Contiene(Cad.Contratos.Casos.MotivosEvaluacion.Todos, m)) == true)
+            errores["motivos"] = ["Elige los motivos de la lista."];
         if (errores.Count > 0)
             return new ResultadoEvaluacion.Invalida(errores);
 
-        var evaluacion = EvaluacionCaso.Registrar(caso, solicitud.IdSolicitud, solicitud.Puntuacion!.Value, solicitud.Comentario, reloj.GetUtcNow());
+        var evaluacion = EvaluacionCaso.Registrar(caso, solicitud.IdSolicitud, solicitud.Puntuacion!.Value, solicitud.Comentario, reloj.GetUtcNow(),
+            solicitud.Motivos);
         db.EvaluacionesCaso.Add(evaluacion);
         try
         {

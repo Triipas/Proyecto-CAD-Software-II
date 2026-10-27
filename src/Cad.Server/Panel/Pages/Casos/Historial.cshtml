@@ -91,6 +91,10 @@
                             <span aria-hidden="true">@(new string('★', evaluacion.Puntuacion))@(new string('☆', 5 - evaluacion.Puntuacion))</span>
                             <strong>@evaluacion.Puntuacion de 5</strong> · <span class="texto-secundario">@Local(evaluacion.EvaluadaEn)</span>
                         </p>
+                        @if (evaluacion.TextosMotivos.Count > 0)
+                        {
+                            <p class="historial__texto" data-motivos-evaluacion>Motivos: @string.Join(" · ", evaluacion.TextosMotivos)</p>
+                        }
                         <p class="historial__texto">@(evaluacion.Comentario is { } comentario ? $"Comentario: {comentario}" : "Sin comentario.")</p>
                     }
                     else

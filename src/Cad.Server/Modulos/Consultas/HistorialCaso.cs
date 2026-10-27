@@ -20,7 +20,12 @@ public sealed record HistorialCaso(
     EvaluacionCiudadano? Evaluacion = null);
 
 // HU33-CA01: puntuación de 1 a 5 y comentario, si existe.
-public sealed record EvaluacionCiudadano(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn);
+public sealed record EvaluacionCiudadano(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn, string[]? Motivos = null)
+{
+    // 27/10/2026: los motivos que eligió, en el texto del catálogo.
+    public IReadOnlyList<string> TextosMotivos => (Motivos ?? [])
+        .Select(m => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosEvaluacion.Todos, m)).OfType<string>().ToList();
+}
 
 // CA02: un caso finalizado queda identificado con su resultado.
 public sealed record ResultadoFinal(string Estado, string Descripcion, DateTimeOffset En);
@@ -187,7 +192,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn,
             // HU33: solo lectura, en la misma página restringida a operadores (CA03).
             await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
-                .Select(e => new EvaluacionCiudadano(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct));
+                .Select(e => new EvaluacionCiudadano(e.Puntuacion, e.Comentario, e.EvaluadaEn, e.Motivos)).SingleOrDefaultAsync(ct));
     }
 
     private async Task<string> CategoriaAsync(Guid id, CancellationToken ct) =>

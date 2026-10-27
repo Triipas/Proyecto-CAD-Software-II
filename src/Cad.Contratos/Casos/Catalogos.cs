@@ -166,3 +166,38 @@ public static class CanalesEntrada
 
     public static readonly IReadOnlyList<OpcionCatalogo> Todos = [new(App, "App CAD Móvil"), .. DeLaCentral];
 }
+
+// HU32 — por qué el ciudadano evalúa así (27/10/2026): opcional y de varias opciones. Con 4 o 5 la app ofrece lo que estuvo
+// bien; con 1 a 3, lo que falló. Cruzados con el tiempo de respuesta, dicen si una nota baja viene de la demora o de otra cosa.
+public static class MotivosEvaluacion
+{
+    public const string LlegaronRapido = "LlegaronRapido";
+    public const string BuenTrato = "BuenTrato";
+    public const string Resolvieron = "Resolvieron";
+    public const string MeInformaron = "MeInformaron";
+    public const string Tardaron = "Tardaron";
+    public const string MalTrato = "MalTrato";
+    public const string NoResolvieron = "NoResolvieron";
+    public const string NoMeInformaron = "NoMeInformaron";
+
+    public static readonly IReadOnlyList<OpcionCatalogo> Positivos =
+    [
+        new(LlegaronRapido, "Llegaron rápido"),
+        new(BuenTrato, "Buen trato"),
+        new(Resolvieron, "Resolvieron el problema"),
+        new(MeInformaron, "Me mantuvieron informado"),
+    ];
+
+    public static readonly IReadOnlyList<OpcionCatalogo> Negativos =
+    [
+        new(Tardaron, "Tardaron en llegar"),
+        new(MalTrato, "Trato inadecuado"),
+        new(NoResolvieron, "No resolvieron el problema"),
+        new(NoMeInformaron, "No me informaron qué pasaba"),
+    ];
+
+    public static readonly IReadOnlyList<OpcionCatalogo> Todos = [.. Positivos, .. Negativos];
+
+    // Lo que la app ofrece para una puntuación.
+    public static IReadOnlyList<OpcionCatalogo> Para(int puntuacion) => puntuacion >= 4 ? Positivos : Negativos;
+}

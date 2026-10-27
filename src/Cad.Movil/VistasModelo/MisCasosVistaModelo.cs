@@ -251,11 +251,38 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     public bool HayEvaluacion => caso?.Evaluacion is not null;
     public string TextoEvaluacion => caso?.Evaluacion is { } e ? $"Tu evaluación: {e.Puntuacion} de 5" : "";
     public string ComentarioRegistrado => caso?.Evaluacion is { } e ? e.Comentario is { } c ? $"Comentario: {c}" : "Sin comentario." : "";
+    public string MotivosRegistrados => caso?.Evaluacion?.Motivos is { Count: > 0 } m
+        ? "Motivos: " + string.Join(" · ", m.Select(c => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosEvaluacion.Todos, c) ?? c))
+        : "";
+    public bool HayMotivosRegistrados => MotivosRegistrados.Length > 0;
+
+    // 27/10/2026: por qué evalúa así, opcional y de varias opciones: con 4 o 5, lo que estuvo bien; con 1 a 3, lo que falló.
+    private readonly HashSet<string> motivosElegidos = [];
+    public IReadOnlyList<OpcionMotivoEvaluacion> OpcionesMotivoEvaluacion { get; private set; } = [];
+    public bool HayOpcionesMotivoEvaluacion => OpcionesMotivoEvaluacion.Count > 0;
+    public string TituloMotivosEvaluacion => puntuacion >= 4 ? "¿Qué estuvo bien? (opcional)" : "¿Qué falló? (opcional)";
+
+    private void ActualizarMotivos()
+    {
+        var disponibles = puntuacion is { } p ? Cad.Contratos.Casos.MotivosEvaluacion.Para(p) : [];
+        motivosElegidos.IntersectWith(disponibles.Select(o => o.Codigo)); // al cambiar de nota, se quitan los que ya no aplican
+        OpcionesMotivoEvaluacion = disponibles.Select(o => new OpcionMotivoEvaluacion(o.Codigo, o.Texto, motivosElegidos.Contains(o.Codigo),
+            new ComandoAsincrono(() =>
+            {
+                if (!motivosElegidos.Remove(o.Codigo))
+                    motivosElegidos.Add(o.Codigo);
+                ActualizarMotivos();
+                return Task.CompletedTask;
+            }))).ToList();
+        Notificar(nameof(OpcionesMotivoEvaluacion));
+        Notificar(nameof(HayOpcionesMotivoEvaluacion));
+        Notificar(nameof(TituloMotivosEvaluacion));
+    }
     public IReadOnlyList<OpcionPuntuacion> Opciones { get; private set; }
     public int? Puntuacion
     {
         get => puntuacion;
-        set { if (Asignar(ref puntuacion, value)) { Opciones = CrearOpciones(); Notificar(nameof(Opciones)); } }
+        set { if (Asignar(ref puntuacion, value)) { Opciones = CrearOpciones(); Notificar(nameof(Opciones)); ActualizarMotivos(); } }
     }
     public string Comentario { get => comentario; set { Asignar(ref comentario, value ?? ""); Notificar(nameof(ContadorComentario)); } }
     public string ContadorComentario => $"{comentario.Length}/{MaximoComentario}";
@@ -308,6 +335,7 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
                      nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion),
                      nameof(PuedeEvaluar), nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado),
+                     nameof(MotivosRegistrados), nameof(HayMotivosRegistrados),
                      nameof(HayReporte), nameof(ReporteCategoria), nameof(ReporteDescripcion), nameof(ReporteOcurrido), nameof(ReporteLugar),
                      nameof(ReporteReferencia), nameof(HayReferencia), nameof(HayFotosReporte), nameof(TextoFotosReporte), nameof(EsReporte),
                      nameof(TextoCancelar), nameof(AyudaCancelacion), nameof(IndicacionMotivo), nameof(TextoConfirmarCancelacion), nameof(TextoNoCancelar) })
@@ -396,7 +424,9 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         {
             // El mismo identificador en cada reintento técnico: el servidor no registra una segunda evaluación (CA03).
             var resultado = await Api.EvaluarCasoAsync(token, casoId,
-                new SolicitudEvaluacionCaso(idEvaluacion, valor, string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim()), CancellationToken.None);
+                new SolicitudEvaluacionCaso(idEvaluacion, valor, string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(),
+                    motivosElegidos.Count == 0 ? null : [.. Cad.Contratos.Casos.MotivosEvaluacion.Todos.Select(o => o.Codigo).Where(motivosElegidos.Contains)]),
+                CancellationToken.None);
             switch (resultado)
             {
                 case ResultadoApi<MiEvaluacion>.Correcto correcto when caso is not null:
@@ -440,6 +470,12 @@ public sealed record OpcionPuntuacion(int Valor, bool Elegida, ComandoAsincrono 
 {
     public string Texto => Valor.ToString(System.Globalization.CultureInfo.InvariantCulture);
     public string Descripcion => $"Puntuación {Valor} de 5{(Elegida ? ", elegida" : "")}";
+}
+
+// 27/10/2026: un motivo de la evaluación, que se marca o desmarca con un toque.
+public sealed record OpcionMotivoEvaluacion(string Codigo, string Texto, bool Elegida, ComandoAsincrono Alternar)
+{
+    public string Descripcion => $"{Texto}{(Elegida ? ", marcado" : "")}";
 }
 
 // 26/10/2026: una foto del reporte propio, para verla en «Mi caso».

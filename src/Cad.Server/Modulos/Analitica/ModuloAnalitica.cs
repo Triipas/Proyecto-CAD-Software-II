@@ -40,6 +40,9 @@ public static class ModuloAnalitica
         services.AddScoped<ConsultarZonasEnAlza>();
         services.AddScoped<ConsultarReportesAnalitica>();
         services.AddScoped<ConsultarPercepcion>();
+        services.AddSingleton<RegistroActividadCiudadano>();
+        services.AddScoped<ConsultarEvaluaciones>();
+        services.AddScoped<ConsultarAdopcion>();
         return services;
     }
 }

@@ -39,6 +39,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.CambioEstadoSereno> CambiosEstadoSereno => Set<Modulos.Serenos.Dominio.CambioEstadoSereno>();
     public DbSet<Modulos.Analitica.PercepcionZona> PercepcionZonas => Set<Modulos.Analitica.PercepcionZona>();
+    public DbSet<Modulos.Analitica.ActividadCiudadano> ActividadesCiudadano => Set<Modulos.Analitica.ActividadCiudadano>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
@@ -268,7 +269,12 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
         builder.Entity<EvaluacionCaso>(evaluacion =>
         {
             evaluacion.ToTable("EvaluacionesCaso", tabla =>
-                tabla.HasCheckConstraint("CK_EvaluacionesCaso_Puntuacion", "\"Puntuacion\" IS NOT NULL AND \"Puntuacion\" BETWEEN 1 AND 5"));
+            {
+                tabla.HasCheckConstraint("CK_EvaluacionesCaso_Puntuacion", "\"Puntuacion\" IS NOT NULL AND \"Puntuacion\" BETWEEN 1 AND 5");
+                // 27/10/2026: los motivos, solo del catálogo.
+                tabla.HasCheckConstraint("CK_EvaluacionesCaso_Motivos",
+                    $"\"Motivos\" <@ ARRAY[{string.Join(", ", MotivosEvaluacion.Todos.Select(m => $"'{m.Codigo}'"))}]::text[]");
+            });
             evaluacion.HasKey(e => e.CasoId);
             evaluacion.Property(e => e.Comentario).HasMaxLength(EvaluacionCaso.MaximoComentario);
             evaluacion.HasOne<Caso>().WithOne().HasForeignKey<EvaluacionCaso>(e => e.CasoId).OnDelete(DeleteBehavior.Restrict);
@@ -401,6 +407,15 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             percepcion.ToTable("PercepcionZonas", tabla =>
                 tabla.HasCheckConstraint("CK_PercepcionZonas_Conteos", "\"Recorridos\" >= 0 AND \"Avisos\" >= 0"));
             percepcion.HasKey(p => new { p.Hora, p.Fila, p.Columna });
+        });
+
+        // 27/10/2026: días en que cada ciudadano usó la app (retención, analítica bloque D). Solo el día.
+        builder.Entity<Modulos.Analitica.ActividadCiudadano>(actividad =>
+        {
+            actividad.ToTable("ActividadesCiudadano");
+            actividad.HasKey(a => new { a.UsuarioId, a.Dia });
+            actividad.HasIndex(a => a.Dia);
+            actividad.HasOne<Usuario>().WithMany().HasForeignKey(a => a.UsuarioId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // 27/10/2026: historial de cambios del estado operativo, solo inserción; se consulta por sereno y por periodo.
