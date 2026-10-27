@@ -77,6 +77,17 @@ public sealed class ConservarRecorridos(CadDbContext db, TimeProvider reloj, IOp
             return sesiones;
 
         await using var transaccion = await db.Database.BeginTransactionAsync(ct);
+        // Las sesiones se bloquean y se vuelven a filtrar dentro de la transacción: si otra eliminación las tomó a la vez, no
+        // se cuentan dos veces en el agregado.
+        var ids = sesiones.ToArray();
+        sesiones = await db.SesionesAcompanamiento
+            .FromSql($"SELECT * FROM \"SesionesAcompanamiento\" WHERE \"Id\" = ANY({ids}) AND \"PosicionesEliminadasEn\" IS NULL FOR UPDATE")
+            .Select(s => s.Id)
+            .ToListAsync(ct);
+        if (sesiones.Count == 0)
+            return sesiones;
+        // 27/10/2026: antes de eliminarlas, su agregado anónimo por zona y hora (percepción de inseguridad, analítica).
+        await Analitica.PercepcionCalculo.GuardarAsync(db, sesiones, ct);
         var posiciones = await db.PosicionesAcompanamiento.Where(p => sesiones.Contains(p.SesionId)).ExecuteDeleteAsync(ct);
         await db.SesionesAcompanamiento.Where(s => sesiones.Contains(s.Id))
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.PosicionesEliminadasEn, (DateTimeOffset?)ahora), ct);
