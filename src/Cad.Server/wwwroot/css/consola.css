@@ -1,0 +1,419 @@
+/*
+  Consola de incidente (27/10/2026): el detalle de un caso como en un software de despacho. Una barra del caso fija bajo la
+  barra superior (quién, estado, desde cuándo y las acciones de la página); debajo tres zonas: los pasos del caso en vertical,
+  el trabajo de ahora en el centro y el expediente a la derecha. Se apoya en detalle-caso.css (siguiente acción, historial,
+  ficha) y solo cambia la composición y el acabado.
+*/
+
+/* ── Página a todo el ancho ───────────────────────────── */
+.pagina--consola {
+  max-width: none;
+  padding: 0 0 var(--espacio-12);
+  gap: 0;
+}
+
+.consola__ancho {
+  width: 100%;
+  max-width: 96rem;
+  margin: 0 auto;
+  padding-inline: var(--espacio-6);
+}
+
+/* Avisos de la página (éxito o error de una acción), alineados con la consola. */
+.pagina--consola > .aviso {
+  width: calc(100% - 2 * var(--espacio-6));
+  max-width: calc(96rem - 2 * var(--espacio-6));
+  margin: var(--espacio-4) auto 0;
+}
+
+/* ── Barra del caso ───────────────────────────────────── */
+.consola__barra {
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+  background: var(--color-superficie);
+}
+
+.consola__barra .consola__ancho {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-6);
+  padding-block: var(--espacio-3) var(--espacio-4);
+}
+
+.consola__miga {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola__miga a {
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+  text-decoration: none;
+}
+
+.consola__miga a:hover {
+  color: var(--color-primario);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.consola__titular {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-3);
+  min-width: 0;
+}
+
+.consola__titulo {
+  margin: 0;
+  font-size: var(--texto-2xl);
+  font-weight: var(--peso-fuerte);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--color-marino);
+}
+
+.consola__meta {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-4);
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+  font-variant-numeric: tabular-nums;
+}
+
+.consola__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+}
+
+.consola__meta .icono {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  color: var(--color-texto-terciario);
+}
+
+.consola__meta strong {
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
+/* El tiempo de un caso abierto: lo que más importa de la barra después del estado. */
+.consola__transcurrido {
+  font-weight: var(--peso-fuerte);
+  color: var(--color-texto);
+}
+
+.consola__acciones {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+}
+
+.consola__acciones .boton .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ── Las tres zonas ───────────────────────────────────── */
+.consola {
+  display: grid;
+  gap: var(--espacio-5);
+  align-items: start;
+  padding-top: var(--espacio-6);
+}
+
+.consola__trabajo {
+  display: grid;
+  gap: var(--espacio-4);
+  min-width: 0;
+}
+
+/* Paneles del trabajo: cabecera con título y cuerpo, sin la sombra de una tarjeta suelta. */
+.consola__trabajo > .seccion-caso {
+  padding: var(--espacio-5);
+  box-shadow: none;
+}
+
+.consola .seccion-caso__titulo {
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: -0.005em;
+}
+
+/* La acción de ahora: el único panel con el borde azul y la sombra de atención. */
+.consola .siguiente {
+  padding: var(--espacio-6);
+  border-color: var(--color-primario);
+  box-shadow: var(--sombra-2);
+}
+
+.consola .siguiente__titulo {
+  font-size: var(--texto-xl);
+}
+
+/* «Otras acciones» y el descarte: filas discretas al pie del trabajo. */
+.consola .otras-acciones {
+  box-shadow: none;
+}
+
+.consola .otras-acciones summary {
+  min-height: 2.75rem;
+  font-size: var(--texto-sm);
+}
+
+.consola .descarte > summary.boton {
+  min-height: 2.25rem;
+  padding-inline: var(--espacio-3);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.consola .descarte > summary.boton:hover {
+  color: var(--color-error);
+  border-color: var(--color-error-borde);
+  background: var(--color-error-fondo);
+}
+
+/* Datos de un panel terminado (cierre, decisión): los cortos en dos columnas, los textos a lo ancho. */
+.consola .siguiente > .datos {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-4) var(--espacio-6);
+  padding-top: var(--espacio-4);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.consola .siguiente > .datos > div:has([data-resultado-publico], [data-notas-internas], .datos__texto) {
+  grid-column: 1 / -1;
+}
+
+.consola .siguiente > .datos dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola .siguiente > .datos dd {
+  margin-top: 2px;
+  font-size: var(--texto-md);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Resumen del caso bajo los pasos. */
+.consola__resumen {
+  display: none;
+}
+
+/* ── Pasos en vertical (columna izquierda) ────────────── */
+.consola__pasos .progreso {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (min-width: 80rem) {
+  .consola {
+    grid-template-columns: 12.5rem minmax(0, 1fr) minmax(21rem, 24rem);
+    gap: var(--espacio-6);
+  }
+
+  .consola__pasos {
+    position: sticky;
+    top: calc(60px + var(--espacio-6));
+  }
+
+  .consola__pasos .progreso {
+    grid-auto-flow: row;
+    grid-auto-rows: 2.75rem;
+    padding: 0;
+  }
+
+  .consola__pasos .progreso__paso {
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    gap: var(--espacio-3);
+    padding-inline: var(--espacio-2);
+    border-radius: var(--radio-control);
+    text-align: left;
+    font-size: var(--texto-sm);
+  }
+
+  /* El trazo baja del paso anterior a este. */
+  .consola__pasos .progreso__paso::before {
+    top: -50%;
+    bottom: 50%;
+    left: calc(var(--espacio-2) + 11px);
+    right: auto;
+    width: 2px;
+    height: auto;
+    transform-origin: 50% 0;
+    animation-name: trazo-vertical;
+  }
+
+  .consola__pasos .progreso__paso--actual {
+    background: var(--color-tenue);
+    color: var(--color-primario);
+  }
+
+  .consola__pasos .progreso__paso--actual .progreso__marca {
+    outline-color: var(--color-superficie);
+  }
+}
+
+@media (min-width: 80rem) {
+  .consola__resumen {
+    display: grid;
+    gap: var(--espacio-3);
+    margin: var(--espacio-6) 0 0;
+    padding: var(--espacio-4) var(--espacio-2) 0;
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .consola__resumen dt {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-terciario);
+  }
+
+  .consola__resumen dd {
+    margin: 2px 0 0;
+    font-size: var(--texto-sm);
+    font-weight: var(--peso-medio);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-texto);
+  }
+}
+
+@keyframes trazo-vertical {
+  from { transform: scaleY(0); }
+}
+
+/* Entre tableta y escritorio angosto: los pasos en horizontal arriba, el trabajo y el expediente en dos columnas. */
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  .consola {
+    grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+  }
+
+  .consola__pasos {
+    grid-column: 1 / -1;
+  }
+
+  .consola__pasos .progreso {
+    border: var(--grosor-borde) solid var(--color-borde);
+    background: var(--color-superficie);
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .consola__pasos .progreso {
+    border: var(--grosor-borde) solid var(--color-borde);
+    background: var(--color-superficie);
+  }
+}
+
+/* ── Expediente (columna derecha) ─────────────────────── */
+.consola__expediente .seccion-caso__titulo,
+.consola__expediente .central__titulo {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.consola__expediente .datos--en-linea > div {
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: baseline;
+}
+
+.consola__expediente .datos--en-linea dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola__expediente .datos--en-linea dd {
+  font-size: var(--texto-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Los tiempos: misma voz que los demás datos del expediente. */
+.consola__expediente [data-tiempos] .datos dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola__expediente [data-tiempos] .datos dd {
+  font-size: var(--texto-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.consola__expediente [data-tiempos] > .texto-secundario {
+  font-size: var(--texto-xs);
+}
+
+.consola__expediente .mapa--detalle {
+  height: 12.5rem;
+  border: var(--grosor-borde) solid var(--color-borde);
+}
+
+/* ── Móvil ────────────────────────────────────────────── */
+@media (min-width: 64rem) {
+  /* La barra del caso acompaña al operador mientras baja por el trabajo. */
+  .consola__barra {
+    position: sticky;
+    top: 60px;
+    z-index: 1050;
+    box-shadow: 0 1px 0 var(--color-borde), 0 6px 16px -12px rgb(11 31 68 / 0.18);
+  }
+}
+
+@media (max-width: 47.5rem) {
+  .consola__ancho {
+    padding-inline: var(--espacio-4);
+  }
+
+  .pagina--consola > .aviso {
+    width: calc(100% - 2 * var(--espacio-4));
+  }
+
+  .consola__barra .consola__ancho {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consola__titulo {
+    font-size: var(--texto-xl);
+  }
+
+  .consola__acciones {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: stretch;
+  }
+
+  .consola__acciones .boton {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .consola .siguiente {
+    padding: var(--espacio-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consola__pasos .progreso__paso::before {
+    animation: none;
+  }
+}
