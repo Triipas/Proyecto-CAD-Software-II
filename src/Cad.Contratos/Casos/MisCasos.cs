@@ -32,8 +32,10 @@ public static class EstadosPublicos
     public const string Cancelado = "Cancelado";
 }
 
-// HU09 — cancelación de un SOS propio pendiente: el motivo es obligatorio (CA01, CA04).
-public sealed record SolicitudCancelacionSos(string? Motivo);
+// HU09 — cancelación de un SOS propio pendiente: el motivo es obligatorio (CA01, CA04). Desde el 27/10/2026 el motivo se
+// elige de MotivosCancelacion (MotivoCodigo) y el texto solo es obligatorio con «Otro motivo». Una app anterior que envía
+// solo el texto se registra como «Otro motivo».
+public sealed record SolicitudCancelacionSos(string? Motivo, string? MotivoCodigo = null);
 
 // HU32 — evaluación voluntaria de un caso propio cerrado: puntuación de 1 a 5 (CA02) y comentario opcional (CA01).
 // IdSolicitud: lo genera la app por evaluación y lo reutiliza en cada reintento técnico.

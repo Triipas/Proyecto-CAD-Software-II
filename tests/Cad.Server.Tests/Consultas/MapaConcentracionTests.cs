@@ -53,8 +53,8 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(id, operador.Id, CancellationToken.None));
         var datos = decision == TipoDecisionReporte.Derivacion
-            ? new DatosDecision(decision, "Motivo ficticio", "Comisaría ficticia", "Se comunicó")
-            : new DatosDecision(decision, "Motivo ficticio");
+            ? new DatosDecision(decision, "Motivo ficticio", "Otro", "Se comunicó", "Comisaría ficticia")
+            : new DatosDecision(decision, "Motivo ficticio", Prioridad: "Media", Heridos: "No", MotivoDescarte: "Duplicado");
         Assert.IsType<ResultadoDecision.Registrado>(await fabrica.ConServiciosAsync(s =>
             s.GetRequiredService<DecidirReporte>().EjecutarAsync(id, datos, operador.Id, CancellationToken.None)));
     }

@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -36,6 +37,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<NotificacionCiudadano> NotificacionesCiudadano => Set<NotificacionCiudadano>();
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
+    public DbSet<Modulos.Serenos.Dominio.CambioEstadoSereno> CambiosEstadoSereno => Set<Modulos.Serenos.Dominio.CambioEstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
@@ -96,6 +98,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
                 tabla.HasCheckConstraint("CK_Casos_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
                 tabla.HasCheckConstraint("CK_Casos_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
                 tabla.HasCheckConstraint("CK_Casos_Precision", "\"PrecisionMetros\" > 0");
+                tabla.HasCheckConstraint("CK_Casos_Prioridad", EnCatalogo("Prioridad", PrioridadesCaso.Todas));
+                tabla.HasCheckConstraint("CK_Casos_Heridos", EnCatalogo("Heridos", PersonasHeridas.Todas));
                 // HU13-CA01: una clasificación guarda siempre categoría, responsable y momento juntos.
                 tabla.HasCheckConstraint("CK_Casos_ClasificacionCompleta",
                     "(\"CategoriaId\" IS NULL AND \"ClasificadoPor\" IS NULL AND \"ClasificadoEn\" IS NULL) OR " +
@@ -106,6 +110,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             caso.HasKey(c => c.Id);
             caso.Property(c => c.Origen).HasConversion<string>().HasMaxLength(20);
             caso.Property(c => c.Estado).HasConversion<string>().HasMaxLength(20);
+            caso.Property(c => c.Prioridad).HasMaxLength(LargoCodigo);
+            caso.Property(c => c.Heridos).HasMaxLength(LargoCodigo);
             caso.Ignore(c => c.UbicacionDisponible);
             caso.Ignore(c => c.PuedeAsignarse);
             caso.Ignore(c => c.PuedeCancelarse);
@@ -178,8 +184,12 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
         builder.Entity<CierreCaso>(cierre =>
         {
             cierre.ToTable("CierresCaso", tabla =>
-                tabla.HasCheckConstraint("CK_CierresCaso_Resultado", "length(btrim(\"ResultadoPublico\")) > 0"));
+            {
+                tabla.HasCheckConstraint("CK_CierresCaso_Resultado", "length(btrim(\"ResultadoPublico\")) > 0");
+                tabla.HasCheckConstraint("CK_CierresCaso_ResultadoAtencion", EnCatalogo("ResultadoAtencion", ResultadosAtencion.Todos));
+            });
             cierre.HasKey(c => c.CasoId);
+            cierre.Property(c => c.ResultadoAtencion).HasMaxLength(LargoCodigo);
             cierre.Property(c => c.ResultadoPublico).HasMaxLength(CierreCaso.MaximoResultado);
             cierre.Property(c => c.NotasInternas).HasMaxLength(CierreCaso.MaximoNotas);
             cierre.HasOne<Caso>().WithOne().HasForeignKey<CierreCaso>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
@@ -191,8 +201,12 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
         builder.Entity<CancelacionSos>(cancelacion =>
         {
             cancelacion.ToTable("CancelacionesSos", tabla =>
-                tabla.HasCheckConstraint("CK_CancelacionesSos_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0"));
+            {
+                tabla.HasCheckConstraint("CK_CancelacionesSos_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0");
+                tabla.HasCheckConstraint("CK_CancelacionesSos_MotivoCodigo", EnCatalogo("MotivoCodigo", MotivosCancelacion.Todos));
+            });
             cancelacion.HasKey(c => c.CasoId);
+            cancelacion.Property(c => c.MotivoCodigo).HasMaxLength(LargoCodigo);
             cancelacion.Property(c => c.Motivo).HasMaxLength(CancelacionSos.MaximoMotivo);
             cancelacion.HasOne<Caso>().WithOne().HasForeignKey<CancelacionSos>(c => c.CasoId).OnDelete(DeleteBehavior.Restrict);
             cancelacion.HasOne<Usuario>().WithMany().HasForeignKey(c => c.CiudadanoId).OnDelete(DeleteBehavior.Restrict);
@@ -202,8 +216,12 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
         builder.Entity<DescarteCaso>(descarte =>
         {
             descarte.ToTable("DescartesCaso", tabla =>
-                tabla.HasCheckConstraint("CK_DescartesCaso_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0"));
+            {
+                tabla.HasCheckConstraint("CK_DescartesCaso_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0");
+                tabla.HasCheckConstraint("CK_DescartesCaso_MotivoCodigo", EnCatalogo("MotivoCodigo", MotivosDescarte.Todos));
+            });
             descarte.HasKey(d => d.CasoId);
+            descarte.Property(d => d.MotivoCodigo).HasMaxLength(LargoCodigo);
             descarte.Property(d => d.Motivo).HasMaxLength(DescarteCaso.MaximoMotivo);
             descarte.Property(d => d.EstadoPrevio).HasConversion<string>().HasMaxLength(20);
             descarte.HasOne<Caso>().WithOne().HasForeignKey<DescarteCaso>(d => d.CasoId).OnDelete(DeleteBehavior.Restrict);
@@ -229,8 +247,12 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
         builder.Entity<Reasignacion>(reasignacion =>
         {
             reasignacion.ToTable("Reasignaciones", tabla =>
-                tabla.HasCheckConstraint("CK_Reasignaciones_Motivo", "length(btrim(\"Motivo\")) > 0"));
+            {
+                tabla.HasCheckConstraint("CK_Reasignaciones_Motivo", "length(btrim(\"Motivo\")) > 0");
+                tabla.HasCheckConstraint("CK_Reasignaciones_MotivoCodigo", EnCatalogo("MotivoCodigo", MotivosReasignacion.Todos));
+            });
             reasignacion.HasKey(r => r.Id);
+            reasignacion.Property(r => r.MotivoCodigo).HasMaxLength(LargoCodigo);
             reasignacion.HasIndex(r => r.CasoId);
             reasignacion.Property(r => r.Motivo).HasMaxLength(Reasignacion.MaximoMotivo);
             reasignacion.HasOne<Caso>().WithMany().HasForeignKey(r => r.CasoId).OnDelete(DeleteBehavior.Restrict);
@@ -257,6 +279,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             detalle.ToTable("DetallesReporte", tabla =>
             {
                 tabla.HasCheckConstraint("CK_DetallesReporte_Descripcion", "length(btrim(\"Descripcion\")) > 0");
+                tabla.HasCheckConstraint("CK_DetallesReporte_Canal", EnCatalogo("Canal", CanalesEntrada.Todos));
                 tabla.HasCheckConstraint("CK_DetallesReporte_Ubicacion",
                     "(\"FuenteUbicacion\" = 'Texto' AND \"LatitudHecho\" IS NULL AND \"LongitudHecho\" IS NULL AND \"PrecisionHechoMetros\" IS NULL " +
                     "AND \"ReferenciaHecho\" IS NOT NULL AND length(btrim(\"ReferenciaHecho\")) > 0) OR " +
@@ -265,6 +288,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
                 tabla.HasCheckConstraint("CK_DetallesReporte_Longitud", "\"LongitudHecho\" BETWEEN -180 AND 180");
                 tabla.HasCheckConstraint("CK_DetallesReporte_Precision", "\"PrecisionHechoMetros\" > 0");
             });
+            detalle.Property(d => d.Canal).HasMaxLength(LargoCodigo);
             detalle.HasKey(d => d.CasoId);
             detalle.Property(d => d.Descripcion).HasMaxLength(DetalleReporte.MaximoDescripcion);
             detalle.Property(d => d.ReferenciaHecho).HasMaxLength(DetalleReporte.MaximoReferencia);
@@ -317,7 +341,11 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
                     "(\"Tipo\" = 'Derivacion' AND \"Destino\" IS NOT NULL AND \"Accion\" IS NOT NULL " +
                     "AND length(btrim(\"Destino\")) > 0 AND length(btrim(\"Accion\")) > 0) OR " +
                     "(\"Tipo\" IN ('Admision', 'Descarte') AND \"Destino\" IS NULL AND \"Accion\" IS NULL)");
+                tabla.HasCheckConstraint("CK_DecisionesReporte_DestinoCodigo", EnCatalogo("DestinoCodigo", DestinosDerivacion.Todos));
+                tabla.HasCheckConstraint("CK_DecisionesReporte_MotivoCodigo", EnCatalogo("MotivoCodigo", MotivosDescarte.Todos));
             });
+            decision.Property(d => d.DestinoCodigo).HasMaxLength(LargoCodigo);
+            decision.Property(d => d.MotivoCodigo).HasMaxLength(LargoCodigo);
             decision.HasKey(d => d.CasoId);
             decision.Property(d => d.Tipo).HasConversion<string>().HasMaxLength(20);
             decision.Property(d => d.Motivo).HasMaxLength(DecisionReporte.MaximoMotivo);
@@ -360,6 +388,16 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             estado.HasKey(e => e.SerenoId);
             estado.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Serenos.Dominio.EstadoSereno>(e => e.SerenoId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // 27/10/2026: historial de cambios del estado operativo, solo inserción; se consulta por sereno y por periodo.
+        builder.Entity<Modulos.Serenos.Dominio.CambioEstadoSereno>(cambio =>
+        {
+            cambio.ToTable("CambiosEstadoSereno");
+            cambio.HasKey(c => c.Id);
+            cambio.HasIndex(c => new { c.SerenoId, c.CambiadoEn });
+            cambio.HasIndex(c => c.CambiadoEn);
+            cambio.HasOne<Usuario>().WithMany().HasForeignKey(c => c.SerenoId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // HU21 (ADR-07): dispositivo para la notificación push, uno por sereno. Un mismo token no puede quedar
@@ -586,4 +624,11 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             ConcurrencyStamp = r.Id.ToString(),
         }));
     }
+
+    // 27/10/2026 — catálogos de registro (Cad.Contratos.Casos): la base de datos tampoco admite un código fuera del catálogo.
+    // Nulo: registros anteriores al catálogo. Los códigos no superan LargoCodigo caracteres.
+    private const int LargoCodigo = 30;
+
+    private static string EnCatalogo(string columna, IReadOnlyList<OpcionCatalogo> opciones) =>
+        $"\"{columna}\" IS NULL OR \"{columna}\" IN ({string.Join(", ", opciones.Select(o => $"'{o.Codigo}'"))})";
 }

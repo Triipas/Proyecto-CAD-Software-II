@@ -144,7 +144,7 @@ public class MapaCasosTests(FabricaCad fabrica)
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(reporte, operador.Id, CancellationToken.None));
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<DecidirReporte>()
-            .EjecutarAsync(reporte, new DatosDecision(TipoDecisionReporte.Descarte, "Duplicado ficticio"), operador.Id, CancellationToken.None));
+            .EjecutarAsync(reporte, new DatosDecision(TipoDecisionReporte.Descarte, "Duplicado ficticio", MotivoDescarte: "Duplicado"), operador.Id, CancellationToken.None));
 
         Assert.DoesNotContain(reporte.ToString(), await (await OperadorAsync()).GetStringAsync(Fragmento));
     }

@@ -69,6 +69,8 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public Dictionary<string, string[]> Errores { get; private set; } = [];
     public string? ErrorAsignacion { get; private set; }
     public string? ErrorCategoria { get; private set; }
+    public string? ErrorPrioridad { get; private set; }
+    public string? ErrorHeridos { get; private set; }
     public string? ErrorClasificacion { get; private set; }
     public string? ErrorAvance { get; private set; }
     public string? ErrorCierre { get; private set; }
@@ -76,13 +78,15 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
 
     public string? ErrorDescarte { get; private set; }
     public string? ErrorMotivoDescarte { get; private set; }
+    public string? ErrorMotivoCodigoDescarte { get; private set; }
 
     // Descarte por la central: el registrado (si el caso ya se descartó) y el bloque para descartarlo mientras está abierto.
     public DescarteVista? Descartado { get; private set; }
     public bool PuedeDescartarse => new[] { EstadoCaso.Pendiente, EstadoCaso.Asignada, EstadoCaso.EnCamino, EstadoCaso.EnAtencion }
         .Any(e => Sos.Estado == EstadosCaso.Texto(e));
     public VistaDescarte VistaDescarte => new($"/panel/central/sos/{Sos.Id}",
-        Sos.Asignacion is { FinalizadaEn: null } vigente ? vigente.Sereno : null, Descarte.Motivo, ErrorDescarte, ErrorMotivoDescarte);
+        Sos.Asignacion is { FinalizadaEn: null } vigente ? vigente.Sereno : null, Descarte.Motivo, ErrorDescarte, ErrorMotivoDescarte,
+        Descarte.MotivoCodigo, ErrorMotivoCodigoDescarte);
 
     public string? ErrorCierreDe(string campo) => ErroresCierre.TryGetValue(campo, out var mensajes) ? mensajes[0] : null;
 
@@ -229,7 +233,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // HU13: clasificar el SOS con una categoría del catálogo.
     public async Task<IActionResult> OnPostClasificarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await clasificar.EjecutarAsync(id, Clasificacion.CategoriaId, User.IdUsuario(), ct);
+        var resultado = await clasificar.EjecutarAsync(id, Clasificacion.CategoriaId, Clasificacion.Prioridad, Clasificacion.Heridos, User.IdUsuario(), ct);
 
         switch (resultado)
         {
@@ -242,7 +246,12 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
             default:
                 if (!await CargarAsync(id, ct))
                     return NotFound();
-                ErrorCategoria = (resultado as ResultadoClasificacion.Invalido)?.Motivo;
+                if (resultado is ResultadoClasificacion.Invalido invalido)
+                {
+                    if (invalido.Campo == "prioridad") ErrorPrioridad = invalido.Motivo;
+                    else if (invalido.Campo == "heridos") ErrorHeridos = invalido.Motivo;
+                    else ErrorCategoria = invalido.Motivo;
+                }
                 ErrorClasificacion = (resultado as ResultadoClasificacion.Rechazado)?.Motivo;
                 Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
                 Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
@@ -278,7 +287,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // HU24-CA05: el operador cierra el caso y queda como responsable.
     public async Task<IActionResult> OnPostCerrarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await cerrar.EjecutarAsync(id, new DatosCierre(Cierre.CategoriaId, Cierre.ResultadoPublico, Cierre.NotasInternas),
+        var resultado = await cerrar.EjecutarAsync(id, new DatosCierre(Cierre.CategoriaId, Cierre.ResultadoAtencion, Cierre.ResultadoPublico, Cierre.NotasInternas),
             User.IdUsuario(), ActorAvance.Operador, ct);
         switch (resultado)
         {
@@ -302,7 +311,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // Descarte por la central (23/10/2026): un caso falso o erróneo termina como «Descartada», con motivo obligatorio.
     public async Task<IActionResult> OnPostDescartarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await descartar.EjecutarAsync(id, Descarte.Motivo, User.IdUsuario(), ct);
+        var resultado = await descartar.EjecutarAsync(id, Descarte.MotivoCodigo, Descarte.Motivo, User.IdUsuario(), ct);
         switch (resultado)
         {
             case ResultadoDescarte.Descartado or ResultadoDescarte.YaDescartado:
@@ -315,6 +324,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
                 if (!await CargarAsync(id, ct))
                     return NotFound();
                 ErrorMotivoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivo")?[0];
+                ErrorMotivoCodigoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivoCodigo")?[0];
                 ErrorDescarte = (resultado as ResultadoDescarte.Rechazado)?.Motivo;
                 Formulario = new FormularioIntento { IdSolicitud = Guid.NewGuid() };
                 Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
@@ -325,7 +335,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // Reasignación por la central (24/10/2026): a otro sereno disponible, con motivo; solo «Asignada» o «En camino».
     public async Task<IActionResult> OnPostReasignarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await reasignar.EjecutarAsync(id, Reasignacion.SerenoId, Reasignacion.Motivo, User.IdUsuario(), Reasignacion.IdSolicitud, ct);
+        var resultado = await reasignar.EjecutarAsync(id, Reasignacion.SerenoId, Reasignacion.MotivoCodigo, Reasignacion.Motivo, User.IdUsuario(), Reasignacion.IdSolicitud, ct);
         switch (resultado)
         {
             case ResultadoReasignacion.Reasignado or ResultadoReasignacion.YaReasignado:
@@ -386,11 +396,14 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     public sealed class FormularioClasificacion
     {
         public Guid? CategoriaId { get; set; }
+        public string? Prioridad { get; set; }
+        public string? Heridos { get; set; }
     }
 
     public sealed class FormularioCierre
     {
         public Guid? CategoriaId { get; set; }
+        public string? ResultadoAtencion { get; set; }
         public string? ResultadoPublico { get; set; }
         public string? NotasInternas { get; set; }
     }

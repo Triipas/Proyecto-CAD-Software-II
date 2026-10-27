@@ -186,7 +186,7 @@ public class DesactivacionCuentaTests(FabricaCad fabrica)
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{casoId}/desplazamiento", null)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/atencion", await fabrica.EnElLugarAsync(casoId))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre",
-            new SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, "Se resolvió en el lugar (ficticio)", null))).StatusCode);
+            new SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, "Se resolvió en el lugar (ficticio)", null, "ResueltoEnElLugar"))).StatusCode);
         var eventosAntes = await fabrica.ConBaseDatosAsync(db => db.EventosCaso.CountAsync(e => e.ActorId == serenoCuenta.Id));
 
         await DesactivarAsync(await AdministradorAsync(), serenoCuenta.Id);

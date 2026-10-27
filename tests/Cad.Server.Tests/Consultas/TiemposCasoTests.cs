@@ -109,8 +109,8 @@ public class TiemposCasoTests(FabricaCad fabrica)
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(id, operador.Id, CancellationToken.None));
         var datos = decision switch
         {
-            TipoDecisionReporte.Derivacion => new DatosDecision(decision, "Motivo ficticio", "Comisaría ficticia", "Se comunicó el caso"),
-            _ => new DatosDecision(decision, "Motivo ficticio"),
+            TipoDecisionReporte.Derivacion => new DatosDecision(decision, "Motivo ficticio", "Otro", "Se comunicó el caso", "Comisaría ficticia"),
+            _ => new DatosDecision(decision, "Motivo ficticio", Prioridad: "Media", Heridos: "No", MotivoDescarte: "Duplicado"),
         };
         Assert.IsType<ResultadoDecision.Registrado>(await fabrica.ConServiciosAsync(s =>
             s.GetRequiredService<DecidirReporte>().EjecutarAsync(id, datos, operador.Id, CancellationToken.None)));

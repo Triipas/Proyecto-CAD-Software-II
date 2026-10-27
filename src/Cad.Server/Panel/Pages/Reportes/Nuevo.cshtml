@@ -58,6 +58,17 @@
         <partial name="_Campo" model="@(new CampoFormulario("Reporte_OcurridoEn", "Reporte.OcurridoEn", "Fecha y hora aproximadas", "datetime-local", r.OcurridoEn, Model.ErrorDe("ocurridoAproximadamenteEn")))" />
     </section>
 
+    @* 27/10/2026: por dónde llegó y su prioridad (el reporte de la central entra ya admitido). *@
+    <section class="superficie pila" aria-labelledby="titulo-entrada">
+        <h2 id="titulo-entrada" class="seccion-caso__titulo">Entrada y prioridad</h2>
+        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Reporte_Canal", "Reporte.Canal", "¿Por dónde llegó?",
+            Cad.Contratos.Casos.CanalesEntrada.DeLaCentral, r.Canal, Model.ErrorDe("canal")))" />
+        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Reporte_Prioridad", "Reporte.Prioridad", "Prioridad",
+            Cad.Contratos.Casos.PrioridadesCaso.Todas, r.Prioridad, Model.ErrorDe("prioridad")))" />
+        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Reporte_Heridos", "Reporte.Heridos", "¿Hay personas heridas?",
+            Cad.Contratos.Casos.PersonasHeridas.Todas, r.Heridos, Model.ErrorDe("heridos")))" />
+    </section>
+
     <section class="superficie pila" aria-labelledby="titulo-lugar">
         <h2 id="titulo-lugar" class="seccion-caso__titulo">Dónde</h2>
         <p class="texto-secundario" id="ayuda-lugar">Toca el mapa para marcar el lugar del hecho, escribe una referencia, o ambas. Sin punto en el mapa, la referencia es obligatoria.</p>

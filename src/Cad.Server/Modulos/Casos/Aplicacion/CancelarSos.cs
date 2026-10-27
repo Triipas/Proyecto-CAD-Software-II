@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
@@ -26,8 +27,11 @@ public sealed class CancelarSos(CadDbContext db, TimeProvider reloj, INotificado
     public const string MotivoCambioConcurrente = "El SOS cambió mientras se cancelaba. Revisa su estado e inténtalo de nuevo.";
     private const int Intentos = 3;
 
-    public async Task<ResultadoCancelacion> EjecutarAsync(Guid ciudadanoId, Guid casoId, string? motivo, CancellationToken ct)
+    public async Task<ResultadoCancelacion> EjecutarAsync(Guid ciudadanoId, Guid casoId, string? motivoCodigo, string? motivo, CancellationToken ct)
     {
+        // Una app anterior al catálogo (27/10/2026) envía solo el texto: se registra como «Otro motivo».
+        if (motivoCodigo is null && !string.IsNullOrWhiteSpace(motivo))
+            motivoCodigo = MotivosCancelacion.Otro;
         for (var intento = 1; ; intento++)
         {
             var caso = await db.Casos.SingleOrDefaultAsync(c => c.Id == casoId && c.CiudadanoId == ciudadanoId
@@ -40,15 +44,21 @@ public sealed class CancelarSos(CadDbContext db, TimeProvider reloj, INotificado
             if (!caso.PuedeCancelarse)
                 return new ResultadoCancelacion.Rechazado(esReporte ? MotivoReporteDecidido : MotivoNoPendiente);
 
-            // CA01: el motivo es obligatorio.
+            // CA01: el motivo es obligatorio: del catálogo, y por escrito si es «Otro motivo».
+            if (!Catalogo.Contiene(MotivosCancelacion.Todos, motivoCodigo))
+                return new ResultadoCancelacion.Invalido(new() { ["motivoCodigo"] = ["Elige el motivo de la cancelación."] });
             if (string.IsNullOrWhiteSpace(motivo))
-                return new ResultadoCancelacion.Invalido(new() { ["motivo"] = ["Indica el motivo de la cancelación."] });
+            {
+                if (motivoCodigo == MotivosCancelacion.Otro)
+                    return new ResultadoCancelacion.Invalido(new() { ["motivo"] = ["Indica el motivo de la cancelación."] });
+                motivo = Catalogo.Texto(MotivosCancelacion.Todos, motivoCodigo)!;
+            }
             if (motivo.Trim().Length > CancelacionSos.MaximoMotivo)
                 return new ResultadoCancelacion.Invalido(new() { ["motivo"] = [$"El motivo admite hasta {CancelacionSos.MaximoMotivo} caracteres."] });
 
             var ahora = reloj.GetUtcNow();
             caso.Cancelar();
-            var cancelacion = CancelacionSos.Registrar(caso, motivo, ahora);
+            var cancelacion = CancelacionSos.Registrar(caso, motivoCodigo!, motivo, ahora);
             db.CancelacionesSos.Add(cancelacion);
             db.EventosCaso.Add(EventoCaso.Registrar(caso, esReporte ? TipoEventoCaso.ReporteRetirado : TipoEventoCaso.SosCancelado, ciudadanoId, VisibilidadEvento.Publica, ahora));
             try

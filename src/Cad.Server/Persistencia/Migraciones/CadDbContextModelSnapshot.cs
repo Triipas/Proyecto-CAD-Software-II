@@ -453,6 +453,10 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("MotivoCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.HasKey("CasoId");
 
                     b.HasIndex("CiudadanoId");
@@ -460,6 +464,8 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("CancelacionesSos", null, t =>
                         {
                             t.HasCheckConstraint("CK_CancelacionesSos_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0");
+
+                            t.HasCheckConstraint("CK_CancelacionesSos_MotivoCodigo", "\"MotivoCodigo\" IS NULL OR \"MotivoCodigo\" IN ('PorError', 'YaNoLoNecesito', 'MeAyudaronOtros', 'Otro')");
                         });
                 });
 
@@ -486,6 +492,10 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("Heridos")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<Guid>("IdSolicitud")
                         .HasColumnType("uuid");
 
@@ -502,6 +512,10 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.Property<double?>("PrecisionMetros")
                         .HasColumnType("double precision");
+
+                    b.Property<string>("Prioridad")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTimeOffset>("RegistradoEn")
                         .HasColumnType("timestamp with time zone");
@@ -535,11 +549,15 @@ namespace Cad.Server.Persistencia.Migraciones
 
                             t.HasCheckConstraint("CK_Casos_ClasificacionCompleta", "(\"CategoriaId\" IS NULL AND \"ClasificadoPor\" IS NULL AND \"ClasificadoEn\" IS NULL) OR (\"CategoriaId\" IS NOT NULL AND \"ClasificadoPor\" IS NOT NULL AND \"ClasificadoEn\" IS NOT NULL)");
 
+                            t.HasCheckConstraint("CK_Casos_Heridos", "\"Heridos\" IS NULL OR \"Heridos\" IN ('Si', 'No', 'NoSeSabe')");
+
                             t.HasCheckConstraint("CK_Casos_Latitud", "\"Latitud\" BETWEEN -90 AND 90");
 
                             t.HasCheckConstraint("CK_Casos_Longitud", "\"Longitud\" BETWEEN -180 AND 180");
 
                             t.HasCheckConstraint("CK_Casos_Precision", "\"PrecisionMetros\" > 0");
+
+                            t.HasCheckConstraint("CK_Casos_Prioridad", "\"Prioridad\" IS NULL OR \"Prioridad\" IN ('Alta', 'Media', 'Baja')");
 
                             t.HasCheckConstraint("CK_Casos_UbicacionCompleta", "(\"Latitud\" IS NULL AND \"Longitud\" IS NULL AND \"PrecisionMetros\" IS NULL AND \"UbicacionObtenidaEn\" IS NULL) OR (\"Latitud\" IS NOT NULL AND \"Longitud\" IS NOT NULL AND \"PrecisionMetros\" IS NOT NULL AND \"UbicacionObtenidaEn\" IS NOT NULL)");
                         });
@@ -701,6 +719,10 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.Property<Guid>("ResponsableId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ResultadoAtencion")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("ResultadoPublico")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -715,6 +737,8 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("CierresCaso", null, t =>
                         {
                             t.HasCheckConstraint("CK_CierresCaso_Resultado", "length(btrim(\"ResultadoPublico\")) > 0");
+
+                            t.HasCheckConstraint("CK_CierresCaso_ResultadoAtencion", "\"ResultadoAtencion\" IS NULL OR \"ResultadoAtencion\" IN ('ResueltoEnElLugar', 'EntregadoAPnp', 'Derivado', 'SinHallazgo', 'FalsaAlarma')");
                         });
                 });
 
@@ -771,10 +795,18 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("DestinoCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("Motivo")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("MotivoCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<Guid>("OperadorId")
                         .HasColumnType("uuid");
@@ -792,7 +824,11 @@ namespace Cad.Server.Persistencia.Migraciones
                         {
                             t.HasCheckConstraint("CK_DecisionesReporte_Derivacion", "(\"Tipo\" = 'Derivacion' AND \"Destino\" IS NOT NULL AND \"Accion\" IS NOT NULL AND length(btrim(\"Destino\")) > 0 AND length(btrim(\"Accion\")) > 0) OR (\"Tipo\" IN ('Admision', 'Descarte') AND \"Destino\" IS NULL AND \"Accion\" IS NULL)");
 
+                            t.HasCheckConstraint("CK_DecisionesReporte_DestinoCodigo", "\"DestinoCodigo\" IS NULL OR \"DestinoCodigo\" IN ('Pnp', 'Fiscalia', 'Cem', 'Samu', 'Bomberos', 'Municipalidad', 'Otro')");
+
                             t.HasCheckConstraint("CK_DecisionesReporte_Motivo", "length(btrim(\"Motivo\")) > 0");
+
+                            t.HasCheckConstraint("CK_DecisionesReporte_MotivoCodigo", "\"MotivoCodigo\" IS NULL OR \"MotivoCodigo\" IN ('FalsoOMalintencionado', 'Duplicado', 'NoVerificable', 'FueraDeAlcance', 'ActivacionAccidental', 'Otro')");
                         });
                 });
 
@@ -814,6 +850,10 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("MotivoCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<Guid>("OperadorId")
                         .HasColumnType("uuid");
 
@@ -824,6 +864,8 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("DescartesCaso", null, t =>
                         {
                             t.HasCheckConstraint("CK_DescartesCaso_Motivo", "\"Motivo\" IS NOT NULL AND length(btrim(\"Motivo\")) > 0");
+
+                            t.HasCheckConstraint("CK_DescartesCaso_MotivoCodigo", "\"MotivoCodigo\" IS NULL OR \"MotivoCodigo\" IN ('FalsoOMalintencionado', 'Duplicado', 'NoVerificable', 'FueraDeAlcance', 'ActivacionAccidental', 'Otro')");
                         });
                 });
 
@@ -831,6 +873,10 @@ namespace Cad.Server.Persistencia.Migraciones
                 {
                     b.Property<Guid>("CasoId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Canal")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<Guid>("CategoriaOriginalId")
                         .HasColumnType("uuid");
@@ -880,6 +926,8 @@ namespace Cad.Server.Persistencia.Migraciones
 
                     b.ToTable("DetallesReporte", null, t =>
                         {
+                            t.HasCheckConstraint("CK_DetallesReporte_Canal", "\"Canal\" IS NULL OR \"Canal\" IN ('App', 'Llamada', 'Radio', 'Presencial', 'RedesSociales', 'Otro')");
+
                             t.HasCheckConstraint("CK_DetallesReporte_Descripcion", "length(btrim(\"Descripcion\")) > 0");
 
                             t.HasCheckConstraint("CK_DetallesReporte_Latitud", "\"LatitudHecho\" BETWEEN -90 AND 90");
@@ -1137,6 +1185,10 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("MotivoCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<Guid>("OperadorId")
                         .HasColumnType("uuid");
 
@@ -1162,6 +1214,8 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("Reasignaciones", null, t =>
                         {
                             t.HasCheckConstraint("CK_Reasignaciones_Motivo", "length(btrim(\"Motivo\")) > 0");
+
+                            t.HasCheckConstraint("CK_Reasignaciones_MotivoCodigo", "\"MotivoCodigo\" IS NULL OR \"MotivoCodigo\" IN ('SerenoNoResponde', 'SerenoOcupado', 'OtroMasCercano', 'FallaDelEquipo', 'Otro')");
                         });
                 });
 
@@ -1421,6 +1475,30 @@ namespace Cad.Server.Persistencia.Migraciones
                         .IsUnique();
 
                     b.ToTable("MedicionesPresentacion", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.CambioEstadoSereno", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CambiadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Operativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SerenoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CambiadoEn");
+
+                    b.HasIndex("SerenoId", "CambiadoEn");
+
+                    b.ToTable("CambiosEstadoSereno", (string)null);
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.DispositivoSereno", b =>
@@ -2116,6 +2194,15 @@ namespace Cad.Server.Persistencia.Migraciones
                         .WithMany()
                         .HasForeignKey("OperadorId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Serenos.Dominio.CambioEstadoSereno", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("SerenoId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

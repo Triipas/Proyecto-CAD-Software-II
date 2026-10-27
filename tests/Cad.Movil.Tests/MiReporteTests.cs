@@ -103,10 +103,11 @@ public class MiReporteTests
         Assert.Equal("Retirar este reporte", vm.TextoCancelar);
         await vm.MostrarCancelacion.EjecutarAsync();
         await vm.ConfirmarCancelacion.EjecutarAsync();
-        Assert.Equal("Indica el motivo del retiro.", vm.ErrorMotivo);
+        Assert.Equal("Elige el motivo del retiro.", vm.ErrorMotivo); // 27/10/2026: primero, el motivo de la lista
         Assert.Empty(api.Cancelaciones);
 
         vm.MotivoCancelacion = "Ya lo resolvieron los vecinos.";
+        vm.MotivoElegido = MotivosCancelacion.Todos.Single(o => o.Codigo == MotivosCancelacion.Otro);
         await vm.ConfirmarCancelacion.EjecutarAsync();
 
         Assert.Equal([(Id, "Ya lo resolvieron los vecinos.")], api.Cancelaciones);
@@ -124,6 +125,7 @@ public class MiReporteTests
             "La central ya decidió sobre el reporte: no se puede retirar.", new Dictionary<string, string[]>());
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "Ya no hace falta.";
+        vm.MotivoElegido = MotivosCancelacion.Todos.Single(o => o.Codigo == MotivosCancelacion.Otro);
         api.RespuestaMiCaso = _ => new ResultadoApi<MiCasoDetalle>.Correcto(Caso(EstadosPublicos.Admitido, Datos()));
 
         await vm.ConfirmarCancelacion.EjecutarAsync();

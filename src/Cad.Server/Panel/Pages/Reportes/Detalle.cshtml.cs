@@ -52,12 +52,14 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         .ToList();
     public Guid IdAsignacion => Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud;
     public string? ErrorMotivoDescarte { get; private set; }
+    public string? ErrorMotivoCodigoDescarte { get; private set; }
 
     // Descarte por la central (un reporte recibido o en revisión se descarta con su decisión, HU17).
     public DescarteVista? Descartado { get; private set; }
     public bool PuedeDescartarse => Reporte.Estado is EstadoCaso.Pendiente or EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion;
     public VistaDescarte VistaDescarte => new($"/panel/reportes/{Reporte.Id}",
-        Seguimiento?.Asignacion is { FinalizadaEn: null } vigente ? vigente.Sereno : null, Descarte.Motivo, ErrorDescarte, ErrorMotivoDescarte);
+        Seguimiento?.Asignacion is { FinalizadaEn: null } vigente ? vigente.Sereno : null, Descarte.Motivo, ErrorDescarte, ErrorMotivoDescarte,
+        Descarte.MotivoCodigo, ErrorMotivoCodigoDescarte);
 
     // Asignación, avances y cierre de un reporte admitido (null antes de la admisión).
     public DetalleSos? Seguimiento { get; private set; }
@@ -222,7 +224,8 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     // HU15, HU16 y HU17.
     public async Task<IActionResult> OnPostDecidirAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await decidir.EjecutarAsync(id, new DatosDecision(Decision.Tipo, Decision.Motivo, Decision.Destino, Decision.Accion),
+        var resultado = await decidir.EjecutarAsync(id, new DatosDecision(Decision.Tipo, Decision.Motivo, Decision.Destino, Decision.Accion,
+            Decision.DetalleDestino, Decision.Prioridad, Decision.Heridos, Decision.MotivoDescarte),
             User.IdUsuario(), ct);
         switch (resultado)
         {
@@ -307,7 +310,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     // HU24-CA05: el operador cierra el reporte en atención y queda como responsable.
     public async Task<IActionResult> OnPostCerrarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await cerrar.EjecutarAsync(id, new DatosCierre(Cierre.CategoriaId, Cierre.ResultadoPublico, Cierre.NotasInternas),
+        var resultado = await cerrar.EjecutarAsync(id, new DatosCierre(Cierre.CategoriaId, Cierre.ResultadoAtencion, Cierre.ResultadoPublico, Cierre.NotasInternas),
             User.IdUsuario(), ActorAvance.Operador, ct);
         switch (resultado)
         {
@@ -332,7 +335,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     // Descarte por la central (23/10/2026): un reporte admitido falso o erróneo termina como «Descartada», con motivo obligatorio.
     public async Task<IActionResult> OnPostDescartarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await descartar.EjecutarAsync(id, Descarte.Motivo, User.IdUsuario(), ct);
+        var resultado = await descartar.EjecutarAsync(id, Descarte.MotivoCodigo, Descarte.Motivo, User.IdUsuario(), ct);
         switch (resultado)
         {
             case ResultadoDescarte.Descartado or ResultadoDescarte.YaDescartado:
@@ -343,6 +346,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
                 if (!await CargarAsync(id, ct))
                     return NotFound();
                 ErrorMotivoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivo")?[0];
+                ErrorMotivoCodigoDescarte = (resultado as ResultadoDescarte.Invalido)?.Errores.GetValueOrDefault("motivoCodigo")?[0];
                 ErrorDescarte = (resultado as ResultadoDescarte.Rechazado)?.Motivo;
                 return Page();
         }
@@ -351,7 +355,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     // Reasignación por la central (24/10/2026): a otro sereno disponible, con motivo; solo «Asignada» o «En camino».
     public async Task<IActionResult> OnPostReasignarAsync(Guid id, CancellationToken ct)
     {
-        var resultado = await reasignar.EjecutarAsync(id, Reasignacion.SerenoId, Reasignacion.Motivo, User.IdUsuario(), Reasignacion.IdSolicitud, ct);
+        var resultado = await reasignar.EjecutarAsync(id, Reasignacion.SerenoId, Reasignacion.MotivoCodigo, Reasignacion.Motivo, User.IdUsuario(), Reasignacion.IdSolicitud, ct);
         switch (resultado)
         {
             case ResultadoReasignacion.Reasignado or ResultadoReasignacion.YaReasignado:
@@ -398,12 +402,17 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         public TipoDecisionReporte Tipo { get; set; } = TipoDecisionReporte.Admision;
         public string? Motivo { get; set; }
         public string? Destino { get; set; }
+        public string? DetalleDestino { get; set; }
         public string? Accion { get; set; }
+        public string? Prioridad { get; set; }
+        public string? Heridos { get; set; }
+        public string? MotivoDescarte { get; set; }
     }
 
     public sealed class FormularioCierre
     {
         public Guid? CategoriaId { get; set; }
+        public string? ResultadoAtencion { get; set; }
         public string? ResultadoPublico { get; set; }
         public string? NotasInternas { get; set; }
     }

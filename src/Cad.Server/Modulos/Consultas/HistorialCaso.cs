@@ -173,6 +173,9 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             var tipificacion = await CategoriaAsync(cierre.CategoriaId, ct);
             var responsable = await NombreAsync(cierre.ResponsableId);
             entradas.Add(new(cierre.CerradoEn, $"Caso cerrado · tipificación «{tipificacion}»", responsable, $"Resultado público: {cierre.ResultadoPublico}"));
+            // 27/10/2026: cómo terminó la atención (catálogo), solo para el personal.
+            if (Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.ResultadosAtencion.Todos, cierre.ResultadoAtencion) is { } comoTermino)
+                entradas.Add(new(cierre.CerradoEn, "Cómo terminó la atención", responsable, comoTermino, Interna: true));
             if (cierre.NotasInternas is { } notas)
                 entradas.Add(new(cierre.CerradoEn, "Notas internas del cierre", responsable, notas, Interna: true));
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);

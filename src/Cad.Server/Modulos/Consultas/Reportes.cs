@@ -17,8 +17,15 @@ public sealed record ReporteEnBandeja(
 public sealed record CorreccionVista(string Anterior, string Nueva, string Operador, DateTimeOffset En);
 
 // HU15–HU17: la decisión registrada sobre el reporte.
-public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En)
+public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En,
+    string? MotivoCodigo = null, string? Prioridad = null, string? Heridos = null)
 {
+    // 27/10/2026: los textos de los catálogos (motivo del descarte; prioridad y heridos de la admisión). Nulos si la decisión
+    // es anterior a los catálogos.
+    public string? TextoMotivoDescarte => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosDescarte.Todos, MotivoCodigo);
+    public string? TextoPrioridad => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.PrioridadesCaso.Todas, Prioridad);
+    public string? TextoHeridos => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.PersonasHeridas.Todas, Heridos);
+
     public string Texto => Tipo switch
     {
         TipoDecisionReporte.Admision => "Admitido para atención",
@@ -132,9 +139,10 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
             .ToList();
         var decision = await (from registro in db.DecisionesReporte.AsNoTracking()
                               join operador in db.Users.AsNoTracking() on registro.OperadorId equals operador.Id
+                              join caso in db.Casos.AsNoTracking() on registro.CasoId equals caso.Id
                               where registro.CasoId == casoId
                               select new DecisionVista(registro.Tipo, registro.Motivo, registro.Destino, registro.Accion,
-                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn))
+                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn, registro.MotivoCodigo, caso.Prioridad, caso.Heridos))
             .SingleOrDefaultAsync(ct);
 
         var fotos = await db.FotosReporte.AsNoTracking().CountAsync(f => f.CasoId == casoId, ct);

@@ -9,6 +9,7 @@
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
              xmlns:sr="clr-namespace:Cad.Contratos.Serenos;assembly=Cad.Contratos"
+             xmlns:cc="clr-namespace:Cad.Contratos.Casos;assembly=Cad.Contratos"
              x:Class="Cad.Movil.Vistas.InicioSerenoPagina"
              x:DataType="vm:InicioSerenoVistaModelo"
              Title="Sereno">
@@ -323,7 +324,14 @@
                                             ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" />
                                 </Border>
                                 <Label Text="{Binding ErrorCategoriaCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoriaCierre}" />
-                                <Label Text="Resultado de la atención" Style="{StaticResource Etiqueta}" />
+                                <!-- 27/10/2026: cómo terminó la atención, de una lista (lo cuenta la central). -->
+                                <Label Text="Cómo terminó la atención" Style="{StaticResource Etiqueta}" />
+                                <Border Style="{StaticResource MarcoCampo}">
+                                    <Picker Title="Elige cómo terminó" ItemsSource="{Binding OpcionesResultadoAtencion}" SelectedItem="{Binding ResultadoAtencionCierre}"
+                                            ItemDisplayBinding="{Binding Texto, x:DataType=cc:OpcionCatalogo}" />
+                                </Border>
+                                <Label Text="{Binding ErrorResultadoAtencionCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorResultadoAtencionCierre}" />
+                                <Label Text="Resultado para el ciudadano" Style="{StaticResource Etiqueta}" />
                                 <Border Style="{StaticResource MarcoCampo}">
                                     <Editor Text="{Binding ResultadoCierre}" HeightRequest="100" Placeholder="Cómo se resolvió el caso" />
                                 </Border>

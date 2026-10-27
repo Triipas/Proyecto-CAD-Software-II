@@ -50,7 +50,7 @@ public class ClasificacionTests(FabricaCad fabrica)
         var token = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, paginaToken ?? Detalle(casoId));
         return await navegador.PostAsync($"{Detalle(casoId)}?handler=Clasificar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Clasificacion.CategoriaId"] = categoria,
+            ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = categoria,
             ["__RequestVerificationToken"] = token,
         }));
     }
@@ -220,7 +220,7 @@ public class ClasificacionTests(FabricaCad fabrica)
         var respuestas = await Task.WhenAll(operadores.Select((o, i) => o.PostAsync($"{Detalle(casoId)}?handler=Clasificar",
             new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[i].Id.ToString(),
+                ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[i].Id.ToString(),
                 ["__RequestVerificationToken"] = tokens[i],
             }))));
 
@@ -246,7 +246,7 @@ public class ClasificacionTests(FabricaCad fabrica)
             var respuestas = await Task.WhenAll(
                 clasificador.PostAsync($"{Detalle(casoId)}?handler=Clasificar", new FormUrlEncodedContent(new Dictionary<string, string>
                 {
-                    ["Clasificacion.CategoriaId"] = Robo.ToString(), ["__RequestVerificationToken"] = tokenClasificar,
+                    ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = Robo.ToString(), ["__RequestVerificationToken"] = tokenClasificar,
                 })),
                 AsignarAsync(asignador, casoId, sereno.Id, tokenAsignar));
 
@@ -279,7 +279,7 @@ public class ClasificacionTests(FabricaCad fabrica)
         var app = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(rol));
 
         var respuesta = await app.PostAsync($"{Detalle(casoId)}?handler=Clasificar",
-            new FormUrlEncodedContent(new Dictionary<string, string> { ["Clasificacion.CategoriaId"] = Robo.ToString() }));
+            new FormUrlEncodedContent(new Dictionary<string, string> { ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = Robo.ToString() }));
 
         Assert.NotEqual(HttpStatusCode.OK, respuesta.StatusCode);
         Assert.NotEqual(HttpStatusCode.Redirect, respuesta.StatusCode);
@@ -290,9 +290,9 @@ public class ClasificacionTests(FabricaCad fabrica)
     public void Dominio_UnCasoClasificado_NoSeVuelveAClasificar()
     {
         var caso = Caso.EmitirSos(Guid.NewGuid(), Guid.NewGuid(), null, DateTimeOffset.UtcNow);
-        caso.Clasificar(Robo, Guid.NewGuid(), DateTimeOffset.UtcNow);
+        caso.Clasificar(Robo, "Media", "No", Guid.NewGuid(), DateTimeOffset.UtcNow);
 
-        Assert.Throws<InvalidOperationException>(() => caso.Clasificar(Violencia, Guid.NewGuid(), DateTimeOffset.UtcNow));
+        Assert.Throws<InvalidOperationException>(() => caso.Clasificar(Violencia, "Alta", "Si", Guid.NewGuid(), DateTimeOffset.UtcNow));
         Assert.Equal(Robo, caso.CategoriaId);
     }
 

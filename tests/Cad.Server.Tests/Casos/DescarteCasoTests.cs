@@ -62,7 +62,7 @@ public class DescarteCasoTests(FabricaCad fabrica)
         var ruta = $"/panel/central/sos/{casoId}";
         return await operador.PostAsync($"{ruta}?handler=Descartar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Descarte.Motivo"] = motivo,
+            ["Descarte.MotivoCodigo"] = "Duplicado", ["Descarte.Motivo"] = motivo,
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
         }));
     }
@@ -149,7 +149,7 @@ public class DescarteCasoTests(FabricaCad fabrica)
         Assert.Equal(Motivo, (await fabrica.ConBaseDatosAsync(db => db.DescartesCaso.AsNoTracking().SingleAsync(d => d.CasoId == casoId))).Motivo);
 
         var resultado = await fabrica.ConServiciosAsync(sp => sp.GetRequiredService<DescartarCaso>()
-            .EjecutarAsync(Guid.NewGuid(), Motivo, Guid.NewGuid(), CancellationToken.None));
+            .EjecutarAsync(Guid.NewGuid(), "Duplicado", Motivo, Guid.NewGuid(), CancellationToken.None));
         Assert.IsType<ResultadoDescarte.NoEncontrado>(resultado);
     }
 
@@ -163,7 +163,7 @@ public class DescarteCasoTests(FabricaCad fabrica)
 
         var respuesta = await administrador.PostAsync($"/panel/central/sos/{casoId}?handler=Descartar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Descarte.Motivo"] = Motivo, ["__RequestVerificationToken"] = token,
+            ["Descarte.MotivoCodigo"] = "Duplicado", ["Descarte.Motivo"] = Motivo, ["__RequestVerificationToken"] = token,
         }));
 
         Assert.NotEqual(HttpStatusCode.OK, respuesta.StatusCode);

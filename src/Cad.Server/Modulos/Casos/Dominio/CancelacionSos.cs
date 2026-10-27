@@ -9,12 +9,16 @@ public sealed class CancelacionSos
     public Guid CasoId { get; private set; }
     public Guid CiudadanoId { get; private set; }
     public string Motivo { get; private set; } = "";
+    // 27/10/2026 — el motivo del catálogo MotivosCancelacion (Cad.Contratos.Casos). Motivo guarda lo que escribió el
+    // ciudadano o, sin texto, el del catálogo. Nulo antes.
+    public string? MotivoCodigo { get; private set; }
     public DateTimeOffset CanceladaEn { get; private set; }
 
     private CancelacionSos() { } // EF Core
 
-    public static CancelacionSos Registrar(Caso caso, string motivo, DateTimeOffset ahora) => new()
+    public static CancelacionSos Registrar(Caso caso, string motivoCodigo, string motivo, DateTimeOffset ahora) => new()
     {
+        MotivoCodigo = motivoCodigo,
         CasoId = caso.Id,
         CiudadanoId = caso.CiudadanoId!.Value,
         Motivo = motivo.Trim(),
