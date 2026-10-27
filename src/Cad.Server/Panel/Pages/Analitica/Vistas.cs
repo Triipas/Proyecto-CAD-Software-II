@@ -96,6 +96,18 @@ public sealed class Regla
     private static string E(string texto) => WebUtility.HtmlEncode(texto);
     private static string N(double v) => v.ToString("0.#", CultureInfo.InvariantCulture);
 
+    // Alturas de los niveles de rótulos sobre el eje y ancho aproximado de un rótulo (12,5 px de Public Sans).
+    private static readonly int[] Niveles = [30, 46, 62];
+    private static double AnchoTexto(string texto) => texto.Length * 6.9 + 4;
+
+    // Entre 4 y 8 marcas en la escala, con pasos redondos (5, 10, 15, 30 min, 1 h…), aunque un caso lento estire la regla.
+    private static double PasoLegible(double rango, double? pedido)
+    {
+        if (pedido is { } p && rango / p <= 10) return p;
+        double[] pasos = [1, 2, 5, 10, 15, 20, 25, 30, 60, 120, 180, 240, 360, 480, 720, 1440];
+        return pasos.FirstOrDefault(c => rango / c <= 8, Math.Ceiling(rango / 8 / 1440) * 1440);
+    }
+
     // Un rótulo centrado en su valor se sale de la regla en los extremos: ahí se alinea hacia adentro.
     private static string Ancla(double x) =>
         x < 80 ? " style=\"text-anchor:start\"" : x > Ancho - 80 ? " style=\"text-anchor:end\"" : "";
@@ -104,12 +116,16 @@ public sealed class Regla
     {
         const int Eje = 104, Alto = 150;
         var s = new StringBuilder($"<svg class=\"regla\" viewBox=\"-24 0 {Ancho + 48} {Alto}\" role=\"img\" aria-label=\"{E(descripcion)}\">");
+        // Lo que ya ocupa cada nivel de rótulos sobre el eje (de x a x).
+        var ocupados = Niveles.Select(_ => new List<(double Desde, double Hasta)>()).ToArray();
         if (Banda is var (desde, hasta, texto))
         {
             s.Append($"<rect class=\"regla__banda\" x=\"{N(X(desde))}\" y=\"{Eje - 70}\" width=\"{N(X(hasta) - X(desde))}\" height=\"80\"/>");
             s.Append($"<line class=\"regla__objetivo\" x1=\"{N(X(hasta))}\" y1=\"{Eje - 70}\" x2=\"{N(X(hasta))}\" y2=\"{Eje + 10}\"/>");
-            // Sin tramos, el texto va arriba de la banda: abajo chocaría con los puntos cercanos al cero.
-            s.Append($"<text class=\"regla__texto-banda\" x=\"{N(X(desde) + 8)}\" y=\"{(Tramos.Count == 0 ? Eje - 54 : Eje - 6)}\">{E(texto)}</text>");
+            // Sin tramos, el texto va en lo alto de la banda y ocupa ese nivel de rótulos; con tramos, abajo, bajo los tramos.
+            if (Tramos.Count == 0)
+                ocupados[^1].Add((X(desde) + 8, X(desde) + 8 + AnchoTexto(texto)));
+            s.Append($"<text class=\"regla__texto-banda\" x=\"{N(X(desde) + 8)}\" y=\"{(Tramos.Count == 0 ? Eje - Niveles[^1] : Eje - 6)}\">{E(texto)}</text>");
         }
         var inicio = 0.0;
         foreach (var (nombre, valor, color) in Tramos)
@@ -121,29 +137,53 @@ public sealed class Regla
             inicio += valor;
         }
         s.Append($"<line class=\"regla__eje\" x1=\"0\" y1=\"{Eje}\" x2=\"{Ancho}\" y2=\"{Eje}\"/>");
-        var paso = Paso ?? (Maximo - Minimo) / 8;
+        var paso = PasoLegible(Maximo - Minimo, Paso);
         for (var v = Minimo; v <= Maximo + 1e-9; v += paso)
         {
-            var rotulo = Math.Abs(v - Maximo) < 1e-9 ? $"{N(v)}{Unidad}" : N(v);
+            var rotulo = v + paso > Maximo + 1e-9 ? $"{N(v)}{Unidad}" : N(v);
             s.Append($"<line class=\"regla__marca\" x1=\"{N(X(v))}\" y1=\"{Eje}\" x2=\"{N(X(v))}\" y2=\"{Eje + 5}\"/><text class=\"regla__escala\" x=\"{N(X(v))}\" y=\"{Eje + 19}\">{E(rotulo)}</text>");
         }
         foreach (var (valor, rotulo) in Anteriores)
             s.Append($"<path class=\"regla__anterior\" d=\"M{N(X(valor))} {Eje - 76} l-5 -8 h10 z\"><title>{E(rotulo)}</title></path><text class=\"regla__anterior-texto\" x=\"{N(X(valor))}\" y=\"{Eje - 88}\"{Ancla(X(valor))}>{E(rotulo)}</text>");
-        var alturas = new[] { 30, 46 };
-        for (var i = 0; i < Puntos.Count; i++)
+        // Puntos casi en el mismo lugar se rotulan juntos («y 2 más»); cada rótulo va al primer nivel donde no pisa a otro, y si
+        // no cabe en ninguno queda solo el punto (con su título al pasar el cursor). Los puntos en alerta eligen primero.
+        var grupos = new List<List<(double Valor, string Rotulo, bool Alerta)>>();
+        foreach (var punto in Puntos.OrderBy(p => p.Valor))
+            if (grupos.Count > 0 && X(punto.Valor) - X(grupos[^1][0].Valor) < 4) grupos[^1].Add(punto);
+            else grupos.Add([punto]);
+        foreach (var grupo in grupos.OrderByDescending(g => g.Any(p => p.Alerta)).ThenBy(g => g[0].Valor))
         {
-            var (valor, rotulo, alerta) = Puntos[i];
-            var y = Eje - alturas[i % 2];
-            s.Append($"<line class=\"regla__guia\" x1=\"{N(X(valor))}\" y1=\"{y + 4}\" x2=\"{N(X(valor))}\" y2=\"{Eje}\"/>");
-            s.Append($"<circle class=\"regla__punto{(alerta ? " regla__punto--alerta" : "")}\" cx=\"{N(X(valor))}\" cy=\"{Eje}\" r=\"7\"/><text class=\"regla__rotulo\" x=\"{N(X(valor))}\" y=\"{y}\"{Ancla(X(valor))}>{E(rotulo)}</text>");
+            var x = X(grupo[0].Valor);
+            var rotulo = grupo.Count == 1 ? grupo[0].Rotulo : $"{grupo[0].Rotulo} y {grupo.Count - 1} más";
+            var ancho = AnchoTexto(rotulo);
+            var (izquierda, derecha) = x < 80 ? (x + 8, x + 8 + ancho) : x > Ancho - 80 ? (x - 8 - ancho, x - 8) : (x - ancho / 2, x + ancho / 2);
+            var nivel = Array.FindIndex(ocupados, o => o.All(r => derecha + 8 < r.Desde || izquierda - 8 > r.Hasta));
+            foreach (var (valor, titulo, alerta) in grupo)
+                s.Append($"<circle class=\"regla__punto{(alerta ? " regla__punto--alerta" : "")}\" cx=\"{N(X(valor))}\" cy=\"{Eje}\" r=\"7\"><title>{E(titulo)}</title></circle>");
+            if (nivel < 0) continue;
+            ocupados[nivel].Add((izquierda, derecha));
+            var y = Eje - Niveles[nivel];
+            s.Append($"<line class=\"regla__guia\" x1=\"{N(x)}\" y1=\"{y + 4}\" x2=\"{N(x)}\" y2=\"{Eje - 7}\"/>");
+            // En los bordes el rótulo se separa un poco de su guía (y de la línea de una marca en el mismo valor).
+            var xRotulo = x < 80 ? x + 8 : x > Ancho - 80 ? x - 8 : x;
+            s.Append($"<text class=\"regla__rotulo\" x=\"{N(xRotulo)}\" y=\"{y}\"{Ancla(x)}>{E(rotulo)}</text>");
         }
-        foreach (var (valor, lleno, rotulo, sub) in Marcas)
+        // Dos marcas cercanas (mediana y p90 parecidos) separan sus rótulos: la primera hacia la izquierda, la otra a la derecha.
+        var marcas = Marcas.OrderBy(m => m.Valor).ToList();
+        for (var i = 0; i < marcas.Count; i++)
         {
-            s.Append($"<line class=\"regla__linea\" x1=\"{N(X(valor))}\" y1=\"{Eje - 64}\" x2=\"{N(X(valor))}\" y2=\"{Eje}\"/>");
-            s.Append($"<circle class=\"regla__marcador{(lleno ? " regla__marcador--lleno" : "")}\" cx=\"{N(X(valor))}\" cy=\"{Eje}\" r=\"8\"/>");
-            s.Append($"<text class=\"regla__valor\" x=\"{N(X(valor))}\" y=\"{Eje + 38}\"{Ancla(X(valor))}>{E(rotulo)}</text>");
+            var (valor, lleno, rotulo, sub) = marcas[i];
+            var x = X(valor);
+            var cerca = (i > 0 && x - X(marcas[i - 1].Valor) < 130) || (i < marcas.Count - 1 && X(marcas[i + 1].Valor) - x < 130);
+            var ancla = !cerca ? Ancla(x)
+                : i > 0 && x - X(marcas[i - 1].Valor) < 130 ? (x > Ancho - 80 ? " style=\"text-anchor:end\"" : " style=\"text-anchor:start\"")
+                : (x < 80 ? " style=\"text-anchor:start\"" : " style=\"text-anchor:end\"");
+            var desplazado = !cerca ? x : ancla.Contains("start") ? x + 4 : x - 4;
+            s.Append($"<line class=\"regla__linea\" x1=\"{N(x)}\" y1=\"{Eje - 64}\" x2=\"{N(x)}\" y2=\"{Eje}\"/>");
+            s.Append($"<circle class=\"regla__marcador{(lleno ? " regla__marcador--lleno" : "")}\" cx=\"{N(x)}\" cy=\"{Eje}\" r=\"8\"/>");
+            s.Append($"<text class=\"regla__valor\" x=\"{N(desplazado)}\" y=\"{Eje + 38}\"{ancla}>{E(rotulo)}</text>");
             if (sub is not null)
-                s.Append($"<text class=\"regla__sub\" x=\"{N(X(valor))}\" y=\"{Eje + 44 + 10}\"{Ancla(X(valor))}>{E(sub)}</text>");
+                s.Append($"<text class=\"regla__sub\" x=\"{N(desplazado)}\" y=\"{Eje + 44 + 10}\"{ancla}>{E(sub)}</text>");
         }
         return new HtmlString(s.Append("</svg>").ToString());
     }

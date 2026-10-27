@@ -22,7 +22,10 @@
     if (Etapa("De «En camino» a la atención")?.P50Minutos is { } camino) tramos.Add(("En camino", camino, "#3F6FE0"));
     var masLargo = tramos.Count == 0 ? default : tramos.MaxBy(t => t.Item2);
     var sumaTramos = tramos.Sum(t => t.Item2);
-    var maximo = Math.Ceiling(new[] { p90 ?? 0, objetivo * 2.0, anterior?.RespuestaP90 ?? 0, v.Respuestas.DefaultIfEmpty(0).Max(), sumaTramos }.Max() / 5) * 5 + 5;
+    // La escala llega al p90 (o al caso más lento cuando son pocos) sin pasar de 4 veces el objetivo: un SOS de horas no aplasta a
+    // los demás; se dibuja en el borde con su tiempo real («→ 4 h 36 min»).
+    var tope = n < minimo ? v.Respuestas.DefaultIfEmpty(0).Max() : p90 ?? 0;
+    var maximo = Math.Ceiling(Math.Min(new[] { tope, objetivo * 2.0, anterior?.RespuestaP90 ?? 0, sumaTramos }.Max(), objetivo * 4.0) / 5) * 5 + 5;
 
     var prioridades = v.Grupos.Where(g => g.Origen == ConsultarTiemposPorEtapa.Sos && g.Prioridad is not null)
         .Select(g => (g.Prioridad!, g.Etapas.Single(e => e.Etapa.StartsWith("Respuesta"))))
@@ -76,7 +79,7 @@ else
                 {
                     Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
                     Banda = (0, objetivo, $"Objetivo provisional ≤ {objetivo} min"),
-                    Puntos = v.Respuestas.Select(r => (r, Formato.Minutos(r), r > objetivo)).ToList(),
+                    Puntos = v.Respuestas.Select(r => (r, (r > maximo ? "→ " : "") + Formato.Minutos(r), r > objetivo)).ToList(),
                 }.Dibujar($"Cada SOS medido: {string.Join(", ", v.Respuestas.Select(r => Formato.Minutos(r)))}"))
                 <div class="aviso aviso--informacion aviso-a"><partial name="_Icono" model="@("informacion")" /><div><p class="aviso__titulo">Pocos casos para dar porcentajes</p><p class="aviso__texto">Las medianas y los p90 aparecen desde @minimo casos. Para ver tendencias, mira un periodo más largo.</p></div>
                     @if (m.Periodo is "hoy" or "rango") { <a class="boton boton--secundario boton--compacto aviso-a__accion" href="@m.Enlace(periodo: "7")">Ver 7 días</a> }</div>
