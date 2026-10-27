@@ -72,7 +72,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding VerCasoActivo}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding VerCasoActivo}"
                             SemanticProperties.Description="{Binding TextoCasoActivo, StringFormat='Tu caso en curso: {0}'}"
                             SemanticProperties.Hint="Abre el detalle de tu caso" />
                 </Grid>
@@ -130,7 +130,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding VerNotificaciones}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding VerNotificaciones}"
                             SemanticProperties.Description="{Binding TextoNotificaciones}"
                             SemanticProperties.Hint="Muestra los avisos de cambios de estado de tus casos" />
                 </Grid>
@@ -148,7 +148,7 @@
                             <Label Text="Centrar" FontFamily="PublicSansMedium" FontSize="14" TextColor="{StaticResource ColorMarino}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Centrar}" SemanticProperties.Description="Centrar"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Centrar}" SemanticProperties.Description="Centrar"
                             SemanticProperties.Hint="Muestra tu ubicación actual en el mapa; no la envía a la central" />
                 </Grid>
             </Grid>
@@ -165,7 +165,7 @@
                             <Label Text="Reportar" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Reportar}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Reportar}"
                             SemanticProperties.Description="Reportar una incidencia"
                             SemanticProperties.Hint="Abre el formulario de reporte; no es una alerta urgente" />
                 </Grid>
@@ -225,7 +225,7 @@
                             <Label Text="Acompañar" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Acompanar}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Acompanar}"
                             SemanticProperties.Description="Acompañamiento"
                             SemanticProperties.Hint="Abre el acompañamiento temporal; no emite un SOS ni registra un reporte" />
                 </Grid>

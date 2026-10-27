@@ -27,7 +27,7 @@
                     <v:Mosaico Columnas="3" Espacio="8" BindableLayout.ItemsSource="{Binding Opciones}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:OpcionCategoria">
-                                <Border Padding="6,12" MinimumHeightRequest="104" StrokeThickness="1"
+                                <Border Padding="6,12" MinimumHeightRequest="104" StrokeThickness="1" v:Movimiento.Tocable="True"
                                         Stroke="{StaticResource ColorBorde}" BackgroundColor="{StaticResource ColorSuperficie}"
                                         SemanticProperties.Description="{Binding DescripcionAccesible}" SemanticProperties.Hint="{Binding Ayuda}">
                                     <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
@@ -95,7 +95,7 @@
                                             <Label Text="Dictar" TextColor="{StaticResource ColorPrimario}" FontFamily="PublicSansSemiBold" FontSize="15" VerticalOptions="Center" />
                                         </HorizontalStackLayout>
                                     </Border>
-                                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Dictar}"
+                                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Dictar}"
                                             SemanticProperties.Description="Dictar lo ocurrido"
                                             SemanticProperties.Hint="Usa el reconocimiento de voz del teléfono; el texto se añade a la descripción" />
                                 </Grid>
