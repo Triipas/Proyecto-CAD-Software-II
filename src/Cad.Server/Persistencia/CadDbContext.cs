@@ -40,6 +40,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Serenos.Dominio.CambioEstadoSereno> CambiosEstadoSereno => Set<Modulos.Serenos.Dominio.CambioEstadoSereno>();
     public DbSet<Modulos.Analitica.PercepcionZona> PercepcionZonas => Set<Modulos.Analitica.PercepcionZona>();
     public DbSet<Modulos.Analitica.ActividadCiudadano> ActividadesCiudadano => Set<Modulos.Analitica.ActividadCiudadano>();
+    public DbSet<Modulos.Analitica.EnvioPush> EnviosPush => Set<Modulos.Analitica.EnvioPush>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
@@ -416,6 +417,17 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             actividad.HasKey(a => new { a.UsuarioId, a.Dia });
             actividad.HasIndex(a => a.Dia);
             actividad.HasOne<Usuario>().WithMany().HasForeignKey(a => a.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 27/10/2026: intentos de notificación push del despacho, con su resultado (salud del sistema). Sin token ni contenido.
+        builder.Entity<Modulos.Analitica.EnvioPush>(envio =>
+        {
+            envio.ToTable("EnviosPush", tabla => tabla.HasCheckConstraint("CK_EnviosPush_Resultado",
+                "\"Resultado\" IN ('Enviada', 'TokenInvalido', 'NoEnviada', 'SinDispositivo')"));
+            envio.HasKey(e => e.Id);
+            envio.Property(e => e.Resultado).HasMaxLength(20);
+            envio.HasIndex(e => e.EnviadoEn);
+            envio.HasOne<Usuario>().WithMany().HasForeignKey(e => e.SerenoId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // 27/10/2026: historial de cambios del estado operativo, solo inserción; se consulta por sereno y por periodo.

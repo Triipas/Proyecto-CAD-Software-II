@@ -169,8 +169,13 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
 
     public enum SiguienteAccion { IniciarRevision, Decidir, Asignar, EsperarDesplazamiento, EsperarAtencion, Cerrar, VerCierre, VerDecision, VerDescarte, VerRetiro, SinAcciones }
 
-    public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct) =>
-        await CargarAsync(id, ct) ? Page() : NotFound();
+    public async Task<IActionResult> OnGetAsync(Guid id, [FromServices] Modulos.Analitica.MarcasCentral marcas, CancellationToken ct)
+    {
+        if (!await CargarAsync(id, ct))
+            return NotFound();
+        await marcas.AbiertoAsync(id, ct); // la primera vez que la central abre el reporte (analítica, 27/10/2026)
+        return Page();
+    }
 
     // DP08 ampliada (26/10/2026): una foto del reporte, solo para el operador (la política de la página). No se guarda en
     // cachés ni se interpreta como otro tipo de contenido.

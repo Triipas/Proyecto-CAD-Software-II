@@ -764,8 +764,9 @@
   conexion.on("SosRecibido", async ({ id }) => {
     if (!(await refrescar())) return;
     avisar(id);
-    // RNF02 (solo con la medición activada): acuse cuando el SOS ya se muestra y se ha avisado.
-    if (seccion.dataset.medicion === "true" && document.getElementById(`sos-${id}`))
+    // Acuse cuando el SOS ya se muestra y se ha avisado: el servidor anota su primera presentación (analítica) y, con la
+    // medición activada, la de RNF02.
+    if (document.getElementById(`sos-${id}`))
       conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
   });
   conexion.on("SerenoActualizado", () => refrescarSerenos());

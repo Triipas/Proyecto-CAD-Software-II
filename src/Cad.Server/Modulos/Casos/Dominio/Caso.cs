@@ -165,6 +165,12 @@ public sealed class Caso
     // 27/10/2026 — prioridad y personas heridas (Cad.Contratos.Casos.PrioridadesCaso y PersonasHeridas): el operador las
     // registra al clasificar un SOS o al admitir un reporte. Nulas en los casos anteriores y en los aún sin decidir.
     public string? Prioridad { get; private set; }
+
+    // 27/10/2026 — salud del sistema (analítica, bloque E): cuándo apareció el caso por primera vez en la central abierta (acuse
+    // del panel al recibirlo en vivo) y cuándo un operador abrió su detalle por primera vez. Las escribe MarcasCentral, una sola
+    // vez cada una; nulas si nunca pasó (o en los casos anteriores).
+    public DateTimeOffset? PresentadoEnCentralEn { get; private set; }
+    public DateTimeOffset? AbiertoEnCentralEn { get; private set; }
     public string? Heridos { get; private set; }
 
     public void Priorizar(string prioridad, string heridos)

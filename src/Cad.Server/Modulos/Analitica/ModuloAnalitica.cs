@@ -26,6 +26,16 @@ public sealed class OpcionesAnalitica
 
     // Zonas en alza (bloque C): cuántas desviaciones sobre el promedio de las semanas anteriores son una alerta.
     public double UmbralAlza { get; set; } = 2;
+
+    // Casos atascados (bloque E): minutos que un caso puede llevar en cada etapa antes de marcarse. Parámetros provisionales hasta
+    // que el PO fije los tiempos objetivo del servicio.
+    public int UmbralSosPendienteMinutos { get; set; } = 3;
+    public int UmbralReporteAdmitidoMinutos { get; set; } = 30;
+    public int UmbralAsignadaMinutos { get; set; } = 5;
+    public int UmbralEnCaminoMinutos { get; set; } = 20;
+    public int UmbralEnAtencionMinutos { get; set; } = 60;
+    public int UmbralRecibidoMinutos { get; set; } = 15;
+    public int UmbralEnRevisionMinutos { get; set; } = 30;
 }
 
 public static class ModuloAnalitica
@@ -43,6 +53,11 @@ public static class ModuloAnalitica
         services.AddSingleton<RegistroActividadCiudadano>();
         services.AddScoped<ConsultarEvaluaciones>();
         services.AddScoped<ConsultarAdopcion>();
+        services.AddScoped<MarcasCentral>();
+        services.AddScoped<ConsultarSaludSistema>();
+        services.AddScoped<ConsultarCasosAtascados>();
+        services.AddScoped<ConsultarDemandaEsperada>();
+        services.AddScoped<GenerarInformePeriodo>();
         return services;
     }
 }

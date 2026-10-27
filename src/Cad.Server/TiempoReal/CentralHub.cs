@@ -17,9 +17,13 @@ public sealed class CentralHub : Hub
     public const string EventoSosCancelado = "SosCancelado";
     public const string EventoAcompanamientoActualizado = "AcompanamientoActualizado";
 
-    // RNF02: el panel confirma que el SOS ya se muestra. Sin efecto si la medición está desactivada.
-    public Task ConfirmarPresentacion(Guid casoId, Modulos.Mediciones.RegistrarPresentacion registrar) =>
-        registrar.EjecutarAsync(casoId, Context.User!.IdUsuario(), Context.ConnectionAborted);
+    // El panel confirma que el SOS ya se muestra. Siempre queda la primera presentación del caso (analítica, 27/10/2026); la
+    // medición de RNF02, solo si está activada.
+    public async Task ConfirmarPresentacion(Guid casoId, Modulos.Mediciones.RegistrarPresentacion registrar, Modulos.Analitica.MarcasCentral marcas)
+    {
+        await marcas.PresentadoAsync(casoId, Context.ConnectionAborted);
+        await registrar.EjecutarAsync(casoId, Context.User!.IdUsuario(), Context.ConnectionAborted);
+    }
 
     public override async Task OnConnectedAsync()
     {
