@@ -19,6 +19,13 @@ public sealed class OpcionesAnalitica
     // Privacidad: una zona con menos casos que este mínimo no se muestra sola (se suma al «resto»), para que no se pueda
     // reconocer un caso concreto por su lugar.
     public int MinimoCasosPorZona { get; set; } = 3;
+
+    // Puntos críticos (bloque C): cuántas incidencias y a qué distancia entre ellas forman un punto que se repite.
+    public double RadioPuntoCriticoMetros { get; set; } = 100;
+    public int MinimoCasosPuntoCritico { get; set; } = 3;
+
+    // Zonas en alza (bloque C): cuántas desviaciones sobre el promedio de las semanas anteriores son una alerta.
+    public double UmbralAlza { get; set; } = 2;
 }
 
 public static class ModuloAnalitica
@@ -29,6 +36,10 @@ public static class ModuloAnalitica
         services.AddScoped<ConsultarDemandaYOferta>();
         services.AddScoped<ConsultarCobertura>();
         services.AddScoped<ConsultarRespuestaPorZona>();
+        services.AddScoped<ConsultarPuntosCriticos>();
+        services.AddScoped<ConsultarZonasEnAlza>();
+        services.AddScoped<ConsultarReportesAnalitica>();
+        services.AddScoped<ConsultarPercepcion>();
         return services;
     }
 }

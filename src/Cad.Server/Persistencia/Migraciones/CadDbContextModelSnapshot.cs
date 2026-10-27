@@ -389,6 +389,31 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Analitica.PercepcionZona", b =>
+                {
+                    b.Property<DateTimeOffset>("Hora")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Fila")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Columna")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Avisos")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Recorridos")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Hora", "Fila", "Columna");
+
+                    b.ToTable("PercepcionZonas", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PercepcionZonas_Conteos", "\"Recorridos\" >= 0 AND \"Avisos\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Asignacion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -539,6 +564,8 @@ namespace Cad.Server.Persistencia.Migraciones
                         .IsUnique()
                         .HasDatabaseName("IX_Casos_IdSolicitud_DeLaCentral")
                         .HasFilter("\"CiudadanoId\" IS NULL");
+
+                    b.HasIndex("RegistradoEn");
 
                     b.HasIndex("CiudadanoId", "IdSolicitud")
                         .IsUnique();
@@ -817,6 +844,8 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasColumnType("character varying(20)");
 
                     b.HasKey("CasoId");
+
+                    b.HasIndex("DecididaEn");
 
                     b.HasIndex("OperadorId");
 

@@ -38,6 +38,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Serenos.Dominio.EstadoSereno> EstadosSereno => Set<Modulos.Serenos.Dominio.EstadoSereno>();
     public DbSet<Modulos.Serenos.Dominio.PosicionSereno> PosicionesSereno => Set<Modulos.Serenos.Dominio.PosicionSereno>();
     public DbSet<Modulos.Serenos.Dominio.CambioEstadoSereno> CambiosEstadoSereno => Set<Modulos.Serenos.Dominio.CambioEstadoSereno>();
+    public DbSet<Modulos.Analitica.PercepcionZona> PercepcionZonas => Set<Modulos.Analitica.PercepcionZona>();
     public DbSet<Modulos.Serenos.Dominio.DispositivoSereno> DispositivosSereno => Set<Modulos.Serenos.Dominio.DispositivoSereno>();
     public DbSet<Modulos.Acompanamiento.Dominio.SesionAcompanamiento> SesionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.SesionAcompanamiento>();
     public DbSet<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento> PosicionesAcompanamiento => Set<Modulos.Acompanamiento.Dominio.PosicionAcompanamiento>();
@@ -111,6 +112,8 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             caso.Property(c => c.Origen).HasConversion<string>().HasMaxLength(20);
             caso.Property(c => c.Estado).HasConversion<string>().HasMaxLength(20);
             caso.Property(c => c.Prioridad).HasMaxLength(LargoCodigo);
+            // La analítica filtra por periodo de registro (27/10/2026).
+            caso.HasIndex(c => c.RegistradoEn);
             caso.Property(c => c.Heridos).HasMaxLength(LargoCodigo);
             caso.Ignore(c => c.UbicacionDisponible);
             caso.Ignore(c => c.PuedeAsignarse);
@@ -345,6 +348,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
                 tabla.HasCheckConstraint("CK_DecisionesReporte_MotivoCodigo", EnCatalogo("MotivoCodigo", MotivosDescarte.Todos));
             });
             decision.Property(d => d.DestinoCodigo).HasMaxLength(LargoCodigo);
+            decision.HasIndex(d => d.DecididaEn);
             decision.Property(d => d.MotivoCodigo).HasMaxLength(LargoCodigo);
             decision.HasKey(d => d.CasoId);
             decision.Property(d => d.Tipo).HasConversion<string>().HasMaxLength(20);
@@ -388,6 +392,15 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             estado.HasKey(e => e.SerenoId);
             estado.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Serenos.Dominio.EstadoSereno>(e => e.SerenoId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // 27/10/2026: agregado anónimo de los recorridos de acompañamiento por hora y zona (analítica, bloque C). Se guarda antes
+        // de eliminar las posiciones por plazo; no tiene referencias a sesiones ni a ciudadanos.
+        builder.Entity<Modulos.Analitica.PercepcionZona>(percepcion =>
+        {
+            percepcion.ToTable("PercepcionZonas", tabla =>
+                tabla.HasCheckConstraint("CK_PercepcionZonas_Conteos", "\"Recorridos\" >= 0 AND \"Avisos\" >= 0"));
+            percepcion.HasKey(p => new { p.Hora, p.Fila, p.Columna });
         });
 
         // 27/10/2026: historial de cambios del estado operativo, solo inserción; se consulta por sereno y por periodo.

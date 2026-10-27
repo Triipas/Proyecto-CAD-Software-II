@@ -159,7 +159,11 @@ public sealed class LineaDeTiempoSerenos
 // (HU08), el punto del hecho para un reporte (DP10), como en HU29.
 internal static class CasosAnalitica
 {
-    public sealed record Fila(Guid Id, OrigenCaso Origen, EstadoCaso Estado, DateTimeOffset RegistradoEn, double? Latitud, double? Longitud)
+    // Las incidencias (como en HU29): sin los casos cancelados por su titular ni los descartados por la central.
+    public static bool EsIncidencia(Fila caso) => !Consultas.ConsultarConcentracion.EstadosExcluidos.Contains(caso.Estado);
+
+    public sealed record Fila(Guid Id, OrigenCaso Origen, EstadoCaso Estado, DateTimeOffset RegistradoEn, double? Latitud, double? Longitud,
+        Guid? CategoriaId = null)
     {
         public Zona? Zona => Latitud is { } lat && Longitud is { } lon ? Analitica.Zona.De(lat, lon) : null;
     }
@@ -171,6 +175,7 @@ internal static class CasosAnalitica
          from detalle in detalles.DefaultIfEmpty()
          select new Fila(caso.Id, caso.Origen, caso.Estado, caso.RegistradoEn,
              caso.Origen == OrigenCaso.Reporte ? (detalle == null ? null : detalle.LatitudHecho) : caso.Latitud,
-             caso.Origen == OrigenCaso.Reporte ? (detalle == null ? null : detalle.LongitudHecho) : caso.Longitud))
+             caso.Origen == OrigenCaso.Reporte ? (detalle == null ? null : detalle.LongitudHecho) : caso.Longitud,
+             caso.CategoriaId))
         .ToListAsync(ct);
 }
