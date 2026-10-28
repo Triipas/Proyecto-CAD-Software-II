@@ -1265,25 +1265,214 @@ a.fila-a__cifra {
   color: var(--color-texto);
 }
 
-/* Fotos */
-.fotos-a {
+/* ¿Cuánto de lo que entra es falso?: una barra por categoría */
+.categorias-a {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  gap: 0.125rem;
+  margin-top: var(--espacio-3);
+}
+
+.categoria-a {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr) 9.5rem;
+  gap: var(--espacio-3);
+  align-items: center;
+  min-height: 2.75rem;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: var(--texto-sm);
+}
+
+.categoria-a--eje {
+  min-height: 0;
+  padding-bottom: var(--espacio-1);
+  border-bottom: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+}
+
+.categoria-a--eje > span:last-child { text-align: right; }
+
+.eje-b {
+  position: relative;
+  height: 1.125rem;
+}
+
+.eje-b__marca {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.eje-b__marca:first-child { transform: none; }
+.eje-b__marca:last-child { transform: translateX(-100%); }
+
+.categoria-a__nombre { min-width: 0; }
+
+.categoria-a__valor {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  font-variant-numeric: tabular-nums;
+}
+
+.categoria-a__valor b {
+  font-size: var(--texto-sm);
+  color: var(--color-texto);
+}
+
+.categoria-a--pocos .pista-b__barra { background: var(--rampa-3); }
+.categoria-a--pocos .categoria-a__nombre { color: var(--color-texto-secundario); }
+
+.pista-b {
+  position: relative;
+  height: 1.5rem;
+  border-radius: 3px;
+  background: var(--color-superficie-hundida);
+}
+
+.pista-b__referencia {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px 0 0 3px;
+  background: var(--color-exito-fondo);
+  border-right: 1.5px dashed var(--color-exito);
+}
+
+.pista-b__barra {
+  position: absolute;
+  top: 0.4375rem;
+  left: 0;
+  height: 0.6875rem;
+  min-width: 2px;
+  border-radius: 0 3px 3px 0;
+  background: var(--rampa-6);
+}
+
+.pista-b__barra--alta { background: var(--color-advertencia); }
+
+.pista-b__todas {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  border-left: 2px solid var(--color-marino);
+}
+
+.leyenda-a__todas {
+  width: 0 !important;
+  height: 0.875rem !important;
+  border-radius: 0 !important;
+  border-left: 2px solid var(--color-marino);
+}
+
+/* Reparto de un total en filas */
+.grupos100 {
+  display: grid;
   gap: var(--espacio-3);
   margin-top: var(--espacio-2);
 }
 
-.fotos-a__caja {
-  display: grid;
-  gap: 0.125rem;
-  padding: var(--espacio-3);
-  border-radius: 10px;
-  background: var(--color-fondo);
+.grupo100__titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--espacio-2);
+  margin: 0 0 var(--espacio-1);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
 }
 
-.fotos-a__caja b {
-  font-size: var(--texto-2xl);
-  color: var(--color-marino);
+.filas100 {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.125rem;
+}
+
+.fila100 {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) minmax(2rem, 1fr) 5rem;
+  gap: var(--espacio-2);
+  align-items: center;
+  min-height: 1.625rem;
+  font-size: var(--texto-xs);
+  color: var(--color-texto);
+}
+
+.fila100--cero { color: var(--color-texto-terciario); }
+
+.fila100__pista {
+  height: 0.625rem;
+  border-radius: 3px;
+  background: var(--color-superficie-hundida);
+  overflow: hidden;
+}
+
+.fila100__pista i {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: 3px;
+}
+
+.fila100--cero .fila100__pista i { min-width: 0; }
+
+.fila100__valor {
+  text-align: right;
+  color: var(--color-texto-secundario);
+  font-variant-numeric: tabular-nums;
+}
+
+.fila100__valor b { color: var(--color-texto); }
+
+/* Fotos: una tabla corta */
+.fotos-a {
+  width: 100%;
+  margin-top: var(--espacio-2);
+  border-collapse: collapse;
+  font-size: var(--texto-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.fotos-a th,
+.fotos-a td {
+  padding: var(--espacio-2) var(--espacio-2);
+  border-bottom: 1px solid var(--color-borde);
+  text-align: right;
+}
+
+.fotos-a thead th {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+}
+
+.fotos-a tbody th {
+  text-align: left;
+  font-weight: var(--peso-medio);
+}
+
+.fotos-a tbody th .tarjeta-a__nota { display: block; font-weight: var(--peso-normal); }
+.fotos-a td { font-size: var(--texto-lg); font-weight: var(--peso-fuerte); color: var(--color-marino); }
+
+@media (max-width: 62rem) {
+  .categoria-a {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--espacio-1);
+    padding-block: var(--espacio-2);
+  }
+
+  .categoria-a .pista-b,
+  .categoria-a .eje-b { grid-column: 1 / -1; order: 3; }
+  .categoria-a--eje > span { display: none; }
 }
 
 /* ── Cobertura: horas del día ── */
