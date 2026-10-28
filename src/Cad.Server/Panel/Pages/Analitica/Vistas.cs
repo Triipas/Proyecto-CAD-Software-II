@@ -114,7 +114,8 @@ public sealed class Regla
 
     public IHtmlContent Dibujar(string descripcion)
     {
-        const int Eje = 104, Alto = 150;
+        const int Eje = 104;
+        var Alto = Marcas.Any(m => m.Sub is not null) ? 176 : 150; // los subtítulos de las marcas piden más aire bajo la escala
         var s = new StringBuilder($"<svg class=\"regla\" viewBox=\"-24 0 {Ancho + 48} {Alto}\" role=\"img\" aria-label=\"{E(descripcion)}\">");
         // Lo que ya ocupa cada nivel de rótulos sobre el eje (de x a x).
         var ocupados = Niveles.Select(_ => new List<(double Desde, double Hasta)>()).ToArray();

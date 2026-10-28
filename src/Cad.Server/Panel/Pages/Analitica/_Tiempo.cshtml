@@ -16,10 +16,10 @@
     var contacto = Etapa("Hasta el primer contacto")?.P50Minutos;
     var despacho = Etapa("Hasta el despacho")?.P50Minutos;
     var tramos = new List<(string, double, string)>();
-    if (contacto is { } c) tramos.Add(("Contacto", c, "#BFD2F8"));
-    if (despacho is { } d) tramos.Add(("Despacho", Math.Max(0, d - (contacto ?? 0)), "#9DB9F4"));
-    if (Etapa("Del despacho a «En camino»")?.P50Minutos is { } salida) tramos.Add(("Salida", salida, "#7FA3EF"));
-    if (Etapa("De «En camino» a la atención")?.P50Minutos is { } camino) tramos.Add(("En camino", camino, "#3F6FE0"));
+    if (contacto is { } c) tramos.Add(("Contactar al ciudadano", c, "var(--rampa-2)"));
+    if (despacho is { } d) tramos.Add(("Elegir y despachar a un sereno", Math.Max(0, d - (contacto ?? 0)), "var(--rampa-3)"));
+    if (Etapa("Del despacho a «En camino»")?.P50Minutos is { } salida) tramos.Add(("El sereno sale", salida, "var(--rampa-4)"));
+    if (Etapa("De «En camino» a la atención")?.P50Minutos is { } camino) tramos.Add(("El sereno llega al lugar", camino, "var(--rampa-6)"));
     var masLargo = tramos.Count == 0 ? default : tramos.MaxBy(t => t.Item2);
     var sumaTramos = tramos.Sum(t => t.Item2);
     // La escala llega al p90 (o al caso más lento cuando son pocos) sin pasar de 4 veces el objetivo: un SOS de horas no aplasta a
@@ -27,6 +27,7 @@
     var tope = n < minimo ? v.Respuestas.DefaultIfEmpty(0).Max() : p90 ?? 0;
     var maximo = Math.Ceiling(Math.Min(new[] { tope, objetivo * 2.0, anterior?.RespuestaP90 ?? 0, sumaTramos }.Max(), objetivo * 4.0) / 5) * 5 + 5;
 
+    string F(double x) => x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
     var prioridades = v.Grupos.Where(g => g.Origen == ConsultarTiemposPorEtapa.Sos && g.Prioridad is not null)
         .Select(g => (g.Prioridad!, g.Etapas.Single(e => e.Etapa.StartsWith("Respuesta"))))
         .ToList();
@@ -54,20 +55,17 @@ else
             @if (n < minimo)
             {
                 <h2 class="respuesta__titular" id="respuesta-tiempo">En @m.TextoPeriodo @(n == 1 ? "se midió" : "se midieron") @Formato.Plural(n, "SOS", "SOS")@(textoPrioridad); @dentro @(dentro == 1 ? "se atendió" : "se atendieron") dentro de los @objetivo min.</h2>
-                <p class="respuesta__lectura">Con tan pocos casos, una mediana o un p90 engañarían: la regla muestra cada SOS en su lugar.</p>
+                <p class="respuesta__lectura">Se mide desde que el ciudadano emite el SOS hasta que el sereno empieza a atenderlo. Con tan pocos casos, un porcentaje engañaría: la regla muestra cada SOS en su lugar.</p>
             }
             else
             {
-                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>; el 10 % más lento tardó @Formato.Minutos(p90).</h2>
+                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>; 9 de cada 10, en @Formato.Minutos(p90) o menos.</h2>
                 <p class="respuesta__lectura">
-                    La regla es el recorrido de un SOS típico: cada tramo dura lo que su etapa.
-                    @if (masLargo.Item1 is { } nombreLargo && sumaTramos > 0 && masLargo.Item2 / sumaTramos >= 0.4)
+                    Se mide desde que el ciudadano emite el SOS hasta que el sereno empieza a atenderlo. En @m.TextoPeriodo se midieron @Formato.Plural(n, "SOS", "SOS").
+                    @if (anterior?.RespuestaP50 is { } antes)
                     {
-                        <text>«@nombreLargo» se lleva @Formato.Porcentaje(masLargo.Item2 / sumaTramos * 100, 0) del tiempo.</text>
-                    }
-                    @if (anterior?.RespuestaP50 is not null)
-                    {
-                        <text>Los triángulos grises marcan @m.TextoAnterior.</text>
+                        var dif = p50!.Value - antes;
+                        <text>Frente a @m.TextoAnterior (triángulos grises: la mitad se atendió en @Formato.Minutos(antes)), @(Math.Abs(dif) < 1 ? "casi igual" : dif < 0 ? $"ahora {Formato.Minutos(-dif)} más rápido" : $"ahora {Formato.Minutos(dif)} más lento").</text>
                     }
                 </p>
             }
@@ -93,17 +91,39 @@ else
                 {
                     Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
                     Banda = (0, objetivo, $"Objetivo provisional ≤ {objetivo} min"),
-                    Tramos = tramos,
-                    Marcas = [(p50!.Value, true, Formato.Minutos(p50), "la mitad"), (p90!.Value, false, Formato.Minutos(p90), "9 de cada 10")],
+                    Marcas = [(p50!.Value, true, Formato.Minutos(p50), "mitad atendida"), (p90!.Value, false, Formato.Minutos(p90), "9 de 10 atendidos")],
                     Anteriores = anteriores,
-                }.Dibujar($"Regla del tiempo de respuesta: mediana {Formato.Minutos(p50)}, p90 {Formato.Minutos(p90)}, objetivo {objetivo} minutos"))
+                }.Dibujar($"Tiempo de respuesta: la mitad de los SOS se atendió en {Formato.Minutos(p50)} y 9 de cada 10 en {Formato.Minutos(p90)} o menos; objetivo provisional {objetivo} minutos"))
                 <ul class="leyenda-a">
-                    <li><i class="leyenda-a__tramo"></i>Etapas (mediana de cada una)</li>
-                    <li><i class="leyenda-a__lleno"></i>La mitad de los SOS</li>
-                    <li><i class="leyenda-a__hueco"></i>9 de cada 10</li>
-                    <li><i class="leyenda-a__banda"></i>Objetivo provisional (lo fija el PO)</li>
-                    <li>@Formato.Plural(n, "SOS medido", "SOS medidos")</li>
+                    <li><i class="leyenda-a__lleno"></i>Hasta aquí se atendió la mitad (mediana)</li>
+                    <li><i class="leyenda-a__hueco"></i>Hasta aquí, 9 de cada 10 (p90)</li>
+                    <li><i class="leyenda-a__banda"></i>Objetivo provisional: aún no lo fija el servicio</li>
+                    @if (anteriores.Count > 0) { <li><i class="leyenda-a__anterior"></i>@(char.ToUpperInvariant(m.TextoAnterior[0]) + m.TextoAnterior[1..])</li> }
                 </ul>
+                @if (tramos.Count > 0)
+                {
+                    <div class="etapas-a" data-etapas>
+                        <p class="etapas-a__titulo">¿En qué etapa se va el tiempo?
+                            @if (masLargo.Item1 is { } nombreLargo && sumaTramos > 0 && masLargo.Item2 / sumaTramos >= 0.4)
+                            {
+                                <span class="tarjeta-a__nota">«@nombreLargo» se lleva @Formato.Porcentaje(masLargo.Item2 / sumaTramos * 100, 0) del recorrido</span>
+                            }
+                        </p>
+                        <ol class="etapas-a__barra" aria-hidden="true">
+                            @foreach (var (nombre, minutos, color) in tramos)
+                            {
+                                <li style="flex:@F(Math.Max(minutos, 0.2)) 1 0;background:@color"></li>
+                            }
+                        </ol>
+                        <ul class="etapas-a__lista">
+                            @foreach (var (nombre, minutos, color) in tramos)
+                            {
+                                <li><i style="background:@color"></i><span>@nombre</span><b>@Formato.Minutos(minutos)</b></li>
+                            }
+                        </ul>
+                        <p class="tarjeta-a__nota">Tiempo típico de cada etapa de un SOS (su mediana). No suman exactamente el total de arriba.</p>
+                    </div>
+                }
             }
         </div>
     </section>
@@ -128,13 +148,35 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-prioridad">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-prioridad">¿Llegamos antes a lo grave?</h3><span class="tarjeta-a__nota">● mediana · ○ p90 · ┆ objetivo</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-prioridad">¿Llegamos antes a lo grave?</h3><span class="tarjeta-a__nota">tiempo hasta atender el SOS, por prioridad</span></div>
             @if (prioridades.Count == 0)
             {
                 <p class="tarjeta-a__vacia">Aún no hay SOS con prioridad en el periodo (se registra al clasificar, desde el 27/10/2026).</p>
             }
             else
             {
+                EtapaTiempo? De(string codigo) => prioridades.Where(p => p.Item1 == codigo).Select(p => p.Item2).FirstOrDefault();
+                bool Medible(EtapaTiempo? e) => e is { P50Minutos: not null } && e.Casos >= minimo;
+                var alta = De(Cad.Contratos.Casos.PrioridadesCaso.Alta);
+                var media = De(Cad.Contratos.Casos.PrioridadesCaso.Media);
+                <p class="prioridades-a__respuesta" data-comparacion>
+                    @if (Medible(alta) && Medible(media))
+                    {
+                        var dif = media!.P50Minutos!.Value - alta!.P50Minutos!.Value;
+                        if (Math.Abs(dif) < 1) { <text><b>Casi igual:</b> a la mitad de los SOS de prioridad Alta y de prioridad Media se les atendió en unos @Formato.Minutos(alta.P50Minutos) o menos.</text> }
+                        else if (dif > 0) { <text><b>Sí:</b> a la mitad de los SOS de prioridad Alta se les atendió en @Formato.Minutos(alta.P50Minutos), @Formato.Minutos(dif) antes que a los de prioridad Media (@Formato.Minutos(media.P50Minutos)).</text> }
+                        else { <text><b>Todavía no:</b> a la mitad de los SOS de prioridad Alta se les atendió en @Formato.Minutos(alta.P50Minutos), @Formato.Minutos(-dif) después que a los de prioridad Media (@Formato.Minutos(media.P50Minutos)).</text> }
+                    }
+                    else
+                    {
+                        <text>Faltan casos para comparar: hacen falta al menos @minimo SOS atendidos de prioridad Alta y @minimo de prioridad Media.</text>
+                    }
+                </p>
+                <ul class="leyenda-a leyenda-a--compacta">
+                    <li><i class="leyenda-a__prio-mitad"></i>Hasta que se atiende la mitad</li>
+                    <li><i class="leyenda-a__prio-nueve"></i>Hasta 9 de cada 10</li>
+                    <li><i class="leyenda-a__banda"></i>Objetivo (@objetivo min)</li>
+                </ul>
                 <ul class="prioridades-a">
                     @foreach (var (codigo, etapa) in prioridades)
                     {
@@ -145,18 +187,17 @@ else
                             <span class="prioridad-a__nombre">@nombre <span class="tarjeta-a__nota">· @etapa.Casos</span></span>
                             @if (etapa.Casos >= minimo && etapa.P50Minutos is not null)
                             {
-                                <span class="prioridad-a__pista" aria-hidden="true">
-                                    <span class="prioridad-a__objetivo" style="left:@(P(objetivo).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
-                                    <span class="prioridad-a__rango" style="left:@(P(etapa.P50Minutos).ToString(System.Globalization.CultureInfo.InvariantCulture))%;width:@((P(etapa.P90Minutos) - P(etapa.P50Minutos)).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
-                                    <span class="prioridad-a__p50" style="left:@(P(etapa.P50Minutos).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
-                                    <span class="prioridad-a__p90" style="left:@(P(etapa.P90Minutos).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                <span class="prioridad-a__pista" role="img" aria-label="@nombre: la mitad se atendió en @Formato.Minutos(etapa.P50Minutos) y 9 de cada 10 en @Formato.Minutos(etapa.P90Minutos) o menos">
+                                    <span class="prioridad-a__nueve" style="width:@F(P(etapa.P90Minutos))%"></span>
+                                    <span class="prioridad-a__mitad" style="width:@F(P(etapa.P50Minutos))%"></span>
+                                    <span class="prioridad-a__objetivo" style="left:@F(P(objetivo))%"></span>
                                 </span>
-                                <span class="prioridad-a__valor"><b>@Formato.Minutos(etapa.P50Minutos)</b> · @Formato.Minutos(etapa.P90Minutos)</span>
+                                <span class="prioridad-a__valor"><span><b>@Formato.Minutos(etapa.P50Minutos)</b> la mitad</span><span><b>@Formato.Minutos(etapa.P90Minutos)</b> 9 de 10</span></span>
                             }
                             else
                             {
                                 <span class="prioridad-a__pista prioridad-a__pista--vacia" aria-hidden="true"></span>
-                                <span class="prioridad-a__valor">@(etapa.Casos == 0 ? "sin atendidos" : "pocos casos")</span>
+                                <span class="prioridad-a__valor"><span>@(etapa.Casos == 0 ? "sin atendidos" : $"pocos casos (mín. {minimo})")</span></span>
                             }
                         </li>
                     }
