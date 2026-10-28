@@ -744,6 +744,64 @@ table.visualmente-oculto {
   color: var(--color-advertencia);
 }
 
+.pista-a__caso:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 3px;
+}
+
+.pista-a__globo {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  gap: var(--espacio-1);
+  min-width: 9.5rem;
+  padding: var(--espacio-2) var(--espacio-3);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  box-shadow: var(--sombra-2);
+  color: var(--color-texto);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--duracion-rapida, 120ms) ease, transform var(--duracion-rapida, 120ms) ease, visibility 0s linear 120ms;
+}
+
+.pista-a__caso--der .pista-a__globo { left: auto; right: -0.5rem; transform: translate(0, 4px); }
+
+.pista-a__caso:hover,
+.pista-a__caso:focus-visible { z-index: 6; }
+
+.pista-a__caso:hover .pista-a__globo,
+.pista-a__caso:focus-visible .pista-a__globo {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+
+.pista-a__caso--der:hover .pista-a__globo,
+.pista-a__caso--der:focus-visible .pista-a__globo { transform: translate(0, 0); }
+
+.pista-a__globo b { font-size: var(--texto-sm); font-weight: var(--peso-fuerte); color: var(--color-marino); font-variant-numeric: tabular-nums; }
+.pista-a__globo ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 1px; font-variant-numeric: tabular-nums; }
+.pista-a__globo li { color: var(--color-texto-secundario); }
+.pista-a__globo li.tarde { color: var(--color-advertencia); font-weight: var(--peso-medio); }
+.pista-a__globo li.mas { color: var(--color-texto-terciario); }
+.pista-a__globo .tarde { color: var(--color-advertencia); font-weight: var(--peso-medio); }
+.pista-a__globo .bien { color: var(--color-exito); font-weight: var(--peso-medio); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pista-a__globo { transition: none; }
+}
+
 .pista-a__caso--grupo {
   width: 1.5rem;
   height: 1.5rem;

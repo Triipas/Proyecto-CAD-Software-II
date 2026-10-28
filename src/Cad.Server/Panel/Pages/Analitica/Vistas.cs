@@ -223,10 +223,20 @@ public static class Carriles
             var lejos = grupo.Any(m => m > esperado * Alcance);
             var x = N(grupo.Average(m => Posicion(m, esperado)));
             var clases = $"pista-a__caso{(atascado ? " pista-a__caso--atascado" : "")}{(grupo.Count > 1 ? " pista-a__caso--grupo" : "")}{(lejos ? " pista-a__caso--lejos" : "")}";
-            var titulo = grupo.Count == 1
-                ? $"{Formato.Minutos(grupo[0])} en la etapa"
-                : $"{grupo.Count} casos: {string.Join(", ", grupo.Select(m => Formato.Minutos(m)))}";
-            s.Append($"<span class=\"{clases}\" style=\"left:{x}%\" title=\"{E(titulo)}\">{(grupo.Count > 1 ? grupo.Count.ToString(CultureInfo.InvariantCulture) : "")}</span>");
+            var posicion = grupo.Average(m => Posicion(m, esperado));
+            // Globo propio (no el «title» del navegador): al pasar el cursor o enfocar el punto, con cada tiempo y si ya pasó lo esperado.
+            var globo = new StringBuilder("<span class=\"pista-a__globo\" role=\"tooltip\">");
+            globo.Append($"<b>{(grupo.Count == 1 ? E(Formato.Minutos(grupo[0])) + " en la etapa" : Formato.Plural(grupo.Count, "caso", "casos") + " en la etapa")}</b>");
+            if (grupo.Count > 1)
+            {
+                globo.Append("<ul>");
+                foreach (var m in grupo.OrderByDescending(m => m).Take(5))
+                    globo.Append($"<li{(m > esperado ? " class=\"tarde\"" : "")}>{E(Formato.Minutos(m))}</li>");
+                if (grupo.Count > 5) globo.Append($"<li class=\"mas\">y {grupo.Count - 5} más</li>");
+                globo.Append("</ul>");
+            }
+            globo.Append($"<span class=\"{(atascado ? "tarde" : "bien")}\">{(atascado ? "▲ Ya pasó lo esperado" : "✓ A tiempo")} (hasta {E(Formato.Minutos(esperado))})</span></span>");
+            s.Append($"<span class=\"{clases}{(posicion > 60 ? " pista-a__caso--der" : "")}\" style=\"left:{x}%\" tabindex=\"0\">{(grupo.Count > 1 ? grupo.Count.ToString(CultureInfo.InvariantCulture) : "")}{globo}</span>");
         }
         return new HtmlString(s.Append("</div>").ToString());
     }

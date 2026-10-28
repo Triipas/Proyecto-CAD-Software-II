@@ -23,9 +23,9 @@ public class CarrilesAhoraTests
 
         Assert.Equal(3, Cuenta(html, "class=\"pista-a__caso"));
         Assert.Contains("pista-a__caso--grupo", html);
-        Assert.Contains(">3</span>", html);
+        Assert.Contains(">3<span class=\"pista-a__globo\"", html);
         Assert.Equal(1, Cuenta(html, "pista-a__caso--atascado"));
-        Assert.Contains("3 casos: 1 min, 2 min, 3 min", html);
+        Assert.Contains("3 casos en la etapa", html);
         Assert.Contains("width:33.33%", html); // la franja de lo esperado
     }
 
@@ -36,7 +36,7 @@ public class CarrilesAhoraTests
 
         Assert.Contains("pista-a__caso--lejos", html);
         Assert.Contains("left:100%", html);
-        Assert.Contains("14 h 00 min en la etapa", html);
+        Assert.Contains("14 h 00 min en la etapa</b>", html);
     }
 
     [Fact]
