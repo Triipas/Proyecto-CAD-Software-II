@@ -109,10 +109,10 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         var peru = CultureInfo.GetCultureInfo("es-PE");
         TextoPeriodo = Periodo switch
         {
-            "hoy" => "hoy",
+            "hoy" => "el día de hoy",
             "7" => "los últimos 7 días",
             "30" => "los últimos 30 días",
-            _ => desde == hasta ? desde.ToString("d 'de' MMMM", peru) : $"del {desde.ToString("d/MM", peru)} al {hasta.ToString("d/MM", peru)}",
+            _ => desde == hasta ? $"el {desde.ToString("d 'de' MMMM", peru)}" : $"el periodo del {desde.ToString("d/MM", peru)} al {hasta.ToString("d/MM", peru)}",
         };
         TextoAnterior = Periodo switch { "hoy" => "ayer", "7" => "la semana anterior", "30" => "los 30 días anteriores", _ => "el periodo anterior" };
     }

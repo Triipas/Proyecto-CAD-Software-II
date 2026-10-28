@@ -16,7 +16,8 @@
 
   function dibujarMapa(contenedor) {
     L.Control.Attribution.prototype.options.prefix = false;
-    const mapa = L.map(contenedor, { zoomControl: false, scrollWheelZoom: false });
+    // El mapa que ocupa la pantalla (cobertura, lo que se repite) se acerca con la rueda; el de una tarjeta deja pasar la rueda al scroll.
+    const mapa = L.map(contenedor, { zoomControl: false, scrollWheelZoom: !!contenedor.closest(".mapa-protagonista") });
     L.tileLayer(contenedor.dataset.teselas, {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
@@ -29,23 +30,34 @@
     const limites = [];
     const escala = contenedor.dataset.escala;
 
-    // Una zona: celda coloreada en la rampa (un solo tono, de claro a oscuro) y su nombre encima; el valor va en el título.
-    function zona(z, proporcion, texto, { alerta = false } = {}) {
+    // Una zona: celda separada de sus vecinas, en un tono de la rampa (más oscuro = más preocupante) y una etiqueta con su nombre y su
+    // valor; el detalle completo va en el globo al pasar el cursor.
+    function zona(z, proporcion, texto, { alerta = false, valor = "" } = {}) {
       const color = rampa[Math.max(0, Math.min(rampa.length - 1, Math.round(proporcion * (rampa.length - 1))))];
-      const caja = [[z.sur, z.oeste], [z.norte, z.este]];
-      L.rectangle(caja, {
-        color: alerta ? advertencia : "#fff",
-        weight: alerta ? 2 : 1,
-        dashArray: alerta ? "5 4" : null,
+      const hueco = 0.07; // la celda se encoge un poco para que se vea la cuadrícula
+      const dLat = (z.norte - z.sur) * hueco, dLon = (z.este - z.oeste) * hueco;
+      const celda = L.rectangle([[z.sur + dLat, z.oeste + dLon], [z.norte - dLat, z.este - dLon]], {
+        color: alerta ? advertencia : rampa[6],
+        weight: alerta ? 2.5 : 1,
+        dashArray: alerta ? "6 4" : null,
+        opacity: alerta ? 1 : 0.55,
         fillColor: color,
-        fillOpacity: 0.72,
-      }).bindTooltip(texto, { direction: "top" }).addTo(mapa);
+        fillOpacity: 0.86,
+        className: "zona-celda",
+      }).bindTooltip(texto, { direction: "top", className: "zona-globo", sticky: true }).addTo(mapa);
+      celda.on("mouseover", () => celda.setStyle({ fillOpacity: 0.96, weight: alerta ? 3 : 2, opacity: 1 }));
+      celda.on("mouseout", () => celda.setStyle({ fillOpacity: 0.86, weight: alerta ? 2.5 : 1, opacity: alerta ? 1 : 0.55 }));
+      const oscura = proporcion > 0.45;
       L.marker([(z.sur + z.norte) / 2, (z.oeste + z.este) / 2], {
-        icon: L.divIcon({ className: "zona-a", html: z.nombre.replace("Zona ", ""), iconSize: [40, 16] }),
+        icon: L.divIcon({
+          className: "zona-a",
+          html: `<span class="zona-a__etiqueta${oscura ? " zona-a__etiqueta--oscura" : ""}${alerta ? " zona-a__etiqueta--alerta" : ""}"><b>${z.nombre.replace("Zona ", "")}</b>${valor ? `<i>${alerta ? "▲ " : ""}${valor}</i>` : ""}</span>`,
+          iconSize: [56, 34],
+        }),
         interactive: false,
         keyboard: false,
       }).addTo(mapa);
-      limites.push(...caja);
+      limites.push([z.sur, z.oeste], [z.norte, z.este]);
     }
 
     if (escala === "minutos" || escala === "cobertura") {
@@ -53,9 +65,9 @@
       const maximo = Math.max(1, ...zonas.map((z) => z.valor));
       for (const z of zonas) {
         if (escala === "minutos")
-          zona(z, z.valor / maximo, `${z.nombre}: p90 ${minutos(z.valor)} · ${z.casos} casos`);
+          zona(z, z.valor / maximo, `${z.nombre}: p90 ${minutos(z.valor)} · ${z.casos} casos`, { valor: minutos(z.valor) });
         else
-          zona(z, z.valor / 100, `${z.nombre}: ${z.valor} % del tiempo con un sereno cerca · ${z.casos} casos`, { alerta: z.alerta });
+          zona(z, 1 - z.valor / 100, `${z.nombre}: ${z.valor} % del tiempo con un sereno libre cerca · ${z.casos} casos`, { alerta: z.alerta, valor: `${z.valor} %` });
       }
       for (const s of leer("[data-serenos]")) {
         L.marker([s.lat, s.lon], {
@@ -66,22 +78,38 @@
         limites.push([s.lat, s.lon]);
       }
     } else if (escala === "repite") {
+      // Zonas en alza: las que tienen alerta, con su etiqueta; las demás, apenas un trazo punteado.
       for (const a of leer("[data-alzas]")) {
-        L.rectangle([[a.sur, a.oeste], [a.norte, a.este]], {
+        const hueco = 0.07, dLat = (a.norte - a.sur) * hueco, dLon = (a.este - a.oeste) * hueco;
+        L.rectangle([[a.sur + dLat, a.oeste + dLon], [a.norte - dLat, a.este - dLon]], {
           color: a.alerta ? advertencia : rampa[4],
-          weight: 2,
-          dashArray: "5 4",
+          weight: a.alerta ? 2.5 : 1.5,
+          dashArray: a.alerta ? "6 4" : "2 5",
+          opacity: a.alerta ? 1 : 0.7,
           fillColor: a.alerta ? advertencia : rampa[2],
-          fillOpacity: 0.12,
-        }).bindTooltip(`${a.nombre}: ${a.texto}`, { direction: "top" }).addTo(mapa);
+          fillOpacity: a.alerta ? 0.18 : 0.05,
+          className: "zona-celda",
+        }).bindTooltip(`${a.nombre}: ${a.texto}`, { direction: "top", className: "zona-globo", sticky: true }).addTo(mapa);
+        if (a.alerta)
+          L.marker([a.norte - dLat, (a.oeste + a.este) / 2], {
+            icon: L.divIcon({
+              className: "zona-a",
+              html: `<span class="zona-a__etiqueta zona-a__etiqueta--alerta"><b>${a.nombre.replace("Zona ", "")}</b><i>▲ ${a.texto}</i></span>`,
+              iconSize: [96, 34],
+              iconAnchor: [48, 38], // sobre el borde norte de la zona, sin tapar los puntos de dentro
+            }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(mapa);
         limites.push([a.sur, a.oeste], [a.norte, a.este]);
       }
+      // Puntos críticos: el número es el de la lista de la derecha; el tamaño crece con los casos.
       for (const p of leer("[data-puntos]")) {
-        const lado = Math.round(26 + Math.min(18, p.casos * 2));
+        const lado = Math.round(28 + Math.min(14, p.casos * 2));
         const texto = `Punto ${p.numero}: ${p.casos} casos${p.categoria ? ` · sobre todo ${p.categoria.toLowerCase()}` : ""}`;
         L.circle([p.lat, p.lon], { radius: 100, color: rampa[5], weight: 1, fillColor: rampa[4], fillOpacity: 0.18, interactive: false }).addTo(mapa);
         L.marker([p.lat, p.lon], {
-          icon: L.divIcon({ className: "punto-a", html: String(p.casos), iconSize: [lado, lado] }),
+          icon: L.divIcon({ className: "punto-a", html: String(p.numero), iconSize: [lado, lado] }),
           title: texto,
           alt: texto,
         }).addTo(mapa);
@@ -91,6 +119,25 @@
 
     if (limites.length) mapa.fitBounds(limites, { padding: [36, 36], maxZoom: 16 });
     else mapa.setView([-16.3988, -71.5369], 13);
+    // La respuesta flotante se puede plegar para ver todo el mapa.
+    const flotanteCaja = contenedor.parentElement.querySelector(".flotante-a");
+    if (flotanteCaja) {
+      const boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "flotante-a__plegar";
+      boton.setAttribute("aria-expanded", "true");
+      boton.setAttribute("aria-label", "Ocultar la respuesta");
+      boton.title = "Ocultar la respuesta";
+      boton.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>';
+      boton.addEventListener("click", () => {
+        const plegada = flotanteCaja.classList.toggle("flotante-a--plegada");
+        boton.setAttribute("aria-expanded", String(!plegada));
+        const texto = plegada ? "Mostrar la respuesta" : "Ocultar la respuesta";
+        boton.setAttribute("aria-label", texto);
+        boton.title = texto;
+      });
+      flotanteCaja.append(boton);
+    }
     // La respuesta flotante tapa la esquina del mapa: se corre el encuadre para que las zonas no queden debajo.
     const flotante = contenedor.parentElement.querySelector(".flotante-a");
     if (flotante && limites.length)

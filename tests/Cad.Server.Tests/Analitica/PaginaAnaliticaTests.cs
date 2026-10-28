@@ -100,6 +100,9 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
 
         Assert.Contains("data-casos=\"5\"", html);
         Assert.Contains("La mitad de los SOS se atendió en <em>10 min</em>", html);
+        Assert.Contains("9 de cada 10, en", html);
+        Assert.Contains("hasta que el sereno empieza a atenderlo", html); // qué se mide
+        Assert.Contains("Hasta aquí, 9 de cada 10 (p90)", html);
         Assert.Contains("class=\"regla\"", html);
     }
 
@@ -173,5 +176,8 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
 
         Assert.Contains("data-respuesta=\"repite\"", html);
         Assert.Contains("/panel/mapa-concentracion?Desde=2017-05-01&Hasta=2017-05-20", html);
+        Assert.Contains("Un <b>punto crítico</b> es un lugar con 3 o más incidencias", html); // define los dos conceptos
+        Assert.Contains("data-punto=\"1\"", html);
+        Assert.Contains("Punto crítico: el número es el de la lista", html); // la leyenda del mapa
     }
 }
