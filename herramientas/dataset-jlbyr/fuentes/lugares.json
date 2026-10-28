@@ -1,0 +1,3938 @@
+[
+{
+"tipo": "suburb",
+"nombre": "José Luis Bustamante y Rivero",
+"lat": -16.427734,
+"lon": -71.523812
+},
+{
+"tipo": "quarter",
+"nombre": "Tasahuayo",
+"lat": -16.440019,
+"lon": -71.524962
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Iglesia Alborada",
+"lat": -16.431622,
+"lon": -71.513441
+},
+{
+"tipo": "marketplace",
+"nombre": "Mercado metropolitano de productores mayoristas Andrés Avenlino Cáceres",
+"lat": -16.423448,
+"lon": -71.536513
+},
+{
+"tipo": "marketplace",
+"nombre": "Nueva Esperanza",
+"lat": -16.424507,
+"lon": -71.537003
+},
+{
+"tipo": "marketplace",
+"nombre": "Virgen del Chapi",
+"lat": -16.424425,
+"lon": -71.534107
+},
+{
+"tipo": "marketplace",
+"nombre": "Asociación FACETRAM",
+"lat": -16.425404,
+"lon": -71.537625
+},
+{
+"tipo": "fuel",
+"nombre": "Repsol",
+"lat": -16.427006,
+"lon": -71.517495
+},
+{
+"tipo": "fuel",
+"nombre": "La Estrella",
+"lat": -16.427355,
+"lon": -71.518212
+},
+{
+"tipo": "fuel",
+"nombre": "Primax",
+"lat": -16.425882,
+"lon": -71.532849
+},
+{
+"tipo": "bank",
+"nombre": "BBVA",
+"lat": -16.425149,
+"lon": -71.532399
+},
+{
+"tipo": "restaurant",
+"nombre": "Luciano",
+"lat": -16.425007,
+"lon": -71.532765
+},
+{
+"tipo": "marketplace",
+"nombre": "Virgen del Chapi",
+"lat": -16.424073,
+"lon": -71.535291
+},
+{
+"tipo": "fuel",
+"nombre": "Primax",
+"lat": -16.426004,
+"lon": -71.515082
+},
+{
+"tipo": "fuel",
+"nombre": "Primax Monterrey",
+"lat": -16.429009,
+"lon": -71.523969
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.423606,
+"lon": -71.520104
+},
+{
+"tipo": "bank",
+"nombre": "Caja Arequipa",
+"lat": -16.426778,
+"lon": -71.539354
+},
+{
+"tipo": "fuel",
+"nombre": "Primax",
+"lat": -16.425713,
+"lon": -71.526916
+},
+{
+"tipo": "bus_stop",
+"nombre": null,
+"lat": -16.419978,
+"lon": -71.516805
+},
+{
+"tipo": "fuel",
+"nombre": "Repsol",
+"lat": -16.425029,
+"lon": -71.524259
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Capilla D.A.C",
+"lat": -16.42437,
+"lon": -71.521839
+},
+{
+"tipo": "nightclub",
+"nombre": "Yuyay",
+"lat": -16.421888,
+"lon": -71.525165
+},
+{
+"tipo": "bar",
+"nombre": "Bar Deportivo La Carlota",
+"lat": -16.421642,
+"lon": -71.525293
+},
+{
+"tipo": "fuel",
+"nombre": "Primax",
+"lat": -16.420942,
+"lon": -71.526052
+},
+{
+"tipo": "bar",
+"nombre": "Paz Soldán",
+"lat": -16.421828,
+"lon": -71.525609
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización La Esperanza",
+"lat": -16.418551,
+"lon": -71.528803
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Encalada",
+"lat": -16.429811,
+"lon": -71.516551
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización La Melgariana",
+"lat": -16.427402,
+"lon": -71.521376
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Monterrey",
+"lat": -16.428866,
+"lon": -71.520239
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Casa Blanca",
+"lat": -16.427669,
+"lon": -71.515025
+},
+{
+"tipo": "restaurant",
+"nombre": "Las Olas",
+"lat": -16.428395,
+"lon": -71.52221
+},
+{
+"tipo": "restaurant",
+"nombre": "Salchipaperia La Brasa",
+"lat": -16.426981,
+"lon": -71.523835
+},
+{
+"tipo": "bank",
+"nombre": "BCP",
+"lat": -16.426724,
+"lon": -71.532966
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización 13 de Enero",
+"lat": -16.431954,
+"lon": -71.530854
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Alto de la Luna",
+"lat": -16.433441,
+"lon": -71.526313
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa San Vicente De Paul",
+"lat": -16.437735,
+"lon": -71.5233
+},
+{
+"tipo": "fuel",
+"nombre": "Don Felipe",
+"lat": -16.437521,
+"lon": -71.520566
+},
+{
+"tipo": "marketplace",
+"nombre": "Gratersa",
+"lat": -16.422369,
+"lon": -71.541971
+},
+{
+"tipo": "fuel",
+"nombre": "J&P",
+"lat": -16.429984,
+"lon": -71.536765
+},
+{
+"tipo": "marketplace",
+"nombre": null,
+"lat": -16.424225,
+"lon": -71.534993
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Daniel Alcides Carrión",
+"lat": -16.424952,
+"lon": -71.520601
+},
+{
+"tipo": "quarter",
+"nombre": "Urbanización Santa Catalina",
+"lat": -16.425879,
+"lon": -71.517217
+},
+{
+"tipo": "bank",
+"nombre": "Banco de la Nación",
+"lat": -16.421865,
+"lon": -71.531497
+},
+{
+"tipo": "restaurant",
+"nombre": "Bruno's",
+"lat": -16.416805,
+"lon": -71.527082
+},
+{
+"tipo": "bank",
+"nombre": "Caja Piura",
+"lat": -16.424037,
+"lon": -71.532757
+},
+{
+"tipo": "convenience",
+"nombre": "Tambo",
+"lat": -16.41752,
+"lon": -71.52707
+},
+{
+"tipo": "restaurant",
+"nombre": "El Fogon",
+"lat": -16.416636,
+"lon": -71.527108
+},
+{
+"tipo": "restaurant",
+"nombre": "El Galpon",
+"lat": -16.430787,
+"lon": -71.532404
+},
+{
+"tipo": "restaurant",
+"nombre": "El Huallaga",
+"lat": -16.430799,
+"lon": -71.532437
+},
+{
+"tipo": "restaurant",
+"nombre": "Fong Mey",
+"lat": -16.417848,
+"lon": -71.526945
+},
+{
+"tipo": "restaurant",
+"nombre": "King Broaster",
+"lat": -16.429664,
+"lon": -71.525594
+},
+{
+"tipo": "restaurant",
+"nombre": "La Bucharra",
+"lat": -16.417918,
+"lon": -71.526906
+},
+{
+"tipo": "restaurant",
+"nombre": "La estacion",
+"lat": -16.418561,
+"lon": -71.526283
+},
+{
+"tipo": "restaurant",
+"nombre": "Las Tres Chombita",
+"lat": -16.416849,
+"lon": -71.527266
+},
+{
+"tipo": "fuel",
+"nombre": "Petroperu",
+"lat": -16.414756,
+"lon": -71.519543
+},
+{
+"tipo": "fuel",
+"nombre": "Petroperu",
+"lat": -16.423771,
+"lon": -71.532187
+},
+{
+"tipo": "restaurant",
+"nombre": "Pollo Real",
+"lat": -16.416661,
+"lon": -71.527329
+},
+{
+"tipo": "restaurant",
+"nombre": "Presto",
+"lat": -16.416596,
+"lon": -71.527374
+},
+{
+"tipo": "restaurant",
+"nombre": "Presto",
+"lat": -16.429858,
+"lon": -71.52672
+},
+{
+"tipo": "restaurant",
+"nombre": "Quingdao",
+"lat": -16.429612,
+"lon": -71.525145
+},
+{
+"tipo": "fuel",
+"nombre": "Repsol",
+"lat": -16.422364,
+"lon": -71.51655
+},
+{
+"tipo": "restaurant",
+"nombre": "Rústica",
+"lat": -16.417057,
+"lon": -71.526892
+},
+{
+"tipo": "restaurant",
+"nombre": "Tradiciones Arequipeñas",
+"lat": -16.418145,
+"lon": -71.526432
+},
+{
+"tipo": "fuel",
+"nombre": "Petroperu",
+"lat": -16.419459,
+"lon": -71.51648
+},
+{
+"tipo": "bar",
+"nombre": "La Roca",
+"lat": -16.419286,
+"lon": -71.526041
+},
+{
+"tipo": "nightclub",
+"nombre": "Munays",
+"lat": -16.41953,
+"lon": -71.525925
+},
+{
+"tipo": "nightclub",
+"nombre": "Ssiomama",
+"lat": -16.418885,
+"lon": -71.526199
+},
+{
+"tipo": "restaurant",
+"nombre": "El Rancho",
+"lat": -16.416325,
+"lon": -71.527473
+},
+{
+"tipo": "bank",
+"nombre": "Caja Arequipa",
+"lat": -16.424524,
+"lon": -71.53318
+},
+{
+"tipo": "bank",
+"nombre": "Caja Tacna",
+"lat": -16.424747,
+"lon": -71.533262
+},
+{
+"tipo": "bank",
+"nombre": "Credinka",
+"lat": -16.424667,
+"lon": -71.533233
+},
+{
+"tipo": "bank",
+"nombre": "Interbank",
+"lat": -16.424875,
+"lon": -71.532921
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Pamer Arequipa",
+"lat": -16.429497,
+"lon": -71.52348
+},
+{
+"tipo": "bank",
+"nombre": "BCP",
+"lat": -16.444115,
+"lon": -71.517869
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Villa Los Francos",
+"lat": -16.441918,
+"lon": -71.521127
+},
+{
+"tipo": "bus_stop",
+"nombre": "Cruce Simón",
+"lat": -16.443891,
+"lon": -71.517953
+},
+{
+"tipo": "clinic",
+"nombre": "13 de Enero",
+"lat": -16.432789,
+"lon": -71.530561
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Cooperativa 58",
+"lat": -16.412068,
+"lon": -71.515895
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Corazon de María",
+"lat": -16.416425,
+"lon": -71.516852
+},
+{
+"tipo": "neighbourhood",
+"nombre": "El Moral",
+"lat": -16.416468,
+"lon": -71.515832
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Monterrico",
+"lat": -16.416999,
+"lon": -71.516892
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Dunker la Valle",
+"lat": -16.418335,
+"lon": -71.51743
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Castro",
+"lat": -16.419386,
+"lon": -71.519121
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Juan Manuel Polar",
+"lat": -16.418365,
+"lon": -71.519802
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Killari",
+"lat": -16.416228,
+"lon": -71.520379
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Camino Real",
+"lat": -16.415186,
+"lon": -71.520372
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Banco Sur",
+"lat": -16.415482,
+"lon": -71.518466
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santo Domingo",
+"lat": -16.413715,
+"lon": -71.518505
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santa María de Lambramani",
+"lat": -16.413934,
+"lon": -71.520625
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asvipol",
+"lat": -16.416195,
+"lon": -71.5228
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Cantuta",
+"lat": -16.41203,
+"lon": -71.518924
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Cooperativa de vivienda del ministerio de agricultura",
+"lat": -16.415528,
+"lon": -71.52832
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Melgar",
+"lat": -16.416036,
+"lon": -71.529356
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Quinta Santa María",
+"lat": -16.416544,
+"lon": -71.531025
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Conquistadores",
+"lat": -16.418162,
+"lon": -71.53046
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Pampilla",
+"lat": -16.419063,
+"lon": -71.531744
+},
+{
+"tipo": "neighbourhood",
+"nombre": "John Kennedy",
+"lat": -16.419723,
+"lon": -71.528494
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Primavera",
+"lat": -16.416506,
+"lon": -71.5276
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Naranjos",
+"lat": -16.420785,
+"lon": -71.527537
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Bancarios",
+"lat": -16.42124,
+"lon": -71.529308
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Quinta Tristán Z",
+"lat": -16.422859,
+"lon": -71.526608
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Casapia",
+"lat": -16.423083,
+"lon": -71.53119
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Laureles",
+"lat": -16.423387,
+"lon": -71.53021
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Quinta Tristán",
+"lat": -16.424411,
+"lon": -71.530289
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Quinta Santa María",
+"lat": -16.424578,
+"lon": -71.531713
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Cooperativa Lambramani",
+"lat": -16.424328,
+"lon": -71.52832
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santa Lucía",
+"lat": -16.424562,
+"lon": -71.52659
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Lanificio",
+"lat": -16.426148,
+"lon": -71.531562
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Las Begonias",
+"lat": -16.426472,
+"lon": -71.526392
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Fecia",
+"lat": -16.428393,
+"lon": -71.531989
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Vinatea Reynoso",
+"lat": -16.429797,
+"lon": -71.529949
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pedro Diez Canseco",
+"lat": -16.428492,
+"lon": -71.526216
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Villa Dolores",
+"lat": -16.425572,
+"lon": -71.522863
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Jacintos",
+"lat": -16.427248,
+"lon": -71.523575
+},
+{
+"tipo": "neighbourhood",
+"nombre": "San Aurelio",
+"lat": -16.427612,
+"lon": -71.523662
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Villa Alejandros",
+"lat": -16.428306,
+"lon": -71.52307
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Portales",
+"lat": -16.427755,
+"lon": -71.523055
+},
+{
+"tipo": "neighbourhood",
+"nombre": "El Rosario",
+"lat": -16.424195,
+"lon": -71.519999
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Dunas del Sur",
+"lat": -16.424367,
+"lon": -71.517468
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Estrella",
+"lat": -16.427739,
+"lon": -71.518352
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santa Elsa",
+"lat": -16.429491,
+"lon": -71.520416
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santa María II",
+"lat": -16.431803,
+"lon": -71.521836
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Álamos",
+"lat": -16.431032,
+"lon": -71.523191
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Monterrico",
+"lat": -16.432928,
+"lon": -71.52254
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Solar del Bosque",
+"lat": -16.433858,
+"lon": -71.520363
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Villa Santa Luisa",
+"lat": -16.435515,
+"lon": -71.520754
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Jabirú",
+"lat": -16.432793,
+"lon": -71.517293
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Mi peru",
+"lat": -16.433473,
+"lon": -71.516035
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Alborada",
+"lat": -16.431183,
+"lon": -71.513363
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Casa Bella",
+"lat": -16.430735,
+"lon": -71.515403
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Encalada",
+"lat": -16.428888,
+"lon": -71.5141
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Alameda del Sol",
+"lat": -16.429776,
+"lon": -71.513882
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Cristales",
+"lat": -16.431757,
+"lon": -71.520277
+},
+{
+"tipo": "neighbourhood",
+"nombre": "La Florida",
+"lat": -16.435565,
+"lon": -71.517517
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Mi Perú",
+"lat": -16.432732,
+"lon": -71.513422
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Huertos",
+"lat": -16.437256,
+"lon": -71.519779
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Satelite Grande",
+"lat": -16.431028,
+"lon": -71.529457
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Alto de la Luna",
+"lat": -16.430991,
+"lon": -71.527102
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Casuarinas",
+"lat": -16.433797,
+"lon": -71.532583
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Satelite Chico",
+"lat": -16.434723,
+"lon": -71.532448
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Olivos",
+"lat": -16.435823,
+"lon": -71.529791
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Rodantes del Sur",
+"lat": -16.435815,
+"lon": -71.527513
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Villa del Mar",
+"lat": -16.43667,
+"lon": -71.526396
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santa Lourdes",
+"lat": -16.437484,
+"lon": -71.525939
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Santa Clara",
+"lat": -16.436983,
+"lon": -71.523306
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Juan Pablo Vizcardo y Guzman",
+"lat": -16.435466,
+"lon": -71.523938
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Dolores",
+"lat": -16.437317,
+"lon": -71.521953
+},
+{
+"tipo": "neighbourhood",
+"nombre": "la Pauca",
+"lat": -16.438502,
+"lon": -71.526554
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Bartolome Herrera",
+"lat": -16.439455,
+"lon": -71.526114
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven San Martín",
+"lat": -16.440007,
+"lon": -71.526319
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Amauta",
+"lat": -16.439978,
+"lon": -71.522358
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización 3 de Octubre",
+"lat": -16.442279,
+"lon": -71.52039
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Simon Bolivar",
+"lat": -16.444585,
+"lon": -71.515043
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven La Breña",
+"lat": -16.448158,
+"lon": -71.516659
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven Ricardo Palma",
+"lat": -16.447571,
+"lon": -71.515421
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Santa Mónica",
+"lat": -16.447771,
+"lon": -71.513793
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Jorge Basadre",
+"lat": -16.446009,
+"lon": -71.513467
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Las Esmeraldas, A.P.I.S",
+"lat": -16.449308,
+"lon": -71.512998
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Buena Vista",
+"lat": -16.451057,
+"lon": -71.511396
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Sol y Luna",
+"lat": -16.451194,
+"lon": -71.509598
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Virgen de Copacabana",
+"lat": -16.45458,
+"lon": -71.51322
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asociación de Vivienda San José",
+"lat": -16.453031,
+"lon": -71.510301
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Pedro Paulet Mostajo",
+"lat": -16.452169,
+"lon": -71.51516
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Villa Las Esmeraldas",
+"lat": -16.453193,
+"lon": -71.513428
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Betania",
+"lat": -16.450544,
+"lon": -71.514835
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Fundo el Peral",
+"lat": -16.420915,
+"lon": -71.538311
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Vista Hermoza",
+"lat": -16.424851,
+"lon": -71.536227
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Los Balcones de Arequipa",
+"lat": -16.425126,
+"lon": -71.534077
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Puerta Verde",
+"lat": -16.426497,
+"lon": -71.534921
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Villa Eléctrica",
+"lat": -16.428787,
+"lon": -71.535042
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Apacheta",
+"lat": -16.430236,
+"lon": -71.533713
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven Cerro July",
+"lat": -16.425947,
+"lon": -71.543517
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Cooperativa Riego Chili",
+"lat": -16.430658,
+"lon": -71.544411
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización San Basilio",
+"lat": -16.429285,
+"lon": -71.543272
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Villa Hermosa Zona B",
+"lat": -16.427335,
+"lon": -71.543478
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Villa Hermoza Zona A",
+"lat": -16.427146,
+"lon": -71.545083
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven Ampliaión Cerro July",
+"lat": -16.427707,
+"lon": -71.547068
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Asentamiento Humano Virgen del Carmen",
+"lat": -16.428868,
+"lon": -71.545218
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven Santa Teresa",
+"lat": -16.428397,
+"lon": -71.541018
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Villa Manuelito",
+"lat": -16.42952,
+"lon": -71.539927
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Alfonso Quiroz",
+"lat": -16.430737,
+"lon": -71.538307
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Pueblo Joven 1 de Mayo",
+"lat": -16.431428,
+"lon": -71.538053
+},
+{
+"tipo": "restaurant",
+"nombre": "Kin Fu",
+"lat": -16.429274,
+"lon": -71.525464
+},
+{
+"tipo": "restaurant",
+"nombre": "Punto Azul",
+"lat": -16.425853,
+"lon": -71.520995
+},
+{
+"tipo": "restaurant",
+"nombre": "Mar Picante",
+"lat": -16.426112,
+"lon": -71.521104
+},
+{
+"tipo": "convenience",
+"nombre": "Listo",
+"lat": -16.426147,
+"lon": -71.51503
+},
+{
+"tipo": "bank",
+"nombre": "Mibanco",
+"lat": -16.423892,
+"lon": -71.532646
+},
+{
+"tipo": "restaurant",
+"nombre": "Sabores de mi tierra",
+"lat": -16.423475,
+"lon": -71.531974
+},
+{
+"tipo": "restaurant",
+"nombre": "El Frejol",
+"lat": -16.421208,
+"lon": -71.531502
+},
+{
+"tipo": "nightclub",
+"nombre": "Nautika",
+"lat": -16.421091,
+"lon": -71.525445
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Cooperativa 58",
+"lat": -16.414801,
+"lon": -71.516206
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Santo Domingo",
+"lat": -16.414126,
+"lon": -71.519577
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 7 De Agosto",
+"lat": -16.425163,
+"lon": -71.515777
+},
+{
+"tipo": "bank",
+"nombre": "Scotiabank",
+"lat": -16.424292,
+"lon": -71.532656
+},
+{
+"tipo": "restaurant",
+"nombre": "Cuyería La Sonia",
+"lat": -16.444454,
+"lon": -71.505287
+},
+{
+"tipo": "restaurant",
+"nombre": null,
+"lat": -16.430012,
+"lon": -71.526427
+},
+{
+"tipo": "restaurant",
+"nombre": "Sillar Wasi",
+"lat": -16.428689,
+"lon": -71.534032
+},
+{
+"tipo": "restaurant",
+"nombre": "Kuan Ti",
+"lat": -16.415708,
+"lon": -71.516112
+},
+{
+"tipo": "nightclub",
+"nombre": "Makumba",
+"lat": -16.421258,
+"lon": -71.525427
+},
+{
+"tipo": "clinic",
+"nombre": "Centro médico alemán",
+"lat": -16.414721,
+"lon": -71.519228
+},
+{
+"tipo": "school",
+"nombre": "40171",
+"lat": -16.415341,
+"lon": -71.51759
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Nuestra Señora De La Paz",
+"lat": -16.427905,
+"lon": -71.535001
+},
+{
+"tipo": "clinic",
+"nombre": "Varis",
+"lat": -16.427183,
+"lon": -71.533791
+},
+{
+"tipo": "school",
+"nombre": "Colegio privado arequipa",
+"lat": -16.43774,
+"lon": -71.525343
+},
+{
+"tipo": "police",
+"nombre": "Puesto de auxilio rápido",
+"lat": -16.415295,
+"lon": -71.515537
+},
+{
+"tipo": "fast_food",
+"nombre": "Esquina de Piero",
+"lat": -16.425714,
+"lon": -71.53371
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Iglesia La Roca",
+"lat": -16.426206,
+"lon": -71.519115
+},
+{
+"tipo": "restaurant",
+"nombre": "Than Ti",
+"lat": -16.422825,
+"lon": -71.531468
+},
+{
+"tipo": "fuel",
+"nombre": "Primax",
+"lat": -16.443154,
+"lon": -71.523083
+},
+{
+"tipo": "restaurant",
+"nombre": "Che Lima",
+"lat": -16.419684,
+"lon": -71.516586
+},
+{
+"tipo": "fast_food",
+"nombre": "El Turco",
+"lat": -16.417222,
+"lon": -71.515833
+},
+{
+"tipo": "alcohol",
+"nombre": "Lucerito",
+"lat": -16.423481,
+"lon": -71.51615
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Naranjps",
+"lat": -16.424342,
+"lon": -71.516112
+},
+{
+"tipo": "restaurant",
+"nombre": "Poseidon",
+"lat": -16.425938,
+"lon": -71.520855
+},
+{
+"tipo": "restaurant",
+"nombre": "Taki",
+"lat": -16.418856,
+"lon": -71.516269
+},
+{
+"tipo": "restaurant",
+"nombre": "Los cebiches de Kike",
+"lat": -16.426477,
+"lon": -71.519952
+},
+{
+"tipo": "restaurant",
+"nombre": "Mar Adentro",
+"lat": -16.428819,
+"lon": -71.546565
+},
+{
+"tipo": "clinic",
+"nombre": "Clínica Ochoa",
+"lat": -16.423683,
+"lon": -71.527866
+},
+{
+"tipo": "sports_centre",
+"nombre": "Puma Sport",
+"lat": -16.436468,
+"lon": -71.544428
+},
+{
+"tipo": "restaurant",
+"nombre": "Aldo",
+"lat": -16.431157,
+"lon": -71.532524
+},
+{
+"tipo": "bar",
+"nombre": "Cebichela",
+"lat": -16.431534,
+"lon": -71.541494
+},
+{
+"tipo": "restaurant",
+"nombre": "Pollero",
+"lat": -16.434829,
+"lon": -71.531209
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Parroquia San Miguel de Simón Bolívar",
+"lat": -16.444978,
+"lon": -71.51222
+},
+{
+"tipo": "restaurant",
+"nombre": null,
+"lat": -16.426861,
+"lon": -71.531264
+},
+{
+"tipo": "restaurant",
+"nombre": "Dragón Dorado",
+"lat": -16.444282,
+"lon": -71.518036
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Testigos de Jehová",
+"lat": -16.423633,
+"lon": -71.516073
+},
+{
+"tipo": "marketplace",
+"nombre": "La Nueva Aurora",
+"lat": -16.425324,
+"lon": -71.536347
+},
+{
+"tipo": "marketplace",
+"nombre": "Señor del Gran Poder",
+"lat": -16.425615,
+"lon": -71.535367
+},
+{
+"tipo": "convenience",
+"nombre": "Menaly Karla",
+"lat": -16.424555,
+"lon": -71.538314
+},
+{
+"tipo": "restaurant",
+"nombre": null,
+"lat": -16.430243,
+"lon": -71.531261
+},
+{
+"tipo": "restaurant",
+"nombre": "Kanela",
+"lat": -16.430373,
+"lon": -71.530422
+},
+{
+"tipo": "bus_stop",
+"nombre": null,
+"lat": -16.415899,
+"lon": -71.518816
+},
+{
+"tipo": "bank",
+"nombre": "Caja Cuzco",
+"lat": -16.424604,
+"lon": -71.537108
+},
+{
+"tipo": "bus_stop",
+"nombre": null,
+"lat": -16.417898,
+"lon": -71.517767
+},
+{
+"tipo": "fast_food",
+"nombre": "San Guchito",
+"lat": -16.430027,
+"lon": -71.530532
+},
+{
+"tipo": "restaurant",
+"nombre": "El Oso",
+"lat": -16.426047,
+"lon": -71.539118
+},
+{
+"tipo": "bank",
+"nombre": "Caja Sullana",
+"lat": -16.426404,
+"lon": -71.539515
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Los Naranjos",
+"lat": -16.4195,
+"lon": -71.526578
+},
+{
+"tipo": "restaurant",
+"nombre": "Norte Marino",
+"lat": -16.429284,
+"lon": -71.531295
+},
+{
+"tipo": "restaurant",
+"nombre": "Cevichería",
+"lat": -16.426689,
+"lon": -71.532545
+},
+{
+"tipo": "bus_stop",
+"nombre": "La Apacheta",
+"lat": -16.430955,
+"lon": -71.532884
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Parroquia San José Obrero",
+"lat": -16.431327,
+"lon": -71.532955
+},
+{
+"tipo": "bus_stop",
+"nombre": "Parada de autobuses lambramani",
+"lat": -16.411782,
+"lon": -71.520985
+},
+{
+"tipo": "restaurant",
+"nombre": "San Sazon",
+"lat": -16.427385,
+"lon": -71.533338
+},
+{
+"tipo": "place_of_worship",
+"nombre": null,
+"lat": -16.421638,
+"lon": -71.531479
+},
+{
+"tipo": "bank",
+"nombre": "Caja Huancayo",
+"lat": -16.425234,
+"lon": -71.534331
+},
+{
+"tipo": "restaurant",
+"nombre": "Chuspas",
+"lat": -16.412071,
+"lon": -71.51844
+},
+{
+"tipo": "restaurant",
+"nombre": "Green",
+"lat": -16.433523,
+"lon": -71.53215
+},
+{
+"tipo": "restaurant",
+"nombre": "A mi manera",
+"lat": -16.415674,
+"lon": -71.516205
+},
+{
+"tipo": "restaurant",
+"nombre": "El maremoto",
+"lat": -16.423295,
+"lon": -71.540359
+},
+{
+"tipo": "restaurant",
+"nombre": "Cebicheria Puesta Mar",
+"lat": -16.425676,
+"lon": -71.524759
+},
+{
+"tipo": "fuel",
+"nombre": null,
+"lat": -16.429427,
+"lon": -71.544333
+},
+{
+"tipo": "marketplace",
+"nombre": "Señor del Gran Poder",
+"lat": -16.424897,
+"lon": -71.53462
+},
+{
+"tipo": "restaurant",
+"nombre": "Doña Fely",
+"lat": -16.444133,
+"lon": -71.511586
+},
+{
+"tipo": "restaurant",
+"nombre": "Pachamanca huancaína El Solitario",
+"lat": -16.445171,
+"lon": -71.504583
+},
+{
+"tipo": "restaurant",
+"nombre": "El caribe",
+"lat": -16.443822,
+"lon": -71.517304
+},
+{
+"tipo": "restaurant",
+"nombre": "Senca",
+"lat": -16.444264,
+"lon": -71.509798
+},
+{
+"tipo": "restaurant",
+"nombre": "Mares y Sillaresa",
+"lat": -16.444861,
+"lon": -71.504859
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Arcangel San Miguel",
+"lat": -16.444481,
+"lon": -71.506777
+},
+{
+"tipo": "convenience",
+"nombre": "Doña Briggit",
+"lat": -16.445854,
+"lon": -71.51823
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.421722,
+"lon": -71.531114
+},
+{
+"tipo": "restaurant",
+"nombre": null,
+"lat": -16.421898,
+"lon": -71.531036
+},
+{
+"tipo": "fuel",
+"nombre": "Repsol",
+"lat": -16.451099,
+"lon": -71.512743
+},
+{
+"tipo": "restaurant",
+"nombre": "Sagitario",
+"lat": -16.426628,
+"lon": -71.539528
+},
+{
+"tipo": "convenience",
+"nombre": "Ualsan",
+"lat": -16.425634,
+"lon": -71.538965
+},
+{
+"tipo": "restaurant",
+"nombre": "Chicharronería La sambita",
+"lat": -16.429709,
+"lon": -71.528383
+},
+{
+"tipo": "convenience",
+"nombre": "Abarrotes Dorita",
+"lat": -16.434327,
+"lon": -71.530497
+},
+{
+"tipo": "restaurant",
+"nombre": "Mama Lila",
+"lat": -16.436415,
+"lon": -71.521906
+},
+{
+"tipo": "mall",
+"nombre": "Centro ferial Virgen de Copacabana El Polo",
+"lat": -16.427185,
+"lon": -71.538911
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización La Breña",
+"lat": -16.446328,
+"lon": -71.518052
+},
+{
+"tipo": "restaurant",
+"nombre": "Al Fuego",
+"lat": -16.42314,
+"lon": -71.530351
+},
+{
+"tipo": "restaurant",
+"nombre": "El Villano",
+"lat": -16.419969,
+"lon": -71.52704
+},
+{
+"tipo": "fast_food",
+"nombre": "Cinema Burger",
+"lat": -16.436136,
+"lon": -71.523704
+},
+{
+"tipo": "fast_food",
+"nombre": "Maria Chicharro",
+"lat": -16.430172,
+"lon": -71.533901
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa St. Andrew",
+"lat": -16.437084,
+"lon": -71.507406
+},
+{
+"tipo": "restaurant",
+"nombre": "El pirata",
+"lat": -16.443457,
+"lon": -71.512914
+},
+{
+"tipo": "convenience",
+"nombre": "Alex",
+"lat": -16.440364,
+"lon": -71.520265
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Los Cisnes",
+"lat": -16.441467,
+"lon": -71.519243
+},
+{
+"tipo": "restaurant",
+"nombre": "El buen sabor",
+"lat": -16.443661,
+"lon": -71.51771
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Juan Pablo Viscardo​ y Guzmán",
+"lat": -16.435654,
+"lon": -71.525817
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.423943,
+"lon": -71.539746
+},
+{
+"tipo": "convenience",
+"nombre": "Caja Arequipa",
+"lat": -16.4496,
+"lon": -71.513182
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.443889,
+"lon": -71.508128
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Iglesia Evangelica Peruana",
+"lat": -16.44904,
+"lon": -71.515335
+},
+{
+"tipo": "restaurant",
+"nombre": "A Fuego Lento",
+"lat": -16.435314,
+"lon": -71.508072
+},
+{
+"tipo": "school",
+"nombre": "Winnie",
+"lat": -16.431496,
+"lon": -71.526261
+},
+{
+"tipo": "bank",
+"nombre": "Giros y tranferenciad",
+"lat": -16.426468,
+"lon": -71.533668
+},
+{
+"tipo": "bank",
+"nombre": null,
+"lat": -16.426052,
+"lon": -71.533421
+},
+{
+"tipo": "restaurant",
+"nombre": "Picanteria",
+"lat": -16.449114,
+"lon": -71.514536
+},
+{
+"tipo": "convenience",
+"nombre": "MilGen",
+"lat": -16.435026,
+"lon": -71.529254
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Nuestra Sra.de Montserrat",
+"lat": -16.439948,
+"lon": -71.522751
+},
+{
+"tipo": "sports_centre",
+"nombre": "Goles y Mas",
+"lat": -16.42882,
+"lon": -71.53904
+},
+{
+"tipo": "restaurant",
+"nombre": "El Daffo de Édgar",
+"lat": -16.432499,
+"lon": -71.528862
+},
+{
+"tipo": "bus_stop",
+"nombre": "Terminal Flores Hermanos",
+"lat": -16.42208,
+"lon": -71.543
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Movimiento Misionero Mundial",
+"lat": -16.428895,
+"lon": -71.5465
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Capilla La Cantuta",
+"lat": -16.412565,
+"lon": -71.519124
+},
+{
+"tipo": "restaurant",
+"nombre": "La Caleta",
+"lat": -16.412224,
+"lon": -71.520613
+},
+{
+"tipo": "restaurant",
+"nombre": "Texas",
+"lat": -16.411678,
+"lon": -71.520579
+},
+{
+"tipo": "restaurant",
+"nombre": "Cebicheria El Sakvavidas",
+"lat": -16.412979,
+"lon": -71.520221
+},
+{
+"tipo": "restaurant",
+"nombre": "El Meson",
+"lat": -16.423797,
+"lon": -71.516012
+},
+{
+"tipo": "restaurant",
+"nombre": "PP's",
+"lat": -16.42502,
+"lon": -71.522695
+},
+{
+"tipo": "bus_stop",
+"nombre": null,
+"lat": -16.414904,
+"lon": -71.519255
+},
+{
+"tipo": "bank",
+"nombre": "Agente BCP",
+"lat": -16.424439,
+"lon": -71.533123
+},
+{
+"tipo": "restaurant",
+"nombre": "Tihuan",
+"lat": -16.435112,
+"lon": -71.521888
+},
+{
+"tipo": "restaurant",
+"nombre": "Misti Pizza",
+"lat": -16.417479,
+"lon": -71.515937
+},
+{
+"tipo": "nightclub",
+"nombre": "Hynoptic",
+"lat": -16.419521,
+"lon": -71.526467
+},
+{
+"tipo": "restaurant",
+"nombre": "Montero Inolvidables Salon",
+"lat": -16.417359,
+"lon": -71.526692
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Peruano Suizo Alfred Werner",
+"lat": -16.423392,
+"lon": -71.5323
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Colibri Libre Waldorf Inspired",
+"lat": -16.415638,
+"lon": -71.521533
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Manos Unidas",
+"lat": -16.423346,
+"lon": -71.526489
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 40121 Everardo Zapata Santillana",
+"lat": -16.4233,
+"lon": -71.5315
+},
+{
+"tipo": "school",
+"nombre": "Conservatorio Regional De Musica Luis Duncker Lavalle",
+"lat": -16.424423,
+"lon": -71.527743
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 41007 Mariano Trinidad Docarmo Y Valdivia",
+"lat": -16.413305,
+"lon": -71.519979
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Nuestra Señora De Las Gracias",
+"lat": -16.411205,
+"lon": -71.516498
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 40171 Santisima Virgen De Fatima",
+"lat": -16.414917,
+"lon": -71.517482
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Academo",
+"lat": -16.41279,
+"lon": -71.517953
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Neptali Valderrama Ampuero",
+"lat": -16.423115,
+"lon": -71.516404
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Santa Maria Madre",
+"lat": -16.423976,
+"lon": -71.519384
+},
+{
+"tipo": "convenience",
+"nombre": "Orange",
+"lat": -16.428402,
+"lon": -71.522168
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Mariam Rosse",
+"lat": -16.426254,
+"lon": -71.543789
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Carita Feliz",
+"lat": -16.427602,
+"lon": -71.546399
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Maria Protectora",
+"lat": -16.426097,
+"lon": -71.534399
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Wolfgang Goethe",
+"lat": -16.426818,
+"lon": -71.539235
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Mater Maria School",
+"lat": -16.4301,
+"lon": -71.5406
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Charlotte Buhler",
+"lat": -16.428092,
+"lon": -71.535298
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Peruano Brasilero Paulo Coelho",
+"lat": -16.42701,
+"lon": -71.531398
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Leonardo Da Vinci",
+"lat": -16.4324,
+"lon": -71.5288
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Wolfang Amadeus Mozart",
+"lat": -16.435108,
+"lon": -71.525987
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa David Ausubel",
+"lat": -16.432702,
+"lon": -71.524036
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Interamericano",
+"lat": -16.425907,
+"lon": -71.526394
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Cedeu De Ciencias Pitagoras",
+"lat": -16.428901,
+"lon": -71.523301
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa San Carlos",
+"lat": -16.427657,
+"lon": -71.523788
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Inicial André Bretón",
+"lat": -16.4286,
+"lon": -71.5243
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Mundo Ecologico",
+"lat": -16.428388,
+"lon": -71.522167
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Helen Keller",
+"lat": -16.436507,
+"lon": -71.524601
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Arequipa",
+"lat": -16.438805,
+"lon": -71.523999
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Los Heraldos De Jesus",
+"lat": -16.441294,
+"lon": -71.520971
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa José Luis Bustamante y Rivero Futura School",
+"lat": -16.441568,
+"lon": -71.524514
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Huellitas De Amor E.i.r.l.",
+"lat": -16.443606,
+"lon": -71.515699
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Pedro Alvarez Cabral",
+"lat": -16.443163,
+"lon": -71.517003
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Rocio Del Cielo",
+"lat": -16.443167,
+"lon": -71.516604
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Divino Maestro Del Saber",
+"lat": -16.443329,
+"lon": -71.51468
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 40631 Juan Pablo Ii",
+"lat": -16.450109,
+"lon": -71.514197
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Niño Divino",
+"lat": -16.449249,
+"lon": -71.514472
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Especial De Rapido Aprendizaje Alfred Binet",
+"lat": -16.434805,
+"lon": -71.509463
+},
+{
+"tipo": "school",
+"nombre": "Cibertec - Arequipa",
+"lat": -16.416174,
+"lon": -71.515574
+},
+{
+"tipo": "school",
+"nombre": "Tecsup No.2",
+"lat": -16.4298,
+"lon": -71.5191
+},
+{
+"tipo": "marketplace",
+"nombre": "Asociación Indpendientes de Abril",
+"lat": -16.425659,
+"lon": -71.537492
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Condominio El Greco",
+"lat": -16.421743,
+"lon": -71.526289
+},
+{
+"tipo": "bus_stop",
+"nombre": null,
+"lat": -16.416131,
+"lon": -71.515548
+},
+{
+"tipo": "convenience",
+"nombre": "Berobed",
+"lat": -16.424614,
+"lon": -71.536412
+},
+{
+"tipo": "restaurant",
+"nombre": "Chicharronería Chichiclo",
+"lat": -16.424992,
+"lon": -71.521434
+},
+{
+"tipo": "restaurant",
+"nombre": "Cevichería Perla Negra",
+"lat": -16.431863,
+"lon": -71.531462
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Teca",
+"lat": -16.430078,
+"lon": -71.531779
+},
+{
+"tipo": "convenience",
+"nombre": "Tienda Luana",
+"lat": -16.419352,
+"lon": -71.51721
+},
+{
+"tipo": "supermarket",
+"nombre": "Franco Retail",
+"lat": -16.41378,
+"lon": -71.520419
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Valle Chili",
+"lat": -16.412218,
+"lon": -71.523359
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Adepa",
+"lat": -16.41832,
+"lon": -71.528181
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Alto de la Luna 4 etapa",
+"lat": -16.432002,
+"lon": -71.523716
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización San ignacio",
+"lat": -16.428547,
+"lon": -71.538865
+},
+{
+"tipo": "restaurant",
+"nombre": "La Chinchana",
+"lat": -16.438074,
+"lon": -71.519644
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.425266,
+"lon": -71.536472
+},
+{
+"tipo": "restaurant",
+"nombre": "Chifa Washington",
+"lat": -16.422403,
+"lon": -71.525391
+},
+{
+"tipo": "clinic",
+"nombre": "Centro de Salud Mental Comunitario Simón Bolívar",
+"lat": -16.443648,
+"lon": -71.515887
+},
+{
+"tipo": "school",
+"nombre": "I.E.P Wolfgang Goethe",
+"lat": -16.427432,
+"lon": -71.538104
+},
+{
+"tipo": "restaurant",
+"nombre": "El Ranchito",
+"lat": -16.41894,
+"lon": -71.517397
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Conquistadores",
+"lat": -16.416709,
+"lon": -71.530234
+},
+{
+"tipo": "convenience",
+"nombre": "Minimarket Flash",
+"lat": -16.430767,
+"lon": -71.531178
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.431013,
+"lon": -71.531546
+},
+{
+"tipo": "restaurant",
+"nombre": "Tai Tai",
+"lat": -16.430202,
+"lon": -71.539676
+},
+{
+"tipo": "restaurant",
+"nombre": "La Vera Pizzería",
+"lat": -16.420228,
+"lon": -71.530543
+},
+{
+"tipo": "convenience",
+"nombre": null,
+"lat": -16.429098,
+"lon": -71.524144
+},
+{
+"tipo": "restaurant",
+"nombre": "Kankacho Arequipeño",
+"lat": -16.425514,
+"lon": -71.522118
+},
+{
+"tipo": "bus_stop",
+"nombre": "Presto",
+"lat": -16.429765,
+"lon": -71.526748
+},
+{
+"tipo": "bus_stop",
+"nombre": "Apacheta",
+"lat": -16.430693,
+"lon": -71.532435
+},
+{
+"tipo": "bus_stop",
+"nombre": "Apacheta",
+"lat": -16.430469,
+"lon": -71.532493
+},
+{
+"tipo": "bus_stop",
+"nombre": "San José Obrero",
+"lat": -16.431312,
+"lon": -71.532742
+},
+{
+"tipo": "bus_stop",
+"nombre": "Óvalo Apacheta",
+"lat": -16.430572,
+"lon": -71.533275
+},
+{
+"tipo": "bus_stop",
+"nombre": "Centro Comercial La Isla (Norte)",
+"lat": -16.426292,
+"lon": -71.53311
+},
+{
+"tipo": "bus_stop",
+"nombre": "13 de Enero",
+"lat": -16.433788,
+"lon": -71.531858
+},
+{
+"tipo": "bus_stop",
+"nombre": "13 de Enero",
+"lat": -16.433914,
+"lon": -71.531602
+},
+{
+"tipo": "bus_stop",
+"nombre": "Colegio Jorge Basadre Grohmann",
+"lat": -16.433134,
+"lon": -71.526004
+},
+{
+"tipo": "bus_stop",
+"nombre": "Guatemala",
+"lat": -16.42982,
+"lon": -71.528307
+},
+{
+"tipo": "bus_stop",
+"nombre": "Fecia",
+"lat": -16.430219,
+"lon": -71.531034
+},
+{
+"tipo": "bus_stop",
+"nombre": "Grifo Monterrey",
+"lat": -16.429313,
+"lon": -71.523899
+},
+{
+"tipo": "bus_stop",
+"nombre": "Pedro D. Canseco",
+"lat": -16.429207,
+"lon": -71.524651
+},
+{
+"tipo": "bus_stop",
+"nombre": "Grifo Monterrey",
+"lat": -16.429026,
+"lon": -71.523449
+},
+{
+"tipo": "bus_stop",
+"nombre": "Residencial Monterrey",
+"lat": -16.428707,
+"lon": -71.522074
+},
+{
+"tipo": "bus_stop",
+"nombre": "Tecsup",
+"lat": -16.428104,
+"lon": -71.520583
+},
+{
+"tipo": "bus_stop",
+"nombre": "Tecsup",
+"lat": -16.427749,
+"lon": -71.520279
+},
+{
+"tipo": "bus_stop",
+"nombre": "Los Ccoritos",
+"lat": -16.427435,
+"lon": -71.518956
+},
+{
+"tipo": "bus_stop",
+"nombre": "La Melgariana",
+"lat": -16.428414,
+"lon": -71.521912
+},
+{
+"tipo": "bus_stop",
+"nombre": "Andrés Avelino Cáceres",
+"lat": -16.424968,
+"lon": -71.533051
+},
+{
+"tipo": "bus_stop",
+"nombre": "Prolongación Dolores",
+"lat": -16.436779,
+"lon": -71.521182
+},
+{
+"tipo": "bus_stop",
+"nombre": "DEMUNA",
+"lat": -16.436287,
+"lon": -71.521736
+},
+{
+"tipo": "bus_stop",
+"nombre": "América",
+"lat": -16.436408,
+"lon": -71.521475
+},
+{
+"tipo": "bus_stop",
+"nombre": "Juan Pablo Vizcardo y Guzmán",
+"lat": -16.435628,
+"lon": -71.525283
+},
+{
+"tipo": "bus_stop",
+"nombre": "Juan Pablo Vizcardo y Guzmán",
+"lat": -16.435622,
+"lon": -71.525403
+},
+{
+"tipo": "bus_stop",
+"nombre": "Monterrico",
+"lat": -16.433206,
+"lon": -71.522492
+},
+{
+"tipo": "bus_stop",
+"nombre": "Santa María II",
+"lat": -16.432248,
+"lon": -71.522819
+},
+{
+"tipo": "bus_stop",
+"nombre": "Santa María II",
+"lat": -16.431682,
+"lon": -71.523375
+},
+{
+"tipo": "bus_stop",
+"nombre": "Monterrico",
+"lat": -16.433122,
+"lon": -71.523058
+},
+{
+"tipo": "bus_stop",
+"nombre": "Francisco de Miranda",
+"lat": -16.434223,
+"lon": -71.525824
+},
+{
+"tipo": "bus_stop",
+"nombre": "Mechita",
+"lat": -16.434084,
+"lon": -71.525961
+},
+{
+"tipo": "bus_stop",
+"nombre": "Colegio Jorge Basadre Grohmann",
+"lat": -16.432948,
+"lon": -71.526114
+},
+{
+"tipo": "bus_stop",
+"nombre": "Presto",
+"lat": -16.4295,
+"lon": -71.52651
+},
+{
+"tipo": "bus_stop",
+"nombre": "Estados Unidos",
+"lat": -16.431002,
+"lon": -71.532668
+},
+{
+"tipo": "bus_stop",
+"nombre": "La Apacheta",
+"lat": -16.43029,
+"lon": -71.533528
+},
+{
+"tipo": "bus_stop",
+"nombre": "Las Convenciones",
+"lat": -16.428478,
+"lon": -71.538133
+},
+{
+"tipo": "bus_stop",
+"nombre": "Las Convenciones",
+"lat": -16.428659,
+"lon": -71.53775
+},
+{
+"tipo": "bus_stop",
+"nombre": "Asociación Comercial Siglo XX",
+"lat": -16.42514,
+"lon": -71.537702
+},
+{
+"tipo": "bus_stop",
+"nombre": "Los Ccoritos",
+"lat": -16.426803,
+"lon": -71.517811
+},
+{
+"tipo": "bus_stop",
+"nombre": "Casablanca",
+"lat": -16.426711,
+"lon": -71.517217
+},
+{
+"tipo": "bus_stop",
+"nombre": "7 de Agosto",
+"lat": -16.426092,
+"lon": -71.51607
+},
+{
+"tipo": "bus_stop",
+"nombre": "7 de Agosto",
+"lat": -16.426165,
+"lon": -71.51581
+},
+{
+"tipo": "bus_stop",
+"nombre": "UAP",
+"lat": -16.425524,
+"lon": -71.521543
+},
+{
+"tipo": "bus_stop",
+"nombre": "UAP",
+"lat": -16.425295,
+"lon": -71.521031
+},
+{
+"tipo": "bus_stop",
+"nombre": "La Alborada",
+"lat": -16.432308,
+"lon": -71.513623
+},
+{
+"tipo": "bus_stop",
+"nombre": "Puente La Florida",
+"lat": -16.435644,
+"lon": -71.519152
+},
+{
+"tipo": "bus_stop",
+"nombre": "Malecón Dolores",
+"lat": -16.436785,
+"lon": -71.521477
+},
+{
+"tipo": "bus_stop",
+"nombre": "Juan Velazco A.",
+"lat": -16.446487,
+"lon": -71.517212
+},
+{
+"tipo": "bus_stop",
+"nombre": "La Breña",
+"lat": -16.44725,
+"lon": -71.516133
+},
+{
+"tipo": "bus_stop",
+"nombre": "Colegio Esmeraldas",
+"lat": -16.449494,
+"lon": -71.514378
+},
+{
+"tipo": "bus_stop",
+"nombre": "Esmeraldas",
+"lat": -16.449237,
+"lon": -71.515123
+},
+{
+"tipo": "bus_stop",
+"nombre": "Comisaría Simón Bolviar",
+"lat": -16.44353,
+"lon": -71.514379
+},
+{
+"tipo": "bus_stop",
+"nombre": null,
+"lat": -16.434183,
+"lon": -71.522222
+},
+{
+"tipo": "alcohol",
+"nombre": "Bodeguita B&B",
+"lat": -16.416203,
+"lon": -71.530764
+},
+{
+"tipo": "restaurant",
+"nombre": "Cebicheria Challwa",
+"lat": -16.415995,
+"lon": -71.530394
+},
+{
+"tipo": "restaurant",
+"nombre": "Restaurante",
+"lat": -16.415639,
+"lon": -71.529803
+},
+{
+"tipo": "convenience",
+"nombre": "Tienda",
+"lat": -16.415628,
+"lon": -71.529782
+},
+{
+"tipo": "convenience",
+"nombre": "Mini Market Jacky",
+"lat": -16.415407,
+"lon": -71.529289
+},
+{
+"tipo": "bus_stop",
+"nombre": "Tasahuayo",
+"lat": -16.440743,
+"lon": -71.525457
+},
+{
+"tipo": "bus_stop",
+"nombre": "El Golf",
+"lat": -16.451003,
+"lon": -71.515624
+},
+{
+"tipo": "bus_stop",
+"nombre": "Centro Comercial La Isla (Sur)",
+"lat": -16.425629,
+"lon": -71.533421
+},
+{
+"tipo": "marketplace",
+"nombre": "Botica Dermia",
+"lat": -16.420383,
+"lon": -71.530983
+},
+{
+"tipo": "marketplace",
+"nombre": "Botica Dermia",
+"lat": -16.427051,
+"lon": -71.533806
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.423733,
+"lon": -71.531058
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.423192,
+"lon": -71.528803
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.420946,
+"lon": -71.527363
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.418571,
+"lon": -71.528779
+},
+{
+"tipo": "park",
+"nombre": "Bancarios",
+"lat": -16.42139,
+"lon": -71.529232
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.42645,
+"lon": -71.526525
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.414771,
+"lon": -71.516621
+},
+{
+"tipo": "park",
+"nombre": "Santo Domingo",
+"lat": -16.416222,
+"lon": -71.517873
+},
+{
+"tipo": "park",
+"nombre": "Parque Monterrey",
+"lat": -16.428831,
+"lon": -71.520198
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.432432,
+"lon": -71.522975
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.431372,
+"lon": -71.524099
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.433883,
+"lon": -71.522589
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.430373,
+"lon": -71.524274
+},
+{
+"tipo": "sports_centre",
+"nombre": "Palacio del Deporte",
+"lat": -16.4329,
+"lon": -71.528149
+},
+{
+"tipo": "park",
+"nombre": "Parque al Maestro",
+"lat": -16.431786,
+"lon": -71.52649
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.43098,
+"lon": -71.527259
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.430726,
+"lon": -71.525636
+},
+{
+"tipo": "park",
+"nombre": "Plaza Ciudad Satélite",
+"lat": -16.430975,
+"lon": -71.529439
+},
+{
+"tipo": "university",
+"nombre": "Universidad de San Martín de Porres",
+"lat": -16.423192,
+"lon": -71.522144
+},
+{
+"tipo": "park",
+"nombre": "Lanificio",
+"lat": -16.426275,
+"lon": -71.531983
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428762,
+"lon": -71.532973
+},
+{
+"tipo": "park",
+"nombre": "Parque La Cantuta I Etapa",
+"lat": -16.412296,
+"lon": -71.518776
+},
+{
+"tipo": "park",
+"nombre": "Parque La Cantuta II Etapa",
+"lat": -16.411626,
+"lon": -71.517845
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.413544,
+"lon": -71.517903
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.413996,
+"lon": -71.518546
+},
+{
+"tipo": "park",
+"nombre": "Complejo deportivo La Cantuta",
+"lat": -16.412901,
+"lon": -71.519815
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.4111,
+"lon": -71.516213
+},
+{
+"tipo": "sports_centre",
+"nombre": "Complejo JLBR",
+"lat": -16.437895,
+"lon": -71.524499
+},
+{
+"tipo": "park",
+"nombre": "Los Ccoritos",
+"lat": -16.427235,
+"lon": -71.517733
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.430724,
+"lon": -71.515439
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.431248,
+"lon": -71.516689
+},
+{
+"tipo": "stadium",
+"nombre": "13 de Enero",
+"lat": -16.431958,
+"lon": -71.530892
+},
+{
+"tipo": "park",
+"nombre": "Mapa del Perú",
+"lat": -16.431941,
+"lon": -71.527529
+},
+{
+"tipo": "park",
+"nombre": "Juan Pablo Vizcardo y Guzmán",
+"lat": -16.433488,
+"lon": -71.526338
+},
+{
+"tipo": "park",
+"nombre": "Juan Pablo",
+"lat": -16.433053,
+"lon": -71.525078
+},
+{
+"tipo": "park",
+"nombre": "Parque 7 de Agosto (Urbanización Santa Catalina)",
+"lat": -16.425829,
+"lon": -71.516071
+},
+{
+"tipo": "park",
+"nombre": "Parque Urbanización Santa Catalina",
+"lat": -16.426018,
+"lon": -71.51787
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.425065,
+"lon": -71.533187
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.418124,
+"lon": -71.531284
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.424663,
+"lon": -71.521882
+},
+{
+"tipo": "park",
+"nombre": "Parque del Paseo de la Cultura",
+"lat": -16.426153,
+"lon": -71.519866
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427358,
+"lon": -71.521375
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428762,
+"lon": -71.525232
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428514,
+"lon": -71.526283
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.424594,
+"lon": -71.518776
+},
+{
+"tipo": "park",
+"nombre": "Los Ccoritos",
+"lat": -16.427836,
+"lon": -71.516421
+},
+{
+"tipo": "park",
+"nombre": "Parque Hartley",
+"lat": -16.427069,
+"lon": -71.516117
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.426393,
+"lon": -71.534836
+},
+{
+"tipo": "mall",
+"nombre": "La Isla",
+"lat": -16.426293,
+"lon": -71.533555
+},
+{
+"tipo": "marketplace",
+"nombre": null,
+"lat": -16.417983,
+"lon": -71.534305
+},
+{
+"tipo": "marketplace",
+"nombre": null,
+"lat": -16.421323,
+"lon": -71.538844
+},
+{
+"tipo": "marketplace",
+"nombre": null,
+"lat": -16.425812,
+"lon": -71.539777
+},
+{
+"tipo": "marketplace",
+"nombre": "Mi Mercado",
+"lat": -16.426936,
+"lon": -71.539818
+},
+{
+"tipo": "marketplace",
+"nombre": "Mercado Cuzco",
+"lat": -16.42463,
+"lon": -71.535318
+},
+{
+"tipo": "marketplace",
+"nombre": "Mercado de Cayma",
+"lat": -16.425659,
+"lon": -71.535997
+},
+{
+"tipo": "marketplace",
+"nombre": "Selor de Luren",
+"lat": -16.42548,
+"lon": -71.536835
+},
+{
+"tipo": "marketplace",
+"nombre": "Sur Andino",
+"lat": -16.420656,
+"lon": -71.537522
+},
+{
+"tipo": "school",
+"nombre": "Pedro P. Díaz",
+"lat": -16.420165,
+"lon": -71.518041
+},
+{
+"tipo": "school",
+"nombre": "Mundo Ecológico",
+"lat": -16.424578,
+"lon": -71.523954
+},
+{
+"tipo": "park",
+"nombre": "El Bosque",
+"lat": -16.422902,
+"lon": -71.526506
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.419148,
+"lon": -71.526657
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.417249,
+"lon": -71.529171
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.41696,
+"lon": -71.530786
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Stella Maris",
+"lat": -16.417626,
+"lon": -71.53064
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 41006 Jorge Polar",
+"lat": -16.426861,
+"lon": -71.521267
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Santa Ursula",
+"lat": -16.430869,
+"lon": -71.519864
+},
+{
+"tipo": "park",
+"nombre": "Parque La Encalada",
+"lat": -16.429852,
+"lon": -71.516489
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428594,
+"lon": -71.516702
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428202,
+"lon": -71.51877
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.433184,
+"lon": -71.512078
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427541,
+"lon": -71.515146
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427063,
+"lon": -71.524411
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427207,
+"lon": -71.525299
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Inmaculada Concepcion",
+"lat": -16.427254,
+"lon": -71.526957
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428681,
+"lon": -71.528254
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427412,
+"lon": -71.527916
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.429587,
+"lon": -71.530713
+},
+{
+"tipo": "park",
+"nombre": "Fecia",
+"lat": -16.42854,
+"lon": -71.532069
+},
+{
+"tipo": "park",
+"nombre": "Puerta Verde",
+"lat": -16.426885,
+"lon": -71.534366
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.42901,
+"lon": -71.535374
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Santa Clara",
+"lat": -16.432333,
+"lon": -71.532923
+},
+{
+"tipo": "marketplace",
+"nombre": "13 de Enero",
+"lat": -16.433152,
+"lon": -71.530674
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.432852,
+"lon": -71.530794
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 41038 Jose Olaya Balandra",
+"lat": -16.43241,
+"lon": -71.530723
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 40038 Jorge Basadre Grohmann",
+"lat": -16.432924,
+"lon": -71.526992
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.433411,
+"lon": -71.526804
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.436198,
+"lon": -71.527415
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434728,
+"lon": -71.533462
+},
+{
+"tipo": "sports_centre",
+"nombre": null,
+"lat": -16.429525,
+"lon": -71.536215
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428938,
+"lon": -71.545844
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427712,
+"lon": -71.5457
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428114,
+"lon": -71.542397
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.442215,
+"lon": -71.519274
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.440532,
+"lon": -71.524931
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.440741,
+"lon": -71.523982
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.441906,
+"lon": -71.521217
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.435439,
+"lon": -71.521941
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.435938,
+"lon": -71.521872
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.435512,
+"lon": -71.516934
+},
+{
+"tipo": "park",
+"nombre": "Parque Simón Bolívar",
+"lat": -16.44493,
+"lon": -71.51599
+},
+{
+"tipo": "park",
+"nombre": "Parque Virgen de Copacabana",
+"lat": -16.446426,
+"lon": -71.513817
+},
+{
+"tipo": "park",
+"nombre": "Parque Santa Mónica",
+"lat": -16.447805,
+"lon": -71.513638
+},
+{
+"tipo": "mall",
+"nombre": "Kosto",
+"lat": -16.424344,
+"lon": -71.531328
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.424193,
+"lon": -71.531515
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.424603,
+"lon": -71.531916
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.424374,
+"lon": -71.528436
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.44858,
+"lon": -71.513908
+},
+{
+"tipo": "school",
+"nombre": null,
+"lat": -16.449294,
+"lon": -71.513971
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.443224,
+"lon": -71.518737
+},
+{
+"tipo": "fuel",
+"nombre": "Primax",
+"lat": -16.444714,
+"lon": -71.504283
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.416115,
+"lon": -71.529417
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.415559,
+"lon": -71.528369
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.414988,
+"lon": -71.515711
+},
+{
+"tipo": "park",
+"nombre": "Cooperativa 58",
+"lat": -16.41641,
+"lon": -71.516855
+},
+{
+"tipo": "marketplace",
+"nombre": "Mercado total",
+"lat": -16.422961,
+"lon": -71.516611
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.417704,
+"lon": -71.516552
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.435039,
+"lon": -71.525386
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434585,
+"lon": -71.526561
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434385,
+"lon": -71.524574
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.433915,
+"lon": -71.523381
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.436439,
+"lon": -71.539791
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.430614,
+"lon": -71.538181
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434207,
+"lon": -71.518662
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.43368,
+"lon": -71.517673
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.41621,
+"lon": -71.520398
+},
+{
+"tipo": "place_of_worship",
+"nombre": null,
+"lat": -16.414507,
+"lon": -71.517415
+},
+{
+"tipo": "park",
+"nombre": "Parque Dunas del Sur",
+"lat": -16.424307,
+"lon": -71.517459
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 40175 Gran Libertador Simón Bolivar",
+"lat": -16.444775,
+"lon": -71.514304
+},
+{
+"tipo": "police",
+"nombre": "Comisaría PNP Simón Bolivar",
+"lat": -16.443357,
+"lon": -71.513725
+},
+{
+"tipo": "marketplace",
+"nombre": "3 de Octubre",
+"lat": -16.443347,
+"lon": -71.518301
+},
+{
+"tipo": "sports_centre",
+"nombre": null,
+"lat": -16.438002,
+"lon": -71.524525
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.439413,
+"lon": -71.524371
+},
+{
+"tipo": "park",
+"nombre": "Parque del Amauta",
+"lat": -16.441157,
+"lon": -71.522596
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.439029,
+"lon": -71.526843
+},
+{
+"tipo": "school",
+"nombre": "CEBA Paucarpata",
+"lat": -16.436531,
+"lon": -71.524576
+},
+{
+"tipo": "park",
+"nombre": "Aplao",
+"lat": -16.436682,
+"lon": -71.529129
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.436275,
+"lon": -71.525007
+},
+{
+"tipo": "park",
+"nombre": "Parque Santa Maria",
+"lat": -16.431418,
+"lon": -71.521671
+},
+{
+"tipo": "park",
+"nombre": "Parque Los Cristales",
+"lat": -16.431803,
+"lon": -71.520479
+},
+{
+"tipo": "park",
+"nombre": "Parque Monterrico",
+"lat": -16.432614,
+"lon": -71.520184
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.43389,
+"lon": -71.520377
+},
+{
+"tipo": "school",
+"nombre": null,
+"lat": -16.413334,
+"lon": -71.51964
+},
+{
+"tipo": "sports_centre",
+"nombre": "Instituo Peruano del Deporte",
+"lat": -16.43086,
+"lon": -71.546191
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.43987,
+"lon": -71.525999
+},
+{
+"tipo": "sports_centre",
+"nombre": "Campo deportivo Tasahuayo",
+"lat": -16.440602,
+"lon": -71.525373
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Vírgen de la Medalla Milagrosa",
+"lat": -16.438189,
+"lon": -71.523956
+},
+{
+"tipo": "clinic",
+"nombre": "Centro de Salud Víctor Raúl Hinojosa",
+"lat": -16.444833,
+"lon": -71.515505
+},
+{
+"tipo": "marketplace",
+"nombre": "Mercado de Simón Bolivar",
+"lat": -16.444436,
+"lon": -71.511667
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.444599,
+"lon": -71.51114
+},
+{
+"tipo": "park",
+"nombre": "Parque Túpac Amaru",
+"lat": -16.443769,
+"lon": -71.507176
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.430304,
+"lon": -71.544641
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.429212,
+"lon": -71.543342
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427567,
+"lon": -71.546105
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa 40122 Manuel Scorza Torres",
+"lat": -16.425342,
+"lon": -71.541388
+},
+{
+"tipo": "marketplace",
+"nombre": null,
+"lat": -16.423532,
+"lon": -71.534813
+},
+{
+"tipo": "place_of_worship",
+"nombre": null,
+"lat": -16.430231,
+"lon": -71.53288
+},
+{
+"tipo": "park",
+"nombre": "Parque Ricardo Palma",
+"lat": -16.448145,
+"lon": -71.515853
+},
+{
+"tipo": "marketplace",
+"nombre": "4 de Octubre",
+"lat": -16.425081,
+"lon": -71.538738
+},
+{
+"tipo": "mall",
+"nombre": "Los Balcones",
+"lat": -16.425152,
+"lon": -71.534531
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.427851,
+"lon": -71.533935
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428346,
+"lon": -71.533926
+},
+{
+"tipo": "school",
+"nombre": "Everardo Zapata Santillana",
+"lat": -16.423062,
+"lon": -71.53079
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.415917,
+"lon": -71.52234
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.419359,
+"lon": -71.518851
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.41436,
+"lon": -71.521252
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.413926,
+"lon": -71.520594
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.444151,
+"lon": -71.508209
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.443208,
+"lon": -71.514039
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Innova Schools",
+"lat": -16.438127,
+"lon": -71.508645
+},
+{
+"tipo": "restaurant",
+"nombre": "Mi Ranchito",
+"lat": -16.439981,
+"lon": -71.510396
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434731,
+"lon": -71.529594
+},
+{
+"tipo": "park",
+"nombre": "Parque Urb. Las Esmeraldas",
+"lat": -16.449419,
+"lon": -71.51258
+},
+{
+"tipo": "park",
+"nombre": "Parque Ub. Las Esmeraldas Sector 1",
+"lat": -16.451115,
+"lon": -71.51237
+},
+{
+"tipo": "clinic",
+"nombre": "Centro de Salud Las Esmeraldas",
+"lat": -16.450024,
+"lon": -71.512577
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.435591,
+"lon": -71.522735
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.436106,
+"lon": -71.523296
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.441584,
+"lon": -71.518419
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.442458,
+"lon": -71.517228
+},
+{
+"tipo": "place_of_worship",
+"nombre": "Capilla Señor de Huanca",
+"lat": -16.43624,
+"lon": -71.527246
+},
+{
+"tipo": "park",
+"nombre": "Parque La Acequia",
+"lat": -16.412835,
+"lon": -71.517183
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.414445,
+"lon": -71.518302
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.428489,
+"lon": -71.514127
+},
+{
+"tipo": "park",
+"nombre": "Parque Camino Real",
+"lat": -16.414933,
+"lon": -71.519978
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.432419,
+"lon": -71.527878
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.432903,
+"lon": -71.517197
+},
+{
+"tipo": "park",
+"nombre": "Parque Solar del Bosque",
+"lat": -16.43308,
+"lon": -71.520014
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.43246,
+"lon": -71.517903
+},
+{
+"tipo": "school",
+"nombre": null,
+"lat": -16.429125,
+"lon": -71.516701
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Madre Santa Beatriz",
+"lat": -16.429324,
+"lon": -71.517341
+},
+{
+"tipo": "place_of_worship",
+"nombre": null,
+"lat": -16.431575,
+"lon": -71.527656
+},
+{
+"tipo": "park",
+"nombre": "Parque Las Esmeraldas",
+"lat": -16.452982,
+"lon": -71.512778
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.435155,
+"lon": -71.521177
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.444664,
+"lon": -71.504572
+},
+{
+"tipo": "marketplace",
+"nombre": null,
+"lat": -16.424228,
+"lon": -71.521515
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.422913,
+"lon": -71.519965
+},
+{
+"tipo": "bank",
+"nombre": "Banco Comercio",
+"lat": -16.423863,
+"lon": -71.522105
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.425436,
+"lon": -71.54259
+},
+{
+"tipo": "place_of_worship",
+"nombre": null,
+"lat": -16.432682,
+"lon": -71.530605
+},
+{
+"tipo": "university",
+"nombre": "Universidad Continental",
+"lat": -16.412759,
+"lon": -71.524706
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.433824,
+"lon": -71.517469
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.43256,
+"lon": -71.515513
+},
+{
+"tipo": "police",
+"nombre": null,
+"lat": -16.415272,
+"lon": -71.515521
+},
+{
+"tipo": "restaurant",
+"nombre": "Los Guisos Arequipeños",
+"lat": -16.417275,
+"lon": -71.518776
+},
+{
+"tipo": "place_of_worship",
+"nombre": "La Iglesia de Jesucristo de los Santos de los Últimos Días",
+"lat": -16.43239,
+"lon": -71.522083
+},
+{
+"tipo": "place_of_worship",
+"nombre": "La Iglesia de Jesucristo de los Santos de los Últimos Días",
+"lat": -16.426702,
+"lon": -71.535752
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa André Bretón",
+"lat": -16.42931,
+"lon": -71.528074
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Niño de la Paz",
+"lat": -16.423723,
+"lon": -71.531575
+},
+{
+"tipo": "hospital",
+"nombre": "Puesto de Salud Salaverry",
+"lat": -16.434948,
+"lon": -71.536367
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.436811,
+"lon": -71.526777
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.436308,
+"lon": -71.526237
+},
+{
+"tipo": "police",
+"nombre": "Comisaría PNP José Luis Bustamante y Rivero",
+"lat": -16.424321,
+"lon": -71.52941
+},
+{
+"tipo": "park",
+"nombre": "Óvalo Dolores",
+"lat": -16.4253,
+"lon": -71.524522
+},
+{
+"tipo": "place_of_worship",
+"nombre": null,
+"lat": -16.435154,
+"lon": -71.529993
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434138,
+"lon": -71.52786
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.434872,
+"lon": -71.53005
+},
+{
+"tipo": "sports_centre",
+"nombre": "Mi Perú",
+"lat": -16.433582,
+"lon": -71.514966
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.438371,
+"lon": -71.521906
+},
+{
+"tipo": "school",
+"nombre": "Institución Educativa Inicial Tasahuayo",
+"lat": -16.439681,
+"lon": -71.524816
+},
+{
+"tipo": "park",
+"nombre": null,
+"lat": -16.431286,
+"lon": -71.5153
+},
+{
+"tipo": "neighbourhood",
+"nombre": "Urbanización Alas del Sur",
+"lat": -16.433111,
+"lon": -71.511913
+}
+]
