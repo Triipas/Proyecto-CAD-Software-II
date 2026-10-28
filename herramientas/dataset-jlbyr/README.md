@@ -7,7 +7,8 @@ acompañamientos.
 **Todos los datos son ficticios:** personas, teléfonos, documentos, descripciones y casos. Lo real es la base de las
 proporciones (de dónde salen se explica abajo) y la geografía del distrito, tomada de OpenStreetMap.
 
-> Todavía **no se carga** en ningún entorno. Este directorio solo contiene la investigación, el generador y su salida.
+> Para cargarlo en una base de datos del sistema, usa el [cargador](cargador/README.md): vacía la base de datos y carga el dataset
+> con las fechas desplazadas para que el periodo termine en el momento de la carga.
 
 ## Qué contiene
 
@@ -25,6 +26,7 @@ proporciones (de dónde salen se explica abajo) y la geografía del distrito, to
 | `salida/casos.csv` | Una fila por caso, para revisarlo en Excel. |
 | `salida/RESUMEN.md` | Las cifras del dataset generado: origen, categoría, estado, tiempos, evaluaciones, hora, día y lugar. |
 | `salida/meta.json` | Inicio y fin del periodo y la semilla. |
+| `cargador/` | Programa que vacía una base de datos del sistema y carga el dataset ([cómo se usa](cargador/README.md)). |
 
 Para regenerar: `python generar.py` (desde esta carpeta).
 
@@ -128,16 +130,14 @@ y, si lo registró la central, quién llamó) y sus decisiones en los eventos (`
 `ReporteDescartado` con su motivo, `CategoriaCorregida`). Los códigos (resultados, motivos, destinos, canales, prioridades) son los
 de `Cad.Contratos`.
 
-## Para cuando se cargue (pendiente)
+## Cómo se carga
 
-- **Desplazar las fechas.** El periodo termina el 30/11/2026 a las 20:00. Al cargar, se suma `ahora − fin_del_periodo` a todas las
-  fechas, así «hoy», «7 días» y «¿Cómo está la central ahora?» muestran datos.
-- **Centrar el mapa del panel en el distrito.** Usar `Panel:Mapa:CentroLatitud = -16.4316` y `CentroLongitud = -71.5290`, zoom 14.
-- **Generar al cargar lo que no conviene guardar aquí:**
-  - las posiciones de los serenos durante su turno, para la cobertura (un recorrido por su sector cada pocos minutos);
-  - las contraseñas de las cuentas;
-  - las fotos de los reportes (imágenes de muestra, según `fotos`);
-  - los envíos push.
-- **Cargar respetando el dominio.** Hacerlo por los casos de uso o con un seeder que construya las entidades, no con SQL suelto: así
-  quedan coherentes el estado, la versión, los eventos y las notificaciones al ciudadano.
-- **Render.** Revisar el límite de filas y almacenamiento del plan de base de datos (ADR-06: sin costo sin autorización).
+Con el [cargador](cargador/README.md). Allí se explica también:
+
+- qué genera al cargar, porque no conviene guardarlo aquí: las posiciones de los serenos, las claves, las fotos de muestra y los envíos push;
+- cuándo conviene cargar para una presentación;
+- cuánto ocupa (unos 80 MB).
+
+Para que el mapa del panel se abra sobre el distrito, el servidor necesita `Panel:Mapa:CentroLatitud = -16.4316`,
+`Panel:Mapa:CentroLongitud = -71.5290` y `Panel:Mapa:Zoom = 14`. En Render se configuran como variables de entorno:
+`Panel__Mapa__CentroLatitud`, `Panel__Mapa__CentroLongitud` y `Panel__Mapa__Zoom`.
