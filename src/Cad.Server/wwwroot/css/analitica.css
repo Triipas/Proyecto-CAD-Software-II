@@ -1803,9 +1803,29 @@ a.fila-a__cifra {
   gap: var(--espacio-2);
 }
 
+.tramos-a__titulo {
+  margin: 0 0 var(--espacio-2);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}
+
+.tramos-a__titulo .tarjeta-a__nota { display: block; font-weight: var(--peso-normal); }
+
+.tramo-a--pocos { opacity: 0.6; }
+
+.tramo-a__valor {
+  display: grid;
+  text-align: right;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.tramo-a__valor small { font-size: var(--texto-xs); color: var(--color-texto-secundario); }
+
 .tramo-a {
   display: grid;
-  grid-template-columns: 7.5rem minmax(0, 1fr) 3rem;
+  grid-template-columns: 7.5rem minmax(0, 1fr) 4.5rem;
   gap: var(--espacio-3);
   align-items: center;
   font-size: var(--texto-sm);
@@ -1861,6 +1881,40 @@ a.fila-a__cifra {
 .tabla-a--cohortes td.celda-a {
   padding-right: var(--espacio-2);
   border: 2px solid var(--color-superficie);
+}
+
+/* ¿Qué opina el ciudadano? ocupa toda la pantalla: la respuesta y las tarjetas se reparten la altura que sobra. */
+.analitica[data-analitica="ciudadano"] .respuesta {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.analitica[data-analitica="ciudadano"] .ciudadano-a {
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+
+.analitica[data-analitica="ciudadano"] .ciudadano-a > div:first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.analitica[data-analitica="ciudadano"] .notas-a {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 9.5rem;
+}
+
+.analitica[data-analitica="ciudadano"] .ciudadano-a > div:last-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.analitica[data-analitica="ciudadano"] .rejilla-a {
+  flex: 1 1 auto;
+  align-items: stretch;
 }
 
 /* ── Sistema ── */

@@ -27,7 +27,7 @@
     {
         <div class="respuesta__cabecera">
             <h2 class="respuesta__titular" id="respuesta-ciudadano">Califican la atención con <em>@Formato.Decimal(promedio) de 5</em>@if (e.Evaluados < minimo) {<text>.</text>} else if (porDemora) {<text>;<br />las notas bajas vienen de la demora.</text>} else if (falloPrincipal is not null) {<text>; lo que más falla: «@falloPrincipal.Texto».</text>} else {<text>.</text>}</h2>
-            <p class="respuesta__lectura">A la izquierda, cómo califican (@Formato.Porcentaje(e.PorcentajeEvaluados, 0) de los casos cerrados se evaluó). A la derecha, la parte de notas bajas (1 a 3) según cuánto tardamos en llegar.</p>
+            <p class="respuesta__lectura">A la izquierda, cuántas evaluaciones recibió cada nota (@Formato.Porcentaje(e.PorcentajeEvaluados, 0) de los casos cerrados se evaluó). A la derecha, de quienes esperaron cada tiempo hasta que empezó la atención, cuántos calificaron con nota baja (1 a 3).</p>
         </div>
         <div class="ciudadano-a">
             <div>
@@ -62,18 +62,20 @@
                 }
                 else
                 {
+                    <p class="tramos-a__titulo">Notas bajas según lo que esperaron <span class="tarjeta-a__nota">% de las evaluaciones de cada tramo · bajas de total</span></p>
                     <ul class="tramos-a">
                         @foreach (var t in e.PorTiempoDeRespuesta)
                         {
                             var peor = t == peorTramo && t.PorcentajeBajas >= 50;
-                            <li class="tramo-a" data-tramo="@t.Tramo" data-evaluaciones="@t.Evaluaciones">
+                            var bajas = (int)Math.Round(t.PorcentajeBajas * t.Evaluaciones / 100.0);
+                            <li class="@(t.Evaluaciones > 0 && t.Evaluaciones < minimo ? "tramo-a tramo-a--pocos" : "tramo-a")" data-tramo="@t.Tramo" data-evaluaciones="@t.Evaluaciones">
                                 <span>@t.Tramo</span>
                                 <span class="tramo-a__pista" aria-hidden="true"><i class="@(peor ? "tramo-a__barra tramo-a__barra--peor" : "tramo-a__barra")" style="width:@Pct(t.PorcentajeBajas)%"></i></span>
-                                <b>@(t.Evaluaciones == 0 ? "—" : Formato.Porcentaje(t.PorcentajeBajas, 0))</b>
+                                <span class="tramo-a__valor"><b>@(t.Evaluaciones == 0 ? "—" : Formato.Porcentaje(t.PorcentajeBajas, 0))</b><small>@(t.Evaluaciones == 0 ? "sin casos" : $"{bajas} de {t.Evaluaciones}")</small></span>
                             </li>
                         }
                     </ul>
-                    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Notas bajas según el tiempo de respuesta (del registro al inicio de la atención).@if (peorTramo is { PorcentajeBajas: >= 50 }) {<text> Con @peorTramo.Tramo.ToLowerInvariant(), @Formato.Porcentaje(peorTramo.PorcentajeBajas, 0) califica mal.</text>}</p>
+                    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">La espera se cuenta desde que se registró el caso hasta que empezó la atención. Los tramos con pocas evaluaciones (menos de @minimo) se ven más tenues: un caso mueve mucho el porcentaje.@if (peorTramo is { PorcentajeBajas: >= 50 }) {<text> Con @peorTramo.Tramo.ToLowerInvariant(), @Formato.Porcentaje(peorTramo.PorcentajeBajas, 0) califica mal.</text>}</p>
                 }
             </div>
         </div>
@@ -111,7 +113,7 @@
         else
         {
             <table class="tabla-a tabla-a--cohortes">
-                <thead><tr><th scope="col">Semana</th><th scope="col" class="tabla-a__num">Registros</th><th scope="col" class="tabla-a__num">La usaron</th><th scope="col" class="tabla-a__num">Volvieron</th></tr></thead>
+                <thead><tr><th scope="col">Registrados la semana del</th><th scope="col" class="tabla-a__num">Personas</th><th scope="col" class="tabla-a__num">La usaron</th><th scope="col" class="tabla-a__num">Volvieron</th></tr></thead>
                 <tbody>
                     @foreach (var c in cohortes)
                     {
@@ -126,11 +128,11 @@
                     }
                 </tbody>
             </table>
-            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">La semana en curso aún no puede tener «volvieron».</p>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">«La usaron»: abrieron la app algún día tras registrarse. «Volvieron»: la usaron en otra semana distinta a la de su registro. Más oscuro, más gente. La semana en curso aún no puede tener «volvieron».</p>
         }
     </section>
     <section class="tarjeta-a" aria-labelledby="titulo-canales">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-canales">Por dónde llegan los reportes</h3><span class="tarjeta-a__nota">@totalCanales en el periodo</span></div>
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-canales">Por dónde llegan los reportes</h3><span class="tarjeta-a__nota">@Formato.Plural(totalCanales, "reporte", "reportes") en el periodo</span></div>
         @if (totalCanales == 0)
         {
             <p class="tarjeta-a__vacia">Sin reportes con canal registrado en el periodo (el canal se registra desde el 27/10/2026).</p>
@@ -138,11 +140,13 @@
         else
         {
             var clases = new[] { "barra100__a", "barra100__b", "barra100__c", "barra100__d", "barra100__e" };
-            <partial name="_Barra100" model="@((IReadOnlyList<(string, int, string)>)canales.Select((c, i) => (c.Texto, c.Reportes, clases[Math.Min(i, clases.Length - 1)])).ToList(), totalCanales)" />
+            IReadOnlyList<(string, int, string)> filasCanales = canales.Select((c, i) => (c.Texto, c.Reportes, clases[Math.Min(i, clases.Length - 1)])).ToList();
+            IReadOnlyList<(string, IReadOnlyList<(string, int, string)>)> repartoCanales = [("", filasCanales)];
+            <partial name="_Filas100" model="@(repartoCanales, totalCanales)" />
         }
         <ul class="filas-a">
-            <li class="fila-a fila-a--dos"><span>Del hecho al reporte, mediana</span><span class="fila-a__cifra">@Formato.Horas(demora.HorasP50)</span></li>
-            <li class="fila-a fila-a--dos"><span>Reportado en la primera hora</span><span class="fila-a__cifra">@(demora.Reportes == 0 ? "—" : Formato.Porcentaje(demora.PorcentajeEnLaPrimeraHora, 0))</span></li>
+            <li class="fila-a fila-a--dos"><span>Tiempo entre el hecho y el reporte (la mitad llega antes de)</span><span class="fila-a__cifra">@Formato.Horas(demora.HorasP50)</span></li>
+            <li class="fila-a fila-a--dos"><span>Reportes enviados en la primera hora del hecho</span><span class="fila-a__cifra">@(demora.Reportes == 0 ? "—" : Formato.Porcentaje(demora.PorcentajeEnLaPrimeraHora, 0))</span></li>
         </ul>
     </section>
 </div>

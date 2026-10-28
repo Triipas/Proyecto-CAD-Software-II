@@ -8,7 +8,10 @@
     {
         var suma = filas.Sum(f => f.Valor);
         <section class="grupo100">
-            <p class="grupo100__titulo">@titulo <span class="tarjeta-a__nota">@suma · @Formato.Porcentaje(100.0 * suma / Math.Max(1, Model.Total), 0)</span></p>
+            @if (!string.IsNullOrEmpty(titulo))
+            {
+                <p class="grupo100__titulo">@titulo <span class="tarjeta-a__nota">@suma · @Formato.Porcentaje(100.0 * suma / Math.Max(1, Model.Total), 0)</span></p>
+            }
             <ul class="filas100">
                 @foreach (var (nombre, valor, clase) in filas)
                 {
