@@ -36,8 +36,21 @@ public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration
     public string CeldasJson => JsonSerializer.Serialize((Mapa?.Celdas ?? []).Select(c => new
     {
         origen = c.Origen == OrigenCaso.Sos ? "SOS" : "Reporte",
-        sur = c.Sur, oeste = c.Oeste, norte = c.Norte, este = c.Este, casos = c.Casos,
+        sur = c.Sur, oeste = c.Oeste, norte = c.Norte, este = c.Este, casos = c.Casos, zona = Zonas.Nombre(c.Sur, c.Oeste),
     }));
+
+    // Puntos del mapa de calor: el centro de una celda fina y sus casos (sin datos de ningún caso concreto).
+    public string CalorJson => JsonSerializer.Serialize((Mapa?.Calor ?? []).Select(p => new { lat = p.Latitud, lon = p.Longitud, casos = p.Casos }));
+
+    // Las zonas con más casos, con el mismo nombre que usa Analítica («Zona K10»), para la tabla del lector de pantalla.
+    public IReadOnlyList<(string Zona, string Origen, int Casos)> ZonasDestacadas =>
+        (Mapa?.Celdas ?? []).OrderByDescending(c => c.Casos).Take(10)
+            .Select(c => (Zonas.Nombre(c.Sur, c.Oeste), c.Origen == OrigenCaso.Sos ? "SOS" : "Reportes", c.Casos)).ToList();
+
+    public Analitica.Zonas Zonas => new(configuracion);
+
+    // La misma selección en Analítica: lo que se repite en esas zonas y cómo se responde ahí.
+    public string EnlaceAnalitica => $"/panel/analitica/repite?periodo=rango&desde={Desde}&hasta={Hasta}";
 
     public string TextoOrigen => Origen switch { "Sos" => "SOS", "Reporte" => "reportes", _ => "SOS y reportes" };
 

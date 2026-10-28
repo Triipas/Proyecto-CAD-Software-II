@@ -216,6 +216,35 @@ public class MapaConcentracionTests(FabricaCad fabrica)
     }
 
     [Fact]
+    public async Task MapaDeCalor_JuntaLosCasosCercanosEnPuntosDeUnos110Metros_SinCancelados()
+    {
+        var zona = ZonaNueva();
+        var desde = DateTimeOffset.UtcNow.AddSeconds(-1);
+        var app = await CiudadanoAsync();
+        await SosAsync(app, zona);
+        await ReporteAsync(app, zona);
+        var cancelado = await SosAsync(app, zona);
+        Assert.Equal(HttpStatusCode.OK, (await app.PostAsJsonAsync($"/api/casos/mios/{cancelado}/cancelacion", new SolicitudCancelacionSos("Falsa alarma"))).StatusCode);
+
+        var mapa = await MapaAsync(desde);
+
+        // El SOS y el reporte del mismo lugar caen en un solo punto de calor, en el centro de su celda fina; el cancelado no cuenta.
+        var punto = Assert.Single(mapa.Calor, p => Math.Abs(p.Latitud - zona) < ConsultarConcentracion.TamanoCalor && Math.Abs(p.Longitud - Longitud) < ConsultarConcentracion.TamanoCalor);
+        Assert.Equal(2, punto.Casos);
+        Assert.Equal(mapa.Sos + mapa.Reportes, mapa.Calor.Sum(p => p.Casos));
+    }
+
+    [Fact]
+    public async Task Pagina_TraeLaCapaDeCalorYLaDiferenciaConAnalitica()
+    {
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion?Desde=2026-01-01&Hasta=2026-01-31"));
+
+        Assert.Contains("id=\"calor-concentracion\"", html);
+        Assert.Contains("data-diferencia", html);
+        Assert.Contains("href=\"/panel/analitica/repite?periodo=rango&desde=2026-01-01&hasta=2026-01-31\"", html);
+    }
+
+    [Fact]
     public async Task CA01_Pagina_SinSeleccion_MuestraLosUltimos30DiasYAmbosOrigenes()
     {
         var html = await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion");
