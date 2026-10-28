@@ -73,6 +73,8 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
         Assert.Contains("data-region-ahora", html);
         Assert.Contains("data-vivo", html);
         Assert.Contains("data-etapa=\"Pendiente\"", html);
+        Assert.Contains("esperado: hasta 3 min", html); // cada etapa dice cuánto se espera de ella
+        Assert.Contains("El tiempo esperado no es un promedio", html);
         Assert.DoesNotContain("data-filtros", html); // «Ahora» no tiene periodo
     }
 

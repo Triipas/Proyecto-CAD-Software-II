@@ -42,10 +42,21 @@
             else
             {
                 <h2 class="respuesta__titular" id="respuesta-ahora">Hay <em>@Formato.Plural(abiertos.Count, "caso abierto", "casos abiertos")</em>@(atascados == 0 ? "; todos van a tiempo." : $"; {atascados} {(atascados == 1 ? "lleva" : "llevan")} más tiempo del esperado en su etapa.")</h2>
-                <p class="respuesta__lectura">Cada punto es un caso, puesto según cuánto lleva en su etapa. La franja verde es el tiempo esperado; un punto ámbar ya la pasó y muestra sus minutos.</p>
+                <p class="respuesta__lectura">Cada punto es un caso, puesto según cuánto lleva en su etapa. La franja verde llega hasta el tiempo esperado de esa etapa, que se lee bajo su nombre; un punto ámbar ya lo pasó.</p>
             }
         </div>
         <div class="carriles-a">
+            <div class="carril-a carril-a--eje" aria-hidden="true">
+                <span class="carril-a__nombre">Etapa y tiempo esperado</span>
+                <span></span>
+                <div class="eje-a">
+                    <span class="eje-a__marca" style="left:0">0</span>
+                    <span class="eje-a__marca eje-a__marca--esperado" style="left:@(Carriles.Posicion(1, 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">lo esperado</span>
+                    <span class="eje-a__marca" style="left:@(Carriles.Posicion(2, 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">2× lo esperado</span>
+                    <span class="eje-a__marca" style="left:100%">3× o más</span>
+                </div>
+                <span class="carril-a__detalle">Atascados</span>
+            </div>
             @foreach (var grupo in carriles.GroupBy(c => c.Grupo))
             {
                 <p class="carriles-a__grupo">@(grupo.Key == "sos" ? "SOS y casos urgentes" : "Reportes")</p>
@@ -56,22 +67,44 @@
                     if (c.Reporte && c.Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion && minutos.Count == 0) { continue; }
                     var esperado = Esperado(c.Estado, c.Reporte);
                     var tarde = minutos.Count(x => x > esperado);
-                    <div class="carril-a" data-etapa="@c.Estado" data-reporte="@c.Reporte.ToString().ToLowerInvariant()" data-casos="@minutos.Count" data-atascados="@tarde">
+                    var masLargo = minutos.Count == 0 ? (double?)null : minutos.Max();
+                    <div class="carril-a" data-etapa="@c.Estado" data-reporte="@c.Reporte.ToString().ToLowerInvariant()" data-casos="@minutos.Count" data-atascados="@tarde" data-esperado="@esperado">
                         <span class="carril-a__nombre">
-                            @if (c.Estado is EstadoCaso.Pendiente && !c.Reporte) { <span class="chip chip--urgente">SOS</span> }
-                            @if (c.Estado is EstadoCaso.Recibido) { <span class="chip chip--reporte">Reporte</span> }
-                            @c.Nombre
+                            <span class="carril-a__titulo">
+                                @if (c.Estado is EstadoCaso.Pendiente && !c.Reporte) { <span class="chip chip--urgente">SOS</span> }
+                                @if (c.Estado is EstadoCaso.Recibido) { <span class="chip chip--reporte">Reporte</span> }
+                                @c.Nombre
+                            </span>
+                            <span class="carril-a__esperado">esperado: hasta @Formato.Minutos(esperado)</span>
                         </span>
                         <span class="carril-a__numero">@minutos.Count</span>
-                        @Regla.Carril(minutos, esperado, $"{c.Nombre}: {minutos.Count} casos, {tarde} con más de {esperado} minutos")
+                        @Carriles.Pista(minutos, esperado, $"{c.Nombre}: {Formato.Plural(minutos.Count, "caso", "casos")}, {(tarde == 0 ? "ninguno" : tarde.ToString())} con más de {Formato.Minutos(esperado)} en la etapa")
+                        <span class="carril-a__detalle">
+                            @if (masLargo is not { } largo)
+                            {
+                                <span class="carril-a__nada">Sin casos</span>
+                            }
+                            else if (tarde > 0)
+                            {
+                                <strong class="carril-a__tarde">▲ @Formato.Plural(tarde, "atascado", "atascados")</strong>
+                                <span>el más largo, @Formato.Minutos(largo)</span>
+                            }
+                            else
+                            {
+                                <strong class="carril-a__bien">✓ A tiempo</strong>
+                                <span>el más largo, @Formato.Minutos(largo)</span>
+                            }
+                        </span>
                     </div>
                 }
             }
             <ul class="leyenda-a">
                 <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Caso a tiempo</li>
-                <li><i class="leyenda-a__atascado"></i>Atascado (minutos en la etapa)</li>
-                <li><i class="leyenda-a__banda"></i>Tiempo esperado (provisional)</li>
+                <li><i class="leyenda-a__atascado"></i>Atascado: ya pasó el tiempo esperado</li>
+                <li><i class="leyenda-a__banda"></i>Tiempo esperado de la etapa</li>
+                <li><i class="leyenda-a__grupo">3</i>Varios casos casi juntos</li>
             </ul>
+            <p class="carriles-a__nota">El tiempo esperado no es un promedio de casos anteriores: es el máximo que la central tolera que un caso lleve en esa etapa. Son valores provisionales, hasta que se fijen los tiempos objetivo del servicio. Los minutos se cuentan desde que el caso entró en la etapa. Todas las filas usan la misma medida, veces lo esperado, así que la franja verde siempre termina en el mismo lugar; los casos más allá de 3× quedan en el borde, con su tiempo escrito a la derecha.</p>
         </div>
     </section>
 
