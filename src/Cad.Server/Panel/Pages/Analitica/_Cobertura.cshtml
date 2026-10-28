@@ -78,7 +78,7 @@ else
                 {
                     <p class="horas-a__conclusion">No entraron casos con hora en @m.TextoPeriodo.</p>
                 }
-                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Promedio de @m.TextoPeriodo por hora del día. Cada gráfico tiene su propia escala: compara la forma, no la altura entre uno y otro.</p>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Promedio por hora del día en @m.TextoPeriodo. Cada gráfico tiene su propia escala: compara la forma, no la altura entre uno y otro.</p>
                 <div class="horas-a" aria-hidden="true">
                     <span class="horas-a__rotulo">Casos que entran<small>hasta @Formato.Decimal(maxCasos) por hora</small></span>
                     <div class="horas-a__barras">@foreach (var h in horas) { <span class="@(franja.Contains(h.Hora) ? "horas-a__casos horas-a__casos--franja" : "horas-a__casos")" style="height:@Altura(h.CasosPorDia, maxCasos)%" title="@h.Hora h: @Formato.Decimal(h.CasosPorDia) casos"></span> }</div>
@@ -102,7 +102,7 @@ else
             </section>
             <section class="tarjeta-a tarjeta-a--llena" aria-labelledby="titulo-zonas-cobertura">
                 <h3 id="titulo-zonas-cobertura">Zonas con menos cobertura</h3>
-                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Las 6 zonas donde más tiempo no hubo un sereno libre cerca, de @m.TextoPeriodo.</p>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Las 6 zonas donde más tiempo no hubo un sereno libre cerca en @m.TextoPeriodo.</p>
                 @if (c.Zonas.Count == 0)
                 {
                     <p class="tarjeta-a__vacia">Sin zonas con 3 o más incidencias.</p>

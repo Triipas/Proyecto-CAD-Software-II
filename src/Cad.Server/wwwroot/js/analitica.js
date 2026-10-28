@@ -78,22 +78,38 @@
         limites.push([s.lat, s.lon]);
       }
     } else if (escala === "repite") {
+      // Zonas en alza: las que tienen alerta, con su etiqueta; las demás, apenas un trazo punteado.
       for (const a of leer("[data-alzas]")) {
-        L.rectangle([[a.sur, a.oeste], [a.norte, a.este]], {
+        const hueco = 0.07, dLat = (a.norte - a.sur) * hueco, dLon = (a.este - a.oeste) * hueco;
+        L.rectangle([[a.sur + dLat, a.oeste + dLon], [a.norte - dLat, a.este - dLon]], {
           color: a.alerta ? advertencia : rampa[4],
-          weight: 2,
-          dashArray: "5 4",
+          weight: a.alerta ? 2.5 : 1.5,
+          dashArray: a.alerta ? "6 4" : "2 5",
+          opacity: a.alerta ? 1 : 0.7,
           fillColor: a.alerta ? advertencia : rampa[2],
-          fillOpacity: 0.12,
-        }).bindTooltip(`${a.nombre}: ${a.texto}`, { direction: "top" }).addTo(mapa);
+          fillOpacity: a.alerta ? 0.18 : 0.05,
+          className: "zona-celda",
+        }).bindTooltip(`${a.nombre}: ${a.texto}`, { direction: "top", className: "zona-globo", sticky: true }).addTo(mapa);
+        if (a.alerta)
+          L.marker([a.norte - dLat, (a.oeste + a.este) / 2], {
+            icon: L.divIcon({
+              className: "zona-a",
+              html: `<span class="zona-a__etiqueta zona-a__etiqueta--alerta"><b>${a.nombre.replace("Zona ", "")}</b><i>▲ ${a.texto}</i></span>`,
+              iconSize: [96, 34],
+              iconAnchor: [48, 38], // sobre el borde norte de la zona, sin tapar los puntos de dentro
+            }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(mapa);
         limites.push([a.sur, a.oeste], [a.norte, a.este]);
       }
+      // Puntos críticos: el número es el de la lista de la derecha; el tamaño crece con los casos.
       for (const p of leer("[data-puntos]")) {
-        const lado = Math.round(26 + Math.min(18, p.casos * 2));
+        const lado = Math.round(28 + Math.min(14, p.casos * 2));
         const texto = `Punto ${p.numero}: ${p.casos} casos${p.categoria ? ` · sobre todo ${p.categoria.toLowerCase()}` : ""}`;
         L.circle([p.lat, p.lon], { radius: 100, color: rampa[5], weight: 1, fillColor: rampa[4], fillOpacity: 0.18, interactive: false }).addTo(mapa);
         L.marker([p.lat, p.lon], {
-          icon: L.divIcon({ className: "punto-a", html: String(p.casos), iconSize: [lado, lado] }),
+          icon: L.divIcon({ className: "punto-a", html: String(p.numero), iconSize: [lado, lado] }),
           title: texto,
           alt: texto,
         }).addTo(mapa);

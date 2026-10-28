@@ -1172,6 +1172,19 @@ a.fila-a__cifra {
 .leyenda-mapa-a__nota { flex-basis: 100%; color: var(--color-texto-terciario); }
 .leyenda-a__alerta { background: var(--color-advertencia-fondo); border: 1.5px dashed var(--color-advertencia); }
 .leyenda-a__sereno-libre-claro { background: #A8D5BC; }
+.leyenda-a__alza-tenue { background: transparent; border: 1.5px dotted var(--rampa-5); }
+.leyenda-a__punto {
+  display: inline-grid;
+  place-items: center;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  border-radius: 50% !important;
+  background: var(--color-primario);
+  color: var(--color-superficie);
+  font-size: 0.6875rem;
+  font-style: normal;
+  font-weight: var(--peso-fuerte);
+}
 
 /* Prioridades: barra oscura hasta la mitad, clara hasta 9 de cada 10, línea del objetivo */
 .prioridades-a {
@@ -1723,9 +1736,18 @@ a.fila-a__cifra {
 }
 
 .alza-a__antes { background: var(--tono-gris); }
+.alza-a__linea { background: var(--rampa-3); }
 .alza-a__ahora { background: var(--color-primario); border: 2px solid #fff; box-shadow: var(--sombra-1); }
 .alza-a--alerta .alza-a__ahora { background: var(--color-advertencia); }
 .alza-a--alerta .alza-a__linea { background: var(--color-advertencia-borde); }
+
+.fila-a__cifra-sub {
+  display: block;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+  text-align: right;
+}
 
 /* ── Ciudadano ── */
 .ciudadano-a {

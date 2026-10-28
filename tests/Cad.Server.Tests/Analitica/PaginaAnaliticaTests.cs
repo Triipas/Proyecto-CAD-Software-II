@@ -176,5 +176,8 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
 
         Assert.Contains("data-respuesta=\"repite\"", html);
         Assert.Contains("/panel/mapa-concentracion?Desde=2017-05-01&Hasta=2017-05-20", html);
+        Assert.Contains("Un <b>punto crítico</b> es un lugar con 3 o más incidencias", html); // define los dos conceptos
+        Assert.Contains("data-punto=\"1\"", html);
+        Assert.Contains("Punto crítico: el número es el de la lista", html); // la leyenda del mapa
     }
 }

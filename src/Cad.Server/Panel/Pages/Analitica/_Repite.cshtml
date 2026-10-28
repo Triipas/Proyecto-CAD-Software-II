@@ -33,17 +33,21 @@ else
                  data-teselas="@m.UrlTeselas" data-escala="repite"><script type="application/json" data-puntos>@Html.Raw(puntosJson)</script><script type="application/json" data-alzas>@Html.Raw(alzasJson)</script></div>
             <div class="respuesta flotante-a" data-respuesta="repite">
                 <h2 class="respuesta__titular" id="respuesta-repite">
-                    @(v.Puntos.Count switch { 0 => "Ningún lugar acumula 3 o más incidencias", 1 => "Un lugar acumula 3 o más incidencias", var n => $"{n} lugares acumulan 3 o más incidencias" })@if (principal is not null)
-                    {<text>; la <em>@m.Zonas.Nombre(principal.Sur, principal.Oeste)</em> @(principal.PromedioAnterior > 0 ? $"está en {Veces(principal)}" : "no tenía casos y ahora sí").</text>}
-                    else {<text>.</text>}
+                    @(v.Puntos.Count switch { 0 => "Ningún lugar acumula", 1 => "Un lugar acumula", var n => $"{n} lugares acumulan" }) 3 o más incidencias muy cerca@(principal is null ? "." : "")@if (principal is not null)
+                    {<text>; esta semana, la <em>@m.Zonas.Nombre(principal.Sur, principal.Oeste)</em> @(principal.PromedioAnterior > 0 ? $"está en {Veces(principal)}" : "no tenía casos y ahora sí").</text>}
                 </h2>
-                <p class="respuesta__lectura">Círculo azul: punto crítico (100 m) con su número de casos. Recuadro ámbar: zona en alza esta semana. Aquí solo lo que se repite; el calor de todos los casos está en el mapa de concentración.</p>
+                <p class="respuesta__lectura">Un <b>punto crítico</b> es un lugar con 3 o más incidencias a menos de 100 m en @m.TextoPeriodo. Una <b>zona en alza</b> recibe esta semana más casos de lo normal para ella. El detalle de cada una está a la derecha.</p>
                 <a class="boton boton--secundario boton--compacto" href="@m.EnlaceConcentracion()">Ver el calor de todos los casos →</a>
+            </div>
+            <div class="leyenda-mapa-a">
+                <span><i class="leyenda-a__punto">1</i>Punto crítico: el número es el de la lista; el círculo tenue marca los 100 m</span>
+                <span><i class="leyenda-a__alerta"></i>▲ Zona en alza con alerta</span>
+                <span><i class="leyenda-a__alza-tenue"></i>Zona que subió, sin alerta</span>
             </div>
         </section>
         <div class="cobertura-a__lado">
             <section class="tarjeta-a" aria-labelledby="titulo-puntos">
-                <div class="tarjeta-a__cabecera"><h3 id="titulo-puntos">Puntos críticos</h3><span class="tarjeta-a__nota">3+ incidencias a 100 m · @m.TextoPeriodo</span></div>
+                <div class="tarjeta-a__cabecera"><h3 id="titulo-puntos">Puntos críticos</h3><span class="tarjeta-a__nota">3 o más incidencias a menos de 100 m, en @m.TextoPeriodo</span></div>
                 @if (v.Puntos.Count == 0)
                 {
                     <p class="tarjeta-a__vacia">Ningún lugar acumula 3 o más incidencias cercanas en el periodo.</p>
@@ -56,31 +60,35 @@ else
                             <li class="fila-a" data-punto="@i">
                                 <span class="numero-a">@i</span>
                                 <span>@m.Zonas.Nombre(p.Latitud - 0.0025, p.Longitud - 0.0025)<br /><span class="tarjeta-a__nota">@(p.CategoriaFrecuente ?? "Sin clasificar") · último @Hace(p.UltimoCaso)</span></span>
-                                <span class="fila-a__cifra">@p.Casos <small>casos</small></span>
+                                <span class="fila-a__cifra">@p.Casos <small>@(p.Casos == 1 ? "caso" : "casos")</small></span>
                             </li>
                         }
                     </ol>
                 }
             </section>
-            <section class="tarjeta-a" aria-labelledby="titulo-alzas">
-                <div class="tarjeta-a__cabecera"><h3 id="titulo-alzas">Zonas en alza</h3><span class="tarjeta-a__nota">● esta semana · ● gris: promedio de 4 semanas</span></div>
+            <section class="tarjeta-a tarjeta-a--llena" aria-labelledby="titulo-alzas">
+                <div class="tarjeta-a__cabecera"><h3 id="titulo-alzas">Zonas en alza</h3><span class="tarjeta-a__nota">esta semana frente a lo normal de cada zona</span></div>
                 @if (v.Alzas.Count == 0)
                 {
                     <p class="tarjeta-a__vacia">Ninguna zona subió esta semana respecto de las cuatro anteriores.</p>
                 }
                 else
                 {
+                    <ul class="leyenda-a leyenda-a--compacta">
+                        <li><i class="leyenda-a__sereno-ocupado"></i>Lo normal: promedio semanal de las 4 semanas anteriores</li>
+                        <li><i class="leyenda-a__atascado leyenda-a__atascado--lleno"></i>Esta semana (ámbar si es alerta)</li>
+                    </ul>
                     <ul class="alzas-a">
                         @foreach (var a in v.Alzas.Take(5))
                         {
                             <li class="alza-a @(a.Alerta ? "alza-a--alerta" : "")" data-alerta="@a.Alerta.ToString().ToLowerInvariant()">
                                 <span>@m.Zonas.Nombre(a.Sur, a.Oeste)<br /><span class="tarjeta-a__nota">@(a.Categoria ?? "todas las categorías")</span></span>
                                 <span class="alza-a__pista" aria-hidden="true"><span class="alza-a__linea" style="left:@P(a.PromedioAnterior)%;width:calc(@P(a.SemanaActual)% - @P(a.PromedioAnterior)%)"></span><span class="alza-a__antes" style="left:@P(a.PromedioAnterior)%"></span><span class="alza-a__ahora" style="left:@P(a.SemanaActual)%"></span></span>
-                                <span class="fila-a__cifra @(a.Alerta ? "fila-a__cifra--aviso" : "")">@(a.Alerta ? "▲ " : "")@a.SemanaActual <small>vs @Formato.Decimal(a.PromedioAnterior)</small></span>
+                                <span class="fila-a__cifra @(a.Alerta ? "fila-a__cifra--aviso" : "")">@(a.Alerta ? "▲ " : "")@a.SemanaActual <small>@(a.SemanaActual == 1 ? "caso" : "casos")</small><span class="fila-a__cifra-sub">normal: @Formato.Decimal(a.PromedioAnterior)</span></span>
                             </li>
                         }
                     </ul>
-                    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Alerta en ámbar cuando el aumento se sale de lo normal (no por uno o dos casos).</p>
+                    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Hay alerta (▲, en ámbar) cuando el aumento se sale de lo normal y la zona suma al menos 3 casos en la semana: uno o dos casos más en una zona tranquila no la activan. Las zonas en alza se miden siempre por semana, aunque elijas otro periodo.</p>
                 }
                 <a class="enlace-a" href="@m.EnlaceConcentracion()">Abrir el periodo en el mapa de concentración →</a>
             </section>
