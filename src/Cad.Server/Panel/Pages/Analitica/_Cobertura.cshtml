@@ -58,37 +58,51 @@ else
             @if (c.Zonas.Count > 0)
             {
                 <div class="leyenda-mapa-a">
-                    <span>% del tiempo con un sereno disponible a @radio m o menos</span>
-                    <div class="rampa-a rampa-a--cobertura" aria-hidden="true"><span>0</span><i></i><span>100 %</span></div>
-                    <span><i class="leyenda-a__rayado"></i>Menos de la mitad del tiempo</span>
-                    <span><i class="leyenda-a__sereno-libre"></i>Serenos ahora</span>
+                    <div class="rampa-a rampa-a--cobertura" aria-hidden="true"><span>Más cubierta</span><i></i><span>Menos cubierta</span></div>
+                    <span><i class="leyenda-a__alerta"></i>▲ Menos de la mitad del tiempo cubierta</span>
+                    <span><i class="leyenda-a__sereno-libre"></i>Serenos libres ahora</span>
+                    <span><i class="leyenda-a__sereno-ocupado"></i>Con caso</span>
+                    <span class="leyenda-mapa-a__nota">Cubierta: hubo un sereno libre a @radio m o menos de la zona.</span>
                 </div>
             }
         </section>
         <div class="cobertura-a__lado">
             <section class="tarjeta-a" aria-labelledby="titulo-turnos">
                 <h3 id="titulo-turnos">¿Los turnos acompañan a la demanda?</h3>
-                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Promedio por hora del día en @m.TextoPeriodo. Misma hora, dos escalas separadas.</p>
+                @if (brecha is not null)
+                {
+                    var enFranja = horas.Where(h => franja.Contains(h.Hora)).ToList();
+                    <p class="horas-a__conclusion" data-franja><b>La hora de más presión es de @franja.Min() a @(franja.Max() + 1) h</b>: entran @Formato.Decimal(enFranja.Average(h => h.CasosPorDia)) casos por hora y quedan @Formato.Decimal(enFranja.Average(h => h.SerenosDisponibles)) serenos libres en promedio.</p>
+                }
+                else
+                {
+                    <p class="horas-a__conclusion">No entraron casos con hora en @m.TextoPeriodo.</p>
+                }
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Promedio de @m.TextoPeriodo por hora del día. Cada gráfico tiene su propia escala: compara la forma, no la altura entre uno y otro.</p>
                 <div class="horas-a" aria-hidden="true">
-                    <span class="horas-a__rotulo">Casos por hora</span>
+                    <span class="horas-a__rotulo">Casos que entran<small>hasta @Formato.Decimal(maxCasos) por hora</small></span>
                     <div class="horas-a__barras">@foreach (var h in horas) { <span class="@(franja.Contains(h.Hora) ? "horas-a__casos horas-a__casos--franja" : "horas-a__casos")" style="height:@Altura(h.CasosPorDia, maxCasos)%" title="@h.Hora h: @Formato.Decimal(h.CasosPorDia) casos"></span> }</div>
-                    <span class="horas-a__rotulo">Serenos libres</span>
+                    <span class="horas-a__rotulo">Serenos libres<small>hasta @Formato.Decimal(maxSerenos)</small></span>
                     <div class="horas-a__barras horas-a__barras--bajas">@foreach (var h in horas) { <span class="@(franja.Contains(h.Hora) ? "horas-a__serenos horas-a__serenos--franja" : "horas-a__serenos")" style="height:@Altura(h.SerenosDisponibles, maxSerenos)%" title="@h.Hora h: @Formato.Decimal(h.SerenosDisponibles) serenos libres"></span> }</div>
                     <span></span><div class="horas-a__eje"><span>0 h</span><span>6</span><span>12</span><span>18</span><span>23 h</span></div>
                 </div>
+                @if (brecha is not null)
+                {
+                    <ul class="leyenda-a">
+                        <li><i class="leyenda-a__prio-nueve"></i>Casos por hora</li>
+                        <li><i class="leyenda-a__sereno-libre-claro"></i>Serenos libres</li>
+                        <li><i class="leyenda-a__prio-mitad"></i>Más oscuro: la hora de más presión (más casos por sereno libre)</li>
+                    </ul>
+                }
                 <table class="visualmente-oculto">
                     <caption>Casos y serenos libres por hora</caption>
                     <thead><tr><th>Hora</th><th>Casos por día</th><th>Serenos operativos</th><th>Serenos libres</th></tr></thead>
                     <tbody>@foreach (var h in horas) { <tr><td>@h.Hora h</td><td>@Formato.Decimal(h.CasosPorDia)</td><td>@Formato.Decimal(h.SerenosOperativos)</td><td>@Formato.Decimal(h.SerenosDisponibles)</td></tr> }</tbody>
                 </table>
-                @if (brecha is not null)
-                {
-                    var enFranja = horas.Where(h => franja.Contains(h.Hora)).ToList();
-                    <p class="horas-a__conclusion"><b>De @franja.Min() a @(franja.Max() + 1) h</b> entran @Formato.Decimal(enFranja.Average(h => h.CasosPorDia)) casos por hora y quedan @Formato.Decimal(enFranja.Average(h => h.SerenosDisponibles)) serenos libres en promedio.</p>
-                }
             </section>
-            <section class="tarjeta-a" aria-labelledby="titulo-zonas-cobertura">
+            <section class="tarjeta-a tarjeta-a--llena" aria-labelledby="titulo-zonas-cobertura">
                 <h3 id="titulo-zonas-cobertura">Zonas con menos cobertura</h3>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Las 6 zonas donde más tiempo no hubo un sereno libre cerca, de @m.TextoPeriodo.</p>
                 @if (c.Zonas.Count == 0)
                 {
                     <p class="tarjeta-a__vacia">Sin zonas con 3 o más incidencias.</p>
@@ -96,13 +110,13 @@ else
                 else
                 {
                     <table class="tabla-a">
-                        <thead><tr><th scope="col">Zona</th><th scope="col">Cubierta</th><th scope="col" class="tabla-a__num">Casos</th><th scope="col" class="tabla-a__num">Sin cobertura</th></tr></thead>
+                        <thead><tr><th scope="col">Zona</th><th scope="col">Tiempo cubierto</th><th scope="col" class="tabla-a__num">Casos</th><th scope="col" class="tabla-a__num">Tiempo sin sereno cerca</th></tr></thead>
                         <tbody>
                             @foreach (var z in c.Zonas.Take(6))
                             {
                                 <tr data-zona="@m.Zonas.Nombre(z.Sur, z.Oeste)">
                                     <td>@m.Zonas.Nombre(z.Sur, z.Oeste)</td>
-                                    <td><span class="medidor-a" aria-hidden="true"><i style="width:@(Math.Round(z.PorcentajeCubierto))%"></i></span>@Formato.Porcentaje(z.PorcentajeCubierto, 0)@if (z.PorcentajeCubierto < 50) {<span class="visualmente-oculto"> (menos de la mitad)</span>}</td>
+                                    <td><span class="@(z.PorcentajeCubierto < 50 ? "medidor-a medidor-a--alerta" : "medidor-a")" aria-hidden="true"><i style="width:@(Math.Round(z.PorcentajeCubierto))%"></i></span>@(z.PorcentajeCubierto < 50 ? "▲ " : "")@Formato.Porcentaje(z.PorcentajeCubierto, 0)@if (z.PorcentajeCubierto < 50) {<span class="visualmente-oculto"> (menos de la mitad)</span>}</td>
                                     <td class="tabla-a__num">@z.Casos</td>
                                     <td class="tabla-a__num">@Formato.Horas(z.HorasSinCobertura)</td>
                                 </tr>

@@ -938,19 +938,49 @@ a.fila-a__cifra {
 
 .mapa-a--grande {
   height: 100%;
-  min-height: 34rem;
+  min-height: 24rem;
   border-radius: var(--radio-superficie);
 }
 
 .zona-a {
   display: grid;
   place-items: center;
-  font: 700 12px/1 var(--fuente);
-  color: var(--color-marino);
-  text-shadow: 0 0 3px #fff, 0 0 3px #fff;
-  white-space: nowrap;
   pointer-events: none;
 }
+
+.zona-a__etiqueta {
+  display: grid;
+  gap: 1px;
+  place-items: center;
+  min-width: 2.75rem;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow: 0 1px 3px rgb(11 31 68 / 0.25);
+  font-family: var(--fuente);
+  line-height: 1.05;
+  white-space: nowrap;
+  color: var(--color-marino);
+}
+
+.zona-a__etiqueta b { font-size: 12px; font-weight: 700; }
+.zona-a__etiqueta i { font-size: 11px; font-style: normal; font-weight: 600; color: var(--color-texto-secundario); font-variant-numeric: tabular-nums; }
+.zona-a__etiqueta--alerta { background: var(--color-advertencia-fondo); }
+.zona-a__etiqueta--alerta i { color: var(--color-advertencia); font-weight: 700; }
+
+.zona-celda { transition: fill-opacity 120ms ease, stroke-width 120ms ease; }
+
+.zona-globo.leaflet-tooltip {
+  padding: 6px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  box-shadow: var(--sombra-2);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: 600 12px/1.35 var(--fuente);
+}
+
+.zona-globo.leaflet-tooltip::before { display: none; }
 
 .punto-a {
   display: grid;
@@ -996,6 +1026,8 @@ a.fila-a__cifra {
   grid-template-columns: minmax(0, 1.55fr) minmax(20rem, 1fr);
   gap: var(--espacio-4);
   align-items: stretch;
+  /* Ocupa lo que queda de la pantalla bajo los filtros; el pie del MVP se queda abajo. */
+  flex: 1 1 auto;
 }
 
 .cobertura-a__lado {
@@ -1003,6 +1035,31 @@ a.fila-a__cifra {
   flex-direction: column;
   gap: var(--espacio-4);
 }
+
+.cobertura-a__lado { min-height: 0; }
+
+/* La lista de zonas toma lo que sobra de la columna y, si no cabe, se desplaza dentro de su tarjeta (la peor zona va primero). */
+.cobertura-a__lado > .tarjeta-a--llena {
+  flex: 1 1 0;
+  min-height: 11rem;
+  overflow: auto;
+}
+
+.cobertura-a .tabla-a td { white-space: nowrap; }
+
+/* Cobertura y lo que se repite ocupan toda la pantalla bajo la barra superior; en pantallas bajas se deja que la página se desplace. */
+.analitica[data-analitica="cobertura"],
+.analitica[data-analitica="repite"] {
+  height: max(calc(100dvh - 3.75rem), 42rem);
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.analitica[data-analitica="cobertura"] .analitica__trabajo,
+.analitica[data-analitica="repite"] .analitica__trabajo { min-height: 0; }
+
+.analitica[data-analitica="cobertura"] .cobertura-a,
+.analitica[data-analitica="repite"] .cobertura-a { min-height: 0; }
 
 .mapa-protagonista {
   position: relative;
@@ -1025,22 +1082,65 @@ a.fila-a__cifra {
 .flotante-a {
   position: absolute;
   z-index: 500;
-  top: var(--espacio-4);
-  left: var(--espacio-4);
-  max-width: 30rem;
-  padding: var(--espacio-4) var(--espacio-5);
-  background: var(--color-superficie);
+  top: var(--espacio-3);
+  left: var(--espacio-3);
+  width: min(21rem, calc(100% - 2 * var(--espacio-3)));
+  padding: var(--espacio-3) 2.5rem var(--espacio-3) var(--espacio-4);
+  background: rgb(255 255 255 / 0.96);
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-superficie);
   box-shadow: var(--sombra-2);
 }
 
 .flotante-a .respuesta__titular {
-  font-size: var(--texto-xl);
+  font-size: var(--texto-base, 1rem);
+  line-height: 1.3;
+}
+
+.flotante-a .respuesta__lectura {
+  margin-top: var(--espacio-1);
+  font-size: var(--texto-xs);
+  line-height: 1.45;
 }
 
 .flotante-a .boton {
-  margin-top: var(--espacio-3);
+  margin-top: var(--espacio-2);
+}
+
+.flotante-a__plegar {
+  position: absolute;
+  top: var(--espacio-2);
+  right: var(--espacio-2);
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-pequeno);
+  background: transparent;
+  color: var(--color-texto-secundario);
+  cursor: pointer;
+}
+
+.flotante-a__plegar:hover { background: var(--color-superficie-hundida); color: var(--color-marino); }
+.flotante-a__plegar:focus-visible { outline: 2px solid var(--color-foco); outline-offset: 1px; }
+.flotante-a__plegar svg { transition: transform 160ms ease; }
+
+/* Plegada: queda solo el título, en una línea. */
+.flotante-a--plegada .respuesta__lectura,
+.flotante-a--plegada .boton { display: none; }
+.flotante-a--plegada .respuesta__titular {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--texto-sm);
+}
+.flotante-a--plegada .flotante-a__plegar svg { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flotante-a__plegar svg,
+  .zona-celda { transition: none; }
 }
 
 .leyenda-mapa-a {
@@ -1068,6 +1168,10 @@ a.fila-a__cifra {
 .rampa-a--cobertura i {
   background: linear-gradient(90deg, var(--rampa-1), var(--rampa-3), var(--rampa-5), var(--rampa-7));
 }
+
+.leyenda-mapa-a__nota { flex-basis: 100%; color: var(--color-texto-terciario); }
+.leyenda-a__alerta { background: var(--color-advertencia-fondo); border: 1.5px dashed var(--color-advertencia); }
+.leyenda-a__sereno-libre-claro { background: #A8D5BC; }
 
 /* Prioridades: barra oscura hasta la mitad, clara hasta 9 de cada 10, línea del objetivo */
 .prioridades-a {
@@ -1485,20 +1589,23 @@ a.fila-a__cifra {
 }
 
 .horas-a__rotulo {
+  display: grid;
   align-self: center;
   font-size: var(--texto-xs);
   color: var(--color-texto-secundario);
 }
 
+.horas-a__rotulo small { font-size: 11px; color: var(--color-texto-terciario); }
+
 .horas-a__barras {
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 4.5rem;
+  height: 5rem;
 }
 
 .horas-a__barras--bajas {
-  height: 3rem;
+  height: 3.25rem;
 }
 
 .horas-a__barras > span {
@@ -1519,9 +1626,12 @@ a.fila-a__cifra {
 }
 
 .horas-a__conclusion {
-  margin: var(--espacio-3) 0 0;
+  margin: var(--espacio-2) 0 0;
   font-size: var(--texto-sm);
+  line-height: 1.45;
 }
+
+.horas-a__conclusion b { color: var(--color-marino); }
 
 .tabla-a {
   width: 100%;
@@ -1570,6 +1680,8 @@ a.fila-a__cifra {
   height: 100%;
   background: var(--rampa-5);
 }
+
+.medidor-a--alerta i { background: var(--color-advertencia); }
 
 /* ── Lo que se repite: zonas en alza ── */
 .alzas-a {
@@ -1920,4 +2032,12 @@ a.fila-a__cifra {
   .rejilla-a--dos {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .analitica[data-analitica="cobertura"],
+  .analitica[data-analitica="repite"] {
+    height: auto;
+    min-height: calc(100vh - 3.75rem);
+  }
+
+  .cobertura-a__lado > .tarjeta-a--llena { overflow: visible; }
 }
