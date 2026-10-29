@@ -113,21 +113,28 @@
 }
 
 <div class="consola consola__ancho">
-    <div class="consola__pasos">
-        <partial name="_ProgresoCaso" model="Model.Pasos" />
-        <dl class="consola__resumen">
-            <div><dt>Registrado</dt><dd><time datetime="@sos.RegistradoEn.ToString("O", inv)">@Corta(sos.RegistradoEn)</time></dd></div>
-            @if (sos.Clasificacion is { } clasificado)
-            {
-                <div><dt>Tipificación</dt><dd>@clasificado.Categoria</dd></div>
-            }
-            @if (sos.Asignacion is { FinalizadaEn: null } enCurso)
-            {
-                <div><dt>Sereno</dt><dd>@enCurso.Sereno</dd></div>
-            }
-            <div><dt>Intentos de contacto</dt><dd>@sos.Intentos.Count</dd></div>
-            <div><dt>Identificador</dt><dd title="@sos.Id">@sos.Id.ToString()[..8].ToUpperInvariant()</dd></div>
-        </dl>
+    @* Columna izquierda, fija al desplazarse: quién es el ciudadano (para decidir rápido) y en qué paso va el caso. *@
+    <div class="consola__lateral">
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
+        <div class="consola__pasos">
+            <partial name="_ProgresoCaso" model="Model.Pasos" />
+            <dl class="consola__resumen">
+                <div><dt>Registrado</dt><dd><time datetime="@sos.RegistradoEn.ToString("O", inv)">@Corta(sos.RegistradoEn)</time></dd></div>
+                @if (sos.Clasificacion is { } clasificado)
+                {
+                    <div><dt>Tipificación</dt><dd>@clasificado.Categoria</dd></div>
+                }
+                @if (sos.Asignacion is { FinalizadaEn: null } enCurso)
+                {
+                    <div><dt>Sereno</dt><dd>@enCurso.Sereno</dd></div>
+                }
+                <div><dt>Intentos de contacto</dt><dd>@sos.Intentos.Count</dd></div>
+                <div><dt>Identificador</dt><dd title="@sos.Id">@sos.Id.ToString()[..8].ToUpperInvariant()</dd></div>
+            </dl>
+        </div>
     </div>
 
     <div class="consola__trabajo">
@@ -450,13 +457,6 @@
             }
             <p class="texto-secundario detalle-caso__nota">Las referencias que indique el ciudadano se registran aparte y no cambian esta ubicación.</p>
         </section>
-
-        @if (Model.Ficha is { } ficha)
-        {
-            <partial name="_FichaCiudadano" model="ficha" />
-        }
-
-
 
         <section class="superficie seccion-caso" aria-labelledby="titulo-clasificacion">
             <h2 id="titulo-clasificacion" class="seccion-caso__titulo">Clasificación</h2>

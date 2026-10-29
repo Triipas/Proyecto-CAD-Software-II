@@ -1,8 +1,9 @@
 /*
   Consola de incidente (27/10/2026): el detalle de un caso como en un software de despacho. Una barra del caso fija bajo la
   barra superior, en una sola fila (quién, estado, cuánto lleva sin despachar, si la página está en vivo y el historial);
-  debajo tres zonas: los pasos del caso en vertical con su resumen, el trabajo de ahora en el centro y el expediente a la
-  derecha, con la ubicación primero. Se apoya en detalle-caso.css (siguiente acción, historial, ficha).
+  debajo tres zonas: a la izquierda, fija, quién es el ciudadano (ficha) y los pasos del caso en vertical con su resumen; el
+  trabajo de ahora en el centro y el expediente a la derecha, con la ubicación primero. Se apoya en detalle-caso.css
+  (siguiente acción, historial, ficha).
 */
 
 .pagina--consola {
@@ -382,7 +383,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Pasos (columna izquierda en escritorio) ──────────── */
+/* ── Columna izquierda: ficha del ciudadano y pasos ───── */
+.consola__lateral {
+  display: grid;
+  gap: var(--espacio-4);
+  min-width: 0;
+}
+
 .consola__pasos .progreso {
   border: 0;
   background: transparent;
@@ -395,19 +402,27 @@
 
 @media (min-width: 80rem) {
   .consola {
-    grid-template-columns: 12.5rem minmax(0, 1fr) minmax(22rem, 26rem);
+    grid-template-columns: 16rem minmax(0, 1fr) minmax(21rem, 24rem);
     gap: var(--espacio-6);
   }
 
-  /* Fija bajo la barra superior y la barra del caso: el paso actual nunca queda tapado. */
-  .consola__pasos {
+  /* Fija bajo la barra superior y la barra del caso: el ciudadano y el paso actual nunca quedan tapados. Si no cabe todo en
+     la altura de la ventana, se desplaza solo esta columna (lo último, el resumen, queda abajo); la ficha va siempre primero. */
+  .consola__lateral {
+    --arriba-lateral: calc(60px + var(--alto-barra-caso) + var(--espacio-5));
     position: sticky;
-    top: calc(60px + var(--alto-barra-caso) + var(--espacio-5));
+    top: var(--arriba-lateral);
+    max-height: calc(100vh - var(--arriba-lateral) - var(--espacio-4));
+    margin: -3px;
+    padding: 3px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 
   .consola__pasos .progreso {
     grid-auto-flow: row;
-    grid-auto-rows: 2.75rem;
+    grid-auto-rows: 2.125rem;
     padding: 0;
   }
 
@@ -445,8 +460,8 @@
   .consola__resumen {
     display: grid;
     gap: var(--espacio-3);
-    margin: var(--espacio-5) 0 0;
-    padding: var(--espacio-4) var(--espacio-2) 0;
+    margin: var(--espacio-3) 0 0;
+    padding: var(--espacio-4) var(--espacio-2) var(--espacio-2);
     border-top: var(--grosor-borde) solid var(--color-borde);
   }
 
@@ -474,7 +489,7 @@
     grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
   }
 
-  .consola__pasos {
+  .consola__lateral {
     grid-column: 1 / -1;
   }
 }
@@ -540,6 +555,89 @@
   margin: 0;
   font-size: var(--texto-sm);
   color: var(--color-texto-secundario);
+}
+
+/* ── Ficha del ciudadano en la columna izquierda ──────── */
+.consola__lateral .ficha-ciudadano {
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.consola__lateral .ficha-ciudadano .seccion-caso__titulo {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0;
+  color: var(--color-marino);
+}
+
+.consola__lateral .ficha__avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.consola__lateral .ficha__nombre {
+  font-size: var(--texto-md);
+  line-height: 1.25;
+}
+
+.consola__lateral .ficha-ciudadano .datos {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3) var(--espacio-3);
+  padding-top: var(--espacio-3);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+/* Contacto de emergencia y dirección, a lo ancho; documento y edad comparten fila. */
+.consola__lateral .ficha-ciudadano .dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.consola__lateral .ficha-ciudadano .datos--en-linea > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+.consola__lateral .ficha-ciudadano .datos dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola__lateral .ficha-ciudadano .datos dd {
+  font-size: var(--texto-sm);
+  overflow-wrap: anywhere;
+}
+
+/* Un teléfono es una acción: el enlace tiene el tamaño de un objetivo, no el de una palabra. */
+.consola__lateral .ficha-ciudadano .datos__telefono {
+  display: inline-block;
+  padding-block: 2px;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  font-variant-numeric: tabular-nums;
+}
+
+.consola__lateral .ficha__telefono .datos__telefono {
+  font-size: var(--texto-md);
+}
+
+.consola__lateral .dato--vacio dd {
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-terciario);
+}
+
+/* Sin la columna fija (pantalla de menos de 80 rem): la ficha ocupa el ancho y reparte sus datos en columnas. */
+@media (max-width: 79.99rem) {
+  .consola__lateral .ficha-ciudadano .datos {
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  }
+
+  .consola__lateral .ficha-ciudadano .dato--ancho {
+    grid-column: auto;
+  }
 }
 
 /* El mapa es el dato principal del expediente: más alto y sin marco propio (vive dentro de la sección). */

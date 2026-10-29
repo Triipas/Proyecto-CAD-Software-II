@@ -193,21 +193,28 @@
 }
 
 <div class="consola consola__ancho">
-    <div class="consola__pasos">
-        <partial name="_ProgresoCaso" model="Model.Pasos" />
-        <dl class="consola__resumen">
-            <div><dt>Registrado</dt><dd><time datetime="@r.RegistradoEn.ToString("O", inv)">@Corta(r.RegistradoEn)</time></dd></div>
-            <div><dt>Ocurrió</dt><dd>@Corta(r.OcurridoAproximadamenteEn)</dd></div>
-            @if (r.RevisionIniciadaPor is { } revisor)
-            {
-                <div><dt>Revisa</dt><dd>@revisor</dd></div>
-            }
-            @if (s?.Asignacion is { FinalizadaEn: null } enCurso)
-            {
-                <div><dt>Sereno</dt><dd>@enCurso.Sereno</dd></div>
-            }
-            <div><dt>Identificador</dt><dd title="@r.Id">@r.Id.ToString()[..8].ToUpperInvariant()</dd></div>
-        </dl>
+    @* Columna izquierda, fija al desplazarse: quién es el ciudadano (para decidir rápido) y en qué paso va el caso. *@
+    <div class="consola__lateral">
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
+        <div class="consola__pasos">
+            <partial name="_ProgresoCaso" model="Model.Pasos" />
+            <dl class="consola__resumen">
+                <div><dt>Registrado</dt><dd><time datetime="@r.RegistradoEn.ToString("O", inv)">@Corta(r.RegistradoEn)</time></dd></div>
+                <div><dt>Ocurrió</dt><dd>@Corta(r.OcurridoAproximadamenteEn)</dd></div>
+                @if (r.RevisionIniciadaPor is { } revisor)
+                {
+                    <div><dt>Revisa</dt><dd>@revisor</dd></div>
+                }
+                @if (s?.Asignacion is { FinalizadaEn: null } enCurso)
+                {
+                    <div><dt>Sereno</dt><dd>@enCurso.Sereno</dd></div>
+                }
+                <div><dt>Identificador</dt><dd title="@r.Id">@r.Id.ToString()[..8].ToUpperInvariant()</dd></div>
+            </dl>
+        </div>
     </div>
 
     <div class="consola__trabajo">
@@ -559,13 +566,6 @@
             </dl>
             <p class="texto-secundario detalle-caso__nota">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
         </section>
-
-        @if (Model.Ficha is { } ficha)
-        {
-            <partial name="_FichaCiudadano" model="ficha" />
-        }
-
-
 
         <section class="superficie seccion-caso" aria-labelledby="titulo-categoria">
             <h2 id="titulo-categoria" class="seccion-caso__titulo">Categoría</h2>
