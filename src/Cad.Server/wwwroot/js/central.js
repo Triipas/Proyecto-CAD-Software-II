@@ -550,7 +550,7 @@
   let arActivo = null; // id del sereno resaltado en la lista (se conserva al rehacerla)
   let arCerradaPara = null; // el operador cerró la barra de este caso: vuelve al elegir otro
 
-  const sinTildes = (texto) => texto.normalize("NFD").replace(/\p{M}/g, "").toLowerCase();
+  const sinTildes = (texto) => texto.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 
   function actualizarBarraAsignacion() {
     const sos = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);

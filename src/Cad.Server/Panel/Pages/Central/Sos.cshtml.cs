@@ -63,6 +63,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // HU20: serenos que pueden recibir el caso (operativos y sin asignación vigente).
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
 
+    // Los mismos, ordenados por cercanía al SOS y con el más cercano sugerido (29/10/2026).
+    public VistaAsignacion VistaAsignacion => VistaAsignacion.Crear(Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud, "al SOS",
+        Sos.Latitud, Sos.Longitud, SerenosDisponibles, ZonaHoraria);
+
     // HU13-CA04: solo las categorías del catálogo vigente (DP07).
     public IReadOnlyList<CategoriaVista> Categorias { get; private set; } = [];
 

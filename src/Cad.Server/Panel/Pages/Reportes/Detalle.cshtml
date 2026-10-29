@@ -75,6 +75,7 @@
     ("No se pudo registrar la decisión", Model.ErrorDecision),
     ("No se registró el inicio de atención", Model.ErrorAtencion),
     ("No se pudo cerrar el reporte", Model.ErrorCierre),
+    ("No se pudo asignar el reporte", Model.ErrorAsignacion),
     ("No se pudo descartar el reporte", Model.ErrorDescarte),
     ("No se pudo reasignar el reporte", Model.ErrorReasignacion) })
 {
@@ -163,10 +164,8 @@
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Asigna el reporte a un sereno disponible</h2>
                         <span class="siguiente__paso">Paso 3 de 3</span>
                     </div>
-                    <p data-pendiente-asignacion>Pendiente de asignación. Asígnalo a un sereno disponible desde la central, como un SOS.</p>
-                    <div class="acciones">
-                        <a class="boton boton--principal" href="/panel/central#titulo-reportes">Ir a la central</a>
-                    </div>
+                    <p data-pendiente-asignacion class="texto-secundario">Pendiente de asignación. El sereno disponible más cercano al lugar del hecho viene sugerido.</p>
+                    <partial name="_AsignarCaso" model="Model.VistaAsignacion" />
                     break;
                 case Accion.EsperarDesplazamiento:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">@s!.Asignacion!.Sereno recibió el despacho</h2>
@@ -472,6 +471,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/asignar-caso.js" asp-append-version="true"></script>
     @if (r.ConPunto)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>

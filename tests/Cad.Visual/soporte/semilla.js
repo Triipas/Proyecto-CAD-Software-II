@@ -108,8 +108,8 @@ export async function sembrar(navegador, secretos) {
   await operador.getByLabel('Categoría', { exact: true }).selectOption({ index: 1 });
   await operador.getByRole('button', { name: 'Clasificar el SOS' }).click();
   await operador.waitForLoadState('networkidle');
-  await operador.getByRole('radio', { name: /Sara/ }).check();
-  await operador.getByRole('button', { name: 'Asignar el caso' }).click();
+  // Sara es la única disponible y el SOS tiene ubicación: viene sugerida y se asigna con su botón.
+  await operador.getByRole('button', { name: /^Asignar a Sara/ }).click();
   await operador.waitForLoadState('networkidle');
 
   const categoriasSereno = await api('/api/sereno/categorias', { metodo: 'GET', token: sara });

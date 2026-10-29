@@ -1,0 +1,64 @@
+@model Cad.Server.Panel.Pages.VistaAsignacion
+@* Asignación a un sereno disponible, en el detalle de un SOS o de un reporte (HU20, 29/10/2026). Si se puede medir, el más
+   cercano al caso viene sugerido con su distancia y se asigna con un solo botón; los demás, ordenados por cercanía, se buscan
+   por nombre (asignar-caso.js). Es un formulario normal (PRG) con el mismo identificador de solicitud que antes. *@
+@if (Model.Disponibles.Count == 0)
+{
+    <p class="texto-secundario">No hay serenos disponibles en este momento (operativos y sin asignación vigente).</p>
+}
+else
+{
+    <div class="asignar" data-asignar-caso>
+        @if (Model.Sugerido is { } sugerido)
+        {
+            <form method="post" asp-page-handler="Asignar" class="asignar__sugerido" data-formulario novalidate>
+                <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.IdSolicitud" />
+                <input type="hidden" name="Asignacion.SerenoId" value="@sugerido.Id" />
+                <p class="asignar__nombre">@sugerido.Nombre</p>
+                <p class="asignar__datos">
+                    <span class="chip chip--progreso"><partial name="_Icono" model="@("ubicacion")" />Más cercano @Model.Lugar · <span class="asignar__distancia">@sugerido.Distancia</span></span>
+                    <span class="texto-secundario">@sugerido.Detalle</span>
+                </p>
+                <div class="acciones">
+                    <button type="submit" class="boton boton--principal" data-texto-carga="Asignando…">Asignar a @sugerido.Nombre</button>
+                </div>
+            </form>
+        }
+        @if (Model.Otros.Count > 0)
+        {
+            var otros = Model.Otros;
+            var abierto = Model.Sugerido is null;
+            <details class="asignar__otros" open="@abierto">
+                <summary>@(Model.Sugerido is null ? "Serenos disponibles" : "Elegir a otro sereno") <span class="asignar__cuenta">(@otros.Count)</span></summary>
+                <form method="post" asp-page-handler="Asignar" class="formulario asignar__lista" data-formulario novalidate>
+                    <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.IdSolicitud" />
+                    @if (otros.Count > 5)
+                    {
+                        <div class="campo">
+                            <label class="visualmente-oculto" for="asignar-buscar">Buscar un sereno disponible por nombre</label>
+                            <input class="campo__control" id="asignar-buscar" type="search" placeholder="Buscar sereno por nombre" autocomplete="off" data-asignar-buscar />
+                            <p class="texto-secundario" role="status" data-asignar-sin-resultados hidden>Ningún sereno disponible se llama así.</p>
+                        </div>
+                    }
+                    <fieldset class="opciones">
+                        <legend class="visualmente-oculto">Sereno disponible</legend>
+                        @foreach (var sereno in otros)
+                        {
+                            var idOpcion = $"Asignacion_Sereno_{sereno.Id:N}";
+                            <label class="opcion" for="@idOpcion" data-asignar-opcion data-nombre="@sereno.Nombre">
+                                <input type="radio" id="@idOpcion" name="Asignacion.SerenoId" value="@sereno.Id" required />
+                                <span>
+                                    @sereno.Nombre
+                                    <span class="texto-secundario">· @(sereno.Metros is null ? sereno.Detalle : $"a {sereno.Distancia} · {sereno.Detalle}")</span>
+                                </span>
+                            </label>
+                        }
+                    </fieldset>
+                    <div class="acciones">
+                        <button type="submit" class="boton @(Model.Sugerido is null ? "boton--principal" : "boton--secundario")" data-texto-carga="Asignando…">Asignar al sereno elegido</button>
+                    </div>
+                </form>
+            </details>
+        }
+    </div>
+}

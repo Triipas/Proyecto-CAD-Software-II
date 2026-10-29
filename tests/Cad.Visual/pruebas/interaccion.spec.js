@@ -60,6 +60,9 @@ test.describe('Central: interacción', () => {
     const buscar = barra.locator('[data-ar-buscar]');
     await expect(buscar).toBeFocused();
     await expect(barra.getByRole('option').first()).toBeVisible();
+    // Sin distinguir mayúsculas ni tildes: «SARÁ» encuentra a «Sara».
+    await buscar.fill('SARÁ');
+    await expect(barra.getByRole('option')).toHaveCount(1);
     await buscar.fill('zzzz');
     await expect(barra.getByText('Ningún sereno disponible se llama así.')).toBeVisible();
   });

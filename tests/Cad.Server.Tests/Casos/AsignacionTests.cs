@@ -56,6 +56,26 @@ public class AsignacionTests(FabricaCad fabrica)
         return await navegador.PostAsync($"{Detalle(casoId)}?handler=Asignar", new FormUrlEncodedContent(campos));
     }
 
+    [Fact]
+    public async Task ElDetalleDeUnSos_SugiereAlSerenoDisponibleMasCercano_YLosDemasQuedanEnOtros()
+    {
+        // HU20 (29/10/2026): como en la central, el detalle sugiere al más cercano con su distancia; sirve igual para
+        // «Asignar sin verificar» (aún sin contacto ni clasificación) que para el paso de asignar.
+        var casoId = await SosAsync(); // -12.0464, -77.0428
+        var (operador, _) = await PanelAsync();
+        var (cercaApp, cerca) = await SerenoAsync();
+        var (lejosApp, lejos) = await SerenoAsync();
+        await cercaApp.PostAsJsonAsync("/api/sereno/posiciones", new PosicionSerenoEnviada(-12.0470, -77.0430, 7, DateTimeOffset.UtcNow));
+        await lejosApp.PostAsJsonAsync("/api/sereno/posiciones", new PosicionSerenoEnviada(-12.0900, -77.0100, 7, DateTimeOffset.UtcNow));
+
+        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync(Detalle(casoId)));
+
+        Assert.Contains("Más cercano al SOS", html);
+        Assert.Matches($"(?s)asignar__sugerido.*?name=\"Asignacion.SerenoId\" value=\"{cerca.Id}\".*?Asignar a ", html);
+        Assert.Matches($"(?s)asignar__otros.*?value=\"{lejos.Id}\"", html);
+        Assert.DoesNotMatch($"(?s)asignar__sugerido.*?value=\"{lejos.Id}\".*?asignar__otros", html);
+    }
+
     private Task<List<Asignacion>> AsignacionesDelCasoAsync(Guid casoId) =>
         fabrica.ConBaseDatosAsync(db => db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync());
 

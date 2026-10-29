@@ -36,6 +36,12 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     public Dictionary<string, string[]> ErroresReasignacion { get; private set; } = [];
     public string? ErrorReasignacion { get; private set; }
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
+    public string? ErrorAsignacion { get; private set; }
+
+    // Un reporte admitido («Pendiente») se asigna aquí mismo: los serenos disponibles, ordenados por cercanía al lugar del
+    // hecho y con el más cercano sugerido (29/10/2026).
+    public VistaAsignacion VistaAsignacion => VistaAsignacion.Crear(Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud, "al lugar del hecho",
+        Reporte.LatitudHecho, Reporte.LongitudHecho, SerenosDisponibles, ZonaHoraria);
     public bool PuedeReasignarse => Seguimiento?.Asignacion is { FinalizadaEn: null } && Reporte.Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino;
     public VistaReasignacion VistaReasignacion => new($"/panel/reportes/{Reporte.Id}", Seguimiento?.Asignacion?.Sereno ?? "",
         SerenosDisponibles.Select(s => new SerenoParaReasignar(s.Id, s.Nombre, s.UltimaPosicionEn is { } h
@@ -217,26 +223,43 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         }
     }
 
-    // HU20-CA07: un reporte admitido se asigna desde la central con las mismas reglas que un SOS. Vuelve a la central.
+    // HU20-CA07: un reporte admitido se asigna con las mismas reglas que un SOS, desde la central (Volver = "central") o
+    // desde su propio detalle (29/10/2026), donde vuelve al reporte.
     public async Task<IActionResult> OnPostAsignarAsync(Guid id, CancellationToken ct)
     {
+        var volverACentral = Asignacion.Volver == "central";
         switch (await asignar.EjecutarAsync(id, Asignacion.SerenoId, User.IdUsuario(), Asignacion.IdSolicitud, ct))
         {
             case ResultadoAsignacion.Asignado or ResultadoAsignacion.YaAsignado:
-                TempData[nameof(Central.IndexModel.Mensaje)] = "Reporte asignado.";
                 TempData[SonidoPanel.Clave] = SonidoPanel.CasoAsignado;
+                if (!volverACentral)
+                    return Hecho(id, "Reporte asignado.", "El sereno ya no figura como disponible.");
+                TempData[nameof(Central.IndexModel.Mensaje)] = "Reporte asignado.";
                 TempData[nameof(Central.IndexModel.DetalleMensaje)] = "El sereno ya no figura como disponible.";
                 break;
             case ResultadoAsignacion.CasoNoEncontrado:
                 return NotFound();
             case ResultadoAsignacion.Rechazado r:
+                if (!volverACentral)
+                    return await ConErrorDeAsignacionAsync(id, r.Motivo, ct);
                 TempData[nameof(Central.IndexModel.ErrorAccion)] = r.Motivo;
                 break;
             case ResultadoAsignacion.Invalido i:
+                if (!volverACentral)
+                    return await ConErrorDeAsignacionAsync(id, i.Motivo, ct);
                 TempData[nameof(Central.IndexModel.ErrorAccion)] = i.Motivo;
                 break;
         }
         return RedirectToPage("/Central/Index");
+    }
+
+    private async Task<IActionResult> ConErrorDeAsignacionAsync(Guid id, string motivo, CancellationToken ct)
+    {
+        if (!await CargarAsync(id, ct))
+            return NotFound();
+        ErrorAsignacion = motivo;
+        Asignacion = new FormularioAsignacion { IdSolicitud = Guid.NewGuid() };
+        return Page();
     }
 
     // HU23-CA02: el operador registra el inicio de atención y queda como responsable.
@@ -339,7 +362,8 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         Seguimiento = reporte.EnAtencionOperativa ? await consultarSeguimiento.EjecutarAsync(id, ct, cualquierOrigen: true) : null;
         CategoriaId ??= reporte.CategoriaActualId;
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
-        SerenosDisponibles = Seguimiento?.Asignacion is { FinalizadaEn: null }
+        // Para reasignar (con una asignación vigente) y para asignar (reporte admitido, aún sin sereno).
+        SerenosDisponibles = Seguimiento?.Asignacion is { FinalizadaEn: null } || reporte.Estado == EstadoCaso.Pendiente
             ? (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList()
             : [];
         Descartado = reporte.Estado == EstadoCaso.Descartada ? await consultarDescarte.EjecutarAsync(id, ct) : null;
