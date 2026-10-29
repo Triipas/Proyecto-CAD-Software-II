@@ -140,6 +140,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
                 "tiempo" => await TiempoAsync(ct),
                 "falsos" => await FalsosAsync(ct),
                 "cobertura" => await CoberturaAsync(ct),
+                "reasigna" => await ReasignaAsync(ct),
                 "repite" => await RepiteAsync(ct),
                 "ciudadano" => await CiudadanoAsync(ct),
                 _ => await SistemaAsync(ct),
@@ -198,6 +199,12 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         await cache.ObtenerAsync(Clave("cobertura", Rango), () => S<ConsultarCobertura>().EjecutarAsync(Rango, ct)),
         await cache.ObtenerAsync(Clave("demanda", Rango), () => S<ConsultarDemandaYOferta>().EjecutarAsync(Rango, ct)),
         await S<ConsultarSerenos>().EjecutarAsync(ct));
+
+    public sealed record VistaReasigna(ResumenReasignaciones Actual, ResumenReasignaciones Anterior);
+
+    private async Task<VistaReasigna> ReasignaAsync(CancellationToken ct) => new(
+        await cache.ObtenerAsync(Clave("reasigna", Rango), () => S<ConsultarReasignaciones>().EjecutarAsync(Rango, ct)),
+        await cache.ObtenerAsync(Clave("reasigna", Anterior), () => S<ConsultarReasignaciones>().EjecutarAsync(Anterior, ct)));
 
     public sealed record VistaRepite(IReadOnlyList<PuntoCritico> Puntos, IReadOnlyList<ZonaEnAlza> Alzas, DateTimeOffset FinSemana);
 
@@ -258,6 +265,14 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
                 ? new Resumen($"▲ {sinCubrir} {(sinCubrir == 1 ? "zona" : "zonas")} sin cubrir", "aviso")
                 : cobertura.Zonas.Count == 0 ? new Resumen("Sin zonas con 3+ casos") : new Resumen("✓ Zonas cubiertas", "bien")
             : new Resumen("Zonas, turnos y serenos");
+        await Intentar("reasigna", async () =>
+        {
+            var r = await cache.ObtenerAsync(Clave("reasigna", Rango), () => S<ConsultarReasignaciones>().EjecutarAsync(Rango, ct));
+            return r.PorcentajeReasignados is not { } p ? new Resumen("Sin casos asignados")
+                : r.CasosReasignados == 0 ? new Resumen("✓ Ninguno reasignado", "bien")
+                : p > Opciones.ReferenciaReasignadosPorcentaje ? new Resumen($"▲ {Formato.Porcentaje(p, 0)} reasignados", "aviso")
+                : new Resumen($"{Formato.Porcentaje(p, 0)} reasignados");
+        });
         await Intentar("repite", async () =>
         {
             var puntos = (await cache.ObtenerAsync(Clave("puntos", Rango), () => S<ConsultarPuntosCriticos>().EjecutarAsync(Rango, ct))).Count;

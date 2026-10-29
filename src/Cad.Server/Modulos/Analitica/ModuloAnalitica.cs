@@ -41,6 +41,10 @@ public sealed class OpcionesAnalitica
     // cuántos casos se dan medianas y p90 (con menos, se muestra cada caso: un percentil de tres casos engaña).
     public int ObjetivoRespuestaSosMinutos { get; set; } = 15;
     public int MinimoParaPercentiles { get; set; } = 5;
+
+    // «¿Se reasigna mucho?» (29/10/2026): desde qué porcentaje de casos asignados reasignados conviene mirarlo. Provisional hasta que
+    // el PO fije el objetivo del servicio.
+    public double ReferenciaReasignadosPorcentaje { get; set; } = 10;
 }
 
 public static class ModuloAnalitica
@@ -60,6 +64,7 @@ public static class ModuloAnalitica
         services.AddScoped<ConsultarAdopcion>();
         services.AddScoped<MarcasCentral>();
         services.AddScoped<ConsultarSaludSistema>();
+        services.AddScoped<ConsultarReasignaciones>();
         services.AddScoped<ConsultarCasosAtascados>();
         services.AddScoped<ConsultarDemandaEsperada>();
         services.AddScoped<GenerarInformePeriodo>();
