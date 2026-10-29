@@ -1,4 +1,4 @@
-"""Dataset simulado de 1000 casos en José Luis Bustamante y Rivero (Arequipa) para la demostración del Sistema Integrado CAD.
+"""Dataset simulado de 4000 casos en José Luis Bustamante y Rivero (Arequipa) para la demostración del Sistema Integrado CAD.
 
 Todos los datos son ficticios, pero sus proporciones salen de fuentes reales (ver README.md): la victimización por tipo de
 delito del INEI (ENAPRES), la mezcla de intervenciones de un serenazgo municipal, la población del distrito (censo 2017) y
@@ -29,7 +29,7 @@ LIMA = timezone(timedelta(hours=-5))
 FIN = datetime(2026, 11, 30, 20, 0, tzinfo=LIMA)
 DIAS = 91  # 13 semanas: alcanza para «7 días», «30 días», el periodo anterior y las cohortes semanales.
 INICIO = FIN - timedelta(days=DIAS)
-TOTAL_CASOS = 1000
+TOTAL_CASOS = 4000  # unos 44 por día: el orden de las intervenciones de un serenazgo de un distrito parecido (README)
 
 # ───────────────────────────── Catálogos del sistema (mismos códigos que Cad.Contratos) ─────────────────────────────
 CATEGORIAS = {
@@ -100,10 +100,11 @@ HORAS = {
 }
 
 # Personas. Población 2017 ajustada: 84 251 (INEI vía citypopulation.de); una app municipal nueva llega a una fracción.
-CIUDADANOS = 430
+CIUDADANOS = 1300
 SERENOS = 36  # 12 por turno, 3 por sector; estimación (no hay cifra pública del distrito, ver README)
 OPERADORES = 6  # 2 por turno
-SESIONES_ACOMPANAMIENTO = 120
+SESIONES_ACOMPANAMIENTO = 360
+URGENTES_DE_ACOMPANAMIENTO = 24  # sesiones que terminan en un caso urgente
 
 TURNOS = {"Mañana": (6, 14), "Tarde": (14, 22), "Noche": (22, 6)}
 
@@ -262,12 +263,15 @@ def iso(t):
 
 # ───────────────────────────── Personas ficticias ─────────────────────────────
 NOMBRES_F = ["María", "Rosa", "Carmen", "Ana", "Luz", "Silvia", "Patricia", "Gladys", "Milagros", "Lucía", "Valeria", "Camila",
-             "Fiorella", "Daniela", "Andrea", "Ximena", "Karla", "Sonia", "Norma", "Elena", "Yesenia", "Lourdes", "Diana", "Sofía"]
+             "Fiorella", "Daniela", "Andrea", "Ximena", "Karla", "Sonia", "Norma", "Elena", "Yesenia", "Lourdes", "Diana", "Sofía",
+             "Roxana", "Maribel", "Jacqueline", "Mariela", "Pamela", "Alejandra", "Nathaly", "Brenda", "Teresa", "Olga", "Juana", "Mayra"]
 NOMBRES_M = ["José", "Luis", "Juan", "Carlos", "Jorge", "Miguel", "Víctor", "César", "Raúl", "Pedro", "Marco", "Diego",
-             "Renzo", "Bruno", "Álvaro", "Edwin", "Wilber", "Freddy", "Hugo", "Alonso", "Gonzalo", "Sebastián", "Iván", "Manuel"]
+             "Renzo", "Bruno", "Álvaro", "Edwin", "Wilber", "Freddy", "Hugo", "Alonso", "Gonzalo", "Sebastián", "Iván", "Manuel",
+             "Percy", "Elmer", "Rolando", "Fernando", "Ricardo", "Javier", "Wilfredo", "Rubén", "Óscar", "Mauricio", "Fabricio", "Nilton"]
 APELLIDOS = ["Quispe", "Mamani", "Huamán", "Condori", "Flores", "Chávez", "Rodríguez", "Gutiérrez", "Apaza", "Ccama", "Torres",
              "Vargas", "Zúñiga", "Cornejo", "Delgado", "Paredes", "Medina", "Salas", "Bustíos", "Linares", "Pinto", "Ramos",
-             "Valdivia", "Herrera", "Chirinos", "Llerena", "Talavera", "Benavides", "Zegarra", "Málaga", "Núñez", "Cáceres"]
+             "Valdivia", "Herrera", "Chirinos", "Llerena", "Talavera", "Benavides", "Zegarra", "Málaga", "Núñez", "Cáceres",
+             "Huanqui", "Ticona", "Choque", "Pacheco", "Rivera", "Begazo", "Carpio", "Manrique", "Oviedo", "Portugal", "Rondón", "Velarde"]
 PARENTESCOS = ["Madre", "Padre", "Hermano/a", "Esposo/a", "Hijo/a", "Pareja", "Tío/a", "Amigo/a"]
 
 usados = set()
@@ -292,9 +296,15 @@ def telefono():
     return f"9000{rng.randint(0, 99999):05d}"
 
 
+documentos = set()
+
+
 def documento():
-    # DNI ficticio: empieza con 00 para que no se confunda con uno real.
-    return f"00{rng.randint(0, 999999):06d}"
+    # DNI ficticio: empieza con 00 para que no se confunda con uno real. Único, como exige el sistema.
+    while (numero := f"00{rng.randint(0, 999999):06d}") in documentos:
+        pass
+    documentos.add(numero)
+    return numero
 
 
 ciudadanos = []
@@ -393,6 +403,45 @@ DESCRIPCIONES = {
                "Una persona tirada en la vereda no responde bien."],
     "otros": ["Un perro agresivo suelto ataca a los transeúntes.", "Cables caídos en la vereda.", "Basura quemándose en la calle."],
 }
+# Más variantes por categoría.
+for categoria, textos in {
+    "robo": ["Me robaron la billetera en la cola del banco.", "Se llevaron la bicicleta que estaba amarrada afuera de la tienda.", "Un sujeto en moto me jaló el celular mientras hablaba.", "Entraron a la cochera y se llevaron herramientas.", "Le quitaron la mochila a un escolar a la salida del colegio.", "Robaron la batería de un auto estacionado en la calle."],
+    "violencia": ["Un señor está golpeando a su esposa en la calle.", "Se oye a una niña llorar y a un adulto gritándole.", "Mi hermana me llamó: su pareja no la deja salir de la casa.", "Un hombre ebrio amenaza a su familia con un cuchillo."],
+    "drogas": ["Dejan bolsitas y jeringas en el parque infantil.", "Un auto se detiene y entrega paquetes a varias personas.", "Fuerte olor a marihuana en el pasaje todas las tardes."],
+    "acoso": ["Un hombre se exhibe frente a las chicas en el paradero.", "Me fotografiaron sin permiso en la combi.", "Un conductor de taxi le insiste a una joven para que suba.", "Siguen a mi hija desde el colegio hasta la casa."],
+    "extorsion": ["Me escribieron por WhatsApp pidiendo dinero para no hacerle daño a mi familia.", "Dejaron una nota amenazante en la puerta de la bodega.", "Cobran «protección» a los mototaxis del paradero."],
+    "alcohol": ["Toman en la losa deportiva y dejan botellas rotas.", "Un grupo bebe en la puerta del colegio en la noche.", "Personas ebrias duermen en la vereda y molestan a los vecinos."],
+    "pelea": ["Pelea con botellas afuera de un bar.", "Dos barras se enfrentan en el parque después del partido.", "Discusión entre choferes que terminó en golpes."],
+    "sospechoso": ["Un hombre revisa las puertas de los autos estacionados.", "Una camioneta pasa varias veces sin luces por la cuadra.", "Desconocidos preguntan por los horarios de los vecinos."],
+    "vandalismo": ["Rompieron las lunas de un auto estacionado.", "Destruyeron los juegos del parque infantil.", "Quemaron un tacho de basura de la municipalidad."],
+    "accidente": ["Un motociclista se cayó en el cruce y no se levanta.", "Un auto se subió a la vereda y chocó con un poste.", "Una bicicleta y un mototaxi chocaron; hay discusión."],
+    "ruido": ["Ensayan con banda y parlantes hasta la madrugada.", "Un taller trabaja con amoladora de noche.", "Un auto con parlantes a todo volumen está estacionado hace horas."],
+    "riesgo": ["Una señora se desmayó en la cola del mercado.", "Un joven está sentado en el borde del puente y no responde.", "Una persona con discapacidad está sola y desorientada en la avenida."],
+    "otros": ["Un poste está a punto de caerse.", "Un buzón sin tapa en plena vereda.", "Un perro atropellado en medio de la pista."],
+}.items():
+    DESCRIPCIONES[categoria] += textos
+
+# Lo que escribe la central al decidir y lo que comenta el ciudadano: varía de un caso a otro.
+TEXTOS_ADMISION = ["Se envía un sereno a verificar.", "Se confirma con el ciudadano y se envía un sereno.",
+                   "Coincide con otros avisos de la zona; se envía un sereno.", "Se admite y se prioriza por la hora.",
+                   "Se envía la unidad del sector."]
+TEXTOS_DESCARTE = {
+    "Duplicado": ["Ya hay un caso abierto por el mismo hecho.", "El mismo hecho lo reportó otro vecino minutos antes."],
+    "NoVerificable": ["No hay datos suficientes para ubicar el hecho.", "El ciudadano no responde y la referencia no es clara."],
+    "FalsoOMalintencionado": ["Se verificó que el hecho no ocurrió.", "El reporte contiene información falsa."],
+    "FueraDeAlcance": ["El hecho ocurrió fuera del distrito.", "No corresponde al serenazgo: es un reclamo administrativo."],
+    "Otro": ["Se orientó al ciudadano por teléfono.", "El hecho ya fue atendido por la Policía."],
+}
+TEXTOS_DERIVACION = ["Corresponde a otra entidad; se le pasó el caso.", "Requiere la intervención de la entidad competente.",
+                     "Se orientó al ciudadano y se comunicó a la entidad."]
+ACCIONES_DERIVACION = ["Se comunicó por teléfono", "Se envió por correo", "Se coordinó por radio", "Se orientó al ciudadano"]
+DETALLES_DESCARTE_SOS = ["El ciudadano indicó que no hay emergencia.", "Se activó por error dentro del bolsillo.",
+                         "Un niño jugaba con el celular.", "El ciudadano confirmó que ya está a salvo y no necesita apoyo."]
+COMENTARIOS_BUENOS = ["Gracias por la ayuda.", "Llegaron rápido.", "Me atendieron bien.", "El sereno fue muy amable.",
+                      "Me mantuvieron informado.", "Excelente servicio, gracias."]
+COMENTARIOS_MALOS = ["Tardaron bastante.", "Nadie me informó qué pasó.", "No encontraron a nadie.", "Llegaron cuando ya se habían ido.",
+                     "Me llamaron varias veces y no vinieron.", "El sereno no quiso tomar mis datos."]
+
 RESULTADOS_PUBLICOS = {
     "ResueltoEnElLugar": "El sereno atendió la situación en el lugar y la normalizó.",
     "EntregadoAPnp": "Se puso el caso en manos de la Policía Nacional.",
@@ -536,7 +585,7 @@ def generar_sos(n):
         t += timedelta(minutes=rng.uniform(0.5, 2))
         eventos.append({"tipo": "CasoDescartado", "en": t, "actor": caso["_operador"],
                         "descarte": {"motivo": elegir({"ActivacionAccidental": 60, "FalsoOMalintencionado": 40}),
-                                     "detalle": "El ciudadano indicó que no hay emergencia (dato ficticio)."}})
+                                     "detalle": rng.choice(DETALLES_DESCARTE_SOS)}})
         caso["eventos"], caso["estado_final"] = eventos, "Descartada"
         return caso
     heridos = elegir({"No": 80, "NoSeSabe": 12, "Si": 8})
@@ -600,20 +649,20 @@ def generar_reporte(n):
     if tipo == "Descarte":
         motivo = elegir(MOTIVOS_DESCARTE)
         eventos.append({"tipo": "ReporteDescartado", "en": decision_en, "actor": caso["_operador"],
-                        "decision": {"tipo": "Descarte", "motivo": motivo, "texto": "Revisado por la central (dato ficticio)."}})
+                        "decision": {"tipo": "Descarte", "motivo": motivo, "texto": rng.choice(TEXTOS_DESCARTE[motivo])}})
         caso["eventos"], caso["estado_final"] = eventos, "Descartada"
         return caso
     if tipo == "Derivacion":
         destino = elegir(DESTINOS.get(categoria_final, DESTINOS["_"]))
         eventos.append({"tipo": "ReporteDerivado", "en": decision_en, "actor": caso["_operador"],
-                        "decision": {"tipo": "Derivacion", "destino": destino, "accion": "Se comunicó por teléfono",
-                                     "texto": "Corresponde a otra entidad (dato ficticio)."}})
+                        "decision": {"tipo": "Derivacion", "destino": destino, "accion": rng.choice(ACCIONES_DERIVACION),
+                                     "texto": rng.choice(TEXTOS_DERIVACION)}})
         caso["eventos"], caso["estado_final"] = eventos, "Derivada"
         return caso
     heridos = elegir({"No": 88, "NoSeSabe": 9, "Si": 3})
     caso["clasificacion"] = {"categoria": CATEGORIAS[categoria_final][0], "prioridad": prioridad_de(categoria_final, heridos), "heridos": heridos}
     eventos.append({"tipo": "ReporteAdmitido", "en": decision_en, "actor": caso["_operador"],
-                    "decision": {"tipo": "Admision", "texto": "Se envía un sereno (dato ficticio)."}})
+                    "decision": {"tipo": "Admision", "texto": rng.choice(TEXTOS_ADMISION)}})
     pendiente(caso, decision_en + timedelta(minutes=lognormal(6, 0.7)), categoria_final, eventos, urgente=False)
     return caso
 
@@ -643,12 +692,12 @@ EN_CURSO = 12  # casos de la última hora y cuarto: al cargar, la central y «Ah
 
 casos = []
 n = 0
-while len(casos) < TOTAL_CASOS - 8 - EN_CURSO:  # 8 casos urgentes salen de los acompañamientos
+while len(casos) < TOTAL_CASOS - URGENTES_DE_ACOMPANAMIENTO - EN_CURSO:  # los urgentes salen de los acompañamientos
     n += 1
     caso = generar_sos(n) if rng.random() < PROPORCION_SOS else generar_reporte(n)
     if caso["registrado_en"] < FIN - timedelta(hours=3):
         casos.append(caso)
-while len(casos) < TOTAL_CASOS - 8:
+while len(casos) < TOTAL_CASOS - URGENTES_DE_ACOMPANAMIENTO:
     n += 1
     FORZAR_MOMENTO = FIN - timedelta(minutes=rng.uniform(3, 75))
     caso = generar_sos(n) if rng.random() < 0.45 else generar_reporte(n)
@@ -695,8 +744,9 @@ for i in range(SESIONES_ACOMPANAMIENTO):
                      "confirmaciones_bienestar": [iso(inicio + timedelta(minutes=m)) for m in range(10, int(minutos), 10)],
                      "avisos": avisos})
 
-# Ocho acompañamientos terminan en un caso urgente: la ciudadana pidió ayuda o un aviso no se resolvió.
-for k, sesion in enumerate(rng.sample([s for s in sesiones if s["cerrada_en"]], 8)):
+# Algunos acompañamientos terminan en un caso urgente: la ciudadana pidió ayuda o un aviso no se resolvió.
+# Solo sesiones sin otro aviso: el sistema no admite dos avisos de la misma regla por la misma confirmación.
+for k, sesion in enumerate(rng.sample([s for s in sesiones if s["cerrada_en"] and not s["avisos"]], URGENTES_DE_ACOMPANAMIENTO)):
     n += 1
     ultima = sesion["posiciones"][len(sesion["posiciones"]) // 2]
     instante = datetime.fromisoformat(ultima["en"])
@@ -751,9 +801,7 @@ for caso in casos:
     else:
         motivos = (["LlegaronRapido"] if not lento and respuesta < (12 if caso["origen"] != "Reporte" else 35) else []) + rng.sample(["BuenTrato", "Resolvieron", "MeInformaron"], k=rng.choice([1, 1, 2]))
     caso["evaluacion"] = {"puntuacion": puntuacion, "motivos": sorted(set(motivos)), "evaluada_en": evaluada,
-                          "comentario": rng.choice([None, None] + (["Tardaron bastante.", "Nadie me informó qué pasó.",
-                                                                                   "No encontraron a nadie."] if puntuacion <= 3 else
-                                                                                  ["Gracias por la ayuda.", "Llegaron rápido.", "Me atendieron bien."]))}
+                          "comentario": rng.choice([None, None] + (COMENTARIOS_MALOS if puntuacion <= 3 else COMENTARIOS_BUENOS))}
 
 # Días de uso de la app por ciudadano: cuando tuvo un caso o un acompañamiento, más aperturas sueltas.
 actividad = defaultdict(set)
@@ -767,6 +815,112 @@ for c in ciudadanos:
     for _ in range(rng.choice([0, 1, 2, 3, 5, 8])):
         dia = desde + timedelta(days=rng.uniform(0, max(0.1, (FIN - desde).days)))
         actividad[c["id"]].add(dia.date())
+
+# ───────────────────────────── Casos en curso al cargar ─────────────────────────────
+# Para la presentación: casos abiertos de los últimos minutos en cada etapa, sobre el dataset base (que no cambia: llevan su
+# propia semilla). Junto con los pocos que ya quedan abiertos en el periodo, al cargar hay 15 SOS y 40 reportes sin cerrar. Pocos con sereno,
+# para que en la central queden serenos disponibles a los que asignar en vivo.
+# (origen, etapa, cuántos, minutos en esa etapa al terminar el periodo)
+EN_CURSO_AL_CARGAR = [
+    ("Sos", "SinAbrir", 3, (0.3, 2.5)),       # recién llegado: nadie lo abrió todavía
+    ("Sos", "EnContacto", 3, (0.3, 1.5)),     # abierto, la central intenta comunicarse
+    ("Sos", "Clasificado", 6, (1, 9)),        # clasificado, espera sereno
+    ("Reporte", "Recibido", 12, (3, 55)),     # nadie lo revisó todavía
+    ("Reporte", "EnRevision", 6, (1, 6)),
+    ("Reporte", "Pendiente", 14, (4, 35)),    # admitido, espera sereno
+    ("Reporte", "PendienteCentral", 5, (2, 25)),  # registrado por la central (llamada, radio…), espera sereno
+]
+# El evento con el que el caso entra en la etapa: el historial termina ahí.
+ENTRA_CON = {"SinAbrir": "SosEmitido", "EnContacto": "IntentoContactoRegistrado", "Clasificado": "CasoClasificado",
+             "Recibido": "ReporteRegistrado", "EnRevision": "RevisionIniciada", "Pendiente": "ReporteAdmitido",
+             "PendienteCentral": "ReporteAdmitido", "Asignada": "CasoAsignado", "EnCamino": "DesplazamientoConfirmado"}
+CON_SERENO = ("Asignada", "EnCamino")
+# Cuánto antes del evento empieza el caso, más o menos: para que se genere cerca de su hora y con los serenos de ese turno.
+ANTICIPO = {"Sos": 4, "Reporte": 25}
+
+rng = random.Random(SEMILLA + 1)
+
+
+def desplazado(valor, delta):
+    if isinstance(valor, datetime):
+        return valor + delta
+    if isinstance(valor, dict):
+        return {k: desplazado(v, delta) for k, v in valor.items()}
+    if isinstance(valor, (list, tuple)):
+        return type(valor)(desplazado(v, delta) for v in valor)
+    return valor
+
+
+def sirve(caso, etapa):
+    if caso["ciudadano"] and caso["ciudadano"] in con_caso_abierto:
+        return False  # un ciudadano, un caso abierto a la vez
+    if caso["origen"] == "Sos" or etapa in CON_SERENO:
+        return "_atencion" in caso
+    if etapa in ("Recibido", "EnRevision"):
+        return any(e["tipo"] == "RevisionIniciada" for e in caso["eventos"])
+    return "_atencion" in caso and (caso["ciudadano"] is None) == (etapa == "PendienteCentral")
+
+
+def en_curso(origen, etapa, edad):
+    global n, FORZAR_MOMENTO
+    while True:
+        n += 1
+        FORZAR_MOMENTO = FIN - timedelta(minutes=edad + ANTICIPO[origen])
+        caso = generar_sos(n) if origen == "Sos" else generar_reporte(n)
+        if not sirve(caso, etapa):
+            continue
+        if etapa not in CON_SERENO:
+            break
+        # Solo serenos del turno que termina el periodo (el caso se corre hasta ahí; un reporte puede llegar horas después del
+        # hecho) y que lleven un rato libres: así, aunque el caso se corra unos minutos, no se cruza con su caso anterior.
+        antes = dict(ocupado_hasta)
+        desde, categoria, urgente = caso["_atencion"]
+        atender(caso, desde, categoria, caso["eventos"], urgente)
+        asignados = {e["sereno"] for e in caso["eventos"] if e.get("sereno")}
+        if asignados <= de_turno_al_final and antes.get(caso["_sereno"], INICIO) <= FIN - timedelta(minutes=30):
+            caso["_respuesta"] = None
+            ocupado_hasta[caso["_sereno"]] = FIN + timedelta(days=1)  # sigue en este caso
+            break
+        ocupado_hasta.clear()
+        ocupado_hasta.update(antes)
+    FORZAR_MOMENTO = None
+    caso.pop("_atencion", None)
+    # El historial termina en el evento que lo deja en la etapa, y todo el caso se corre para que ese evento ocurra «edad»
+    # minutos antes del final del periodo.
+    corte = max(i for i, e in enumerate(caso["eventos"]) if e["tipo"] in (ENTRA_CON[etapa], "CasoReasignado" if etapa == "Asignada" else ""))
+    caso["eventos"] = caso["eventos"][:corte + 1]
+    if etapa == "SinAbrir":
+        caso["abierto_en_central"] = None
+    caso = desplazado(caso, FIN - timedelta(minutes=edad) - caso["eventos"][-1]["en"])
+    con_caso_abierto.add(caso["ciudadano"])
+    return caso
+
+
+de_turno_al_final = {s["id"] for k in range(1, 5) for s in en_turno(FIN - timedelta(minutes=1), k)}
+con_caso_abierto = {c["ciudadano"] for c in casos if c["estado"] not in ("Cerrada", "Descartada", "Derivada", "Cancelada")}
+nuevos = [en_curso(origen, etapa, rng.uniform(*edades)) for origen, etapa, cuantos, edades in EN_CURSO_AL_CARGAR for _ in range(cuantos)]
+for caso in nuevos:
+    recortar(caso)
+    if caso["ciudadano"]:
+        actividad[caso["ciudadano"]].add(caso["registrado_en"].date())
+# Un sereno no atiende dos casos a la vez: el de un caso en curso terminó lo anterior antes de que se lo asignaran.
+for caso in nuevos:
+    if caso.get("_sereno"):
+        asignado = next(e["en"] for e in caso["eventos"] if e.get("sereno") == caso["_sereno"])
+        otros = [e["en"] for c in casos for e in c["eventos"] if e["tipo"] == "CasoCerrado" and c.get("_sereno") == caso["_sereno"]]
+        abiertos = [c["id"] for c in casos + nuevos if c is not caso and c.get("_sereno") == caso["_sereno"] and c["estado"] != "Cerrada"]
+        assert not abiertos and all(t <= asignado for t in otros), f"{caso['_sereno']} quedaría en dos casos a la vez"
+        assert all(s in {x["id"] for k in range(1, 5) for x in en_turno(e["en"], k)} for e in caso["eventos"] if (s := e.get("sereno"))),             f"{caso['_sereno']} no está de turno cuando se le asigna {caso['id']}"
+casos += nuevos
+casos.sort(key=lambda c: c["registrado_en"])
+numero = {caso["id"]: f"CASO-{i + 1:04d}" for i, caso in enumerate(casos)}
+for caso in casos:
+    caso["id"] = numero[caso["id"]]
+for s in sesiones:
+    for a in s["avisos"]:
+        if a.get("caso"):
+            a["caso"] = numero[a["caso"]]
+libres = [s["id"] for k in range(1, 5) for s in en_turno(FIN - timedelta(minutes=1), k) if ocupado_hasta[s["id"]] <= FIN]
 
 # ───────────────────────────── Salida ─────────────────────────────
 SALIDA.mkdir(exist_ok=True)
@@ -840,6 +994,13 @@ for cat, cnt in sorted(por_cat.items(), key=lambda x: -sum(x[1].values())):
 lineas += ["", "## Estado al final del periodo", "", "| Estado | Casos |", "|---|---:|"]
 for k, v in Counter(c["estado"] for c in casos).most_common():
     lineas.append(f"| {k} | {v} |")
+abiertos = [c for c in casos if c["estado"] not in ("Cerrada", "Descartada", "Derivada", "Cancelada")]
+lineas += ["", "## Abiertos al cargar", "", "| Origen | Estado | Casos | Desde hace |", "|---|---|---:|---|"]
+for (origen, estado), grupo in sorted(defaultdict(list, {k: [c for c in abiertos if (c["origen"], c["estado"]) == k]
+                                                          for k in {(c["origen"], c["estado"]) for c in abiertos}}).items()):
+    edades = sorted((FIN - c["eventos"][-1]["en"]).total_seconds() / 60 for c in grupo)
+    lineas.append(f"| {origen} | {estado} | {len(grupo)} | {edades[0]:.0f}–{edades[-1]:.0f} min |")
+lineas += ["", f"Serenos de turno sin caso al cargar: {len(libres)} (para asignar en vivo)."]
 respuestas = [c["_respuesta"] for c in casos if c.get("_respuesta") and c["estado"] == "Cerrada" and c["origen"] != "Reporte"]
 respuestas_rep = [c["_respuesta"] for c in casos if c.get("_respuesta") and c["estado"] == "Cerrada" and c["origen"] == "Reporte"]
 lineas += ["", "## Tiempos de respuesta (registro → inicio de la atención)", "",
