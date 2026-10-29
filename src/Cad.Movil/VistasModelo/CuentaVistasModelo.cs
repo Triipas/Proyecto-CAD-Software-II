@@ -17,6 +17,7 @@ public static class Rutas
     public const string Reporte = "reporte"; // HU10, desde el inicio del ciudadano
     public const string MisCasos = "//ciudadano/mis-casos"; // HU30, pestaña de la barra inferior
     public const string MiCaso = "mi-caso"; // HU30, con ?id=
+    public const string ParametroCalificar = "calificar"; // HU32: «mi-caso?id=…&calificar=1» abre con la evaluación a la vista
     public const string Notificaciones = "//ciudadano/notificaciones"; // HU31, pestaña «Avisos»
     public const string Acompanamiento = "acompanamiento"; // HU34–HU37
     public const string Perfil = "//ciudadano/perfil"; // ADR-08, fase D

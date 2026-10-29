@@ -22,6 +22,72 @@
 
                     <v:Aviso Emergente="True" Tipo="exito" Texto="{Binding Confirmacion}" Mostrar="{Binding HayConfirmacion}" />
 
+                    <!-- HU32 — evaluación voluntaria de un caso cerrado (una por caso). 29/10/2026: al cerrarse el caso se abre sola, arriba, con «Ahora no»;
+                         omitida, queda «Calificar la atención». -->
+                    <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayEvaluacion}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding TextoEvaluacion}" FontAttributes="Bold" />
+                            <Label Text="{Binding MotivosRegistrados}" IsVisible="{Binding HayMotivosRegistrados}" />
+                            <Label Text="{Binding ComentarioRegistrado}" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding OfrecerEvaluacion}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Evaluar la atención (opcional)" Style="{StaticResource TituloSeccion}" SemanticProperties.HeadingLevel="Level2" />
+                            <Label Text="Cuéntanos cómo fue la atención. No es obligatorio y no cambia tu caso." Style="{StaticResource TextoSecundario}" />
+                            <Button Text="Calificar la atención" Style="{StaticResource BotonSecundario}" Command="{Binding MostrarEvaluacion}"
+                                    SemanticProperties.Hint="Abre el formulario de evaluación" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding FormularioEvaluacion}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Evaluar la atención (opcional)" Style="{StaticResource TituloSeccion}" SemanticProperties.HeadingLevel="Level2" />
+                            <v:Aviso Tipo="informacion" Texto="{Binding TextoInvitacionEvaluacion}" IsVisible="{Binding InvitacionEvaluacion}" />
+                            <Label Text="Elige una puntuación de 1 (muy mala) a 5 (muy buena). Solo puedes evaluar una vez." Style="{StaticResource TextoSecundario}" />
+                            <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Opciones}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:OpcionPuntuacion">
+                                        <Button Text="{Binding Texto}" Command="{Binding Elegir}" WidthRequest="56" HeightRequest="56" Padding="0"
+                                                Style="{StaticResource BotonSecundario}" SemanticProperties.Description="{Binding Descripcion}">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button" Binding="{Binding Elegida}" Value="True">
+                                                    <Setter Property="Style" Value="{StaticResource BotonPrincipal}" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </HorizontalStackLayout>
+                            <!-- 27/10/2026: por qué evalúa así (opcional, varias opciones); aparece al elegir la puntuación. -->
+                            <Label Text="{Binding TituloMotivosEvaluacion}" Style="{StaticResource Etiqueta}" IsVisible="{Binding HayOpcionesMotivoEvaluacion}" />
+                            <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding OpcionesMotivoEvaluacion}" IsVisible="{Binding HayOpcionesMotivoEvaluacion}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:OpcionMotivoEvaluacion">
+                                        <Button Text="{Binding Texto}" Command="{Binding Alternar}" Margin="0,0,8,8" Padding="14,0" HeightRequest="48"
+                                                Style="{StaticResource BotonSecundario}" SemanticProperties.Description="{Binding Descripcion}">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button" Binding="{Binding Elegida}" Value="True">
+                                                    <Setter Property="Style" Value="{StaticResource BotonPrincipal}" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+                            <Label Text="Comentario (opcional)" Style="{StaticResource Etiqueta}" />
+                            <Border Style="{StaticResource MarcoCampo}">
+                                <Editor Text="{Binding Comentario}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoComentario}"
+                                        Placeholder="Cuéntanos cómo fue la atención" AutoSize="Disabled" SemanticProperties.Description="Comentario de la evaluación" />
+                            </Border>
+                            <Label Text="{Binding ContadorComentario}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
+                            <Label Text="{Binding ErrorEvaluacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorEvaluacion}" />
+                            <Button Text="Enviar evaluación" Style="{StaticResource BotonPrincipal}" Command="{Binding EnviarEvaluacion}" />
+                            <Button Text="Ahora no" Style="{StaticResource BotonSecundario}" Command="{Binding OmitirEvaluacion}"
+                                    SemanticProperties.Hint="Cierra el formulario sin enviar nada; podrás calificar más tarde desde este caso" />
+                            <ActivityIndicator IsRunning="{Binding Evaluando}" IsVisible="{Binding Evaluando}" />
+                        </VerticalStackLayout>
+                    </Border>
+
                     <!-- HU09 — cancelar un SOS pendiente o retirar un reporte sin decidir, con motivo obligatorio. No finaliza un acompañamiento activo. -->
                     <Button Text="{Binding TextoCancelar}" Style="{StaticResource BotonSecundario}" TextColor="{StaticResource ColorUrgente}" Command="{Binding MostrarCancelacion}"
                             IsVisible="{Binding OfrecerCancelacion}" SemanticProperties.Hint="Muestra el formulario con el motivo" />
@@ -92,60 +158,6 @@
                                 </v:Mosaico>
                             </VerticalStackLayout>
                             <Label Text="Lo que enviaste no se puede modificar." Style="{StaticResource TextoSecundario}" FontSize="13" />
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- HU32 — evaluación voluntaria de un caso cerrado (una por caso). -->
-                    <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding HayEvaluacion}">
-                        <VerticalStackLayout Spacing="4">
-                            <Label Text="{Binding TextoEvaluacion}" FontAttributes="Bold" />
-                            <Label Text="{Binding MotivosRegistrados}" IsVisible="{Binding HayMotivosRegistrados}" />
-                            <Label Text="{Binding ComentarioRegistrado}" />
-                        </VerticalStackLayout>
-                    </Border>
-                    <Border Style="{StaticResource Superficie}" Padding="16" IsVisible="{Binding PuedeEvaluar}">
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Evaluar la atención (opcional)" Style="{StaticResource TituloSeccion}" />
-                            <Label Text="Elige una puntuación de 1 (muy mala) a 5 (muy buena). Solo puedes evaluar una vez." Style="{StaticResource TextoSecundario}" />
-                            <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Opciones}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:OpcionPuntuacion">
-                                        <Button Text="{Binding Texto}" Command="{Binding Elegir}" WidthRequest="56" HeightRequest="56" Padding="0"
-                                                Style="{StaticResource BotonSecundario}" SemanticProperties.Description="{Binding Descripcion}">
-                                            <Button.Triggers>
-                                                <DataTrigger TargetType="Button" Binding="{Binding Elegida}" Value="True">
-                                                    <Setter Property="Style" Value="{StaticResource BotonPrincipal}" />
-                                                </DataTrigger>
-                                            </Button.Triggers>
-                                        </Button>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </HorizontalStackLayout>
-                            <!-- 27/10/2026: por qué evalúa así (opcional, varias opciones); aparece al elegir la puntuación. -->
-                            <Label Text="{Binding TituloMotivosEvaluacion}" Style="{StaticResource Etiqueta}" IsVisible="{Binding HayOpcionesMotivoEvaluacion}" />
-                            <FlexLayout Wrap="Wrap" BindableLayout.ItemsSource="{Binding OpcionesMotivoEvaluacion}" IsVisible="{Binding HayOpcionesMotivoEvaluacion}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:OpcionMotivoEvaluacion">
-                                        <Button Text="{Binding Texto}" Command="{Binding Alternar}" Margin="0,0,8,8" Padding="14,0" HeightRequest="48"
-                                                Style="{StaticResource BotonSecundario}" SemanticProperties.Description="{Binding Descripcion}">
-                                            <Button.Triggers>
-                                                <DataTrigger TargetType="Button" Binding="{Binding Elegida}" Value="True">
-                                                    <Setter Property="Style" Value="{StaticResource BotonPrincipal}" />
-                                                </DataTrigger>
-                                            </Button.Triggers>
-                                        </Button>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </FlexLayout>
-                            <Label Text="Comentario (opcional)" Style="{StaticResource Etiqueta}" />
-                            <Border Style="{StaticResource MarcoCampo}">
-                                <Editor Text="{Binding Comentario}" HeightRequest="96" MaxLength="{x:Static vm:MiCasoVistaModelo.MaximoComentario}"
-                                        Placeholder="Cuéntanos cómo fue la atención" AutoSize="Disabled" SemanticProperties.Description="Comentario de la evaluación" />
-                            </Border>
-                            <Label Text="{Binding ContadorComentario}" Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="End" />
-                            <Label Text="{Binding ErrorEvaluacion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorEvaluacion}" />
-                            <Button Text="Enviar evaluación" Style="{StaticResource BotonPrincipal}" Command="{Binding EnviarEvaluacion}" />
-                            <ActivityIndicator IsRunning="{Binding Evaluando}" IsVisible="{Binding Evaluando}" />
                         </VerticalStackLayout>
                     </Border>
 

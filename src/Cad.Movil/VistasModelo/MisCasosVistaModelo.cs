@@ -139,11 +139,22 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     private bool formularioCancelacion, cancelando;
     private string motivoCancelacion = "", errorMotivo = "", confirmacion = "";
     private Cad.Contratos.Casos.OpcionCatalogo? motivoElegido;
+    private readonly OfertaEvaluacion? oferta;
 
-    public MiCasoVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null)
+    public MiCasoVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null,
+        OfertaEvaluacion? oferta = null)
         : base(api, sesiones, navegacion, reloj, zona)
     {
-        Actualizar = new ComandoAsincrono(ActualizarAsync);
+        this.oferta = oferta;
+        MostrarEvaluacion = new ComandoAsincrono(() => { FormularioEvaluacion = true; return Task.CompletedTask; });
+        OmitirEvaluacion = new ComandoAsincrono(() =>
+        {
+            invitacionEvaluacion = false;
+            FormularioEvaluacion = false;
+            ErrorEvaluacion = "";
+            return Task.CompletedTask;
+        });
+        Actualizar = new ComandoAsincrono(() => ActualizarAsync());
         MostrarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = true; return Task.CompletedTask; });
         OcultarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = false; ErrorMotivo = ""; return Task.CompletedTask; });
         ConfirmarCancelacion = new ComandoAsincrono(CancelarAsync);
@@ -248,6 +259,35 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     private Guid idEvaluacion = Guid.NewGuid();
 
     public bool PuedeEvaluar => caso is { Estado: EstadosPublicos.Cerrado, Evaluacion: null };
+
+    // 29/10/2026 — al cerrarse el caso, la evaluación se ofrece sola (una vez; ver OfertaEvaluacion): el formulario se abre con una
+    // invitación y «Ahora no» lo pliega sin enviar nada. Plegado, el caso sigue ofreciendo «Calificar la atención» cuando se quiera.
+    private bool formularioEvaluacion, invitacionEvaluacion;
+    public bool FormularioEvaluacion
+    {
+        get => formularioEvaluacion && PuedeEvaluar;
+        private set { Asignar(ref formularioEvaluacion, value); NotificarFormularioEvaluacion(); }
+    }
+    public bool OfrecerEvaluacion => PuedeEvaluar && !formularioEvaluacion;
+    public bool InvitacionEvaluacion => invitacionEvaluacion && FormularioEvaluacion;
+    public string TextoInvitacionEvaluacion => "Tu caso se cerró. Si quieres, cuéntanos cómo fue la atención. Es opcional: puedes omitirla y " +
+        "calificar más tarde desde este caso.";
+    public ComandoAsincrono MostrarEvaluacion { get; }
+    public ComandoAsincrono OmitirEvaluacion { get; }
+
+    private void NotificarFormularioEvaluacion()
+    {
+        foreach (var p in new[] { nameof(FormularioEvaluacion), nameof(OfrecerEvaluacion), nameof(InvitacionEvaluacion) })
+            Notificar(p);
+    }
+
+    // Abre la evaluación con la invitación; el caso queda marcado como ofrecido para que no se abra sola otra vez.
+    private void InvitarAEvaluar(Guid id)
+    {
+        oferta?.Marcar(id);
+        invitacionEvaluacion = true;
+        FormularioEvaluacion = true;
+    }
     public bool HayEvaluacion => caso?.Evaluacion is not null;
     public string TextoEvaluacion => caso?.Evaluacion is { } e ? $"Tu evaluación: {e.Puntuacion} de 5" : "";
     public string ComentarioRegistrado => caso?.Evaluacion is { } e ? e.Comentario is { } c ? $"Comentario: {c}" : "Sin comentario." : "";
@@ -295,15 +335,28 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         Enumerable.Range(1, 5).Select(v => new OpcionPuntuacion(v, v == puntuacion,
             new ComandoAsincrono(() => { Puntuacion = v; ErrorEvaluacion = ""; return Task.CompletedTask; }))).ToList();
 
-    public Task CargarAsync(Guid id)
+    // ofrecerEvaluacion: la app abrió el caso porque acaba de cerrarse (ver OfertaEvaluacion); ya está marcado como ofrecido.
+    public Task CargarAsync(Guid id, bool ofrecerEvaluacion = false)
     {
         casoId = id;
+        if (ofrecerEvaluacion)
+        {
+            invitacionEvaluacion = true;
+            formularioEvaluacion = true;
+        }
         return ActualizarAsync();
     }
 
-    private async Task ActualizarAsync()
+    // Mientras el caso sigue abierto, la pantalla lo vuelve a consultar sola (sin avisos push); al cerrarse, ofrece la evaluación.
+    public bool EnCurso => caso is not null && caso.Estado is not (EstadosPublicos.Cerrado or EstadosPublicos.Derivado
+        or EstadosPublicos.Descartado or EstadosPublicos.Cancelado);
+    public static readonly TimeSpan IntervaloRevision = TimeSpan.FromSeconds(20);
+    public Task RevisarAsync() => ActualizarAsync(silencioso: true);
+
+    private async Task ActualizarAsync(bool silencioso = false)
     {
-        Cargando = true;
+        if (!silencioso)
+            Cargando = true;
         try
         {
             if (await TokenAsync() is not { } token)
@@ -311,10 +364,17 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
             var resultado = await Api.ConsultarMiCasoAsync(token, casoId, CancellationToken.None);
             if (resultado is ResultadoApi<MiCasoDetalle>.Correcto correcto)
             {
+                var estabaCerrado = caso is null || caso.Estado == EstadosPublicos.Cerrado;
                 Mensaje = "";
                 caso = correcto.Valor;
-                await CargarFotosAsync(token);
+                // El caso se cerró con la pantalla abierta: la evaluación se ofrece ahora mismo.
+                if (!estabaCerrado && oferta?.EsOfrecible(caso) == true)
+                    InvitarAEvaluar(caso.Id);
+                if (!silencioso)
+                    await CargarFotosAsync(token);
             }
+            else if (silencioso)
+                return; // una consulta de fondo que falla no avisa de nada: la próxima lo reintenta
             else
             {
                 // CA04: un caso ajeno o inexistente no se muestra.
@@ -326,7 +386,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         }
         finally
         {
-            Cargando = false;
+            if (!silencioso)
+                Cargando = false;
         }
     }
 
@@ -334,7 +395,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     {
         foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
                      nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion),
-                     nameof(PuedeEvaluar), nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado),
+                     nameof(PuedeEvaluar), nameof(FormularioEvaluacion), nameof(OfrecerEvaluacion), nameof(InvitacionEvaluacion), nameof(EnCurso),
+                     nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado),
                      nameof(MotivosRegistrados), nameof(HayMotivosRegistrados),
                      nameof(HayReporte), nameof(ReporteCategoria), nameof(ReporteDescripcion), nameof(ReporteOcurrido), nameof(ReporteLugar),
                      nameof(ReporteReferencia), nameof(HayReferencia), nameof(HayFotosReporte), nameof(TextoFotosReporte), nameof(EsReporte),
