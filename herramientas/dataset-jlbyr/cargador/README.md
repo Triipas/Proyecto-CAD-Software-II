@@ -31,7 +31,7 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
 
 1. **Vacía** todas las tablas de datos y borra las cuentas, salvo el administrador. Conserva lo que el sistema necesita para arrancar:
    migraciones, roles, categorías y claves de las cookies del panel.
-2. **Crea las cuentas:** 6 operadores, 36 serenos y 430 ciudadanos, con su perfil.
+2. **Crea las cuentas:** 6 operadores, 36 serenos y 1300 ciudadanos, con su perfil.
    - El personal entra con su correo y una contraseña común. Los ciudadanos entran con su celular y un PIN común.
    - Las dos claves se generan la primera vez y se guardan en el archivo de credenciales, con la lista de cuentas. Ese archivo queda
      fuera del repositorio.
@@ -55,7 +55,7 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
 
 El periodo termina en el momento de la carga, y los datos «envejecen»: los 55 casos abiertos llevan de 1 a 60 minutos al cargar,
 y cada minuto que pasa se suma a su espera. Para una presentación, conviene **cargar justo antes de empezar** (5 a 15 minutos
-antes): no hace falta vaciar nada a mano, el cargador vacía y vuelve a cargar todo. Cada carga tarda unos segundos en local y
+antes): no hace falta vaciar nada a mano, el cargador vacía y vuelve a cargar todo. Cada carga tarda unos 30 s en local y
 unos minutos contra Neon; las horas parten del inicio de la carga.
 
 Las horas del día se desplazan junto con el periodo. Si se carga a las 20:00, los picos quedan donde los puso el generador
@@ -65,4 +65,4 @@ Después de cargar en Render, el panel puede mostrar durante unos minutos la ana
 
 ## Lo que ocupa
 
-Unos 80 MB en PostgreSQL. Casi todo son las posiciones de los serenos: unas 275 000.
+Unos 110 MB en PostgreSQL. Casi todo son las posiciones de los serenos: unas 275 000.
