@@ -1,0 +1,160 @@
+@model (IndexModel M, IndexModel.VistaFalsos V)
+@{
+    var (m, v) = Model;
+    var indice = v.Actual;
+    var minimo = m.Opciones.MinimoParaPercentiles;
+    // Descartes de reportes anteriores al catálogo (27/10/2026): no se cuentan como falsos ni como verdaderos. Se cuentan entre las
+    // mismas decisiones del índice (por fecha de decisión), no en el embudo (por fecha de registro).
+    var sinRegistrar = indice.ReportesDescartadosSinMotivo;
+    // Las 6 categorías con más reportes decididos, de mayor a menor porcentaje de falsos.
+    var categorias = indice.PorCategoria.Where(c => c.Decididos > 0).OrderByDescending(c => c.Decididos).Take(6)
+        .OrderByDescending(c => c.Porcentaje).ThenByDescending(c => c.Decididos).ToList();
+    var peor = indice.PorCategoria.Where(c => c.Decididos >= minimo && c.Falsos > 0).OrderByDescending(c => c.Porcentaje).FirstOrDefault();
+    static string UnoDeCada(double porcentaje) => $"1 de cada {Math.Max(1, (int)Math.Round(100 / porcentaje))}";
+    var maximo = Math.Max(25, Math.Ceiling(categorias.Select(c => c.Porcentaje).DefaultIfEmpty(0).Max() / 5) * 5);
+    var paso = maximo > 40 ? 10 : 5;
+    string F(double x) => x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    const double Referencia = 5; // «menos del 5 %»: provisional
+}
+@if (indice.ReportesDecididos == 0 && indice.Sos == 0)
+{
+    <partial name="_Vacio" model="@(new Vacio($"No se decidió ningún reporte ni entró ningún SOS en {m.TextoPeriodo}.",
+        "Sin decisiones no hay forma de saber qué parte era falsa. Prueba con un periodo más largo.",
+        m.Periodo == "30" ? [] : [("Ver los últimos 30 días", m.Enlace(periodo: "30"), true)]))" />
+}
+else
+{
+    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-falsos" data-respuesta="falsos">
+        <div class="respuesta__cabecera">
+            @if (indice.ReportesDecididos == 0)
+            {
+                <h2 class="respuesta__titular" id="respuesta-falsos">No se decidió ningún reporte en @m.TextoPeriodo; de los SOS, <em>@Formato.Plural(indice.SosDescartadosPorFalsos, "fue falso", "fueron falsos")</em>.</h2>
+            }
+            else if (indice.ReportesFalsos == 0)
+            {
+                <h2 class="respuesta__titular" id="respuesta-falsos">@(sinRegistrar > 0 ? "Ningún descarte registrado" : "Ningún reporte decidido") en @m.TextoPeriodo <em>fue falso</em>.</h2>
+            }
+            else
+            {
+                <h2 class="respuesta__titular" id="respuesta-falsos">@(sinRegistrar > 0 ? "Al menos " : "")@UnoDeCada(indice.PorcentajeReportesFalsos!.Value) reportes decididos era falso@(peor is not null && peor.Porcentaje > indice.PorcentajeReportesFalsos ? "" : ".")@if (peor is not null && peor.Porcentaje > indice.PorcentajeReportesFalsos) {<text>; en <em>@peor.Categoria.ToLowerInvariant()</em>, @UnoDeCada(peor.Porcentaje).</text>}</h2>
+            }
+            <p class="respuesta__lectura">Un reporte cuenta como falso cuando la central lo descartó como «falso o malintencionado». Se miden los reportes de la app que se decidieron en @m.TextoPeriodo (los que registra la propia central no entran); cada barra es una categoría y su largo, el porcentaje de sus reportes que resultó falso.</p>
+        </div>
+        @if (indice.ReportesDecididos > 0)
+        {
+            <div class="respuesta__visual">
+                <div class="categorias-a" data-categorias>
+                    <div class="categoria-a categoria-a--eje" aria-hidden="true">
+                        <span>Categoría · reportes decididos</span>
+                        <div class="eje-b">
+                            @for (var t = 0.0; t <= maximo + 1e-9; t += paso)
+                            {
+                                <span class="eje-b__marca" style="left:@F(t / maximo * 100)%">@F(t)@(t + paso > maximo + 1e-9 ? " %" : "")</span>
+                            }
+                        </div>
+                        <span>Falsos</span>
+                    </div>
+                    @foreach (var c in categorias)
+                    {
+                        var antes = v.Anterior.PorCategoria.FirstOrDefault(a => a.Categoria == c.Categoria);
+                        var pocos = c.Decididos < minimo;
+                        <div class="categoria-a@(pocos ? " categoria-a--pocos" : "")" data-categoria="@c.Categoria">
+                            <span class="categoria-a__nombre">@c.Categoria <span class="tarjeta-a__nota">· @c.Decididos</span></span>
+                            <span class="pista-b" role="img" aria-label="@c.Categoria: @c.Falsos de @c.Decididos reportes decididos fueron falsos (@Formato.Porcentaje(c.Porcentaje, 0))">
+                                <span class="pista-b__referencia" style="width:@F(Referencia / maximo * 100)%"></span>
+                                <span class="pista-b__barra@(c.Porcentaje >= 10 ? " pista-b__barra--alta" : "")" style="width:@F(Math.Min(100, c.Porcentaje / maximo * 100))%"></span>
+                                <span class="pista-b__todas" style="left:@F(indice.PorcentajeReportesFalsos!.Value / maximo * 100)%"></span>
+                            </span>
+                            <span class="categoria-a__valor">
+                                <span><b>@(c.Porcentaje >= 10 ? "▲ " : "")@Formato.Porcentaje(c.Porcentaje, 0)</b> · @c.Falsos de @c.Decididos</span>
+                                @if (pocos) { <span>pocos casos (mín. @minimo)</span> }
+                                else if (antes is { Decididos: > 0 }) { <span>antes: @Formato.Porcentaje(antes.Porcentaje, 0)</span> }
+                            </span>
+                        </div>
+                    }
+                </div>
+                <ul class="leyenda-a">
+                    <li><i class="leyenda-a__prio-mitad"></i>Falsos, como % de los reportes decididos de la categoría</li>
+                    <li><i class="leyenda-a__atascado leyenda-a__atascado--lleno"></i>▲ 10 % o más</li>
+                    <li><i class="leyenda-a__todas"></i>Todas las categorías: @Formato.Porcentaje(indice.PorcentajeReportesFalsos!.Value) (@indice.ReportesFalsos de @indice.ReportesDecididos)</li>
+                    <li><i class="leyenda-a__banda"></i>Referencia provisional: menos del @F(Referencia) %</li>
+                </ul>
+                <p class="tarjeta-a__nota">Se muestran las 6 categorías con más reportes decididos. «antes» es el mismo porcentaje en @m.TextoAnterior.</p>
+                @if (sinRegistrar > 0)
+                {
+                    <div class="aviso aviso--advertencia aviso-a"><partial name="_Icono" model="@("advertencia")" />
+                        <div><p class="aviso__titulo">El índice es un mínimo, no el valor real</p><p class="aviso__texto">@Formato.Plural(sinRegistrar, "descarte no tiene", "descartes no tienen") motivo registrado (son anteriores al 27/10/2026): el porcentaje de falsos puede ser mayor. El aviso desaparece cuando el periodo no tiene datos anteriores.</p></div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <div class="rejilla-a rejilla-a--tres">
+        <section class="tarjeta-a" aria-labelledby="titulo-terminan">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-terminan">¿En qué terminan los reportes?</h3><span class="tarjeta-a__nota">@Formato.Plural(v.Embudo.Recibidos, "registrado", "registrados")</span></div>
+            @if (v.Embudo.Recibidos == 0)
+            {
+                <p class="tarjeta-a__vacia">No se registraron reportes en el periodo.</p>
+            }
+            else
+            {
+                var descartes = v.Embudo.MotivosDescarte.Select(c => (
+                    c.Codigo == Cad.Contratos.Casos.MotivosDescarte.FalsoOMalintencionado ? "Falsos" : c.Codigo == ConsultarEmbudoReportes.SinRegistrar ? "Sin motivo registrado" : c.Texto,
+                    c.Veces,
+                    c.Codigo == Cad.Contratos.Casos.MotivosDescarte.FalsoOMalintencionado ? "barra100__alerta" : c.Codigo == ConsultarEmbudoReportes.SinRegistrar ? "barra100__sin-registrar" : "barra100__c")).ToList();
+                if (!descartes.Any(d => d.Item1 == "Falsos")) { descartes.Insert(0, ("Falsos", 0, "barra100__alerta")); }
+                var grupos = new List<(string, IReadOnlyList<(string, int, string)>)>
+                {
+                    ("Se atendieron", new List<(string, int, string)> { ("Admitidos", v.Embudo.Admitidos, "barra100__a"), ("Derivados a otra entidad", v.Embudo.Derivados, "barra100__b") }),
+                    ("La central los descartó", descartes),
+                    ("Siguen abiertos o se retiraron", new List<(string, int, string)> { ("Sin decidir todavía", v.Embudo.SinDecidir, "barra100__e"), ("Retirados por quien los envió", v.Embudo.Retirados, "barra100__d") }),
+                };
+                <partial name="_Filas100" model="@(grupos.Select(g => (g.Item1, (IReadOnlyList<(string, int, string)>)g.Item2.Where(f => f.Item2 > 0 || f.Item1 == "Falsos").ToList())).Where(g => g.Item2.Count > 0).ToList() as IReadOnlyList<(string, IReadOnlyList<(string, int, string)>)>, v.Embudo.Recibidos)" />
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Solo «Falsos» cuenta como falso: un duplicado o un reporte que no se pudo verificar no.</p>
+            }
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-sos-falsos">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-sos-falsos">¿Y cuántos SOS no eran una emergencia?</h3><span class="tarjeta-a__nota">@Formato.Plural(indice.Sos, "recibido", "recibidos")</span></div>
+            @if (indice.Sos == 0)
+            {
+                <p class="tarjeta-a__vacia">No entraron SOS en el periodo.</p>
+            }
+            else
+            {
+                var resto = Math.Max(0, indice.Sos - indice.SosDescartadosPorFalsos - indice.SosActivacionAccidental - indice.SosFalsaAlarmaAlCerrar);
+                var gruposSos = new List<(string, IReadOnlyList<(string, int, string)>)>
+                {
+                    ("Eran una emergencia o siguen en curso", new List<(string, int, string)> { ("Atendidos o en curso", resto, "barra100__a") }),
+                    ("No lo eran", new List<(string, int, string)> { ("Falsos", indice.SosDescartadosPorFalsos, "barra100__alerta"), ("Activación accidental", indice.SosActivacionAccidental, "barra100__d"), ("Falsa alarma al cerrar", indice.SosFalsaAlarmaAlCerrar, "barra100__e") }),
+                };
+                <partial name="_Filas100" model="@(gruposSos.Select(g => (g.Item1, (IReadOnlyList<(string, int, string)>)g.Item2)).ToList() as IReadOnlyList<(string, IReadOnlyList<(string, int, string)>)>, indice.Sos)" />
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Falso: la central lo descartó como falso o malintencionado. Accidental: descartado por ese motivo o cancelado con «Lo envié por error». Falsa alarma: se atendió y al cerrar no había emergencia.</p>
+            }
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-fotos">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-fotos">¿Las fotos ayudan?</h3><span class="tarjeta-a__nota">reportes de la app</span></div>
+            @if (v.Reportes.ConFotos.Decididos + v.Reportes.SinFotos.Decididos == 0)
+            {
+                <p class="tarjeta-a__vacia">Sin reportes decididos en el periodo para comparar.</p>
+            }
+            else
+            {
+                <table class="fotos-a">
+                    <thead><tr><th scope="col"><span class="visualmente-oculto">Reportes</span></th><th scope="col">Admitidos</th><th scope="col">Falsos</th></tr></thead>
+                    <tbody>
+                        @foreach (var (nombre, d) in new[] { ("Con fotos", v.Reportes.ConFotos), ("Sin fotos", v.Reportes.SinFotos) })
+                        {
+                            <tr data-fotos="@nombre">
+                                <th scope="row">@nombre <span class="tarjeta-a__nota">@Formato.Plural(d.Decididos, "decidido", "decididos")</span></th>
+                                <td>@(d.Decididos == 0 ? "—" : Formato.Porcentaje(d.PorcentajeAdmitidos, 0))</td>
+                                <td>@(d.Decididos == 0 ? "—" : Formato.Porcentaje(d.PorcentajeFalsos, 0))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Porcentaje de los reportes decididos en cada grupo: «Admitidos» pasó a despacho y «Falsos» lo descartó la central como falso.@(Math.Min(v.Reportes.ConFotos.Decididos, v.Reportes.SinFotos.Decididos) < minimo ? " Con tan pocos casos, la diferencia puede ser casualidad." : "")</p>
+            }
+        </section>
+    </div>
+}

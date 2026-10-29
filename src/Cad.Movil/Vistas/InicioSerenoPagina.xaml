@@ -9,6 +9,7 @@
              xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
              xmlns:v="clr-namespace:Cad.Movil.Vistas"
              xmlns:sr="clr-namespace:Cad.Contratos.Serenos;assembly=Cad.Contratos"
+             xmlns:cc="clr-namespace:Cad.Contratos.Casos;assembly=Cad.Contratos"
              x:Class="Cad.Movil.Vistas.InicioSerenoPagina"
              x:DataType="vm:InicioSerenoVistaModelo"
              Title="Sereno">
@@ -59,7 +60,7 @@
                 </HorizontalStackLayout>
                 <Grid Grid.Column="3" WidthRequest="44" HeightRequest="44">
                     <v:Icono Nombre="{Binding IconoEtapas}" Color="White" Tamano="22" HorizontalOptions="Center" VerticalOptions="Center" />
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding AlternarEtapas}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding AlternarEtapas}"
                             SemanticProperties.Description="Mostrar u ocultar las etapas del caso" />
                 </Grid>
             </Grid>
@@ -165,7 +166,7 @@
 
                 <Button Text="Volver a ingresar" Style="{StaticResource BotonSecundario}" Command="{Binding Salir}" IsVisible="{Binding SesionTerminada}" />
 
-                <Label Text="MVP académico con datos simulados. Mantén la app abierta mientras estés operativo." Style="{StaticResource TextoSecundario}"
+                <Label Text="Mantén la app abierta mientras estés operativo." Style="{StaticResource TextoSecundario}"
                        FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>
@@ -195,7 +196,7 @@
                 <v:Aviso Tipo="advertencia" VerticalOptions="Start" Margin="12" IsVisible="{Binding SinPuntoEnMapa}"
                          Texto="Este caso no tiene un punto en el mapa: guíate por la referencia y lo que registró la central." />
                 <Border VerticalOptions="End" HorizontalOptions="End" Margin="12,0,12,28" Padding="14,0" HeightRequest="44" StrokeThickness="0"
-                        StrokeShape="RoundRectangle 22" BackgroundColor="{StaticResource ColorSuperficie}">
+                        StrokeShape="RoundRectangle 22" BackgroundColor="{StaticResource ColorSuperficie}" v:Movimiento.Tocable="True">
                     <Border.Shadow><Shadow Brush="#0B1F44" Offset="0,4" Radius="12" Opacity="0.18" /></Border.Shadow>
                     <Border.GestureRecognizers><TapGestureRecognizer Tapped="AlVerAmbos" /></Border.GestureRecognizers>
                     <HorizontalStackLayout Spacing="6" VerticalOptions="Center" SemanticProperties.Description="Ver el caso y tu posición en el mapa">
@@ -245,7 +246,7 @@
 
                             <!-- Lo que registró la central: una línea; al tocar, todo el detalle (con el panel desplegado). -->
                             <Border Padding="12,10" StrokeThickness="1" Stroke="{StaticResource ColorBorde}" StrokeShape="RoundRectangle 14"
-                                    BackgroundColor="{StaticResource ColorFondo}">
+                                    BackgroundColor="{StaticResource ColorFondo}" v:Movimiento.Tocable="True">
                                 <Border.GestureRecognizers><TapGestureRecognizer Command="{Binding VerInformacion}" /></Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" SemanticProperties.Description="Lo que registró la central"
                                       SemanticProperties.Hint="Muestra u oculta el detalle del caso">
@@ -323,7 +324,14 @@
                                             ItemDisplayBinding="{Binding Nombre, x:DataType=sr:CategoriaCatalogo}" />
                                 </Border>
                                 <Label Text="{Binding ErrorCategoriaCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorCategoriaCierre}" />
-                                <Label Text="Resultado de la atención" Style="{StaticResource Etiqueta}" />
+                                <!-- 27/10/2026: cómo terminó la atención, de una lista (lo cuenta la central). -->
+                                <Label Text="Cómo terminó la atención" Style="{StaticResource Etiqueta}" />
+                                <Border Style="{StaticResource MarcoCampo}">
+                                    <Picker Title="Elige cómo terminó" ItemsSource="{Binding OpcionesResultadoAtencion}" SelectedItem="{Binding ResultadoAtencionCierre}"
+                                            ItemDisplayBinding="{Binding Texto, x:DataType=cc:OpcionCatalogo}" />
+                                </Border>
+                                <Label Text="{Binding ErrorResultadoAtencionCierre}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorResultadoAtencionCierre}" />
+                                <Label Text="Resultado para el ciudadano" Style="{StaticResource Etiqueta}" />
                                 <Border Style="{StaticResource MarcoCampo}">
                                     <Editor Text="{Binding ResultadoCierre}" HeightRequest="100" Placeholder="Cómo se resolvió el caso" />
                                 </Border>

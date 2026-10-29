@@ -20,7 +20,7 @@
   function marcar(punto, centrar) {
     if (marcador) marcador.setLatLng(punto);
     else marcador = L.marker(punto, {
-      icon: L.divIcon({ className: "marcador-hecho marcador-hecho--reporte", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 26] }),
+      icon: L.divIcon(cadMarcadores.caso(true, "marcador-hecho")),
       title: "Lugar del hecho",
       alt: "Lugar del hecho",
       keyboard: false,

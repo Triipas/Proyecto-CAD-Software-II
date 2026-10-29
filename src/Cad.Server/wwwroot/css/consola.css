@@ -1,0 +1,614 @@
+/*
+  Consola de incidente (27/10/2026): el detalle de un caso como en un software de despacho. Una barra del caso fija bajo la
+  barra superior, en una sola fila (quién, estado, cuánto lleva sin despachar, si la página está en vivo y el historial);
+  debajo tres zonas: los pasos del caso en vertical con su resumen, el trabajo de ahora en el centro y el expediente a la
+  derecha, con la ubicación primero. Se apoya en detalle-caso.css (siguiente acción, historial, ficha).
+*/
+
+.pagina--consola {
+  --alto-barra-caso: 4rem;
+  max-width: none;
+  padding: 0 0 var(--espacio-12);
+  gap: 0;
+}
+
+.consola__ancho {
+  width: 100%;
+  max-width: 100rem;
+  margin: 0 auto;
+  padding-inline: var(--espacio-6);
+}
+
+/* Avisos de la página (éxito o error de una acción), alineados con la consola. */
+.pagina--consola > .aviso {
+  width: calc(100% - 2 * var(--espacio-6));
+  max-width: calc(100rem - 2 * var(--espacio-6));
+  margin: var(--espacio-4) auto 0;
+}
+
+/* ── Barra del caso: una fila ─────────────────────────── */
+.consola__barra {
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+  background: var(--color-superficie);
+}
+
+.consola__barra .consola__ancho {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: var(--alto-barra-caso);
+  padding-block: var(--espacio-2);
+}
+
+.consola__volver {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-left: calc(-1 * var(--espacio-2));
+  border-radius: var(--radio-control);
+  color: var(--color-texto-secundario);
+  transition: background-color var(--duracion-rapida) ease, color var(--duracion-rapida) ease;
+}
+
+.consola__volver .icono {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consola__volver:hover {
+    color: var(--color-primario);
+    background: var(--color-tenue);
+  }
+}
+
+.consola__titular {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-3);
+  min-width: 0;
+}
+
+.consola__titulo {
+  margin: 0;
+  font-size: var(--texto-xl);
+  font-weight: var(--peso-fuerte);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--color-marino);
+}
+
+/* Quién reportó (detalle del reporte): dato secundario junto al título. */
+.consola__quien {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.consola__quien strong {
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
+/* Cronómetro: cuánto lleva el caso. Mientras espera a la central sube de tono (data-nivel lo pone consola.js). */
+.consola__cronometro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.1875rem 0.75rem 0.1875rem 0.5625rem;
+  border: 1px solid var(--color-neutro-borde);
+  border-radius: 999px;
+  font-size: var(--texto-sm);
+  color: var(--color-neutro);
+  background: var(--color-neutro-fondo);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: color var(--duracion-base) ease, background-color var(--duracion-base) ease, border-color var(--duracion-base) ease;
+}
+
+.consola__cronometro .icono {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.consola__cronometro strong {
+  font-weight: var(--peso-fuerte);
+}
+
+.consola__cronometro[data-nivel="1"] {
+  border-color: var(--color-advertencia-borde);
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
+}
+
+.consola__cronometro[data-nivel="2"] {
+  border-color: var(--color-urgente);
+  color: #FFFFFF;
+  background: var(--color-urgente);
+}
+
+.consola__acciones {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.consola__acciones .boton .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* «En vivo»: la página escucha el canal de la central. */
+.consola__vivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+}
+
+.consola__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-texto-terciario);
+}
+
+.consola__vivo[data-conexion="conectado"] {
+  color: var(--color-exito);
+}
+
+.consola__vivo[data-conexion="conectado"] .consola__punto {
+  background: var(--color-exito);
+  box-shadow: 0 0 0 3px var(--color-exito-fondo);
+}
+
+.consola__vivo[data-conexion="reconectando"],
+.consola__vivo[data-conexion="desconectado"] {
+  color: var(--color-advertencia);
+}
+
+.consola__vivo[data-conexion="reconectando"] .consola__punto,
+.consola__vivo[data-conexion="desconectado"] .consola__punto {
+  background: var(--color-advertencia);
+}
+
+/* Otro SOS entró a la central mientras se trabaja este. */
+.consola__otro-sos {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.3125rem 0.75rem;
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  background: var(--color-urgente);
+  text-decoration: none;
+}
+
+.consola__otro-sos .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.consola__otro-sos:not([hidden]) {
+  animation: otro-sos-entra var(--duracion-base) var(--curva-salida);
+}
+
+@keyframes otro-sos-entra {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ── Las tres zonas ───────────────────────────────────── */
+.consola {
+  display: grid;
+  gap: var(--espacio-5);
+  align-items: start;
+  padding-top: var(--espacio-6);
+}
+
+.consola__trabajo {
+  display: grid;
+  gap: var(--espacio-4);
+  min-width: 0;
+}
+
+.consola__trabajo > .seccion-caso {
+  padding: var(--espacio-5);
+  box-shadow: none;
+}
+
+.consola .seccion-caso__titulo {
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: -0.005em;
+}
+
+/* El caso cambió mientras se escribía. */
+.consola__cambio {
+  align-items: center;
+}
+
+.consola__cambio .aviso__texto {
+  flex: 1;
+  margin: 0;
+}
+
+.consola__cambio[data-tono="informacion"] {
+  border-color: var(--color-informacion-borde);
+  color: var(--color-informacion);
+  background: var(--color-informacion-fondo);
+}
+
+.consola__cambio[data-tono="urgente"] {
+  border-color: var(--color-urgente-borde);
+  color: var(--color-urgente);
+  background: var(--color-urgente-fondo);
+}
+
+/* La acción de ahora: el único panel con el borde azul y la sombra de atención. */
+.consola .siguiente {
+  padding: var(--espacio-6);
+  border-color: var(--color-primario);
+  box-shadow: var(--sombra-2);
+}
+
+.consola .siguiente__titulo {
+  font-size: var(--texto-xl);
+}
+
+/* Un caso terminado ya no pide nada: el panel deja de llamar la atención. */
+.consola .siguiente--terminado {
+  border-color: var(--color-borde);
+  box-shadow: var(--sombra-1);
+}
+
+/* «Despachar ahora»: el camino urgente, a la vista dentro de la acción. */
+.siguiente__atajo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2) var(--espacio-4);
+  margin: 0;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-hundida);
+}
+
+/* Resultado del intento: la opción elegida se ve elegida (azul sólido); el foco es un anillo aparte. */
+.consola .opciones--segmentadas .opcion:has(input:checked) {
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+  box-shadow: none;
+}
+
+.consola .opciones--segmentadas .opcion:has(input:focus-visible) {
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consola .opciones--segmentadas .opcion:not(:has(input:checked)):hover {
+    color: var(--color-texto);
+    background: var(--color-superficie);
+  }
+}
+
+/* «Otras acciones»: un plegable discreto con su flecha; dentro, los botones no compiten con la acción principal. */
+.consola .otras-acciones {
+  box-shadow: none;
+}
+
+.consola .otras-acciones summary {
+  gap: var(--espacio-2);
+  min-height: 2.75rem;
+  font-size: var(--texto-sm);
+  list-style: none;
+}
+
+.consola .otras-acciones summary::-webkit-details-marker {
+  display: none;
+}
+
+.consola .otras-acciones summary::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--duracion-rapida) var(--curva-estandar);
+}
+
+.consola .otras-acciones[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.consola .otras-acciones .boton--principal {
+  border: 1px solid var(--color-borde-control);
+  color: var(--color-marino);
+  background: var(--color-superficie);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consola .otras-acciones .boton--principal:hover {
+    background: var(--color-tenue);
+  }
+}
+
+.consola .descarte > summary.boton {
+  min-height: 2.25rem;
+  padding-inline: var(--espacio-3);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consola .descarte > summary.boton:hover {
+    color: var(--color-error);
+    border-color: var(--color-error-borde);
+    background: var(--color-error-fondo);
+  }
+}
+
+/* Datos de un panel terminado (cierre, decisión): los cortos en dos columnas, los textos a lo ancho. */
+.consola .siguiente > .datos {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-4) var(--espacio-6);
+  padding-top: var(--espacio-4);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.consola .siguiente > .datos > div:has([data-resultado-publico], [data-notas-internas], .datos__texto) {
+  grid-column: 1 / -1;
+}
+
+.consola .siguiente > .datos dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola .siguiente > .datos dd {
+  margin-top: 2px;
+  font-size: var(--texto-md);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Pasos (columna izquierda en escritorio) ──────────── */
+.consola__pasos .progreso {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.consola__resumen {
+  display: none;
+}
+
+@media (min-width: 80rem) {
+  .consola {
+    grid-template-columns: 12.5rem minmax(0, 1fr) minmax(22rem, 26rem);
+    gap: var(--espacio-6);
+  }
+
+  /* Fija bajo la barra superior y la barra del caso: el paso actual nunca queda tapado. */
+  .consola__pasos {
+    position: sticky;
+    top: calc(60px + var(--alto-barra-caso) + var(--espacio-5));
+  }
+
+  .consola__pasos .progreso {
+    grid-auto-flow: row;
+    grid-auto-rows: 2.75rem;
+    padding: 0;
+  }
+
+  .consola__pasos .progreso__paso {
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    gap: var(--espacio-3);
+    padding-inline: var(--espacio-2);
+    border-radius: var(--radio-control);
+    text-align: left;
+    font-size: var(--texto-sm);
+  }
+
+  .consola__pasos .progreso__paso::before {
+    top: -50%;
+    bottom: 50%;
+    left: calc(var(--espacio-2) + 11px);
+    right: auto;
+    width: 2px;
+    height: auto;
+    transform-origin: 50% 0;
+    animation-name: trazo-vertical;
+  }
+
+  .consola__pasos .progreso__paso--actual {
+    background: var(--color-tenue);
+    color: var(--color-primario);
+  }
+
+  .consola__pasos .progreso__paso--actual .progreso__marca {
+    outline-color: var(--color-tenue);
+  }
+
+  .consola__resumen {
+    display: grid;
+    gap: var(--espacio-3);
+    margin: var(--espacio-5) 0 0;
+    padding: var(--espacio-4) var(--espacio-2) 0;
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .consola__resumen dt {
+    font-size: var(--texto-xs);
+    color: var(--color-texto-terciario);
+  }
+
+  .consola__resumen dd {
+    margin: 2px 0 0;
+    font-size: var(--texto-sm);
+    font-weight: var(--peso-medio);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-texto);
+    overflow-wrap: anywhere;
+  }
+}
+
+@keyframes trazo-vertical {
+  from { transform: scaleY(0); }
+}
+
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  .consola {
+    grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+  }
+
+  .consola__pasos {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 79.99rem) {
+  .consola__pasos .progreso {
+    border: var(--grosor-borde) solid var(--color-borde);
+    background: var(--color-superficie);
+  }
+}
+
+/* ── Expediente (columna derecha) ─────────────────────── */
+.consola__expediente .seccion-caso__titulo,
+.consola__expediente .central__titulo {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0;
+  color: var(--color-marino);
+}
+
+.consola__expediente .datos--en-linea > div {
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: baseline;
+}
+
+.consola__expediente .datos--en-linea dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola__expediente .datos--en-linea dd {
+  font-size: var(--texto-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lo que el ciudadano no completó: presente, pero sin competir con lo que sí hay. */
+.consola__expediente .dato--vacio dd {
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-terciario);
+}
+
+.consola__expediente [data-tiempos] .datos dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+.consola__expediente [data-tiempos] .datos dd {
+  font-size: var(--texto-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.consola__expediente [data-tiempos] > .texto-secundario {
+  font-size: var(--texto-xs);
+}
+
+/* Sin marcas de tiempo todavía: una línea en lugar de «No disponible» repetido. */
+.tiempos--sin-marcas > .datos,
+.tiempos--sin-marcas > .texto-secundario {
+  display: none;
+}
+
+.tiempos__pendiente {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+/* El mapa es el dato principal del expediente: más alto y sin marco propio (vive dentro de la sección). */
+.consola__expediente .mapa--detalle {
+  height: 16rem;
+  margin-inline: calc(-1 * var(--espacio-5));
+  border-radius: 0;
+}
+
+.consola__expediente > .seccion-caso:first-child .mapa--detalle {
+  margin-top: calc(-1 * var(--espacio-1));
+}
+
+/* ── Escritorio: la barra acompaña al operador ────────── */
+@media (min-width: 64rem) {
+  .consola__barra {
+    position: sticky;
+    top: 60px;
+    z-index: 1050;
+    box-shadow: 0 6px 16px -12px rgb(11 31 68 / 0.22);
+  }
+}
+
+/* ── Móvil ────────────────────────────────────────────── */
+@media (max-width: 47.5rem) {
+  .consola__ancho {
+    padding-inline: var(--espacio-4);
+  }
+
+  .pagina--consola > .aviso {
+    width: calc(100% - 2 * var(--espacio-4));
+  }
+
+  .consola__barra .consola__ancho {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding-block: var(--espacio-3);
+  }
+
+  .consola__titular {
+    flex-basis: calc(100% - 3rem);
+  }
+
+  .consola__acciones {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .consola .siguiente {
+    padding: var(--espacio-5);
+  }
+
+  .consola .siguiente > .datos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consola__expediente .mapa--detalle {
+    margin-inline: calc(-1 * var(--espacio-5));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consola__pasos .progreso__paso::before,
+  .consola__otro-sos:not([hidden]) {
+    animation: none;
+  }
+
+  .consola__cronometro,
+  .consola .otras-acciones summary::before {
+    transition: none;
+  }
+}

@@ -50,14 +50,14 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(id, operador.Id, CancellationToken.None));
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<DecidirReporte>().EjecutarAsync(id,
-            new DatosDecision(TipoDecisionReporte.Admision, "Motivo ficticio"), operador.Id, CancellationToken.None));
+            new DatosDecision(TipoDecisionReporte.Admision, "Motivo ficticio", Prioridad: "Media", Heridos: "No"), operador.Id, CancellationToken.None));
         return id;
     }
 
     private Task Clasificar(Guid casoId, Guid categoria) => fabrica.ConServiciosAsync(async s =>
     {
         var operador = await fabrica.CrearAsync(Roles.Operador);
-        return await s.GetRequiredService<ClasificarCaso>().EjecutarAsync(casoId, categoria, operador.Id, CancellationToken.None);
+        return await s.GetRequiredService<ClasificarCaso>().EjecutarAsync(casoId, categoria, "Media", "No", operador.Id, CancellationToken.None);
     });
 
     // Un sereno operativo; cada asignación lo ocupa, así que se libera cerrando la asignación anterior.
@@ -81,7 +81,7 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         var avanzar = s.GetRequiredService<AvanzarCaso>();
         await avanzar.EjecutarAsync(casoId, Avance.ConfirmarDesplazamiento, serenoId, ActorAvance.Sereno, CancellationToken.None);
         await avanzar.EjecutarAsync(casoId, Avance.IniciarAtencion, serenoId, ActorAvance.Sereno, CancellationToken.None, await fabrica.EnElLugarAsync(casoId));
-        return await s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId, new DatosCierre(tipificacion ?? Robo, "Resultado ficticio", null), serenoId,
+        return await s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId, new DatosCierre(tipificacion ?? Robo, "ResueltoEnElLugar", "Resultado ficticio", null), serenoId,
             ActorAvance.Sereno, CancellationToken.None);
     });
 

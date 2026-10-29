@@ -17,6 +17,11 @@
             <p id="Clasificacion_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
         }
     </div>
+    @* 27/10/2026: la prioridad y si hay heridos; con ellas se comparan los tiempos de respuesta. *@
+    <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Clasificacion_Prioridad", "Clasificacion.Prioridad", "Prioridad",
+        Cad.Contratos.Casos.PrioridadesCaso.Todas, Model.Clasificacion.Prioridad, Model.ErrorPrioridad))" />
+    <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Clasificacion_Heridos", "Clasificacion.Heridos", "¿Hay personas heridas?",
+        Cad.Contratos.Casos.PersonasHeridas.Todas, Model.Clasificacion.Heridos, Model.ErrorHeridos))" />
     <div class="acciones">
         <button type="submit" class="boton boton--principal" data-texto-carga="Clasificando…">Clasificar el SOS</button>
     </div>

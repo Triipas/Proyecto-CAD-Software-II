@@ -105,7 +105,15 @@ public static class Autenticacion
                     OnTokenValidated = async contexto =>
                     {
                         if (!await SesionVigenteAsync(contexto.HttpContext, contexto.Principal))
+                        {
                             contexto.Fail("La sesión ya no es válida.");
+                            return;
+                        }
+                        // 27/10/2026: el día de uso del ciudadano, para la retención (analítica, bloque D).
+                        if (contexto.Principal!.IsInRole(Roles.Ciudadano))
+                            await contexto.HttpContext.RequestServices.GetRequiredService<Modulos.Analitica.RegistroActividadCiudadano>()
+                                .AnotarAsync(contexto.HttpContext.RequestServices.GetRequiredService<Persistencia.CadDbContext>(),
+                                    contexto.Principal.IdUsuario(), contexto.HttpContext.RequestAborted);
                     },
                 };
             });

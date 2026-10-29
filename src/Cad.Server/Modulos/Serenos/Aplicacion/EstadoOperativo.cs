@@ -63,6 +63,8 @@ public sealed class GestionarEstadoOperativo(CadDbContext db, TimeProvider reloj
             }
 
             var cambio = estado.Cambiar(solicitud.Operativo, ahora);
+            if (cambio)
+                db.CambiosEstadoSereno.Add(CambioEstadoSereno.Registrar(estado)); // en la misma transacción que el estado
             try
             {
                 await db.SaveChangesAsync(ct);

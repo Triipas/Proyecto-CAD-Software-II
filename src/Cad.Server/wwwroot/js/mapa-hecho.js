@@ -11,8 +11,10 @@
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
   }).addTo(mapa);
+  // El mismo marcador que el caso tiene en la central (marcadores.js).
+  const reporte = (contenedor.dataset.claseMarcador ?? "").includes("reporte");
   L.marker(punto, {
-    icon: L.divIcon({ className: contenedor.dataset.claseMarcador ?? "marcador-hecho", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 26] }),
+    icon: L.divIcon(cadMarcadores.caso(reporte, "marcador-hecho")),
     title: contenedor.dataset.titulo ?? "Lugar del hecho",
     alt: contenedor.dataset.titulo ?? "Lugar del hecho",
     keyboard: false,
@@ -20,7 +22,6 @@
 
   // Al abrir el detalle, dos anillos se abren una vez desde el punto (sin ellos si se pide reducir el movimiento).
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const reporte = (contenedor.dataset.claseMarcador ?? "").includes("reporte");
   const anillo = L.marker(punto, {
     icon: L.divIcon({ className: `llegada${reporte ? " llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [96, 96], iconAnchor: [48, 48] }),
     interactive: false,

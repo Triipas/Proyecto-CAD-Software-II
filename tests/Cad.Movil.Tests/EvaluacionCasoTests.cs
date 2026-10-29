@@ -184,4 +184,40 @@ public class EvaluacionCasoTests
         Assert.False(vm.HayMensaje);
         Assert.Empty(api.Evaluaciones);
     }
+
+    // 27/10/2026: por qué evalúa así, opcional; la lista depende de la nota y lo que ya no aplica se quita al cambiarla.
+    [Fact]
+    public async Task Motivos_SeOfrecenSegunLaPuntuacion_YSeEnvianLosMarcados()
+    {
+        var vm = await AbiertoAsync();
+        Assert.False(vm.HayOpcionesMotivoEvaluacion); // sin puntuación, todavía no
+
+        vm.Puntuacion = 2;
+        Assert.Equal("¿Qué falló? (opcional)", vm.TituloMotivosEvaluacion);
+        Assert.Equal(MotivosEvaluacion.Negativos.Select(o => o.Codigo), vm.OpcionesMotivoEvaluacion.Select(o => o.Codigo));
+        await vm.OpcionesMotivoEvaluacion.Single(o => o.Codigo == MotivosEvaluacion.Tardaron).Alternar.EjecutarAsync();
+        Assert.True(vm.OpcionesMotivoEvaluacion.Single(o => o.Codigo == MotivosEvaluacion.Tardaron).Elegida);
+
+        vm.Puntuacion = 5; // otra nota: «Tardaron en llegar» ya no aplica
+        Assert.Equal("¿Qué estuvo bien? (opcional)", vm.TituloMotivosEvaluacion);
+        Assert.DoesNotContain(vm.OpcionesMotivoEvaluacion, o => o.Elegida);
+        await vm.OpcionesMotivoEvaluacion.Single(o => o.Codigo == MotivosEvaluacion.BuenTrato).Alternar.EjecutarAsync();
+        await vm.OpcionesMotivoEvaluacion.Single(o => o.Codigo == MotivosEvaluacion.LlegaronRapido).Alternar.EjecutarAsync();
+        await vm.EnviarEvaluacion.EjecutarAsync();
+
+        // En el orden de la lista, no en el de los toques.
+        Assert.Equal([MotivosEvaluacion.LlegaronRapido, MotivosEvaluacion.BuenTrato], Assert.Single(api.Evaluaciones).Solicitud.Motivos);
+    }
+
+    [Fact]
+    public async Task Motivos_SinMarcarNinguno_NoSeEnvian_YLosRegistradosSeMuestran()
+    {
+        var vm = await AbiertoAsync();
+        vm.Puntuacion = 3;
+        await vm.EnviarEvaluacion.EjecutarAsync();
+        Assert.Null(Assert.Single(api.Evaluaciones).Solicitud.Motivos);
+
+        var evaluado = await AbiertoAsync(evaluacion: new MiEvaluacion(2, null, Ahora, [MotivosEvaluacion.Tardaron, MotivosEvaluacion.NoMeInformaron]));
+        Assert.Equal("Motivos: Tardaron en llegar · No me informaron qué pasaba", evaluado.MotivosRegistrados);
+    }
 }

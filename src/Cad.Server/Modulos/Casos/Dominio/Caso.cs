@@ -112,12 +112,15 @@ public sealed class Caso
     }
 
     // HU09-CA01/CA03: el titular solo cancela un SOS «Pendiente»; asignado o en un estado posterior, ya no.
-    public bool PuedeCancelarse => Origen == OrigenCaso.Sos && Estado == EstadoCaso.Pendiente;
+    // HU09: un SOS se cancela mientras está pendiente. Decisión del PO del 26/10/2026: un reporte se retira mientras la central
+    // no lo haya decidido («Recibido» o «En revisión»); termina igual, como «Cancelada» con el motivo de su titular.
+    public bool PuedeCancelarse => Origen == OrigenCaso.Sos ? Estado == EstadoCaso.Pendiente
+        : Origen == OrigenCaso.Reporte && Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision;
 
     public void Cancelar()
     {
         if (!PuedeCancelarse)
-            throw new InvalidOperationException("Solo un SOS pendiente puede cancelarse.");
+            throw new InvalidOperationException("Solo un SOS pendiente o un reporte sin decidir puede cancelarse.");
         Estado = EstadoCaso.Cancelada;
     }
 
@@ -159,13 +162,31 @@ public sealed class Caso
 
     public bool Clasificado => CategoriaId is not null;
 
+    // 27/10/2026 — prioridad y personas heridas (Cad.Contratos.Casos.PrioridadesCaso y PersonasHeridas): el operador las
+    // registra al clasificar un SOS o al admitir un reporte. Nulas en los casos anteriores y en los aún sin decidir.
+    public string? Prioridad { get; private set; }
+
+    // 27/10/2026 — salud del sistema (analítica, bloque E): cuándo apareció el caso por primera vez en la central abierta (acuse
+    // del panel al recibirlo en vivo) y cuándo un operador abrió su detalle por primera vez. Las escribe MarcasCentral, una sola
+    // vez cada una; nulas si nunca pasó (o en los casos anteriores).
+    public DateTimeOffset? PresentadoEnCentralEn { get; private set; }
+    public DateTimeOffset? AbiertoEnCentralEn { get; private set; }
+    public string? Heridos { get; private set; }
+
+    public void Priorizar(string prioridad, string heridos)
+    {
+        Prioridad = prioridad;
+        Heridos = heridos;
+    }
+
     // CA01: un SOS sin tipo se clasifica con responsable, fecha y hora. Reclasificar no está definido en HU13:
     // se rechaza hasta que el PO lo decida (no se añade una regla que la HU no tiene).
-    public void Clasificar(Guid categoriaId, Guid operadorId, DateTimeOffset ahora)
+    public void Clasificar(Guid categoriaId, string prioridad, string heridos, Guid operadorId, DateTimeOffset ahora)
     {
         if (Clasificado)
             throw new InvalidOperationException("El caso ya está clasificado.");
         CategoriaId = categoriaId;
+        Priorizar(prioridad, heridos);
         ClasificadoPor = operadorId;
         ClasificadoEn = ahora;
     }

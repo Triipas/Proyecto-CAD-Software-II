@@ -1,0 +1,27 @@
+@model (IReadOnlyList<(string Titulo, IReadOnlyList<(string Nombre, int Valor, string Clase)> Filas)> Grupos, int Total)
+@* Cómo se reparte un total: grupos con título y una fila por parte (nombre, barra proporcional al total y cantidad con su porcentaje). Nunca solo color: cada fila lleva su nombre y su cifra. *@
+@{
+    string Ancho(int parte) => (Model.Total == 0 ? 0 : 100.0 * parte / Model.Total).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}
+<div class="grupos100">
+    @foreach (var (titulo, filas) in Model.Grupos)
+    {
+        var suma = filas.Sum(f => f.Valor);
+        <section class="grupo100">
+            @if (!string.IsNullOrEmpty(titulo))
+            {
+                <p class="grupo100__titulo">@titulo <span class="tarjeta-a__nota">@suma · @Formato.Porcentaje(100.0 * suma / Math.Max(1, Model.Total), 0)</span></p>
+            }
+            <ul class="filas100">
+                @foreach (var (nombre, valor, clase) in filas)
+                {
+                    <li class="fila100@(valor == 0 ? " fila100--cero" : "")">
+                        <span class="fila100__nombre">@nombre</span>
+                        <span class="fila100__pista" aria-hidden="true"><i class="@clase" style="width:@Ancho(valor)%"></i></span>
+                        <span class="fila100__valor"><b>@valor</b> · @Formato.Porcentaje(100.0 * valor / Math.Max(1, Model.Total), 0)</span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+</div>

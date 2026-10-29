@@ -1,30 +1,36 @@
 @model Cad.Server.Modulos.Consultas.FichaCiudadano
-@* ADR-08, fase D: datos del ciudadano para atender su caso. Los opcionales que no completó se indican como «No registrado». *@
+@* ADR-08, fase D: datos del ciudadano para atender su caso. Los opcionales que no completó se indican como «No registrado».
+   Rediseño del 27/10/2026: el nombre y el teléfono primero, con sus iniciales; los demás datos debajo. *@
+@{
+    var iniciales = string.Concat(Model.Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+}
 <section class="superficie seccion-caso" aria-labelledby="titulo-ciudadano" data-ficha-ciudadano>
     <h2 id="titulo-ciudadano" class="seccion-caso__titulo">Ciudadano</h2>
-    <dl class="datos datos--en-linea">
-        <div><dt>Nombre</dt><dd>@Model.Nombre</dd></div>
-        <div>
-            <dt>Teléfono registrado</dt>
-            <dd>
+    <div class="ficha">
+        <span class="ficha__avatar" aria-hidden="true">@iniciales</span>
+        <div class="ficha__datos">
+            <p class="ficha__nombre">@Model.Nombre</p>
+            <p class="ficha__telefono">
                 @if (Model.Telefono is { Length: > 0 } telefono)
                 {
-                    <a class="datos__telefono" href="tel:@telefono">@telefono</a>
+                    <span class="visualmente-oculto">Teléfono registrado: </span><a class="datos__telefono" href="tel:@telefono">@(telefono.Length == 9 ? $"{telefono[..3]} {telefono[3..6]} {telefono[6..]}" : telefono)</a>
                     @if (Model.TelefonoVerificado)
                     {
-                        <span class="texto-secundario"> · verificado</span>
+                        <span> · verificado</span>
                     }
                 }
                 else
                 {
-                    <span>No registrado</span>
+                    <span>Teléfono: No registrado</span>
                 }
-            </dd>
+            </p>
         </div>
-        <div><dt>Documento</dt><dd>@(Model.Documento ?? "No registrado")</dd></div>
-        <div><dt>Edad</dt><dd>@(Model.Edad is { } edad ? $"{edad} años" : "No registrada")</dd></div>
-        <div><dt>Dirección</dt><dd>@(Model.Direccion ?? "No registrada")</dd></div>
-        <div>
+    </div>
+    <dl class="datos datos--en-linea">
+        <div class="@(Model.Documento is null ? "dato--vacio" : null)"><dt>Documento</dt><dd>@(Model.Documento ?? "No registrado")</dd></div>
+        <div class="@(Model.Edad is null ? "dato--vacio" : null)"><dt>Edad</dt><dd>@(Model.Edad is { } edad ? $"{edad} años" : "No registrada")</dd></div>
+        <div class="@(Model.Direccion is null ? "dato--vacio" : null)"><dt>Dirección</dt><dd>@(Model.Direccion ?? "No registrada")</dd></div>
+        <div class="@(Model.TieneContacto ? null : "dato--vacio")">
             <dt>Contacto de emergencia</dt>
             <dd data-contacto-emergencia>
                 @if (Model.TieneContacto)

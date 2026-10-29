@@ -48,7 +48,7 @@ Decisión delegada al equipo de desarrollo y registrada el 12/10/2026: **cualqui
 | `POST /panel/central/sos/{id}?handler=IniciarAtencion` (inicio de atención por el operador) | HU23 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `POST /hubs/sereno/negotiate` y `/hubs/sereno` (aviso del despacho; cada sereno solo recibe los suyos) | HU21 | ✘ | ✘ | ✘ | ✔ | ✘ |
 | `GET` y `POST /panel/central/sos/{id}` (verificación del SOS: teléfono, intentos de contacto, información y referencia; manejadores `Asignar` de HU20 y `Clasificar` de HU13) | HU12, HU13, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
-| `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
+| `GET /panel/reportes`, `GET` y `POST /panel/reportes/{id}` (reportes recibidos y en revisión; revisión, corrección de categoría, decisión y asignación de un admitido; fotos del ciudadano con `?handler=Foto`, [ADR-09](decisiones/ADR-09-fotos-del-reporte.md), verificadas en `FotosReporteTests.OtrosPerfiles_NoObtienenLasFotos`) | HU14–HU17, HU20 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/acompanamientos` (y su fragmento `?handler=Lista`), `/panel/acompanamientos/{id}` y `/panel/acompanamientos/historial` (acompañamientos activos, recorridos e historial de sesiones) | HU38, HU39 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/avisos/{id}` y sus acciones (revisar, actuación, resolver, vincular y crear caso urgente) | HU42, HU43 | ✘ | ✘ | ✔ | ✘ | ✘ |
 | `GET /panel/casos` (búsqueda de casos con filtros) | HU26 | ✘ | ✘ | ✔ | ✘ | ✘ |

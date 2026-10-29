@@ -59,7 +59,12 @@ public static class TextoInicioAtencion
 }
 
 // HU13: categoría asignada, responsable y momento (CA01). Nula = «Tipo por determinar» (CA03).
-public sealed record ClasificacionVista(string Categoria, string Operador, DateTimeOffset ClasificadoEn);
+public sealed record ClasificacionVista(string Categoria, string Operador, DateTimeOffset ClasificadoEn, string? Prioridad = null, string? Heridos = null)
+{
+    // 27/10/2026: textos de los catálogos; un caso clasificado antes no los tiene.
+    public string? TextoPrioridad => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.PrioridadesCaso.Todas, Prioridad);
+    public string? TextoHeridos => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.PersonasHeridas.Todas, Heridos);
+}
 
 // HU20: asignación vigente del caso (sereno y momento).
 // SerenoOperativo: falso si el sereno de una asignación vigente se desactivó (24/10/2026, DP16-b): la central lo ve marcado.
@@ -67,7 +72,12 @@ public sealed record AsignacionVista(Guid SerenoId, string Sereno, DateTimeOffse
     bool SerenoOperativo = true);
 
 // HU24: cierre registrado. Resultado público y notas internas diferenciados (CA04).
-public sealed record CierreVista(string Tipificacion, string ResultadoPublico, string? NotasInternas, string Responsable, DateTimeOffset CerradoEn);
+public sealed record CierreVista(string Tipificacion, string ResultadoPublico, string? NotasInternas, string Responsable, DateTimeOffset CerradoEn,
+    string? ResultadoAtencion = null)
+{
+    // 27/10/2026: el texto del catálogo; un cierre anterior al catálogo no lo tiene.
+    public string ComoTermino => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.ResultadosAtencion.Todos, ResultadoAtencion) ?? "No registrado";
+}
 
 public sealed record IntentoContactoVista(
     ResultadoContacto Resultado,
@@ -120,7 +130,7 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
                             join responsable in db.Users.AsNoTracking() on c.ResponsableId equals responsable.Id
                             where c.CasoId == casoId
                             select new CierreVista(categoria.Nombre, c.ResultadoPublico, c.NotasInternas,
-                                responsable.Nombres + " " + responsable.Apellidos, c.CerradoEn))
+                                responsable.Nombres + " " + responsable.Apellidos, c.CerradoEn, c.ResultadoAtencion))
                            .SingleOrDefaultAsync(ct);
 
         var clasificacion = await (from caso in db.Casos.AsNoTracking()
@@ -128,7 +138,7 @@ public sealed class ConsultarDetalleSos(CadDbContext db)
                                    join operador in db.Users.AsNoTracking() on caso.ClasificadoPor equals (Guid?)operador.Id
                                    where caso.Id == casoId
                                    select new ClasificacionVista(categoria.Nombre, operador.Nombres + " " + operador.Apellidos,
-                                       caso.ClasificadoEn!.Value))
+                                       caso.ClasificadoEn!.Value, caso.Prioridad, caso.Heridos))
                                   .SingleOrDefaultAsync(ct);
 
         var avances = (await (from evento in db.EventosCaso.AsNoTracking()

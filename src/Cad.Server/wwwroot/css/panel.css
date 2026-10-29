@@ -1162,22 +1162,6 @@ a.boton {
   filter: var(--mapa-filtro-teselas);
 }
 
-.marcador-sos {
-  display: grid;
-  place-items: center;
-  border-radius: var(--radio-control);
-  font: 700 0.75rem/1 var(--fuente);
-  color: #FFFFFF;                     /* 6.57:1 sobre el rojo de urgencia */
-  background: var(--color-urgente);
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 0 0 1px var(--color-urgente);
-}
-
-.marcador-sos:focus-visible {
-  outline: 3px solid var(--color-foco);
-  outline-offset: 2px;
-}
-
 /* ===== Verificación del SOS (HU12) ===== */
 
 .verificacion {
@@ -1420,27 +1404,6 @@ a.boton {
   color: var(--color-texto-secundario);
 }
 
-.marcador-sereno {
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  font: 700 0.8rem/1 var(--fuente);
-  color: #FFFFFF;
-  background: var(--color-primario);   /* blanco encima: 5.17:1 */
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 0 0 1px var(--color-primario);
-}
-
-.marcador-sereno--no-disponible {
-  background: var(--color-texto-secundario);   /* blanco encima: 6.92:1 */
-  box-shadow: 0 0 0 1px var(--color-texto-secundario);
-}
-
-.marcador-sereno:focus-visible {
-  outline: 3px solid var(--color-foco);
-  outline-offset: 2px;
-}
-
 /* El atributo hidden gana a los display propios de los componentes (botones, avisos, formularios). */
 [hidden] {
   display: none !important;
@@ -1464,18 +1427,6 @@ a.boton {
   height: 18rem;
 }
 
-/* Lugar del hecho: alfiler rojo con borde blanco, distinto del marcador SOS (que lleva texto). */
-.marcador-hecho span {
-  display: block;
-  width: 22px;
-  height: 22px;
-  border-radius: 50% 50% 50% 0;
-  background: var(--color-urgente);
-  border: 3px solid #FFFFFF;
-  transform: rotate(-45deg);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-}
-
 /* La descripción del ciudadano conserva sus saltos de línea. */
 .datos__texto {
   white-space: pre-wrap;
@@ -1497,22 +1448,6 @@ a.boton {
 
 .central__contador--reportes {
   background: var(--color-reporte);
-}
-
-.marcador-reporte {
-  display: grid;
-  place-items: center;
-  border-radius: var(--radio-control);
-  font: 700 0.8rem/1 var(--fuente);
-  color: #FFFFFF;
-  background: var(--color-reporte);
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 0 0 1px var(--color-reporte);
-}
-
-.marcador-reporte:focus-visible {
-  outline: 3px solid var(--color-foco);
-  outline-offset: 2px;
 }
 
 /* ===== Búsqueda de casos (HU26) ===== */
@@ -1714,22 +1649,80 @@ a.boton {
 
 /* ===== Mapa de casos (HU25) ===== */
 
-/* Casos en curso: el color sigue siendo el del origen (rojo SOS, violeta reporte); el relleno blanco con borde los distingue
-   de los pendientes de asignación, y el borde discontinuo marca un reporte recibido o en revisión. Texto 6.05:1 y 7.10:1. */
+/* Marcadores (27/10/2026, marcadores.js): una familia para la central y los mapas de detalle. La forma dice qué es (SOS:
+   cuadrado redondeado con sirena; reporte: círculo con documento; sereno: escudo con su silueta). Todos llevan el borde
+   blanco y la misma sombra, y el icono va al centro de la caja que mide Leaflet: el ancla cae justo en el punto. Sin
+   «position»: Leaflet los coloca en absoluto, y eso ancla también su pulso y su anillo. */
+.marcador-sos,
+.marcador-reporte {
+  border: 3px solid #FFFFFF;
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(13, 27, 51, 0.3), 0 3px 8px rgba(13, 27, 51, 0.25);
+}
+
+.marcador-sos {
+  border-radius: 10px;
+  background: var(--mapa-sos);
+}
+
+.marcador-reporte {
+  border-radius: 999px;
+  background: var(--mapa-reporte);
+}
+
+/* El icono se centra en absoluto: Leaflet fija «display: block» en sus marcadores y una rejilla no llegaría a aplicarse. */
+.marcador-sos > .icono,
+.marcador-reporte > .icono {
+  position: absolute;
+  inset: 0;
+  width: 18px;
+  height: 18px;
+  margin: auto;
+}
+
+.marcador-reporte > .icono {
+  width: 17px;
+  height: 17px;
+}
+
+/* Casos en curso: el color sigue siendo el del origen; el relleno blanco con borde e icono de color los distingue de los
+   pendientes de asignación (un halo blanco los separa del mapa), y el borde discontinuo marca un reporte recibido o en
+   revisión. Icono 6.05:1 y 7.10:1. */
+.marcador-caso--en-curso.marcador-sos,
+.marcador-caso--en-curso.marcador-reporte {
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 3px 8px rgba(13, 27, 51, 0.3);
+}
+
 .marcador-caso--en-curso.marcador-sos {
   color: var(--color-urgente);
-  background: #FFFFFF;
-  border: 3px solid var(--color-urgente);
+  border-color: var(--color-urgente);
 }
 
 .marcador-caso--en-curso.marcador-reporte {
   color: var(--color-reporte);
-  background: #FFFFFF;
-  border: 3px solid var(--color-reporte);
+  border-color: var(--color-reporte);
 }
 
 .marcador-caso--revision {
   border-style: dashed;
+}
+
+.marcador-sereno {
+  filter: drop-shadow(0 2px 3px rgba(13, 27, 51, 0.35));
+}
+
+.marcador-sereno svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.marcador-sos:focus-visible,
+.marcador-reporte:focus-visible,
+.marcador-sereno:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 2px;
 }
 
 /* ===== Chips de estado (rediseño CAD v2): tono + icono + texto literal del estado ===== */

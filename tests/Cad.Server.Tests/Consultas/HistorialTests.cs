@@ -55,7 +55,7 @@ public partial class HistorialTests(FabricaCad fabrica)
             ["Formulario.IdSolicitud"] = Guid.NewGuid().ToString(), ["Formulario.Resultado"] = "Contactado",
             ["Formulario.InformacionHecho"] = "Discusión entre vecinos", ["Formulario.ReferenciaUbicacion"] = "Frente al parque",
         });
-        await EnviarAsync(operador, casoId, "Clasificar", new() { ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[0].Id.ToString() });
+        await EnviarAsync(operador, casoId, "Clasificar", new() { ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[0].Id.ToString() });
         await EnviarAsync(operador, casoId, "Asignar", new()
         {
             ["Asignacion.SerenoId"] = serenoCuenta.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(),
@@ -63,7 +63,7 @@ public partial class HistorialTests(FabricaCad fabrica)
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{casoId}/desplazamiento", null)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/atencion", await fabrica.EnElLugarAsync(casoId))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre",
-            new SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, "Se resolvió en el lugar", notas))).StatusCode);
+            new SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, "Se resolvió en el lugar", notas, "ResueltoEnElLugar"))).StatusCode);
         return (casoId, operador);
     }
 
@@ -82,7 +82,7 @@ public partial class HistorialTests(FabricaCad fabrica)
         var codigo = $"OP-T{Random.Shared.Next(100_000, 999_999)}"; // ficticio y único en la base de pruebas
         await fabrica.ConBaseDatosAsync(db => Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ExecuteUpdateAsync(
             db.Users.Where(u => u.Id == cuenta.Id), s => s.SetProperty(u => u.CodigoPersonal, codigo)));
-        await EnviarAsync(operador, casoId, "Clasificar", new() { ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[0].Id.ToString() });
+        await EnviarAsync(operador, casoId, "Clasificar", new() { ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = CategoriaIncidencia.Iniciales[0].Id.ToString() });
 
         var html = await operador.GetStringAsync(Ruta(casoId));
 
@@ -100,13 +100,13 @@ public partial class HistorialTests(FabricaCad fabrica)
         Assert.Equal(
         [
             "SOS emitido", "Intento de contacto: Contactado", "Clasificado como «Violencia familiar»", "Asignado al sereno Prueba Sereno",
-            "En camino", "Inicio de atención", "Asignación finalizada", "Caso cerrado · tipificación «Robo o hurto»", "Notas internas del cierre",
+            "En camino", "Inicio de atención", "Asignación finalizada", "Caso cerrado · tipificación «Robo o hurto»", "Cómo terminó la atención", "Notas internas del cierre",
         ], Actuaciones(html));
         Assert.Contains("· Prueba Ciudadano", html);
         Assert.Contains("· Prueba Operador", html);
         Assert.Contains("· Prueba Sereno", html);
         Assert.Contains("Hecho: Discusión entre vecinos · Referencia indicada por el ciudadano: Frente al parque", html);
-        Assert.Equal(9, Regex.Matches(html, "<time datetime=").Count);
+        Assert.Equal(10, Regex.Matches(html, "<time datetime=").Count);
     }
 
     [Fact]

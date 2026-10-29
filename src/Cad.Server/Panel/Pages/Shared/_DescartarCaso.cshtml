@@ -22,13 +22,15 @@
                 <div><p class="aviso__texto">@Model.Error</p></div>
             </div>
         }
+        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Descarte_MotivoCodigo", "Descarte.MotivoCodigo", "Motivo del descarte",
+            Cad.Contratos.Casos.MotivosDescarte.Todos, Model.MotivoCodigo, Model.ErrorMotivoCodigo))" />
         <div class="campo">
-            <label class="campo__etiqueta" for="Descarte_Motivo">Motivo del descarte</label>
+            <label class="campo__etiqueta" for="Descarte_Motivo">Detalle</label>
             <textarea class="campo__control campo__control--texto" id="Descarte_Motivo" name="Descarte.Motivo" rows="3" required
                       maxlength="@Cad.Server.Modulos.Casos.Dominio.DescarteCaso.MaximoMotivo"
                       aria-invalid="@(Model.ErrorMotivo is null ? null : "true")"
                       aria-describedby="Descarte_Motivo-ayuda@(Model.ErrorMotivo is null ? "" : " Descarte_Motivo-error")">@Model.Motivo</textarea>
-            <p id="Descarte_Motivo-ayuda" class="campo__ayuda">Por ejemplo: llamada de broma, SOS enviado por error, reporte duplicado. Solo lo ve el personal autorizado.</p>
+            <p id="Descarte_Motivo-ayuda" class="campo__ayuda">Qué pasó, por ejemplo: «el ciudadano confirmó que lo envió por error». Solo lo ve el personal autorizado.</p>
             @if (Model.ErrorMotivo is not null)
             {
                 <p id="Descarte_Motivo-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorMotivo</span></p>

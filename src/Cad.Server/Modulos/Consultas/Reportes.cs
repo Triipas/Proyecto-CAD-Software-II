@@ -17,8 +17,15 @@ public sealed record ReporteEnBandeja(
 public sealed record CorreccionVista(string Anterior, string Nueva, string Operador, DateTimeOffset En);
 
 // HU15–HU17: la decisión registrada sobre el reporte.
-public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En)
+public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En,
+    string? MotivoCodigo = null, string? Prioridad = null, string? Heridos = null)
 {
+    // 27/10/2026: los textos de los catálogos (motivo del descarte; prioridad y heridos de la admisión). Nulos si la decisión
+    // es anterior a los catálogos.
+    public string? TextoMotivoDescarte => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosDescarte.Todos, MotivoCodigo);
+    public string? TextoPrioridad => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.PrioridadesCaso.Todas, Prioridad);
+    public string? TextoHeridos => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.PersonasHeridas.Todas, Heridos);
+
     public string Texto => Tipo switch
     {
         TipoDecisionReporte.Admision => "Admitido para atención",
@@ -43,6 +50,8 @@ public sealed record ReporteAdmitido(
     public bool ConPunto => Latitud is not null && Longitud is not null;
 }
 
+public sealed record RetiroVista(string Motivo, DateTimeOffset En);
+
 public sealed record DetalleReporteVista(
     Guid Id,
     EstadoCaso Estado,
@@ -66,7 +75,11 @@ public sealed record DetalleReporteVista(
     // Reporte registrado por la central (23/10/2026): quién avisó y su teléfono, si los dio.
     bool DeLaCentral = false,
     string? ContactoNombre = null,
-    string? ContactoTelefono = null)
+    string? ContactoTelefono = null,
+    // DP08 ampliada (26/10/2026): cuántas fotos adjuntó el ciudadano (se piden una por una, solo para el operador).
+    int Fotos = 0,
+    // Decisión del PO del 26/10/2026: el ciudadano retiró el reporte antes de la decisión, con su motivo.
+    RetiroVista? Retiro = null)
 {
     public bool PuedeIniciarRevision => Estado == EstadoCaso.Recibido;
     public bool PuedeCorregirCategoria => Estado == EstadoCaso.EnRevision;
@@ -126,17 +139,29 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
             .ToList();
         var decision = await (from registro in db.DecisionesReporte.AsNoTracking()
                               join operador in db.Users.AsNoTracking() on registro.OperadorId equals operador.Id
+                              join caso in db.Casos.AsNoTracking() on registro.CasoId equals caso.Id
                               where registro.CasoId == casoId
                               select new DecisionVista(registro.Tipo, registro.Motivo, registro.Destino, registro.Accion,
-                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn))
+                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn, registro.MotivoCodigo, caso.Prioridad, caso.Heridos))
             .SingleOrDefaultAsync(ct);
+
+        var fotos = await db.FotosReporte.AsNoTracking().CountAsync(f => f.CasoId == casoId, ct);
+        var retiro = await db.CancelacionesSos.AsNoTracking().Where(c => c.CasoId == casoId)
+            .Select(c => new RetiroVista(c.Motivo, c.CanceladaEn)).SingleOrDefaultAsync(ct);
 
         var (c, d) = (fila.caso, fila.detalle);
         return new DetalleReporteVista(c.Id, c.Estado, EstadosCaso.Texto(c.Origen, c.Estado), c.RegistradoEn, fila.Ciudadano, d.Descripcion,
             d.OcurridoAproximadamenteEn, d.FuenteUbicacion, d.LatitudHecho, d.LongitudHecho, d.PrecisionHechoMetros,
             d.ReferenciaHecho, c.CategoriaId!.Value, categorias[c.CategoriaId!.Value], categorias[d.CategoriaOriginalId],
-            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono);
+            revision?.Operador, revision?.OcurridoEn, correcciones, decision, d.DeLaCentral, d.ContactoNombre, d.ContactoTelefono, fotos, retiro);
     }
+}
+
+// DP08 ampliada: el contenido de una foto del reporte (1–3), o null si no existe. Solo la usa el detalle del panel (operador).
+public sealed class ConsultarFotoReporte(CadDbContext db)
+{
+    public Task<byte[]?> EjecutarAsync(Guid casoId, int numero, CancellationToken ct) =>
+        db.FotosReporte.AsNoTracking().Where(f => f.CasoId == casoId && f.Numero == numero).Select(f => f.Contenido).SingleOrDefaultAsync(ct);
 }
 
 // Reporte registrado por la central (23/10/2026): no tiene ciudadano; se nombra por quien avisó, si lo dio.

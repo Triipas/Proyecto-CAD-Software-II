@@ -68,6 +68,9 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
     public Task<ResultadoApi<MiCasoDetalle>> ConsultarMiCasoAsync(string token, Guid casoId, CancellationToken ct) =>
         EnviarAsync<MiCasoDetalle>(HttpMethod.Get, $"api/casos/mios/{casoId}", null, token, ct);
 
+    public Task<ResultadoApi<byte[]>> ConsultarFotoMiCasoAsync(string token, Guid casoId, int numero, CancellationToken ct) =>
+        EnviarAsync<byte[]>(HttpMethod.Get, $"api/casos/mios/{casoId}/fotos/{numero}", null, token, ct);
+
     public Task<ResultadoApi<MiCasoDetalle>> CancelarSosAsync(string token, Guid casoId, SolicitudCancelacionSos solicitud, CancellationToken ct) =>
         EnviarAsync<MiCasoDetalle>(HttpMethod.Post, $"api/casos/mios/{casoId}/cancelacion", solicitud, token, ct);
 
@@ -159,6 +162,8 @@ public sealed class ApiCad(HttpClient http, IConfiguracionServidor configuracion
             if (respuesta.IsSuccessStatusCode)
                 return new ResultadoApi<T>.Correcto(typeof(T) == typeof(SinContenido)
                     ? (T)(object)new SinContenido()
+                    : typeof(T) == typeof(byte[])
+                        ? (T)(object)await respuesta.Content.ReadAsByteArrayAsync(ct) // una foto, no JSON
                     : respuesta.StatusCode == HttpStatusCode.NoContent
                         ? default! // p. ej., un sereno sin despacho (HU21)
                         : (await respuesta.Content.ReadFromJsonAsync<T>(Json, ct))!);

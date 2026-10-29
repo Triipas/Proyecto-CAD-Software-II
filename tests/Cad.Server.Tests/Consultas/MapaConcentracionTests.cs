@@ -53,8 +53,8 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(id, operador.Id, CancellationToken.None));
         var datos = decision == TipoDecisionReporte.Derivacion
-            ? new DatosDecision(decision, "Motivo ficticio", "Comisaría ficticia", "Se comunicó")
-            : new DatosDecision(decision, "Motivo ficticio");
+            ? new DatosDecision(decision, "Motivo ficticio", "Otro", "Se comunicó", "Comisaría ficticia")
+            : new DatosDecision(decision, "Motivo ficticio", Prioridad: "Media", Heridos: "No", MotivoDescarte: "Duplicado");
         Assert.IsType<ResultadoDecision.Registrado>(await fabrica.ConServiciosAsync(s =>
             s.GetRequiredService<DecidirReporte>().EjecutarAsync(id, datos, operador.Id, CancellationToken.None)));
     }
@@ -120,6 +120,8 @@ public class MapaConcentracionTests(FabricaCad fabrica)
     {
         var zona = ZonaNueva();
         var desde = DateTimeOffset.UtcNow.AddSeconds(-1);
+        // La prueba anterior pudo dejar un caso sin ubicación en el último segundo: se compara con lo que ya había.
+        var sinUbicacionAntes = (await MapaAsync(desde)).SinUbicacion;
         var app = await CiudadanoAsync();
         var cancelado = await SosAsync(app, zona);
         Assert.Equal(HttpStatusCode.OK, (await app.PostAsJsonAsync($"/api/casos/mios/{cancelado}/cancelacion", new SolicitudCancelacionSos("Falsa alarma"))).StatusCode);
@@ -134,7 +136,7 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         Assert.Equal(1, En(mapa, zona, OrigenCaso.Sos));
         // El derivado sí es una incidencia (CA03 solo excluye «Cancelada» y «Descartada»).
         Assert.Equal(1, En(mapa, zona, OrigenCaso.Reporte));
-        Assert.Equal(0, mapa.SinUbicacion);
+        Assert.Equal(sinUbicacionAntes, mapa.SinUbicacion);
     }
 
     [Fact]
@@ -211,6 +213,35 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         var marca = "<script type=\"application/json\" id=\"celdas-concentracion\">";
         var inicio = html.IndexOf(marca, StringComparison.Ordinal) + marca.Length;
         return JsonDocument.Parse(html[inicio..html.IndexOf("</script>", inicio, StringComparison.Ordinal)]).RootElement;
+    }
+
+    [Fact]
+    public async Task MapaDeCalor_JuntaLosCasosCercanosEnPuntosDeUnos110Metros_SinCancelados()
+    {
+        var zona = ZonaNueva();
+        var desde = DateTimeOffset.UtcNow.AddSeconds(-1);
+        var app = await CiudadanoAsync();
+        await SosAsync(app, zona);
+        await ReporteAsync(app, zona);
+        var cancelado = await SosAsync(app, zona);
+        Assert.Equal(HttpStatusCode.OK, (await app.PostAsJsonAsync($"/api/casos/mios/{cancelado}/cancelacion", new SolicitudCancelacionSos("Falsa alarma"))).StatusCode);
+
+        var mapa = await MapaAsync(desde);
+
+        // El SOS y el reporte del mismo lugar caen en un solo punto de calor, en el centro de su celda fina; el cancelado no cuenta.
+        var punto = Assert.Single(mapa.Calor, p => Math.Abs(p.Latitud - zona) < ConsultarConcentracion.TamanoCalor && Math.Abs(p.Longitud - Longitud) < ConsultarConcentracion.TamanoCalor);
+        Assert.Equal(2, punto.Casos);
+        Assert.Equal(mapa.Sos + mapa.Reportes, mapa.Calor.Sum(p => p.Casos));
+    }
+
+    [Fact]
+    public async Task Pagina_TraeLaCapaDeCalorYLaDiferenciaConAnalitica()
+    {
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion?Desde=2026-01-01&Hasta=2026-01-31"));
+
+        Assert.Contains("id=\"calor-concentracion\"", html);
+        Assert.Contains("data-diferencia", html);
+        Assert.Contains("href=\"/panel/analitica/repite?periodo=rango&desde=2026-01-01&hasta=2026-01-31\"", html);
     }
 
     [Fact]

@@ -49,12 +49,13 @@ public class ReasignacionCasoTests(FabricaCad fabrica)
         return sos.Id;
     }
 
-    private static async Task<HttpResponseMessage> ReasignarAsync(HttpClient operador, Guid casoId, Guid serenoId, string motivo = Motivo, Guid? idSolicitud = null)
+    private static async Task<HttpResponseMessage> ReasignarAsync(HttpClient operador, Guid casoId, Guid serenoId, string motivo = Motivo, Guid? idSolicitud = null,
+        string motivoCodigo = "SerenoNoResponde")
     {
         var ruta = $"/panel/central/sos/{casoId}";
         return await operador.PostAsync($"{ruta}?handler=Reasignar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Reasignacion.SerenoId"] = serenoId.ToString(), ["Reasignacion.Motivo"] = motivo,
+            ["Reasignacion.SerenoId"] = serenoId.ToString(), ["Reasignacion.MotivoCodigo"] = motivoCodigo, ["Reasignacion.Motivo"] = motivo,
             ["Reasignacion.IdSolicitud"] = (idSolicitud ?? Guid.NewGuid()).ToString(),
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
         }));
@@ -99,9 +100,12 @@ public class ReasignacionCasoTests(FabricaCad fabrica)
         var nuevo = await SerenoAsync();
         var casoId = await SosAsignadoAsync(operador, anterior);
 
-        var sinMotivo = await ReasignarAsync(operador, casoId, nuevo.Cuenta.Id, motivo: "  ");
+        // 27/10/2026: el motivo se elige del catálogo; escribirlo solo es obligatorio con «Otro motivo».
+        var sinMotivo = await ReasignarAsync(operador, casoId, nuevo.Cuenta.Id, motivo: "  ", motivoCodigo: "");
         Assert.Equal(HttpStatusCode.OK, sinMotivo.StatusCode);
-        Assert.Contains("Indica por qué se reasigna el caso.", System.Net.WebUtility.HtmlDecode(await sinMotivo.Content.ReadAsStringAsync()));
+        Assert.Contains("Elige por qué se reasigna el caso.", System.Net.WebUtility.HtmlDecode(await sinMotivo.Content.ReadAsStringAsync()));
+        var otroSinTexto = await ReasignarAsync(operador, casoId, nuevo.Cuenta.Id, motivo: "  ", motivoCodigo: "Otro");
+        Assert.Contains("Indica por qué se reasigna el caso.", System.Net.WebUtility.HtmlDecode(await otroSinTexto.Content.ReadAsStringAsync()));
         var alMismo = await ReasignarAsync(operador, casoId, anterior.Cuenta.Id);
         Assert.Contains(ReasignarCaso.MotivoMismoSereno, System.Net.WebUtility.HtmlDecode(await alMismo.Content.ReadAsStringAsync()));
         Assert.Equal(anterior.Cuenta.Id, await fabrica.ConBaseDatosAsync(db => db.Asignaciones.Where(a => a.CasoId == casoId && a.Vigente).Select(a => a.SerenoId).SingleAsync()));

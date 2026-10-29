@@ -5,6 +5,7 @@
 @using Accion = Cad.Server.Panel.Pages.Reportes.DetalleModel.SiguienteAccion
 @{
     ViewData["Title"] = "Reporte";
+    ViewData["ClasePagina"] = "pagina--consola";
     var inv = CultureInfo.InvariantCulture;
     var r = Model.Reporte;
     var s = Model.Seguimiento;
@@ -13,12 +14,84 @@
     var fuente = r.FuenteUbicacion switch
     {
         "Mapa" => "Punto elegido en el mapa por el ciudadano",
-        "PosicionActual" => "Posición del ciudadano al reportar (la eligió él)",
+        "PosicionActual" => "Posición del ciudadano al reportar (por elección suya)",
         _ => "Referencia textual (sin punto)",
     };
+    // Consola de incidente (27/10/2026), como el detalle del SOS. Un reporte no es urgente: su cronómetro no sube de tono.
+    var terminado = r.Estado is EstadoCaso.Derivada or EstadoCaso.Descartada or EstadoCaso.Cancelada or EstadoCaso.Cerrada;
+    var etiquetaTiempo = r.Estado switch
+    {
+        EstadoCaso.Recibido => "Sin revisar",
+        EstadoCaso.EnRevision => "Sin decidir",
+        EstadoCaso.Pendiente => "Sin asignar",
+        _ => "Abierto",
+    };
+    var fase = siguiente switch
+    {
+        Accion.IniciarRevision or Accion.Decidir => "Revisión",
+        Accion.Asignar => "Despacho",
+        _ => "Atención",
+    };
+    string Transcurrido(TimeSpan t) => t.TotalMinutes < 1 ? "hace menos de 1 min"
+        : t.TotalHours < 1 ? $"hace {(int)t.TotalMinutes} min"
+        : t.TotalDays < 1 ? $"hace {(int)t.TotalHours} h {t.Minutes} min"
+        : $"hace {(int)t.TotalDays} d {t.Hours} h";
+    string Corta(DateTimeOffset momento)
+    {
+        var local = TimeZoneInfo.ConvertTime(momento, Model.ZonaHoraria);
+        var hoy = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Model.ZonaHoraria).Date;
+        return local.Date == hoy ? $"hoy, {local.ToString("HH:mm", inv)}" : local.ToString("dd/MM HH:mm", inv);
+    }
+    var categoriaCorregida = r.CategoriaOriginal != r.CategoriaActual;
     // «Otras acciones»: corregir la categoría, solo mientras el reporte está «En revisión» (HU14-CA04).
     var abrirOtras = Model.ErrorCategoria is not null || Model.ErrorCorreccion is not null;
+    var hechoPrimero = r.PuedeIniciarRevision || r.PuedeDecidir;
 
+    // Rediseño del 27/10/2026: lo que reportó el ciudadano va en la columna principal, junto a la decisión (antes, abajo en el
+    // contexto). Mientras se revisa va primero; después, bajo las acciones.
+    void Hecho()
+    {
+        <section class="superficie seccion-caso hecho" aria-labelledby="titulo-hecho">
+            <div class="hecho__cabecera">
+                <h2 id="titulo-hecho" class="seccion-caso__titulo">@(r.DeLaCentral ? "Lo que se informó a la central" : "Lo que reportó el ciudadano")</h2>
+                <p class="hecho__cuando">Ocurrió aproximadamente el @Local(r.OcurridoAproximadamenteEn, "dd/MM/yyyy HH:mm")</p>
+            </div>
+            <p class="hecho__descripcion" data-descripcion>@r.Descripcion</p>
+            @if (r.DeLaCentral)
+            {
+                <dl class="datos datos--en-linea">
+                    <div><dt>Registrado</dt><dd>Por la central</dd></div>
+                    <div><dt>Quién avisó</dt><dd data-contacto>@(r.ContactoNombre ?? "Sin datos")@(r.ContactoTelefono is { } telefono ? $" · {telefono}" : "")</dd></div>
+                </dl>
+            }
+            else
+            {
+                @* DP08 ampliada (26/10/2026): fotos que adjuntó el ciudadano, ya sin metadatos; solo las ve el operador. *@
+                <div class="hecho__fotos" data-fotos-reporte="@r.Fotos">
+                    <h3 id="titulo-fotos" class="hecho__subtitulo">Fotos del ciudadano</h3>
+                    @if (r.Fotos == 0)
+                    {
+                        <p class="texto-secundario" data-sin-fotos>El ciudadano no adjuntó fotos.</p>
+                    }
+                    else
+                    {
+                        <ul class="fotos-reporte" role="list">
+                            @for (var n = 1; n <= r.Fotos; n++)
+                            {
+                                var url = $"/panel/reportes/{r.Id}?handler=Foto&numero={n}";
+                                <li>
+                                    <a href="@url" target="_blank" rel="noopener" class="fotos-reporte__enlace" data-foto="@n">
+                                        <img src="@url" alt="Foto @n de @r.Fotos adjuntada por el ciudadano" decoding="async" />
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        <p class="texto-secundario detalle-caso__nota">Ábrela para verla en tamaño completo (en otra pestaña). Son fotos del ciudadano: no confirman por sí solas lo ocurrido.</p>
+                    }
+                </div>
+            }
+        </section>
+    }
     // HU15–HU17: la decisión registrada, en la tarjeta (derivado o descartado) o en el contexto (admitido).
     void DatosDecision(Cad.Server.Modulos.Consultas.DecisionVista d)
     {
@@ -28,6 +101,15 @@
             {
                 <div><dt>Destino</dt><dd data-destino>@destino</dd></div>
                 <div><dt>Acción realizada</dt><dd class="datos__texto">@d.Accion</dd></div>
+            }
+            @if (d.TextoMotivoDescarte is { } motivoDescarte)
+            {
+                <div><dt>Motivo del descarte</dt><dd data-motivo-descarte>@motivoDescarte</dd></div>
+            }
+            @if (d.Tipo == TipoDecisionReporte.Admision && d.TextoPrioridad is { } prioridad)
+            {
+                <div><dt>Prioridad</dt><dd data-prioridad>@prioridad</dd></div>
+                <div><dt>Personas heridas</dt><dd data-heridos>@d.TextoHeridos</dd></div>
             }
             <div><dt>Motivo</dt><dd class="datos__texto" data-motivo>@d.Motivo</dd></div>
             <div><dt>Decidido por</dt><dd>@d.Operador</dd></div>
@@ -41,20 +123,41 @@
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/consola.css" asp-append-version="true" />
 }
 
-<p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
-
-<header class="cabecera-caso">
-    <div class="cabecera-caso__fila">
-        <span class="etiqueta-reporte"><partial name="_Icono" model="@("documento")" />Reporte</span>
-        <h1 class="titulo">@r.CategoriaActual</h1>
-        <span data-estado><partial name="_ChipEstado" model="@((r.TextoEstado, false))" /></span>
+<header class="consola__barra" data-caso="@r.Id" data-origen-estado="Reporte @r.TextoEstado"
+        data-regiones="[aria-labelledby='titulo-categoria'],[aria-labelledby='titulo-revision'],[data-tiempos]"
+        data-texto-cancelado="El ciudadano retiró este reporte mientras escribías. Lo que escribiste no se registró.">
+    <div class="consola__ancho">
+        <a class="consola__volver" href="/panel/reportes" aria-label="Volver a los reportes" title="Reportes">
+            <partial name="_Icono" model="@("izquierda")" />
+        </a>
+        <div class="consola__titular">
+            <span class="etiqueta-reporte"><partial name="_Icono" model="@("documento")" />Reporte</span>
+            <h1 class="consola__titulo">@r.CategoriaActual</h1>
+            <span data-estado><partial name="_ChipEstado" model="@((r.TextoEstado, false))" /></span>
+            <span class="consola__quien">de <strong>@r.Ciudadano</strong></span>
+            @if (!terminado)
+            {
+                <span class="consola__cronometro" data-transcurrido="@r.RegistradoEn.ToString("O", inv)" data-nivel="0" title="Registrado el @Local(r.RegistradoEn)">
+                    <partial name="_Icono" model="@("reloj")" />
+                    <span>@etiquetaTiempo</span>
+                    <strong data-texto>@Transcurrido(DateTimeOffset.UtcNow - r.RegistradoEn)</strong>
+                </span>
+            }
+        </div>
+        <div class="consola__acciones">
+            <a class="consola__otro-sos" href="/panel/central" data-otro-sos hidden>
+                <partial name="_Icono" model="@("urgente")" />Nuevo SOS en la central
+            </a>
+            <span class="consola__vivo" data-vivo data-conexion="conectando"><span class="consola__punto" aria-hidden="true"></span><span data-texto>Conectando…</span></span>
+            <a class="boton boton--secundario boton--compacto" href="/panel/casos/@r.Id/historial">
+                <partial name="_Icono" model="@("reloj")" />Historial
+            </a>
+        </div>
     </div>
-    <p class="cabecera-caso__resumen">
-        Reporte de incidencia de <strong>@r.Ciudadano</strong> · Registrado el @Local(r.RegistradoEn) · <a href="/panel/casos/@r.Id/historial">Ver el historial del caso</a>
-    </p>
-    <partial name="_ProgresoCaso" model="Model.Pasos" />
+    <p class="visualmente-oculto" role="status" data-anuncio></p>
 </header>
 
 @if (Model.Mensaje is not null)
@@ -75,9 +178,9 @@
     ("No se pudo registrar la decisión", Model.ErrorDecision),
     ("No se registró el inicio de atención", Model.ErrorAtencion),
     ("No se pudo cerrar el reporte", Model.ErrorCierre),
-    ("No se pudo asignar el reporte", Model.ErrorAsignacion),
     ("No se pudo descartar el reporte", Model.ErrorDescarte),
-    ("No se pudo reasignar el reporte", Model.ErrorReasignacion) })
+    ("No se pudo reasignar el reporte", Model.ErrorReasignacion),
+    ("No se pudo asignar el reporte", Model.ErrorAsignacion) })
 {
     if (error is null) continue;
     <div class="aviso aviso--error" role="alert" tabindex="-1" data-enfocar>
@@ -89,16 +192,42 @@
     </div>
 }
 
-<div class="detalle-caso">
-    <div class="detalle-caso__principal">
-        <section class="superficie siguiente" aria-labelledby="titulo-siguiente">
+<div class="consola consola__ancho">
+    <div class="consola__pasos">
+        <partial name="_ProgresoCaso" model="Model.Pasos" />
+        <dl class="consola__resumen">
+            <div><dt>Registrado</dt><dd><time datetime="@r.RegistradoEn.ToString("O", inv)">@Corta(r.RegistradoEn)</time></dd></div>
+            <div><dt>Ocurrió</dt><dd>@Corta(r.OcurridoAproximadamenteEn)</dd></div>
+            @if (r.RevisionIniciadaPor is { } revisor)
+            {
+                <div><dt>Revisa</dt><dd>@revisor</dd></div>
+            }
+            @if (s?.Asignacion is { FinalizadaEn: null } enCurso)
+            {
+                <div><dt>Sereno</dt><dd>@enCurso.Sereno</dd></div>
+            }
+            <div><dt>Identificador</dt><dd title="@r.Id">@r.Id.ToString()[..8].ToUpperInvariant()</dd></div>
+        </dl>
+    </div>
+
+    <div class="consola__trabajo">
+        <div class="aviso consola__cambio" role="alert" data-caso-cambio data-tono="informacion" hidden>
+            <partial name="_Icono" model="@("informacion")" />
+            <p class="aviso__texto" data-texto></p>
+            <button type="button" class="boton boton--secundario boton--compacto" data-recargar>Ver los cambios</button>
+        </div>
+        @if (hechoPrimero)
+        {
+            Hecho();
+        }
+        <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente">
             @switch (siguiente)
             {
                 case Accion.IniciarRevision:
                     @* HU14-CA01/CA02/CA05 — inicio de la revisión. *@
                     <div class="siguiente__cabecera">
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Revisa el reporte de @r.Ciudadano</h2>
-                        <span class="siguiente__paso">Paso 1 de 3</span>
+                        <span class="siguiente__paso">@fase</span>
                     </div>
                     <form method="post" asp-page-handler="IniciarRevision" class="formulario" data-formulario>
                         <p class="texto-secundario">El reporte pasará a «En revisión» y quedarás como responsable. Después podrás corregir la categoría y decidir.</p>
@@ -111,7 +240,7 @@
                     @* HU15–HU17 — admitir, derivar o descartar, solo desde «En revisión». *@
                     <div class="siguiente__cabecera">
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Decide qué hacer con el reporte</h2>
-                        <span class="siguiente__paso">Paso 2 de 3</span>
+                        <span class="siguiente__paso">@fase</span>
                     </div>
                     <form method="post" asp-page-handler="Decidir" class="formulario" data-formulario novalidate>
                         <fieldset class="opciones opciones--segmentadas">
@@ -121,19 +250,29 @@
                                 <label class="opcion"><input type="radio" name="Decision.Tipo" value="Derivacion" checked="@(Model.Decision.Tipo == TipoDecisionReporte.Derivacion)" aria-describedby="ayuda-derivacion" />Derivar</label>
                                 <label class="opcion"><input type="radio" name="Decision.Tipo" value="Descarte" checked="@(Model.Decision.Tipo == TipoDecisionReporte.Descarte)" aria-describedby="ayuda-descarte" />Descartar</label>
                             </div>
-                            <p id="ayuda-admision" class="campo__ayuda decision__ayuda decision__ayuda--admision">Admitir para atención: pasa a «Pendiente» para asignarlo a un sereno desde la central.</p>
+                            <p id="ayuda-admision" class="campo__ayuda decision__ayuda decision__ayuda--admision">Admitir para atención: pasa a «Admitido» y queda listo para asignarlo a un sereno.</p>
                             <p id="ayuda-derivacion" class="campo__ayuda decision__ayuda decision__ayuda--derivacion">Derivar a otra entidad: es solo un registro, el sistema no envía nada.</p>
                             <p id="ayuda-descarte" class="campo__ayuda decision__ayuda decision__ayuda--descarte">Descartar: el reporte no se atiende y queda en el historial.</p>
                         </fieldset>
+                        @* 27/10/2026: cada decisión registra lo suyo de un catálogo (lo cuenta la analítica): al admitir, la prioridad y
+                           si hay heridos; al descartar, el motivo; al derivar, el destino. Solo se muestra el de la decisión elegida. *@
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_Prioridad", "Decision.Prioridad", "Prioridad",
+                            Cad.Contratos.Casos.PrioridadesCaso.Todas, Model.Decision.Prioridad, Model.ErrorDecisionDe("prioridad"), Clase: "campo--admision"))" />
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_Heridos", "Decision.Heridos", "¿Hay personas heridas?",
+                            Cad.Contratos.Casos.PersonasHeridas.Todas, Model.Decision.Heridos, Model.ErrorDecisionDe("heridos"), Clase: "campo--admision"))" />
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_MotivoDescarte", "Decision.MotivoDescarte", "Motivo del descarte",
+                            Cad.Contratos.Casos.MotivosDescarte.Todos, Model.Decision.MotivoDescarte, Model.ErrorDecisionDe("motivoDescarte"), Clase: "campo--descarte"))" />
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Decision_Destino", "Decision.Destino", "Destino",
+                            Cad.Contratos.Casos.DestinosDerivacion.Todos, Model.Decision.Destino, Model.ErrorDecisionDe("destino"), Clase: "campo--derivacion"))" />
                         @foreach (var (campo, etiqueta, ayuda, valor, multilinea, maximo) in new[]
                         {
+                            ("DetalleDestino", "Entidad u oficina (opcional)", "Precisa el destino, por ejemplo la comisaría. Obligatorio si elegiste «Otra entidad».", Model.Decision.DetalleDestino, false, DecisionReporte.MaximoDestino),
                             ("Motivo", "Motivo", "Obligatorio en las tres decisiones. En un descarte es la justificación.", Model.Decision.Motivo, true, DecisionReporte.MaximoMotivo),
-                            ("Destino", "Destino (solo para derivar)", "Entidad o área a la que se deriva. Obligatorio al derivar.", Model.Decision.Destino, false, DecisionReporte.MaximoDestino),
                             ("Accion", "Acción realizada (solo para derivar)", "Por ejemplo, cómo se comunicó el caso. Obligatoria al derivar.", Model.Decision.Accion, true, DecisionReporte.MaximoAccion),
                         })
                         {
                             var id = $"Decision_{campo}";
-                            var error = Model.ErrorDecisionDe(campo.ToLowerInvariant());
+                            var error = Model.ErrorDecisionDe(char.ToLowerInvariant(campo[0]) + campo[1..]);
                             var descrito = error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda";
                             <div class="campo@(campo == "Motivo" ? "" : " campo--derivacion")">
                                 <label class="campo__etiqueta" for="@id">@etiqueta</label>
@@ -162,10 +301,13 @@
                 case Accion.Asignar:
                     <div class="siguiente__cabecera">
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Asigna el reporte a un sereno disponible</h2>
-                        <span class="siguiente__paso">Paso 3 de 3</span>
+                        <span class="siguiente__paso">@fase</span>
                     </div>
-                    <p data-pendiente-asignacion class="texto-secundario">Pendiente de asignación. El sereno disponible más cercano al lugar del hecho viene sugerido.</p>
+                    <p data-pendiente-asignacion>Pendiente de asignación. El sereno disponible más cercano al lugar del hecho viene sugerido; también puedes asignarlo desde el mapa de la central, como un SOS.</p>
                     <partial name="_AsignarCaso" model="Model.VistaAsignacion" />
+                    <div class="acciones">
+                        <a class="boton boton--secundario" href="/panel/central#titulo-reportes">Ver en el mapa de la central</a>
+                    </div>
                     break;
                 case Accion.EsperarDesplazamiento:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">@s!.Asignacion!.Sereno recibió el despacho</h2>
@@ -216,8 +358,12 @@
                                 <p id="Cierre_CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorCategoria</span></p>
                             }
                         </div>
+                        @* 27/10/2026: cómo terminó la atención, del catálogo (lo cuenta la analítica). *@
+                        <partial name="_CampoCatalogo" model="@(new CampoCatalogo("Cierre_ResultadoAtencion", "Cierre.ResultadoAtencion", "Cómo terminó la atención",
+                            Cad.Contratos.Casos.ResultadosAtencion.Todos, Model.Cierre.ResultadoAtencion, Model.ErrorCierreDe("resultadoAtencion"),
+                            "Solo lo ve el personal autorizado."))" />
                         <div class="campo">
-                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado de la atención</label>
+                            <label class="campo__etiqueta" for="Cierre_ResultadoPublico">Resultado para el ciudadano</label>
                             <textarea class="campo__control campo__control--texto" id="Cierre_ResultadoPublico" name="Cierre.ResultadoPublico" rows="3" required
                                       maxlength="@CierreCaso.MaximoResultado"
                                       aria-invalid="@(errorResultado is null ? null : "true")"
@@ -250,6 +396,7 @@
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Atención cerrada</h2>
                     <dl class="datos" data-cierre>
                         <div><dt>Tipificación final</dt><dd>@cierre.Tipificacion</dd></div>
+                        <div><dt>Cómo terminó</dt><dd data-resultado-atencion>@cierre.ComoTermino</dd></div>
                         <div><dt>Resultado de la atención (público)</dt><dd data-resultado-publico>@cierre.ResultadoPublico</dd></div>
                         <div><dt>Notas internas (solo personal autorizado)</dt><dd data-notas-internas>@(cierre.NotasInternas ?? "Sin notas internas.")</dd></div>
                         <div><dt>Cerrado por</dt><dd>@cierre.Responsable</dd></div>
@@ -269,11 +416,24 @@
                     var descarte = Model.Descartado!;
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Reporte descartado por la central</h2>
                     <dl class="datos" data-descartado>
+                        @if (descarte.TextoMotivo is { } motivoDescarte)
+                        {
+                            <div><dt>Motivo del descarte</dt><dd data-motivo-descarte>@motivoDescarte</dd></div>
+                        }
                         <div><dt>Motivo (solo personal autorizado)</dt><dd>@descarte.Motivo</dd></div>
                         <div><dt>Estaba</dt><dd>@descarte.EstadoPrevio</dd></div>
                         <div><dt>Descartado por</dt><dd>@descarte.Operador</dd></div>
                         <div><dt>Fecha y hora</dt><dd>@Local(descarte.DescartadoEn)</dd></div>
                     </dl>
+                    break;
+                case Accion.VerRetiro:
+                    var retiro = r.Retiro!;
+                    <h2 class="siguiente__titulo" id="titulo-siguiente">Reporte retirado por el ciudadano</h2>
+                    <dl class="datos" data-retirado>
+                        <div><dt>Motivo del ciudadano</dt><dd>@retiro.Motivo</dd></div>
+                        <div><dt>Fecha y hora</dt><dd>@Local(retiro.En)</dd></div>
+                    </dl>
+                    <p class="texto-secundario">Lo retiró antes de la decisión de la central: ya no admite acciones.</p>
                     break;
                 default:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">Sin acciones pendientes</h2>
@@ -313,6 +473,11 @@
                     </section>
                 </div>
             </details>
+        }
+
+        @if (!hechoPrimero)
+        {
+            Hecho();
         }
 
         @* Decisión del PO del 16/10/2026: atención de un reporte admitido, con las mismas reglas que en un SOS. *@
@@ -368,29 +533,7 @@
         }
     </div>
 
-    <aside class="detalle-caso__contexto" aria-label="Contexto del reporte">
-        @if (Model.Ficha is { } ficha)
-        {
-            <partial name="_FichaCiudadano" model="ficha" />
-        }
-
-        <section class="superficie seccion-caso" aria-labelledby="titulo-hecho">
-            <h2 id="titulo-hecho" class="seccion-caso__titulo">Hecho reportado</h2>
-            <dl class="datos">
-                @if (r.DeLaCentral)
-                {
-                    <div><dt>Registrado</dt><dd>Por la central</dd></div>
-                    <div><dt>Quién avisó</dt><dd data-contacto>@(r.ContactoNombre ?? "Sin datos")@(r.ContactoTelefono is { } telefono ? $" · {telefono}" : "")</dd></div>
-                }
-                else
-                {
-                    <div><dt>Ciudadano</dt><dd>@r.Ciudadano</dd></div>
-                }
-                <div><dt>Ocurrió aproximadamente</dt><dd>@Local(r.OcurridoAproximadamenteEn, "dd/MM/yyyy HH:mm")</dd></div>
-                <div><dt>Descripción</dt><dd class="datos__texto" data-descripcion>@r.Descripcion</dd></div>
-            </dl>
-        </section>
-
+    <aside class="detalle-caso__contexto consola__expediente" aria-label="Expediente del reporte">
         <section class="superficie seccion-caso" aria-labelledby="titulo-lugar">
             <h2 id="titulo-lugar" class="seccion-caso__titulo">Ubicación del hecho</h2>
             @if (r.ConPunto)
@@ -417,10 +560,17 @@
             <p class="texto-secundario detalle-caso__nota">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
         </section>
 
+        @if (Model.Ficha is { } ficha)
+        {
+            <partial name="_FichaCiudadano" model="ficha" />
+        }
+
+
+
         <section class="superficie seccion-caso" aria-labelledby="titulo-categoria">
             <h2 id="titulo-categoria" class="seccion-caso__titulo">Categoría</h2>
             <dl class="datos datos--en-linea">
-                <div><dt>Original (elegida por el ciudadano)</dt><dd data-categoria-original>@r.CategoriaOriginal</dd></div>
+                <div class="@(categoriaCorregida ? null : "dato--vacio")"><dt>Original (elegida por el ciudadano)</dt><dd data-categoria-original>@r.CategoriaOriginal</dd></div>
                 <div><dt>Vigente</dt><dd data-categoria-vigente>@r.CategoriaActual</dd></div>
             </dl>
             @if (r.Correcciones.Count > 0)
@@ -472,9 +622,12 @@
 
 @section Scripts {
     <script src="~/js/asignar-caso.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/consola.js" asp-append-version="true"></script>
     @if (r.ConPunto)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+        <script src="~/js/marcadores.js" asp-append-version="true"></script>
         <script src="~/js/mapa-hecho.js" asp-append-version="true"></script>
     }
 }

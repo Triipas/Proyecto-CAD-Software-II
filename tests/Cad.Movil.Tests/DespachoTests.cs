@@ -365,7 +365,7 @@ public class DespachoTests
     private DespachoSereno EnAtencion() => Despacho() with { Estado = DespachoSereno.EstadoEnAtencion };
 
     [Fact]
-    public async Task HU24_CerrarElCaso_EnviaTipificacionResultadoYNotas_YDejaDeMostrarElDespacho()
+    public async Task HU24_CerrarElCaso_EnviaTipificacionComoTerminoResultadoYNotas_YDejaDeMostrarElDespacho()
     {
         api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(EnAtencion());
         var vm = VistaModelo(Servicio());
@@ -376,6 +376,7 @@ public class DespachoTests
         Assert.True(vm.MostrarCierre);
         Assert.Equal(api.Categorias, vm.CategoriasCierre);
         vm.CategoriaCierre = vm.CategoriasCierre[0];
+        vm.ResultadoAtencionCierre = vm.OpcionesResultadoAtencion[0]; // 27/10/2026: cómo terminó, de la lista
         vm.ResultadoCierre = "Resultado ficticio";
         vm.NotasCierre = "Nota interna ficticia";
         api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
@@ -383,6 +384,8 @@ public class DespachoTests
 
         var enviado = Assert.Single(api.Cierres);
         Assert.Equal(api.Categorias[0].Id, enviado.CategoriaId);
+        Assert.Equal(Cad.Contratos.Casos.ResultadosAtencion.ResueltoEnElLugar, enviado.ResultadoAtencion);
+        Assert.Null(vm.ResultadoAtencionCierre); // el formulario queda limpio
         Assert.Equal("Resultado ficticio", enviado.ResultadoPublico);
         Assert.Equal("Nota interna ficticia", enviado.NotasInternas);
         Assert.False(vm.HayDespacho);

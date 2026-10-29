@@ -1,0 +1,1001 @@
+id,origen,categoria,estado,registrado_en,hora,dia_semana,latitud,longitud,sector,lugar,referencia,prioridad,sereno,respuesta_min,resultado,puntuacion
+CASO-0001,Reporte,Ruidos molestos o escándalo,Cerrada,2026-08-31T01:38:19-05:00,1,Mon,-16.427051,-71.531512,1,noche,"República de Chile, cerca de un local nocturno",Baja,SER-26,19.4,ResueltoEnElLugar,
+CASO-0002,Reporte,Peleas o riñas,Cerrada,2026-08-31T01:46:41-05:00,1,Mon,-16.431429,-71.524598,2,parque,"Pasaje 11, cerca del parque",Media,SER-30,39.6,ResueltoEnElLugar,5
+CASO-0003,Reporte,Consumo o venta de drogas,Descartada,2026-08-31T13:35:45-05:00,13,Mon,-16.413424,-71.51744,1,parque,"Colonia, cerca del parque",,,,,
+CASO-0004,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-08-31T17:43:54-05:00,17,Mon,-16.425444,-71.533578,1,parque,"Óvalo Avelino, cerca del parque",Baja,SER-13,36.0,ResueltoEnElLugar,5
+CASO-0005,Sos,Violencia familiar,Cerrada,2026-08-31T19:45:50-05:00,19,Mon,-16.427112,-71.541741,4,residencial,"Calle Edmundo Escomel, Pueblo Joven Santa Teresa",Alta,SER-23,11.8,EntregadoAPnp,4
+CASO-0006,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-08-31T20:26:19-05:00,20,Mon,-16.433404,-71.517129,2,parque,"Avenida Túpac Amaru, cerca del parque",Baja,SER-18,11.0,ResueltoEnElLugar,
+CASO-0007,Reporte,Robo o hurto,Cerrada,2026-08-31T21:36:18-05:00,21,Mon,-16.434171,-71.525928,2,paradero,"Paradero Mechita, Avenida Túpac Amaru",Media,SER-18,31.1,Derivado,
+CASO-0008,Reporte,Consumo o venta de drogas,Cerrada,2026-08-31T21:52:11-05:00,21,Mon,-16.43372,-71.520351,2,parque,"Avenida Túpac Amaru, cerca del parque",Baja,SER-28,66.9,ResueltoEnElLugar,4
+CASO-0009,Reporte,Robo o hurto,Descartada,2026-08-31T22:00:47-05:00,22,Mon,-16.421038,-71.540305,4,mercado,"E. Zegarra Ballón, cerca del mercado",,,,,
+CASO-0010,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-08-31T23:10:24-05:00,23,Mon,-16.415643,-71.520064,1,parque,"Avenida Lambramani, cerca del parque",Baja,SER-26,49.2,ResueltoEnElLugar,
+CASO-0011,Reporte,Violencia familiar,Cerrada,2026-08-31T23:11:03-05:00,23,Mon,-16.435448,-71.518828,2,residencial,"Avenida Túpac Amaru, La Florida",Alta,SER-30,67.3,ResueltoEnElLugar,
+CASO-0012,Reporte,Accidente de tránsito,Derivada,2026-09-01T18:22:24-05:00,18,Tue,-16.439875,-71.525727,3,avenida,"Calle Huamachuco, cuadra 1",,,,,
+CASO-0013,Sos,Peleas o riñas,Cerrada,2026-09-01T21:14:01-05:00,21,Tue,-16.417802,-71.527315,1,noche,"Cerca de Fong Mey, Calle 1",Media,SER-14,9.7,ResueltoEnElLugar,
+CASO-0014,Sos,Persona o vehículo sospechoso,Cerrada,2026-09-01T21:51:01-05:00,21,Tue,-16.440768,-71.524101,3,residencial,"Calle Tasahuayo, Tasahuayo",Baja,SER-20,13.9,SinHallazgo,
+CASO-0015,Reporte,Robo o hurto,Derivada,2026-09-01T23:01:06-05:00,23,Tue,-16.436355,-71.52108,2,residencial,"Avenida Túpac Amaru, Villa Santa Luisa",,,,,
+CASO-0016,Reporte,Otros,Cerrada,2026-09-02T15:34:52-05:00,15,Wed,-16.429725,-71.530796,1,parque,"Argentina, cerca del parque",Baja,SER-15,25.4,ResueltoEnElLugar,
+CASO-0017,Sos,Robo o hurto,Cerrada,2026-09-02T18:12:56-05:00,18,Wed,-16.424193,-71.533697,1,mercado,"Avenida Daniel Alcides Carrión, cerca del mercado",Media,SER-15,11.7,SinHallazgo,4
+CASO-0018,Reporte,Accidente de tránsito,Cerrada,2026-09-02T19:22:17-05:00,19,Wed,-16.411896,-71.521073,1,avenida,"Avenida Lambramani, cuadra 10",Media,SER-15,34.1,ResueltoEnElLugar,
+CASO-0019,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-02T20:05:22-05:00,20,Wed,-16.429381,-71.528589,1,colegio,"Frente al colegio Institución Educativa André Bretón, Calle Guatemala",Alta,SER-15,81.0,SinHallazgo,
+CASO-0020,Sos,Robo o hurto,Cerrada,2026-09-02T20:24:20-05:00,20,Wed,-16.423282,-71.516302,2,mercado,"Mercado total, Avenida Pizarro",Media,SER-16,16.6,EntregadoAPnp,3
+CASO-0021,Reporte,Accidente de tránsito,Descartada,2026-09-02T21:33:49-05:00,21,Wed,-16.418532,-71.532427,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 6",,,,,
+CASO-0022,Reporte,Robo o hurto,Cerrada,2026-09-02T22:13:49-05:00,22,Wed,-16.437159,-71.528203,3,residencial,"Avenida 13 de Junio, Rodantes del Sur",Media,SER-33,32.1,SinHallazgo,
+CASO-0023,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-02T22:18:37-05:00,22,Wed,-16.421824,-71.527875,1,residencial,"Calle 10, Los Naranjos",Baja,SER-25,23.9,SinHallazgo,
+CASO-0024,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-03T01:34:22-05:00,1,Thu,-16.449609,-71.513905,3,noche,"Cerca de Picanteria, Avenida Las Esmeraldas",Alta,SER-33,61.6,ResueltoEnElLugar,4
+CASO-0025,Reporte,Extorsión o amenazas,Derivada,2026-09-03T19:13:17-05:00,19,Thu,-16.424564,-71.53308,1,comercio,"Frente a Caja Tacna, Avenida Daniel Alcides Carrión",,,,,
+CASO-0026,Acompanamiento,Acoso en la vía pública,Cerrada,2026-09-03T19:39:56-05:00,19,Thu,-16.433575,-71.523447,2,avenida,"Recorrido de acompañamiento, Avenida Francisco Miranda",Alta,SER-16,8.7,Derivado,
+CASO-0027,Sos,Violencia familiar,Cerrada,2026-09-03T19:54:52-05:00,19,Thu,-16.411363,-71.515703,1,residencial,"Calle Plata, Cooperativa 58",Alta,SER-14,51.0,ResueltoEnElLugar,3
+CASO-0028,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-03T21:57:12-05:00,21,Thu,-16.411539,-71.521212,1,residencial,"Malecón Missouri, Valle Chili",Baja,SER-27,55.5,SinHallazgo,3
+CASO-0029,Reporte,Robo o hurto,Cerrada,2026-09-03T23:47:01-05:00,23,Thu,-16.424054,-71.532579,1,comercio,"Frente a Caja Piura, Avenida Daniel Alcides Carrión",Media,SER-26,53.7,SinHallazgo,4
+CASO-0030,Reporte,Robo o hurto,Descartada,2026-09-04T07:14:04-05:00,7,Fri,-16.43138,-71.523153,2,paradero,"Paradero Santa María II, Avenida Dolores",,,,,
+CASO-0031,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-04T09:56:14-05:00,9,Fri,-16.427475,-71.533915,4,avenida,"Avenida Cementerio, cuadra 6",Baja,SER-10,46.4,ResueltoEnElLugar,
+CASO-0032,Sos,Accidente de tránsito,Cerrada,2026-09-04T10:17:49-05:00,10,Fri,-16.423866,-71.524058,1,avenida,"Avenida Dolores, cuadra 5",Media,SER-03,10.2,Derivado,
+CASO-0033,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-04T10:47:01-05:00,10,Fri,-16.430091,-71.530503,4,noche,"Cerca de San Guchito, Avenida Estados Unidos",Baja,SER-11,29.2,SinHallazgo,
+CASO-0034,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-04T13:06:40-05:00,13,Fri,-16.435726,-71.524428,2,parque,"Avenida los Próceres, cerca del parque",Alta,SER-06,33.7,ResueltoEnElLugar,
+CASO-0035,Sos,Consumo o venta de drogas,Cerrada,2026-09-04T20:38:58-05:00,20,Fri,-16.424387,-71.528518,1,parque,"Calle Los Guindos, cerca del parque",Baja,SER-14,7.7,Derivado,
+CASO-0036,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-09-04T20:53:44-05:00,20,Fri,-16.423716,-71.518534,2,residencial,"Pizarro, Dunas del Sur",,,,,
+CASO-0037,Sos,Violencia familiar,Cerrada,2026-09-04T21:25:56-05:00,21,Fri,-16.442295,-71.520544,3,residencial,"Pasaje Montesori, Urbanización 3 de Octubre",Alta,SER-20,20.3,EntregadoAPnp,4
+CASO-0038,Reporte,Peleas o riñas,Cerrada,2026-09-04T23:12:24-05:00,23,Fri,-16.431273,-71.540917,4,noche,"Cerca de Cebichela, Avenida de las Convenciones",Media,SER-35,61.7,ResueltoEnElLugar,
+CASO-0039,Reporte,Consumo o venta de drogas,Cerrada,2026-09-04T23:58:31-05:00,23,Fri,-16.43308,-71.510682,2,avenida,"Avenida Colón, cuadra 10",Baja,SER-29,41.4,EntregadoAPnp,
+CASO-0040,Reporte,Persona o vehículo sospechoso,Descartada,2026-09-05T01:41:53-05:00,1,Sat,-16.424838,-71.542626,4,residencial,"Calle Edmundo Escomel, Pueblo Joven Cerro July",,,,,
+CASO-0041,Sos,Acoso en la vía pública,Cerrada,2026-09-05T03:51:02-05:00,3,Sat,-16.428554,-71.534708,4,colegio,"Frente al colegio Institución Educativa Charlotte Buhler, Avenida Cementerio",Media,SER-34,13.0,ResueltoEnElLugar,4
+CASO-0042,Reporte,Robo o hurto,Cerrada,2026-09-05T05:58:26-05:00,5,Sat,-16.44596,-71.516901,3,residencial,"María Nieves Bustamante, Urbanización La Breña",Media,SER-07,57.0,ResueltoEnElLugar,5
+CASO-0043,Reporte,Robo o hurto,Cerrada,2026-09-05T06:33:59-05:00,6,Sat,-16.436357,-71.521275,2,paradero,"Paradero DEMUNA, Avenida Dolores",Media,SER-04,46.2,SinHallazgo,4
+CASO-0044,Reporte,Robo o hurto,Cerrada,2026-09-05T17:08:48-05:00,17,Sat,-16.430746,-71.533115,4,paradero,"Paradero Apacheta, Óvalo Apacheta",Media,SER-22,18.7,EntregadoAPnp,
+CASO-0045,Reporte,Robo o hurto,Cerrada,2026-09-05T18:14:45-05:00,18,Sat,-16.426573,-71.533245,1,paradero,"Paradero Centro Comercial La Isla (Norte), Avenida Perú",Media,SER-15,48.9,EntregadoAPnp,
+CASO-0046,Reporte,Persona en riesgo,Cerrada,2026-09-05T21:05:04-05:00,21,Sat,-16.422785,-71.534441,1,mercado,"Avenida Daniel Alcides Carrión, cerca del mercado",Alta,SER-14,12.8,ResueltoEnElLugar,
+CASO-0047,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-05T22:14:16-05:00,22,Sat,-16.426314,-71.524575,1,noche,"Cerca de Cebicheria Puesta Mar, Urbanización Las Begonias Manzana A",Baja,SER-25,31.4,SinHallazgo,5
+CASO-0048,Reporte,Consumo o venta de drogas,Cerrada,2026-09-05T22:23:55-05:00,22,Sat,-16.422351,-71.52113,1,parque,"Pizarro, cerca del parque",Baja,SER-26,40.2,ResueltoEnElLugar,
+CASO-0049,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-09-05T22:30:27-05:00,22,Sat,-16.419634,-71.530381,1,noche,"Cerca de La Vera Pizzería, Calle 6",,,,,
+CASO-0050,Reporte,Peleas o riñas,Derivada,2026-09-05T22:50:55-05:00,22,Sat,-16.421578,-71.525213,1,avenida,"Avenida Dolores, cuadra 10",,,,,
+CASO-0051,Reporte,Ruidos molestos o escándalo,Descartada,2026-09-05T23:37:02-05:00,23,Sat,-16.443348,-71.509098,2,residencial,"Ballón Farfán, Asentamiento Humano Jorge Basadre",,,,,
+CASO-0052,Sos,Violencia familiar,Cerrada,2026-09-06T00:07:11-05:00,0,Sun,-16.429702,-71.515443,2,residencial,"Calle 5, Casa Bella",Alta,SER-30,10.6,ResueltoEnElLugar,
+CASO-0053,Reporte,Robo o hurto,Cerrada,2026-09-06T00:52:32-05:00,0,Sun,-16.430213,-71.532466,4,paradero,"Paradero Apacheta, Avenida Estados Unidos",Media,SER-35,18.7,SinHallazgo,
+CASO-0054,Reporte,Daños o vandalismo,Cerrada,2026-09-06T04:11:01-05:00,4,Sun,-16.428839,-71.534941,4,parque,"Avenida Cementerio, cerca del parque",Baja,SER-36,51.0,SinHallazgo,
+CASO-0055,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-06T11:48:06-05:00,11,Sun,-16.41611,-71.530523,1,noche,"Cerca de Cebicheria Challwa, Avenida Agricultura",Baja,SER-03,16.0,ResueltoEnElLugar,
+CASO-0056,Reporte,Persona en riesgo,Cerrada,2026-09-06T13:09:35-05:00,13,Sun,-16.423713,-71.531465,1,parque,"Avenida Daniel Alcides Carrión, cerca del parque",Alta,SER-03,23.8,ResueltoEnElLugar,
+CASO-0057,Reporte,Daños o vandalismo,Derivada,2026-09-06T18:03:38-05:00,18,Sun,-16.414342,-71.515775,1,parque,"Calle Río Nilo, cerca del parque",,,,,
+CASO-0058,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-06T21:23:07-05:00,21,Sun,-16.421285,-71.524785,1,noche,"Cerca de Bar Deportivo La Carlota, Avenida Dolores",Baja,SER-25,57.2,ResueltoEnElLugar,3
+CASO-0059,Reporte,Peleas o riñas,Cerrada,2026-09-07T01:25:22-05:00,1,Mon,-16.426504,-71.53543,4,parque,"Siglo XX, cerca del parque",Media,SER-34,9.6,ResueltoEnElLugar,
+CASO-0060,Reporte,Daños o vandalismo,Cerrada,2026-09-07T01:45:31-05:00,1,Mon,-16.422468,-71.525854,1,parque,"Parque El Bosque, Avenida Dolores",Baja,SER-26,31.0,ResueltoEnElLugar,4
+CASO-0061,Reporte,Persona o vehículo sospechoso,Derivada,2026-09-07T02:16:40-05:00,2,Mon,-16.4409,-71.525325,3,residencial,"Calle Tasahuayo, Tasahuayo",,,,,
+CASO-0062,Reporte,Persona en riesgo,Cerrada,2026-09-07T06:28:12-05:00,6,Mon,-16.42932,-71.523572,2,avenida,"Avenida Hartley, cuadra 2",Alta,SER-06,92.8,ResueltoEnElLugar,
+CASO-0063,Reporte,Daños o vandalismo,Descartada,2026-09-07T12:55:04-05:00,12,Mon,-16.448326,-71.516184,3,parque,"Parque Ricardo Palma, Calle José Carlos Mariátegui",,,,,
+CASO-0064,Sos,Robo o hurto,Cerrada,2026-09-07T13:14:27-05:00,13,Mon,-16.424846,-71.535323,1,mercado,"Andrés Avelino Cáceres, cerca del mercado",Media,SER-02,14.4,ResueltoEnElLugar,
+CASO-0065,Sos,Persona en riesgo,Cerrada,2026-09-07T14:06:58-05:00,14,Mon,-16.424255,-71.517745,2,parque,"Parque Dunas del Sur, Santa Catalina",Alta,SER-16,13.1,ResueltoEnElLugar,
+CASO-0066,Sos,Persona en riesgo,Cerrada,2026-09-07T15:54:29-05:00,15,Mon,-16.451395,-71.510694,3,residencial,"Av. La Riviera, Urbanización Buena Vista",Alta,SER-20,6.8,ResueltoEnElLugar,
+CASO-0067,Sos,Violencia familiar,Cerrada,2026-09-07T17:21:03-05:00,17,Mon,-16.422979,-71.528473,1,residencial,"Calle Los Cedros, Cooperativa Lambramani",Alta,SER-14,31.9,ResueltoEnElLugar,3
+CASO-0068,Sos,Robo o hurto,Descartada,2026-09-07T20:18:44-05:00,20,Mon,-16.444634,-71.513428,2,residencial,"Ulrich Neisser, Asentamiento Humano Jorge Basadre",,,,,
+CASO-0069,Reporte,Persona o vehículo sospechoso,Derivada,2026-09-07T23:09:29-05:00,23,Mon,-16.427417,-71.546124,4,colegio,"Frente al colegio Institución Educativa Carita Feliz, E. Zegarra Ballón",,,,,
+CASO-0070,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-09-08T00:00:21-05:00,0,Tue,-16.411767,-71.52047,1,noche,"Cerca de La Caleta, Avenida Lambramani",,,,,
+CASO-0071,Reporte,Persona o vehículo sospechoso,Derivada,2026-09-08T04:11:54-05:00,4,Tue,-16.419599,-71.528797,1,residencial,"Calle 10, John Kennedy",,,,,
+CASO-0072,Reporte,Peleas o riñas,Cerrada,2026-09-08T06:38:50-05:00,6,Tue,-16.43217,-71.531366,4,noche,"Cerca de Cevichería Perla Negra, Calle Ricardo Palma",Media,SER-11,36.1,ResueltoEnElLugar,
+CASO-0073,Reporte,Robo o hurto,Cerrada,2026-09-08T09:39:18-05:00,9,Tue,-16.448883,-71.514541,3,paradero,"Paradero Colegio Esmeraldas, C.3",Media,SER-08,41.8,ResueltoEnElLugar,3
+CASO-0074,Sos,Otros,Cancelada,2026-09-08T11:18:58-05:00,11,Tue,-16.42215,-71.527779,1,parque,"Calle Las Moras, cerca del parque",,,,,
+CASO-0075,Sos,Robo o hurto,Cerrada,2026-09-08T19:12:44-05:00,19,Tue,-16.424126,-71.536642,4,mercado,"Mercado Nueva Esperanza, Avenida Juan Vidaurrázaga",Media,SER-24,8.5,SinHallazgo,
+CASO-0076,Sos,Robo o hurto,Cerrada,2026-09-08T20:12:19-05:00,20,Tue,-16.430484,-71.532292,4,paradero,"Paradero Apacheta, Calle Valdelomar",Media,SER-22,8.2,ResueltoEnElLugar,
+CASO-0077,Sos,Persona o vehículo sospechoso,Cerrada,2026-09-08T20:17:43-05:00,20,Tue,-16.441016,-71.521241,3,colegio,"Frente al colegio Institución Educativa Los Heraldos De Jesus, Pasaje Jorge Chavez",Baja,SER-20,10.6,EntregadoAPnp,
+CASO-0078,Reporte,Robo o hurto,Cerrada,2026-09-08T20:58:38-05:00,20,Tue,-16.425603,-71.533524,1,avenida,"Óvalo Avelino, cuadra 10",Media,SER-13,60.0,SinHallazgo,
+CASO-0079,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-08T23:18:32-05:00,23,Tue,-16.430829,-71.526072,2,parque,"Avenida Túpac Amaru, cerca del parque",Baja,SER-28,22.0,ResueltoEnElLugar,
+CASO-0080,Sos,Robo o hurto,Cerrada,2026-09-09T02:32:19-05:00,2,Wed,-16.422637,-71.541701,4,mercado,"Mercado Gratersa, E. Zegarra Ballón",Alta,SER-35,31.7,SinHallazgo,
+CASO-0081,Sos,Extorsión o amenazas,Cerrada,2026-09-09T12:32:11-05:00,12,Wed,-16.413915,-71.520073,1,comercio,"Frente a Franco Retail, Avenida Lambramani",Media,SER-01,13.0,SinHallazgo,
+CASO-0082,Sos,Acoso en la vía pública,Cerrada,2026-09-09T13:26:11-05:00,13,Wed,-16.449803,-71.514927,3,paradero,"Paradero Colegio Esmeraldas, Avenida Las Esmeraldas",Media,SER-09,18.9,SinHallazgo,
+CASO-0083,Reporte,Daños o vandalismo,Descartada,2026-09-09T15:14:24-05:00,15,Wed,-16.447196,-71.517402,3,residencial,"Urb. San Agustín, Urbanización La Breña",,,,,
+CASO-0084,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-09T19:18:40-05:00,19,Wed,-16.454493,-71.514011,3,residencial,"Avenida Primavera, Asentamiento Humano Virgen de Copacabana",Baja,SER-19,37.2,ResueltoEnElLugar,
+CASO-0085,Sos,Acoso en la vía pública,Cerrada,2026-09-09T20:55:45-05:00,20,Wed,-16.430497,-71.512359,2,avenida,"Avenida Colón, cuadra 10",Media,SER-18,7.5,SinHallazgo,
+CASO-0086,Sos,Peleas o riñas,Cerrada,2026-09-10T01:26:20-05:00,1,Thu,-16.417096,-71.526568,1,noche,"Cerca de Rústica, Avenida Dolores",Media,SER-27,13.2,ResueltoEnElLugar,4
+CASO-0087,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-09-10T02:01:04-05:00,2,Thu,-16.428698,-71.543521,4,residencial,"Villa Manuelito, Urbanización San Basilio",,,,,
+CASO-0088,Sos,Peleas o riñas,Cancelada,2026-09-10T02:04:56-05:00,2,Thu,-16.430271,-71.539303,4,avenida,"Cerro Juli, cuadra 3",,,,,
+CASO-0089,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-10T03:22:07-05:00,3,Thu,-16.453339,-71.513378,3,residencial,"Avenida Las Esmeraldas, Villa Las Esmeraldas",Baja,SER-32,11.9,SinHallazgo,
+CASO-0090,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-10T10:47:34-05:00,10,Thu,-16.442884,-71.514624,2,colegio,"Frente al colegio Institución Educativa Divino Maestro Del Saber, Ballón Farfán",Baja,SER-05,52.8,SinHallazgo,4
+CASO-0091,Reporte,Acoso en la vía pública,Cerrada,2026-09-10T17:51:10-05:00,17,Thu,-16.427912,-71.534614,4,parque,"Parque Puerta Verde, Avenida Cementerio",Media,SER-23,38.8,ResueltoEnElLugar,
+CASO-0092,Reporte,Peleas o riñas,Cerrada,2026-09-10T21:29:25-05:00,21,Thu,-16.433944,-71.53165,4,residencial,"Calle Alfonso Ugarte, Casuarinas",Media,SER-35,45.5,ResueltoEnElLugar,5
+CASO-0093,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-10T22:55:58-05:00,22,Thu,-16.436668,-71.527309,3,residencial,"Calle los Olivos, Rodantes del Sur",Baja,SER-33,72.0,SinHallazgo,
+CASO-0094,Reporte,Acoso en la vía pública,Cerrada,2026-09-10T23:08:46-05:00,23,Thu,-16.427467,-71.545499,4,parque,"Saco Olivero, cerca del parque",Media,SER-35,77.9,SinHallazgo,
+CASO-0095,Reporte,Consumo o venta de drogas,Cerrada,2026-09-10T23:51:37-05:00,23,Thu,-16.430987,-71.51792,2,residencial,"Calle 10, La Encalada",Baja,SER-28,70.1,FalsaAlarma,
+CASO-0096,Sos,Peleas o riñas,Cerrada,2026-09-11T04:26:53-05:00,4,Fri,-16.427927,-71.544462,4,avenida,"Saco Olivero, cuadra 6",Media,SER-35,12.5,Derivado,
+CASO-0097,Reporte,Consumo o venta de drogas,Cerrada,2026-09-11T08:47:38-05:00,8,Fri,-16.418542,-71.529941,1,parque,"Calle 2, cerca del parque",Baja,SER-03,28.0,EntregadoAPnp,
+CASO-0098,Reporte,Robo o hurto,Cerrada,2026-09-11T09:24:48-05:00,9,Fri,-16.426834,-71.517429,2,comercio,"Frente a Repsol, Avenida Hartley",Media,SER-06,56.9,SinHallazgo,
+CASO-0099,Reporte,Acoso en la vía pública,Cancelada,2026-09-11T09:43:28-05:00,9,Fri,-16.427203,-71.53284,1,avenida,"Avenida Perú, cuadra 2",,,,,
+CASO-0100,Reporte,Violencia familiar,Cerrada,2026-09-11T12:58:37-05:00,12,Fri,-16.416216,-71.530488,1,residencial,"Urbanización Agricultura, Urbanización Conquistadores",Alta,SER-01,60.1,EntregadoAPnp,5
+CASO-0101,Reporte,Otros,Cerrada,2026-09-11T15:26:53-05:00,15,Fri,-16.426271,-71.541131,4,residencial,"Pasaje Pascual Saco Oliveros, Pueblo Joven Santa Teresa",Baja,SER-24,42.8,SinHallazgo,3
+CASO-0102,Reporte,Extorsión o amenazas,Descartada,2026-09-11T19:14:27-05:00,19,Fri,-16.414581,-71.519266,1,comercio,"Frente a Petroperu, Avenida Lambramani",,,,,
+CASO-0103,Reporte,Robo o hurto,Cerrada,2026-09-11T21:59:41-05:00,21,Fri,-16.428189,-71.519258,2,paradero,"Paradero Tecsup, Avenida Hartley",Media,SER-28,21.2,SinHallazgo,
+CASO-0104,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-11T23:02:43-05:00,23,Fri,-16.451515,-71.512986,3,residencial,"Avenida las Esmeraldas, Urbanización Buena Vista",Baja,SER-32,50.2,ResueltoEnElLugar,4
+CASO-0105,Sos,Peleas o riñas,Cerrada,2026-09-12T00:14:39-05:00,0,Sat,-16.415799,-71.529591,1,noche,"Cerca de Restaurante, Avenida Agricultura",Alta,SER-25,14.9,SinHallazgo,
+CASO-0106,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-12T00:38:43-05:00,0,Sat,-16.43272,-71.517303,2,residencial,"Calle 10, Jabirú",Baja,SER-29,24.2,SinHallazgo,
+CASO-0107,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-12T01:59:08-05:00,1,Sat,-16.430366,-71.514776,2,residencial,"Santa Ursula, Casa Bella",Baja,SER-29,62.7,EntregadoAPnp,
+CASO-0108,Reporte,Persona en riesgo,Cerrada,2026-09-12T10:20:48-05:00,10,Sat,-16.442776,-71.518712,3,mercado,"Mercado 3 de Octubre, Avenida Caracas",Alta,SER-08,24.7,SinHallazgo,
+CASO-0109,Reporte,Robo o hurto,Cerrada,2026-09-12T14:32:21-05:00,14,Sat,-16.436093,-71.520894,2,residencial,"Avenida Túpac Amaru, Villa Santa Luisa",Media,SER-18,35.3,EntregadoAPnp,
+CASO-0110,Reporte,Robo o hurto,Descartada,2026-09-12T19:14:02-05:00,19,Sat,-16.434247,-71.532551,4,paradero,"Paradero 13 de Enero, Garcilazo de la Vega",,,,,
+CASO-0111,Reporte,Otros,Derivada,2026-09-12T19:48:48-05:00,19,Sat,-16.429614,-71.512879,2,avenida,"Avenida Pizarro, cuadra 10",,,,,
+CASO-0112,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-12T19:53:34-05:00,19,Sat,-16.425199,-71.521995,2,noche,"Cerca de Kankacho Arequipeño, Avenida Alameda de la Cultura",Baja,SER-18,11.8,ResueltoEnElLugar,
+CASO-0113,Reporte,Robo o hurto,Cerrada,2026-09-12T21:07:58-05:00,21,Sat,-16.415815,-71.518214,1,paradero,"Arenales, cerca del paradero",Alta,SER-14,43.7,ResueltoEnElLugar,
+CASO-0114,Reporte,Persona o vehículo sospechoso,Descartada,2026-09-12T21:37:42-05:00,21,Sat,-16.447544,-71.515872,3,residencial,"Jorge Basadre, Pueblo Joven Ricardo Palma",,,,,
+CASO-0115,Reporte,Extorsión o amenazas,Derivada,2026-09-12T22:02:10-05:00,22,Sat,-16.426685,-71.533188,1,comercio,"Frente a Primax, Avenida Perú",,,,,
+CASO-0116,Sos,Violencia familiar,Cerrada,2026-09-12T22:09:16-05:00,22,Sat,-16.430962,-71.528816,1,residencial,"Calle Panamá, Satelite Grande",Alta,SER-25,14.1,Derivado,3
+CASO-0117,Reporte,Robo o hurto,Cerrada,2026-09-12T22:19:20-05:00,22,Sat,-16.415585,-71.516985,1,paradero,"Arenales, cerca del paradero",Media,SER-26,30.9,Derivado,
+CASO-0118,Reporte,Peleas o riñas,Cerrada,2026-09-12T22:57:37-05:00,22,Sat,-16.420749,-71.530028,1,mercado,"Mercado Botica Dermia, Calle 6",Media,SER-26,43.2,SinHallazgo,
+CASO-0119,Sos,Robo o hurto,Cerrada,2026-09-13T00:13:41-05:00,0,Sun,-16.42399,-71.531666,1,comercio,"Frente a Kosto, Avenida Daniel Alcides Carrión",Media,SER-26,14.8,Derivado,
+CASO-0120,Sos,Persona o vehículo sospechoso,Cerrada,2026-09-13T13:46:31-05:00,13,Sun,-16.429127,-71.516136,2,colegio,"Calle 5, cerca del colegio",Baja,SER-06,10.9,SinHallazgo,3
+CASO-0121,Reporte,Acoso en la vía pública,Cerrada,2026-09-13T14:50:27-05:00,14,Sun,-16.437101,-71.507419,2,colegio,"Frente al colegio Institución Educativa St. Andrew, Calle Colón",Media,SER-18,11.4,FalsaAlarma,
+CASO-0122,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-13T16:27:18-05:00,16,Sun,-16.424108,-71.517892,2,residencial,"Santa Catalina, Dunas del Sur",Baja,SER-18,20.6,ResueltoEnElLugar,
+CASO-0123,Reporte,Extorsión o amenazas,Derivada,2026-09-13T18:49:29-05:00,18,Sun,-16.447294,-71.516277,3,residencial,"C.7, Pueblo Joven Ricardo Palma",,,,,
+CASO-0124,Reporte,Robo o hurto,Cerrada,2026-09-13T19:02:19-05:00,19,Sun,-16.423843,-71.516253,2,mercado,"Mercado total, Avenida Pizarro",Media,SER-16,27.0,FalsaAlarma,
+CASO-0125,Reporte,Accidente de tránsito,Cerrada,2026-09-13T20:35:17-05:00,20,Sun,-16.433106,-71.515596,2,avenida,"Avenida Túpac Amaru, cuadra 10",Media,SER-16,9.4,SinHallazgo,
+CASO-0126,Reporte,Violencia familiar,Derivada,2026-09-13T21:39:21-05:00,21,Sun,-16.42455,-71.518874,2,residencial,"Santa Catalina, El Rosario",,,,,
+CASO-0127,Reporte,Robo o hurto,Cerrada,2026-09-13T22:16:33-05:00,22,Sun,-16.426092,-71.537592,4,mercado,"Mercado Asociación Indpendientes de Abril, Siglo XX",Media,SER-34,32.3,SinHallazgo,
+CASO-0128,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-13T22:22:50-05:00,22,Sun,-16.43523,-71.527808,3,residencial,"Calle 7 de Junio, Rodantes del Sur",Baja,SER-32,46.2,ResueltoEnElLugar,
+CASO-0129,Reporte,Robo o hurto,Cerrada,2026-09-13T22:31:02-05:00,22,Sun,-16.425625,-71.537482,4,mercado,"Mercado Asociación Indpendientes de Abril, Siglo XX",Media,SER-36,20.8,ResueltoEnElLugar,
+CASO-0130,Reporte,Robo o hurto,Cerrada,2026-09-13T23:12:09-05:00,23,Sun,-16.425736,-71.535605,4,mercado,"Mercado Cuzco, Andrés Avelino Cáceres",Media,SER-36,47.1,ResueltoEnElLugar,
+CASO-0131,Reporte,Otros,Cerrada,2026-09-13T23:56:26-05:00,23,Sun,-16.430929,-71.530594,4,residencial,"Calle Bernardo Alcedo, Urbanización 13 de Enero",Baja,SER-34,95.3,SinHallazgo,
+CASO-0132,Reporte,Extorsión o amenazas,Derivada,2026-09-14T08:59:08-05:00,8,Mon,-16.423885,-71.531579,1,comercio,"Frente a Kosto, Avenida Daniel Alcides Carrión",,,,,
+CASO-0133,Reporte,Accidente de tránsito,Cerrada,2026-09-14T15:10:17-05:00,15,Mon,-16.427553,-71.518987,2,comercio,"Frente a La Estrella, Avenida Hartley",Media,SER-18,42.3,EntregadoAPnp,4
+CASO-0134,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-14T15:36:11-05:00,15,Mon,-16.432571,-71.512146,2,parque,"Alas del Sur, cerca del parque",Baja,SER-18,59.0,SinHallazgo,3
+CASO-0135,Sos,Accidente de tránsito,Cerrada,2026-09-14T17:52:50-05:00,17,Mon,-16.424542,-71.532478,1,comercio,"Frente a Caja Arequipa, Avenida Daniel Alcides Carrión",Media,SER-13,15.2,EntregadoAPnp,5
+CASO-0136,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-14T17:55:01-05:00,17,Mon,-16.424851,-71.542898,4,residencial,"Calle Edmundo Escomel, Pueblo Joven Cerro July",Baja,SER-23,49.8,SinHallazgo,
+CASO-0137,Reporte,Consumo o venta de drogas,Cerrada,2026-09-14T18:46:47-05:00,18,Mon,-16.42615,-71.516183,2,parque,"Parque 7 de Agosto (Urbanización Santa Catalina), Avenida Hartley",Baja,SER-16,56.4,ResueltoEnElLugar,
+CASO-0138,Reporte,Daños o vandalismo,Cerrada,2026-09-14T20:24:17-05:00,20,Mon,-16.42075,-71.527689,1,parque,"Calle 10, cerca del parque",Baja,SER-13,38.3,SinHallazgo,5
+CASO-0139,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-15T01:00:47-05:00,1,Tue,-16.443234,-71.511581,2,residencial,"Arequipa, Asentamiento Humano Jorge Basadre",Baja,SER-30,53.5,SinHallazgo,3
+CASO-0140,Sos,Robo o hurto,Cerrada,2026-09-15T14:14:34-05:00,14,Tue,-16.435019,-71.52925,3,comercio,"Frente a MilGen, Calle Miguel de Cervantes",Media,SER-21,10.5,ResueltoEnElLugar,5
+CASO-0141,Sos,Robo o hurto,Cerrada,2026-09-15T18:38:57-05:00,18,Tue,-16.414728,-71.527668,1,avenida,"Avenida Dolores, cuadra 12",Media,SER-13,17.6,ResueltoEnElLugar,5
+CASO-0142,Sos,Violencia familiar,Cerrada,2026-09-15T22:06:01-05:00,22,Tue,-16.442659,-71.510965,2,residencial,"Ballón Farfán, Asentamiento Humano Jorge Basadre",Alta,SER-29,13.9,EntregadoAPnp,
+CASO-0143,Reporte,Ruidos molestos o escándalo,Descartada,2026-09-15T23:26:39-05:00,23,Tue,-16.441143,-71.522136,3,residencial,"28 de Julio, Amauta",,,,,
+CASO-0144,Reporte,Extorsión o amenazas,Cerrada,2026-09-16T03:39:59-05:00,3,Wed,-16.417711,-71.52741,1,comercio,"Frente a Tambo, Calle 1",Media,SER-26,28.5,Derivado,
+CASO-0145,Reporte,Accidente de tránsito,Cerrada,2026-09-16T08:18:50-05:00,8,Wed,-16.425116,-71.53789,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 12",Media,SER-11,57.6,Derivado,
+CASO-0146,Reporte,Acoso en la vía pública,Cerrada,2026-09-16T16:39:12-05:00,16,Wed,-16.451043,-71.515366,3,paradero,"Paradero El Golf, Urb. San Agustín",Media,SER-20,34.5,ResueltoEnElLugar,5
+CASO-0147,Reporte,Peleas o riñas,Derivada,2026-09-16T23:22:21-05:00,23,Wed,-16.429464,-71.525839,2,noche,"Cerca de King Broaster, Avenida Estados Unidos",,,,,
+CASO-0148,Reporte,Daños o vandalismo,Cerrada,2026-09-17T06:28:01-05:00,6,Thu,-16.41718,-71.516342,1,residencial,"Calle José Carlos Mariátegui, Monterrico",Baja,SER-03,89.9,SinHallazgo,
+CASO-0149,Reporte,Persona en riesgo,Cerrada,2026-09-17T13:57:23-05:00,13,Thu,-16.441965,-71.52152,3,parque,"Pasaje Jorge Chavez, cerca del parque",Alta,SER-20,83.9,ResueltoEnElLugar,
+CASO-0150,Reporte,Violencia familiar,Cerrada,2026-09-17T16:38:17-05:00,16,Thu,-16.436554,-71.527868,3,residencial,"Avenida 13 de Junio, Rodantes del Sur",Alta,SER-20,52.2,Derivado,5
+CASO-0151,Sos,Peleas o riñas,Descartada,2026-09-17T22:30:31-05:00,22,Thu,-16.415372,-71.51633,1,noche,"Cerca de Kuan Ti, Río Nilo",,,,,
+CASO-0152,Sos,Robo o hurto,Cerrada,2026-09-17T23:26:59-05:00,23,Thu,-16.427624,-71.520603,2,residencial,"Avenida La Melgariana, Urbanización La Melgariana",Media,SER-28,10.4,FalsaAlarma,4
+CASO-0153,Reporte,Violencia familiar,Cerrada,2026-09-18T00:01:15-05:00,0,Fri,-16.431905,-71.512778,2,residencial,"Pasaje Callao, La Alborada",Alta,SER-29,51.1,Derivado,
+CASO-0154,Reporte,Robo o hurto,Descartada,2026-09-18T12:13:19-05:00,12,Fri,-16.425277,-71.53407,1,avenida,"Andrés Avelino Cáceres, cuadra 1",,,,,
+CASO-0155,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-18T20:19:29-05:00,20,Fri,-16.432916,-71.526827,2,parque,"Calle Sangarará, cerca del parque",Baja,SER-18,22.0,SinHallazgo,
+CASO-0156,Acompanamiento,Acoso en la vía pública,Cerrada,2026-09-18T20:32:41-05:00,20,Fri,-16.434713,-71.527386,3,avenida,"Recorrido de acompañamiento, Calle Chavín de Huántar",Alta,SER-20,5.0,Derivado,
+CASO-0157,Sos,Acoso en la vía pública,Cancelada,2026-09-18T22:31:04-05:00,22,Fri,-16.424543,-71.533077,1,paradero,"Paradero Andrés Avelino Cáceres, Avenida Daniel Alcides Carrión",,,,,
+CASO-0158,Sos,Acoso en la vía pública,Cerrada,2026-09-19T06:17:27-05:00,6,Sat,-16.417009,-71.532305,1,avenida,"Avenida Agricultura, cuadra 9",Media,SER-01,11.5,ResueltoEnElLugar,
+CASO-0159,Acompanamiento,Acoso en la vía pública,Cerrada,2026-09-19T07:36:14-05:00,7,Sat,-16.415851,-71.529584,1,avenida,"Recorrido de acompañamiento, Avenida Agricultura",Alta,SER-01,15.1,ResueltoEnElLugar,
+CASO-0160,Sos,Robo o hurto,Cerrada,2026-09-19T10:15:03-05:00,10,Sat,-16.429606,-71.526767,2,paradero,"Paradero Presto, Avenida Estados Unidos",Media,SER-05,9.4,EntregadoAPnp,
+CASO-0161,Sos,Robo o hurto,Cerrada,2026-09-19T10:27:48-05:00,10,Sat,-16.442898,-71.510204,2,residencial,"Guillermo Seoane, Asentamiento Humano Jorge Basadre",Media,SER-04,9.6,SinHallazgo,
+CASO-0162,Sos,Violencia familiar,Cerrada,2026-09-19T18:15:57-05:00,18,Sat,-16.437118,-71.52733,3,residencial,"Avenida 13 de Junio, Urbanización Villa del Mar",Alta,SER-19,23.1,EntregadoAPnp,5
+CASO-0163,Reporte,Robo o hurto,Descartada,2026-09-19T19:57:21-05:00,19,Sat,-16.42398,-71.533925,1,mercado,"Mercado Virgen del Chapi, Avenida Daniel Alcides Carrión",,,,,
+CASO-0164,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-19T20:24:17-05:00,20,Sat,-16.425097,-71.525707,1,residencial,"Quinta Tristan, Santa Lucía",Baja,SER-14,57.4,ResueltoEnElLugar,3
+CASO-0165,Sos,Violencia familiar,Cerrada,2026-09-19T22:50:40-05:00,22,Sat,-16.441484,-71.520881,3,residencial,"Pasaje Jorge Chavez, Villa Los Francos",Alta,SER-32,10.1,Derivado,
+CASO-0166,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-19T23:15:02-05:00,23,Sat,-16.411651,-71.520588,1,residencial,"Malecón Missouri, La Cantuta",Baja,SER-26,41.9,SinHallazgo,
+CASO-0167,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-19T23:23:55-05:00,23,Sat,-16.42875,-71.528516,1,residencial,"Calle Guatemala, Vinatea Reynoso",Alta,SER-25,68.0,SinHallazgo,2
+CASO-0168,Reporte,Extorsión o amenazas,Derivada,2026-09-20T01:40:55-05:00,1,Sun,-16.423574,-71.533062,1,comercio,"Frente a Caja Piura, Avenida Daniel Alcides Carrión",,,,,
+CASO-0169,Reporte,Robo o hurto,Cerrada,2026-09-20T03:04:38-05:00,3,Sun,-16.433269,-71.522732,2,paradero,"Paradero Monterrico, Avenida Francisco Miranda",Media,SER-29,24.2,SinHallazgo,
+CASO-0170,Reporte,Robo o hurto,Descartada,2026-09-20T05:33:47-05:00,5,Sun,-16.424902,-71.533328,1,comercio,"Frente a Caja Tacna, Avenida Daniel Alcides Carrión",,,,,
+CASO-0171,Sos,Robo o hurto,Cerrada,2026-09-20T06:15:46-05:00,6,Sun,-16.426033,-71.533236,1,paradero,"Paradero Centro Comercial La Isla (Norte), Avenida Perú",Alta,SER-02,10.6,ResueltoEnElLugar,
+CASO-0172,Sos,Violencia familiar,Cancelada,2026-09-20T15:07:01-05:00,15,Sun,-16.427504,-71.517237,2,residencial,"Los Ccoritos, La Estrella",,,,,
+CASO-0173,Reporte,Accidente de tránsito,Cerrada,2026-09-20T15:10:12-05:00,15,Sun,-16.42733,-71.518422,2,avenida,"Avenida Hartley, cuadra 6",Media,SER-17,29.3,ResueltoEnElLugar,
+CASO-0174,Reporte,Robo o hurto,Cerrada,2026-09-20T18:50:52-05:00,18,Sun,-16.444378,-71.508828,2,avenida,"Avenida Caracas, cuadra 5",Media,SER-18,31.1,Derivado,
+CASO-0175,Sos,Consumo o venta de drogas,Cerrada,2026-09-20T20:35:35-05:00,20,Sun,-16.416829,-71.530119,1,parque,"Agricultura, cerca del parque",Baja,SER-13,24.7,SinHallazgo,4
+CASO-0176,Reporte,Persona en riesgo,Derivada,2026-09-20T22:09:47-05:00,22,Sun,-16.432197,-71.521198,2,parque,"Parque Los Cristales, Avenida Dolores",,,,,
+CASO-0177,Sos,Consumo o venta de drogas,Cerrada,2026-09-20T22:51:02-05:00,22,Sun,-16.414733,-71.517126,1,parque,"Colonia, cerca del parque",Alta,SER-25,16.1,ResueltoEnElLugar,
+CASO-0178,Reporte,Daños o vandalismo,Cerrada,2026-09-20T23:02:42-05:00,23,Sun,-16.428949,-71.523881,2,colegio,"Frente al colegio Institución Educativa Cedeu De Ciencias Pitagoras, Avenida Dolores",Baja,SER-30,57.0,EntregadoAPnp,4
+CASO-0179,Sos,Persona o vehículo sospechoso,Cerrada,2026-09-20T23:45:26-05:00,23,Sun,-16.436756,-71.527942,3,residencial,"Pasaje Primero de Mayo, Rodantes del Sur",Baja,SER-31,21.1,ResueltoEnElLugar,4
+CASO-0180,Reporte,Ruidos molestos o escándalo,Descartada,2026-09-20T23:52:39-05:00,23,Sun,-16.416049,-71.518355,1,residencial,"Arenales, Banco Sur",,,,,
+CASO-0181,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-21T02:05:52-05:00,2,Mon,-16.42954,-71.536087,4,parque,"Avenida Juan Vidaurrázaga, cerca del parque",Baja,SER-36,61.2,ResueltoEnElLugar,4
+CASO-0182,Reporte,Peleas o riñas,Cerrada,2026-09-21T02:23:51-05:00,2,Mon,-16.425501,-71.533145,1,avenida,"Óvalo Avelino, cuadra 5",Media,SER-27,15.9,SinHallazgo,
+CASO-0183,Reporte,Robo o hurto,Descartada,2026-09-21T10:48:07-05:00,10,Mon,-16.446788,-71.516929,3,paradero,"Paradero Juan Velazco A., Avenida Juan Velazco Alvarado",,,,,
+CASO-0184,Sos,Persona en riesgo,Cerrada,2026-09-21T11:49:03-05:00,11,Mon,-16.425236,-71.538149,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 6",Alta,SER-11,10.7,ResueltoEnElLugar,4
+CASO-0185,Sos,Accidente de tránsito,Descartada,2026-09-21T13:18:46-05:00,13,Mon,-16.417236,-71.532876,1,avenida,"Avenida Agricultura, cuadra 10",,,,,
+CASO-0186,Reporte,Robo o hurto,Cerrada,2026-09-21T13:32:17-05:00,13,Mon,-16.436246,-71.544663,4,avenida,"Prolongación Cerro Juli, cuadra 10",Media,SER-11,32.2,ResueltoEnElLugar,4
+CASO-0187,Reporte,Consumo o venta de drogas,Cerrada,2026-09-21T17:29:05-05:00,17,Mon,-16.411461,-71.518525,1,parque,"Parque La Cantuta II Etapa, Malecón Missouri",Baja,SER-13,52.4,FalsaAlarma,
+CASO-0188,Sos,Robo o hurto,Cerrada,2026-09-21T19:29:15-05:00,19,Mon,-16.425183,-71.537552,4,comercio,"Frente a Caja Cuzco, Siglo XX",Media,SER-24,13.9,Derivado,5
+CASO-0189,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-21T20:25:32-05:00,20,Mon,-16.44366,-71.517181,3,noche,"Cerca de El caribe, Avenida Caracas",Baja,SER-19,18.0,ResueltoEnElLugar,
+CASO-0190,Reporte,Persona o vehículo sospechoso,Descartada,2026-09-21T22:58:33-05:00,22,Mon,-16.433297,-71.529272,3,residencial,"Calle Nicaragua, Urbanización 13 de Enero",,,,,
+CASO-0191,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-22T00:01:15-05:00,0,Tue,-16.445937,-71.510948,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Baja,SER-28,19.7,ResueltoEnElLugar,
+CASO-0192,Reporte,Consumo o venta de drogas,Cerrada,2026-09-22T01:40:46-05:00,1,Tue,-16.427381,-71.54207,4,avenida,"Saco Olivero, cuadra 8",Baja,SER-35,113.6,ResueltoEnElLugar,
+CASO-0193,Reporte,Ruidos molestos o escándalo,Descartada,2026-09-22T01:59:33-05:00,1,Tue,-16.41739,-71.526667,1,noche,"Cerca de Montero Inolvidables Salon, Avenida Dolores",,,,,
+CASO-0194,Reporte,Robo o hurto,Cerrada,2026-09-22T03:16:11-05:00,3,Tue,-16.443311,-71.512985,2,noche,"Cerca de El pirata, Avenida Caracas",Media,SER-28,92.9,ResueltoEnElLugar,
+CASO-0195,Reporte,Otros,Cerrada,2026-09-22T06:10:11-05:00,6,Tue,-16.42164,-71.531368,1,comercio,"Frente a Banco de la Nación, Avenida Daniel Alcides Carrión",Baja,SER-03,60.4,EntregadoAPnp,5
+CASO-0196,Sos,Acoso en la vía pública,Cerrada,2026-09-22T07:10:23-05:00,7,Tue,-16.428579,-71.53531,4,colegio,"Frente al colegio Institución Educativa Charlotte Buhler, Avenida Cementerio",Media,SER-11,30.7,EntregadoAPnp,3
+CASO-0197,Sos,Consumo o venta de drogas,Cerrada,2026-09-22T19:12:03-05:00,19,Tue,-16.442806,-71.513543,2,parque,"Ballón Farfán, cerca del parque",Alta,SER-17,10.7,ResueltoEnElLugar,
+CASO-0198,Sos,Violencia familiar,Cerrada,2026-09-22T21:58:29-05:00,21,Tue,-16.434619,-71.533346,4,residencial,"Puerto Rico, Satelite Chico",Alta,SER-34,28.1,Derivado,
+CASO-0199,Sos,Violencia familiar,Cerrada,2026-09-22T22:10:24-05:00,22,Tue,-16.432166,-71.528472,3,residencial,"Calle Venezuela, Satelite Grande",Alta,SER-33,54.3,Derivado,
+CASO-0200,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-23T00:30:34-05:00,0,Wed,-16.430179,-71.514994,2,residencial,"Calle 5, Casa Bella",Baja,SER-29,44.8,SinHallazgo,
+CASO-0201,Reporte,Ruidos molestos o escándalo,Descartada,2026-09-23T01:47:29-05:00,1,Wed,-16.428755,-71.522038,2,noche,"Cerca de Las Olas, Avenida Hartley",,,,,
+CASO-0202,Reporte,Peleas o riñas,Cerrada,2026-09-23T02:42:31-05:00,2,Wed,-16.436692,-71.523604,2,avenida,"Avenida Libertadores, cuadra 10",Media,SER-28,51.1,ResueltoEnElLugar,
+CASO-0203,Sos,Robo o hurto,Cerrada,2026-09-23T07:06:35-05:00,7,Wed,-16.420434,-71.525815,1,comercio,"Frente a Primax, Avenida Dolores",Media,SER-02,13.7,EntregadoAPnp,
+CASO-0204,Reporte,Robo o hurto,Cerrada,2026-09-23T08:57:42-05:00,8,Wed,-16.424752,-71.537803,4,mercado,"Mercado Asociación Indpendientes de Abril, Avenida Juan Vidaurrázaga",Media,SER-12,79.5,ResueltoEnElLugar,3
+CASO-0205,Reporte,Persona en riesgo,Descartada,2026-09-23T09:44:10-05:00,9,Wed,-16.422246,-71.537305,1,avenida,"Avenida Juan Vidaurrázaga, cuadra 7",,,,,
+CASO-0206,Sos,Extorsión o amenazas,Cerrada,2026-09-23T14:17:20-05:00,14,Wed,-16.426226,-71.539847,4,mercado,"Avenida Juan Vidaurrázaga, cerca del mercado",Media,SER-22,11.7,ResueltoEnElLugar,
+CASO-0207,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-23T15:14:05-05:00,15,Wed,-16.429288,-71.525926,2,noche,"Cerca de Kin Fu, Avenida Estados Unidos",Baja,SER-18,11.9,ResueltoEnElLugar,
+CASO-0208,Sos,Robo o hurto,Cerrada,2026-09-23T15:33:21-05:00,15,Wed,-16.448405,-71.51206,2,residencial,"C.16, Las Esmeraldas, A.P.I.S",Media,SER-16,6.8,SinHallazgo,3
+CASO-0209,Sos,Consumo o venta de drogas,Cerrada,2026-09-23T17:43:00-05:00,17,Wed,-16.422245,-71.529586,1,parque,"Calle Los Pinos, cerca del parque",Baja,SER-14,9.9,SinHallazgo,4
+CASO-0210,Reporte,Accidente de tránsito,Cerrada,2026-09-23T18:05:44-05:00,18,Wed,-16.431146,-71.54466,4,avenida,"Avenida Mostajo, cuadra 12",Media,SER-23,10.8,Derivado,
+CASO-0211,Reporte,Persona o vehículo sospechoso,Descartada,2026-09-23T19:07:04-05:00,19,Wed,-16.445413,-71.515397,3,residencial,"C. Vinatea Reynoso, Urbanización Simon Bolivar",,,,,
+CASO-0212,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-23T19:42:42-05:00,19,Wed,-16.443078,-71.510761,2,residencial,"Ballón Farfán, Asentamiento Humano Jorge Basadre",Baja,SER-18,44.3,ResueltoEnElLugar,
+CASO-0213,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-23T22:32:24-05:00,22,Wed,-16.426018,-71.54286,4,parque,"Calle Ayarza, cerca del parque",Baja,SER-35,22.1,ResueltoEnElLugar,
+CASO-0214,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-09-24T01:57:01-05:00,1,Thu,-16.438762,-71.527854,3,residencial,"Huacho, la Pauca",,,,,
+CASO-0215,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-24T02:22:54-05:00,2,Thu,-16.42534,-71.523777,1,parque,"Parque Óvalo Dolores, Avenida Alameda de la Cultura",Baja,SER-26,18.0,ResueltoEnElLugar,
+CASO-0216,Sos,Accidente de tránsito,Cerrada,2026-09-24T06:08:42-05:00,6,Thu,-16.425156,-71.532698,1,avenida,"Óvalo Avelino, cuadra 9",Alta,SER-02,8.2,EntregadoAPnp,
+CASO-0217,Acompanamiento,Acoso en la vía pública,Cerrada,2026-09-24T10:35:07-05:00,10,Thu,-16.429026,-71.532526,4,avenida,"Recorrido de acompañamiento, Avenida Perú",Alta,SER-12,6.7,ResueltoEnElLugar,
+CASO-0218,Reporte,Robo o hurto,Cerrada,2026-09-24T14:18:32-05:00,14,Thu,-16.433874,-71.526225,2,paradero,"Paradero Francisco de Miranda, Avenida Túpac Amaru",Media,SER-16,10.0,SinHallazgo,
+CASO-0219,Sos,Peleas o riñas,Cerrada,2026-09-24T16:03:35-05:00,16,Thu,-16.432558,-71.516524,2,parque,"Santa Ursula, cerca del parque",Alta,SER-17,11.1,SinHallazgo,
+CASO-0220,Reporte,Robo o hurto,Cerrada,2026-09-24T20:47:10-05:00,20,Thu,-16.425272,-71.52859,1,avenida,"Andrés Avelino Cáceres, cuadra 7",Media,SER-13,9.1,ResueltoEnElLugar,
+CASO-0221,Reporte,Ruidos molestos o escándalo,Derivada,2026-09-24T23:51:13-05:00,23,Thu,-16.411636,-71.521265,1,residencial,"Malecón Missouri, Valle Chili",,,,,
+CASO-0222,Reporte,Violencia familiar,Derivada,2026-09-25T01:18:36-05:00,1,Fri,-16.42389,-71.518483,2,residencial,"Santa Catalina, Dunas del Sur",,,,,
+CASO-0223,Sos,Robo o hurto,Cerrada,2026-09-25T03:42:26-05:00,3,Fri,-16.425748,-71.534037,1,avenida,"Andrés Avelino Cáceres, cuadra 12",Media,SER-26,18.8,EntregadoAPnp,
+CASO-0224,Reporte,Accidente de tránsito,Cerrada,2026-09-25T10:16:33-05:00,10,Fri,-16.414521,-71.527595,1,avenida,"Avenida Dolores, cuadra 12",Media,SER-02,19.4,ResueltoEnElLugar,
+CASO-0225,Sos,Acoso en la vía pública,Cerrada,2026-09-25T12:42:42-05:00,12,Fri,-16.416697,-71.515666,1,colegio,"Frente al colegio Cibertec - Arequipa, Arenales",Media,SER-02,8.1,ResueltoEnElLugar,4
+CASO-0226,Reporte,Robo o hurto,Cerrada,2026-09-25T13:16:27-05:00,13,Fri,-16.43585,-71.528669,3,residencial,"Pasaje Primero de Mayo, Los Olivos",Media,SER-08,65.9,EntregadoAPnp,
+CASO-0227,Reporte,Robo o hurto,Cerrada,2026-09-25T15:01:24-05:00,15,Fri,-16.425764,-71.535984,4,comercio,"Siglo XX, cerca de un comercio",Media,SER-23,23.0,EntregadoAPnp,
+CASO-0228,Reporte,Consumo o venta de drogas,Derivada,2026-09-25T19:26:09-05:00,19,Fri,-16.425589,-71.524474,1,avenida,"Avenida Dolores, cuadra 6",,,,,
+CASO-0229,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-25T20:20:54-05:00,20,Fri,-16.437358,-71.526062,3,residencial,"Avenida 13 de Junio, Santa Lourdes",Baja,SER-21,24.8,ResueltoEnElLugar,
+CASO-0230,Reporte,Robo o hurto,Cerrada,2026-09-26T04:29:06-05:00,4,Sat,-16.424988,-71.524113,1,comercio,"Frente a Repsol, Avenida Alameda de la Cultura",Media,SER-27,19.2,SinHallazgo,
+CASO-0231,Reporte,Daños o vandalismo,Cerrada,2026-09-26T04:52:47-05:00,4,Sat,-16.416279,-71.5162,1,colegio,"Frente al colegio Cibertec - Arequipa, Calle José Carlos Mariátegui",Baja,SER-25,12.9,SinHallazgo,
+CASO-0232,Sos,Robo o hurto,Cerrada,2026-09-26T09:31:58-05:00,9,Sat,-16.424335,-71.537124,4,mercado,"Mercado Nueva Esperanza, Avenida Juan Vidaurrázaga",Media,SER-11,10.1,SinHallazgo,5
+CASO-0233,Sos,Robo o hurto,Cerrada,2026-09-26T12:53:00-05:00,12,Sat,-16.429861,-71.537158,4,comercio,"Frente a J&P, Avenida Juan Vidaurrázaga",Media,SER-11,10.3,EntregadoAPnp,
+CASO-0234,Reporte,Acoso en la vía pública,Descartada,2026-09-26T15:38:39-05:00,15,Sat,-16.428746,-71.524418,2,colegio,"Frente al colegio Institución Educativa Inicial André Bretón, Avenida Estados Unidos",,,,,
+CASO-0235,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-26T17:16:14-05:00,17,Sat,-16.42667,-71.542346,4,residencial,"Calle Pascual Saco Oliveros, Asentamiento Humano Villa Hermosa Zona B",Baja,SER-22,20.8,ResueltoEnElLugar,
+CASO-0236,Sos,Robo o hurto,Cerrada,2026-09-26T19:15:36-05:00,19,Sat,-16.429712,-71.526569,2,avenida,"Avenida Túpac Amaru, cuadra 10",Alta,SER-16,11.3,EntregadoAPnp,5
+CASO-0237,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-26T19:29:20-05:00,19,Sat,-16.428992,-71.522425,2,colegio,"Frente al colegio Institución Educativa Cedeu De Ciencias Pitagoras, Avenida Hartley",Baja,SER-18,41.4,ResueltoEnElLugar,
+CASO-0238,Reporte,Consumo o venta de drogas,Cerrada,2026-09-26T19:57:33-05:00,19,Sat,-16.426664,-71.52646,1,parque,"Pedro Diez Canseco, cerca del parque",Baja,SER-14,16.2,SinHallazgo,
+CASO-0239,Sos,Violencia familiar,Cerrada,2026-09-26T20:22:07-05:00,20,Sat,-16.435199,-71.529728,3,residencial,"Avenida 13 de Junio, Los Olivos",Alta,SER-19,25.0,ResueltoEnElLugar,5
+CASO-0240,Reporte,Accidente de tránsito,Descartada,2026-09-26T23:15:42-05:00,23,Sat,-16.430341,-71.526238,2,avenida,"Avenida Túpac Amaru, cuadra 12",,,,,
+CASO-0241,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-09-26T23:20:17-05:00,23,Sat,-16.444213,-71.512715,2,residencial,"Ricardo Palma, Asentamiento Humano Jorge Basadre",,,,,
+CASO-0242,Sos,Robo o hurto,Cerrada,2026-09-27T08:39:26-05:00,8,Sun,-16.433522,-71.51076,2,avenida,"Calle Colón, cuadra 3",Media,SER-04,33.2,SinHallazgo,
+CASO-0243,Reporte,Robo o hurto,Cerrada,2026-09-27T12:54:32-05:00,12,Sun,-16.450696,-71.511856,3,residencial,"Av. La Riviera, Urbanización Buena Vista",Media,SER-09,17.0,EntregadoAPnp,
+CASO-0244,Sos,Consumo o venta de drogas,Cerrada,2026-09-27T15:04:15-05:00,15,Sun,-16.418368,-71.532615,1,parque,"Avenida Daniel Alcides Carrión, cerca del parque",Baja,SER-15,22.2,SinHallazgo,4
+CASO-0245,Sos,Persona en riesgo,Descartada,2026-09-27T15:12:48-05:00,15,Sun,-16.422489,-71.520457,1,parque,"Pizarro, cerca del parque",,,,,
+CASO-0246,Reporte,Violencia familiar,Cerrada,2026-09-27T15:46:39-05:00,15,Sun,-16.44382,-71.50674,2,residencial,"Calle Luis Sánchez Cerro, Asentamiento Humano Jorge Basadre",Alta,SER-18,23.1,ResueltoEnElLugar,
+CASO-0247,Reporte,Robo o hurto,Cerrada,2026-09-27T18:00:13-05:00,18,Sun,-16.418107,-71.526545,1,comercio,"Frente a Tambo, Avenida Dolores",Media,SER-13,31.4,SinHallazgo,3
+CASO-0248,Reporte,Persona en riesgo,Derivada,2026-09-27T19:29:31-05:00,19,Sun,-16.417755,-71.526773,1,avenida,"Calle 2, cuadra 12",,,,,
+CASO-0249,Reporte,Consumo o venta de drogas,Cerrada,2026-09-27T20:47:55-05:00,20,Sun,-16.416447,-71.518855,1,parque,"Parque Santo Domingo, Avenida Lambramani",Baja,SER-15,31.4,ResueltoEnElLugar,4
+CASO-0250,Reporte,Robo o hurto,Cerrada,2026-09-27T20:51:44-05:00,20,Sun,-16.424439,-71.535741,1,mercado,"Mercado Cuzco, Andrés Avelino Cáceres",Media,SER-13,39.9,SinHallazgo,3
+CASO-0251,Reporte,Peleas o riñas,Cerrada,2026-09-27T21:47:14-05:00,21,Sun,-16.425353,-71.532431,1,noche,"Cerca de Luciano, Andrés Avelino Cáceres",Media,SER-15,12.1,EntregadoAPnp,
+CASO-0252,Reporte,Accidente de tránsito,Cerrada,2026-09-27T21:56:35-05:00,21,Sun,-16.427597,-71.546674,4,avenida,"Avenida Francisco Mostajo, cuadra 8",Media,SER-34,76.9,ResueltoEnElLugar,3
+CASO-0253,Sos,Peleas o riñas,Cerrada,2026-09-27T22:00:31-05:00,22,Sun,-16.430286,-71.525806,2,noche,"Cerca de King Broaster, Avenida Túpac Amaru",Media,SER-29,9.0,ResueltoEnElLugar,5
+CASO-0254,Sos,Robo o hurto,Cerrada,2026-09-27T22:43:28-05:00,22,Sun,-16.444004,-71.510999,2,mercado,"Mercado de Simón Bolivar, Condesuyos",Media,SER-30,15.3,FalsaAlarma,
+CASO-0255,Sos,Robo o hurto,Cerrada,2026-09-27T23:43:29-05:00,23,Sun,-16.424757,-71.533062,1,comercio,"Frente a Credinka, Avenida Daniel Alcides Carrión",Media,SER-27,7.5,SinHallazgo,
+CASO-0256,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-27T23:56:12-05:00,23,Sun,-16.444971,-71.509037,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Baja,SER-30,11.7,ResueltoEnElLugar,
+CASO-0257,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-09-28T04:31:27-05:00,4,Mon,-16.433741,-71.517474,2,parque,"Avenida Túpac Amaru, cerca del parque",,,,,
+CASO-0258,Reporte,Daños o vandalismo,Derivada,2026-09-28T04:54:09-05:00,4,Mon,-16.417202,-71.531015,1,colegio,"Frente al colegio Institución Educativa Stella Maris, Avenida Agricultura",,,,,
+CASO-0259,Sos,Robo o hurto,Cerrada,2026-09-28T10:58:12-05:00,10,Mon,-16.425197,-71.536137,4,mercado,"Mercado Señor del Gran Poder, Andrés Avelino Cáceres",Media,SER-10,13.0,ResueltoEnElLugar,5
+CASO-0260,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-28T13:45:16-05:00,13,Mon,-16.426423,-71.541612,4,residencial,"Pasaje Pascual Saco Oliveros, Pueblo Joven Cerro July",Baja,SER-24,48.4,SinHallazgo,3
+CASO-0261,Sos,Robo o hurto,Cerrada,2026-09-28T15:03:42-05:00,15,Mon,-16.425027,-71.544193,4,avenida,"E. Zegarra Ballón, cuadra 10",Media,SER-23,10.8,EntregadoAPnp,
+CASO-0262,Reporte,Robo o hurto,Cerrada,2026-09-28T16:37:29-05:00,16,Mon,-16.418747,-71.517351,1,comercio,"Frente a Tienda Luana, Avenida Lambramani",Media,SER-14,61.0,SinHallazgo,
+CASO-0263,Sos,Robo o hurto,Cancelada,2026-09-28T17:27:59-05:00,17,Mon,-16.427586,-71.520936,2,paradero,"Paradero Tecsup, Avenida La Melgariana",,,,,
+CASO-0264,Reporte,Robo o hurto,Cerrada,2026-09-28T18:47:21-05:00,18,Mon,-16.444416,-71.506228,2,residencial,"Calle Luis Sánchez Cerro, Asentamiento Humano Jorge Basadre",Media,SER-16,13.7,SinHallazgo,
+CASO-0265,Sos,Consumo o venta de drogas,Cerrada,2026-09-28T19:59:41-05:00,19,Mon,-16.429478,-71.535917,4,parque,"Avenida Juan Vidaurrázaga, cerca del parque",Baja,SER-24,13.2,FalsaAlarma,
+CASO-0266,Sos,Robo o hurto,Cerrada,2026-09-28T20:22:53-05:00,20,Mon,-16.422068,-71.542811,4,paradero,"Paradero Terminal Flores Hermanos, Javier Pérez de Cuéllar",Media,SER-24,40.4,ResueltoEnElLugar,
+CASO-0267,Reporte,Accidente de tránsito,Derivada,2026-09-28T20:30:55-05:00,20,Mon,-16.430567,-71.533219,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 2",,,,,
+CASO-0268,Reporte,Extorsión o amenazas,Cerrada,2026-09-28T21:23:19-05:00,21,Mon,-16.451223,-71.512198,3,comercio,"Frente a Repsol, Pasaje  1",Media,SER-31,52.7,SinHallazgo,3
+CASO-0269,Reporte,Robo o hurto,Cerrada,2026-09-29T01:47:22-05:00,1,Tue,-16.420683,-71.531511,1,mercado,"Mercado Botica Dermia, Avenida Daniel Alcides Carrión",Media,SER-25,26.9,SinHallazgo,
+CASO-0270,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-29T03:11:57-05:00,3,Tue,-16.447807,-71.517196,3,residencial,"Urb. San Agustín, Pueblo Joven La Breña",Alta,SER-32,74.6,ResueltoEnElLugar,
+CASO-0271,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-29T16:19:57-05:00,16,Tue,-16.431153,-71.515678,2,residencial,"Calle 6, Casa Bella",Baja,SER-17,49.6,ResueltoEnElLugar,4
+CASO-0272,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-29T18:43:21-05:00,18,Tue,-16.430405,-71.540949,4,colegio,"Frente al colegio Institución Educativa Mater Maria School, Avenida de las Convenciones",Baja,SER-24,29.7,ResueltoEnElLugar,5
+CASO-0273,Sos,Peleas o riñas,Descartada,2026-09-29T23:26:53-05:00,23,Tue,-16.434326,-71.530094,3,parque,"Avenida Inglaterra, cerca del parque",,,,,
+CASO-0274,Reporte,Persona o vehículo sospechoso,Cerrada,2026-09-29T23:36:39-05:00,23,Tue,-16.429714,-71.51989,2,colegio,"Frente al colegio Tecsup No.2, Avenida La Melgariana",Baja,SER-28,20.4,SinHallazgo,
+CASO-0275,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-09-29T23:54:07-05:00,23,Tue,-16.428072,-71.514075,2,parque,"Avenida Pizarro, cerca del parque",Baja,SER-29,65.2,ResueltoEnElLugar,5
+CASO-0276,Reporte,Ruidos molestos o escándalo,Cerrada,2026-09-30T01:02:06-05:00,1,Wed,-16.447532,-71.51622,3,residencial,"C.8, Pueblo Joven La Breña",Baja,SER-33,18.3,ResueltoEnElLugar,
+CASO-0277,Reporte,Peleas o riñas,Descartada,2026-09-30T01:07:54-05:00,1,Wed,-16.423507,-71.540316,4,noche,"Cerca de El maremoto, E. Zegarra Ballón",,,,,
+CASO-0278,Sos,Peleas o riñas,Descartada,2026-09-30T02:07:35-05:00,2,Wed,-16.42984,-71.513182,2,avenida,"Avenida Pizarro, cuadra 10",,,,,
+CASO-0279,Reporte,Acoso en la vía pública,Descartada,2026-09-30T09:10:59-05:00,9,Wed,-16.432187,-71.530897,4,colegio,"Frente al colegio Institución Educativa 41038 Jose Olaya Balandra, Calle Ricardo Palma",,,,,
+CASO-0280,Sos,Peleas o riñas,Cerrada,2026-09-30T11:39:30-05:00,11,Wed,-16.429857,-71.525214,2,noche,"Cerca de Quingdao, Pasaje 11",Alta,SER-04,15.2,Derivado,
+CASO-0281,Reporte,Accidente de tránsito,Derivada,2026-09-30T20:28:01-05:00,20,Wed,-16.435141,-71.518218,2,avenida,"Avenida Túpac Amaru, cuadra 4",,,,,
+CASO-0282,Sos,Robo o hurto,Cerrada,2026-10-01T01:58:56-05:00,1,Thu,-16.442661,-71.516575,2,residencial,"Calle Manuel Gonzales Prada, Urbanización Simon Bolivar",Media,SER-30,9.1,Derivado,
+CASO-0283,Reporte,Daños o vandalismo,Cerrada,2026-10-01T05:32:49-05:00,5,Thu,-16.443188,-71.512551,2,residencial,"Arequipa, Urbanización Simon Bolivar",Baja,SER-06,151.1,ResueltoEnElLugar,
+CASO-0284,Reporte,Robo o hurto,Cerrada,2026-10-01T10:00:36-05:00,10,Thu,-16.422924,-71.54194,4,mercado,"Mercado Gratersa, E. Zegarra Ballón",Media,SER-12,38.4,Derivado,
+CASO-0285,Sos,Robo o hurto,Cerrada,2026-10-01T14:35:27-05:00,14,Thu,-16.43263,-71.514177,2,avenida,"Avenida Túpac Amaru, cuadra 5",Media,SER-17,5.7,SinHallazgo,4
+CASO-0286,Reporte,Accidente de tránsito,Cerrada,2026-10-01T17:39:26-05:00,17,Thu,-16.423567,-71.542214,4,avenida,"E. Zegarra Ballón, cuadra 11",Media,SER-23,12.8,ResueltoEnElLugar,
+CASO-0287,Sos,Violencia familiar,Cerrada,2026-10-01T19:23:54-05:00,19,Thu,-16.44834,-71.515618,3,residencial,"Calle 4, Pueblo Joven Ricardo Palma",Alta,SER-19,33.6,Derivado,
+CASO-0288,Reporte,Violencia familiar,Derivada,2026-10-01T20:38:15-05:00,20,Thu,-16.423151,-71.529785,1,residencial,"Calle Los Guindos, Los Laureles",,,,,
+CASO-0289,Reporte,Robo o hurto,Cerrada,2026-10-01T20:51:46-05:00,20,Thu,-16.424466,-71.538797,4,comercio,"Frente a Menaly Karla, Avenida Juan Vidaurrázaga",Media,SER-23,29.1,EntregadoAPnp,
+CASO-0290,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-02T02:45:49-05:00,2,Fri,-16.443417,-71.508968,2,parque,"Mariscal Castilla, cerca del parque",Baja,SER-29,47.4,EntregadoAPnp,
+CASO-0291,Reporte,Peleas o riñas,Cerrada,2026-10-02T03:37:38-05:00,3,Fri,-16.421633,-71.53824,1,mercado,"Avenida Juan Vidaurrázaga, cerca del mercado",Media,SER-27,53.9,ResueltoEnElLugar,
+CASO-0292,Reporte,Daños o vandalismo,Cerrada,2026-10-02T11:07:23-05:00,11,Fri,-16.437226,-71.525733,3,parque,"Avenida 13 de Junio, cerca del parque",Baja,SER-07,44.7,Derivado,
+CASO-0293,Sos,Violencia familiar,Cerrada,2026-10-02T16:39:29-05:00,16,Fri,-16.440932,-71.520404,3,residencial,"Pasaje Jorge Chavez, Villa Los Francos",Alta,SER-21,22.5,EntregadoAPnp,4
+CASO-0294,Reporte,Robo o hurto,Cerrada,2026-10-02T17:13:13-05:00,17,Fri,-16.423329,-71.523938,1,residencial,"Calle 1, Villa Dolores",Media,SER-13,31.9,ResueltoEnElLugar,5
+CASO-0295,Reporte,Accidente de tránsito,Derivada,2026-10-02T20:05:54-05:00,20,Fri,-16.418292,-71.526409,1,avenida,"Avenida Dolores, cuadra 8",,,,,
+CASO-0296,Reporte,Ruidos molestos o escándalo,Descartada,2026-10-02T20:13:54-05:00,20,Fri,-16.411481,-71.516951,1,residencial,"Malecón Missouri, Cooperativa 58",,,,,
+CASO-0297,Sos,Violencia familiar,Cerrada,2026-10-02T20:22:00-05:00,20,Fri,-16.443523,-71.508422,2,residencial,"Ballón Farfán, Asentamiento Humano Jorge Basadre",Alta,SER-18,16.2,EntregadoAPnp,
+CASO-0298,Reporte,Consumo o venta de drogas,Descartada,2026-10-02T22:46:08-05:00,22,Fri,-16.441727,-71.519304,3,parque,"Prolongación Avenida Dolores, cerca del parque",,,,,
+CASO-0299,Reporte,Robo o hurto,Cerrada,2026-10-02T23:38:54-05:00,23,Fri,-16.424711,-71.531863,1,comercio,"Frente a Petroperu, Andrés Avelino Cáceres",Media,SER-25,28.1,SinHallazgo,
+CASO-0300,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-03T01:33:01-05:00,1,Sat,-16.430153,-71.528443,1,residencial,"Calle Honduras, Satelite Grande",Baja,SER-25,34.5,ResueltoEnElLugar,
+CASO-0301,Sos,Peleas o riñas,Cancelada,2026-10-03T02:10:54-05:00,2,Sat,-16.433034,-71.516878,2,parque,"Santa Ursula, cerca del parque",,,,,
+CASO-0302,Sos,Robo o hurto,Cerrada,2026-10-03T06:49:29-05:00,6,Sat,-16.436807,-71.520947,2,paradero,"Paradero Malecón Dolores, Prolongación Avenida Dolores",Media,SER-04,6.6,EntregadoAPnp,
+CASO-0303,Sos,Robo o hurto,Cerrada,2026-10-03T08:49:49-05:00,8,Sat,-16.425565,-71.535686,4,mercado,"Mercado Asociación Indpendientes de Abril, Andrés Avelino Cáceres",Media,SER-10,7.8,SinHallazgo,
+CASO-0304,Sos,Robo o hurto,Cerrada,2026-10-03T08:58:14-05:00,8,Sat,-16.425457,-71.536381,4,mercado,"Mercado de Cayma, Andrés Avelino Cáceres",Alta,SER-11,8.7,EntregadoAPnp,4
+CASO-0305,Sos,Acoso en la vía pública,Cerrada,2026-10-03T10:35:01-05:00,10,Sat,-16.426981,-71.517352,2,paradero,"Paradero Casablanca, Avenida Hartley",Media,SER-04,16.8,SinHallazgo,
+CASO-0306,Reporte,Robo o hurto,Cerrada,2026-10-03T11:04:14-05:00,11,Sat,-16.424914,-71.53735,4,mercado,"Mercado Asociación FACETRAM, Andrés Avelino Cáceres",Media,SER-10,61.4,SinHallazgo,
+CASO-0307,Reporte,Otros,Cerrada,2026-10-03T13:54:44-05:00,13,Sat,-16.425441,-71.533123,1,avenida,"Óvalo Avelino, cuadra 10",Baja,SER-14,17.5,FalsaAlarma,
+CASO-0308,Reporte,Robo o hurto,Cerrada,2026-10-03T15:41:17-05:00,15,Sat,-16.423877,-71.535582,1,mercado,"Mercado Virgen del Chapi, Andrés Avelino Cáceres",Media,SER-14,33.1,EntregadoAPnp,
+CASO-0309,Sos,Violencia familiar,Cerrada,2026-10-03T15:43:49-05:00,15,Sat,-16.431758,-71.527354,2,residencial,"Calle Uruguay, Alto de la Luna",Alta,SER-18,10.6,EntregadoAPnp,5
+CASO-0310,Reporte,Consumo o venta de drogas,Descartada,2026-10-03T17:18:10-05:00,17,Sat,-16.437699,-71.525422,3,parque,"Parque Complejo JLBR, Malecón Dolores",,,,,
+CASO-0311,Sos,Violencia familiar,Cerrada,2026-10-03T20:09:44-05:00,20,Sat,-16.42617,-71.542263,4,residencial,"Calle Ayarza, Pueblo Joven Cerro July",Alta,SER-22,10.8,ResueltoEnElLugar,
+CASO-0312,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-03T22:00:54-05:00,22,Sat,-16.443752,-71.510677,2,residencial,"C.Unión, Asentamiento Humano Jorge Basadre",Baja,SER-28,47.8,FalsaAlarma,
+CASO-0313,Sos,Robo o hurto,Cerrada,2026-10-03T22:13:23-05:00,22,Sat,-16.435776,-71.525683,3,paradero,"Paradero Juan Pablo Vizcardo y Guzmán, Calle José Baquijano y Carrillo",Media,SER-31,13.7,SinHallazgo,
+CASO-0314,Reporte,Persona en riesgo,Cerrada,2026-10-04T01:08:33-05:00,1,Sun,-16.412576,-71.51613,1,residencial,"Calle Indo, Cooperativa 58",Alta,SER-25,82.6,ResueltoEnElLugar,
+CASO-0315,Reporte,Robo o hurto,Cerrada,2026-10-04T04:12:39-05:00,4,Sun,-16.422832,-71.521449,1,mercado,"Pizarro, cerca del mercado",Media,SER-26,86.4,EntregadoAPnp,
+CASO-0316,Sos,Peleas o riñas,Cerrada,2026-10-04T16:44:52-05:00,16,Sun,-16.421851,-71.5263,1,noche,"Cerca de Paz Soldán, Quinta Tristan",Media,SER-13,24.6,ResueltoEnElLugar,
+CASO-0317,Reporte,Consumo o venta de drogas,Cerrada,2026-10-04T22:13:24-05:00,22,Sun,-16.428326,-71.544264,4,residencial,"Villa Manuelito, Asentamiento Humano Virgen del Carmen",Baja,SER-36,60.1,ResueltoEnElLugar,
+CASO-0318,Reporte,Persona o vehículo sospechoso,Descartada,2026-10-05T00:02:02-05:00,0,Mon,-16.439787,-71.524446,3,colegio,"Frente al colegio Institución Educativa Inicial Tasahuayo, Calle Tasahuayo",,,,,
+CASO-0319,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-05T01:03:26-05:00,1,Mon,-16.412329,-71.515809,1,residencial,"Calle Río Nilo, Cooperativa 58",Baja,SER-25,49.1,ResueltoEnElLugar,
+CASO-0320,Sos,Persona o vehículo sospechoso,Cerrada,2026-10-05T02:58:12-05:00,2,Mon,-16.421393,-71.527881,1,parque,"Calle 10, cerca del parque",Baja,SER-27,18.9,ResueltoEnElLugar,
+CASO-0321,Reporte,Otros,Descartada,2026-10-05T12:26:42-05:00,12,Mon,-16.434298,-71.527442,3,parque,"Calle Salazar Bondy, cerca del parque",,,,,
+CASO-0322,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-05T16:15:37-05:00,16,Mon,-16.434776,-71.522985,2,parque,"Avenida los Próceres, cerca del parque",Baja,SER-18,25.4,ResueltoEnElLugar,
+CASO-0323,Sos,Otros,Cerrada,2026-10-05T16:17:52-05:00,16,Mon,-16.413308,-71.519776,1,parque,"Parque Complejo deportivo La Cantuta, Avenida Lambramani",Baja,SER-13,8.7,SinHallazgo,4
+CASO-0324,Sos,Persona en riesgo,Cerrada,2026-10-05T16:26:44-05:00,16,Mon,-16.4447,-71.51157,2,parque,"Neisser, cerca del parque",Alta,SER-16,11.6,ResueltoEnElLugar,5
+CASO-0325,Reporte,Accidente de tránsito,Cerrada,2026-10-05T17:26:54-05:00,17,Mon,-16.438295,-71.520538,2,avenida,"Prolongación Avenida Dolores, cuadra 10",Media,SER-17,18.4,Derivado,
+CASO-0326,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-05T22:33:58-05:00,22,Mon,-16.429784,-71.52003,2,colegio,"Frente al colegio Tecsup No.2, Avenida La Melgariana",Baja,SER-30,37.5,ResueltoEnElLugar,
+CASO-0327,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-06T00:43:15-05:00,0,Tue,-16.415588,-71.521742,1,colegio,"Frente al colegio Institución Educativa Colibri Libre Waldorf Inspired, Avenida Lambramani",Baja,SER-26,12.5,SinHallazgo,
+CASO-0328,Reporte,Robo o hurto,Cerrada,2026-10-06T01:20:49-05:00,1,Tue,-16.427202,-71.518346,2,comercio,"Frente a La Estrella, Avenida Hartley",Media,SER-28,15.2,SinHallazgo,
+CASO-0329,Reporte,Ruidos molestos o escándalo,Derivada,2026-10-06T02:18:43-05:00,2,Tue,-16.420154,-71.527361,1,noche,"Cerca de El Villano, Quinta Tristan",,,,,
+CASO-0330,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-06T02:51:40-05:00,2,Tue,-16.428762,-71.542957,4,parque,"Villa Manuelito, cerca del parque",Baja,SER-35,20.2,ResueltoEnElLugar,
+CASO-0331,Sos,Acoso en la vía pública,Cerrada,2026-10-06T17:41:20-05:00,17,Tue,-16.431032,-71.532319,4,paradero,"Paradero Estados Unidos, Calle Valdelomar",Media,SER-24,32.2,SinHallazgo,3
+CASO-0332,Reporte,Robo o hurto,Cerrada,2026-10-06T21:45:13-05:00,21,Tue,-16.424819,-71.537635,4,mercado,"Mercado 4 de Octubre, Avenida Juan Vidaurrázaga",Media,SER-34,27.5,EntregadoAPnp,
+CASO-0333,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-06T23:12:56-05:00,23,Tue,-16.436412,-71.528656,3,parque,"Parque Aplao, Avenida 13 de Junio",Baja,SER-31,21.0,SinHallazgo,
+CASO-0334,Reporte,Robo o hurto,Cerrada,2026-10-06T23:19:34-05:00,23,Tue,-16.447622,-71.516607,3,residencial,"C.8, Pueblo Joven La Breña",Media,SER-32,11.3,SinHallazgo,
+CASO-0335,Reporte,Consumo o venta de drogas,Cerrada,2026-10-07T06:04:01-05:00,6,Wed,-16.432568,-71.528292,3,parque,"Calle Honduras, cerca del parque",Baja,SER-09,52.1,ResueltoEnElLugar,5
+CASO-0336,Sos,Robo o hurto,Cerrada,2026-10-07T08:27:08-05:00,8,Wed,-16.43294,-71.525862,2,paradero,"Paradero Colegio Jorge Basadre Grohmann, Calle Sangarará",Media,SER-05,14.8,SinHallazgo,
+CASO-0337,Reporte,Otros,Cerrada,2026-10-07T10:41:42-05:00,10,Wed,-16.430751,-71.520726,2,parque,"Parque Los Cristales, Avenida La Melgariana",Baja,SER-04,28.1,SinHallazgo,
+CASO-0338,Reporte,Robo o hurto,Derivada,2026-10-07T15:36:54-05:00,15,Wed,-16.422576,-71.542465,4,paradero,"Paradero Terminal Flores Hermanos, Javier Pérez de Cuéllar",,,,,
+CASO-0339,Sos,Acoso en la vía pública,Cerrada,2026-10-07T19:22:26-05:00,19,Wed,-16.425099,-71.524257,1,colegio,"Frente al colegio Mundo Ecológico, Avenida Alameda de la Cultura",Media,SER-14,17.3,FalsaAlarma,5
+CASO-0340,Sos,Persona o vehículo sospechoso,Cerrada,2026-10-07T20:31:26-05:00,20,Wed,-16.44491,-71.509051,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Baja,SER-16,22.2,ResueltoEnElLugar,4
+CASO-0341,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-10-07T22:33:03-05:00,22,Wed,-16.41579,-71.516063,1,noche,"Cerca de Kuan Ti, Calle José Carlos Mariátegui",,,,,
+CASO-0342,Reporte,Ruidos molestos o escándalo,Cancelada,2026-10-07T23:40:33-05:00,23,Wed,-16.448833,-71.516379,3,residencial,"C.7, Pueblo Joven La Breña",,,,,
+CASO-0343,Sos,Robo o hurto,Cerrada,2026-10-08T00:44:35-05:00,0,Thu,-16.440826,-71.525437,3,paradero,"Paradero Tasahuayo, Calle Tasahuayo",Media,SER-33,14.6,SinHallazgo,
+CASO-0344,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-08T00:52:50-05:00,0,Thu,-16.411523,-71.515535,1,residencial,"Calle Río Nilo, Cooperativa 58",Baja,SER-26,47.2,SinHallazgo,5
+CASO-0345,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-08T01:03:06-05:00,1,Thu,-16.432011,-71.51999,2,parque,"Parque Los Cristales, Calle 10",Baja,SER-30,33.2,ResueltoEnElLugar,5
+CASO-0346,Reporte,Acoso en la vía pública,Cerrada,2026-10-08T04:08:23-05:00,4,Thu,-16.43558,-71.519182,2,paradero,"Paradero Puente La Florida, Avenida Túpac Amaru",Media,SER-30,30.1,ResueltoEnElLugar,
+CASO-0347,Sos,Accidente de tránsito,Cerrada,2026-10-08T07:00:41-05:00,7,Thu,-16.42405,-71.539506,4,comercio,"Avenida Juan Vidaurrázaga, cerca de un comercio",Media,SER-10,20.5,Derivado,
+CASO-0348,Reporte,Acoso en la vía pública,Cerrada,2026-10-08T07:22:50-05:00,7,Thu,-16.428541,-71.52062,2,paradero,"Paradero Tecsup, Avenida La Melgariana",Media,SER-06,70.9,SinHallazgo,
+CASO-0349,Reporte,Otros,Derivada,2026-10-08T09:34:19-05:00,9,Thu,-16.412762,-71.516545,1,parque,"Parque La Acequia, Colonia",,,,,
+CASO-0350,Sos,Extorsión o amenazas,Cerrada,2026-10-08T14:38:49-05:00,14,Thu,-16.426702,-71.516816,2,comercio,"Frente a Repsol, Avenida Hartley",Media,SER-16,7.0,SinHallazgo,
+CASO-0351,Sos,Otros,Cerrada,2026-10-08T15:04:53-05:00,15,Thu,-16.435831,-71.519412,2,avenida,"Avenida Túpac Amaru, cuadra 7",Baja,SER-17,12.7,ResueltoEnElLugar,5
+CASO-0352,Reporte,Accidente de tránsito,Cerrada,2026-10-08T15:38:31-05:00,15,Thu,-16.424377,-71.532759,1,comercio,"Frente a Interbank, Avenida Daniel Alcides Carrión",Media,SER-15,23.1,ResueltoEnElLugar,4
+CASO-0353,Sos,Extorsión o amenazas,Cerrada,2026-10-08T16:16:54-05:00,16,Thu,-16.424483,-71.534791,1,mercado,"Andrés Avelino Cáceres, cerca del mercado",Media,SER-14,11.0,EntregadoAPnp,
+CASO-0354,Reporte,Extorsión o amenazas,Derivada,2026-10-08T17:50:38-05:00,17,Thu,-16.427068,-71.533922,4,residencial,"Costa Rica, Urbanización Puerta Verde",,,,,
+CASO-0355,Reporte,Extorsión o amenazas,Derivada,2026-10-08T22:08:01-05:00,22,Thu,-16.423504,-71.520638,2,comercio,"Pizarro, cerca de un comercio",,,,,
+CASO-0356,Reporte,Robo o hurto,Cerrada,2026-10-08T22:37:44-05:00,22,Thu,-16.430293,-71.532936,4,paradero,"Paradero Óvalo Apacheta, Avenida Perú",Media,SER-34,27.4,SinHallazgo,4
+CASO-0357,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-09T01:09:25-05:00,1,Fri,-16.443552,-71.511372,2,residencial,"Ballón Farfán, Asentamiento Humano Jorge Basadre",Baja,SER-30,55.8,SinHallazgo,
+CASO-0358,Reporte,Daños o vandalismo,Cancelada,2026-10-09T02:26:30-05:00,2,Fri,-16.420289,-71.526963,1,residencial,"Quinta Tristan, Los Naranjos",,,,,
+CASO-0359,Reporte,Daños o vandalismo,Cerrada,2026-10-09T06:19:07-05:00,6,Fri,-16.444683,-71.504871,2,parque,"Avenida Caracas, cerca del parque",Baja,SER-04,25.0,ResueltoEnElLugar,5
+CASO-0360,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-09T08:54:35-05:00,8,Fri,-16.440062,-71.522626,3,colegio,"Frente al colegio Institución Educativa Nuestra Sra.de Montserrat, 28 de Julio",Baja,SER-07,35.8,SinHallazgo,
+CASO-0361,Reporte,Robo o hurto,Cerrada,2026-10-09T13:40:29-05:00,13,Fri,-16.430327,-71.512608,2,avenida,"Avenida Pizarro, cuadra 1",Media,SER-16,56.1,SinHallazgo,4
+CASO-0362,Reporte,Robo o hurto,Cerrada,2026-10-09T13:47:04-05:00,13,Fri,-16.434705,-71.529596,3,comercio,"Frente a MilGen, Calle Moquegua",Media,SER-20,69.1,EntregadoAPnp,3
+CASO-0363,Sos,Peleas o riñas,Cerrada,2026-10-09T18:09:46-05:00,18,Fri,-16.421018,-71.5255,1,noche,"Cerca de Nautika, Avenida Dolores",Media,SER-15,9.6,ResueltoEnElLugar,
+CASO-0364,Reporte,Robo o hurto,Cerrada,2026-10-09T20:32:06-05:00,20,Fri,-16.423986,-71.539719,4,comercio,"Avenida Juan Vidaurrázaga, cerca de un comercio",Media,SER-22,19.2,Derivado,
+CASO-0365,Reporte,Consumo o venta de drogas,Descartada,2026-10-09T22:43:30-05:00,22,Fri,-16.4299,-71.536795,4,avenida,"1 de Mayo, cuadra 4",,,,,
+CASO-0366,Reporte,Ruidos molestos o escándalo,Derivada,2026-10-10T00:50:58-05:00,0,Sat,-16.425996,-71.536091,4,residencial,"Siglo XX, Urbanización Vista Hermoza",,,,,
+CASO-0367,Reporte,Extorsión o amenazas,Cerrada,2026-10-10T01:47:06-05:00,1,Sat,-16.434817,-71.529501,3,comercio,"Frente a MilGen, Calle Moquegua",Media,SER-32,13.5,ResueltoEnElLugar,
+CASO-0368,Sos,Peleas o riñas,Cerrada,2026-10-10T06:16:31-05:00,6,Sat,-16.44468,-71.504568,2,noche,"Cerca de Pachamanca huancaína El Solitario, Avenida Caracas",Media,SER-04,15.5,SinHallazgo,4
+CASO-0369,Reporte,Robo o hurto,Descartada,2026-10-10T06:39:47-05:00,6,Sat,-16.435534,-71.52485,2,paradero,"Paradero Juan Pablo Vizcardo y Guzmán, Avenida los Próceres",,,,,
+CASO-0370,Reporte,Accidente de tránsito,Cerrada,2026-10-10T07:28:13-05:00,7,Sat,-16.430274,-71.534868,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 12",Media,SER-12,33.6,ResueltoEnElLugar,
+CASO-0371,Reporte,Ruidos molestos o escándalo,Derivada,2026-10-10T07:32:55-05:00,7,Sat,-16.427046,-71.518384,2,residencial,"Avenida Paseo de la Cultura, La Estrella",,,,,
+CASO-0372,Sos,Robo o hurto,Cerrada,2026-10-10T09:17:40-05:00,9,Sat,-16.411073,-71.515984,1,avenida,"Avenida los Incas, cuadra 11",Media,SER-03,17.8,SinHallazgo,3
+CASO-0373,Acompanamiento,Acoso en la vía pública,Cerrada,2026-10-10T14:21:20-05:00,14,Sat,-16.427093,-71.528984,1,avenida,"Recorrido de acompañamiento, Pedro Diez Canseco",Alta,SER-14,4.2,ResueltoEnElLugar,
+CASO-0374,Sos,Robo o hurto,Cerrada,2026-10-10T16:07:17-05:00,16,Sat,-16.432375,-71.543301,4,avenida,"Prolongación Cerro Juli, cuadra 4",Media,SER-22,9.7,ResueltoEnElLugar,
+CASO-0375,Sos,Robo o hurto,Cancelada,2026-10-10T20:43:20-05:00,20,Sat,-16.430917,-71.541046,4,avenida,"Avenida de las Convenciones, cuadra 1",,,,,
+CASO-0376,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-10-10T22:25:48-05:00,22,Sat,-16.427528,-71.532886,1,parque,"Costa Rica, cerca del parque",,,,,
+CASO-0377,Reporte,Ruidos molestos o escándalo,Descartada,2026-10-10T23:48:15-05:00,23,Sat,-16.426248,-71.519631,2,noche,"Cerca de Los cebiches de Kike, Santa Catalina",,,,,
+CASO-0378,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-11T01:16:19-05:00,1,Sun,-16.446306,-71.518048,3,residencial,"José Galvez, Urbanización La Breña",Baja,SER-33,126.2,ResueltoEnElLugar,1
+CASO-0379,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-10-11T02:37:43-05:00,2,Sun,-16.423898,-71.531773,1,parque,"Avenida Daniel Alcides Carrión, cerca del parque",,,,,
+CASO-0380,Reporte,Robo o hurto,Cerrada,2026-10-11T11:34:48-05:00,11,Sun,-16.444395,-71.518098,3,avenida,"Avenida Gustavo Begazo, cuadra 8",Media,SER-08,11.7,EntregadoAPnp,
+CASO-0381,Sos,Robo o hurto,Cerrada,2026-10-11T18:48:30-05:00,18,Sun,-16.444279,-71.512992,2,residencial,"Ulrich Neisser, Asentamiento Humano Jorge Basadre",Media,SER-16,14.3,SinHallazgo,
+CASO-0382,Reporte,Consumo o venta de drogas,Cerrada,2026-10-11T19:49:22-05:00,19,Sun,-16.435297,-71.527981,3,residencial,"Calle 7 de Junio, Rodantes del Sur",Baja,SER-19,43.3,ResueltoEnElLugar,
+CASO-0383,Sos,Robo o hurto,Cerrada,2026-10-11T20:37:45-05:00,20,Sun,-16.41152,-71.517004,1,residencial,"Calle Plata, Cooperativa 58",Media,SER-15,14.1,ResueltoEnElLugar,
+CASO-0384,Sos,Violencia familiar,Cerrada,2026-10-12T02:08:48-05:00,2,Mon,-16.444729,-71.511448,2,residencial,"Neisser, Asentamiento Humano Jorge Basadre",Alta,SER-29,17.3,EntregadoAPnp,4
+CASO-0385,Sos,Persona o vehículo sospechoso,Cerrada,2026-10-12T04:47:57-05:00,4,Mon,-16.42412,-71.519657,2,colegio,"Frente al colegio Institución Educativa Santa Maria Madre, Pizarro",Baja,SER-30,12.8,SinHallazgo,4
+CASO-0386,Sos,Accidente de tránsito,Cerrada,2026-10-12T08:48:28-05:00,8,Mon,-16.432183,-71.513616,2,avenida,"Avenida Túpac Amaru, cuadra 7",Media,SER-06,25.1,Derivado,5
+CASO-0387,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-12T10:40:05-05:00,10,Mon,-16.429301,-71.529006,1,noche,"Cerca de Chicharronería La sambita, Calle Honduras",Baja,SER-02,70.2,ResueltoEnElLugar,3
+CASO-0388,Sos,Robo o hurto,Cerrada,2026-10-12T12:08:33-05:00,12,Mon,-16.431229,-71.523294,2,paradero,"Paradero Santa María II, Avenida Dolores",Media,SER-05,6.6,SinHallazgo,
+CASO-0389,Reporte,Consumo o venta de drogas,Cerrada,2026-10-12T12:39:50-05:00,12,Mon,-16.433865,-71.524248,2,residencial,"Pasaje 11, Juan Pablo Vizcardo y Guzman",Baja,SER-04,74.2,Derivado,
+CASO-0390,Reporte,Consumo o venta de drogas,Cancelada,2026-10-12T19:27:38-05:00,19,Mon,-16.417227,-71.532515,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 3",,,,,
+CASO-0391,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-10-13T04:08:20-05:00,4,Tue,-16.414799,-71.518043,1,parque,"Colonia, cerca del parque",,,,,
+CASO-0392,Reporte,Otros,Cerrada,2026-10-13T13:51:41-05:00,13,Tue,-16.416144,-71.519033,1,avenida,"Avenida Lambramani, cuadra 7",Baja,SER-01,17.8,SinHallazgo,
+CASO-0393,Reporte,Acoso en la vía pública,Cerrada,2026-10-13T15:56:04-05:00,15,Tue,-16.431337,-71.538462,4,avenida,"Cerro Juli, cuadra 7",Media,SER-24,47.7,ResueltoEnElLugar,
+CASO-0394,Reporte,Otros,Cerrada,2026-10-13T18:01:59-05:00,18,Tue,-16.41452,-71.528052,1,avenida,"Avenida Agricultura, cuadra 1",Baja,SER-15,15.4,Derivado,
+CASO-0395,Reporte,Consumo o venta de drogas,Cerrada,2026-10-13T20:54:57-05:00,20,Tue,-16.42811,-71.546225,4,parque,"Saco Olivero, cerca del parque",Baja,SER-24,65.4,ResueltoEnElLugar,
+CASO-0396,Reporte,Consumo o venta de drogas,Cerrada,2026-10-13T23:46:46-05:00,23,Tue,-16.434166,-71.533799,4,parque,"Puerto Rico, cerca del parque",Baja,SER-34,11.1,SinHallazgo,
+CASO-0397,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-14T03:48:11-05:00,3,Wed,-16.448485,-71.512102,3,residencial,"Calle 2, Las Esmeraldas, A.P.I.S",Baja,SER-31,23.6,ResueltoEnElLugar,
+CASO-0398,Reporte,Accidente de tránsito,Cerrada,2026-10-14T12:42:39-05:00,12,Wed,-16.431444,-71.543392,4,avenida,"Prolongación Cerro Juli, cuadra 8",Media,SER-11,62.6,Derivado,3
+CASO-0399,Sos,Persona en riesgo,Cerrada,2026-10-14T14:29:05-05:00,14,Wed,-16.433137,-71.525834,2,avenida,"Calle Sangarará, cuadra 1",Alta,SER-18,13.0,ResueltoEnElLugar,
+CASO-0400,Reporte,Persona en riesgo,Derivada,2026-10-14T15:10:44-05:00,15,Wed,-16.426949,-71.540899,4,residencial,"Pasaje Pascual Saco Oliveros, Pueblo Joven Santa Teresa",,,,,
+CASO-0401,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-14T16:22:22-05:00,16,Wed,-16.43,-71.513905,2,residencial,"Alameda del Sol, Alameda del Sol",Baja,SER-16,46.7,SinHallazgo,
+CASO-0402,Reporte,Accidente de tránsito,Descartada,2026-10-14T20:51:37-05:00,20,Wed,-16.431621,-71.535413,4,avenida,"Avenida las Peñas, cuadra 10",,,,,
+CASO-0403,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-15T00:42:51-05:00,0,Thu,-16.42189,-71.541172,4,residencial,"E. Zegarra Ballón, Fundo el Peral",Baja,SER-34,75.8,SinHallazgo,2
+CASO-0404,Reporte,Acoso en la vía pública,Derivada,2026-10-15T01:54:31-05:00,1,Thu,-16.428946,-71.523525,2,paradero,"Paradero Grifo Monterrey, Avenida Hartley",,,,,
+CASO-0405,Reporte,Consumo o venta de drogas,Derivada,2026-10-15T03:37:26-05:00,3,Thu,-16.440433,-71.525136,3,residencial,"Contamana, Tasahuayo",,,,,
+CASO-0406,Reporte,Persona en riesgo,Cerrada,2026-10-15T05:55:02-05:00,5,Thu,-16.428393,-71.520532,2,residencial,"Avenida La Melgariana, Urbanización Monterrey",Alta,SER-28,18.5,ResueltoEnElLugar,
+CASO-0407,Reporte,Robo o hurto,Cerrada,2026-10-15T11:22:44-05:00,11,Thu,-16.42598,-71.533407,1,comercio,"Avenida Cementerio, cerca de un comercio",Media,SER-03,47.3,ResueltoEnElLugar,
+CASO-0408,Sos,Extorsión o amenazas,Cerrada,2026-10-15T11:39:59-05:00,11,Thu,-16.428426,-71.523581,2,comercio,"Avenida Dolores, cerca de un comercio",Media,SER-06,8.9,ResueltoEnElLugar,
+CASO-0409,Reporte,Accidente de tránsito,Derivada,2026-10-15T12:02:42-05:00,12,Thu,-16.425712,-71.532309,1,comercio,"Frente a BBVA, Andrés Avelino Cáceres",,,,,
+CASO-0410,Sos,Robo o hurto,Cerrada,2026-10-15T18:54:54-05:00,18,Thu,-16.443738,-71.517852,3,paradero,"Paradero Cruce Simón, Avenida Caracas",Media,SER-21,11.1,SinHallazgo,5
+CASO-0411,Reporte,Acoso en la vía pública,Derivada,2026-10-15T19:16:13-05:00,19,Thu,-16.4284,-71.534115,4,parque,"Avenida Cementerio, cerca del parque",,,,,
+CASO-0412,Reporte,Robo o hurto,Cerrada,2026-10-15T21:17:15-05:00,21,Thu,-16.4305,-71.531017,4,paradero,"Paradero Fecia, Avenida Estados Unidos",Media,SER-23,15.1,EntregadoAPnp,
+CASO-0413,Sos,Robo o hurto,Cerrada,2026-10-15T21:41:01-05:00,21,Thu,-16.444279,-71.515521,2,residencial,"Ulrich Neisser, Urbanización Simon Bolivar",Media,SER-16,9.7,SinHallazgo,
+CASO-0414,Sos,Acoso en la vía pública,Cerrada,2026-10-15T21:52:14-05:00,21,Thu,-16.428567,-71.534936,4,colegio,"Frente al colegio Institución Educativa Charlotte Buhler, Avenida Cementerio",Media,SER-36,15.0,SinHallazgo,3
+CASO-0415,Sos,Violencia familiar,Cerrada,2026-10-15T22:49:06-05:00,22,Thu,-16.447744,-71.514328,3,residencial,"C.6, Urbanización Santa Mónica",Alta,SER-33,15.0,Derivado,
+CASO-0416,Reporte,Extorsión o amenazas,Cerrada,2026-10-15T22:55:17-05:00,22,Thu,-16.42879,-71.533782,4,residencial,"Calle Ecuador, Urbanización Villa Eléctrica",Media,SER-36,15.5,EntregadoAPnp,
+CASO-0417,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-15T23:25:30-05:00,23,Thu,-16.432926,-71.517937,2,parque,"Santa Ursula, cerca del parque",Baja,SER-28,30.1,ResueltoEnElLugar,
+CASO-0418,Sos,Robo o hurto,Cerrada,2026-10-15T23:49:01-05:00,23,Thu,-16.417082,-71.532736,1,avenida,"Avenida Agricultura, cuadra 5",Media,SER-27,17.6,EntregadoAPnp,
+CASO-0419,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-16T00:11:25-05:00,0,Fri,-16.410941,-71.516229,1,parque,"Calle Malecón Bustamante y Rivero, cerca del parque",Baja,SER-27,25.3,SinHallazgo,2
+CASO-0420,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-16T00:17:38-05:00,0,Fri,-16.415184,-71.517969,1,colegio,"Frente al colegio 40171, Arenales",Baja,SER-27,84.8,ResueltoEnElLugar,
+CASO-0421,Acompanamiento,Acoso en la vía pública,Cerrada,2026-10-16T02:55:32-05:00,2,Fri,-16.444553,-71.513848,2,avenida,"Recorrido de acompañamiento, Ulrich Neisser",Alta,SER-30,6.5,EntregadoAPnp,
+CASO-0422,Sos,Robo o hurto,Cerrada,2026-10-16T07:16:12-05:00,7,Fri,-16.425087,-71.537455,4,mercado,"Mercado 4 de Octubre, Siglo XX",Media,SER-11,43.7,SinHallazgo,3
+CASO-0423,Reporte,Accidente de tránsito,Cerrada,2026-10-16T07:38:07-05:00,7,Fri,-16.430711,-71.512361,2,avenida,"Avenida Pizarro, cuadra 5",Media,SER-06,71.7,ResueltoEnElLugar,3
+CASO-0424,Reporte,Otros,Cerrada,2026-10-16T13:40:48-05:00,13,Fri,-16.438387,-71.522425,3,parque,"Primer Parque, cerca del parque",Baja,SER-09,34.7,ResueltoEnElLugar,
+CASO-0425,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-16T18:28:26-05:00,18,Fri,-16.412344,-71.519932,1,parque,"Parque Complejo deportivo La Cantuta, Avenida Lambramani",Baja,SER-15,29.0,ResueltoEnElLugar,
+CASO-0426,Reporte,Consumo o venta de drogas,Cerrada,2026-10-16T18:53:20-05:00,18,Fri,-16.445256,-71.515048,2,parque,"Parque Simón Bolívar, C. Vinatea Reynoso",Baja,SER-17,31.0,Derivado,
+CASO-0427,Reporte,Peleas o riñas,Descartada,2026-10-16T20:58:04-05:00,20,Fri,-16.444629,-71.50377,2,noche,"Cerca de Pachamanca huancaína El Solitario, Avenida Caracas",,,,,
+CASO-0428,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-16T21:55:49-05:00,21,Fri,-16.424755,-71.537558,4,residencial,"Siglo XX, Urbanización Vista Hermoza",Baja,SER-35,60.8,ResueltoEnElLugar,
+CASO-0429,Reporte,Persona o vehículo sospechoso,Derivada,2026-10-16T22:37:35-05:00,22,Fri,-16.448564,-71.514749,3,residencial,"Avenida Principal, Pueblo Joven Ricardo Palma",,,,,
+CASO-0430,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-16T23:11:16-05:00,23,Fri,-16.444634,-71.511513,2,residencial,"Neisser, Asentamiento Humano Jorge Basadre",Alta,SER-30,42.1,ResueltoEnElLugar,5
+CASO-0431,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-16T23:25:50-05:00,23,Fri,-16.431569,-71.531297,4,residencial,"Calle Sebastián Barranca, Urbanización 13 de Enero",Alta,SER-34,38.3,FalsaAlarma,
+CASO-0432,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-16T23:38:32-05:00,23,Fri,-16.421622,-71.525321,1,noche,"Cerca de Nautika, Avenida Dolores",Baja,SER-27,30.2,ResueltoEnElLugar,
+CASO-0433,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-17T00:06:37-05:00,0,Sat,-16.417376,-71.515835,1,noche,"Cerca de El Turco, Calle José Carlos Mariátegui",Baja,SER-25,11.2,ResueltoEnElLugar,
+CASO-0434,Sos,Robo o hurto,Cerrada,2026-10-17T00:22:29-05:00,0,Sat,-16.429246,-71.524298,2,paradero,"Paradero Grifo Monterrey, Avenida Estados Unidos",Media,SER-29,10.9,Derivado,
+CASO-0435,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-10-17T01:49:33-05:00,1,Sat,-16.441621,-71.524535,3,residencial,"Calle Huanta, Tasahuayo",,,,,
+CASO-0436,Reporte,Peleas o riñas,Cerrada,2026-10-17T02:34:06-05:00,2,Sat,-16.423763,-71.532548,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 11",Media,SER-27,23.6,ResueltoEnElLugar,
+CASO-0437,Reporte,Daños o vandalismo,Cerrada,2026-10-17T04:44:12-05:00,4,Sat,-16.429566,-71.536627,4,parque,"Avenida Juan Vidaurrázaga, cerca del parque",Baja,SER-36,32.6,ResueltoEnElLugar,
+CASO-0438,Sos,Accidente de tránsito,Cerrada,2026-10-17T07:45:34-05:00,7,Sat,-16.415715,-71.527956,1,avenida,"Avenida Dolores, cuadra 6",Media,SER-01,39.1,Derivado,
+CASO-0439,Reporte,Robo o hurto,Cerrada,2026-10-17T12:26:57-05:00,12,Sat,-16.425151,-71.531518,1,avenida,"Andrés Avelino Cáceres, cuadra 7",Media,SER-03,24.9,ResueltoEnElLugar,
+CASO-0440,Reporte,Persona en riesgo,Cerrada,2026-10-17T12:28:28-05:00,12,Sat,-16.430091,-71.534971,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 5",Alta,SER-12,42.1,ResueltoEnElLugar,
+CASO-0441,Reporte,Accidente de tránsito,Cerrada,2026-10-17T18:01:51-05:00,18,Sat,-16.425265,-71.53346,1,comercio,"Frente a Credinka, Avenida Daniel Alcides Carrión",Media,SER-14,22.7,Derivado,
+CASO-0442,Reporte,Robo o hurto,Cerrada,2026-10-17T18:20:36-05:00,18,Sat,-16.433652,-71.522475,2,paradero,"Avenida Dolores, cerca del paradero",Media,SER-16,45.1,Derivado,3
+CASO-0443,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-17T18:36:56-05:00,18,Sat,-16.432166,-71.531952,4,residencial,"Garcilazo de la Vega, Urbanización 13 de Enero",Baja,SER-24,36.3,ResueltoEnElLugar,5
+CASO-0444,Reporte,Acoso en la vía pública,Cerrada,2026-10-17T19:44:34-05:00,19,Sat,-16.425465,-71.54351,4,colegio,"Frente al colegio Institución Educativa Mariam Rosse, Calle Augusto Salazar Bondy",Media,SER-24,16.6,SinHallazgo,
+CASO-0445,Sos,Robo o hurto,Cerrada,2026-10-17T19:49:25-05:00,19,Sat,-16.426356,-71.52411,1,avenida,"Avenida Dolores, cuadra 8",Media,SER-14,31.0,EntregadoAPnp,
+CASO-0446,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-17T20:01:44-05:00,20,Sat,-16.429751,-71.52621,2,noche,"Avenida Estados Unidos, cerca de un local nocturno",Baja,SER-17,76.8,ResueltoEnElLugar,
+CASO-0447,Reporte,Daños o vandalismo,Derivada,2026-10-17T22:05:50-05:00,22,Sat,-16.412647,-71.519501,1,parque,"Parque La Cantuta I Etapa, Avenida Lambramani",,,,,
+CASO-0448,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-17T22:49:52-05:00,22,Sat,-16.420308,-71.53101,1,noche,"Cerca de La Vera Pizzería, Avenida Daniel Alcides Carrión",Baja,SER-25,35.7,ResueltoEnElLugar,
+CASO-0449,Sos,Violencia familiar,Cerrada,2026-10-17T23:05:06-05:00,23,Sat,-16.449067,-71.515606,3,residencial,"Avenida Principal, Pueblo Joven La Breña",Alta,SER-31,28.2,ResueltoEnElLugar,
+CASO-0450,Reporte,Ruidos molestos o escándalo,Cancelada,2026-10-17T23:36:11-05:00,23,Sat,-16.432976,-71.528976,3,noche,"Cerca de El Daffo de Édgar, Calle Honduras",,,,,
+CASO-0451,Reporte,Ruidos molestos o escándalo,Cancelada,2026-10-17T23:47:38-05:00,23,Sat,-16.437257,-71.526238,3,residencial,"Avenida 13 de Junio, Santa Lourdes",,,,,
+CASO-0452,Reporte,Daños o vandalismo,Cerrada,2026-10-18T00:11:45-05:00,0,Sun,-16.434517,-71.509499,2,colegio,"Frente al colegio Institución Educativa Especial De Rapido Aprendizaje Alfred Binet, Calle Colón",Baja,SER-30,91.4,SinHallazgo,
+CASO-0453,Sos,Peleas o riñas,Cerrada,2026-10-18T00:37:37-05:00,0,Sun,-16.42195,-71.531225,1,noche,"Avenida Daniel Alcides Carrión, cerca de un local nocturno",Media,SER-26,19.3,FalsaAlarma,4
+CASO-0454,Reporte,Violencia familiar,Cerrada,2026-10-18T01:35:18-05:00,1,Sun,-16.415455,-71.518173,1,residencial,"Arenales, Banco Sur",Alta,SER-26,10.2,Derivado,
+CASO-0455,Sos,Accidente de tránsito,Cerrada,2026-10-18T01:45:45-05:00,1,Sun,-16.430484,-71.533064,4,avenida,"Avenida Perú, cuadra 7",Media,SER-36,17.1,ResueltoEnElLugar,4
+CASO-0456,Sos,Robo o hurto,Cerrada,2026-10-18T05:42:51-05:00,5,Sun,-16.430623,-71.540715,4,avenida,"Avenida de las Convenciones, cuadra 10",Media,SER-36,11.0,ResueltoEnElLugar,
+CASO-0457,Sos,Robo o hurto,Cerrada,2026-10-18T07:21:52-05:00,7,Sun,-16.415675,-71.529794,1,comercio,"Frente a Tienda, Avenida Agricultura",Media,SER-01,10.6,EntregadoAPnp,
+CASO-0458,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-18T07:59:57-05:00,7,Sun,-16.441234,-71.521068,3,colegio,"Frente al colegio Institución Educativa Los Heraldos De Jesus, Pasaje Jorge Chavez",Baja,SER-09,12.4,SinHallazgo,
+CASO-0459,Reporte,Accidente de tránsito,Descartada,2026-10-18T08:34:26-05:00,8,Sun,-16.43663,-71.521684,2,avenida,"Avenida Túpac Amaru, cuadra 4",,,,,
+CASO-0460,Reporte,Robo o hurto,Cerrada,2026-10-18T09:37:57-05:00,9,Sun,-16.42301,-71.517109,2,mercado,"Mercado total, Pizarro",Media,SER-06,35.7,SinHallazgo,
+CASO-0461,Reporte,Persona en riesgo,Cerrada,2026-10-18T10:27:00-05:00,10,Sun,-16.414195,-71.521843,1,parque,"Avenida Lambramani, cerca del parque",Alta,SER-02,19.0,ResueltoEnElLugar,
+CASO-0462,Sos,Persona en riesgo,Cerrada,2026-10-18T11:04:58-05:00,11,Sun,-16.428102,-71.526549,1,parque,"Pasaje Pedro Díaz, cerca del parque",Alta,SER-01,13.6,ResueltoEnElLugar,
+CASO-0463,Sos,Violencia familiar,Cancelada,2026-10-18T11:34:57-05:00,11,Sun,-16.418567,-71.526826,1,residencial,"Calle 1, Urbanización Los Naranjos",,,,,
+CASO-0464,Sos,Persona en riesgo,Cerrada,2026-10-18T16:15:43-05:00,16,Sun,-16.441239,-71.518342,2,parque,"Avenida José de San Martín, cerca del parque",Alta,SER-17,10.9,ResueltoEnElLugar,
+CASO-0465,Reporte,Accidente de tránsito,Cerrada,2026-10-18T18:40:17-05:00,18,Sun,-16.438994,-71.520542,2,avenida,"Prolongación Avenida Dolores, cuadra 5",Media,SER-17,26.4,ResueltoEnElLugar,
+CASO-0466,Reporte,Robo o hurto,Descartada,2026-10-18T19:10:34-05:00,19,Sun,-16.421455,-71.538653,1,mercado,"Avenida Juan Vidaurrázaga, cerca del mercado",,,,,
+CASO-0467,Reporte,Consumo o venta de drogas,Cerrada,2026-10-18T19:33:34-05:00,19,Sun,-16.412004,-71.52083,1,residencial,"Malecón Missouri, La Cantuta",Baja,SER-13,34.7,ResueltoEnElLugar,
+CASO-0468,Reporte,Accidente de tránsito,Cerrada,2026-10-18T20:15:10-05:00,20,Sun,-16.414753,-71.527885,1,avenida,"Avenida Dolores, cuadra 6",Media,SER-13,12.5,ResueltoEnElLugar,
+CASO-0469,Reporte,Ruidos molestos o escándalo,Descartada,2026-10-18T22:38:54-05:00,22,Sun,-16.41268,-71.515454,1,residencial,"Calle Parana, Cooperativa 58",,,,,
+CASO-0470,Sos,Violencia familiar,Cerrada,2026-10-18T22:45:44-05:00,22,Sun,-16.41106,-71.515464,1,residencial,"Calle Malecón Bustamante y Rivero, Cooperativa 58",Alta,SER-25,12.3,ResueltoEnElLugar,4
+CASO-0471,Sos,Peleas o riñas,Cerrada,2026-10-18T22:51:27-05:00,22,Sun,-16.434639,-71.531763,3,noche,"Cerca de Pollero, Garcilazo de la Vega",Media,SER-33,13.4,SinHallazgo,
+CASO-0472,Reporte,Peleas o riñas,Cerrada,2026-10-18T23:13:24-05:00,23,Sun,-16.430272,-71.529722,1,noche,"Cerca de Kanela, Calle Haití",Media,SER-27,21.6,SinHallazgo,
+CASO-0473,Reporte,Consumo o venta de drogas,Cerrada,2026-10-19T00:01:11-05:00,0,Mon,-16.43521,-71.522689,2,parque,"Pasaje Independencia, cerca del parque",Baja,SER-29,28.3,ResueltoEnElLugar,
+CASO-0474,Reporte,Robo o hurto,Cerrada,2026-10-19T00:04:35-05:00,0,Mon,-16.426138,-71.541476,4,residencial,"Calle Pascual Saco Oliveros, Pueblo Joven Cerro July",Media,SER-36,142.8,SinHallazgo,1
+CASO-0475,Reporte,Persona o vehículo sospechoso,Descartada,2026-10-19T03:00:23-05:00,3,Mon,-16.451012,-71.512283,3,parque,"Parque Ub. Las Esmeraldas Sector 1, Avenida las Esmeraldas",,,,,
+CASO-0476,Reporte,Daños o vandalismo,Descartada,2026-10-19T07:57:49-05:00,7,Mon,-16.424863,-71.537313,4,residencial,"Siglo XX, Urbanización Vista Hermoza",,,,,
+CASO-0477,Reporte,Robo o hurto,Cerrada,2026-10-19T18:11:30-05:00,18,Mon,-16.436876,-71.521257,2,paradero,"Paradero Malecón Dolores, Avenida Túpac Amaru",Media,SER-16,26.5,EntregadoAPnp,
+CASO-0478,Reporte,Robo o hurto,Cerrada,2026-10-19T19:06:26-05:00,19,Mon,-16.423373,-71.535188,1,mercado,"Andrés Avelino Cáceres, cerca del mercado",Media,SER-14,28.6,SinHallazgo,
+CASO-0479,Reporte,Acoso en la vía pública,Cerrada,2026-10-19T19:47:14-05:00,19,Mon,-16.438527,-71.52779,3,avenida,"Ayaviri, cuadra 7",Media,SER-19,35.5,SinHallazgo,
+CASO-0480,Reporte,Ruidos molestos o escándalo,Descartada,2026-10-20T02:28:53-05:00,2,Tue,-16.433831,-71.53192,4,noche,"Cerca de Green, Garcilazo de la Vega",,,,,
+CASO-0481,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-20T05:28:39-05:00,5,Tue,-16.411372,-71.515899,1,parque,"Calle Río Nilo, cerca del parque",Baja,SER-26,62.8,SinHallazgo,4
+CASO-0482,Reporte,Robo o hurto,Cerrada,2026-10-20T07:56:45-05:00,7,Tue,-16.43006,-71.523318,2,avenida,"Avenida Dolores, cuadra 3",Media,SER-05,31.3,SinHallazgo,
+CASO-0483,Sos,Persona en riesgo,Cerrada,2026-10-20T08:45:26-05:00,8,Tue,-16.427836,-71.52656,1,parque,"Pasaje Pedro Díaz, cerca del parque",Alta,SER-01,12.6,ResueltoEnElLugar,
+CASO-0484,Reporte,Accidente de tránsito,Cerrada,2026-10-20T10:40:17-05:00,10,Tue,-16.451323,-71.514599,3,avenida,"Avenida Arequipa, cuadra 10",Media,SER-08,9.1,ResueltoEnElLugar,
+CASO-0485,Reporte,Persona en riesgo,Descartada,2026-10-20T10:49:46-05:00,10,Tue,-16.432271,-71.54305,4,avenida,"Prolongación Cerro Juli, cuadra 6",,,,,
+CASO-0486,Sos,Persona en riesgo,Cancelada,2026-10-20T11:16:45-05:00,11,Tue,-16.426985,-71.539392,4,mercado,"Mi Mercado, Avenida Juan Vidaurrázaga",,,,,
+CASO-0487,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-20T13:45:56-05:00,13,Tue,-16.429691,-71.525073,2,residencial,"Pasaje 11, Pedro Diez Canseco",Baja,SER-18,100.4,SinHallazgo,1
+CASO-0488,Reporte,Robo o hurto,Cerrada,2026-10-20T15:24:32-05:00,15,Tue,-16.427214,-71.546693,4,avenida,"E. Zegarra Ballón, cuadra 4",Media,SER-22,14.4,EntregadoAPnp,
+CASO-0489,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-20T21:00:48-05:00,21,Tue,-16.411408,-71.51709,1,residencial,"Calle Plata, Cooperativa 58",Baja,SER-13,31.2,ResueltoEnElLugar,
+CASO-0490,Reporte,Accidente de tránsito,Cerrada,2026-10-20T22:49:54-05:00,22,Tue,-16.431003,-71.543728,4,avenida,"Avenida de las Convenciones, cuadra 4",Media,SER-35,42.0,EntregadoAPnp,3
+CASO-0491,Reporte,Consumo o venta de drogas,Derivada,2026-10-21T01:41:07-05:00,1,Wed,-16.426253,-71.522324,2,parque,"Calle 7, cerca del parque",,,,,
+CASO-0492,Sos,Acoso en la vía pública,Cerrada,2026-10-21T04:39:34-05:00,4,Wed,-16.427247,-71.532984,1,avenida,"Avenida Perú, cuadra 9",Alta,SER-26,11.7,SinHallazgo,
+CASO-0493,Sos,Robo o hurto,Cerrada,2026-10-21T08:28:26-05:00,8,Wed,-16.449268,-71.51235,3,residencial,"C.17, Las Esmeraldas, A.P.I.S",Media,SER-07,9.8,SinHallazgo,
+CASO-0494,Sos,Consumo o venta de drogas,Cerrada,2026-10-21T18:58:11-05:00,18,Wed,-16.415772,-71.523163,1,parque,"Avenida Lambramani, cerca del parque",Baja,SER-15,15.3,SinHallazgo,
+CASO-0495,Reporte,Peleas o riñas,Cerrada,2026-10-21T21:29:20-05:00,21,Wed,-16.41715,-71.526389,1,noche,"Cerca de El Fogon, Avenida Dolores",Media,SER-27,69.5,SinHallazgo,
+CASO-0496,Reporte,Robo o hurto,Cerrada,2026-10-22T01:18:02-05:00,1,Thu,-16.430442,-71.532359,4,avenida,"Avenida Estados Unidos, cuadra 1",Media,SER-35,30.9,SinHallazgo,
+CASO-0497,Reporte,Ruidos molestos o escándalo,Derivada,2026-10-22T04:39:10-05:00,4,Thu,-16.430742,-71.532514,4,noche,"Cerca de El Huallaga, Avenida Estados Unidos",,,,,
+CASO-0498,Acompanamiento,Acoso en la vía pública,Cerrada,2026-10-22T06:44:58-05:00,6,Thu,-16.431423,-71.529182,4,avenida,"Recorrido de acompañamiento, Calle Honduras",Alta,SER-12,43.4,ResueltoEnElLugar,
+CASO-0499,Sos,Accidente de tránsito,Cerrada,2026-10-22T14:57:55-05:00,14,Thu,-16.445818,-71.51857,3,avenida,"Avenida Gustavo Begazo, cuadra 4",Media,SER-20,6.9,ResueltoEnElLugar,4
+CASO-0500,Reporte,Persona o vehículo sospechoso,Descartada,2026-10-22T15:03:58-05:00,15,Thu,-16.434474,-71.522267,2,residencial,"Avenida los Próceres, Monterrico",,,,,
+CASO-0501,Reporte,Robo o hurto,Cerrada,2026-10-22T15:47:00-05:00,15,Thu,-16.417921,-71.518015,1,avenida,"Avenida Lambramani, cuadra 7",Media,SER-15,40.8,ResueltoEnElLugar,
+CASO-0502,Reporte,Otros,Cerrada,2026-10-22T18:10:00-05:00,18,Thu,-16.433146,-71.517995,2,parque,"Santa Ursula, cerca del parque",Baja,SER-17,12.4,ResueltoEnElLugar,
+CASO-0503,Reporte,Consumo o venta de drogas,Cerrada,2026-10-22T18:22:39-05:00,18,Thu,-16.435177,-71.5294,3,residencial,"Avenida 13 de Junio, Los Olivos",Baja,SER-19,26.1,ResueltoEnElLugar,
+CASO-0504,Sos,Peleas o riñas,Cerrada,2026-10-22T21:35:05-05:00,21,Thu,-16.42355,-71.516609,2,mercado,"Mercado total, Avenida Pizarro",Media,SER-16,12.6,ResueltoEnElLugar,
+CASO-0505,Reporte,Consumo o venta de drogas,Cerrada,2026-10-22T23:16:34-05:00,23,Thu,-16.416957,-71.51621,1,residencial,"Calle José Carlos Mariátegui, El Moral",Baja,SER-27,14.7,ResueltoEnElLugar,
+CASO-0506,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-22T23:36:50-05:00,23,Thu,-16.429691,-71.517712,2,colegio,"Frente al colegio Institución Educativa Madre Santa Beatriz, Calle 9",Baja,SER-30,13.5,SinHallazgo,
+CASO-0507,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-23T00:16:08-05:00,0,Fri,-16.428632,-71.546602,4,noche,"Cerca de Mar Adentro, Saco Olivero",Baja,SER-35,76.2,ResueltoEnElLugar,
+CASO-0508,Reporte,Robo o hurto,Cerrada,2026-10-23T03:26:17-05:00,3,Fri,-16.431993,-71.522277,2,paradero,"Paradero Santa María II, Avenida Dolores",Media,SER-28,13.3,SinHallazgo,
+CASO-0509,Sos,Peleas o riñas,Descartada,2026-10-23T04:13:55-05:00,4,Fri,-16.434587,-71.531969,3,avenida,"Alemania, cuadra 7",,,,,
+CASO-0510,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-23T05:08:41-05:00,5,Fri,-16.432039,-71.52295,2,parque,"Avenida Dolores, cerca del parque",Baja,SER-30,58.8,SinHallazgo,
+CASO-0511,Reporte,Extorsión o amenazas,Cerrada,2026-10-23T08:20:13-05:00,8,Fri,-16.421531,-71.531108,1,comercio,"Frente a Banco de la Nación, Avenida Daniel Alcides Carrión",Media,SER-01,10.9,ResueltoEnElLugar,
+CASO-0512,Sos,Robo o hurto,Cerrada,2026-10-23T08:36:16-05:00,8,Fri,-16.429088,-71.537644,4,paradero,"Paradero Las Convenciones, Avenida de las Convenciones",Media,SER-10,13.0,EntregadoAPnp,
+CASO-0513,Reporte,Daños o vandalismo,Cerrada,2026-10-23T09:11:08-05:00,9,Fri,-16.423559,-71.529994,1,colegio,"Frente al colegio Everardo Zapata Santillana, Los Cipreses",Baja,SER-02,43.0,ResueltoEnElLugar,5
+CASO-0514,Sos,Robo o hurto,Cerrada,2026-10-23T12:41:20-05:00,12,Fri,-16.436734,-71.520703,2,avenida,"Avenida Túpac Amaru, cuadra 11",Media,SER-06,9.7,ResueltoEnElLugar,4
+CASO-0515,Sos,Persona en riesgo,Cerrada,2026-10-23T13:33:22-05:00,13,Fri,-16.430735,-71.516839,2,residencial,"Calle 9, La Encalada",Alta,SER-04,20.3,ResueltoEnElLugar,5
+CASO-0516,Reporte,Daños o vandalismo,Cerrada,2026-10-23T13:33:33-05:00,13,Fri,-16.411195,-71.516456,1,parque,"Malecón Missouri, cerca del parque",Baja,SER-02,28.8,SinHallazgo,
+CASO-0517,Reporte,Consumo o venta de drogas,Cerrada,2026-10-23T16:00:42-05:00,16,Fri,-16.430613,-71.515445,2,parque,"Calle 1, cerca del parque",Baja,SER-17,12.1,ResueltoEnElLugar,
+CASO-0518,Sos,Robo o hurto,Cerrada,2026-10-23T16:32:40-05:00,16,Fri,-16.437011,-71.521239,2,paradero,"Paradero Malecón Dolores, Avenida Túpac Amaru",Media,SER-17,10.4,SinHallazgo,
+CASO-0519,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-23T18:09:01-05:00,18,Fri,-16.440825,-71.525187,3,parque,"Calle Tasahuayo, cerca del parque",Baja,SER-20,39.0,ResueltoEnElLugar,
+CASO-0520,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-10-23T19:11:34-05:00,19,Fri,-16.425345,-71.532877,1,noche,"Cerca de Luciano, Óvalo Avelino",,,,,
+CASO-0521,Sos,Robo o hurto,Descartada,2026-10-23T19:22:59-05:00,19,Fri,-16.444308,-71.511161,2,mercado,"Mercado de Simón Bolivar, Camaná",,,,,
+CASO-0522,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-23T19:55:23-05:00,19,Fri,-16.432389,-71.512028,2,residencial,"Alas del Sur, Urbanización Alas del Sur",Baja,SER-17,29.6,ResueltoEnElLugar,
+CASO-0523,Sos,Violencia familiar,Cerrada,2026-10-23T20:10:46-05:00,20,Fri,-16.426776,-71.5418,4,residencial,"Calle Pascual Saco Oliveros, Asentamiento Humano Villa Hermosa Zona B",Alta,SER-23,15.0,Derivado,
+CASO-0524,Reporte,Persona o vehículo sospechoso,Derivada,2026-10-23T20:22:14-05:00,20,Fri,-16.44928,-71.514463,3,residencial,"Avenida Las Esmeraldas, Asentamiento Humano Betania",,,,,
+CASO-0525,Reporte,Violencia familiar,Cancelada,2026-10-23T20:57:05-05:00,20,Fri,-16.423921,-71.526785,1,residencial,"Calle Las Moras, Santa Lucía",,,,,
+CASO-0526,Sos,Robo o hurto,Cerrada,2026-10-23T23:37:26-05:00,23,Fri,-16.420182,-71.531951,1,mercado,"Mercado Botica Dermia, Avenida Daniel Alcides Carrión",Media,SER-25,27.1,ResueltoEnElLugar,3
+CASO-0527,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-24T00:13:45-05:00,0,Sat,-16.4374,-71.524988,3,residencial,"Avenida 13 de Junio, Santa Lourdes",Baja,SER-31,83.4,SinHallazgo,4
+CASO-0528,Reporte,Persona en riesgo,Cerrada,2026-10-24T02:57:08-05:00,2,Sat,-16.420413,-71.537242,1,mercado,"Mercado Sur Andino, Avenida Juan Vidaurrázaga",Alta,SER-27,49.3,ResueltoEnElLugar,5
+CASO-0529,Reporte,Consumo o venta de drogas,Cerrada,2026-10-24T03:33:14-05:00,3,Sat,-16.443497,-71.513591,2,parque,"Caravelí, cerca del parque",Baja,SER-29,29.3,SinHallazgo,
+CASO-0530,Reporte,Robo o hurto,Cerrada,2026-10-24T05:36:34-05:00,5,Sat,-16.425025,-71.533083,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 4",Media,SER-03,44.7,SinHallazgo,
+CASO-0531,Reporte,Acoso en la vía pública,Derivada,2026-10-24T13:30:51-05:00,13,Sat,-16.425236,-71.534003,1,colegio,"Frente al colegio Institución Educativa Maria Protectora, Andrés Avelino Cáceres",,,,,
+CASO-0532,Sos,Violencia familiar,Cerrada,2026-10-24T13:56:36-05:00,13,Sat,-16.438484,-71.521493,2,residencial,"28 de Julio, Urbanización Dolores",Alta,SER-18,29.0,Derivado,
+CASO-0533,Reporte,Otros,Cerrada,2026-10-24T14:13:10-05:00,14,Sat,-16.428185,-71.52054,2,residencial,"Avenida La Melgariana, Urbanización Monterrey",Baja,SER-16,24.1,SinHallazgo,
+CASO-0534,Sos,Persona en riesgo,Cerrada,2026-10-24T14:47:23-05:00,14,Sat,-16.431362,-71.52355,2,avenida,"Avenida Dolores, cuadra 10",Alta,SER-17,10.4,ResueltoEnElLugar,
+CASO-0535,Reporte,Robo o hurto,Cerrada,2026-10-24T14:53:36-05:00,14,Sat,-16.428158,-71.521865,2,paradero,"Paradero La Melgariana, Avenida Hartley",Media,SER-21,28.6,EntregadoAPnp,
+CASO-0536,Sos,Robo o hurto,Cerrada,2026-10-24T17:53:32-05:00,17,Sat,-16.425566,-71.533352,1,mercado,"Mercado Virgen del Chapi, Óvalo Avelino",Media,SER-15,10.7,Derivado,4
+CASO-0537,Reporte,Robo o hurto,Cerrada,2026-10-24T21:35:27-05:00,21,Sat,-16.445571,-71.518525,3,avenida,"Avenida Gustavo Begazo, cuadra 12",Media,SER-33,50.7,EntregadoAPnp,
+CASO-0538,Reporte,Peleas o riñas,Cerrada,2026-10-24T22:11:46-05:00,22,Sat,-16.417312,-71.53044,1,parque,"Los Conquistadores, cerca del parque",Media,SER-25,60.1,SinHallazgo,2
+CASO-0539,Reporte,Consumo o venta de drogas,Descartada,2026-10-24T22:19:36-05:00,22,Sat,-16.431812,-71.528575,2,residencial,"Calle Uruguay, Satelite Grande",,,,,
+CASO-0540,Reporte,Robo o hurto,Cerrada,2026-10-24T23:23:55-05:00,23,Sat,-16.42578,-71.533828,1,comercio,"Andrés Avelino Cáceres, cerca de un comercio",Alta,SER-25,42.6,SinHallazgo,
+CASO-0541,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-24T23:34:09-05:00,23,Sat,-16.428683,-71.538696,4,parque,"Parque Goles y Mas, Avenida Juan Vidaurrázaga",Baja,SER-35,35.0,SinHallazgo,
+CASO-0542,Reporte,Consumo o venta de drogas,Cerrada,2026-10-24T23:53:47-05:00,23,Sat,-16.42461,-71.527924,1,parque,"Andrés Avelino Cáceres, cerca del parque",Baja,SER-25,67.4,ResueltoEnElLugar,
+CASO-0543,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-25T00:36:25-05:00,0,Sun,-16.422662,-71.530459,1,noche,"Cerca de Al Fuego, Calle Los Cedros",Baja,SER-26,27.4,ResueltoEnElLugar,
+CASO-0544,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-25T01:26:18-05:00,1,Sun,-16.42827,-71.520001,2,residencial,"Avenida La Melgariana, Urbanización Monterrey",Baja,SER-29,49.1,SinHallazgo,
+CASO-0545,Reporte,Daños o vandalismo,Cerrada,2026-10-25T01:39:18-05:00,1,Sun,-16.416311,-71.516248,1,parque,"Parque Cooperativa 58, Calle José Carlos Mariátegui",Baja,SER-26,111.8,ResueltoEnElLugar,1
+CASO-0546,Reporte,Daños o vandalismo,Cerrada,2026-10-25T05:57:44-05:00,5,Sun,-16.431921,-71.530646,4,residencial,"Calle México, Urbanización 13 de Enero",Baja,SER-11,69.5,ResueltoEnElLugar,2
+CASO-0547,Sos,Robo o hurto,Cancelada,2026-10-25T06:23:38-05:00,6,Sun,-16.423543,-71.532318,1,comercio,"Frente a Mibanco, Avenida Daniel Alcides Carrión",,,,,
+CASO-0548,Sos,Robo o hurto,Cerrada,2026-10-25T06:45:35-05:00,6,Sun,-16.444927,-71.510148,2,residencial,"San Martín, Asentamiento Humano Jorge Basadre",Media,SER-04,12.5,Derivado,
+CASO-0549,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-25T10:39:54-05:00,10,Sun,-16.415915,-71.530441,1,noche,"Cerca de Cebicheria Challwa, Avenida Agricultura",Baja,SER-02,51.7,ResueltoEnElLugar,
+CASO-0550,Reporte,Persona en riesgo,Cerrada,2026-10-25T16:20:54-05:00,16,Sun,-16.425512,-71.528787,1,avenida,"Andrés Avelino Cáceres, cuadra 10",Alta,SER-13,34.4,ResueltoEnElLugar,
+CASO-0551,Reporte,Ruidos molestos o escándalo,Descartada,2026-10-25T19:32:56-05:00,19,Sun,-16.424518,-71.525289,1,residencial,"Quinta Tristan, Santa Lucía",,,,,
+CASO-0552,Reporte,Robo o hurto,Cerrada,2026-10-25T19:52:23-05:00,19,Sun,-16.416068,-71.529005,1,comercio,"Frente a Mini Market Jacky, Avenida Agricultura",Media,SER-15,37.9,SinHallazgo,
+CASO-0553,Sos,Consumo o venta de drogas,Cerrada,2026-10-25T22:43:19-05:00,22,Sun,-16.429416,-71.524333,2,avenida,"Avenida Estados Unidos, cuadra 1",Baja,SER-29,11.2,ResueltoEnElLugar,
+CASO-0554,Sos,Consumo o venta de drogas,Cerrada,2026-10-25T23:00:32-05:00,23,Sun,-16.430022,-71.516603,2,parque,"Parque La Encalada, Calle 9",Baja,SER-30,25.0,ResueltoEnElLugar,5
+CASO-0555,Reporte,Robo o hurto,Cerrada,2026-10-26T01:00:34-05:00,1,Mon,-16.42773,-71.534201,4,mercado,"Mercado Botica Dermia, Avenida Cementerio",Media,SER-34,34.7,ResueltoEnElLugar,
+CASO-0556,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-26T02:12:32-05:00,2,Mon,-16.449165,-71.515087,3,noche,"Cerca de Picanteria, Avenida Las Esmeraldas",Baja,SER-33,80.9,FalsaAlarma,
+CASO-0557,Sos,Peleas o riñas,Cerrada,2026-10-26T06:31:36-05:00,6,Mon,-16.437751,-71.51947,2,noche,"Cerca de La Chinchana, Prolongación Avenida Dolores",Media,SER-04,10.5,EntregadoAPnp,4
+CASO-0558,Sos,Robo o hurto,Cancelada,2026-10-26T07:59:46-05:00,7,Mon,-16.429218,-71.522047,2,paradero,"Paradero Residencial Monterrey, Avenida Hartley",,,,,
+CASO-0559,Reporte,Extorsión o amenazas,Derivada,2026-10-26T15:58:00-05:00,15,Mon,-16.425897,-71.534941,4,mercado,"Mercado de Cayma, Andrés Avelino Cáceres",,,,,
+CASO-0560,Reporte,Robo o hurto,Cerrada,2026-10-26T16:21:01-05:00,16,Mon,-16.423395,-71.535754,1,mercado,"Mercado Cuzco, Avenida Juan Vidaurrázaga",Media,SER-13,27.4,SinHallazgo,4
+CASO-0561,Reporte,Robo o hurto,Cerrada,2026-10-26T18:00:48-05:00,18,Mon,-16.43529,-71.528007,3,residencial,"Calle 7 de Junio, Rodantes del Sur",Media,SER-19,54.2,ResueltoEnElLugar,
+CASO-0562,Reporte,Robo o hurto,Cerrada,2026-10-26T20:10:58-05:00,20,Mon,-16.424558,-71.537553,4,residencial,"Siglo XX, Urbanización Vista Hermoza",Media,SER-24,34.3,ResueltoEnElLugar,5
+CASO-0563,Reporte,Robo o hurto,Cerrada,2026-10-26T23:51:17-05:00,23,Mon,-16.445342,-71.509715,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Media,SER-28,21.2,ResueltoEnElLugar,
+CASO-0564,Reporte,Violencia familiar,Derivada,2026-10-27T01:58:48-05:00,1,Tue,-16.451793,-71.51251,3,residencial,"Avenida las Esmeraldas, Urbanización Buena Vista",,,,,
+CASO-0565,Sos,Acoso en la vía pública,Descartada,2026-10-27T06:46:03-05:00,6,Tue,-16.42581,-71.52621,1,avenida,"Andrés Avelino Cáceres, cuadra 9",,,,,
+CASO-0566,Reporte,Persona en riesgo,Cerrada,2026-10-27T11:04:43-05:00,11,Tue,-16.444393,-71.5121,2,residencial,"Ulrich Neisser, Asentamiento Humano Jorge Basadre",Alta,SER-04,44.1,Derivado,
+CASO-0567,Reporte,Robo o hurto,Descartada,2026-10-27T16:11:37-05:00,16,Tue,-16.425678,-71.536596,4,mercado,"Mercado La Nueva Aurora, Siglo XX",,,,,
+CASO-0568,Reporte,Persona o vehículo sospechoso,Derivada,2026-10-27T21:50:44-05:00,21,Tue,-16.443433,-71.514462,2,colegio,"Frente al colegio Institución Educativa Divino Maestro Del Saber, Avenida Caracas",,,,,
+CASO-0569,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-28T00:44:40-05:00,0,Wed,-16.444806,-71.506914,2,colegio,"Frente al colegio Institución Educativa Arcangel San Miguel, Avenida La Amistad",Baja,SER-29,78.9,SinHallazgo,
+CASO-0570,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-28T02:43:58-05:00,2,Wed,-16.454272,-71.514037,3,residencial,"Avenida Primavera, Asentamiento Humano Virgen de Copacabana",Baja,SER-32,17.0,SinHallazgo,
+CASO-0571,Reporte,Peleas o riñas,Cerrada,2026-10-28T02:45:55-05:00,2,Wed,-16.443542,-71.510807,2,avenida,"Avenida Caracas, cuadra 10",Media,SER-28,64.3,SinHallazgo,3
+CASO-0572,Reporte,Robo o hurto,Derivada,2026-10-28T02:58:12-05:00,2,Wed,-16.425608,-71.537363,4,mercado,"Mercado Asociación Indpendientes de Abril, Siglo XX",,,,,
+CASO-0573,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-28T03:49:33-05:00,3,Wed,-16.446789,-71.514566,3,residencial,"C.5, Pueblo Joven Ricardo Palma",Baja,SER-31,82.2,SinHallazgo,
+CASO-0574,Reporte,Peleas o riñas,Derivada,2026-10-28T06:08:49-05:00,6,Wed,-16.43423,-71.535858,4,avenida,"Avenida las Peñas, cuadra 12",,,,,
+CASO-0575,Sos,Accidente de tránsito,Cancelada,2026-10-28T10:39:14-05:00,10,Wed,-16.430231,-71.512628,2,avenida,"Avenida Pizarro, cuadra 12",,,,,
+CASO-0576,Sos,Robo o hurto,Cerrada,2026-10-28T13:50:55-05:00,13,Wed,-16.431407,-71.533265,4,paradero,"Paradero San José Obrero, Avenida Socabaya",Media,SER-11,10.8,ResueltoEnElLugar,5
+CASO-0577,Sos,Acoso en la vía pública,Cerrada,2026-10-28T14:45:46-05:00,14,Wed,-16.430396,-71.532714,4,paradero,"Paradero Apacheta, Avenida Perú",Media,SER-22,12.4,ResueltoEnElLugar,
+CASO-0578,Sos,Consumo o venta de drogas,Cerrada,2026-10-28T17:44:38-05:00,17,Wed,-16.446057,-71.516198,3,residencial,"Jorge Basadre, Pueblo Joven Ricardo Palma",Baja,SER-19,14.3,ResueltoEnElLugar,4
+CASO-0579,Reporte,Robo o hurto,Cerrada,2026-10-28T18:28:23-05:00,18,Wed,-16.42412,-71.533579,1,mercado,"Mercado Virgen del Chapi, Avenida Daniel Alcides Carrión",Media,SER-14,45.1,ResueltoEnElLugar,5
+CASO-0580,Reporte,Robo o hurto,Cerrada,2026-10-28T21:04:30-05:00,21,Wed,-16.425944,-71.533239,1,comercio,"Avenida Perú, cerca de un comercio",Media,SER-13,43.8,SinHallazgo,3
+CASO-0581,Sos,Violencia familiar,Cerrada,2026-10-29T01:46:54-05:00,1,Thu,-16.420334,-71.530015,1,residencial,"Calle 6, Bancarios",Alta,SER-26,36.6,Derivado,4
+CASO-0582,Reporte,Peleas o riñas,Derivada,2026-10-29T01:50:21-05:00,1,Thu,-16.429584,-71.530435,1,parque,"Avenida Estados Unidos, cerca del parque",,,,,
+CASO-0583,Reporte,Robo o hurto,Cerrada,2026-10-29T04:48:53-05:00,4,Thu,-16.431152,-71.532795,4,paradero,"Paradero San José Obrero, Avenida Socabaya",Media,SER-36,43.1,ResueltoEnElLugar,
+CASO-0584,Sos,Extorsión o amenazas,Cerrada,2026-10-29T11:37:18-05:00,11,Thu,-16.44461,-71.504572,2,comercio,"Frente a Primax, Avenida Caracas",Media,SER-05,15.0,SinHallazgo,4
+CASO-0585,Sos,Robo o hurto,Cerrada,2026-10-29T11:46:17-05:00,11,Thu,-16.425176,-71.535812,4,comercio,"Andrés Avelino Cáceres, cerca de un comercio",Media,SER-12,21.1,ResueltoEnElLugar,5
+CASO-0586,Reporte,Accidente de tránsito,Cerrada,2026-10-29T12:15:20-05:00,12,Thu,-16.434094,-71.522656,2,avenida,"Avenida Dolores, cuadra 5",Media,SER-05,25.0,ResueltoEnElLugar,
+CASO-0587,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-29T15:52:01-05:00,15,Thu,-16.424439,-71.538054,4,residencial,"Siglo XX, Urbanización Vista Hermoza",Baja,SER-22,44.2,FalsaAlarma,5
+CASO-0588,Reporte,Consumo o venta de drogas,Derivada,2026-10-29T16:58:14-05:00,16,Thu,-16.429062,-71.531591,4,parque,"Parque Fecia, Argentina",,,,,
+CASO-0589,Sos,Violencia familiar,Cerrada,2026-10-29T18:02:03-05:00,18,Thu,-16.449008,-71.516197,3,residencial,"C.8, Pueblo Joven La Breña",Alta,SER-21,17.5,ResueltoEnElLugar,4
+CASO-0590,Sos,Acoso en la vía pública,Cerrada,2026-10-29T19:20:31-05:00,19,Thu,-16.43388,-71.531573,4,avenida,"Avenida Socabaya, cuadra 4",Media,SER-23,19.9,SinHallazgo,3
+CASO-0591,Reporte,Consumo o venta de drogas,Cerrada,2026-10-29T19:44:15-05:00,19,Thu,-16.435072,-71.529015,3,residencial,"Calle Chavín de Huántar, Los Olivos",Baja,SER-21,36.0,EntregadoAPnp,
+CASO-0592,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-30T00:23:47-05:00,0,Fri,-16.41625,-71.527687,1,noche,"Cerca de Presto, Avenida Dolores",Baja,SER-26,50.8,ResueltoEnElLugar,
+CASO-0593,Reporte,Peleas o riñas,Cerrada,2026-10-30T02:29:14-05:00,2,Fri,-16.433636,-71.519604,2,parque,"Parque Monterrico, Avenida Túpac Amaru",Media,SER-29,40.2,SinHallazgo,
+CASO-0594,Reporte,Ruidos molestos o escándalo,Descartada,2026-10-30T03:00:51-05:00,3,Fri,-16.449143,-71.514054,3,noche,"Cerca de Picanteria, C.3",,,,,
+CASO-0595,Reporte,Persona o vehículo sospechoso,Derivada,2026-10-30T06:11:46-05:00,6,Fri,-16.433542,-71.526542,2,parque,"Parque Juan Pablo Vizcardo y Guzmán, Calle Sangarará",,,,,
+CASO-0596,Reporte,Ruidos molestos o escándalo,Cerrada,2026-10-30T06:50:07-05:00,6,Fri,-16.44456,-71.511245,2,residencial,"Camaná, Asentamiento Humano Jorge Basadre",Baja,SER-04,49.0,ResueltoEnElLugar,5
+CASO-0597,Sos,Robo o hurto,Cerrada,2026-10-30T11:00:47-05:00,11,Fri,-16.432288,-71.523364,2,avenida,"Avenida Dolores, cuadra 9",Media,SER-06,12.1,ResueltoEnElLugar,5
+CASO-0598,Reporte,Violencia familiar,Cerrada,2026-10-30T14:19:07-05:00,14,Fri,-16.440012,-71.52176,3,residencial,"28 de Julio, Amauta",Alta,SER-20,61.4,EntregadoAPnp,
+CASO-0599,Sos,Violencia familiar,Cerrada,2026-10-30T14:41:26-05:00,14,Fri,-16.424746,-71.525234,1,residencial,"Quinta Tristan, Santa Lucía",Alta,SER-14,8.9,ResueltoEnElLugar,4
+CASO-0600,Sos,Robo o hurto,Cerrada,2026-10-30T15:38:22-05:00,15,Fri,-16.428878,-71.51353,2,avenida,"Avenida Pizarro, cuadra 6",Media,SER-16,7.8,SinHallazgo,
+CASO-0601,Reporte,Accidente de tránsito,Cerrada,2026-10-30T15:57:26-05:00,15,Fri,-16.424921,-71.529541,1,avenida,"Andrés Avelino Cáceres, cuadra 6",Media,SER-14,61.1,EntregadoAPnp,
+CASO-0602,Reporte,Consumo o venta de drogas,Cerrada,2026-10-30T17:55:14-05:00,17,Fri,-16.44635,-71.514339,3,residencial,"María Nieves Bustamante, Asentamiento Humano Jorge Basadre",Baja,SER-20,19.9,FalsaAlarma,
+CASO-0603,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-30T20:16:54-05:00,20,Fri,-16.436626,-71.529502,3,parque,"Parque Aplao, Calle Villa María",Baja,SER-20,25.5,ResueltoEnElLugar,
+CASO-0604,Reporte,Consumo o venta de drogas,Cerrada,2026-10-30T20:23:32-05:00,20,Fri,-16.443433,-71.516478,2,residencial,"Calle Bolivia, Urbanización Simon Bolivar",Baja,SER-16,18.6,SinHallazgo,
+CASO-0605,Reporte,Consumo o venta de drogas,Cerrada,2026-10-30T20:55:28-05:00,20,Fri,-16.42629,-71.536969,4,residencial,"Siglo XX, Urbanización Vista Hermoza",Baja,SER-22,21.9,ResueltoEnElLugar,
+CASO-0606,Sos,Robo o hurto,Cerrada,2026-10-30T21:08:49-05:00,21,Fri,-16.424239,-71.521118,2,mercado,"Avenida La Melgariana, cerca del mercado",Media,SER-17,9.6,SinHallazgo,
+CASO-0607,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-30T21:26:32-05:00,21,Fri,-16.432669,-71.53206,4,residencial,"Garcilazo de la Vega, Casuarinas",Baja,SER-24,29.0,ResueltoEnElLugar,
+CASO-0608,Sos,Persona o vehículo sospechoso,Cerrada,2026-10-30T21:46:03-05:00,21,Fri,-16.433951,-71.529278,3,parque,"Avenida Inglaterra, cerca del parque",Baja,SER-21,11.8,SinHallazgo,3
+CASO-0609,Reporte,Peleas o riñas,Cerrada,2026-10-30T21:48:01-05:00,21,Fri,-16.425338,-71.527265,1,avenida,"Andrés Avelino Cáceres, cuadra 10",Media,SER-25,41.7,SinHallazgo,
+CASO-0610,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-30T23:07:33-05:00,23,Fri,-16.426303,-71.534572,4,parque,"Andrés Avelino Cáceres, cerca del parque",Baja,SER-36,68.6,ResueltoEnElLugar,
+CASO-0611,Reporte,Robo o hurto,Cerrada,2026-10-31T09:24:42-05:00,9,Sat,-16.412148,-71.52107,1,paradero,"Paradero Parada de autobuses lambramani, Avenida Lambramani",Media,SER-02,49.3,ResueltoEnElLugar,4
+CASO-0612,Reporte,Robo o hurto,Derivada,2026-10-31T10:08:47-05:00,10,Sat,-16.433665,-71.510712,2,avenida,"Calle Colón, cuadra 6",,,,,
+CASO-0613,Reporte,Otros,Descartada,2026-10-31T13:44:04-05:00,13,Sat,-16.429634,-71.536344,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 12",,,,,
+CASO-0614,Reporte,Extorsión o amenazas,Cerrada,2026-10-31T19:40:34-05:00,19,Sat,-16.420023,-71.530699,1,mercado,"Mercado Botica Dermia, Calle 6",Media,SER-14,20.4,ResueltoEnElLugar,
+CASO-0615,Reporte,Persona o vehículo sospechoso,Cerrada,2026-10-31T21:06:56-05:00,21,Sat,-16.423302,-71.517629,2,residencial,"Pizarro, Dunas del Sur",Baja,SER-18,28.7,SinHallazgo,
+CASO-0616,Sos,Violencia familiar,Cerrada,2026-10-31T21:58:45-05:00,21,Sat,-16.424942,-71.543251,4,residencial,"Calle Edmundo Escomel, Pueblo Joven Cerro July",Alta,SER-36,6.4,Derivado,
+CASO-0617,Reporte,Robo o hurto,Cerrada,2026-10-31T23:54:54-05:00,23,Sat,-16.425569,-71.532874,1,paradero,"Paradero Andrés Avelino Cáceres, Andrés Avelino Cáceres",Media,SER-26,30.0,EntregadoAPnp,
+CASO-0618,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-10-31T23:58:45-05:00,23,Sat,-16.413938,-71.518851,1,parque,"Avenida Lambramani, cerca del parque",Baja,SER-26,84.9,ResueltoEnElLugar,
+CASO-0619,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-01T00:56:08-05:00,0,Sun,-16.437748,-71.527486,3,residencial,"Calle los Olivos, la Pauca",,,,,
+CASO-0620,Reporte,Robo o hurto,Cerrada,2026-11-01T03:30:35-05:00,3,Sun,-16.422277,-71.543064,4,paradero,"Paradero Terminal Flores Hermanos, Javier Pérez de Cuéllar",Media,SER-35,17.2,FalsaAlarma,
+CASO-0621,Reporte,Robo o hurto,Cerrada,2026-11-01T06:52:54-05:00,6,Sun,-16.433434,-71.530022,3,mercado,"Mercado 13 de Enero, Calle México",Media,SER-08,33.6,Derivado,
+CASO-0622,Reporte,Robo o hurto,Derivada,2026-11-01T14:03:19-05:00,14,Sun,-16.426127,-71.53342,1,paradero,"Paradero Centro Comercial La Isla (Sur), Avenida Perú",,,,,
+CASO-0623,Reporte,Acoso en la vía pública,Cerrada,2026-11-01T18:21:32-05:00,18,Sun,-16.431055,-71.517272,2,parque,"Calle 1, cerca del parque",Media,SER-16,59.2,SinHallazgo,
+CASO-0624,Reporte,Daños o vandalismo,Cerrada,2026-11-01T21:17:56-05:00,21,Sun,-16.427663,-71.520675,2,residencial,"Avenida La Melgariana, Urbanización La Melgariana",Baja,SER-18,12.9,EntregadoAPnp,
+CASO-0625,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-01T21:20:15-05:00,21,Sun,-16.414869,-71.517739,1,residencial,"Colonia, Banco Sur",Baja,SER-15,20.9,ResueltoEnElLugar,
+CASO-0626,Reporte,Violencia familiar,Derivada,2026-11-01T23:32:20-05:00,23,Sun,-16.433766,-71.528457,3,residencial,"Calle Shinchi Roca, Alto de la Luna",,,,,
+CASO-0627,Reporte,Daños o vandalismo,Cerrada,2026-11-02T03:25:34-05:00,3,Mon,-16.4283,-71.539273,4,parque,"Parque Goles y Mas, Avenida Juan Vidaurrázaga",Baja,SER-34,59.6,FalsaAlarma,
+CASO-0628,Reporte,Persona en riesgo,Derivada,2026-11-02T10:03:28-05:00,10,Mon,-16.446312,-71.514287,3,residencial,"C.9, Asentamiento Humano Jorge Basadre",,,,,
+CASO-0629,Sos,Accidente de tránsito,Cerrada,2026-11-02T14:01:32-05:00,14,Mon,-16.427873,-71.51999,2,avenida,"Avenida Hartley, cuadra 10",Media,SER-18,12.8,Derivado,
+CASO-0630,Sos,Robo o hurto,Cerrada,2026-11-02T15:51:18-05:00,15,Mon,-16.418211,-71.517445,1,paradero,"Pasaje Dunker Lavalle, cerca del paradero",Media,SER-13,15.2,EntregadoAPnp,4
+CASO-0631,Reporte,Peleas o riñas,Cerrada,2026-11-02T19:57:28-05:00,19,Mon,-16.44082,-71.520396,3,residencial,"Pasaje Jorge Chavez, Villa Los Francos",Media,SER-21,105.8,SinHallazgo,1
+CASO-0632,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-02T21:43:55-05:00,21,Mon,-16.413667,-71.518408,1,parque,"Colonia, cerca del parque",Baja,SER-13,20.8,ResueltoEnElLugar,
+CASO-0633,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-03T00:23:20-05:00,0,Tue,-16.412743,-71.520331,1,colegio,"Frente al colegio Institución Educativa 41007 Mariano Trinidad Docarmo Y Valdivia, Avenida Lambramani",Baja,SER-25,67.0,SinHallazgo,
+CASO-0634,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-03T01:10:11-05:00,1,Tue,-16.418638,-71.527935,1,parque,"Calle 1, cerca del parque",Baja,SER-26,33.3,EntregadoAPnp,5
+CASO-0635,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-03T05:42:02-05:00,5,Tue,-16.431549,-71.511867,2,residencial,"Alas del Sur, La Alborada",Baja,SER-04,49.5,SinHallazgo,
+CASO-0636,Reporte,Robo o hurto,Descartada,2026-11-03T10:32:48-05:00,10,Tue,-16.42385,-71.536874,4,mercado,"Mercado metropolitano de productores mayoristas Andrés Avenlino Cáceres, Avenida Juan Vidaurrázaga",,,,,
+CASO-0637,Sos,Robo o hurto,Cerrada,2026-11-03T13:19:25-05:00,13,Tue,-16.427092,-71.518954,2,avenida,"Avenida Hartley, cuadra 4",Media,SER-05,10.0,EntregadoAPnp,
+CASO-0638,Sos,Robo o hurto,Cerrada,2026-11-03T13:41:40-05:00,13,Tue,-16.43613,-71.521056,2,paradero,"Paradero América, Avenida Túpac Amaru",Media,SER-04,8.5,ResueltoEnElLugar,5
+CASO-0639,Reporte,Robo o hurto,Cerrada,2026-11-03T15:03:58-05:00,15,Tue,-16.435277,-71.508012,2,avenida,"Calle Colón, cuadra 11",Media,SER-18,51.9,ResueltoEnElLugar,
+CASO-0640,Reporte,Accidente de tránsito,Descartada,2026-11-03T16:15:12-05:00,16,Tue,-16.425964,-71.516157,2,avenida,"Avenida Hartley, cuadra 1",,,,,
+CASO-0641,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-03T20:54:28-05:00,20,Tue,-16.431008,-71.524712,2,parque,"Pasaje 11, cerca del parque",Baja,SER-18,41.3,ResueltoEnElLugar,
+CASO-0642,Sos,Robo o hurto,Cerrada,2026-11-03T21:23:46-05:00,21,Tue,-16.424147,-71.534118,1,mercado,"Avenida Daniel Alcides Carrión, cerca del mercado",Media,SER-15,7.2,SinHallazgo,
+CASO-0643,Reporte,Otros,Cerrada,2026-11-03T21:55:43-05:00,21,Tue,-16.431544,-71.515231,2,residencial,"Santa Ursula, Casa Bella",Baja,SER-28,41.9,Derivado,5
+CASO-0644,Reporte,Robo o hurto,Cerrada,2026-11-03T23:34:17-05:00,23,Tue,-16.428397,-71.523651,2,paradero,"Paradero Grifo Monterrey, Avenida Dolores",Media,SER-29,110.4,EntregadoAPnp,1
+CASO-0645,Sos,Persona en riesgo,Cerrada,2026-11-04T11:26:10-05:00,11,Wed,-16.422213,-71.543236,4,mercado,"Mercado Gratersa, Javier Pérez de Cuéllar",Alta,SER-12,10.3,ResueltoEnElLugar,
+CASO-0646,Sos,Robo o hurto,Cerrada,2026-11-04T17:34:32-05:00,17,Wed,-16.443564,-71.514238,2,paradero,"Paradero Comisaría Simón Bolviar, Avenida Caracas",Media,SER-18,17.4,SinHallazgo,
+CASO-0647,Reporte,Extorsión o amenazas,Descartada,2026-11-04T21:29:45-05:00,21,Wed,-16.445796,-71.517896,3,comercio,"Frente a Doña Briggit, María Nieves Bustamante",,,,,
+CASO-0648,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-04T22:45:50-05:00,22,Wed,-16.431754,-71.526299,2,parque,"Parque al Maestro, Avenida Túpac Amaru",Baja,SER-28,70.9,ResueltoEnElLugar,
+CASO-0649,Reporte,Daños o vandalismo,Cerrada,2026-11-04T23:03:59-05:00,23,Wed,-16.44104,-71.524505,3,residencial,"Calle Tumbes, Tasahuayo",Baja,SER-32,24.9,SinHallazgo,
+CASO-0650,Sos,Violencia familiar,Cerrada,2026-11-04T23:49:24-05:00,23,Wed,-16.42808,-71.521084,2,residencial,"Avenida La Melgariana, Urbanización La Melgariana",Alta,SER-30,11.4,EntregadoAPnp,
+CASO-0651,Sos,Persona o vehículo sospechoso,Cerrada,2026-11-04T23:50:02-05:00,23,Wed,-16.429274,-71.516357,2,colegio,"Calle 5, cerca del colegio",Baja,SER-29,7.3,SinHallazgo,4
+CASO-0652,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-05T02:03:06-05:00,2,Thu,-16.411943,-71.518713,1,noche,"Cerca de Chuspas, Malecón Missouri",,,,,
+CASO-0653,Reporte,Ruidos molestos o escándalo,Derivada,2026-11-05T02:10:18-05:00,2,Thu,-16.449295,-71.515199,3,residencial,"Avenida Las Esmeraldas, Asentamiento Humano Betania",,,,,
+CASO-0654,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-05T02:29:00-05:00,2,Thu,-16.428853,-71.531268,1,noche,"Cerca de Norte Marino, Argentina",Baja,SER-25,19.6,ResueltoEnElLugar,
+CASO-0655,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-05T03:17:03-05:00,3,Thu,-16.43934,-71.52294,3,residencial,"Primer Parque, Amauta",Baja,SER-33,25.0,ResueltoEnElLugar,
+CASO-0656,Reporte,Ruidos molestos o escándalo,Derivada,2026-11-05T05:41:18-05:00,5,Thu,-16.448929,-71.51425,3,noche,"Cerca de Picanteria, C.3",,,,,
+CASO-0657,Sos,Extorsión o amenazas,Cerrada,2026-11-05T06:16:22-05:00,6,Thu,-16.425667,-71.539793,4,comercio,"Frente a Caja Sullana, Avenida Juan Vidaurrázaga",Alta,SER-10,9.8,EntregadoAPnp,
+CASO-0658,Sos,Acoso en la vía pública,Cerrada,2026-11-05T08:28:49-05:00,8,Thu,-16.436066,-71.521116,2,paradero,"Paradero América, Avenida Túpac Amaru",Media,SER-05,17.7,FalsaAlarma,4
+CASO-0659,Reporte,Accidente de tránsito,Cerrada,2026-11-05T08:56:23-05:00,8,Thu,-16.437789,-71.520484,2,avenida,"Prolongación Avenida Dolores, cuadra 2",Media,SER-05,23.9,Derivado,
+CASO-0660,Sos,Robo o hurto,Cerrada,2026-11-05T09:56:24-05:00,9,Thu,-16.431726,-71.541738,4,avenida,"Avenida de las Convenciones, cuadra 12",Media,SER-12,33.0,SinHallazgo,2
+CASO-0661,Acompanamiento,Acoso en la vía pública,Cerrada,2026-11-05T12:24:51-05:00,12,Thu,-16.433399,-71.524075,2,avenida,"Recorrido de acompañamiento, Calle Bartolomé Herrera",Alta,SER-06,7.2,SinHallazgo,
+CASO-0662,Sos,Robo o hurto,Cerrada,2026-11-05T17:19:26-05:00,17,Thu,-16.430122,-71.532062,4,paradero,"Paradero Apacheta, Avenida Estados Unidos",Media,SER-24,13.5,FalsaAlarma,
+CASO-0663,Reporte,Accidente de tránsito,Descartada,2026-11-05T18:32:06-05:00,18,Thu,-16.417069,-71.532487,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 5",,,,,
+CASO-0664,Sos,Accidente de tránsito,Cerrada,2026-11-05T19:03:30-05:00,19,Thu,-16.42788,-71.528657,1,avenida,"Calle Guatemala, cuadra 11",Media,SER-14,17.4,ResueltoEnElLugar,5
+CASO-0665,Sos,Robo o hurto,Cerrada,2026-11-05T20:41:33-05:00,20,Thu,-16.425216,-71.537022,4,mercado,"Mercado La Nueva Aurora, Andrés Avelino Cáceres",Media,SER-23,10.6,FalsaAlarma,4
+CASO-0666,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-05T21:08:47-05:00,21,Thu,-16.424072,-71.540415,4,noche,"Cerca de El maremoto, E. Zegarra Ballón",Baja,SER-23,48.6,SinHallazgo,
+CASO-0667,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-05T21:12:44-05:00,21,Thu,-16.433331,-71.526876,2,colegio,"Frente al colegio Institución Educativa 40038 Jorge Basadre Grohmann, Calle Sangarará",Baja,SER-16,34.9,EntregadoAPnp,
+CASO-0668,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-06T00:30:11-05:00,0,Fri,-16.430559,-71.53913,4,noche,"Cerca de Tai Tai, Cerro Juli",Baja,SER-35,10.0,SinHallazgo,
+CASO-0669,Sos,Violencia familiar,Cerrada,2026-11-06T00:36:28-05:00,0,Fri,-16.436787,-71.529225,3,residencial,"Avenida 13 de Junio, Los Olivos",Alta,SER-31,8.8,EntregadoAPnp,
+CASO-0670,Sos,Violencia familiar,Descartada,2026-11-06T00:57:37-05:00,0,Fri,-16.42499,-71.543642,4,residencial,"Calle Felipe Santiago, Pueblo Joven Cerro July",,,,,
+CASO-0671,Reporte,Robo o hurto,Cerrada,2026-11-06T01:07:51-05:00,1,Fri,-16.421729,-71.539523,4,mercado,"Avenida Juan Vidaurrázaga, cerca del mercado",Media,SER-35,118.0,ResueltoEnElLugar,4
+CASO-0672,Reporte,Peleas o riñas,Cerrada,2026-11-06T01:23:54-05:00,1,Fri,-16.419751,-71.525433,1,noche,"Cerca de Munays, Avenida Dolores",Media,SER-26,67.4,ResueltoEnElLugar,
+CASO-0673,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-06T01:40:17-05:00,1,Fri,-16.417388,-71.518838,1,noche,"Cerca de Los Guisos Arequipeños, Avenida Lambramani",Baja,SER-27,74.7,ResueltoEnElLugar,3
+CASO-0674,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-06T02:11:20-05:00,2,Fri,-16.421574,-71.525128,1,noche,"Cerca de Makumba, Avenida Dolores",,,,,
+CASO-0675,Reporte,Peleas o riñas,Derivada,2026-11-06T02:29:23-05:00,2,Fri,-16.445035,-71.518244,3,noche,"Cerca de Dragón Dorado, C. Vinatea Reynoso",,,,,
+CASO-0676,Reporte,Robo o hurto,Cerrada,2026-11-06T06:12:55-05:00,6,Fri,-16.432295,-71.525873,2,avenida,"Avenida Túpac Amaru, cuadra 8",Media,SER-04,32.5,ResueltoEnElLugar,
+CASO-0677,Sos,Extorsión o amenazas,Cerrada,2026-11-06T09:04:23-05:00,9,Fri,-16.424714,-71.539572,4,comercio,"Avenida Juan Vidaurrázaga, cerca de un comercio",Media,SER-11,13.4,ResueltoEnElLugar,
+CASO-0678,Sos,Persona en riesgo,Cerrada,2026-11-06T11:59:07-05:00,11,Fri,-16.427732,-71.547119,4,avenida,"Avenida Francisco Mostajo, cuadra 9",Alta,SER-10,11.6,Derivado,
+CASO-0679,Sos,Acoso en la vía pública,Cerrada,2026-11-06T18:38:54-05:00,18,Fri,-16.42557,-71.528488,1,avenida,"Andrés Avelino Cáceres, cuadra 4",Media,SER-15,13.2,ResueltoEnElLugar,
+CASO-0680,Reporte,Violencia familiar,Cerrada,2026-11-06T20:11:25-05:00,20,Fri,-16.428432,-71.515365,2,residencial,"Avenida Paseo de la Cultura, Casa Blanca",Alta,SER-18,35.0,Derivado,
+CASO-0681,Reporte,Acoso en la vía pública,Cerrada,2026-11-06T20:31:38-05:00,20,Fri,-16.443952,-71.514325,2,paradero,"Paradero Comisaría Simón Bolviar, Ricardo Palma",Media,SER-17,10.9,ResueltoEnElLugar,
+CASO-0682,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-06T20:37:03-05:00,20,Fri,-16.426877,-71.531151,1,noche,"República de Chile, cerca de un local nocturno",Baja,SER-13,23.5,ResueltoEnElLugar,
+CASO-0683,Sos,Robo o hurto,Cerrada,2026-11-06T20:49:05-05:00,20,Fri,-16.420546,-71.536719,1,mercado,"Mercado Sur Andino, Avenida Juan Vidaurrázaga",Media,SER-15,12.2,ResueltoEnElLugar,5
+CASO-0684,Reporte,Robo o hurto,Descartada,2026-11-06T21:07:25-05:00,21,Fri,-16.427034,-71.54663,4,avenida,"Avenida Francisco Mostajo, cuadra 2",,,,,
+CASO-0685,Sos,Accidente de tránsito,Cerrada,2026-11-06T21:13:48-05:00,21,Fri,-16.426183,-71.539791,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 4",Media,SER-23,9.1,Derivado,
+CASO-0686,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-06T21:41:07-05:00,21,Fri,-16.42953,-71.529278,1,residencial,"Calle Honduras, Vinatea Reynoso",Baja,SER-27,52.3,SinHallazgo,3
+CASO-0687,Sos,Robo o hurto,Cancelada,2026-11-06T21:43:26-05:00,21,Fri,-16.424662,-71.539803,4,mercado,"Mercado 4 de Octubre, Avenida Juan Vidaurrázaga",,,,,
+CASO-0688,Reporte,Consumo o venta de drogas,Cerrada,2026-11-06T22:01:35-05:00,22,Fri,-16.422099,-71.530918,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 3",Baja,SER-27,66.8,ResueltoEnElLugar,
+CASO-0689,Reporte,Peleas o riñas,Descartada,2026-11-06T23:39:08-05:00,23,Fri,-16.416792,-71.527488,1,noche,"Cerca de Presto, Los Conquistadores",,,,,
+CASO-0690,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-07T00:42:44-05:00,0,Sat,-16.42728,-71.517369,2,parque,"Parque Los Ccoritos, Avenida Paseo de la Cultura",Baja,SER-28,42.8,ResueltoEnElLugar,
+CASO-0691,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-07T02:54:28-05:00,2,Sat,-16.436684,-71.539939,4,residencial,"Jiron Miguel Grau, Pueblo Joven 1 de Mayo",Alta,SER-34,52.7,ResueltoEnElLugar,
+CASO-0692,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-07T03:45:04-05:00,3,Sat,-16.422155,-71.525372,1,noche,"Cerca de Yuyay, Avenida Dolores",,,,,
+CASO-0693,Sos,Robo o hurto,Cerrada,2026-11-07T05:07:07-05:00,5,Sat,-16.434491,-71.530594,3,avenida,"Avenida Inglaterra, cuadra 8",Media,SER-32,9.3,ResueltoEnElLugar,
+CASO-0694,Sos,Violencia familiar,Cerrada,2026-11-07T13:15:52-05:00,13,Sat,-16.410852,-71.515174,1,residencial,"Calle Malecón Bustamante y Rivero, Cooperativa 58",Alta,SER-02,14.5,Derivado,
+CASO-0695,Sos,Robo o hurto,Cerrada,2026-11-07T14:57:32-05:00,14,Sat,-16.420089,-71.530389,1,mercado,"Mercado Botica Dermia, Calle 6",Media,SER-14,10.1,SinHallazgo,4
+CASO-0696,Reporte,Daños o vandalismo,Cerrada,2026-11-07T15:02:20-05:00,15,Sat,-16.435317,-71.522748,2,parque,"Pasaje Independencia, cerca del parque",Baja,SER-18,70.8,ResueltoEnElLugar,
+CASO-0697,Sos,Extorsión o amenazas,Cerrada,2026-11-07T18:57:53-05:00,18,Sat,-16.424446,-71.532479,1,comercio,"Frente a Caja Piura, Avenida Daniel Alcides Carrión",Media,SER-14,33.2,EntregadoAPnp,3
+CASO-0698,Sos,Robo o hurto,Cerrada,2026-11-07T19:36:34-05:00,19,Sat,-16.429701,-71.52673,2,paradero,"Paradero Presto, Avenida Estados Unidos",Media,SER-18,8.8,SinHallazgo,
+CASO-0699,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-07T19:50:38-05:00,19,Sat,-16.439963,-71.52532,3,parque,"Parque Campo deportivo Tasahuayo, Calle Huamachuco",Baja,SER-19,44.0,SinHallazgo,4
+CASO-0700,Sos,Robo o hurto,Cerrada,2026-11-07T19:58:18-05:00,19,Sat,-16.419397,-71.531468,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 12",Media,SER-15,12.5,FalsaAlarma,
+CASO-0701,Reporte,Robo o hurto,Cerrada,2026-11-07T20:17:11-05:00,20,Sat,-16.422617,-71.543104,4,paradero,"Paradero Terminal Flores Hermanos, Javier Pérez de Cuéllar",Media,SER-22,36.3,ResueltoEnElLugar,
+CASO-0702,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-07T20:22:14-05:00,20,Sat,-16.426207,-71.526137,1,colegio,"Frente al colegio Institución Educativa Interamericano, Urbanización Las Begonias Manzana D",Baja,SER-15,83.1,ResueltoEnElLugar,2
+CASO-0703,Reporte,Daños o vandalismo,Cerrada,2026-11-07T20:57:03-05:00,20,Sat,-16.451599,-71.511913,3,residencial,"Pasaje  1, Urbanización Buena Vista",Baja,SER-21,31.4,ResueltoEnElLugar,4
+CASO-0704,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-11-07T22:29:10-05:00,22,Sat,-16.436136,-71.526969,3,parque,"Calle Salazar Bondy, cerca del parque",,,,,
+CASO-0705,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-07T22:49:42-05:00,22,Sat,-16.453138,-71.513212,3,residencial,"Avenida las Esmeraldas, Villa Las Esmeraldas",Baja,SER-31,35.2,ResueltoEnElLugar,
+CASO-0706,Reporte,Consumo o venta de drogas,Cerrada,2026-11-07T22:54:00-05:00,22,Sat,-16.428893,-71.520161,2,parque,"Parque Monterrey, Avenida La Melgariana",Baja,SER-28,26.2,Derivado,5
+CASO-0707,Reporte,Violencia familiar,Cerrada,2026-11-07T23:05:20-05:00,23,Sat,-16.442088,-71.520707,3,residencial,"Pasaje Jorge Chavez, Urbanización 3 de Octubre",Alta,SER-32,19.8,ResueltoEnElLugar,
+CASO-0708,Reporte,Robo o hurto,Cerrada,2026-11-07T23:15:55-05:00,23,Sat,-16.424673,-71.522393,1,avenida,"Avenida Alameda de la Cultura, cuadra 9",Media,SER-26,52.3,SinHallazgo,3
+CASO-0709,Reporte,Robo o hurto,Derivada,2026-11-07T23:19:45-05:00,23,Sat,-16.424393,-71.53484,1,mercado,"Andrés Avelino Cáceres, cerca del mercado",,,,,
+CASO-0710,Reporte,Persona o vehículo sospechoso,Derivada,2026-11-07T23:31:15-05:00,23,Sat,-16.426173,-71.536761,4,residencial,"Siglo XX, Urbanización Vista Hermoza",,,,,
+CASO-0711,Sos,Peleas o riñas,Cerrada,2026-11-08T02:36:00-05:00,2,Sun,-16.417063,-71.527138,1,noche,"Cerca de Presto, Los Conquistadores",Media,SER-25,11.1,SinHallazgo,
+CASO-0712,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-08T04:00:30-05:00,4,Sun,-16.430578,-71.532685,4,noche,"Cerca de El Galpon, Óvalo Apacheta",,,,,
+CASO-0713,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-08T06:18:37-05:00,6,Sun,-16.426293,-71.543468,4,colegio,"Frente al colegio Institución Educativa Mariam Rosse, Calle Ayarza",Baja,SER-11,44.7,ResueltoEnElLugar,5
+CASO-0714,Reporte,Accidente de tránsito,Cerrada,2026-11-08T09:33:06-05:00,9,Sun,-16.425801,-71.521198,2,avenida,"Avenida La Melgariana, cuadra 4",Media,SER-06,14.1,Derivado,
+CASO-0715,Sos,Persona en riesgo,Cerrada,2026-11-08T13:05:27-05:00,13,Sun,-16.420589,-71.537545,1,mercado,"Mercado Sur Andino, Avenida Juan Vidaurrázaga",Alta,SER-01,14.2,ResueltoEnElLugar,4
+CASO-0716,Sos,Persona en riesgo,Cerrada,2026-11-08T13:38:54-05:00,13,Sun,-16.417072,-71.529275,1,parque,"Agricultura, cerca del parque",Alta,SER-03,10.4,ResueltoEnElLugar,4
+CASO-0717,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-08T13:57:43-05:00,13,Sun,-16.43509,-71.528284,3,residencial,"Pasaje Primero de Mayo, Rodantes del Sur",Baja,SER-20,30.0,EntregadoAPnp,4
+CASO-0718,Reporte,Persona en riesgo,Cerrada,2026-11-08T16:31:51-05:00,16,Sun,-16.417282,-71.527692,1,avenida,"Calle 2, cuadra 12",Alta,SER-15,21.3,ResueltoEnElLugar,
+CASO-0719,Reporte,Otros,Cerrada,2026-11-08T20:00:37-05:00,20,Sun,-16.420299,-71.537792,1,mercado,"Avenida Juan Vidaurrázaga, cerca del mercado",Baja,SER-13,53.8,ResueltoEnElLugar,4
+CASO-0720,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-08T20:22:41-05:00,20,Sun,-16.444725,-71.508841,2,parque,"San Martín, cerca del parque",Baja,SER-18,40.5,ResueltoEnElLugar,
+CASO-0721,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-08T20:41:47-05:00,20,Sun,-16.433717,-71.532061,4,residencial,"Garcilazo de la Vega, Casuarinas",,,,,
+CASO-0722,Sos,Robo o hurto,Descartada,2026-11-08T20:57:07-05:00,20,Sun,-16.433324,-71.531286,4,mercado,"Mercado 13 de Enero, Calle Alfonso Ugarte",,,,,
+CASO-0723,Reporte,Persona o vehículo sospechoso,Descartada,2026-11-08T20:59:47-05:00,20,Sun,-16.439751,-71.522407,3,colegio,"Frente al colegio Institución Educativa Nuestra Sra.de Montserrat, 28 de Julio",,,,,
+CASO-0724,Sos,Peleas o riñas,Descartada,2026-11-08T22:16:27-05:00,22,Sun,-16.445371,-71.505182,2,noche,"Cerca de Mares y Sillaresa, Avenida Caracas",,,,,
+CASO-0725,Reporte,Robo o hurto,Descartada,2026-11-08T23:43:19-05:00,23,Sun,-16.437697,-71.525162,3,avenida,"Calle José Baquijano y Carrillo, cuadra 10",,,,,
+CASO-0726,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-08T23:45:41-05:00,23,Sun,-16.415489,-71.516581,1,noche,"Cerca de A mi manera, Río Nilo",Baja,SER-25,32.9,ResueltoEnElLugar,
+CASO-0727,Reporte,Consumo o venta de drogas,Cerrada,2026-11-09T00:11:06-05:00,0,Mon,-16.416417,-71.527045,1,avenida,"Avenida Dolores, cuadra 10",Baja,SER-27,14.2,EntregadoAPnp,
+CASO-0728,Reporte,Violencia familiar,Derivada,2026-11-09T01:09:22-05:00,1,Mon,-16.424866,-71.518851,2,residencial,"Santa Catalina, El Rosario",,,,,
+CASO-0729,Reporte,Peleas o riñas,Cerrada,2026-11-09T02:14:15-05:00,2,Mon,-16.434402,-71.518362,2,parque,"Avenida Túpac Amaru, cerca del parque",Media,SER-30,23.4,ResueltoEnElLugar,
+CASO-0730,Reporte,Otros,Descartada,2026-11-09T16:13:34-05:00,16,Mon,-16.431555,-71.541929,4,avenida,"Avenida de las Convenciones, cuadra 5",,,,,
+CASO-0731,Sos,Robo o hurto,Cerrada,2026-11-09T16:15:41-05:00,16,Mon,-16.419862,-71.537266,1,mercado,"Mercado Sur Andino, Avenida Juan Vidaurrázaga",Media,SER-14,26.9,EntregadoAPnp,5
+CASO-0732,Sos,Persona en riesgo,Cerrada,2026-11-09T16:28:42-05:00,16,Mon,-16.426892,-71.533104,1,avenida,"Avenida Perú, cuadra 5",Alta,SER-13,9.4,Derivado,
+CASO-0733,Reporte,Acoso en la vía pública,Descartada,2026-11-09T18:31:46-05:00,18,Mon,-16.436479,-71.527456,3,parque,"Calle los Olivos, cerca del parque",,,,,
+CASO-0734,Reporte,Robo o hurto,Cerrada,2026-11-09T20:30:28-05:00,20,Mon,-16.43374,-71.512774,2,residencial,"Alas del Sur, Urbanización Alas del Sur",Media,SER-18,39.4,SinHallazgo,
+CASO-0735,Reporte,Consumo o venta de drogas,Cerrada,2026-11-09T20:41:56-05:00,20,Mon,-16.436583,-71.527991,3,parque,"Pasaje Primero de Mayo, cerca del parque",Baja,SER-19,32.4,SinHallazgo,4
+CASO-0736,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-09T20:56:19-05:00,20,Mon,-16.414668,-71.519603,1,parque,"Avenida Lambramani, cerca del parque",,,,,
+CASO-0737,Sos,Robo o hurto,Cancelada,2026-11-09T21:34:57-05:00,21,Mon,-16.423908,-71.536771,4,mercado,"Mercado metropolitano de productores mayoristas Andrés Avenlino Cáceres, Avenida Juan Vidaurrázaga",,,,,
+CASO-0738,Sos,Persona o vehículo sospechoso,Cerrada,2026-11-10T18:17:48-05:00,18,Tue,-16.447538,-71.515801,3,residencial,"Calle César Vallejo, Pueblo Joven Ricardo Palma",Baja,SER-20,12.1,SinHallazgo,
+CASO-0739,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-10T20:40:08-05:00,20,Tue,-16.436039,-71.520785,2,residencial,"Avenida Túpac Amaru, Villa Santa Luisa",Baja,SER-18,26.0,SinHallazgo,
+CASO-0740,Sos,Robo o hurto,Cerrada,2026-11-10T22:22:40-05:00,22,Tue,-16.426913,-71.517916,2,comercio,"Frente a Repsol, Avenida Hartley",Media,SER-28,15.7,SinHallazgo,
+CASO-0741,Reporte,Robo o hurto,Cerrada,2026-11-10T23:23:57-05:00,23,Tue,-16.425761,-71.537157,4,mercado,"Mercado Asociación FACETRAM, Siglo XX",Media,SER-36,53.7,SinHallazgo,4
+CASO-0742,Reporte,Acoso en la vía pública,Cerrada,2026-11-11T08:52:28-05:00,8,Wed,-16.425651,-71.52604,1,avenida,"Andrés Avelino Cáceres, cuadra 4",Media,SER-01,33.3,FalsaAlarma,5
+CASO-0743,Sos,Persona o vehículo sospechoso,Cerrada,2026-11-11T14:19:07-05:00,14,Wed,-16.432592,-71.515813,2,parque,"Santa Ursula, cerca del parque",Baja,SER-16,41.5,SinHallazgo,
+CASO-0744,Sos,Robo o hurto,Cerrada,2026-11-11T23:50:22-05:00,23,Wed,-16.451293,-71.511937,3,comercio,"Frente a Repsol, Pasaje  1",Media,SER-32,47.3,ResueltoEnElLugar,
+CASO-0745,Reporte,Violencia familiar,Cerrada,2026-11-11T23:51:29-05:00,23,Wed,-16.448963,-71.515409,3,residencial,"Calle César Vallejo, Pueblo Joven Ricardo Palma",Alta,SER-33,11.5,EntregadoAPnp,
+CASO-0746,Reporte,Daños o vandalismo,Cerrada,2026-11-12T01:15:23-05:00,1,Thu,-16.432493,-71.520079,2,parque,"Parque Solar del Bosque, Avenida Dolores",Baja,SER-29,28.7,ResueltoEnElLugar,
+CASO-0747,Reporte,Accidente de tránsito,Cerrada,2026-11-12T12:13:30-05:00,12,Thu,-16.432179,-71.514227,2,avenida,"Avenida Túpac Amaru, cuadra 9",Media,SER-05,23.0,ResueltoEnElLugar,
+CASO-0748,Reporte,Robo o hurto,Cerrada,2026-11-12T15:19:23-05:00,15,Thu,-16.429955,-71.537194,4,avenida,"1 de Mayo, cuadra 9",Media,SER-23,17.9,EntregadoAPnp,
+CASO-0749,Sos,Accidente de tránsito,Cerrada,2026-11-12T15:52:34-05:00,15,Thu,-16.418144,-71.532062,1,avenida,"Vía Exclusiva Daniel Alcides Carrión, cuadra 1",Media,SER-15,10.4,ResueltoEnElLugar,5
+CASO-0750,Reporte,Persona en riesgo,Cerrada,2026-11-12T18:19:27-05:00,18,Thu,-16.425945,-71.53489,4,mercado,"Mercado Señor del Gran Poder, Andrés Avelino Cáceres",Alta,SER-23,28.5,ResueltoEnElLugar,
+CASO-0751,Reporte,Peleas o riñas,Cerrada,2026-11-12T20:39:56-05:00,20,Thu,-16.425106,-71.536916,4,comercio,"Frente a Caja Cuzco, Andrés Avelino Cáceres",Media,SER-22,50.9,ResueltoEnElLugar,
+CASO-0752,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-12T21:11:20-05:00,21,Thu,-16.431627,-71.532452,4,noche,"Cerca de Aldo, Avenida Socabaya",,,,,
+CASO-0753,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-12T21:37:04-05:00,21,Thu,-16.422213,-71.525107,1,noche,"Cerca de Paz Soldán, Avenida Dolores",Baja,SER-27,68.5,ResueltoEnElLugar,2
+CASO-0754,Sos,Peleas o riñas,Descartada,2026-11-12T21:52:39-05:00,21,Thu,-16.434843,-71.508695,2,avenida,"Calle Colón, cuadra 3",,,,,
+CASO-0755,Sos,Robo o hurto,Cerrada,2026-11-12T23:23:15-05:00,23,Thu,-16.431558,-71.523383,2,paradero,"Paradero Santa María II, Avenida Dolores",Media,SER-30,13.5,SinHallazgo,
+CASO-0756,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-13T01:01:54-05:00,1,Fri,-16.426823,-71.533856,4,parque,"Parque Puerta Verde, República de Chile",Baja,SER-36,57.5,ResueltoEnElLugar,5
+CASO-0757,Sos,Persona en riesgo,Cerrada,2026-11-13T08:32:46-05:00,8,Fri,-16.424975,-71.534812,1,mercado,"Mercado Señor del Gran Poder, Andrés Avelino Cáceres",Alta,SER-03,13.9,Derivado,5
+CASO-0758,Reporte,Otros,Cerrada,2026-11-13T09:21:19-05:00,9,Fri,-16.440916,-71.525257,3,residencial,"Calle Tumbes, Tasahuayo",Baja,SER-07,28.2,Derivado,4
+CASO-0759,Sos,Robo o hurto,Cerrada,2026-11-13T10:18:57-05:00,10,Fri,-16.420491,-71.530793,1,mercado,"Mercado Botica Dermia, Calle 6",Media,SER-02,32.0,SinHallazgo,
+CASO-0760,Sos,Robo o hurto,Cerrada,2026-11-13T15:21:52-05:00,15,Fri,-16.441597,-71.519734,3,avenida,"Prolongación Avenida Dolores, cuadra 4",Media,SER-20,13.2,ResueltoEnElLugar,5
+CASO-0761,Sos,Violencia familiar,Descartada,2026-11-13T16:04:40-05:00,16,Fri,-16.427094,-71.526482,1,residencial,"Pasaje Pedro Díaz, Las Begonias",,,,,
+CASO-0762,Reporte,Robo o hurto,Cerrada,2026-11-13T19:25:34-05:00,19,Fri,-16.428416,-71.522077,2,paradero,"Paradero Residencial Monterrey, Avenida Hartley",Media,SER-16,16.9,SinHallazgo,
+CASO-0763,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-13T19:37:23-05:00,19,Fri,-16.431454,-71.51632,2,residencial,"Calle 2, Casa Bella",Baja,SER-17,14.5,ResueltoEnElLugar,
+CASO-0764,Sos,Acoso en la vía pública,Cerrada,2026-11-13T19:58:25-05:00,19,Fri,-16.428705,-71.524255,2,colegio,"Frente al colegio Institución Educativa Inicial André Bretón, Avenida Dolores",Media,SER-18,13.6,EntregadoAPnp,
+CASO-0765,Sos,Robo o hurto,Cancelada,2026-11-13T20:21:16-05:00,20,Fri,-16.419958,-71.537668,1,mercado,"Mercado Sur Andino, Avenida Juan Vidaurrázaga",,,,,
+CASO-0766,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-11-13T21:13:39-05:00,21,Fri,-16.416629,-71.520425,1,parque,"Arenales, cerca del parque",,,,,
+CASO-0767,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-13T21:33:40-05:00,21,Fri,-16.445371,-71.50939,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Baja,SER-28,58.6,FalsaAlarma,4
+CASO-0768,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-13T21:42:07-05:00,21,Fri,-16.416092,-71.5288,1,parque,"Agricultura, cerca del parque",Baja,SER-25,36.6,ResueltoEnElLugar,
+CASO-0769,Sos,Violencia familiar,Cerrada,2026-11-13T22:09:47-05:00,22,Fri,-16.43302,-71.528476,3,residencial,"Calle Honduras, Alto de la Luna",Alta,SER-32,27.9,ResueltoEnElLugar,4
+CASO-0770,Reporte,Consumo o venta de drogas,Cerrada,2026-11-13T22:31:46-05:00,22,Fri,-16.451283,-71.513253,3,parque,"Parque Ub. Las Esmeraldas Sector 1, Avenida las Esmeraldas",Baja,SER-31,37.8,SinHallazgo,
+CASO-0771,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-13T23:07:01-05:00,23,Fri,-16.43088,-71.532363,4,residencial,"Calle Valdelomar, Urbanización Teca",Baja,SER-35,20.2,ResueltoEnElLugar,
+CASO-0772,Reporte,Daños o vandalismo,Cerrada,2026-11-13T23:31:41-05:00,23,Fri,-16.423674,-71.529202,1,residencial,"Calle Los Guindos, Los Laureles",Baja,SER-27,125.7,ResueltoEnElLugar,
+CASO-0773,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-14T00:26:47-05:00,0,Sat,-16.424089,-71.519834,2,residencial,"Pizarro, El Rosario",Baja,SER-28,25.9,ResueltoEnElLugar,
+CASO-0774,Reporte,Robo o hurto,Cerrada,2026-11-14T00:52:10-05:00,0,Sat,-16.434509,-71.531634,3,paradero,"Paradero 13 de Enero, Garcilazo de la Vega",Media,SER-31,38.7,ResueltoEnElLugar,
+CASO-0775,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-14T03:54:08-05:00,3,Sat,-16.422827,-71.531687,1,noche,"Cerca de Than Ti, Avenida Daniel Alcides Carrión",Baja,SER-25,52.4,ResueltoEnElLugar,
+CASO-0776,Reporte,Accidente de tránsito,Cerrada,2026-11-14T06:26:10-05:00,6,Sat,-16.433129,-71.514846,2,avenida,"Avenida Túpac Amaru, cuadra 7",Media,SER-04,54.4,Derivado,4
+CASO-0777,Reporte,Otros,Cerrada,2026-11-14T10:19:15-05:00,10,Sat,-16.434701,-71.529474,3,parque,"Calle Moquegua, cerca del parque",Baja,SER-08,37.6,EntregadoAPnp,
+CASO-0778,Reporte,Consumo o venta de drogas,Cerrada,2026-11-14T10:26:55-05:00,10,Sat,-16.431971,-71.51774,2,parque,"Calle 10, cerca del parque",Baja,SER-04,27.1,FalsaAlarma,4
+CASO-0779,Reporte,Robo o hurto,Descartada,2026-11-14T14:43:37-05:00,14,Sat,-16.425748,-71.514919,2,avenida,"Avenida Hartley, cuadra 11",,,,,
+CASO-0780,Reporte,Robo o hurto,Cerrada,2026-11-14T19:43:32-05:00,19,Sat,-16.430329,-71.532435,4,paradero,"Paradero Apacheta, Avenida Estados Unidos",Media,SER-24,25.5,SinHallazgo,
+CASO-0781,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-14T20:01:56-05:00,20,Sat,-16.432495,-71.512669,2,residencial,"Alas del Sur, Mi Perú",Baja,SER-16,9.9,ResueltoEnElLugar,
+CASO-0782,Sos,Robo o hurto,Cerrada,2026-11-14T20:46:02-05:00,20,Sat,-16.436682,-71.521472,2,avenida,"Avenida Dolores, cuadra 11",Media,SER-16,8.8,EntregadoAPnp,4
+CASO-0783,Sos,Peleas o riñas,Cerrada,2026-11-14T20:53:54-05:00,20,Sat,-16.419226,-71.525442,1,noche,"Cerca de La Roca, Avenida Dolores",Media,SER-15,21.3,Derivado,4
+CASO-0784,Reporte,Robo o hurto,Cancelada,2026-11-14T21:58:43-05:00,21,Sat,-16.426764,-71.527178,1,avenida,"Pedro Diez Canseco, cuadra 1",,,,,
+CASO-0785,Reporte,Violencia familiar,Derivada,2026-11-14T22:14:46-05:00,22,Sat,-16.432269,-71.528065,2,residencial,"Calle Venezuela, Alto de la Luna",,,,,
+CASO-0786,Reporte,Peleas o riñas,Cerrada,2026-11-14T22:30:00-05:00,22,Sat,-16.436444,-71.521544,2,paradero,"Paradero Malecón Dolores, Avenida Dolores",Media,SER-28,39.6,ResueltoEnElLugar,4
+CASO-0787,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-14T23:02:41-05:00,23,Sat,-16.433495,-71.529924,3,residencial,"Calle México, Urbanización 13 de Enero",Baja,SER-32,77.8,ResueltoEnElLugar,
+CASO-0788,Sos,Robo o hurto,Cerrada,2026-11-14T23:59:59-05:00,23,Sat,-16.449849,-71.51389,3,paradero,"Paradero Colegio Esmeraldas, Avenida Las Esmeraldas",Media,SER-31,14.1,SinHallazgo,4
+CASO-0789,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-15T00:48:45-05:00,0,Sun,-16.419072,-71.517316,1,noche,"Cerca de El Ranchito, Avenida Lambramani",,,,,
+CASO-0790,Sos,Violencia familiar,Cerrada,2026-11-15T00:51:55-05:00,0,Sun,-16.42644,-71.537063,4,residencial,"Siglo XX, Urbanización Vista Hermoza",Alta,SER-35,20.5,Derivado,5
+CASO-0791,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-15T01:39:38-05:00,1,Sun,-16.429718,-71.534211,4,noche,"Cerca de Maria Chicharro, Avenida Cementerio",Baja,SER-35,16.0,ResueltoEnElLugar,
+CASO-0792,Sos,Robo o hurto,Cerrada,2026-11-15T06:51:07-05:00,6,Sun,-16.417562,-71.527152,1,comercio,"Frente a Tambo, Avenida Dolores",Media,SER-02,11.1,EntregadoAPnp,
+CASO-0793,Reporte,Acoso en la vía pública,Cerrada,2026-11-15T09:48:57-05:00,9,Sun,-16.429649,-71.527106,2,paradero,"Paradero Presto, Avenida Estados Unidos",Media,SER-05,27.8,ResueltoEnElLugar,
+CASO-0794,Reporte,Robo o hurto,Cerrada,2026-11-15T13:15:22-05:00,13,Sun,-16.426705,-71.529035,1,avenida,"Pedro Diez Canseco, cuadra 5",Media,SER-03,15.8,SinHallazgo,
+CASO-0795,Reporte,Persona en riesgo,Descartada,2026-11-15T14:33:07-05:00,14,Sun,-16.425525,-71.539947,4,mercado,"Avenida Juan Vidaurrázaga, cerca del mercado",,,,,
+CASO-0796,Sos,Violencia familiar,Cerrada,2026-11-15T15:29:49-05:00,15,Sun,-16.412378,-71.515392,1,residencial,"Calle Internacional, Cooperativa 58",Alta,SER-15,7.3,Derivado,
+CASO-0797,Sos,Acoso en la vía pública,Cerrada,2026-11-15T17:36:11-05:00,17,Sun,-16.424815,-71.524404,1,parque,"Parque Óvalo Dolores, Avenida Dolores",Media,SER-15,8.7,Derivado,
+CASO-0798,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-15T18:31:06-05:00,18,Sun,-16.420348,-71.517507,2,colegio,"Frente al colegio Pedro P. Díaz, Avenida Lambramani",Baja,SER-17,49.1,SinHallazgo,4
+CASO-0799,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-15T19:45:00-05:00,19,Sun,-16.417463,-71.516461,1,noche,"Cerca de El Turco, Calle José Carlos Mariátegui",,,,,
+CASO-0800,Reporte,Consumo o venta de drogas,Cerrada,2026-11-15T19:50:49-05:00,19,Sun,-16.446186,-71.513621,2,parque,"Parque Virgen de Copacabana, Calle 1",Baja,SER-18,21.6,ResueltoEnElLugar,
+CASO-0801,Reporte,Persona o vehículo sospechoso,Descartada,2026-11-15T21:04:40-05:00,21,Sun,-16.41099,-71.518402,1,parque,"Parque La Cantuta II Etapa, Malecón Missouri",,,,,
+CASO-0802,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-15T21:29:17-05:00,21,Sun,-16.431005,-71.526313,2,parque,"Avenida Túpac Amaru, cerca del parque",Baja,SER-17,9.1,ResueltoEnElLugar,
+CASO-0803,Reporte,Ruidos molestos o escándalo,Derivada,2026-11-15T23:48:52-05:00,23,Sun,-16.43395,-71.529258,3,residencial,"Calle Nicaragua, Los Olivos",,,,,
+CASO-0804,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-16T01:52:12-05:00,1,Mon,-16.429909,-71.525708,2,noche,"Avenida Estados Unidos, cerca de un local nocturno",Baja,SER-29,63.7,ResueltoEnElLugar,
+CASO-0805,Sos,Robo o hurto,Cerrada,2026-11-16T03:22:53-05:00,3,Mon,-16.433913,-71.531478,4,paradero,"Paradero 13 de Enero, Avenida Socabaya",Alta,SER-34,15.3,SinHallazgo,5
+CASO-0806,Reporte,Accidente de tránsito,Cerrada,2026-11-16T12:56:09-05:00,12,Mon,-16.418729,-71.526349,1,avenida,"Avenida Dolores, cuadra 4",Media,SER-03,23.7,ResueltoEnElLugar,5
+CASO-0807,Reporte,Robo o hurto,Cerrada,2026-11-16T13:47:06-05:00,13,Mon,-16.418188,-71.533863,1,mercado,"Avenida Daniel Alcides Carrión, cerca del mercado",Media,SER-14,24.9,EntregadoAPnp,
+CASO-0808,Sos,Robo o hurto,Cerrada,2026-11-16T18:24:40-05:00,18,Mon,-16.431999,-71.513786,2,paradero,"Paradero La Alborada, Avenida Túpac Amaru",Media,SER-16,10.1,SinHallazgo,5
+CASO-0809,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-16T19:00:41-05:00,19,Mon,-16.441416,-71.5204,3,residencial,"Pasaje Jorge Chavez, Urbanización 3 de Octubre",Baja,SER-19,29.0,SinHallazgo,3
+CASO-0810,Reporte,Robo o hurto,Cerrada,2026-11-16T20:18:08-05:00,20,Mon,-16.44632,-71.515638,3,residencial,"Pasaje Julio César Tello, Pueblo Joven Ricardo Palma",Media,SER-20,29.4,ResueltoEnElLugar,
+CASO-0811,Reporte,Violencia familiar,Cerrada,2026-11-17T00:52:22-05:00,0,Tue,-16.448883,-71.513121,3,residencial,"C.15, Las Esmeraldas, A.P.I.S",Alta,SER-32,19.4,EntregadoAPnp,
+CASO-0812,Sos,Otros,Cerrada,2026-11-17T07:40:01-05:00,7,Tue,-16.423877,-71.53216,1,parque,"Avenida Daniel Alcides Carrión, cerca del parque",Baja,SER-03,10.7,ResueltoEnElLugar,
+CASO-0813,Reporte,Acoso en la vía pública,Cerrada,2026-11-17T13:58:28-05:00,13,Tue,-16.436624,-71.520965,2,avenida,"Avenida Túpac Amaru, cuadra 4",Media,SER-17,56.2,SinHallazgo,
+CASO-0814,Reporte,Robo o hurto,Descartada,2026-11-17T17:14:17-05:00,17,Tue,-16.425863,-71.535527,4,mercado,"Mercado de Cayma, Siglo XX",,,,,
+CASO-0815,Reporte,Accidente de tránsito,Cerrada,2026-11-17T17:29:08-05:00,17,Tue,-16.435809,-71.5194,2,avenida,"Avenida Túpac Amaru, cuadra 5",Media,SER-18,15.3,Derivado,
+CASO-0816,Sos,Robo o hurto,Cerrada,2026-11-17T19:47:48-05:00,19,Tue,-16.433689,-71.527468,3,residencial,"Calle José Olaya, Alto de la Luna",Media,SER-20,39.3,ResueltoEnElLugar,
+CASO-0817,Reporte,Peleas o riñas,Descartada,2026-11-17T20:34:07-05:00,20,Tue,-16.417902,-71.528906,1,parque,"Calle 2, cerca del parque",,,,,
+CASO-0818,Reporte,Robo o hurto,Derivada,2026-11-17T20:43:06-05:00,20,Tue,-16.43378,-71.523028,2,paradero,"Paradero Monterrico, Avenida Dolores",,,,,
+CASO-0819,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-17T21:29:19-05:00,21,Tue,-16.424268,-71.54305,4,residencial,"Calle Felipe Santiago, Pueblo Joven Cerro July",Baja,SER-36,77.9,ResueltoEnElLugar,3
+CASO-0820,Reporte,Robo o hurto,Cancelada,2026-11-17T23:25:32-05:00,23,Tue,-16.437068,-71.521315,2,paradero,"Paradero Malecón Dolores, Avenida Túpac Amaru",,,,,
+CASO-0821,Reporte,Peleas o riñas,Cerrada,2026-11-18T00:26:12-05:00,0,Wed,-16.431856,-71.531258,4,noche,"Cerca de Cevichería Perla Negra, Javier Heraud",Media,SER-35,37.4,SinHallazgo,
+CASO-0822,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-18T01:47:18-05:00,1,Wed,-16.435619,-71.528721,3,residencial,"Pasaje Primero de Mayo, Los Olivos",Baja,SER-33,131.5,SinHallazgo,
+CASO-0823,Sos,Acoso en la vía pública,Cerrada,2026-11-18T07:14:10-05:00,7,Wed,-16.451364,-71.515358,3,paradero,"Paradero El Golf, Urb. San Agustín",Media,SER-07,19.8,ResueltoEnElLugar,
+CASO-0824,Reporte,Consumo o venta de drogas,Descartada,2026-11-18T17:35:38-05:00,17,Wed,-16.431247,-71.530844,4,parque,"Parque 13 de Enero, Calle Bernardo Alcedo",,,,,
+CASO-0825,Reporte,Accidente de tránsito,Descartada,2026-11-18T18:37:09-05:00,18,Wed,-16.425146,-71.536274,4,avenida,"Andrés Avelino Cáceres, cuadra 1",,,,,
+CASO-0826,Reporte,Robo o hurto,Cerrada,2026-11-18T19:31:10-05:00,19,Wed,-16.425267,-71.536577,4,mercado,"Mercado de Cayma, Andrés Avelino Cáceres",Media,SER-22,51.2,ResueltoEnElLugar,
+CASO-0827,Reporte,Robo o hurto,Descartada,2026-11-18T21:31:35-05:00,21,Wed,-16.42797,-71.515551,2,residencial,"Avenida Paseo de la Cultura, Casa Blanca",,,,,
+CASO-0828,Sos,Robo o hurto,Cancelada,2026-11-18T21:31:55-05:00,21,Wed,-16.424147,-71.525326,1,residencial,"Quinta Tristan, Santa Lucía",,,,,
+CASO-0829,Reporte,Robo o hurto,Cerrada,2026-11-19T00:39:57-05:00,0,Thu,-16.427646,-71.532415,1,avenida,"Avenida Perú, cuadra 12",Media,SER-26,171.6,SinHallazgo,
+CASO-0830,Sos,Violencia familiar,Cerrada,2026-11-19T00:56:46-05:00,0,Thu,-16.433791,-71.531991,4,residencial,"Garcilazo de la Vega, Casuarinas",Alta,SER-36,15.9,Derivado,
+CASO-0831,Reporte,Robo o hurto,Cerrada,2026-11-19T02:33:24-05:00,2,Thu,-16.423546,-71.533539,1,comercio,"Frente a Mibanco, Avenida Daniel Alcides Carrión",Media,SER-25,10.7,SinHallazgo,
+CASO-0832,Sos,Robo o hurto,Cerrada,2026-11-19T03:53:14-05:00,3,Thu,-16.425892,-71.533609,1,comercio,"Avenida Cementerio, cerca de un comercio",Media,SER-25,12.0,ResueltoEnElLugar,4
+CASO-0833,Sos,Robo o hurto,Cerrada,2026-11-19T06:43:41-05:00,6,Thu,-16.42052,-71.525986,1,avenida,"Avenida Dolores, cuadra 9",Media,SER-01,23.1,SinHallazgo,3
+CASO-0834,Reporte,Robo o hurto,Cerrada,2026-11-19T08:24:57-05:00,8,Thu,-16.427396,-71.534018,4,mercado,"Mercado Botica Dermia, Avenida Cementerio",Media,SER-12,11.1,ResueltoEnElLugar,
+CASO-0835,Sos,Persona en riesgo,Cerrada,2026-11-19T12:35:46-05:00,12,Thu,-16.425545,-71.537617,4,mercado,"Mercado Asociación FACETRAM, Siglo XX",Alta,SER-12,10.5,Derivado,4
+CASO-0836,Sos,Robo o hurto,Cerrada,2026-11-19T16:05:04-05:00,16,Thu,-16.42489,-71.534659,1,mercado,"Mercado Señor del Gran Poder, Andrés Avelino Cáceres",Media,SER-13,19.0,SinHallazgo,
+CASO-0837,Sos,Extorsión o amenazas,Cerrada,2026-11-19T16:17:22-05:00,16,Thu,-16.426819,-71.539773,4,mercado,"Mi Mercado, Avenida Juan Vidaurrázaga",Media,SER-24,12.4,SinHallazgo,
+CASO-0838,Sos,Violencia familiar,Cerrada,2026-11-19T19:16:01-05:00,19,Thu,-16.445308,-71.514941,2,residencial,"C. Vinatea Reynoso, Urbanización Simon Bolivar",Alta,SER-17,18.0,EntregadoAPnp,4
+CASO-0839,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-19T22:21:36-05:00,22,Thu,-16.432804,-71.531689,4,noche,"Cerca de Green, Calle Andrés Rázuri",,,,,
+CASO-0840,Sos,Robo o hurto,Cancelada,2026-11-20T00:25:52-05:00,0,Fri,-16.436267,-71.529668,3,residencial,"Calle Villa María, Los Olivos",,,,,
+CASO-0841,Reporte,Robo o hurto,Cerrada,2026-11-20T00:46:46-05:00,0,Fri,-16.428938,-71.526353,2,paradero,"Paradero Presto, Avenida Estados Unidos",Media,SER-28,45.4,Derivado,5
+CASO-0842,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-20T01:28:28-05:00,1,Fri,-16.438838,-71.52632,3,parque,"Calle Huamachuco, cerca del parque",Baja,SER-33,52.5,ResueltoEnElLugar,
+CASO-0843,Sos,Peleas o riñas,Cerrada,2026-11-20T03:44:06-05:00,3,Fri,-16.426973,-71.533063,1,avenida,"Avenida Perú, cuadra 11",Media,SER-26,6.3,ResueltoEnElLugar,4
+CASO-0844,Sos,Otros,Cerrada,2026-11-20T10:25:18-05:00,10,Fri,-16.433142,-71.528177,3,parque,"Parque Palacio del Deporte, Calle Honduras",Baja,SER-07,17.3,SinHallazgo,3
+CASO-0845,Sos,Persona en riesgo,Cerrada,2026-11-20T12:01:55-05:00,12,Fri,-16.426256,-71.536965,4,mercado,"Mercado Selor de Luren, Siglo XX",Alta,SER-11,8.9,ResueltoEnElLugar,
+CASO-0846,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-20T14:06:22-05:00,14,Fri,-16.432051,-71.528123,2,residencial,"Calle Venezuela, Alto de la Luna",Baja,SER-18,45.9,ResueltoEnElLugar,5
+CASO-0847,Reporte,Robo o hurto,Descartada,2026-11-20T14:19:29-05:00,14,Fri,-16.42315,-71.516612,2,mercado,"Mercado total, Avenida Pizarro",,,,,
+CASO-0848,Reporte,Persona o vehículo sospechoso,Derivada,2026-11-20T15:13:08-05:00,15,Fri,-16.434237,-71.516864,2,parque,"Avenida Túpac Amaru, cerca del parque",,,,,
+CASO-0849,Reporte,Acoso en la vía pública,Descartada,2026-11-20T16:20:28-05:00,16,Fri,-16.433932,-71.522388,2,paradero,"Avenida Dolores, cerca del paradero",,,,,
+CASO-0850,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-20T19:56:23-05:00,19,Fri,-16.444917,-71.509656,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Alta,SER-17,28.3,ResueltoEnElLugar,
+CASO-0851,Reporte,Robo o hurto,Cerrada,2026-11-20T20:23:25-05:00,20,Fri,-16.41738,-71.527412,1,comercio,"Frente a Tambo, Calle 1",Media,SER-15,9.7,SinHallazgo,
+CASO-0852,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-20T20:48:56-05:00,20,Fri,-16.436701,-71.528311,3,residencial,"Pasaje Primero de Mayo, Rodantes del Sur",Baja,SER-20,38.5,ResueltoEnElLugar,
+CASO-0853,Reporte,Extorsión o amenazas,Descartada,2026-11-20T20:53:15-05:00,20,Fri,-16.425931,-71.540746,4,mercado,"Pasaje Pascual Saco Oliveros, cerca del mercado",,,,,
+CASO-0854,Sos,Robo o hurto,Cerrada,2026-11-20T21:12:26-05:00,21,Fri,-16.425878,-71.535968,4,mercado,"Mercado La Nueva Aurora, Siglo XX",Media,SER-22,12.5,SinHallazgo,
+CASO-0855,Sos,Robo o hurto,Descartada,2026-11-20T21:33:18-05:00,21,Fri,-16.428588,-71.521737,2,paradero,"Paradero Residencial Monterrey, Avenida Hartley",,,,,
+CASO-0856,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-20T23:22:13-05:00,23,Fri,-16.424179,-71.521773,1,parque,"Avenida Alameda de la Cultura, cerca del parque",Baja,SER-25,81.7,ResueltoEnElLugar,
+CASO-0857,Sos,Peleas o riñas,Cerrada,2026-11-21T00:34:08-05:00,0,Sat,-16.446571,-71.514248,3,parque,"Parque Virgen de Copacabana, C.9",Media,SER-32,28.4,EntregadoAPnp,2
+CASO-0858,Reporte,Robo o hurto,Cerrada,2026-11-21T02:33:33-05:00,2,Sat,-16.424628,-71.538024,4,paradero,"Paradero Asociación Comercial Siglo XX, Avenida Juan Vidaurrázaga",Media,SER-34,74.4,ResueltoEnElLugar,4
+CASO-0859,Reporte,Daños o vandalismo,Descartada,2026-11-21T05:12:12-05:00,5,Sat,-16.435571,-71.529544,3,residencial,"Avenida 13 de Junio, Los Olivos",,,,,
+CASO-0860,Reporte,Consumo o venta de drogas,Descartada,2026-11-21T06:22:52-05:00,6,Sat,-16.448027,-71.51528,3,residencial,"Calle César Vallejo, Pueblo Joven Ricardo Palma",,,,,
+CASO-0861,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-21T08:59:35-05:00,8,Sat,-16.435089,-71.529109,3,residencial,"Pasaje Primero de Mayo, Los Olivos",Baja,SER-07,25.3,ResueltoEnElLugar,4
+CASO-0862,Sos,Acoso en la vía pública,Cerrada,2026-11-21T10:18:54-05:00,10,Sat,-16.43075,-71.532664,4,avenida,"Avenida Socabaya, cuadra 5",Media,SER-11,10.7,ResueltoEnElLugar,
+CASO-0863,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-21T10:29:49-05:00,10,Sat,-16.449247,-71.514609,3,residencial,"C.3, Asentamiento Humano Betania",Baja,SER-07,53.7,ResueltoEnElLugar,4
+CASO-0864,Sos,Otros,Cancelada,2026-11-21T13:23:14-05:00,13,Sat,-16.431714,-71.528108,2,parque,"Parque Mapa del Perú, Calle Uruguay",,,,,
+CASO-0865,Reporte,Daños o vandalismo,Cerrada,2026-11-21T13:41:55-05:00,13,Sat,-16.44136,-71.524994,3,colegio,"Frente al colegio Institución Educativa José Luis Bustamante y Rivero Futura School, Calle Juliaca",Baja,SER-21,68.5,Derivado,
+CASO-0866,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-21T15:32:42-05:00,15,Sat,-16.44782,-71.51635,3,residencial,"C.7, Pueblo Joven La Breña",,,,,
+CASO-0867,Sos,Violencia familiar,Cerrada,2026-11-21T18:11:31-05:00,18,Sat,-16.444521,-71.512154,2,residencial,"Ulrich Neisser, Asentamiento Humano Jorge Basadre",Alta,SER-16,20.0,Derivado,4
+CASO-0868,Sos,Robo o hurto,Cerrada,2026-11-21T20:20:32-05:00,20,Sat,-16.424572,-71.532959,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 5",Media,SER-15,14.1,ResueltoEnElLugar,4
+CASO-0869,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-21T20:44:31-05:00,20,Sat,-16.430436,-71.532561,4,noche,"Cerca de El Huallaga, Avenida Estados Unidos",Baja,SER-23,7.0,SinHallazgo,
+CASO-0870,Sos,Violencia familiar,Cancelada,2026-11-21T20:51:24-05:00,20,Sat,-16.443864,-71.517456,3,residencial,"Juan Velazco Alvarado, Urbanización Simon Bolivar",,,,,
+CASO-0871,Sos,Robo o hurto,Descartada,2026-11-21T23:57:01-05:00,23,Sat,-16.425575,-71.535407,4,mercado,"Mercado Señor del Gran Poder, Andrés Avelino Cáceres",,,,,
+CASO-0872,Sos,Violencia familiar,Cerrada,2026-11-22T00:23:16-05:00,0,Sun,-16.418262,-71.526547,1,residencial,"Calle 1, Urbanización Los Naranjos",Alta,SER-26,14.4,Derivado,
+CASO-0873,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-22T00:58:43-05:00,0,Sun,-16.444377,-71.509835,2,residencial,"San Martín, Asentamiento Humano Jorge Basadre",Baja,SER-30,21.6,ResueltoEnElLugar,
+CASO-0874,Reporte,Robo o hurto,Cerrada,2026-11-22T01:28:41-05:00,1,Sun,-16.430368,-71.527639,2,paradero,"Paradero Guatemala, Avenida Estados Unidos",Media,SER-29,34.2,SinHallazgo,
+CASO-0875,Reporte,Persona o vehículo sospechoso,Descartada,2026-11-22T02:56:11-05:00,2,Sun,-16.43203,-71.529962,4,colegio,"Frente al colegio Institución Educativa 41038 Jose Olaya Balandra, Calle Uruguay",,,,,
+CASO-0876,Reporte,Robo o hurto,Cerrada,2026-11-22T03:27:33-05:00,3,Sun,-16.443124,-71.518318,3,mercado,"Mercado 3 de Octubre, Calle Manuel Gonzales Prada",Media,SER-32,29.5,SinHallazgo,
+CASO-0877,Reporte,Violencia familiar,Cerrada,2026-11-22T04:12:46-05:00,4,Sun,-16.426392,-71.517773,2,residencial,"Los Ccoritos, Urbanización Santa Catalina",Alta,SER-30,98.3,ResueltoEnElLugar,1
+CASO-0878,Reporte,Robo o hurto,Cerrada,2026-11-22T11:58:11-05:00,11,Sun,-16.448326,-71.515385,3,paradero,"Paradero Esmeraldas, C.3",Media,SER-08,26.1,SinHallazgo,
+CASO-0879,Sos,Extorsión o amenazas,Cerrada,2026-11-22T13:20:08-05:00,13,Sun,-16.424523,-71.535157,1,mercado,"Mercado Cuzco, Andrés Avelino Cáceres",Media,SER-03,24.3,ResueltoEnElLugar,4
+CASO-0880,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-22T17:25:42-05:00,17,Sun,-16.443861,-71.516861,3,colegio,"Frente al colegio Institución Educativa Pedro Alvarez Cabral, Calle Bolivia",Baja,SER-19,30.3,SinHallazgo,5
+CASO-0881,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-22T19:57:03-05:00,19,Sun,-16.449626,-71.514956,3,residencial,"C.7, Asentamiento Humano Betania",Baja,SER-19,53.5,ResueltoEnElLugar,
+CASO-0882,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-22T20:34:05-05:00,20,Sun,-16.42536,-71.540831,4,colegio,"Frente al colegio Institución Educativa 40122 Manuel Scorza Torres, Calle Ayarza",Baja,SER-23,43.5,SinHallazgo,
+CASO-0883,Reporte,Persona o vehículo sospechoso,Derivada,2026-11-23T02:55:48-05:00,2,Mon,-16.417647,-71.516363,1,parque,"Calle José Carlos Mariátegui, cerca del parque",,,,,
+CASO-0884,Reporte,Acoso en la vía pública,Cerrada,2026-11-23T07:54:58-05:00,7,Mon,-16.449065,-71.51451,3,paradero,"Paradero Colegio Esmeraldas, C.3",Media,SER-09,10.9,ResueltoEnElLugar,
+CASO-0885,Reporte,Robo o hurto,Cerrada,2026-11-23T08:11:52-05:00,8,Mon,-16.411715,-71.521195,1,paradero,"Paradero Parada de autobuses lambramani, Avenida Lambramani",Media,SER-03,28.9,SinHallazgo,
+CASO-0886,Sos,Violencia familiar,Cerrada,2026-11-23T08:35:22-05:00,8,Mon,-16.432119,-71.527688,2,residencial,"Calle Venezuela, Alto de la Luna",Alta,SER-04,13.1,ResueltoEnElLugar,
+CASO-0887,Reporte,Acoso en la vía pública,Cerrada,2026-11-23T11:15:58-05:00,11,Mon,-16.43431,-71.526739,3,parque,"Calle Chavín de Huántar, cerca del parque",Media,SER-07,32.7,Derivado,
+CASO-0888,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-23T15:55:26-05:00,15,Mon,-16.422446,-71.527626,1,residencial,"Calle Las Moras, Quinta Tristán Z",Baja,SER-14,34.1,SinHallazgo,
+CASO-0889,Reporte,Consumo o venta de drogas,Cerrada,2026-11-23T18:08:26-05:00,18,Mon,-16.444239,-71.511805,2,residencial,"Neisser, Asentamiento Humano Jorge Basadre",Baja,SER-17,32.3,EntregadoAPnp,
+CASO-0890,Sos,Acoso en la vía pública,Cerrada,2026-11-23T19:46:59-05:00,19,Mon,-16.450739,-71.513171,3,colegio,"Frente al colegio Institución Educativa 40631 Juan Pablo Ii, Avenida las Esmeraldas",Media,SER-20,15.6,FalsaAlarma,5
+CASO-0891,Reporte,Extorsión o amenazas,Derivada,2026-11-23T20:59:01-05:00,20,Mon,-16.44316,-71.522851,3,comercio,"Frente a Primax, Avenida Caracas",,,,,
+CASO-0892,Reporte,Extorsión o amenazas,Cerrada,2026-11-23T22:28:53-05:00,22,Mon,-16.422177,-71.541594,4,mercado,"Mercado Gratersa, E. Zegarra Ballón",Media,SER-34,28.3,Derivado,5
+CASO-0893,Reporte,Daños o vandalismo,Descartada,2026-11-24T00:50:22-05:00,0,Tue,-16.440374,-71.521418,3,parque,"28 de Julio, cerca del parque",,,,,
+CASO-0894,Reporte,Violencia familiar,Cerrada,2026-11-24T01:00:52-05:00,1,Tue,-16.444695,-71.509402,2,residencial,"Misti, Asentamiento Humano Jorge Basadre",Alta,SER-28,73.1,Derivado,2
+CASO-0895,Reporte,Consumo o venta de drogas,Cerrada,2026-11-24T01:36:51-05:00,1,Tue,-16.435834,-71.529848,3,residencial,"Calle 28 de Julio, Los Olivos",Baja,SER-32,90.4,SinHallazgo,
+CASO-0896,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-24T02:04:43-05:00,2,Tue,-16.429838,-71.516142,2,colegio,"Calle 7, cerca del colegio",Baja,SER-28,74.9,SinHallazgo,
+CASO-0897,Sos,Acoso en la vía pública,Cerrada,2026-11-24T05:20:07-05:00,5,Tue,-16.429164,-71.537329,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 9",Media,SER-34,17.6,ResueltoEnElLugar,4
+CASO-0898,Reporte,Accidente de tránsito,Cerrada,2026-11-24T10:38:53-05:00,10,Tue,-16.423482,-71.532445,1,avenida,"Avenida Daniel Alcides Carrión, cuadra 2",Media,SER-01,36.8,ResueltoEnElLugar,
+CASO-0899,Reporte,Robo o hurto,Cerrada,2026-11-24T11:01:12-05:00,11,Tue,-16.427084,-71.539699,4,avenida,"Avenida Juan Vidaurrázaga, cuadra 7",Media,SER-11,37.8,SinHallazgo,
+CASO-0900,Reporte,Robo o hurto,Descartada,2026-11-24T11:04:51-05:00,11,Tue,-16.424269,-71.534177,1,mercado,"Mercado Virgen del Chapi, Andrés Avelino Cáceres",,,,,
+CASO-0901,Sos,Persona en riesgo,Cerrada,2026-11-24T16:14:44-05:00,16,Tue,-16.447776,-71.514343,3,residencial,"Avenida 1, Urbanización Santa Mónica",Alta,SER-20,9.4,Derivado,5
+CASO-0902,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-24T16:50:47-05:00,16,Tue,-16.437859,-71.522713,2,residencial,"Primer Parque, Urbanización Dolores",Baja,SER-18,8.2,SinHallazgo,
+CASO-0903,Reporte,Robo o hurto,Cerrada,2026-11-24T20:14:10-05:00,20,Tue,-16.424788,-71.543233,4,residencial,"Calle Felipe Santiago, Pueblo Joven Cerro July",Media,SER-24,73.1,SinHallazgo,
+CASO-0904,Reporte,Robo o hurto,Cerrada,2026-11-24T21:31:22-05:00,21,Tue,-16.436832,-71.522077,2,paradero,"Paradero Malecón Dolores, Avenida Libertadores",Media,SER-17,41.1,SinHallazgo,
+CASO-0905,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-24T22:11:51-05:00,22,Tue,-16.429703,-71.52828,1,noche,"Cerca de Chicharronería La sambita, Avenida Estados Unidos",Baja,SER-26,12.4,ResueltoEnElLugar,
+CASO-0906,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-24T22:23:12-05:00,22,Tue,-16.411648,-71.521352,1,paradero,"Paradero Parada de autobuses lambramani, Avenida Lambramani",Baja,SER-27,58.8,ResueltoEnElLugar,5
+CASO-0907,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-24T22:50:06-05:00,22,Tue,-16.44521,-71.508423,2,residencial,"Avenida La Amistad, Asentamiento Humano Jorge Basadre",Baja,SER-29,15.1,ResueltoEnElLugar,
+CASO-0908,Reporte,Peleas o riñas,Cerrada,2026-11-24T23:04:58-05:00,23,Tue,-16.416108,-71.517441,1,parque,"Parque Cooperativa 58, Colonia",Media,SER-26,17.6,ResueltoEnElLugar,
+CASO-0909,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-11-24T23:45:27-05:00,23,Tue,-16.437966,-71.521439,2,parque,"28 de Julio, cerca del parque",,,,,
+CASO-0910,Sos,Violencia familiar,Cerrada,2026-11-24T23:50:58-05:00,23,Tue,-16.450687,-71.512053,3,residencial,"Av. La Riviera, Urbanización Buena Vista",Alta,SER-31,8.9,EntregadoAPnp,5
+CASO-0911,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-25T00:13:57-05:00,0,Wed,-16.445578,-71.51823,3,residencial,"C. Vinatea Reynoso, Urbanización La Breña",Baja,SER-32,46.0,SinHallazgo,
+CASO-0912,Sos,Robo o hurto,Cerrada,2026-11-25T00:31:17-05:00,0,Wed,-16.424204,-71.537723,4,comercio,"Frente a Caja Cuzco, Avenida Juan Vidaurrázaga",Media,SER-34,11.4,SinHallazgo,
+CASO-0913,Reporte,Daños o vandalismo,Cerrada,2026-11-25T01:15:55-05:00,1,Wed,-16.438968,-71.525987,3,parque,"Calle Huamachuco, cerca del parque",Baja,SER-31,16.7,ResueltoEnElLugar,
+CASO-0914,Reporte,Daños o vandalismo,Cerrada,2026-11-25T04:16:30-05:00,4,Wed,-16.432111,-71.516389,2,parque,"Santa Ursula, cerca del parque",Baja,SER-29,19.0,ResueltoEnElLugar,
+CASO-0915,Reporte,Robo o hurto,Descartada,2026-11-25T05:44:19-05:00,5,Wed,-16.427528,-71.520014,2,paradero,"Paradero Tecsup, Avenida Hartley",,,,,
+CASO-0916,Sos,Robo o hurto,Cerrada,2026-11-25T17:34:35-05:00,17,Wed,-16.42574,-71.52051,2,paradero,"Paradero UAP, Avenida La Melgariana",Media,SER-18,11.9,Derivado,5
+CASO-0917,Sos,Violencia familiar,Cancelada,2026-11-25T18:34:19-05:00,18,Wed,-16.425062,-71.523366,1,residencial,"Calle 1, Villa Dolores",,,,,
+CASO-0918,Reporte,Accidente de tránsito,Cerrada,2026-11-25T19:57:10-05:00,19,Wed,-16.433876,-71.527433,3,avenida,"Avenida Inglaterra, cuadra 2",Media,SER-20,33.7,EntregadoAPnp,
+CASO-0919,Reporte,Violencia familiar,Cerrada,2026-11-25T20:57:10-05:00,20,Wed,-16.411985,-71.516201,1,residencial,"Calle Indo, Cooperativa 58",Alta,SER-15,20.2,ResueltoEnElLugar,
+CASO-0920,Sos,Persona o vehículo sospechoso,Cerrada,2026-11-25T21:02:55-05:00,21,Wed,-16.412404,-71.521073,1,parque,"Avenida Lambramani, cerca del parque",Baja,SER-13,9.3,ResueltoEnElLugar,4
+CASO-0921,Reporte,Robo o hurto,Cerrada,2026-11-25T22:02:42-05:00,22,Wed,-16.41577,-71.518742,1,paradero,"Arenales, cerca del paradero",Media,SER-26,17.3,Derivado,
+CASO-0922,Reporte,Robo o hurto,Descartada,2026-11-26T01:04:55-05:00,1,Thu,-16.443706,-71.516798,2,mercado,"Mercado 3 de Octubre, Calle Bolivia",,,,,
+CASO-0923,Sos,Peleas o riñas,Cerrada,2026-11-26T02:25:40-05:00,2,Thu,-16.430024,-71.542628,4,parque,"Villa Manuelito, cerca del parque",Media,SER-35,23.5,EntregadoAPnp,3
+CASO-0924,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-26T03:02:55-05:00,3,Thu,-16.435142,-71.529225,3,residencial,"Calle Chavín de Huántar, Los Olivos",Baja,SER-32,35.2,SinHallazgo,
+CASO-0925,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-26T03:13:17-05:00,3,Thu,-16.425606,-71.525373,1,residencial,"Urbanización Las Begonias Manzana B, Las Begonias",Baja,SER-26,71.4,SinHallazgo,
+CASO-0926,Reporte,Robo o hurto,Descartada,2026-11-26T09:28:15-05:00,9,Thu,-16.434345,-71.515951,2,avenida,"Avenida Túpac Amaru, cuadra 1",,,,,
+CASO-0927,Sos,Persona en riesgo,Cerrada,2026-11-26T13:56:47-05:00,13,Thu,-16.425967,-71.526419,1,parque,"Urbanización Las Begonias Manzana D, cerca del parque",Alta,SER-13,23.8,ResueltoEnElLugar,4
+CASO-0928,Reporte,Violencia familiar,Derivada,2026-11-26T19:25:29-05:00,19,Thu,-16.445974,-71.516863,3,residencial,"María Nieves Bustamante, Urbanización La Breña",,,,,
+CASO-0929,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-26T20:51:11-05:00,20,Thu,-16.446218,-71.515522,3,residencial,"María Nieves Bustamante, Pueblo Joven Ricardo Palma",Baja,SER-21,33.4,ResueltoEnElLugar,3
+CASO-0930,Reporte,Peleas o riñas,Descartada,2026-11-26T21:26:01-05:00,21,Thu,-16.427119,-71.546619,4,avenida,"Avenida Francisco Mostajo, cuadra 10",,,,,
+CASO-0931,Reporte,Robo o hurto,Cerrada,2026-11-26T21:49:29-05:00,21,Thu,-16.429974,-71.514916,2,residencial,"Calle 4, Casa Bella",Media,SER-29,45.1,EntregadoAPnp,
+CASO-0932,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-26T23:18:40-05:00,23,Thu,-16.417446,-71.516497,1,noche,"Cerca de El Turco, Calle José Carlos Mariátegui",,,,,
+CASO-0933,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-27T02:23:01-05:00,2,Fri,-16.423941,-71.516278,2,noche,"Cerca de El Meson, Avenida Pizarro",Alta,SER-30,30.9,ResueltoEnElLugar,5
+CASO-0934,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-27T06:33:08-05:00,6,Fri,-16.444013,-71.517498,3,residencial,"Ricardo Palma, Urbanización La Breña",Baja,SER-09,19.9,SinHallazgo,
+CASO-0935,Reporte,Extorsión o amenazas,Derivada,2026-11-27T07:12:52-05:00,7,Fri,-16.425957,-71.535437,4,mercado,"Mercado Señor del Gran Poder, Siglo XX",,,,,
+CASO-0936,Reporte,Robo o hurto,Cerrada,2026-11-27T09:58:36-05:00,9,Fri,-16.431339,-71.533318,4,paradero,"Paradero La Apacheta, Avenida Socabaya",Media,SER-10,44.3,ResueltoEnElLugar,
+CASO-0937,Sos,Robo o hurto,Cerrada,2026-11-27T11:05:15-05:00,11,Fri,-16.429821,-71.52557,2,avenida,"Avenida Estados Unidos, cuadra 6",Media,SER-04,11.6,EntregadoAPnp,5
+CASO-0938,Reporte,Robo o hurto,Derivada,2026-11-27T13:09:43-05:00,13,Fri,-16.43104,-71.541761,4,avenida,"Avenida de las Convenciones, cuadra 3",,,,,
+CASO-0939,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-27T15:11:59-05:00,15,Fri,-16.423403,-71.529992,1,noche,"Cerca de Al Fuego, Los Cipreses",Baja,SER-13,11.3,ResueltoEnElLugar,
+CASO-0940,Sos,Robo o hurto,Cerrada,2026-11-27T15:49:07-05:00,15,Fri,-16.426782,-71.533092,1,comercio,"Avenida Perú, cerca de un comercio",Media,SER-14,8.7,SinHallazgo,3
+CASO-0941,Reporte,Robo o hurto,Cerrada,2026-11-27T16:36:04-05:00,16,Fri,-16.434747,-71.531207,3,residencial,"Calle Andrés Rázuri, Satelite Chico",Media,SER-20,13.4,EntregadoAPnp,
+CASO-0942,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-27T17:58:49-05:00,17,Fri,-16.448341,-71.515962,3,residencial,"Jorge Basadre, Pueblo Joven La Breña",Baja,SER-20,42.6,SinHallazgo,
+CASO-0943,Reporte,Robo o hurto,Cerrada,2026-11-27T18:51:55-05:00,18,Fri,-16.431082,-71.533336,4,paradero,"Paradero La Apacheta, Avenida Socabaya",Media,SER-22,62.6,EntregadoAPnp,3
+CASO-0944,Reporte,Robo o hurto,Derivada,2026-11-27T19:19:51-05:00,19,Fri,-16.429714,-71.531092,4,avenida,"Argentina, cuadra 10",,,,,
+CASO-0945,Sos,Persona o vehículo sospechoso,Cerrada,2026-11-27T20:10:44-05:00,20,Fri,-16.427105,-71.52817,1,parque,"Pedro Diez Canseco, cerca del parque",Alta,SER-14,7.6,EntregadoAPnp,
+CASO-0946,Reporte,Ruidos molestos o escándalo,Descartada,2026-11-27T21:10:56-05:00,21,Fri,-16.421989,-71.525425,1,noche,"Cerca de Nautika, Avenida Dolores",,,,,
+CASO-0947,Sos,Peleas o riñas,Cerrada,2026-11-27T22:14:17-05:00,22,Fri,-16.417271,-71.518693,1,noche,"Cerca de Los Guisos Arequipeños, Avenida Lambramani",Media,SER-27,13.5,ResueltoEnElLugar,4
+CASO-0948,Reporte,Robo o hurto,Derivada,2026-11-27T22:42:48-05:00,22,Fri,-16.424724,-71.537715,4,mercado,"Mercado 4 de Octubre, Avenida Juan Vidaurrázaga",,,,,
+CASO-0949,Reporte,Persona o vehículo sospechoso,Cancelada,2026-11-27T22:48:29-05:00,22,Fri,-16.423987,-71.519785,2,colegio,"Frente al colegio Institución Educativa Santa Maria Madre, Pizarro",,,,,
+CASO-0950,Sos,Peleas o riñas,Cerrada,2026-11-27T23:42:28-05:00,23,Fri,-16.443898,-71.517078,3,noche,"Cerca de El caribe, Avenida Caracas",Media,SER-31,12.9,Derivado,4
+CASO-0951,Reporte,Consumo o venta de drogas,Descartada,2026-11-28T01:15:04-05:00,1,Sat,-16.41244,-71.52077,1,avenida,"Avenida Lambramani, cuadra 7",,,,,
+CASO-0952,Reporte,Consumo o venta de drogas,Cerrada,2026-11-28T03:01:24-05:00,3,Sat,-16.446254,-71.515265,3,residencial,"Pasaje Julio César Tello, Pueblo Joven Ricardo Palma",Baja,SER-32,58.2,FalsaAlarma,4
+CASO-0953,Reporte,Peleas o riñas,Cerrada,2026-11-28T03:15:55-05:00,3,Sat,-16.444815,-71.508427,2,parque,"Avenida La Amistad, cerca del parque",Media,SER-29,84.6,ResueltoEnElLugar,4
+CASO-0954,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-28T03:17:10-05:00,3,Sat,-16.426023,-71.521528,2,noche,"Cerca de Mar Picante, Avenida La Melgariana",Baja,SER-28,85.6,ResueltoEnElLugar,
+CASO-0955,Reporte,Accidente de tránsito,Derivada,2026-11-28T08:11:30-05:00,8,Sat,-16.42563,-71.534307,1,avenida,"Andrés Avelino Cáceres, cuadra 10",,,,,
+CASO-0956,Reporte,Accidente de tránsito,Cerrada,2026-11-28T08:14:02-05:00,8,Sat,-16.425279,-71.525075,1,avenida,"Andrés Avelino Cáceres, cuadra 8",Media,SER-03,56.5,EntregadoAPnp,3
+CASO-0957,Reporte,Robo o hurto,Cerrada,2026-11-28T08:24:33-05:00,8,Sat,-16.441879,-71.516698,2,residencial,"Avenida José de San Martín, Los Cisnes",Media,SER-05,19.1,FalsaAlarma,
+CASO-0958,Sos,Persona en riesgo,Cerrada,2026-11-28T08:27:21-05:00,8,Sat,-16.422345,-71.525824,1,parque,"Parque El Bosque, Avenida Dolores",Alta,SER-01,20.2,Derivado,
+CASO-0959,Reporte,Extorsión o amenazas,Cerrada,2026-11-28T12:02:13-05:00,12,Sat,-16.4244,-71.532019,1,comercio,"Frente a Scotiabank, Avenida Daniel Alcides Carrión",Media,SER-03,28.8,EntregadoAPnp,
+CASO-0960,Sos,Robo o hurto,Cerrada,2026-11-28T14:34:30-05:00,14,Sat,-16.426942,-71.543241,4,avenida,"Saco Olivero, cuadra 7",Media,SER-23,13.2,ResueltoEnElLugar,
+CASO-0961,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-28T17:17:22-05:00,17,Sat,-16.413601,-71.521813,1,parque,"Avenida Lambramani, cerca del parque",Baja,SER-15,30.9,SinHallazgo,
+CASO-0962,Reporte,Acoso en la vía pública,Cerrada,2026-11-28T18:04:19-05:00,18,Sat,-16.427403,-71.545396,4,parque,"Saco Olivero, cerca del parque",Alta,SER-23,56.9,EntregadoAPnp,
+CASO-0963,Sos,Violencia familiar,Cerrada,2026-11-28T18:15:35-05:00,18,Sat,-16.443776,-71.506412,2,residencial,"Calle Manuel Seoane, Asentamiento Humano Jorge Basadre",Alta,SER-18,9.1,Derivado,5
+CASO-0964,Sos,Robo o hurto,Cerrada,2026-11-28T19:41:19-05:00,19,Sat,-16.42141,-71.5305,1,mercado,"Mercado Botica Dermia, Calle Los Pinos",Alta,SER-14,11.6,Derivado,
+CASO-0965,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-28T20:18:27-05:00,20,Sat,-16.431524,-71.524905,2,parque,"Pasaje 11, cerca del parque",Baja,SER-17,16.0,ResueltoEnElLugar,
+CASO-0966,Reporte,Persona o vehículo sospechoso,Cerrada,2026-11-28T20:34:34-05:00,20,Sat,-16.415963,-71.521134,1,colegio,"Frente al colegio Institución Educativa Colibri Libre Waldorf Inspired, Avenida Lambramani",Baja,SER-14,34.7,ResueltoEnElLugar,3
+CASO-0967,Reporte,Robo o hurto,Cerrada,2026-11-28T20:51:56-05:00,20,Sat,-16.429101,-71.524569,2,paradero,"Paradero Pedro D. Canseco, Avenida Estados Unidos",Media,SER-17,30.7,SinHallazgo,
+CASO-0968,Reporte,Persona o vehículo sospechoso,Derivada,2026-11-28T22:40:55-05:00,22,Sat,-16.430065,-71.53004,1,residencial,"Calle Haití, Vinatea Reynoso",,,,,
+CASO-0969,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-28T23:29:57-05:00,23,Sat,-16.44707,-71.51498,3,residencial,"C.9, Pueblo Joven Ricardo Palma",Baja,SER-33,67.6,ResueltoEnElLugar,2
+CASO-0970,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-28T23:59:20-05:00,23,Sat,-16.426961,-71.531534,1,noche,"República de Chile, cerca de un local nocturno",Baja,SER-26,11.5,ResueltoEnElLugar,
+CASO-0971,Reporte,Peleas o riñas,Cerrada,2026-11-29T01:25:15-05:00,1,Sun,-16.440827,-71.52381,3,parque,"Calle Tasahuayo, cerca del parque",Media,SER-33,83.8,Derivado,
+CASO-0972,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-29T03:41:35-05:00,3,Sun,-16.446946,-71.517721,3,residencial,"Nicaragua, Urbanización La Breña",Baja,SER-33,19.3,ResueltoEnElLugar,
+CASO-0973,Reporte,Persona o vehículo sospechoso,Descartada,2026-11-29T06:10:26-05:00,6,Sun,-16.444709,-71.504452,2,parque,"Avenida Caracas, cerca del parque",,,,,
+CASO-0974,Sos,Robo o hurto,Cerrada,2026-11-29T08:01:26-05:00,8,Sun,-16.425986,-71.537721,4,mercado,"Mercado Asociación Indpendientes de Abril, Siglo XX",Media,SER-11,16.0,EntregadoAPnp,5
+CASO-0975,Reporte,Robo o hurto,Cerrada,2026-11-29T10:54:01-05:00,10,Sun,-16.432653,-71.525428,2,paradero,"Paradero Colegio Jorge Basadre Grohmann, Avenida Túpac Amaru",Media,SER-05,32.4,SinHallazgo,
+CASO-0976,Reporte,Acoso en la vía pública,Cerrada,2026-11-29T11:39:31-05:00,11,Sun,-16.430455,-71.532083,4,paradero,"Paradero Apacheta, Avenida Estados Unidos",Media,SER-10,40.8,SinHallazgo,
+CASO-0977,Sos,Robo o hurto,Cerrada,2026-11-29T13:33:39-05:00,13,Sun,-16.424951,-71.533377,1,comercio,"Frente a Interbank, Avenida Daniel Alcides Carrión",Media,SER-02,17.8,SinHallazgo,
+CASO-0978,Reporte,Accidente de tránsito,Cerrada,2026-11-29T14:03:43-05:00,14,Sun,-16.429515,-71.524223,2,comercio,"Avenida Estados Unidos, cerca de un comercio",Media,SER-17,10.2,ResueltoEnElLugar,
+CASO-0979,Reporte,Otros,Descartada,2026-11-29T14:15:01-05:00,14,Sun,-16.441415,-71.524939,3,residencial,"Calle Juliaca, Tasahuayo",,,,,
+CASO-0980,Sos,Robo o hurto,Cerrada,2026-11-29T17:08:21-05:00,17,Sun,-16.424462,-71.52168,2,mercado,"Avenida Alameda de la Cultura, cerca del mercado",Media,SER-18,12.2,ResueltoEnElLugar,5
+CASO-0981,Reporte,Robo o hurto,Cerrada,2026-11-29T19:23:43-05:00,19,Sun,-16.425004,-71.536107,4,mercado,"Mercado Señor del Gran Poder, Andrés Avelino Cáceres",Media,SER-22,46.0,SinHallazgo,
+CASO-0982,Sos,Violencia familiar,Cerrada,2026-11-29T19:26:56-05:00,19,Sun,-16.411003,-71.517205,1,residencial,"Colonia, Cooperativa 58",Alta,SER-15,15.6,Derivado,4
+CASO-0983,Reporte,Consumo de alcohol en la vía pública,Cerrada,2026-11-29T20:12:18-05:00,20,Sun,-16.432261,-71.52025,2,parque,"Parque Los Cristales, Avenida Dolores",Baja,SER-16,42.5,FalsaAlarma,
+CASO-0984,Reporte,Consumo de alcohol en la vía pública,Descartada,2026-11-29T22:57:54-05:00,22,Sun,-16.431505,-71.527291,2,parque,"Parque Mapa del Perú, Calle Uruguay",,,,,
+CASO-0985,Reporte,Robo o hurto,Cerrada,2026-11-29T23:23:21-05:00,23,Sun,-16.417986,-71.528266,1,avenida,"Calle 2, cuadra 7",Media,SER-26,53.0,ResueltoEnElLugar,3
+CASO-0986,Reporte,Ruidos molestos o escándalo,Cerrada,2026-11-29T23:46:46-05:00,23,Sun,-16.436896,-71.527391,3,residencial,"Calle los Olivos, Urbanización Villa del Mar",Baja,SER-32,158.1,ResueltoEnElLugar,
+CASO-0987,Reporte,Extorsión o amenazas,Derivada,2026-11-30T02:55:35-05:00,2,Mon,-16.424383,-71.531278,1,comercio,"Frente a Kosto, Andrés Avelino Cáceres",,,,,
+CASO-0988,Reporte,Robo o hurto,Cerrada,2026-11-30T16:51:38-05:00,16,Mon,-16.427788,-71.531051,1,avenida,"Argentina, cuadra 2",Media,SER-13,46.3,ResueltoEnElLugar,
+CASO-0989,Sos,Extorsión o amenazas,EnCamino,2026-11-30T18:45:25-05:00,18,Mon,-16.415987,-71.529462,1,comercio,"Frente a Mini Market Jacky, Avenida Agricultura",Media,SER-14,,,
+CASO-0990,Sos,Peleas o riñas,Cancelada,2026-11-30T18:48:52-05:00,18,Mon,-16.415883,-71.529167,1,parque,"Avenida Agricultura, cerca del parque",,,,,
+CASO-0991,Sos,Violencia familiar,Cerrada,2026-11-30T18:52:57-05:00,18,Mon,-16.435269,-71.519013,2,residencial,"Avenida Túpac Amaru, La Florida",Alta,SER-17,10.5,EntregadoAPnp,
+CASO-0992,Reporte,Consumo o venta de drogas,Recibido,2026-11-30T19:02:11-05:00,19,Mon,-16.435899,-71.52489,3,parque,"Avenida Túpac Amaru, cerca del parque",,,,,
+CASO-0993,Sos,Robo o hurto,Cancelada,2026-11-30T19:08:10-05:00,19,Mon,-16.425373,-71.534914,1,mercado,"Mercado Virgen del Chapi, Andrés Avelino Cáceres",,,,,
+CASO-0994,Sos,Violencia familiar,EnAtencion,2026-11-30T19:17:32-05:00,19,Mon,-16.444072,-71.514606,2,residencial,"Ricardo Palma, Urbanización Simon Bolivar",Alta,SER-16,,,
+CASO-0995,Reporte,Robo o hurto,EnAtencion,2026-11-30T19:20:19-05:00,19,Mon,-16.42761,-71.533577,4,mercado,"Mercado Botica Dermia, Costa Rica",Media,SER-23,,,
+CASO-0996,Sos,Robo o hurto,EnAtencion,2026-11-30T19:21:24-05:00,19,Mon,-16.43021,-71.533556,4,paradero,"Paradero La Apacheta, Avenida Juan Vidaurrázaga",Media,SER-24,,,
+CASO-0997,Reporte,Violencia familiar,Recibido,2026-11-30T19:36:51-05:00,19,Mon,-16.450138,-71.5153,3,residencial,"C.8, Asentamiento Humano Betania",,,,,
+CASO-0998,Reporte,Consumo de alcohol en la vía pública,Derivada,2026-11-30T19:38:39-05:00,19,Mon,-16.416722,-71.52719,1,noche,"Cerca de Pollo Real, Avenida Dolores",,,,,
+CASO-0999,Reporte,Robo o hurto,Recibido,2026-11-30T19:45:12-05:00,19,Mon,-16.428995,-71.525271,2,avenida,"Avenida Estados Unidos, cuadra 3",,,,,
+CASO-1000,Reporte,Otros,Recibido,2026-11-30T19:58:06-05:00,19,Mon,-16.411397,-71.516879,1,residencial,"Colonia, Cooperativa 58",Baja,SER-13,,,

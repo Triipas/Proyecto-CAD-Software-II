@@ -12,12 +12,17 @@ public sealed class Reasignacion
     public Guid SerenoNuevoId { get; private set; }
     public Guid OperadorId { get; private set; }
     public string Motivo { get; private set; } = "";
+    // 27/10/2026 — el motivo del catálogo MotivosReasignacion (Cad.Contratos.Casos). Motivo guarda el detalle escrito o, sin
+    // él, el texto del catálogo. Nulo antes.
+    public string? MotivoCodigo { get; private set; }
     public DateTimeOffset ReasignadoEn { get; private set; }
 
     private Reasignacion() { } // EF Core
 
-    public static Reasignacion Registrar(Caso caso, Guid serenoAnteriorId, Guid serenoNuevoId, Guid operadorId, string motivo, DateTimeOffset ahora) => new()
+    public static Reasignacion Registrar(Caso caso, Guid serenoAnteriorId, Guid serenoNuevoId, Guid operadorId, string motivoCodigo, string motivo,
+        DateTimeOffset ahora) => new()
     {
+        MotivoCodigo = motivoCodigo,
         Id = Guid.CreateVersion7(),
         CasoId = caso.Id,
         SerenoAnteriorId = serenoAnteriorId,

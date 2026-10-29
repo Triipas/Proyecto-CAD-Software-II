@@ -64,7 +64,7 @@ public class NotificacionesCiudadanoTests(FabricaCad fabrica)
 
     private async Task Cerrar(Guid casoId, Guid serenoId) =>
         Assert.IsType<ResultadoCierre.Cerrado>(await Servicio(s => s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId,
-            new DatosCierre(Robo, "Resultado público ficticio", "Notas internas ficticias"), serenoId, ActorAvance.Sereno, CancellationToken.None)));
+            new DatosCierre(Robo, "ResueltoEnElLugar", "Resultado público ficticio", "Notas internas ficticias"), serenoId, ActorAvance.Sereno, CancellationToken.None)));
 
     // ----- CA01 y CA05 -----
 
@@ -80,7 +80,7 @@ public class NotificacionesCiudadanoTests(FabricaCad fabrica)
         await Servicio(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(reporte, operador.Id, CancellationToken.None));
         await Servicio(s => s.GetRequiredService<RevisarReporte>().CorregirCategoriaAsync(reporte, Otros, operador.Id, CancellationToken.None)); // interno
         await Servicio(s => s.GetRequiredService<DecidirReporte>().EjecutarAsync(reporte,
-            new DatosDecision(TipoDecisionReporte.Admision, "Motivo ficticio"), operador.Id, CancellationToken.None));
+            new DatosDecision(TipoDecisionReporte.Admision, "Motivo ficticio", Prioridad: "Media", Heridos: "No"), operador.Id, CancellationToken.None));
         await Asignar(reporte, sereno.Id, operador.Id);
         await Avanzar(reporte, Avance.ConfirmarDesplazamiento, sereno.Id); // sigue «En atención»
         await Avanzar(reporte, Avance.IniciarAtencion, sereno.Id);         // sigue «En atención»
@@ -107,7 +107,7 @@ public class NotificacionesCiudadanoTests(FabricaCad fabrica)
 
         await Servicio(s => s.GetRequiredService<RegistrarIntentoContacto>().EjecutarAsync(sos, operador.Id,
             new DatosIntentoContacto(Guid.NewGuid(), "Contactado", "Información reservada", null), CancellationToken.None));
-        await Servicio(s => s.GetRequiredService<ClasificarCaso>().EjecutarAsync(sos, Robo, operador.Id, CancellationToken.None));
+        await Servicio(s => s.GetRequiredService<ClasificarCaso>().EjecutarAsync(sos, Robo, "Media", "No", operador.Id, CancellationToken.None));
         Assert.Empty(await DelCasoAsync(sos));
         await Asignar(sos, sereno.Id, operador.Id);
         await Avanzar(sos, Avance.ConfirmarDesplazamiento, sereno.Id);
@@ -128,7 +128,7 @@ public class NotificacionesCiudadanoTests(FabricaCad fabrica)
         await Servicio(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(reporte, operador.Id, CancellationToken.None));
 
         await Servicio(s => s.GetRequiredService<DecidirReporte>().EjecutarAsync(reporte,
-            new DatosDecision(tipo, "Motivo reservado", "Destino reservado", "Acción reservada"), operador.Id, CancellationToken.None));
+            new DatosDecision(tipo, "Motivo reservado", "Otro", "Acción reservada", "Destino reservado", "Media", "No", "Duplicado"), operador.Id, CancellationToken.None));
 
         Assert.Equal([EstadosPublicos.EnRevision, estado], (await DelCasoAsync(reporte)).Select(n => n.EstadoPublico));
     }
@@ -181,7 +181,7 @@ public class NotificacionesCiudadanoTests(FabricaCad fabrica)
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await Servicio(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(reporte, operador.Id, CancellationToken.None));
         await Servicio(s => s.GetRequiredService<DecidirReporte>().EjecutarAsync(reporte,
-            new DatosDecision(TipoDecisionReporte.Derivacion, "Motivo reservado", "Destino reservado", "Acción reservada"), operador.Id, CancellationToken.None));
+            new DatosDecision(TipoDecisionReporte.Derivacion, "Motivo reservado", "Otro", "Acción reservada", "Destino reservado"), operador.Id, CancellationToken.None));
 
         var json = await app.GetStringAsync(Ruta);
 

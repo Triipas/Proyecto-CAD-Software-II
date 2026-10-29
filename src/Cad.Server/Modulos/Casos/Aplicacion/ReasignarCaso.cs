@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
@@ -29,8 +30,8 @@ public sealed class ReasignarCaso(CadDbContext db, TimeProvider reloj, INotifica
 
     private static readonly Guid RolSereno = Roles.Todos.Single(r => r.Nombre == Roles.Sereno).Id;
 
-    public async Task<ResultadoReasignacion> EjecutarAsync(Guid casoId, Guid serenoNuevoId, string? motivo, Guid operadorId, Guid idSolicitud,
-        CancellationToken ct)
+    public async Task<ResultadoReasignacion> EjecutarAsync(Guid casoId, Guid serenoNuevoId, string? motivoCodigo, string? motivo, Guid operadorId,
+        Guid idSolicitud, CancellationToken ct)
     {
         if (await db.Asignaciones.AsNoTracking().SingleOrDefaultAsync(a => a.OperadorId == operadorId && a.IdSolicitud == idSolicitud, ct) is { } previa)
             return new ResultadoReasignacion.YaReasignado(previa);
@@ -40,8 +41,14 @@ public sealed class ReasignarCaso(CadDbContext db, TimeProvider reloj, INotifica
             errores["idSolicitud"] = ["Falta el identificador de la solicitud. Recarga la página e inténtalo de nuevo."];
         if (serenoNuevoId == Guid.Empty)
             errores["serenoId"] = ["Elige el sereno que atenderá el caso."];
+        // 27/10/2026: el motivo del catálogo; el detalle escrito solo es obligatorio con «Otro motivo».
+        if (!Catalogo.Contiene(MotivosReasignacion.Todos, motivoCodigo))
+            errores["motivoCodigo"] = ["Elige por qué se reasigna el caso."];
         if (string.IsNullOrWhiteSpace(motivo))
-            errores["motivo"] = ["Indica por qué se reasigna el caso."];
+        {
+            if (motivoCodigo == MotivosReasignacion.Otro)
+                errores["motivo"] = ["Indica por qué se reasigna el caso."];
+        }
         else if (motivo.Trim().Length > Reasignacion.MaximoMotivo)
             errores["motivo"] = [$"El motivo admite hasta {Reasignacion.MaximoMotivo} caracteres."];
         if (errores.Count > 0)
@@ -81,7 +88,8 @@ public sealed class ReasignarCaso(CadDbContext db, TimeProvider reloj, INotifica
                 await db.SaveChangesAsync(ct);
                 nueva = Asignacion.Registrar(caso, serenoNuevoId, operadorId, idSolicitud, ahora);
                 db.Asignaciones.Add(nueva);
-                db.Reasignaciones.Add(Reasignacion.Registrar(caso, anterior.SerenoId, serenoNuevoId, operadorId, motivo!, ahora));
+                db.Reasignaciones.Add(Reasignacion.Registrar(caso, anterior.SerenoId, serenoNuevoId, operadorId, motivoCodigo!,
+                    string.IsNullOrWhiteSpace(motivo) ? Catalogo.Texto(MotivosReasignacion.Todos, motivoCodigo)! : motivo, ahora));
                 db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.CasoReasignado, operadorId, VisibilidadEvento.Interna, ahora));
                 await db.SaveChangesAsync(ct);
                 await transaccion.CommitAsync(ct);

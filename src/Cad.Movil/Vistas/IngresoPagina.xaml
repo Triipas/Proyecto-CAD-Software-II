@@ -56,8 +56,6 @@
                            Style="{StaticResource TextoSecundario}" FontSize="13" />
                 </VerticalStackLayout>
 
-                <Label Text="MVP académico · datos simulados · no es un canal oficial de emergencias"
-                       Style="{StaticResource TextoSecundario}" FontSize="13" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

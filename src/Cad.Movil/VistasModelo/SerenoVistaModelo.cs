@@ -26,6 +26,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     private bool mostrarConfirmarDesactivacion;
     private bool mostrarExplicacion, mostrarAjustes, mostrarCierre, mostrarInformacion, panelExpandido, mostrarEtapas = true, calculandoRuta;
     private CategoriaCatalogo? categoriaCierre;
+    private Cad.Contratos.Casos.OpcionCatalogo? resultadoAtencionCierre;
     private string? resultadoCierre, notasCierre, avisoComoLlegar;
     private ResultadoRuta? ruta;
     private PuntoRuta? origenRuta;
@@ -496,6 +497,11 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public bool PuedeAbrirCierre => EnAtencion && !mostrarCierre;
     public IReadOnlyList<CategoriaCatalogo> CategoriasCierre => despacho.Categorias;
     public CategoriaCatalogo? CategoriaCierre { get => categoriaCierre; set => Asignar(ref categoriaCierre, value); }
+    // 27/10/2026: cómo terminó la atención, del catálogo compartido con el servidor (lo cuenta la analítica de la central).
+    public IReadOnlyList<Cad.Contratos.Casos.OpcionCatalogo> OpcionesResultadoAtencion => Cad.Contratos.Casos.ResultadosAtencion.Todos;
+    public Cad.Contratos.Casos.OpcionCatalogo? ResultadoAtencionCierre { get => resultadoAtencionCierre; set => Asignar(ref resultadoAtencionCierre, value); }
+    public string? ErrorResultadoAtencionCierre => PrimerError("resultadoAtencion");
+    public bool HayErrorResultadoAtencionCierre => ErrorResultadoAtencionCierre is not null;
     public string? ResultadoCierre { get => resultadoCierre; set => Asignar(ref resultadoCierre, value); }
     public string? NotasCierre { get => notasCierre; set => Asignar(ref notasCierre, value); }
     public string? ErrorCategoriaCierre => PrimerError("categoriaId");
@@ -521,10 +527,10 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
 
     private async Task ConfirmarCierreAsync()
     {
-        if (await despacho.CerrarAsync(CategoriaCierre?.Id, ResultadoCierre, NotasCierre))
+        if (await despacho.CerrarAsync(CategoriaCierre?.Id, ResultadoCierre, NotasCierre, ResultadoAtencionCierre?.Codigo))
         {
             MostrarCierre = false;
-            (CategoriaCierre, ResultadoCierre, NotasCierre) = (null, null, null);
+            (CategoriaCierre, ResultadoAtencionCierre, ResultadoCierre, NotasCierre) = (null, null, null, null);
         }
         ActualizarDespacho();
     }
@@ -614,6 +620,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
                      nameof(PuedeConfirmarDesplazamiento), nameof(PuedeIniciarAtencion), nameof(TextoAvances), nameof(HayAvances),
                      nameof(MostrarCierre), nameof(PuedeAbrirCierre), nameof(CategoriasCierre), nameof(ErrorCategoriaCierre), nameof(HayErrorCategoriaCierre),
                      nameof(ErrorResultadoCierre), nameof(HayErrorResultadoCierre), nameof(ErrorNotasCierre), nameof(HayErrorNotasCierre),
+                     nameof(ErrorResultadoAtencionCierre), nameof(HayErrorResultadoAtencionCierre),
                      nameof(CierreReciente), nameof(HayCierreReciente), nameof(DespachoRetirado), nameof(HayDespachoRetirado),
                      nameof(Destino), nameof(HayDestino), nameof(SinPuntoEnMapa), nameof(TituloUbicacion), nameof(DetalleUbicacion),
                      nameof(TextoDistancia), nameof(HayDistancia), nameof(Etapas), nameof(ResumenCentral), nameof(SinModoDespacho), nameof(PuedeActuar),
