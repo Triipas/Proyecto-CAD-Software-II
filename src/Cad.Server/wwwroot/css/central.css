@@ -463,6 +463,123 @@
   color: var(--color-primario);
 }
 
+/* Filtro por nombre del panel de serenos. */
+.serenos-filtro {
+  gap: var(--espacio-1);
+}
+
+.central .sereno--oculto {
+  display: none;
+}
+
+/* ── Asignación rápida (29/10/2026) ───────────────────────
+   Barra sobre la leyenda, entre los dos paneles: el sereno más cercano a un clic y un buscador por nombre. La lista se abre
+   hacia arriba para no salirse de la pantalla. */
+.asignar-rapido {
+  position: absolute;
+  z-index: 550;
+  left: 28.5rem;
+  right: 21.5rem;
+  bottom: calc(var(--espacio-4) + 3rem);
+  max-width: 42rem;
+  display: grid;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3);
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+}
+
+.asignar-rapido[hidden],
+.asignar-rapido [hidden] {
+  display: none;
+}
+
+.asignar-rapido__caso {
+  margin: 0;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+}
+
+.asignar-rapido__fila {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--espacio-2);
+  align-items: center;
+}
+
+.asignar-rapido__sugerido {
+  white-space: nowrap;
+}
+
+.asignar-rapido__buscar {
+  position: relative;
+}
+
+.asignar-rapido__buscar .campo__control {
+  width: 100%;
+}
+
+.asignar-rapido__lista {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--espacio-1));
+  max-height: 14rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--espacio-1);
+  list-style: none;
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+}
+
+.asignar-rapido__lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  cursor: pointer;
+}
+
+.asignar-rapido__lista li[aria-selected="true"] {
+  background: var(--color-tenue);
+  font-weight: var(--peso-semi);
+}
+
+.asignar-rapido__lista .asignar-rapido__nada {
+  cursor: default;
+  color: var(--color-texto-secundario);
+}
+
+.asignar-rapido__distancia {
+  flex: none;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+@media (max-width: 47.5rem) {
+  .asignar-rapido {
+    position: relative;
+    inset: auto;
+    max-width: none;
+    margin: 0 var(--espacio-3);
+  }
+
+  .asignar-rapido__fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .asignar-rapido__lista {
+    bottom: auto;
+    top: calc(100% + var(--espacio-1));
+  }
+}
+
 /* ── Leyenda del mapa: cada capa se activa o se oculta ─── */
 .leyenda-mapa {
   position: absolute;

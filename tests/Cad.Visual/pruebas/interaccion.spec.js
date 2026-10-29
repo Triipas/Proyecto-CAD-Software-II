@@ -35,6 +35,35 @@ test.describe('Central: interacción', () => {
     await expect(asignar).toBeFocused();
   });
 
+  test('la barra de asignación rápida ofrece al más cercano y busca a otro por nombre', async ({ page }, info) => {
+    test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
+    await prepararPagina(page);
+    await abrir(page, '/panel/central');
+    await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+
+    const barra = page.locator('[data-asignar-rapido]');
+    await expect(barra).toBeHidden();
+    await page.locator('.central__urgente [data-seleccionar-sos]').first().click();
+    await expect(barra).toBeVisible();
+
+    // El más cercano, a un clic: abre la misma confirmación que el panel (sin confirmarla).
+    const sugerido = barra.locator('[data-ar-sugerido]');
+    await expect(sugerido).toContainText(/\d+ (m|km)/);
+    await sugerido.click();
+    const dialogo = page.getByRole('dialog');
+    await expect(dialogo.getByRole('heading')).toContainText('¿Asignar el SOS de Ana Ficticia');
+    await page.keyboard.press('Escape');
+    await expect(dialogo).toBeHidden();
+
+    // «/» enfoca el buscador; un nombre que no existe no deja opciones.
+    await page.keyboard.press('/');
+    const buscar = barra.locator('[data-ar-buscar]');
+    await expect(buscar).toBeFocused();
+    await expect(barra.getByRole('option').first()).toBeVisible();
+    await buscar.fill('zzzz');
+    await expect(barra.getByText('Ningún sereno disponible se llama así.')).toBeVisible();
+  });
+
   test('los paneles se pliegan y las capas del mapa se ocultan desde la leyenda', async ({ page }, info) => {
     test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
     await prepararPagina(page);

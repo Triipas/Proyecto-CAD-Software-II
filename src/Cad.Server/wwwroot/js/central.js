@@ -309,8 +309,8 @@
 
   // 24/10/2026: elegir el caso es la acción principal, desde la cola o desde el mapa. El mapa lo encuadra con su sereno
   // sugerido (o vuela a él) y se abren los serenos para asignar; reemplaza a «Ver en el mapa» y «Elegir sereno».
+  // 29/10/2026: ya no se abre el panel de serenos (tapaba el mapa): la barra de asignación rápida resuelve la elección.
   function elegirCaso(id, { desdeMapa = false } = {}) {
-    desplegar(document.getElementById("panel-serenos"));
     seleccionar(id, { desdeMapa, conSereno: true });
   }
 
@@ -522,7 +522,142 @@
       confirmacion.hidden = true;
     }
     for (const boton of regionSerenos.querySelectorAll("[data-asignar-sereno]")) boton.hidden = !sos;
+    actualizarBarraAsignacion();
   }
+
+  // ---------- Asignación rápida (29/10/2026): el más cercano a un clic y un buscador por nombre ----------
+  // Con el caso elegido, la barra ofrece al sereno disponible más cercano y un combobox para buscar a otro (flechas + Intro,
+  // «/» para enfocarlo). Los candidatos salen de la lista de serenos, así que se rehace con cada resincronización.
+  const barra = document.querySelector("[data-asignar-rapido]");
+  const arCaso = barra.querySelector("[data-ar-caso]");
+  const arVacio = barra.querySelector("[data-ar-vacio]");
+  const arFila = barra.querySelector("[data-ar-fila]");
+  const arSugerido = barra.querySelector("[data-ar-sugerido]");
+  const arBuscar = barra.querySelector("[data-ar-buscar]");
+  const arLista = barra.querySelector("[data-ar-lista]");
+  const arAnuncio = barra.querySelector("[data-ar-anuncio]");
+  let arCasoActual = null;
+  let arCandidatos = [];
+  let arVisibles = [];
+  let arActivo = null; // id del sereno resaltado en la lista (se conserva al rehacerla)
+
+  const sinTildes = (texto) => texto.normalize("NFD").replace(/\p{M}/g, "").toLowerCase();
+
+  function actualizarBarraAsignacion() {
+    const sos = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
+    barra.hidden = !sos;
+    if (!sos) {
+      arCasoActual = null;
+      cerrarListaAsignacion();
+      return;
+    }
+    if (arCasoActual !== sosSeleccionado) {
+      arCasoActual = sosSeleccionado;
+      arBuscar.value = "";
+      arActivo = null;
+    }
+    arCaso.textContent = `${sos.dataset.origen === "Reporte" ? "Reporte" : "SOS"} de ${sos.dataset.ciudadano} · asignar a`;
+    const origen = sos.dataset.lat ? L.latLng(Number(sos.dataset.lat), Number(sos.dataset.lon)) : null;
+    arCandidatos = [...regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]')]
+      .map((item) => ({
+        item, id: item.dataset.sereno, nombre: item.dataset.nombre, buscable: sinTildes(item.dataset.nombre),
+        metros: origen && item.dataset.lat ? origen.distanceTo(L.latLng(Number(item.dataset.lat), Number(item.dataset.lon))) : null,
+      }))
+      .sort((a, b) => (a.metros ?? Infinity) - (b.metros ?? Infinity) || a.nombre.localeCompare(b.nombre, "es"));
+    arVacio.hidden = arCandidatos.length > 0;
+    arFila.hidden = arCandidatos.length === 0;
+    const cercano = arCandidatos.find((c) => c.metros !== null);
+    arSugerido.hidden = !cercano;
+    if (cercano) {
+      arSugerido.textContent = `${cercano.nombre} · ${distancia(cercano.metros)}`;
+      arSugerido.dataset.sereno = cercano.id;
+      arSugerido.setAttribute("aria-label", `Asignar a ${cercano.nombre}, el más cercano, a ${distancia(cercano.metros)}`);
+    }
+    pintarListaAsignacion();
+  }
+
+  function pintarListaAsignacion() {
+    const consulta = sinTildes(arBuscar.value.trim());
+    arVisibles = arCandidatos.filter((c) => c.buscable.includes(consulta));
+    if (!arVisibles.some((c) => c.id === arActivo)) arActivo = arVisibles[0]?.id ?? null;
+    arLista.innerHTML = arVisibles.length
+      ? arVisibles.map((c) => `<li role="option" id="ar-op-${c.id}" data-id="${c.id}" aria-selected="${c.id === arActivo}">`
+        + `<span class="asignar-rapido__nombre">${escapar(c.nombre)}</span>`
+        + `<span class="asignar-rapido__distancia">${c.metros === null ? "sin ubicación" : distancia(c.metros)}</span></li>`).join("")
+      : `<li class="asignar-rapido__nada" role="presentation">Ningún sereno disponible se llama así.</li>`;
+    arBuscar.setAttribute("aria-activedescendant", arActivo ? `ar-op-${arActivo}` : "");
+    arLista.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+    arAnuncio.textContent = arLista.hidden ? "" : `${arVisibles.length} ${arVisibles.length === 1 ? "sereno" : "serenos"}`;
+  }
+
+  function abrirListaAsignacion() {
+    arLista.hidden = false;
+    arBuscar.setAttribute("aria-expanded", "true");
+    pintarListaAsignacion();
+  }
+
+  function cerrarListaAsignacion() {
+    arLista.hidden = true;
+    arBuscar.setAttribute("aria-expanded", "false");
+    arBuscar.setAttribute("aria-activedescendant", "");
+  }
+
+  function asignarDesdeBarra(id) {
+    const item = id && regionSerenos.querySelector(`[data-sereno="${CSS.escape(id)}"]`);
+    if (!item) return;
+    cerrarListaAsignacion();
+    abrirConfirmacion(item);
+  }
+
+  function moverActivo(paso) {
+    if (!arVisibles.length) return;
+    const actual = arVisibles.findIndex((c) => c.id === arActivo);
+    arActivo = arVisibles[(actual + paso + arVisibles.length) % arVisibles.length].id;
+    pintarListaAsignacion();
+  }
+
+  arSugerido.addEventListener("click", () => asignarDesdeBarra(arSugerido.dataset.sereno));
+  arBuscar.addEventListener("focus", abrirListaAsignacion);
+  arBuscar.addEventListener("input", abrirListaAsignacion);
+  arBuscar.addEventListener("blur", cerrarListaAsignacion);
+  arBuscar.addEventListener("keydown", (evento) => {
+    if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
+      evento.preventDefault();
+      if (arLista.hidden) abrirListaAsignacion();
+      else moverActivo(evento.key === "ArrowDown" ? 1 : -1);
+    } else if (evento.key === "Enter") {
+      evento.preventDefault();
+      asignarDesdeBarra(arActivo);
+    } else if (evento.key === "Escape" && !arLista.hidden) {
+      evento.preventDefault();
+      cerrarListaAsignacion();
+    }
+  });
+  // El clic en una opción no debe quitarle el foco al campo antes de contar (blur cerraría la lista primero).
+  arLista.addEventListener("mousedown", (evento) => evento.preventDefault());
+  arLista.addEventListener("click", (evento) => asignarDesdeBarra(evento.target.closest("[data-id]")?.dataset.id));
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key !== "/" || evento.ctrlKey || evento.metaKey || evento.altKey || barra.hidden || arFila.hidden) return;
+    if (evento.target.closest("input, textarea, select, [contenteditable]")) return;
+    evento.preventDefault();
+    arBuscar.focus();
+  });
+
+  // Filtro por nombre del panel de serenos: oculta tarjetas, no toca la lista que el servidor resincroniza.
+  const filtroSerenos = document.querySelector("[data-filtro-serenos]");
+  const sinCoincidencias = document.querySelector("[data-sin-coincidencias]");
+  function aplicarFiltroSerenos() {
+    const consulta = sinTildes(filtroSerenos.value.trim());
+    const items = [...regionSerenos.querySelectorAll("[data-sereno]")];
+    let visibles = 0;
+    for (const item of items) {
+      const coincide = sinTildes(item.dataset.nombre).includes(consulta);
+      item.classList.toggle("sereno--oculto", !coincide);
+      if (coincide) visibles++;
+    }
+    sinCoincidencias.hidden = !consulta || visibles > 0 || items.length === 0;
+  }
+  filtroSerenos.addEventListener("input", aplicarFiltroSerenos);
 
   function abrirConfirmacion(itemSereno) {
     const sos = document.getElementById(`sos-${sosSeleccionado}`);
@@ -591,6 +726,7 @@
       animar: true,
       despues: () => {
         if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+        aplicarFiltroSerenos();
         actualizarAsignacion();
         calcularDespacho();
       },
