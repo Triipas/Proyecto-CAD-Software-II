@@ -34,6 +34,7 @@ public static class ModuloCasos
         services.AddScoped<EvaluarCaso>();
         services.AddScoped<Modulos.Consultas.ConsultarSosPendientes>();
         services.AddScoped<Modulos.Consultas.ConsultarCasosEnMapa>();
+        services.AddScoped<Modulos.Consultas.ConsultarCasosAsignados>(); // cola de la central (29/10/2026)
         services.AddSingleton<Modulos.Consultas.RedCalles>();
         services.AddScoped<Modulos.Consultas.ConsultarRutasEnCamino>();
         services.AddScoped<Modulos.Consultas.ConsultarDetalleSos>();

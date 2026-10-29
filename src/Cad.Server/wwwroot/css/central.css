@@ -182,6 +182,15 @@
   background: var(--color-reporte);
 }
 
+.central__contador--asignados {
+  background: var(--color-progreso);
+}
+
+.central__asignados {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
 .central__ayuda {
   margin: 0;
   font-size: var(--texto-xs);
@@ -220,6 +229,12 @@
   .central .sos:hover {
     box-shadow: var(--sombra-2);
   }
+}
+
+/* Un caso con sereno ya no es urgente: tarjeta neutra, sin el tinte rojo del SOS pendiente. El estado va en su chip. */
+.central .sos--asignado:not(.sos--reporte):not(.sos--seleccionado) {
+  border-color: var(--color-borde);
+  background: var(--color-superficie);
 }
 
 .central .sos--seleccionado {
@@ -1086,7 +1101,9 @@
 }
 
 .cola--solo-sos .central__reportes,
-.cola--solo-reportes .central__urgente {
+.cola--solo-reportes .central__urgente,
+.cola--solo-sos .sos--asignado.sos--reporte,
+.cola--solo-reportes .sos--asignado:not(.sos--reporte) {
   display: none;
 }
 

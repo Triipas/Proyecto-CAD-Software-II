@@ -13,6 +13,11 @@
   const regionReportes = document.querySelector("[data-region-reportes]");
   const contadorReportes = document.querySelector("[data-contador-reportes]");
   const casos = () => [...region.querySelectorAll("[data-sos]"), ...(regionReportes?.querySelectorAll("[data-sos]") ?? [])];
+  // Casos con sereno (asignados, en camino o en atención): siguen en la cola tras los pendientes. Al elegir uno se dibuja,
+  // solo entonces, el recorrido de su sereno (29/10/2026).
+  const regionAsignados = document.querySelector("[data-region-asignados]");
+  const contadorAsignados = document.querySelector("[data-contador-asignados]");
+  let casoConRuta = null;
   // HU25: casos en curso con ubicación (no asignables), con su origen y su estado.
   const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
   const marcadoresEnCurso = new Map();
@@ -191,6 +196,7 @@
   let sosSeleccionado = null;
 
   function seleccionar(id, { desdeMapa = false, conSereno = false } = {}) {
+    soltarAsignado();
     sosSeleccionado = id;
     for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
     for (const boton of document.querySelectorAll("[data-seleccionar-sos][aria-pressed=true]")) boton.setAttribute("aria-pressed", "false");
@@ -229,6 +235,61 @@
     actualizarAsignacion();
     dibujarDespacho();
   }
+
+  // ---------- Casos con sereno en la cola ----------
+  // Elegirlo lleva el mapa al caso con su sereno y dibuja el recorrido de ese sereno; ningún otro recorrido se dibuja.
+  function marcarAsignado(id) {
+    for (const item of document.querySelectorAll("[data-asignado]")) {
+      const elegido = item.dataset.asignado === id;
+      item.classList.toggle("sos--seleccionado", elegido);
+      item.querySelector("[data-seleccionar-asignado]")?.setAttribute("aria-pressed", String(elegido));
+    }
+  }
+
+  function seleccionarAsignado(id, { desdeMapa = false } = {}) {
+    if (sosSeleccionado) deseleccionar();
+    casoConRuta = id;
+    marcarAsignado(id);
+    const item = document.getElementById(`asignado-${id}`);
+    if (item && desdeMapa) {
+      item.scrollIntoView({ block: "nearest" });
+      item.focus();
+    }
+    resaltar(marcadoresEnCurso, id);
+    dibujarEnCurso();
+    const marcador = marcadoresEnCurso.get(id) ?? [...marcadoresSerenos.values()].find((m) => m.claves?.includes(`caso:${id}`));
+    if (!marcador) return;
+    if (desdeMapa) {
+      centrar(marcador);
+      return;
+    }
+    const v = vinculos().get(id);
+    const clase = item?.dataset.origen === "Reporte" ? "llegada--reporte" : "";
+    if (v && !v.enElLugar) encuadrar(L.latLngBounds([v.puntoCaso, v.puntoSereno]), marcador, clase);
+    else volarA(marcador, { zoom: 17, clase });
+  }
+
+  function soltarAsignado() {
+    if (!casoConRuta) return;
+    casoConRuta = null;
+    marcarAsignado(null);
+    resaltar(marcadoresEnCurso, null);
+    dibujarRecorridos(vinculos());
+  }
+
+  // El contador de la sección dice cuántos se ven con el filtro de la cola.
+  function contarAsignados() {
+    if (!contadorAsignados) return;
+    const filtro = document.querySelector('[data-filtro-cola][aria-pressed="true"]')?.dataset.filtroCola ?? "todo";
+    const visibles = [...document.querySelectorAll("[data-asignado]")].filter((i) =>
+      filtro === "todo" || (filtro === "reportes") === (i.dataset.origen === "Reporte")).length;
+    cadMovimiento.fijarCifra(contadorAsignados, visibles);
+  }
+
+  regionAsignados?.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("[data-seleccionar-asignado]");
+    if (boton) seleccionarAsignado(boton.closest("[data-asignado]").dataset.asignado);
+  });
 
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
   // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
@@ -304,7 +365,7 @@
         keyboard: true,
       })
         .bindPopup(detalle, GLOBO)
-        .on("click", (e) => centrar(e.target))
+        .on("click", () => seleccionarAsignado(id, { desdeMapa: true }))
         .addTo(mapa);
       marcador.claves = [`caso:${id}`];
       marcador.forma = `${clase}|${texto}`;
@@ -381,7 +442,7 @@
     for (const linea of lineasVinculo.splice(0)) linea.remove();
     let faltan = false;
     for (const v of vinculados.values()) {
-      if (v.enElLugar) continue;
+      if (v.enElLugar || v.caso.dataset.casoMapa !== casoConRuta) continue; // solo el recorrido del caso elegido
       const origen = v.caso.dataset.origen === "Reporte" ? "reporte" : "sos";
       const clase = `linea-vinculo linea-vinculo--${origen}`;
       const recorrido = recorridos.get(v.sereno.dataset.sereno);
@@ -402,7 +463,8 @@
   async function pedirRecorridos(vinculados) {
     if (pidiendoRecorridos) return; // al terminar se redibuja y, si algo cambió entretanto, se vuelve a pedir
     pidiendoRecorridos = true;
-    const claves = new Map([...vinculados.values()].map((v) => [v.sereno.dataset.sereno, { clave: claveRecorrido(v), caso: v.caso.dataset.casoMapa }]));
+    const claves = new Map([...vinculados.values()].filter((v) => v.caso.dataset.casoMapa === casoConRuta)
+      .map((v) => [v.sereno.dataset.sereno, { clave: claveRecorrido(v), caso: v.caso.dataset.casoMapa }]));
     try {
       const respuesta = await fetch("/panel/central?handler=Rutas", { headers: { Accept: "application/json" }, credentials: "same-origin" });
       if (respuesta.redirected || !respuesta.ok) return;
@@ -470,7 +532,10 @@
       }
       existente?.remove();
       if (v) {
-        const conjunto = marcadorEnElLugar(v).on("click", () => seleccionarSereno(id, { desdeMapa: true })).addTo(mapa);
+        const conjunto = marcadorEnElLugar(v).on("click", () => {
+          seleccionarSereno(id, { desdeMapa: true });
+          seleccionarAsignado(v.caso.dataset.casoMapa, { desdeMapa: true });
+        }).addTo(mapa);
         conjunto.claves = [`sereno:${id}`, `caso:${v.caso.dataset.casoMapa}`];
         conjunto.forma = forma;
         marcadoresSerenos.set(id, conjunto);
@@ -808,6 +873,13 @@
       const elegido = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
       const esReporte = elegido?.dataset.origen === "Reporte";
       if (elegido && ((filtro === "sos" && esReporte) || (filtro === "reportes" && !esReporte))) deseleccionar();
+      const asignado = casoConRuta && document.getElementById(`asignado-${casoConRuta}`);
+      const asignadoEsReporte = asignado?.dataset.origen === "Reporte";
+      if (asignado && ((filtro === "sos" && asignadoEsReporte) || (filtro === "reportes" && !asignadoEsReporte))) {
+        mapa.closePopup();
+        soltarAsignado();
+      }
+      contarAsignados();
     });
   }
 
@@ -916,15 +988,24 @@
         avisarReportesNuevos();
       }
     }
+    if (regionAsignados) {
+      const asignados = await fetch("/panel/central?handler=Asignados", { headers: { Accept: "text/html" }, credentials: "same-origin" });
+      if (asignados.ok && !asignados.redirected)
+        cadMovimiento.actualizarRegion(regionAsignados, await asignados.text(), { animar: true, despues: () => marcarAsignado(casoConRuta) });
+    }
     if (regionCasosMapa) {
       const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
       if (enCurso.ok && !enCurso.redirected) cadMovimiento.actualizarRegion(regionCasosMapa, await enCurso.text());
     }
+    // El caso con recorrido que ya no está en curso (se cerró) deja de tenerlo.
+    if (casoConRuta && !regionCasosMapa?.querySelector(`[data-caso-mapa="${CSS.escape(casoConRuta)}"]`)) casoConRuta = null;
     dibujarMarcadores();
     dibujarEnCurso();
     if (sosSeleccionado) resaltar(marcadores, sosSeleccionado);
+    if (casoConRuta) resaltar(marcadoresEnCurso, casoConRuta);
     actualizarAsignacion();
     actualizarIndicadores();
+    contarAsignados();
     return true;
   }
 
