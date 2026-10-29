@@ -21,6 +21,7 @@ public partial class InicioCiudadanoPagina : ContentPage
     // Movimiento (fase 3): para animar solo los cambios, no el estado con el que se abre la pantalla.
     private string? tipoSosAnterior, estadoCasoAnterior;
     private bool transmitiendo;
+    private IDispatcherTimer? revision;
 
     public InicioCiudadanoPagina(InicioCiudadanoVistaModelo vistaModelo, IConfiguracionServidor servidor)
     {
@@ -48,7 +49,27 @@ public partial class InicioCiudadanoPagina : ContentPage
             await CargarMapaAsync();
         }
         await vistaModelo.AlAparecerAsync();
+        IniciarRevision();
     }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        revision?.Stop();
+    }
+
+    // Sin avisos push para el ciudadano: mientras el inicio está a la vista se consultan sus casos cada pocos segundos (también el SOS
+    // que acaba de emitir). Al cerrarse un caso, la app abre sola su evaluación (opcional, una vez por caso).
+    private void IniciarRevision()
+    {
+        revision ??= Dispatcher.CreateTimer();
+        revision.Interval = InicioCiudadanoVistaModelo.IntervaloRevision;
+        revision.Tick -= AlRevisar;
+        revision.Tick += AlRevisar;
+        revision.Start();
+    }
+
+    private async void AlRevisar(object? sender, EventArgs e) => await vistaModelo.RevisarCasosAsync();
 
     // Leaflet va dentro de la página (sin CDN), como en el reporte. La posición solo se dibuja aquí; no se envía.
     private async Task CargarMapaAsync()

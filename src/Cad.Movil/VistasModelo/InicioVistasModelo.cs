@@ -17,6 +17,8 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
     private readonly ServicioBandeja? bandeja;
     private readonly ServicioAcompanamiento? acompanamiento;
     private readonly IApiCad? api;
+    private readonly OfertaEvaluacion? oferta;
+    private readonly SemaphoreSlim revision = new(1, 1);
     private MiCasoResumen? casoActivo;
     private ResultadoPreparacion? estadoUbicacion;
     private int? noLeidas;
@@ -25,8 +27,9 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
 
     public InicioCiudadanoVistaModelo(EmisorSos emisor, PreparacionUbicacion preparacion, IAlmacenSesion sesiones,
         INavegacion navegacion, Action abrirAjustes, ServicioBandeja? bandeja = null, ServicioAcompanamiento? acompanamiento = null,
-        IApiCad? api = null)
+        IApiCad? api = null, OfertaEvaluacion? oferta = null)
     {
+        this.oferta = oferta;
         this.bandeja = bandeja;
         this.acompanamiento = acompanamiento;
         this.api = api;
@@ -123,14 +126,35 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
             Notificar(nameof(Saludo));
             Notificar(nameof(Iniciales));
         }
-        if (await api.ConsultarMisCasosAsync(sesion.Token, CancellationToken.None) is ResultadoApi<List<MiCasoResumen>>.Correcto correcto)
+        await RevisarCasosAsync();
+    }
+
+    // Consulta los casos propios: actualiza la franja del caso en curso y, si alguno acaba de cerrarse sin haberse ofrecido su
+    // evaluación, abre «Mi caso» con la evaluación a la vista (HU32; opcional, una sola vez por caso). Se llama al mostrar el
+    // inicio y, mientras sigue a la vista con un caso en curso, cada pocos segundos (la app ciudadana no recibe avisos push).
+    public async Task RevisarCasosAsync()
+    {
+        if (api is null || await sesiones.LeerAsync() is not { } sesion || !await revision.WaitAsync(0))
+            return;
+        try
         {
+            if (await api.ConsultarMisCasosAsync(sesion.Token, CancellationToken.None) is not ResultadoApi<List<MiCasoResumen>>.Correcto correcto)
+                return;
             casoActivo = correcto.Valor.Where(c => !EstadosFinales.Contains(c.Estado)).MaxBy(c => c.RegistradoEn);
             foreach (var p in new[] { nameof(HayCasoActivo), nameof(TextoCasoActivo), nameof(AyudaCasoActivo), nameof(OrigenCaso),
                          nameof(EstadoCaso), nameof(CasoEsSos), nameof(SelloCaso) })
                 Notificar(p);
+            if (oferta is not null && await oferta.BuscarAsync(sesion.Token, correcto.Valor) is { } cerrado)
+                await navegacion.IrAAsync($"{Rutas.MiCaso}?id={cerrado}&{Rutas.ParametroCalificar}=1");
+        }
+        finally
+        {
+            revision.Release();
         }
     }
+
+    // Cada cuánto se vuelve a consultar el inicio mientras hay un caso en curso a la vista.
+    public static readonly TimeSpan IntervaloRevision = TimeSpan.FromSeconds(20);
 
     private async Task CentrarAsync()
     {
