@@ -91,6 +91,58 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('.sereno', { hasText: 'Ubicación no disponible' }).locator('[data-ver-sereno]')).toHaveCount(0);
   });
 
+  test('el filtro de la cola también filtra el mapa: «SOS» solo SOS, «Reportes» solo reportes', async ({ page }, info) => {
+    test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
+    await prepararPagina(page);
+    await abrir(page, '/panel/central');
+    await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+
+    const capa = (nombre) => page.locator(`[data-capa="${nombre}"]`);
+    const filtro = (nombre) => page.locator(`[data-filtro-cola="${nombre}"]`);
+    // Qué marcadores se ven (por estilo: la semilla no los deja dentro del encuadre).
+    const vistos = (selector) => page.evaluate((s) => [...document.querySelectorAll(s)].map((e) => getComputedStyle(e).display !== 'none'), selector);
+
+    // Con todo, se ve todo.
+    expect(await vistos('.marcador-sos')).toContain(true);
+    expect(await vistos('.marcador-reporte')).toContain(true);
+
+    // «SOS»: ningún reporte en el mapa (ni el pendiente ni el que está en curso), y su chip lo dice.
+    await filtro('sos').click();
+    await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'false');
+    await expect(capa('sos')).toHaveAttribute('aria-pressed', 'true');
+    const reportes = await vistos('.marcador-reporte');
+    expect(reportes.length).toBeGreaterThan(0);
+    expect(reportes).not.toContain(true);
+    expect(await vistos('.marcador-sos')).toContain(true);
+
+    // «Reportes»: ningún SOS.
+    await filtro('reportes').click();
+    await expect(capa('sos')).toHaveAttribute('aria-pressed', 'false');
+    await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'true');
+    expect(await vistos('.marcador-sos')).not.toContain(true);
+    expect(await vistos('.marcador-reporte')).toContain(true);
+
+    // «Todo» los devuelve.
+    await filtro('todo').click();
+    await expect(capa('sos')).toHaveAttribute('aria-pressed', 'true');
+    await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'true');
+    expect(await vistos('.marcador-reporte')).toContain(true);
+
+    // El caso elegido que queda fuera del filtro se suelta: la barra de asignación se cierra.
+    const barra = page.locator('[data-asignar-rapido]');
+    await page.locator('.central__reportes [data-seleccionar-sos]').first().click();
+    await expect(barra).toBeVisible();
+    await filtro('sos').click();
+    await expect(barra).toBeHidden();
+    await expect(page.locator('.sos--seleccionado')).toHaveCount(0);
+
+    // Uno de su propio grupo sí se conserva.
+    await page.locator('.central__urgente [data-seleccionar-sos]').first().click();
+    await expect(barra).toBeVisible();
+    await filtro('sos').click();
+    await expect(barra).toBeVisible();
+  });
+
   test('los paneles se pliegan y las capas del mapa se ocultan desde la leyenda', async ({ page }, info) => {
     test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
     await prepararPagina(page);
