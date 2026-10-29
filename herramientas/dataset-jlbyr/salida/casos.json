@@ -75608,6 +75608,329 @@
  },
  {
   "id": "CASO-0994",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000003",
+  "ciudadano": "CIU-0069",
+  "registrado_en": "2026-11-30T19:09:43-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Grupo de jóvenes consumiendo en la losa deportiva.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:05:53-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "Parque Fecia, Calle Cuba"
+   },
+   "fotos": 0
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:09:43-05:00",
+    "actor": "CIU-0069"
+   }
+  ],
+  "estado_final": "Descartada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-0995",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
+  "ciudadano": "CIU-0127",
+  "registrado_en": "2026-11-30T19:12:43-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Personas bebiendo en la vía pública frente a la tienda.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:10:35-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.436328,
+    "longitud": -71.522747,
+    "precision_m": 23,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:12:43-05:00",
+    "actor": "CIU-0127"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-0996",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0297",
+  "registrado_en": "2026-11-30T19:13:54-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Me arrancharon el celular y huyeron en una moto lineal.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:28:06-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.423844,
+    "longitud": -71.536131,
+    "precision_m": 15,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:13:54-05:00",
+    "actor": "CIU-0297"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:38:03-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:42:37-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-0997",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
+  "ciudadano": "CIU-0322",
+  "registrado_en": "2026-11-30T19:14:13-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Dos personas se están golpeando en la calle.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:04:26-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.443663,
+    "longitud": -71.517105,
+    "precision_m": 5,
+    "referencia": "Cerca de El buen sabor, Avenida Caracas"
+   },
+   "fotos": 1
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000008",
+   "prioridad": "Alta",
+   "heridos": "Si"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:14:13-05:00",
+    "actor": "CIU-0322"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-0998",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000003",
+  "ciudadano": "CIU-0121",
+  "registrado_en": "2026-11-30T19:14:16-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Grupo de jóvenes consumiendo en la losa deportiva.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:58:08-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "Andrés Avelino Cáceres, cerca del parque"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000003",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:14:16-05:00",
+    "actor": "CIU-0121"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:33:33-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:36:29-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-0999",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
+  "ciudadano": "CIU-0328",
+  "registrado_en": "2026-11-30T19:15:32-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Una persona tirada en la vereda no responde bien.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:20:34-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.414398,
+    "longitud": -71.517252,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:15:32-05:00",
+    "actor": "CIU-0328"
+   }
+  ],
+  "estado_final": "Descartada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1000",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000003",
+  "ciudadano": "CIU-0176",
+  "registrado_en": "2026-11-30T19:15:47-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Venden droga en la esquina del parque todas las noches.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:56:59-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.443039,
+    "longitud": -71.517131,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:15:47-05:00",
+    "actor": "CIU-0176"
+   }
+  ],
+  "estado_final": "Derivada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1001",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000012",
+  "ciudadano": "CIU-0050",
+  "registrado_en": "2026-11-30T19:17:27-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Escándalo en la vía pública, gritos y botellas rotas.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:55:49-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.414957,
+    "longitud": -71.51659,
+    "precision_m": 19,
+    "referencia": "Cerca de Kuan Ti, Río Nilo"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000012",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:17:27-05:00",
+    "actor": "CIU-0050"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:29:23-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:30:22-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1002",
   "origen": "Sos",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
   "ciudadano": "CIU-0269",
@@ -75676,7 +75999,58 @@
   "estado": "EnAtencion"
  },
  {
-  "id": "CASO-0995",
+  "id": "CASO-1003",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
+  "ciudadano": "CIU-0122",
+  "registrado_en": "2026-11-30T19:19:16-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Dos personas miran las casas y toman fotos.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:31:37-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.444855,
+    "longitud": -71.516511,
+    "precision_m": null,
+    "referencia": "C. Vinatea Reynoso, Urbanización Simon Bolivar"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000009",
+   "prioridad": "Alta",
+   "heridos": "Si"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:19:16-05:00",
+    "actor": "CIU-0122"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:29:43-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:33:24-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1004",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": null,
@@ -75744,7 +76118,7 @@
   "estado": "EnAtencion"
  },
  {
-  "id": "CASO-0996",
+  "id": "CASO-1005",
   "origen": "Sos",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0341",
@@ -75813,7 +76187,368 @@
   "estado": "EnAtencion"
  },
  {
-  "id": "CASO-0997",
+  "id": "CASO-1006",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
+  "ciudadano": "CIU-0030",
+  "registrado_en": "2026-11-30T19:21:27-05:00",
+  "sector": 4,
+  "reporte": {
+   "descripcion": "Personas bebiendo en la vía pública frente a la tienda.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:12:08-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.428049,
+    "longitud": -71.534321,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000007",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:21:27-05:00",
+    "actor": "CIU-0030"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:29:53-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:34:20-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1007",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
+  "ciudadano": "CIU-0041",
+  "registrado_en": "2026-11-30T19:22:20-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Un auto sin placa está estacionado hace horas.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:58:57-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.446128,
+    "longitud": -71.514888,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000009",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:22:20-05:00",
+    "actor": "CIU-0041"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:31:15-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:34:44-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1008",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
+  "ciudadano": "CIU-0363",
+  "registrado_en": "2026-11-30T19:25:02-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Una persona tirada en la vereda no responde bien.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:11:40-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.423912,
+    "longitud": -71.535273,
+    "precision_m": 26,
+    "referencia": "Mercado Virgen del Chapi, Andrés Avelino Cáceres"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000013",
+   "prioridad": "Alta",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:25:02-05:00",
+    "actor": "CIU-0363"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1009",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0375",
+  "registrado_en": "2026-11-30T19:25:16-05:00",
+  "sector": 4,
+  "reporte": {
+   "descripcion": "Forzaron la puerta de una tienda durante la madrugada.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:26:57-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.424757,
+    "longitud": -71.536776,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 1
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "NoSeSabe"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:25:16-05:00",
+    "actor": "CIU-0375"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:49:26-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:53:15-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1010",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
+  "ciudadano": "CIU-0068",
+  "registrado_en": "2026-11-30T19:26:09-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Merodean por los techos de las viviendas.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:16:14-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "Frente al colegio Institución Educativa Los Heraldos De Jesus, Pasaje Jorge Chavez"
+   },
+   "fotos": 0
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:26:09-05:00",
+    "actor": "CIU-0068"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:57:46-05:00",
+    "actor": "OPE-4"
+   }
+  ],
+  "estado_final": "Descartada",
+  "estado": "EnRevision"
+ },
+ {
+  "id": "CASO-1011",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0089",
+  "registrado_en": "2026-11-30T19:27:17-05:00",
+  "sector": 4,
+  "reporte": {
+   "descripcion": "Intentaron robarme la mochila; logré escapar.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:05:18-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.427018,
+    "longitud": -71.534228,
+    "precision_m": null,
+    "referencia": "República de Chile, cuadra 7"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000012",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:27:17-05:00",
+    "actor": "CIU-0089"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1012",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000012",
+  "ciudadano": "CIU-0416",
+  "registrado_en": "2026-11-30T19:35:03-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Un local sigue con música a todo volumen.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:24:08-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.443718,
+    "longitud": -71.509432,
+    "precision_m": 16,
+    "referencia": null
+   },
+   "fotos": 1
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000012",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:35:03-05:00",
+    "actor": "CIU-0416"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1013",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
+  "ciudadano": "CIU-0095",
+  "registrado_en": "2026-11-30T19:35:59-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Pelea entre varios jóvenes a la salida de una discoteca.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:22:10-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "Cerca de Texas, Malecón Missouri"
+   },
+   "fotos": 1
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000005",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:35:59-05:00",
+    "actor": "CIU-0095"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:47:40-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "CategoriaCorregida",
+    "en": "2026-11-30T19:48:40-05:00",
+    "actor": "OPE-3",
+    "correccion": {
+     "anterior": "0199e2b0-0000-7000-8000-000000000008",
+     "nueva": "0199e2b0-0000-7000-8000-000000000005"
+    }
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:49:56-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1014",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
   "ciudadano": "CIU-0273",
@@ -75845,7 +76580,95 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-0998",
+  "id": "CASO-1015",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0331",
+  "registrado_en": "2026-11-30T19:37:09-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Robaron el espejo y la llanta de repuesto de un auto estacionado.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:06:16-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.42788,
+    "longitud": -71.51434,
+    "precision_m": 17,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:37:09-05:00",
+    "actor": "CIU-0331"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1016",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0152",
+  "registrado_en": "2026-11-30T19:38:00-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Me arrancharon el celular y huyeron en una moto lineal.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:37:08-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.429327,
+    "longitud": -71.528304,
+    "precision_m": null,
+    "referencia": "Paradero Guatemala, Calle Guatemala"
+   },
+   "fotos": 1
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:38:00-05:00",
+    "actor": "CIU-0152"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:41:56-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:45:35-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1017",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
   "ciudadano": "CIU-0282",
@@ -75902,7 +76725,450 @@
   "estado": "Derivada"
  },
  {
-  "id": "CASO-0999",
+  "id": "CASO-1018",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": null,
+  "registrado_en": "2026-11-30T19:39:34-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Me arrancharon el celular y huyeron en una moto lineal.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:25:34-05:00",
+   "canal": "Llamada",
+   "registrado_por_operador": "OPE-3",
+   "contacto": {
+    "nombre": "Luis Cornejo Linares",
+    "telefono": "900044289"
+   },
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.433981,
+    "longitud": -71.525789,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "presentado_en_central": "2026-11-30T19:39:34-05:00",
+  "abierto_en_central": "2026-11-30T19:39:34-05:00",
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:39:34-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:40:04-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1019",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000010",
+  "ciudadano": "CIU-0026",
+  "registrado_en": "2026-11-30T19:40:13-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Se robaron la tapa del buzón.",
+   "ocurrido_aproximadamente_en": "2026-11-30T15:20:56-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.434355,
+    "longitud": -71.520126,
+    "precision_m": 15,
+    "referencia": "Avenida Túpac Amaru, cerca del parque"
+   },
+   "fotos": 1
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000010",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:40:13-05:00",
+    "actor": "CIU-0026"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:54:35-05:00",
+    "actor": "OPE-5"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "EnRevision"
+ },
+ {
+  "id": "CASO-1020",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000011",
+  "ciudadano": "CIU-0275",
+  "registrado_en": "2026-11-30T19:40:17-05:00",
+  "sector": 4,
+  "reporte": {
+   "descripcion": "Atropello leve a un peatón; está consciente.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:32:23-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "E. Zegarra Ballón, cuadra 8"
+   },
+   "fotos": 0
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:40:17-05:00",
+    "actor": "CIU-0275"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:58:28-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Descartada",
+  "estado": "EnRevision"
+ },
+ {
+  "id": "CASO-1021",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
+  "ciudadano": "CIU-0107",
+  "registrado_en": "2026-11-30T19:40:52-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Un niño perdido en el mercado busca a su mamá.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:36:27-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.423392,
+    "longitud": -71.516592,
+    "precision_m": 8,
+    "referencia": null
+   },
+   "fotos": 2
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000008",
+   "prioridad": "Media",
+   "heridos": "NoSeSabe"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:40:52-05:00",
+    "actor": "CIU-0107"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:51:45-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "CategoriaCorregida",
+    "en": "2026-11-30T19:52:45-05:00",
+    "actor": "OPE-3",
+    "correccion": {
+     "anterior": "0199e2b0-0000-7000-8000-000000000013",
+     "nueva": "0199e2b0-0000-7000-8000-000000000008"
+    }
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:55:53-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1022",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000012",
+  "ciudadano": "CIU-0129",
+  "registrado_en": "2026-11-30T19:41:00-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Escándalo en la vía pública, gritos y botellas rotas.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:09:02-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.422047,
+    "longitud": -71.531302,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 3
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000012",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:41:00-05:00",
+    "actor": "CIU-0129"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:48:38-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:52:56-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1023",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0261",
+  "registrado_en": "2026-11-30T19:42:56-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Me arrancharon el celular y huyeron en una moto lineal.",
+   "ocurrido_aproximadamente_en": "2026-11-30T17:15:45-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.423487,
+    "longitud": -71.536482,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:42:56-05:00",
+    "actor": "CIU-0261"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:49:41-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:51:52-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   },
+   {
+    "tipo": "CasoAsignado",
+    "en": "2026-11-30T19:55:01-05:00",
+    "actor": "OPE-4",
+    "sereno": "SER-26"
+   },
+   {
+    "tipo": "DesplazamientoConfirmado",
+    "en": "2026-11-30T19:57:29-05:00",
+    "actor": "SER-26"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "EnCamino"
+ },
+ {
+  "id": "CASO-1024",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
+  "ciudadano": "CIU-0357",
+  "registrado_en": "2026-11-30T19:43:22-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Personas bebiendo en la vía pública frente a la tienda.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:20:42-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.417267,
+    "longitud": -71.526784,
+    "precision_m": null,
+    "referencia": "Cerca de Montero Inolvidables Salon, Avenida Dolores"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000007",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:43:22-05:00",
+    "actor": "CIU-0357"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:49:09-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:52:22-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1025",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000006",
+  "ciudadano": "CIU-0421",
+  "registrado_en": "2026-11-30T19:43:59-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Me llaman para amenazarme si no pago.",
+   "ocurrido_aproximadamente_en": "2026-11-30T13:51:29-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.42455,
+    "longitud": -71.533451,
+    "precision_m": null,
+    "referencia": "Frente a Agente BCP, Avenida Daniel Alcides Carrión"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000006",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:43:59-05:00",
+    "actor": "CIU-0421"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:55:37-05:00",
+    "actor": "OPE-5"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "EnRevision"
+ },
+ {
+  "id": "CASO-1026",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
+  "ciudadano": "CIU-0316",
+  "registrado_en": "2026-11-30T19:44:59-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Merodean por los techos de las viviendas.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:20:54-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "C.2, Urbanización Santa Mónica"
+   },
+   "fotos": 2
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000009",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:44:59-05:00",
+    "actor": "CIU-0316"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:53:49-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:55:10-05:00",
+    "actor": "OPE-4",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1027",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0009",
@@ -75934,7 +77200,808 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1000",
+  "id": "CASO-1028",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000010",
+  "ciudadano": "CIU-0201",
+  "registrado_en": "2026-11-30T19:45:28-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Hicieron pintas en la fachada del colegio.",
+   "ocurrido_aproximadamente_en": "2026-11-30T07:47:00-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "Alas del Sur, La Alborada"
+   },
+   "fotos": 0
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:45:28-05:00",
+    "actor": "CIU-0201"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:55:27-05:00",
+    "actor": "OPE-2"
+   }
+  ],
+  "estado_final": "Descartada",
+  "estado": "EnRevision"
+ },
+ {
+  "id": "CASO-1029",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
+  "ciudadano": null,
+  "registrado_en": "2026-11-30T19:45:56-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Dos personas miran las casas y toman fotos.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:16:25-05:00",
+   "canal": "Llamada",
+   "registrado_por_operador": "OPE-4",
+   "contacto": {
+    "nombre": "Camila Salas Torres",
+    "telefono": "900029153"
+   },
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.428361,
+    "longitud": -71.526347,
+    "precision_m": null,
+    "referencia": "Pasaje Pedro Díaz, Pedro Diez Canseco"
+   },
+   "fotos": 0
+  },
+  "presentado_en_central": "2026-11-30T19:45:56-05:00",
+  "abierto_en_central": "2026-11-30T19:45:56-05:00",
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000009",
+   "prioridad": "Baja",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:45:56-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:46:26-05:00",
+    "actor": "OPE-4"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1030",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
+  "ciudadano": "CIU-0293",
+  "registrado_en": "2026-11-30T19:47:29-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Dos personas miran las casas y toman fotos.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:27:55-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.445874,
+    "longitud": -71.513461,
+    "precision_m": 9,
+    "referencia": null
+   },
+   "fotos": 1
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:47:29-05:00",
+    "actor": "CIU-0293"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:58:45-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Descartada",
+  "estado": "EnRevision"
+ },
+ {
+  "id": "CASO-1031",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
+  "ciudadano": "CIU-0263",
+  "registrado_en": "2026-11-30T19:49:58-05:00",
+  "sector": 2,
+  "ubicacion": {
+   "latitud": -16.44237,
+   "longitud": -71.510207,
+   "precision_m": 5
+  },
+  "presentado_en_central": "2026-11-30T19:50:01-05:00",
+  "abierto_en_central": "2026-11-30T19:50:25-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:51:02-05:00",
+    "operador": "OPE-4",
+    "resultado": "Contactado",
+    "referencia": "Guillermo Seoane, Asentamiento Humano Jorge Basadre"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000001",
+   "prioridad": "Alta",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:49:58-05:00",
+    "actor": "CIU-0263"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:51:02-05:00",
+    "actor": "OPE-4",
+    "resultado": "Contactado"
+   },
+   {
+    "tipo": "CasoClasificado",
+    "en": "2026-11-30T19:51:38-05:00",
+    "actor": "OPE-4"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1032",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
+  "ciudadano": "CIU-0191",
+  "registrado_en": "2026-11-30T19:51:48-05:00",
+  "sector": 1,
+  "ubicacion": {
+   "latitud": -16.417433,
+   "longitud": -71.532815,
+   "precision_m": 7
+  },
+  "presentado_en_central": "2026-11-30T19:51:49-05:00",
+  "abierto_en_central": "2026-11-30T19:53:00-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:53:34-05:00",
+    "operador": "OPE-3",
+    "resultado": "Contactado",
+    "referencia": "Avenida Agricultura, cuadra 4"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000008",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:51:48-05:00",
+    "actor": "CIU-0191"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:53:34-05:00",
+    "actor": "OPE-3",
+    "resultado": "Contactado"
+   },
+   {
+    "tipo": "CasoClasificado",
+    "en": "2026-11-30T19:54:29-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1033",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
+  "ciudadano": "CIU-0407",
+  "registrado_en": "2026-11-30T19:52:56-05:00",
+  "sector": 4,
+  "ubicacion": {
+   "latitud": -16.426619,
+   "longitud": -71.54302,
+   "precision_m": 13
+  },
+  "presentado_en_central": "2026-11-30T19:52:58-05:00",
+  "abierto_en_central": "2026-11-30T19:53:12-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:53:54-05:00",
+    "operador": "OPE-4",
+    "resultado": "Contactado",
+    "referencia": "Calle Augusto Salazar Bondy, Pueblo Joven Cerro July"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000001",
+   "prioridad": "Alta",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:52:56-05:00",
+    "actor": "CIU-0407"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:53:54-05:00",
+    "actor": "OPE-4",
+    "resultado": "Contactado"
+   },
+   {
+    "tipo": "CasoClasificado",
+    "en": "2026-11-30T19:54:50-05:00",
+    "actor": "OPE-4"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1034",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
+  "ciudadano": null,
+  "registrado_en": "2026-11-30T19:53:04-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Una mujer pide ayuda; su pareja la está agrediendo.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:42:44-05:00",
+   "canal": "Llamada",
+   "registrado_por_operador": "OPE-4",
+   "contacto": {
+    "nombre": "Pedro Torres Valdivia",
+    "telefono": "900034542"
+   },
+   "ubicacion": {
+    "fuente": "Texto",
+    "latitud": null,
+    "longitud": null,
+    "precision_m": null,
+    "referencia": "C.6, Urbanización Santa Mónica"
+   },
+   "fotos": 0
+  },
+  "presentado_en_central": "2026-11-30T19:53:04-05:00",
+  "abierto_en_central": "2026-11-30T19:53:04-05:00",
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000001",
+   "prioridad": "Alta",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:53:04-05:00",
+    "actor": "OPE-4"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:53:34-05:00",
+    "actor": "OPE-4"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1035",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000011",
+  "ciudadano": "CIU-0359",
+  "registrado_en": "2026-11-30T19:53:32-05:00",
+  "sector": 1,
+  "ubicacion": {
+   "latitud": -16.42465,
+   "longitud": -71.532926,
+   "precision_m": 11
+  },
+  "presentado_en_central": "2026-11-30T19:53:34-05:00",
+  "abierto_en_central": "2026-11-30T19:54:18-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:54:57-05:00",
+    "operador": "OPE-3",
+    "resultado": "Contactado",
+    "referencia": "Avenida Daniel Alcides Carrión, cuadra 3"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000011",
+   "prioridad": "Media",
+   "heridos": "NoSeSabe"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:53:32-05:00",
+    "actor": "CIU-0359"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:54:57-05:00",
+    "actor": "OPE-3",
+    "resultado": "Contactado"
+   },
+   {
+    "tipo": "CasoClasificado",
+    "en": "2026-11-30T19:56:23-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1036",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000011",
+  "ciudadano": "CIU-0310",
+  "registrado_en": "2026-11-30T19:54:14-05:00",
+  "sector": 1,
+  "reporte": {
+   "descripcion": "Choque entre un taxi y una moto, sin heridos graves.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:31:58-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.423041,
+    "longitud": -71.531854,
+    "precision_m": 24,
+    "referencia": "Frente a Petroperu, Avenida Daniel Alcides Carrión"
+   },
+   "fotos": 0
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000011",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:54:14-05:00",
+    "actor": "CIU-0310"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1037",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
+  "ciudadano": "CIU-0299",
+  "registrado_en": "2026-11-30T19:54:37-05:00",
+  "sector": 2,
+  "ubicacion": {
+   "latitud": -16.429598,
+   "longitud": -71.513033,
+   "precision_m": 16
+  },
+  "presentado_en_central": "2026-11-30T19:54:40-05:00",
+  "abierto_en_central": "2026-11-30T19:56:36-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:56:58-05:00",
+    "operador": "OPE-4",
+    "resultado": "NoFuePosibleComunicar",
+    "referencia": null
+   },
+   {
+    "en": "2026-11-30T19:58:35-05:00",
+    "operador": "OPE-4",
+    "resultado": "Contactado",
+    "referencia": "Avenida Pizarro, cuadra 8"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000008",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:54:37-05:00",
+    "actor": "CIU-0299"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:56:58-05:00",
+    "actor": "OPE-4",
+    "resultado": "NoFuePosibleComunicar"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:58:35-05:00",
+    "actor": "OPE-4",
+    "resultado": "Contactado"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1038",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
+  "ciudadano": null,
+  "registrado_en": "2026-11-30T19:56:08-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Una persona tirada en la vereda no responde bien.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:23:10-05:00",
+   "canal": "Llamada",
+   "registrado_por_operador": "OPE-3",
+   "contacto": {
+    "nombre": "Norma Torres Vargas",
+    "telefono": "900077621"
+   },
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.427846,
+    "longitud": -71.515012,
+    "precision_m": null,
+    "referencia": null
+   },
+   "fotos": 0
+  },
+  "presentado_en_central": "2026-11-30T19:56:08-05:00",
+  "abierto_en_central": "2026-11-30T19:56:08-05:00",
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000013",
+   "prioridad": "Alta",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:56:08-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:56:38-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1039",
+  "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000011",
+  "ciudadano": null,
+  "registrado_en": "2026-11-30T19:56:16-05:00",
+  "sector": 2,
+  "reporte": {
+   "descripcion": "Choque entre un taxi y una moto, sin heridos graves.",
+   "ocurrido_aproximadamente_en": "2026-11-30T19:35:48-05:00",
+   "canal": "Llamada",
+   "registrado_por_operador": "OPE-3",
+   "contacto": {
+    "nombre": "Marco Cáceres Linares",
+    "telefono": "900067652"
+   },
+   "ubicacion": {
+    "fuente": "Mapa",
+    "latitud": -16.429014,
+    "longitud": -71.524008,
+    "precision_m": null,
+    "referencia": "Avenida Dolores, cuadra 11"
+   },
+   "fotos": 0
+  },
+  "presentado_en_central": "2026-11-30T19:56:16-05:00",
+  "abierto_en_central": "2026-11-30T19:56:16-05:00",
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000011",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:56:16-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:56:46-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1040",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000005",
+  "ciudadano": "CIU-0057",
+  "registrado_en": "2026-11-30T19:56:41-05:00",
+  "sector": 4,
+  "ubicacion": {
+   "latitud": -16.426643,
+   "longitud": -71.534348,
+   "precision_m": 8
+  },
+  "presentado_en_central": "2026-11-30T19:56:43-05:00",
+  "abierto_en_central": "2026-11-30T19:57:06-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:57:41-05:00",
+    "operador": "OPE-3",
+    "resultado": "Contactado",
+    "referencia": "Avenida Cementerio, cerca del parque"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000005",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:56:41-05:00",
+    "actor": "CIU-0057"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:57:41-05:00",
+    "actor": "OPE-3",
+    "resultado": "Contactado"
+   },
+   {
+    "tipo": "CasoClasificado",
+    "en": "2026-11-30T19:58:46-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "CasoAsignado",
+    "en": "2026-11-30T19:59:10-05:00",
+    "actor": "OPE-3",
+    "sereno": "SER-20"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Asignada"
+ },
+ {
+  "id": "CASO-1041",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
+  "ciudadano": "CIU-0317",
+  "registrado_en": "2026-11-30T19:56:52-05:00",
+  "sector": 4,
+  "ubicacion": {
+   "latitud": -16.433965,
+   "longitud": -71.532118,
+   "precision_m": 24
+  },
+  "presentado_en_central": "2026-11-30T19:56:55-05:00",
+  "abierto_en_central": "2026-11-30T19:57:33-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:58:07-05:00",
+    "operador": "OPE-3",
+    "resultado": "NoFuePosibleComunicar",
+    "referencia": null
+   },
+   {
+    "en": "2026-11-30T19:58:49-05:00",
+    "operador": "OPE-3",
+    "resultado": "SinRespuesta",
+    "referencia": null
+   },
+   {
+    "en": "2026-11-30T19:59:18-05:00",
+    "operador": "OPE-3",
+    "resultado": "NoFuePosibleComunicar",
+    "referencia": null
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000013",
+   "prioridad": "Alta",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:56:52-05:00",
+    "actor": "CIU-0317"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:58:07-05:00",
+    "actor": "OPE-3",
+    "resultado": "NoFuePosibleComunicar"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:58:49-05:00",
+    "actor": "OPE-3",
+    "resultado": "SinRespuesta"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:59:18-05:00",
+    "actor": "OPE-3",
+    "resultado": "NoFuePosibleComunicar"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1042",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
+  "ciudadano": "CIU-0240",
+  "registrado_en": "2026-11-30T19:57:00-05:00",
+  "sector": 2,
+  "ubicacion": {
+   "latitud": -16.441918,
+   "longitud": -71.516872,
+   "precision_m": 21
+  },
+  "presentado_en_central": "2026-11-30T19:57:02-05:00",
+  "abierto_en_central": "2026-11-30T19:57:24-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:57:55-05:00",
+    "operador": "OPE-3",
+    "resultado": "Contactado",
+    "referencia": "Avenida José de San Martín, Los Cisnes"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000001",
+   "prioridad": "Alta",
+   "heridos": "NoSeSabe"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:57:00-05:00",
+    "actor": "CIU-0240"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:57:55-05:00",
+    "actor": "OPE-3",
+    "resultado": "Contactado"
+   },
+   {
+    "tipo": "CasoClasificado",
+    "en": "2026-11-30T19:58:09-05:00",
+    "actor": "OPE-3"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1043",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
+  "ciudadano": "CIU-0256",
+  "registrado_en": "2026-11-30T19:57:33-05:00",
+  "sector": 2,
+  "ubicacion": {
+   "latitud": -16.444191,
+   "longitud": -71.507183,
+   "precision_m": 4
+  },
+  "presentado_en_central": "2026-11-30T19:57:37-05:00",
+  "abierto_en_central": null,
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:58:29-05:00",
+    "operador": "OPE-3",
+    "resultado": "NoFuePosibleComunicar",
+    "referencia": null
+   },
+   {
+    "en": "2026-11-30T19:58:47-05:00",
+    "operador": "OPE-3",
+    "resultado": "SinRespuesta",
+    "referencia": null
+   },
+   {
+    "en": "2026-11-30T19:59:09-05:00",
+    "operador": "OPE-3",
+    "resultado": "SinRespuesta",
+    "referencia": null
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000008",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:57:33-05:00",
+    "actor": "CIU-0256"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1044",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000005",
+  "ciudadano": "CIU-0329",
+  "registrado_en": "2026-11-30T19:57:53-05:00",
+  "sector": 1,
+  "ubicacion": {
+   "latitud": -16.415419,
+   "longitud": -71.519518,
+   "precision_m": 12
+  },
+  "presentado_en_central": "2026-11-30T19:57:54-05:00",
+  "abierto_en_central": null,
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:59:26-05:00",
+    "operador": "OPE-3",
+    "resultado": "Contactado",
+    "referencia": "Avenida Lambramani, cerca del paradero"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000005",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:57:53-05:00",
+    "actor": "CIU-0329"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1045",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000004",
   "ciudadano": "CIU-0352",
@@ -75969,5 +78036,85 @@
   ],
   "estado_final": "Cerrada",
   "estado": "Recibido"
+ },
+ {
+  "id": "CASO-1046",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000005",
+  "ciudadano": "CIU-0280",
+  "registrado_en": "2026-11-30T19:58:08-05:00",
+  "sector": 2,
+  "ubicacion": {
+   "latitud": -16.442501,
+   "longitud": -71.517244,
+   "precision_m": 21
+  },
+  "presentado_en_central": "2026-11-30T19:58:11-05:00",
+  "abierto_en_central": "2026-11-30T19:58:36-05:00",
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:59:22-05:00",
+    "operador": "OPE-3",
+    "resultado": "Contactado",
+    "referencia": "Avenida José de San Martín, cerca del parque"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000005",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:58:08-05:00",
+    "actor": "CIU-0280"
+   },
+   {
+    "tipo": "IntentoContactoRegistrado",
+    "en": "2026-11-30T19:59:22-05:00",
+    "actor": "OPE-3",
+    "resultado": "Contactado"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
+ },
+ {
+  "id": "CASO-1047",
+  "origen": "Sos",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
+  "ciudadano": "CIU-0257",
+  "registrado_en": "2026-11-30T19:58:58-05:00",
+  "sector": 1,
+  "ubicacion": {
+   "latitud": -16.421485,
+   "longitud": -71.531314,
+   "precision_m": 23
+  },
+  "presentado_en_central": "2026-11-30T19:59:00-05:00",
+  "abierto_en_central": null,
+  "intentos_contacto": [
+   {
+    "en": "2026-11-30T19:59:58-05:00",
+    "operador": "OPE-4",
+    "resultado": "Contactado",
+    "referencia": "Frente a Banco de la Nación, Avenida Daniel Alcides Carrión"
+   }
+  ],
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000002",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "SosEmitido",
+    "en": "2026-11-30T19:58:58-05:00",
+    "actor": "CIU-0257"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "Pendiente"
  }
 ]

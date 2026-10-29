@@ -39,7 +39,13 @@ Para regenerar: `python generar.py` (desde esta carpeta).
   - SOS: mediana de unos 13 min, p90 de unos 27 min.
   - Reportes: mediana de unos 35 min.
 - **Evaluaciones:** el 42 % de los casos cerrados con ciudadano se evalúa, con un promedio de unos 3,9 de 5. La nota baja cuando el sereno tarda más de lo esperado o no encuentra a nadie.
-- **Al final del periodo** quedan casos abiertos (reportes recibidos sin revisar, serenos en camino y en atención), para que la central y «¿Cómo está la central ahora?» tengan algo que mostrar.
+- **Al cargar** quedan abiertos 15 SOS y 40 reportes de los últimos minutos, para mostrar la central en vivo (detalle en
+  [salida/RESUMEN.md](salida/RESUMEN.md), «Abiertos al cargar»):
+  - SOS: 11 pendientes (sin abrir, con la central intentando contactar y ya clasificados), 1 asignado, 1 en camino y 2 en atención.
+  - Reportes: 14 recibidos, 6 en revisión, 18 admitidos esperando sereno (5 registrados por la central), 1 en camino y 1 en atención.
+  - Casi todos sin sereno: quedan unos 5 serenos de turno libres para asignar durante la presentación.
+
+  Son 47 casos más sobre los 1000 del periodo, con su propia semilla (`EN_CURSO_AL_CARGAR` en `generar.py`): el resto del dataset no cambia.
 
 Las cifras exactas están en [salida/RESUMEN.md](salida/RESUMEN.md).
 

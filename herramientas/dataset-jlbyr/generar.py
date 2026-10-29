@@ -768,6 +768,110 @@ for c in ciudadanos:
         dia = desde + timedelta(days=rng.uniform(0, max(0.1, (FIN - desde).days)))
         actividad[c["id"]].add(dia.date())
 
+# ───────────────────────────── Casos en curso al cargar ─────────────────────────────
+# Para la presentación: casos abiertos de los últimos minutos en cada etapa, sobre el dataset base (que no cambia: llevan su
+# propia semilla). Junto con los 8 que ya quedan abiertos, al cargar hay 15 SOS y 40 reportes sin cerrar. Pocos con sereno,
+# para que en la central queden serenos disponibles a los que asignar en vivo.
+# (origen, etapa, cuántos, minutos en esa etapa al terminar el periodo)
+EN_CURSO_AL_CARGAR = [
+    ("Sos", "SinAbrir", 3, (0.3, 2.5)),       # recién llegado: nadie lo abrió todavía
+    ("Sos", "EnContacto", 3, (0.3, 1.5)),     # abierto, la central intenta comunicarse
+    ("Sos", "Clasificado", 5, (1, 9)),        # clasificado, espera sereno
+    ("Sos", "Asignada", 1, (0.5, 2.5)),
+    ("Reporte", "Recibido", 10, (3, 55)),     # nadie lo revisó todavía
+    ("Reporte", "EnRevision", 6, (1, 6)),
+    ("Reporte", "Pendiente", 13, (4, 35)),    # admitido, espera sereno
+    ("Reporte", "PendienteCentral", 5, (2, 25)),  # registrado por la central (llamada, radio…), espera sereno
+    ("Reporte", "EnCamino", 1, (2, 8)),
+]
+# El evento con el que el caso entra en la etapa: el historial termina ahí.
+ENTRA_CON = {"SinAbrir": "SosEmitido", "EnContacto": "IntentoContactoRegistrado", "Clasificado": "CasoClasificado",
+             "Recibido": "ReporteRegistrado", "EnRevision": "RevisionIniciada", "Pendiente": "ReporteAdmitido",
+             "PendienteCentral": "ReporteAdmitido", "Asignada": "CasoAsignado", "EnCamino": "DesplazamientoConfirmado"}
+CON_SERENO = ("Asignada", "EnCamino")
+# Cuánto antes del evento empieza el caso, más o menos: para que se genere cerca de su hora y con los serenos de ese turno.
+ANTICIPO = {"Sos": 4, "Reporte": 25}
+
+rng = random.Random(SEMILLA + 1)
+
+
+def desplazado(valor, delta):
+    if isinstance(valor, datetime):
+        return valor + delta
+    if isinstance(valor, dict):
+        return {k: desplazado(v, delta) for k, v in valor.items()}
+    if isinstance(valor, (list, tuple)):
+        return type(valor)(desplazado(v, delta) for v in valor)
+    return valor
+
+
+def sirve(caso, etapa):
+    if caso["ciudadano"] and caso["ciudadano"] in con_caso_abierto:
+        return False  # un ciudadano, un caso abierto a la vez
+    if caso["origen"] == "Sos" or etapa in CON_SERENO:
+        return "_atencion" in caso
+    if etapa in ("Recibido", "EnRevision"):
+        return any(e["tipo"] == "RevisionIniciada" for e in caso["eventos"])
+    return "_atencion" in caso and (caso["ciudadano"] is None) == (etapa == "PendienteCentral")
+
+
+def en_curso(origen, etapa, edad):
+    global n, FORZAR_MOMENTO
+    while True:
+        n += 1
+        FORZAR_MOMENTO = FIN - timedelta(minutes=edad + ANTICIPO[origen])
+        caso = generar_sos(n) if origen == "Sos" else generar_reporte(n)
+        if not sirve(caso, etapa):
+            continue
+        if etapa not in CON_SERENO:
+            break
+        # Solo un sereno que lleve un rato libre: así, aunque el caso se corra unos minutos, no se cruza con su caso anterior.
+        antes = dict(ocupado_hasta)
+        desde, categoria, urgente = caso["_atencion"]
+        atender(caso, desde, categoria, caso["eventos"], urgente)
+        if antes.get(caso["_sereno"], INICIO) <= FIN - timedelta(minutes=30):
+            caso["_respuesta"] = None
+            ocupado_hasta[caso["_sereno"]] = FIN + timedelta(days=1)  # sigue en este caso
+            break
+        ocupado_hasta.clear()
+        ocupado_hasta.update(antes)
+    FORZAR_MOMENTO = None
+    caso.pop("_atencion", None)
+    # El historial termina en el evento que lo deja en la etapa, y todo el caso se corre para que ese evento ocurra «edad»
+    # minutos antes del final del periodo.
+    corte = max(i for i, e in enumerate(caso["eventos"]) if e["tipo"] in (ENTRA_CON[etapa], "CasoReasignado" if etapa == "Asignada" else ""))
+    caso["eventos"] = caso["eventos"][:corte + 1]
+    if etapa == "SinAbrir":
+        caso["abierto_en_central"] = None
+    caso = desplazado(caso, FIN - timedelta(minutes=edad) - caso["eventos"][-1]["en"])
+    con_caso_abierto.add(caso["ciudadano"])
+    return caso
+
+
+con_caso_abierto = {c["ciudadano"] for c in casos if c["estado"] not in ("Cerrada", "Descartada", "Derivada", "Cancelada")}
+nuevos = [en_curso(origen, etapa, rng.uniform(*edades)) for origen, etapa, cuantos, edades in EN_CURSO_AL_CARGAR for _ in range(cuantos)]
+for caso in nuevos:
+    recortar(caso)
+    if caso["ciudadano"]:
+        actividad[caso["ciudadano"]].add(caso["registrado_en"].date())
+# Un sereno no atiende dos casos a la vez: el de un caso en curso terminó lo anterior antes de que se lo asignaran.
+for caso in nuevos:
+    if caso.get("_sereno"):
+        asignado = next(e["en"] for e in caso["eventos"] if e.get("sereno") == caso["_sereno"])
+        otros = [e["en"] for c in casos for e in c["eventos"] if e["tipo"] == "CasoCerrado" and c.get("_sereno") == caso["_sereno"]]
+        abiertos = [c["id"] for c in casos + nuevos if c is not caso and c.get("_sereno") == caso["_sereno"] and c["estado"] != "Cerrada"]
+        assert not abiertos and all(t <= asignado for t in otros), f"{caso['_sereno']} quedaría en dos casos a la vez"
+casos += nuevos
+casos.sort(key=lambda c: c["registrado_en"])
+numero = {caso["id"]: f"CASO-{i + 1:04d}" for i, caso in enumerate(casos)}
+for caso in casos:
+    caso["id"] = numero[caso["id"]]
+for s in sesiones:
+    for a in s["avisos"]:
+        if a.get("caso"):
+            a["caso"] = numero[a["caso"]]
+libres = [s["id"] for k in range(1, 5) for s in en_turno(FIN - timedelta(minutes=1), k) if ocupado_hasta[s["id"]] <= FIN]
+
 # ───────────────────────────── Salida ─────────────────────────────
 SALIDA.mkdir(exist_ok=True)
 
@@ -840,6 +944,13 @@ for cat, cnt in sorted(por_cat.items(), key=lambda x: -sum(x[1].values())):
 lineas += ["", "## Estado al final del periodo", "", "| Estado | Casos |", "|---|---:|"]
 for k, v in Counter(c["estado"] for c in casos).most_common():
     lineas.append(f"| {k} | {v} |")
+abiertos = [c for c in casos if c["estado"] not in ("Cerrada", "Descartada", "Derivada", "Cancelada")]
+lineas += ["", "## Abiertos al cargar", "", "| Origen | Estado | Casos | Desde hace |", "|---|---|---:|---|"]
+for (origen, estado), grupo in sorted(defaultdict(list, {k: [c for c in abiertos if (c["origen"], c["estado"]) == k]
+                                                          for k in {(c["origen"], c["estado"]) for c in abiertos}}).items()):
+    edades = sorted((FIN - c["eventos"][-1]["en"]).total_seconds() / 60 for c in grupo)
+    lineas.append(f"| {origen} | {estado} | {len(grupo)} | {edades[0]:.0f}–{edades[-1]:.0f} min |")
+lineas += ["", f"Serenos de turno sin caso al cargar: {len(libres)} (para asignar en vivo)."]
 respuestas = [c["_respuesta"] for c in casos if c.get("_respuesta") and c["estado"] == "Cerrada" and c["origen"] != "Reporte"]
 respuestas_rep = [c["_respuesta"] for c in casos if c.get("_respuesta") and c["estado"] == "Cerrada" and c["origen"] == "Reporte"]
 lineas += ["", "## Tiempos de respuesta (registro → inicio de la atención)", "",

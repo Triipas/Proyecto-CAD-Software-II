@@ -53,9 +53,10 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
 
 ## Cuándo cargar
 
-El periodo termina en el momento de la carga, y los datos «envejecen» con los días: los casos abiertos se ven atascados y «hoy»
-queda vacío. Para una presentación, conviene **recargar uno o dos días antes**; cada carga tarda unos segundos en local y unos
-minutos contra Neon.
+El periodo termina en el momento de la carga, y los datos «envejecen»: los 55 casos abiertos llevan de 1 a 60 minutos al cargar,
+y cada minuto que pasa se suma a su espera. Para una presentación, conviene **cargar justo antes de empezar** (5 a 15 minutos
+antes): no hace falta vaciar nada a mano, el cargador vacía y vuelve a cargar todo. Cada carga tarda unos segundos en local y
+unos minutos contra Neon; las horas parten del inicio de la carga.
 
 Las horas del día se desplazan junto con el periodo. Si se carga a las 20:00, los picos quedan donde los puso el generador
 (robos a la salida del trabajo, alcohol y ruido de noche); a otra hora, se corren las mismas horas.
