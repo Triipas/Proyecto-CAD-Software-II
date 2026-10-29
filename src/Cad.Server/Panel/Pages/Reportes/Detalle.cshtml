@@ -303,36 +303,11 @@
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Asigna el reporte a un sereno disponible</h2>
                         <span class="siguiente__paso">@fase</span>
                     </div>
-                    <p data-pendiente-asignacion>Pendiente de asignación. Elige un sereno disponible; también puedes hacerlo desde el mapa de la central, como un SOS.</p>
-                    @if (Model.SerenosParaAsignar.Count == 0)
-                    {
-                        <p class="texto-secundario">No hay serenos disponibles en este momento (operativos y sin asignación vigente).</p>
-                        <div class="acciones">
-                            <a class="boton boton--secundario" href="/panel/central#titulo-reportes">Ver en el mapa de la central</a>
-                        </div>
-                    }
-                    else
-                    {
-                        <form method="post" asp-page-handler="Asignar" class="formulario" data-formulario novalidate>
-                            <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.IdAsignacion" />
-                            <input type="hidden" name="Asignacion.Volver" value="detalle" />
-                            <fieldset class="opciones">
-                                <legend class="campo__etiqueta">Sereno disponible</legend>
-                                @foreach (var sereno in Model.SerenosParaAsignar)
-                                {
-                                    var idOpcion = $"Asignacion_Sereno_{sereno.Id:N}";
-                                    <label class="opcion" for="@idOpcion">
-                                        <input type="radio" id="@idOpcion" name="Asignacion.SerenoId" value="@sereno.Id" required />
-                                        <span>@sereno.Nombre <span class="texto-secundario">· @sereno.Detalle</span></span>
-                                    </label>
-                                }
-                            </fieldset>
-                            <div class="acciones">
-                                <a class="boton boton--secundario" href="/panel/central#titulo-reportes">Ver en el mapa de la central</a>
-                                <button type="submit" class="boton boton--principal" data-texto-carga="Asignando…">Asignar el reporte</button>
-                            </div>
-                        </form>
-                    }
+                    <p data-pendiente-asignacion>Pendiente de asignación. El sereno disponible más cercano al lugar del hecho viene sugerido; también puedes asignarlo desde el mapa de la central, como un SOS.</p>
+                    <partial name="_AsignarCaso" model="Model.VistaAsignacion" />
+                    <div class="acciones">
+                        <a class="boton boton--secundario" href="/panel/central#titulo-reportes">Ver en el mapa de la central</a>
+                    </div>
                     break;
                 case Accion.EsperarDesplazamiento:
                     <h2 class="siguiente__titulo" id="titulo-siguiente">@s!.Asignacion!.Sereno recibió el despacho</h2>
@@ -646,6 +621,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/asignar-caso.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/consola.js" asp-append-version="true"></script>
     @if (r.ConPunto)

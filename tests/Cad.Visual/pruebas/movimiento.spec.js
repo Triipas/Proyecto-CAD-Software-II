@@ -75,7 +75,7 @@ test.describe('Central: movimiento', () => {
     await expect(boton).toBeFocused();
     await expect(boton).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.sereno--sugerido [data-distancia]')).toHaveCount(1);
-    await expect(page.locator('[data-asignar-sereno]:visible').first()).toBeVisible();
+    await expect(page.locator('[data-ar-sugerido]')).toBeVisible();
   });
 });
 

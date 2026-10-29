@@ -124,7 +124,7 @@ public class MonitoreoSerenosTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task ConPosicion_SeOfreceUnBotonParaUbicarloEnElMapa_YSinCasoNoHayVinculo()
+    public async Task ConPosicion_LaTarjetaEsUnBotonParaUbicarloEnElMapa_YSinCasoNoHayVinculo()
     {
         var (app, sereno) = await SerenoAsync();
         await CambiarAsync(app, true);
@@ -133,9 +133,10 @@ public class MonitoreoSerenosTests(FabricaCad fabrica)
 
         var elemento = Elemento(await operador.GetStringAsync(Fragmento), sereno.Id);
 
-        // Un botón a la vista (antes un texto con aspecto de enlace), aparte de la hora de la última ubicación.
-        Assert.Matches("<button type=\"button\" class=\"boton boton--secundario boton--compacto sereno__ubicar\" data-ver-sereno", elemento);
-        Assert.Contains("Ubicar en el mapa", elemento);
+        // La tarjeta entera es el botón (el del nombre, extendido a toda la tarjeta), como en las de SOS y reportes.
+        Assert.Matches("<button type=\"button\" class=\"sereno__nombre sereno__seleccionar\" data-ver-sereno aria-pressed=\"false\">", elemento);
+        Assert.Contains("ver su ubicación en el mapa", elemento);
+        Assert.DoesNotContain("data-asignar-sereno", elemento); // se asigna desde la barra de asignación rápida
         Assert.Contains("Última ubicación a las ", elemento);
         // Sin caso asignado no hay caso con el que vincularlo en el mapa.
         Assert.Contains("data-caso=\"\"", elemento);

@@ -117,6 +117,79 @@ public class DecisionReporteTests(FabricaCad fabrica)
         Assert.Contains("data-pendiente-asignacion", html);
     }
 
+    // ----- Sugerencia de sereno en el detalle (29/10/2026) -----
+
+    private static Task<HttpResponseMessage> PosicionAsync(HttpClient app, double latitud, double longitud) =>
+        app.PostAsJsonAsync("/api/sereno/posiciones", new PosicionSerenoEnviada(latitud, longitud, 7, DateTimeOffset.UtcNow));
+
+    [Fact]
+    public async Task UnReporteAdmitido_SugiereEnSuDetalleAlSerenoMasCercanoAlLugarDelHecho_YSeAsignaDesdeAhi()
+    {
+        var id = await EnRevisionAsync(); // lugar del hecho: -12.0589, -77.0461
+        var (operador, _) = await OperadorAsync();
+        await DecidirAsync(operador, id, "Admision", "Corresponde atenderlo");
+        var (cercaApp, cerca) = await SerenoOperativoAsync();
+        var (lejosApp, lejos) = await SerenoOperativoAsync();
+        await PosicionAsync(cercaApp, -12.0590, -77.0462);
+        await PosicionAsync(lejosApp, -12.0800, -77.0100);
+
+        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync(Ruta(id)));
+
+        // El más cercano, con su distancia y un botón directo; el otro, en «Elegir a otro sereno».
+        Assert.Contains("Más cercano al lugar del hecho", html);
+        Assert.Matches($"(?s)asignar__sugerido.*?name=\"Asignacion.SerenoId\" value=\"{cerca.Id}\".*?Asignar a ", html);
+        Assert.Contains("Elegir a otro sereno", html);
+        Assert.DoesNotMatch($"(?s)asignar__sugerido.*?value=\"{lejos.Id}\".*?asignar__otros", html);
+        Assert.Contains($"value=\"{lejos.Id}\"", html);
+
+        // Asignar desde el propio reporte (Volver = "detalle") vuelve al reporte (no a la central) y lo deja asignado.
+        var ruta = Ruta(id);
+        var respuesta = await operador.PostAsync($"{ruta}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Asignacion.SerenoId"] = cerca.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.Volver"] = "detalle",
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
+        }));
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Equal(ruta, respuesta.Headers.Location!.OriginalString);
+        Assert.Equal(EstadoCaso.Asignada, (await CasoAsync(id)).Estado);
+        Assert.Contains("Reporte asignado.", await operador.GetStringAsync(ruta));
+    }
+
+    [Fact]
+    public async Task UnReporteAdmitido_AsignadoAUnSerenoNoDisponibleDesdeSuDetalle_MuestraElErrorEnElReporte()
+    {
+        var id = await EnRevisionAsync();
+        var (operador, _) = await OperadorAsync();
+        await DecidirAsync(operador, id, "Admision", "Corresponde atenderlo");
+        var ruta = Ruta(id);
+
+        var respuesta = await operador.PostAsync($"{ruta}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Asignacion.SerenoId"] = Guid.NewGuid().ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.Volver"] = "detalle",
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
+        }));
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.Contains("No se pudo asignar el reporte", System.Net.WebUtility.HtmlDecode(await respuesta.Content.ReadAsStringAsync()));
+        Assert.Equal(EstadoCaso.Pendiente, (await CasoAsync(id)).Estado);
+    }
+
+    [Fact]
+    public async Task UnReporteAdmitidoSinPunto_ListaALosSerenosSinSugerirUnoPorDistancia()
+    {
+        var id = await EnRevisionAsync(conPunto: false);
+        var (operador, _) = await OperadorAsync();
+        await DecidirAsync(operador, id, "Admision", "Corresponde atenderlo");
+        var (app, sereno) = await SerenoOperativoAsync();
+        await PosicionAsync(app, -12.0590, -77.0462);
+
+        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync(Ruta(id)));
+
+        Assert.DoesNotContain("Más cercano", html);
+        Assert.DoesNotContain("asignar__sugerido", html);
+        Assert.Contains($"value=\"{sereno.Id}\"", html); // sigue pudiéndose elegir
+    }
+
     [Fact]
     public async Task HU15_CA02_HU20_CA07_UnReporteAdmitido_SeMuestraEnLaCentralYSeAsignaComoUnSos()
     {

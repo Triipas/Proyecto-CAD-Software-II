@@ -23,7 +23,16 @@
                     data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)" data-caso="@sereno.CasoAsignadoId"
                     data-hora="@(sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "")" data-clave="@sereno.Id">
                     <div class="sereno__cabecera">
-                        <span class="sereno__nombre">@sereno.Nombre</span>
+                        @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is not null)
+                        {
+                            @* 29/10/2026: como en las tarjetas de SOS y reportes, la tarjeta entera es el botón (el del nombre, extendido a
+                               toda la tarjeta): lleva el mapa al sereno. Sin ubicación no hay a dónde llevarlo y el nombre es solo texto. *@
+                            <button type="button" class="sereno__nombre sereno__seleccionar" data-ver-sereno aria-pressed="false">@sereno.Nombre<span class="visualmente-oculto">: ver su ubicación en el mapa</span></button>
+                        }
+                        else
+                        {
+                            <span class="sereno__nombre">@sereno.Nombre</span>
+                        }
                         <span class="estado @(sereno.Operativo ? "estado--activa" : "estado--inactiva")" data-suave>
                             <partial name="_Icono" model="@(sereno.Operativo ? "exito" : "informacion")" />@(sereno.Operativo ? "Operativo" : "No operativo")
                         </span>
@@ -50,11 +59,6 @@
                             <partial name="_Icono" model="@("reloj")" />
                             <span>Última ubicación a las @TimeZoneInfo.ConvertTime(recibida, Model.ZonaHoraria).ToString("HH:mm:ss", inv) · ± @sereno.PrecisionMetros?.ToString("0", inv) m</span>
                         </p>
-                        @* Botón a la vista (antes era un texto con aspecto de enlace): lleva el mapa al sereno. *@
-                        <button type="button" class="boton boton--secundario boton--compacto sereno__ubicar" data-ver-sereno
-                                aria-label="Ubicar en el mapa al sereno @sereno.Nombre">
-                            <partial name="_Icono" model="@("ubicacion")" />Ubicar en el mapa
-                        </button>
                     }
                     else
                     {
@@ -64,13 +68,6 @@
                             <partial name="_Icono" model="@("advertencia")" />
                             <span>Ubicación no disponible</span>
                         </p>
-                    }
-                    @if (sereno.Disponible)
-                    {
-                        @* HU20: visible solo con un SOS seleccionado (lo muestra el panel). *@
-                        <button type="button" class="boton boton--secundario sereno__asignar" data-asignar-sereno hidden>
-                            Asignar al caso seleccionado<span class="visualmente-oculto"> a @sereno.Nombre</span>
-                        </button>
                     }
                 </li>
             }

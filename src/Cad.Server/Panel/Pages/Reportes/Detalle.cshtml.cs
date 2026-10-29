@@ -45,12 +45,10 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     public string? ErrorDescarte { get; private set; }
     public string? ErrorAsignacion { get; private set; }
 
-    // Asignación desde este detalle (27/10/2026): los serenos disponibles con su última ubicación.
-    public IReadOnlyList<SerenoParaReasignar> SerenosParaAsignar => SerenosDisponibles
-        .Select(s => new SerenoParaReasignar(s.Id, s.Nombre, s.UltimaPosicionEn is { } h
-            ? $"última ubicación a las {TimeZoneInfo.ConvertTime(h, ZonaHoraria):HH:mm}" : "ubicación no disponible"))
-        .ToList();
-    public Guid IdAsignacion => Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud;
+    // Asignación desde este detalle (27/10/2026): los serenos disponibles, ordenados por cercanía al lugar del hecho y con el
+    // más cercano sugerido (29/10/2026). Vuelve a este reporte (Volver = "detalle").
+    public VistaAsignacion VistaAsignacion => VistaAsignacion.Crear(Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud,
+        "al lugar del hecho", Reporte.LatitudHecho, Reporte.LongitudHecho, SerenosDisponibles, ZonaHoraria, "detalle");
     public string? ErrorMotivoDescarte { get; private set; }
     public string? ErrorMotivoCodigoDescarte { get; private set; }
 
