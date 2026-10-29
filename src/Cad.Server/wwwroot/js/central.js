@@ -488,11 +488,21 @@
     }
   }
 
+  // La tarjeta elegida y su botón (aria-pressed) van juntos; también se repone tras resincronizar la lista.
+  function marcarSereno(id) {
+    for (const item of regionSerenos.querySelectorAll(".sereno--seleccionado")) {
+      item.classList.remove("sereno--seleccionado");
+      item.querySelector("[data-ver-sereno]")?.setAttribute("aria-pressed", "false");
+    }
+    const item = id && document.getElementById(`sereno-${id}`);
+    item?.classList.add("sereno--seleccionado");
+    item?.querySelector("[data-ver-sereno]")?.setAttribute("aria-pressed", "true");
+    return item || null;
+  }
+
   function seleccionarSereno(id, { desdeMapa = false } = {}) {
-    for (const item of regionSerenos.querySelectorAll(".sereno--seleccionado")) item.classList.remove("sereno--seleccionado");
-    const item = document.getElementById(`sereno-${id}`);
+    const item = marcarSereno(id);
     if (item) {
-      item.classList.add("sereno--seleccionado");
       if (desdeMapa) {
         item.scrollIntoView({ block: "nearest" });
         item.focus();
@@ -506,12 +516,11 @@
   regionSerenos.addEventListener("click", (evento) => {
     const boton = evento.target.closest("[data-ver-sereno]");
     if (boton) seleccionarSereno(boton.closest("[data-sereno]").dataset.sereno);
-    const asignar = evento.target.closest("[data-asignar-sereno]");
-    if (asignar) abrirConfirmacion(asignar.closest("[data-sereno]"));
   });
 
   // ---------- HU20: asignar el SOS seleccionado a un sereno disponible ----------
-  // El operador compara las ubicaciones en el mapa y elige; el panel solo pide confirmación.
+  // El operador elige al sereno en la barra de asignación rápida (el más cercano o el que busca); aquí solo se pide
+  // confirmación. Las tarjetas de «Serenos» ya no asignan: solo llevan el mapa al sereno.
   const confirmacion = document.querySelector("[data-confirmar-asignacion]");
   const textoConfirmacion = confirmacion.querySelector("[data-texto-confirmacion]");
 
@@ -521,7 +530,6 @@
       sosSeleccionado = null;
       confirmacion.hidden = true;
     }
-    for (const boton of regionSerenos.querySelectorAll("[data-asignar-sereno]")) boton.hidden = !sos;
     actualizarBarraAsignacion();
   }
 
@@ -738,7 +746,7 @@
     cadMovimiento.actualizarRegion(regionSerenos, await respuesta.text(), {
       animar: true,
       despues: () => {
-        if (seleccionado) document.getElementById(`sereno-${seleccionado}`)?.classList.add("sereno--seleccionado");
+        if (seleccionado) marcarSereno(seleccionado);
         aplicarFiltroSerenos();
         actualizarAsignacion();
         calcularDespacho();

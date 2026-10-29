@@ -381,21 +381,89 @@
   gap: var(--espacio-1);
 }
 
-.central .sereno {
-  gap: 2px;
-  padding: var(--espacio-2);
-  border-color: transparent;
-  border-radius: var(--radio-control);
+/* 29/10/2026: la tarjeta entera es el botón que lleva el mapa al sereno, igual que en las tarjetas de SOS y reportes: el botón
+   es el nombre (lo que anuncia el lector de pantalla) y su área cubre la tarjeta; el enlace al caso queda por encima. Un sereno
+   sin ubicación no tiene botón: su tarjeta no reacciona. */
+.central .lista-serenos {
+  gap: var(--espacio-2);
 }
 
-.central .sereno--seleccionado,
+.central .sereno {
+  position: relative;
+  gap: 2px;
+  padding: var(--espacio-3);
+  border-radius: var(--radio-superficie);
+  transition: border-color var(--duracion-rapida) ease, box-shadow var(--duracion-rapida) ease, background-color var(--duracion-rapida) ease;
+}
+
+/* El más cercano al caso elegido: tinte azul; elegido: borde de acción, como el SOS elegido en la cola. */
 .central .sereno--sugerido {
-  outline: none;
+  border-color: var(--color-tenue-fuerte);
   background: var(--color-tenue);
+}
+
+.central .sereno--seleccionado {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: inset 0 0 0 1px var(--color-primario), var(--sombra-2);
 }
 
 .central .sereno__nombre {
   font-size: var(--texto-sm);
+  line-height: 1.3;
+}
+
+/* Nombre a la izquierda y estado a la derecha; la disponibilidad baja a su propia línea. */
+.central .sereno__cabecera {
+  flex-wrap: wrap;
+  gap: 2px var(--espacio-2);
+}
+
+.central .sereno__cabecera .estado {
+  margin-left: auto;
+}
+
+.central .sereno__disponibilidad {
+  flex-basis: 100%;
+}
+
+.central .sereno__seleccionar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.central .sereno__seleccionar {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: var(--peso-medio) var(--texto-sm)/1.3 var(--fuente);
+  text-align: left;
+  color: var(--color-texto);
+  background: none;
+  cursor: pointer;
+}
+
+.central .sereno__seleccionar:focus-visible {
+  outline: none;
+}
+
+.central .sereno:has(.sereno__seleccionar:focus-visible) {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .central .sereno:has(.sereno__seleccionar):not(.sereno--seleccionado):hover {
+    border-color: var(--color-borde-control);
+    box-shadow: var(--sombra-1);
+  }
+}
+
+.central .sereno__caso a {
+  position: relative;
+  z-index: 1;
 }
 
 .central .sereno .estado,
@@ -430,11 +498,11 @@
 .central .sereno__distancia {
   font-size: var(--texto-xs);
   font-weight: var(--peso-medio);
+  font-variant-numeric: tabular-nums;
   color: var(--color-primario);
 }
 
-/* Hora y precisión de la última ubicación, y debajo el botón para ubicar al sereno en el mapa (antes un texto con aspecto de
-   enlace: ahora se ve dónde pulsar). */
+/* Hora y precisión de la última ubicación. */
 .central .sereno__ubicacion,
 .central .sos__dato-ubicacion {
   display: flex;
@@ -450,17 +518,6 @@
   width: 0.875rem;
   height: 0.875rem;
   flex: none;
-}
-
-.central .sereno__ubicar {
-  justify-self: start;
-  gap: var(--espacio-1);
-}
-
-.central .sereno__ubicar .icono {
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-primario);
 }
 
 /* ── Búsqueda de serenos (29/10/2026) ──────────────────────

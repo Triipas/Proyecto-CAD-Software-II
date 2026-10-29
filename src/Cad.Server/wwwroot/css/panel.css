@@ -1446,13 +1446,6 @@ a.boton {
   display: none !important;
 }
 
-.sereno__asignar {
-  justify-self: start;
-  min-height: 2.25rem;
-  padding: var(--espacio-1) var(--espacio-4);
-  font-size: var(--texto-sm);
-}
-
 .sos__acciones {
   display: flex;
   flex-wrap: wrap;

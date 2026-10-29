@@ -18,8 +18,8 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('.etiqueta-despacho')).toHaveText(/\d+ (m|km)/);
     await expect(page.locator('.sereno--sugerido [data-distancia]')).toContainText('Más cercano al caso elegido');
 
-    // Abrir la confirmación: es un diálogo modal con el foco dentro.
-    const asignar = page.locator('[data-asignar-sereno]:visible').first();
+    // Abrir la confirmación desde la barra de asignación rápida: es un diálogo modal con el foco dentro.
+    const asignar = page.locator('[data-ar-sugerido]');
     await asignar.click();
     const dialogo = page.getByRole('dialog');
     await expect(dialogo).toBeVisible();
@@ -62,6 +62,30 @@ test.describe('Central: interacción', () => {
     await expect(barra.getByRole('option').first()).toBeVisible();
     await buscar.fill('zzzz');
     await expect(barra.getByText('Ningún sereno disponible se llama así.')).toBeVisible();
+  });
+
+  test('la tarjeta de un sereno con ubicación es un botón que lo elige; sin ubicación no hay botón', async ({ page }, info) => {
+    test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
+    await prepararPagina(page);
+    await abrir(page, '/panel/central');
+    await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+
+    const tarjeta = page.locator('.sereno:has([data-ver-sereno])').first();
+    const boton = tarjeta.locator('[data-ver-sereno]');
+    await expect(boton).toHaveAttribute('aria-pressed', 'false');
+    // Se pulsa en el cuerpo de la tarjeta, no en el nombre: el área del botón cubre toda la tarjeta.
+    const caja = await tarjeta.boundingBox();
+    await page.mouse.click(caja.x + caja.width - 8, caja.y + caja.height - 8);
+    await expect(boton).toHaveAttribute('aria-pressed', 'true');
+    await expect(tarjeta).toHaveClass(/sereno--seleccionado/);
+
+    // La selección sobrevive a la resincronización de la lista.
+    await page.evaluate(() => window.cadCentral.refrescarSerenos());
+    await expect(boton).toHaveAttribute('aria-pressed', 'true');
+    await expect(tarjeta).toHaveClass(/sereno--seleccionado/);
+
+    // Sin ubicación (Pedro Suplente): la tarjeta no ofrece botón.
+    await expect(page.locator('.sereno', { hasText: 'Ubicación no disponible' }).locator('[data-ver-sereno]')).toHaveCount(0);
   });
 
   test('los paneles se pliegan y las capas del mapa se ocultan desde la leyenda', async ({ page }, info) => {

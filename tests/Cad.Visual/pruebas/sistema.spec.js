@@ -40,7 +40,8 @@ for (const rol of [null, 'admin', 'operador']) {
 
           const interactivos = visibles.filter((el) =>
             el.matches('button, select, textarea, input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), [role="button"]'));
-          const medida = (el) => { const c = el.getBoundingClientRect(); return { alto: Math.round(c.height), ancho: Math.round(c.width) }; };
+          // En las tarjetas de SOS, reportes y serenos el botón es el nombre, pero su ::after cubre toda la tarjeta: ese es su área real.
+          const medida = (el) => { const c = (el.matches('.sos__seleccionar, .sereno__seleccionar') ? el.closest('li') : el).getBoundingClientRect(); return { alto: Math.round(c.height), ancho: Math.round(c.width) }; };
           const describir = (el) => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : ''} «${(el.innerText || el.value || el.getAttribute('aria-label') || '').trim().slice(0, 40)}»`;
 
           const fueraDePaleta = new Map();
