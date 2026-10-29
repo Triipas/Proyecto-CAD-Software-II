@@ -825,11 +825,13 @@ def en_curso(origen, etapa, edad):
             continue
         if etapa not in CON_SERENO:
             break
-        # Solo un sereno que lleve un rato libre: así, aunque el caso se corra unos minutos, no se cruza con su caso anterior.
+        # Solo serenos del turno que termina el periodo (el caso se corre hasta ahí; un reporte puede llegar horas después del
+        # hecho) y que lleven un rato libres: así, aunque el caso se corra unos minutos, no se cruza con su caso anterior.
         antes = dict(ocupado_hasta)
         desde, categoria, urgente = caso["_atencion"]
         atender(caso, desde, categoria, caso["eventos"], urgente)
-        if antes.get(caso["_sereno"], INICIO) <= FIN - timedelta(minutes=30):
+        asignados = {e["sereno"] for e in caso["eventos"] if e.get("sereno")}
+        if asignados <= de_turno_al_final and antes.get(caso["_sereno"], INICIO) <= FIN - timedelta(minutes=30):
             caso["_respuesta"] = None
             ocupado_hasta[caso["_sereno"]] = FIN + timedelta(days=1)  # sigue en este caso
             break
@@ -848,6 +850,7 @@ def en_curso(origen, etapa, edad):
     return caso
 
 
+de_turno_al_final = {s["id"] for k in range(1, 5) for s in en_turno(FIN - timedelta(minutes=1), k)}
 con_caso_abierto = {c["ciudadano"] for c in casos if c["estado"] not in ("Cerrada", "Descartada", "Derivada", "Cancelada")}
 nuevos = [en_curso(origen, etapa, rng.uniform(*edades)) for origen, etapa, cuantos, edades in EN_CURSO_AL_CARGAR for _ in range(cuantos)]
 for caso in nuevos:
@@ -861,6 +864,7 @@ for caso in nuevos:
         otros = [e["en"] for c in casos for e in c["eventos"] if e["tipo"] == "CasoCerrado" and c.get("_sereno") == caso["_sereno"]]
         abiertos = [c["id"] for c in casos + nuevos if c is not caso and c.get("_sereno") == caso["_sereno"] and c["estado"] != "Cerrada"]
         assert not abiertos and all(t <= asignado for t in otros), f"{caso['_sereno']} quedaría en dos casos a la vez"
+        assert all(s in {x["id"] for k in range(1, 5) for x in en_turno(e["en"], k)} for e in caso["eventos"] if (s := e.get("sereno"))),             f"{caso['_sereno']} no está de turno cuando se le asigna {caso['id']}"
 casos += nuevos
 casos.sort(key=lambda c: c["registrado_en"])
 numero = {caso["id"]: f"CASO-{i + 1:04d}" for i, caso in enumerate(casos)}

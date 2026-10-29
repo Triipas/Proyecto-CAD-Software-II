@@ -17,7 +17,7 @@ Periodo simulado: 31/08/2026 – 30/11/2026 (91 días). Todas las fechas se desp
 
 | Categoría | SOS | Reportes | Total |
 |---|---:|---:|---:|
-| Robo o hurto | 115 | 162 | 277 |
+| Robo o hurto | 115 | 161 | 276 |
 | Persona o vehículo sospechoso | 13 | 96 | 109 |
 | Consumo de alcohol en la vía pública | 0 | 93 | 93 |
 | Ruidos molestos o escándalo | 0 | 84 | 84 |
@@ -25,7 +25,7 @@ Periodo simulado: 31/08/2026 – 30/11/2026 (91 días). Todas las fechas se desp
 | Peleas o riñas | 33 | 38 | 71 |
 | Consumo o venta de drogas | 11 | 55 | 66 |
 | Accidente de tránsito | 15 | 47 | 62 |
-| Acoso en la vía pública | 34 | 27 | 61 |
+| Acoso en la vía pública | 34 | 28 | 62 |
 | Persona en riesgo | 24 | 24 | 48 |
 | Daños o vandalismo | 0 | 36 | 36 |
 | Extorsión o amenazas | 12 | 23 | 35 |
@@ -60,7 +60,7 @@ Periodo simulado: 31/08/2026 – 30/11/2026 (91 días). Todas las fechas se desp
 | Sos | EnCamino | 1 | 72–72 min |
 | Sos | Pendiente | 11 | 1–8 min |
 
-Serenos de turno sin caso al cargar: 4 (para asignar en vivo).
+Serenos de turno sin caso al cargar: 3 (para asignar en vivo).
 
 ## Tiempos de respuesta (registro → inicio de la atención)
 
@@ -120,8 +120,8 @@ Serenos de turno sin caso al cargar: 4 (para asignar en vivo).
 | residencial | 288 |
 | avenida | 180 |
 | parque | 173 |
-| mercado | 97 |
-| paradero | 95 |
+| paradero | 96 |
+| mercado | 96 |
 | noche | 94 |
 | comercio | 70 |
 | colegio | 50 |
@@ -130,9 +130,9 @@ Serenos de turno sin caso al cargar: 4 (para asignar en vivo).
 
 | Sector | Casos |
 |---|---:|
-| Sector 1 | 335 |
+| Sector 1 | 334 |
 | Sector 2 | 309 |
-| Sector 3 | 188 |
+| Sector 3 | 189 |
 | Sector 4 | 215 |
 
 Sin ubicación en el mapa: 115 casos (SOS sin GPS y reportes con solo una referencia en texto).

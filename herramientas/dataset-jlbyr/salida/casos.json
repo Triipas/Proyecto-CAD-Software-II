@@ -75641,6 +75641,68 @@
  {
   "id": "CASO-0995",
   "origen": "Reporte",
+  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000005",
+  "ciudadano": "CIU-0258",
+  "registrado_en": "2026-11-30T19:10:58-05:00",
+  "sector": 3,
+  "reporte": {
+   "descripcion": "Un hombre sigue a las estudiantes a la salida del colegio.",
+   "ocurrido_aproximadamente_en": "2026-11-30T18:00:09-05:00",
+   "canal": "App",
+   "registrado_por_operador": null,
+   "contacto": null,
+   "ubicacion": {
+    "fuente": "PosicionActual",
+    "latitud": -16.450642,
+    "longitud": -71.516109,
+    "precision_m": 19,
+    "referencia": null
+   },
+   "fotos": 2
+  },
+  "clasificacion": {
+   "categoria": "0199e2b0-0000-7000-8000-000000000005",
+   "prioridad": "Media",
+   "heridos": "No"
+  },
+  "eventos": [
+   {
+    "tipo": "ReporteRegistrado",
+    "en": "2026-11-30T19:10:58-05:00",
+    "actor": "CIU-0258"
+   },
+   {
+    "tipo": "RevisionIniciada",
+    "en": "2026-11-30T19:46:34-05:00",
+    "actor": "OPE-3"
+   },
+   {
+    "tipo": "ReporteAdmitido",
+    "en": "2026-11-30T19:53:58-05:00",
+    "actor": "OPE-3",
+    "decision": {
+     "tipo": "Admision",
+     "texto": "Se envía un sereno (dato ficticio)."
+    }
+   },
+   {
+    "tipo": "CasoAsignado",
+    "en": "2026-11-30T19:56:39-05:00",
+    "actor": "OPE-3",
+    "sereno": "SER-19"
+   },
+   {
+    "tipo": "DesplazamientoConfirmado",
+    "en": "2026-11-30T19:57:29-05:00",
+    "actor": "SER-19"
+   }
+  ],
+  "estado_final": "Cerrada",
+  "estado": "EnCamino"
+ },
+ {
+  "id": "CASO-0996",
+  "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
   "ciudadano": "CIU-0127",
   "registrado_en": "2026-11-30T19:12:43-05:00",
@@ -75676,7 +75738,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-0996",
+  "id": "CASO-0997",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0297",
@@ -75727,7 +75789,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-0997",
+  "id": "CASO-0998",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
   "ciudadano": "CIU-0322",
@@ -75764,7 +75826,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-0998",
+  "id": "CASO-0999",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000003",
   "ciudadano": "CIU-0121",
@@ -75815,7 +75877,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-0999",
+  "id": "CASO-1000",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
   "ciudadano": "CIU-0328",
@@ -75847,7 +75909,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1000",
+  "id": "CASO-1001",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000003",
   "ciudadano": "CIU-0176",
@@ -75879,7 +75941,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1001",
+  "id": "CASO-1002",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000012",
   "ciudadano": "CIU-0050",
@@ -75930,7 +75992,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1002",
+  "id": "CASO-1003",
   "origen": "Sos",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
   "ciudadano": "CIU-0269",
@@ -75999,7 +76061,7 @@
   "estado": "EnAtencion"
  },
  {
-  "id": "CASO-1003",
+  "id": "CASO-1004",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
   "ciudadano": "CIU-0122",
@@ -76050,7 +76112,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1004",
+  "id": "CASO-1005",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": null,
@@ -76118,7 +76180,7 @@
   "estado": "EnAtencion"
  },
  {
-  "id": "CASO-1005",
+  "id": "CASO-1006",
   "origen": "Sos",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0341",
@@ -76187,7 +76249,7 @@
   "estado": "EnAtencion"
  },
  {
-  "id": "CASO-1006",
+  "id": "CASO-1007",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
   "ciudadano": "CIU-0030",
@@ -76238,7 +76300,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1007",
+  "id": "CASO-1008",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
   "ciudadano": "CIU-0041",
@@ -76289,7 +76351,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1008",
+  "id": "CASO-1009",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
   "ciudadano": "CIU-0363",
@@ -76326,7 +76388,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1009",
+  "id": "CASO-1010",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0375",
@@ -76377,7 +76439,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1010",
+  "id": "CASO-1011",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000009",
   "ciudadano": "CIU-0068",
@@ -76414,7 +76476,7 @@
   "estado": "EnRevision"
  },
  {
-  "id": "CASO-1011",
+  "id": "CASO-1012",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0089",
@@ -76451,7 +76513,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1012",
+  "id": "CASO-1013",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000012",
   "ciudadano": "CIU-0416",
@@ -76488,7 +76550,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1013",
+  "id": "CASO-1014",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000008",
   "ciudadano": "CIU-0095",
@@ -76548,7 +76610,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1014",
+  "id": "CASO-1015",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000001",
   "ciudadano": "CIU-0273",
@@ -76580,7 +76642,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1015",
+  "id": "CASO-1016",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0331",
@@ -76617,7 +76679,7 @@
   "estado": "Recibido"
  },
  {
-  "id": "CASO-1016",
+  "id": "CASO-1017",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": "CIU-0152",
@@ -76668,7 +76730,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1017",
+  "id": "CASO-1018",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000007",
   "ciudadano": "CIU-0282",
@@ -76725,7 +76787,7 @@
   "estado": "Derivada"
  },
  {
-  "id": "CASO-1018",
+  "id": "CASO-1019",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
   "ciudadano": null,
@@ -76772,7 +76834,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1019",
+  "id": "CASO-1020",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000010",
   "ciudadano": "CIU-0026",
@@ -76814,7 +76876,7 @@
   "estado": "EnRevision"
  },
  {
-  "id": "CASO-1020",
+  "id": "CASO-1021",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000011",
   "ciudadano": "CIU-0275",
@@ -76851,7 +76913,7 @@
   "estado": "EnRevision"
  },
  {
-  "id": "CASO-1021",
+  "id": "CASO-1022",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000013",
   "ciudadano": "CIU-0107",
@@ -76911,7 +76973,7 @@
   "estado": "Pendiente"
  },
  {
-  "id": "CASO-1022",
+  "id": "CASO-1023",
   "origen": "Reporte",
   "categoria_inicial": "0199e2b0-0000-7000-8000-000000000012",
   "ciudadano": "CIU-0129",
@@ -76960,68 +77022,6 @@
   ],
   "estado_final": "Cerrada",
   "estado": "Pendiente"
- },
- {
-  "id": "CASO-1023",
-  "origen": "Reporte",
-  "categoria_inicial": "0199e2b0-0000-7000-8000-000000000002",
-  "ciudadano": "CIU-0261",
-  "registrado_en": "2026-11-30T19:42:56-05:00",
-  "sector": 1,
-  "reporte": {
-   "descripcion": "Me arrancharon el celular y huyeron en una moto lineal.",
-   "ocurrido_aproximadamente_en": "2026-11-30T17:15:45-05:00",
-   "canal": "App",
-   "registrado_por_operador": null,
-   "contacto": null,
-   "ubicacion": {
-    "fuente": "Mapa",
-    "latitud": -16.423487,
-    "longitud": -71.536482,
-    "precision_m": null,
-    "referencia": null
-   },
-   "fotos": 0
-  },
-  "clasificacion": {
-   "categoria": "0199e2b0-0000-7000-8000-000000000002",
-   "prioridad": "Media",
-   "heridos": "No"
-  },
-  "eventos": [
-   {
-    "tipo": "ReporteRegistrado",
-    "en": "2026-11-30T19:42:56-05:00",
-    "actor": "CIU-0261"
-   },
-   {
-    "tipo": "RevisionIniciada",
-    "en": "2026-11-30T19:49:41-05:00",
-    "actor": "OPE-4"
-   },
-   {
-    "tipo": "ReporteAdmitido",
-    "en": "2026-11-30T19:51:52-05:00",
-    "actor": "OPE-4",
-    "decision": {
-     "tipo": "Admision",
-     "texto": "Se envía un sereno (dato ficticio)."
-    }
-   },
-   {
-    "tipo": "CasoAsignado",
-    "en": "2026-11-30T19:55:01-05:00",
-    "actor": "OPE-4",
-    "sereno": "SER-26"
-   },
-   {
-    "tipo": "DesplazamientoConfirmado",
-    "en": "2026-11-30T19:57:29-05:00",
-    "actor": "SER-26"
-   }
-  ],
-  "estado_final": "Cerrada",
-  "estado": "EnCamino"
  },
  {
   "id": "CASO-1024",
