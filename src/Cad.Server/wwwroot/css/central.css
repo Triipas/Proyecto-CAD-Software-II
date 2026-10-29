@@ -822,7 +822,9 @@
 .central--sin-reporte .marcador-reporte,
 .central--sin-sereno .marcador-sereno,
 .central--sin-sereno .conjunto__etiqueta,
-.central--sin-sereno .linea-vinculo {
+.central--sin-sereno .linea-vinculo,
+.central--sin-sos .linea-vinculo--sos,
+.central--sin-reporte .linea-vinculo--reporte {
   display: none;
 }
 
@@ -867,7 +869,9 @@
 
 /* La leyenda sigue mandando sobre el marcador conjunto: después de sus estilos y con más especificidad que su display. */
 .central--sin-sos .marcador-conjunto .marcador-sos,
-.central--sin-reporte .marcador-conjunto .marcador-reporte {
+.central--sin-reporte .marcador-conjunto .marcador-reporte,
+.central--sin-sos .marcador-conjunto--sos .conjunto__etiqueta,
+.central--sin-reporte .marcador-conjunto--reporte .conjunto__etiqueta {
   display: none;
 }
 

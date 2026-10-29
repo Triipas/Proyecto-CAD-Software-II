@@ -220,6 +220,16 @@
     else volarA(marcador, { clase: claseLlegada(id) });
   }
 
+  function deseleccionar() {
+    sosSeleccionado = null;
+    for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
+    for (const boton of document.querySelectorAll("[data-seleccionar-sos][aria-pressed=true]")) boton.setAttribute("aria-pressed", "false");
+    resaltar(marcadores, null);
+    mapa.closePopup();
+    actualizarAsignacion();
+    dibujarDespacho();
+  }
+
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
   // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
   let lineaDespacho = null;
@@ -372,16 +382,18 @@
     let faltan = false;
     for (const v of vinculados.values()) {
       if (v.enElLugar) continue;
+      const origen = v.caso.dataset.origen === "Reporte" ? "reporte" : "sos";
+      const clase = `linea-vinculo linea-vinculo--${origen}`;
       const recorrido = recorridos.get(v.sereno.dataset.sereno);
       if (recorrido?.clave !== claveRecorrido(v)) faltan = true;
       // Hasta que llega el nuevo, se mantiene el recorrido anterior del mismo caso (sin parpadeo cada 15 s).
       if (recorrido?.caso === v.caso.dataset.casoMapa && recorrido.puntos) {
         const trazo = { lineCap: "round", lineJoin: "round", interactive: false };
         lineasVinculo.push(
-          L.polyline(recorrido.puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9, className: "linea-vinculo" }).addTo(mapa),
-          L.polyline(recorrido.puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9, className: "linea-vinculo" }).addTo(mapa));
+          L.polyline(recorrido.puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9, className: clase }).addTo(mapa),
+          L.polyline(recorrido.puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9, className: clase }).addTo(mapa));
       } else {
-        lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: "linea-vinculo" }).addTo(mapa));
+        lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: clase }).addTo(mapa));
       }
     }
     if (faltan) pedirRecorridos(vinculados);
@@ -725,13 +737,14 @@
     });
   }
   const central = document.querySelector(".central");
+  // La leyenda y el filtro de la cola mandan sobre la misma capa: el chip siempre dice lo que se ve.
+  function fijarCapa(capa, visible) {
+    document.querySelector(`[data-capa="${capa}"]`)?.setAttribute("aria-pressed", String(visible));
+    central.classList.toggle(`central--sin-${capa}`, !visible);
+    if (capa === "sereno") lineaDespacho?.getElement()?.classList.toggle("visualmente-oculto", !visible);
+  }
   for (const boton of document.querySelectorAll("[data-capa]")) {
-    boton.addEventListener("click", () => {
-      const visible = boton.getAttribute("aria-pressed") !== "true";
-      boton.setAttribute("aria-pressed", String(visible));
-      central.classList.toggle(`central--sin-${boton.dataset.capa}`, !visible);
-      if (boton.dataset.capa === "sereno") lineaDespacho?.getElement()?.classList.toggle("visualmente-oculto", !visible);
-    });
+    boton.addEventListener("click", () => fijarCapa(boton.dataset.capa, boton.getAttribute("aria-pressed") !== "true"));
   }
 
   // HU19-CA03: se vuelve a pedir el fragmento al servidor (fuente de verdad); se conserva la selección.
@@ -784,8 +797,17 @@
   for (const boton of document.querySelectorAll("[data-filtro-cola]")) {
     boton.addEventListener("click", () => {
       for (const otro of document.querySelectorAll("[data-filtro-cola]")) otro.setAttribute("aria-pressed", String(otro === boton));
-      cola.classList.toggle("cola--solo-sos", boton.dataset.filtroCola === "sos");
-      cola.classList.toggle("cola--solo-reportes", boton.dataset.filtroCola === "reportes");
+      const filtro = boton.dataset.filtroCola;
+      cola.classList.toggle("cola--solo-sos", filtro === "sos");
+      cola.classList.toggle("cola--solo-reportes", filtro === "reportes");
+      // 29/10/2026: «SOS» deja solo los SOS en el mapa y «Reportes» solo los reportes (con las líneas de sus serenos);
+      // «Todo» vuelve a mostrar ambos. Con muchos reportes, el mapa no se llena de lo que no se está trabajando.
+      fijarCapa("sos", filtro !== "reportes");
+      fijarCapa("reporte", filtro !== "sos");
+      // El caso elegido que queda fuera del filtro se suelta: ni su tarjeta ni su marcador están a la vista.
+      const elegido = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
+      const esReporte = elegido?.dataset.origen === "Reporte";
+      if (elegido && ((filtro === "sos" && esReporte) || (filtro === "reportes" && !esReporte))) deseleccionar();
     });
   }
 
