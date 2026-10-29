@@ -119,9 +119,12 @@
         <div class="panel-flotante__cuerpo" id="cuerpo-serenos">
             <p class="central__ayuda">Disponible: operativo y sin caso asignado.</p>
             @* Filtro por nombre: la lista crece y buscar a ojo no escala. central.js lo reaplica al resincronizar. *@
-            <div class="campo serenos-filtro">
-                <label class="visualmente-oculto" for="filtro-serenos">Buscar un sereno por nombre</label>
-                <input class="campo__control" id="filtro-serenos" type="search" placeholder="Buscar sereno…" autocomplete="off" data-filtro-serenos />
+            <div class="serenos-filtro">
+                <div class="campo-busqueda">
+                    <label class="visualmente-oculto" for="filtro-serenos">Buscar un sereno por nombre</label>
+                    <span class="campo-busqueda__icono"><partial name="_Icono" model="@("lupa")" /></span>
+                    <input class="campo__control campo-busqueda__control" id="filtro-serenos" type="search" placeholder="Buscar sereno por nombre" autocomplete="off" data-filtro-serenos />
+                </div>
                 <p class="texto-secundario" role="status" data-sin-coincidencias hidden>Ningún sereno se llama así.</p>
             </div>
             <div data-region-serenos>
@@ -141,14 +144,24 @@
     @* Asignación rápida: al elegir un caso aparece aquí el sereno disponible más cercano (un clic) y un buscador por nombre
        (se enfoca con «/»; flechas y Intro). No hace falta abrir el panel de serenos. Pide la misma confirmación que el panel. *@
     <section class="asignar-rapido" aria-label="Asignar el caso elegido" data-asignar-rapido hidden>
-        <p class="asignar-rapido__caso" data-ar-caso></p>
+        <div class="asignar-rapido__cabecera">
+            <h2 class="asignar-rapido__titulo" data-ar-caso></h2>
+            <button type="button" class="asignar-rapido__cerrar" data-ar-cerrar aria-label="Cerrar la asignación rápida">
+                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
+            </button>
+        </div>
         <p class="texto-secundario" data-ar-vacio hidden>No hay serenos disponibles en este momento.</p>
         <div class="asignar-rapido__fila" data-ar-fila>
-            <button type="button" class="boton boton--principal asignar-rapido__sugerido" data-ar-sugerido hidden></button>
-            <div class="asignar-rapido__buscar">
+            <button type="button" class="boton boton--principal asignar-rapido__sugerido" data-ar-sugerido hidden>
+                <span class="asignar-rapido__accion" data-ar-sugerido-nombre></span>
+                <span class="asignar-rapido__meta" data-ar-sugerido-meta></span>
+            </button>
+            <div class="campo-busqueda asignar-rapido__buscar">
                 <label class="visualmente-oculto" for="ar-buscar">Buscar otro sereno disponible por nombre</label>
-                <input class="campo__control" id="ar-buscar" type="search" role="combobox" aria-expanded="false" aria-controls="ar-lista"
-                       aria-autocomplete="list" placeholder="Buscar otro sereno…  ( / )" autocomplete="off" data-ar-buscar />
+                <span class="campo-busqueda__icono"><partial name="_Icono" model="@("lupa")" /></span>
+                <input class="campo__control campo-busqueda__control" id="ar-buscar" type="search" role="combobox" aria-expanded="false" aria-controls="ar-lista"
+                       aria-autocomplete="list" placeholder="Buscar otro sereno" autocomplete="off" data-ar-buscar />
+                <kbd class="asignar-rapido__atajo" aria-hidden="true">/</kbd>
                 <ul class="asignar-rapido__lista" id="ar-lista" role="listbox" aria-label="Serenos disponibles" data-ar-lista hidden></ul>
             </div>
         </div>

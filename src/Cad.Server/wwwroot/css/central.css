@@ -463,31 +463,66 @@
   color: var(--color-primario);
 }
 
-/* Filtro por nombre del panel de serenos. */
+/* ── Búsqueda de serenos (29/10/2026) ──────────────────────
+   Campo de 44 px de siempre con la lupa del sistema a la izquierda; sirve al filtro del panel y al buscador de la barra. */
+.campo-busqueda {
+  position: relative;
+}
+
+.campo-busqueda__icono {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--espacio-3);
+  display: grid;
+  place-items: center;
+  color: var(--color-texto-secundario);
+  pointer-events: none;
+}
+
+.campo-busqueda__icono .icono {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.campo-busqueda__control {
+  padding-left: calc(var(--espacio-3) + 1.125rem + var(--espacio-2));
+}
+
 .serenos-filtro {
-  gap: var(--espacio-1);
+  display: grid;
+  gap: var(--espacio-2);
 }
 
 .central .sereno--oculto {
   display: none;
 }
 
-/* ── Asignación rápida (29/10/2026) ───────────────────────
-   Barra sobre la leyenda, entre los dos paneles: el sereno más cercano a un clic y un buscador por nombre. La lista se abre
-   hacia arriba para no salirse de la pantalla. */
+/* ── Asignación rápida (29/10/2026) ────────────────────────
+   Panel flotante bajo el mismo lenguaje que la cola y los serenos (16 px, sombra flotante), entre ambos y sobre la leyenda.
+   Una sola acción principal: asignar al sereno más cercano. El buscador resuelve a cualquier otro; su lista se abre hacia
+   arriba para no salirse de la pantalla. */
 .asignar-rapido {
   position: absolute;
   z-index: 550;
   left: 28.5rem;
   right: 21.5rem;
   bottom: calc(var(--espacio-4) + 3rem);
-  max-width: 42rem;
+  max-width: 40rem;
   display: grid;
-  gap: var(--espacio-2);
-  padding: var(--espacio-3);
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-4);
   border-radius: var(--radio-dialogo);
   background: var(--color-superficie);
   box-shadow: var(--sombra-3);
+  animation: asignar-rapido-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+@keyframes asignar-rapido-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 
 .asignar-rapido[hidden],
@@ -495,60 +530,144 @@
   display: none;
 }
 
-.asignar-rapido__caso {
+.asignar-rapido__cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.asignar-rapido__titulo {
   margin: 0;
-  font-size: var(--texto-sm);
-  font-weight: var(--peso-semi);
+  min-width: 0;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-medio);
+  line-height: 1.35;
   color: var(--color-marino);
+  overflow-wrap: anywhere;
+}
+
+.asignar-rapido__cerrar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  border: 0;
+  border-radius: var(--radio-control);
+  color: var(--color-texto-secundario);
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .asignar-rapido__cerrar:hover {
+    color: var(--color-texto);
+    background: var(--color-superficie-hundida);
+  }
 }
 
 .asignar-rapido__fila {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--espacio-2);
+  gap: var(--espacio-3);
   align-items: center;
 }
 
+/* El botón nombra su acción y dice por qué es la sugerencia: «Asignar a …» / «Más cercano · 345 m». */
 .asignar-rapido__sugerido {
-  white-space: nowrap;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  min-height: 3.25rem;
+  padding: var(--espacio-2) var(--espacio-4);
+  text-align: left;
+  font-weight: var(--peso-medio);
 }
 
-.asignar-rapido__buscar {
-  position: relative;
+.asignar-rapido__accion {
+  line-height: 1.3;
 }
 
-.asignar-rapido__buscar .campo__control {
-  width: 100%;
+.asignar-rapido__meta {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-tenue); /* tinte del propio azul: 6:1 sobre el botón */
+}
+
+.asignar-rapido__atajo {
+  position: absolute;
+  top: 50%;
+  right: var(--espacio-3);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 var(--espacio-1);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-pequeno);
+  font: var(--peso-medio) var(--texto-xs)/1 var(--fuente);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-hundida);
+  pointer-events: none;
+}
+
+/* La pista de la tecla sobra con el campo en uso, con texto escrito o sin teclado. */
+.asignar-rapido__buscar .campo-busqueda__control:focus ~ .asignar-rapido__atajo,
+.asignar-rapido__buscar .campo-busqueda__control:not(:placeholder-shown) ~ .asignar-rapido__atajo {
+  display: none;
+}
+
+@media (hover: none) {
+  .asignar-rapido__atajo {
+    display: none;
+  }
 }
 
 .asignar-rapido__lista {
   position: absolute;
-  left: 0;
   right: 0;
-  bottom: calc(100% + var(--espacio-1));
+  bottom: calc(100% + var(--espacio-2));
+  width: max-content;
+  min-width: 100%;
+  max-width: 30rem;
   max-height: 14rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0;
   padding: var(--espacio-1);
   list-style: none;
-  border-radius: var(--radio-control);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
   background: var(--color-superficie);
   box-shadow: var(--sombra-3);
 }
 
 .asignar-rapido__lista li {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--espacio-3);
+  gap: var(--espacio-4);
+  min-height: 2.25rem;
   padding: var(--espacio-2) var(--espacio-3);
   border-radius: var(--radio-control);
   font-size: var(--texto-sm);
   cursor: pointer;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .asignar-rapido__lista li:hover {
+    background: var(--color-superficie-hundida);
+  }
+}
+
 .asignar-rapido__lista li[aria-selected="true"] {
   background: var(--color-tenue);
-  font-weight: var(--peso-semi);
+  font-weight: var(--peso-medio);
 }
 
 .asignar-rapido__lista .asignar-rapido__nada {
@@ -559,15 +678,18 @@
 .asignar-rapido__distancia {
   flex: none;
   font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  font-variant-numeric: tabular-nums;
   color: var(--color-texto-secundario);
 }
 
+/* Por debajo de 760 px los paneles se apilan bajo el mapa: la barra se queda fija al pie de la pantalla (si no, quedaría
+   al final de la página, lejos del caso que se acaba de elegir) y deja sitio para no tapar lo de abajo. */
 @media (max-width: 47.5rem) {
   .asignar-rapido {
-    position: relative;
-    inset: auto;
+    position: fixed;
+    inset: auto var(--espacio-3) var(--espacio-3);
     max-width: none;
-    margin: 0 var(--espacio-3);
   }
 
   .asignar-rapido__fila {
@@ -575,8 +697,13 @@
   }
 
   .asignar-rapido__lista {
-    bottom: auto;
-    top: calc(100% + var(--espacio-1));
+    width: auto;
+    max-width: none;
+    left: 0;
+  }
+
+  .central:has(.asignar-rapido:not([hidden])) {
+    padding-bottom: 13rem;
   }
 }
 

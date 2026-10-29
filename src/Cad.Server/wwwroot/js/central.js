@@ -540,13 +540,15 @@
   let arCandidatos = [];
   let arVisibles = [];
   let arActivo = null; // id del sereno resaltado en la lista (se conserva al rehacerla)
+  let arCerradaPara = null; // el operador cerró la barra de este caso: vuelve al elegir otro
 
   const sinTildes = (texto) => texto.normalize("NFD").replace(/\p{M}/g, "").toLowerCase();
 
   function actualizarBarraAsignacion() {
     const sos = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
-    barra.hidden = !sos;
-    if (!sos) {
+    if (!sos) arCerradaPara = null;
+    barra.hidden = !sos || arCerradaPara === sosSeleccionado;
+    if (barra.hidden) {
       arCasoActual = null;
       cerrarListaAsignacion();
       return;
@@ -556,7 +558,7 @@
       arBuscar.value = "";
       arActivo = null;
     }
-    arCaso.textContent = `${sos.dataset.origen === "Reporte" ? "Reporte" : "SOS"} de ${sos.dataset.ciudadano} · asignar a`;
+    arCaso.textContent = `Asignar el ${sos.dataset.origen === "Reporte" ? "reporte" : "SOS"} de ${sos.dataset.ciudadano}`;
     const origen = sos.dataset.lat ? L.latLng(Number(sos.dataset.lat), Number(sos.dataset.lon)) : null;
     arCandidatos = [...regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]')]
       .map((item) => ({
@@ -569,7 +571,8 @@
     const cercano = arCandidatos.find((c) => c.metros !== null);
     arSugerido.hidden = !cercano;
     if (cercano) {
-      arSugerido.textContent = `${cercano.nombre} · ${distancia(cercano.metros)}`;
+      arSugerido.querySelector("[data-ar-sugerido-nombre]").textContent = `Asignar a ${cercano.nombre}`;
+      arSugerido.querySelector("[data-ar-sugerido-meta]").textContent = `Más cercano · ${distancia(cercano.metros)}`;
       arSugerido.dataset.sereno = cercano.id;
       arSugerido.setAttribute("aria-label", `Asignar a ${cercano.nombre}, el más cercano, a ${distancia(cercano.metros)}`);
     }
@@ -616,6 +619,16 @@
     pintarListaAsignacion();
   }
 
+  function cerrarBarraAsignacion() {
+    arCerradaPara = sosSeleccionado;
+    actualizarBarraAsignacion();
+  }
+
+  barra.querySelector("[data-ar-cerrar]").addEventListener("click", cerrarBarraAsignacion);
+  // Esc con la lista cerrada (la lista lo atiende primero) cierra la barra y deja el mapa libre.
+  barra.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && arLista.hidden && !evento.defaultPrevented) cerrarBarraAsignacion();
+  });
   arSugerido.addEventListener("click", () => asignarDesdeBarra(arSugerido.dataset.sereno));
   arBuscar.addEventListener("focus", abrirListaAsignacion);
   arBuscar.addEventListener("input", abrirListaAsignacion);
