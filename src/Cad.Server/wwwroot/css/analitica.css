@@ -2158,3 +2158,30 @@ a.fila-a__cifra {
 
   .cobertura-a__lado > .tarjeta-a--llena { overflow: visible; }
 }
+
+/* ── ¿Se reasigna mucho?: pares dato-cifra de las tarjetas ────────────────────────────────────────── */
+.cifras-a {
+  display: grid;
+  gap: var(--espacio-3);
+  margin: var(--espacio-3) 0 0;
+}
+
+.cifras-a > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--espacio-3);
+}
+
+.cifras-a dt {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.cifras-a dd {
+  margin: 0;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-fuerte);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-marino);
+}

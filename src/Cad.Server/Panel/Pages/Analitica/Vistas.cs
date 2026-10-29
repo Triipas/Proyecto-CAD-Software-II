@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Html;
 
 namespace Cad.Server.Panel.Pages.Analitica;
 
-// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las siete preguntas, los nombres de zona, la regla y los
+// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las ocho preguntas, los nombres de zona, la regla y los
 // carriles (dibujados en SVG desde el servidor: sin JavaScript para leer una respuesta) y las señales de la salud del sistema.
 public static class Formato
 {
@@ -48,6 +48,7 @@ public static class Preguntas
         new("tiempo", "¿Llegamos a tiempo?", "<path d=\"M4 17h16M4 17V7m4 10v-4m4 4V9m4 8v-6\"/>"),
         new("falsos", "¿Cuánto de lo que entra es falso?", "<path d=\"M12 3 21 19H3z\"/><path d=\"M12 10v4m0 3v.01\"/>"),
         new("cobertura", "¿Dónde falta cobertura?", "<path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>"),
+        new("reasigna", "¿Se reasigna mucho?", "<path d=\"M4 8h13m-3-3 3 3-3 3\"/><path d=\"M20 16H7m3-3-3 3 3 3\"/>"),
         new("repite", "¿Qué se repite?", "<path d=\"M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3\"/><path d=\"M18 3v4h-4M6 21v-4h4\"/>"),
         new("ciudadano", "¿Qué opina el ciudadano?", "<circle cx=\"12\" cy=\"8\" r=\"3.5\"/><path d=\"M5 20c1-4 4-6 7-6s6 2 7 6\"/>"),
         new("sistema", "¿Funciona el sistema?", "<rect x=\"4\" y=\"5\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M9 20h6M12 16v4\"/>"),

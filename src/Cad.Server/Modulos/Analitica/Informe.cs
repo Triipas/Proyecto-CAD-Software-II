@@ -70,7 +70,7 @@ public sealed record InformePeriodo(PeriodoAnalitica Periodo, PeriodoAnalitica A
 }
 
 public sealed class GenerarInformePeriodo(CadDbContext db, ConsultarRespuestaPorZona respuesta, ConsultarEvaluaciones evaluaciones,
-    ConsultarPuntosCriticos puntos, ConsultarIndiceFalsos falsos)
+    ConsultarPuntosCriticos puntos, ConsultarIndiceFalsos falsos, ConsultarReasignaciones reasignaciones)
 {
     public async Task<InformePeriodo> EjecutarAsync(PeriodoAnalitica periodo, CancellationToken ct)
     {
@@ -100,6 +100,7 @@ public sealed class GenerarInformePeriodo(CadDbContext db, ConsultarRespuestaPor
         var indice = await falsos.EjecutarAsync(p, ct);
         var evaluacion = await evaluaciones.EjecutarAsync(p, ct);
         var evaluadas = evaluacion.Distribucion.Sum(d => d.Evaluaciones);
+        var reasignado = await reasignaciones.EjecutarAsync(p, ct);
         var acompanamientos = await db.SesionesAcompanamiento.AsNoTracking().CountAsync(s => s.IniciadaEn >= p.Desde && s.IniciadaEn < p.Hasta, ct);
 
         return
@@ -119,6 +120,8 @@ public sealed class GenerarInformePeriodo(CadDbContext db, ConsultarRespuestaPor
             new("Veracidad", "Casos descartados por falsos", "casos", indice.SosDescartadosPorFalsos + indice.ReportesFalsos),
             new("Veracidad", "SOS por activación accidental", "%", indice.PorcentajeSosAccidentales),
             new("Veracidad", "SOS cancelados por el ciudadano", "%", Porcentaje(sos.Count(c => c.Estado == EstadoCaso.Cancelada), sos.Count)),
+            new("Despacho", "Casos reasignados", "%", reasignado.PorcentajeReasignados),
+            new("Despacho", "Reasignaciones", "veces", reasignado.Reasignaciones),
             new("Servicio", "Casos cerrados evaluados", "%", evaluacion.Cerrados == 0 ? null : evaluacion.PorcentajeEvaluados),
             new("Servicio", "Evaluación promedio", "de 5", evaluadas == 0 ? null : evaluacion.Distribucion.Sum(d => d.Puntuacion * d.Evaluaciones) / (double)evaluadas),
             new("Patrones", "Puntos críticos", "lugares", (await puntos.EjecutarAsync(p, ct)).Count),
