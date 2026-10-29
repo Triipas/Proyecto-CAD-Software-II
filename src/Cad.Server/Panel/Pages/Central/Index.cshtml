@@ -104,6 +104,18 @@
                     <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
                 </div>
             </section>
+
+            @* Los casos que ya tienen sereno siguen a la vista, tras los pendientes: al elegir uno, el mapa va a él y dibuja solo
+               entonces el recorrido de su sereno. El filtro de la cola también los separa en SOS y reportes. *@
+            <section class="central__asignados" aria-labelledby="titulo-asignados">
+                <h3 id="titulo-asignados" class="central__titulo">
+                    Con sereno asignado <span class="central__contador central__contador--asignados" data-contador-asignados>@Model.Asignados.Count</span>
+                </h3>
+                <p class="central__ayuda">Asignados, en camino o en atención. Elige uno para ver el recorrido de su sereno.</p>
+                <div data-region-asignados>
+                    <partial name="_ListaAsignados" model="@Model.ListaDeAsignados" />
+                </div>
+            </section>
         </div>
     </section>
 
