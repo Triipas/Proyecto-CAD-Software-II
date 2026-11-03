@@ -136,7 +136,7 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         // un resultado público y notas internas, que pueden contener datos personales.
         await EnviarAsync(central.Navegador, $"/panel/central/sos/{sos.Id}?handler=Clasificar", new()
         {
-            ["Clasificacion.CategoriaId"] = Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id.ToString(),
+            ["Clasificacion.Prioridad"] = "Media", ["Clasificacion.Heridos"] = "No", ["Clasificacion.CategoriaId"] = Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id.ToString(),
         });
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{sos.Id}/desplazamiento", null)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{sos.Id}/atencion", await fabrica.EnElLugarAsync(sos.Id))).StatusCode);
@@ -144,7 +144,7 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         var notasCierre = $"Vecino identificado como agresor {sello}";
         sensibles["datos personales"].AddRange([resultadoCierre, notasCierre]);
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{sos.Id}/cierre",
-            new Cad.Contratos.Serenos.SolicitudCierreCaso(Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id, resultadoCierre, notasCierre))).StatusCode);
+            new Cad.Contratos.Serenos.SolicitudCierreCaso(Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia.Iniciales[0].Id, resultadoCierre, notasCierre, "ResueltoEnElLugar"))).StatusCode);
         Assert.Contains(notasCierre, await central.Navegador.GetStringAsync($"/panel/central/sos/{sos.Id}"));
 
         // Sellos de seguridad de Identity (equivalen a credenciales para revocar sesiones).
@@ -220,13 +220,13 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         var accion = $"Llamada al 105 con el DNI del denunciante {sello}";
         sensibles["datos personales"].AddRange([.. motivos, destino, accion]);
         await EnviarAsync(panel, $"/panel/reportes/{reportes[0]}?handler=Decidir",
-            new() { ["Decision.Tipo"] = "Admision", ["Decision.Motivo"] = motivos[0] }, $"/panel/reportes/{reportes[0]}");
+            new() { ["Decision.Tipo"] = "Admision", ["Decision.Motivo"] = motivos[0], ["Decision.Prioridad"] = "Media", ["Decision.Heridos"] = "No" }, $"/panel/reportes/{reportes[0]}");
         await EnviarAsync(panel, $"/panel/reportes/{reportes[1]}?handler=Decidir", new()
         {
-            ["Decision.Tipo"] = "Derivacion", ["Decision.Motivo"] = motivos[1], ["Decision.Destino"] = destino, ["Decision.Accion"] = accion,
+            ["Decision.Tipo"] = "Derivacion", ["Decision.Motivo"] = motivos[1], ["Decision.Destino"] = "Otro", ["Decision.DetalleDestino"] = destino, ["Decision.Accion"] = accion,
         }, $"/panel/reportes/{reportes[1]}");
         await EnviarAsync(panel, $"/panel/reportes/{reportes[2]}?handler=Decidir",
-            new() { ["Decision.Tipo"] = "Descarte", ["Decision.Motivo"] = motivos[2] }, $"/panel/reportes/{reportes[2]}");
+            new() { ["Decision.Tipo"] = "Descarte", ["Decision.Motivo"] = motivos[2], ["Decision.MotivoDescarte"] = "Duplicado" }, $"/panel/reportes/{reportes[2]}");
 
         // HU20-CA07: el admitido se asigna desde la central a un sereno operativo, que lo atiende y lo cierra (HU21–HU24).
         var sereno = await fabrica.CrearAsync(Roles.Sereno);
@@ -246,7 +246,7 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         var notas = $"El denunciante es primo del sospechoso {sello}";
         sensibles["datos personales"].AddRange([resultado, notas]);
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsJsonAsync($"/api/sereno/casos/{reportes[0]}/cierre",
-            new Cad.Contratos.Serenos.SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, resultado, notas))).StatusCode);
+            new Cad.Contratos.Serenos.SolicitudCierreCaso(CategoriaIncidencia.Iniciales[1].Id, resultado, notas, "ResueltoEnElLugar"))).StatusCode);
 
         // HU26 y HU27: búsqueda con filtros e historial con notas internas.
         Assert.Contains(reportes[1].ToString(), await panel.GetStringAsync("/panel/casos?Origen=Reporte"));

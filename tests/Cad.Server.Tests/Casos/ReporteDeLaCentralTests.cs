@@ -40,6 +40,9 @@ public class ReporteDeLaCentralTests(FabricaCad fabrica)
             ["Reporte.Latitud"] = latitud ?? "",
             ["Reporte.Longitud"] = longitud ?? "",
             ["Reporte.Referencia"] = referencia ?? "",
+            ["Reporte.Canal"] = "Llamada",
+            ["Reporte.Prioridad"] = "Media",
+            ["Reporte.Heridos"] = "No",
             ["Reporte.ContactoNombre"] = contacto ?? "",
             ["Reporte.ContactoTelefono"] = telefono ?? "",
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, Ruta),
@@ -153,7 +156,7 @@ public class ReporteDeLaCentralTests(FabricaCad fabrica)
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsync($"/api/sereno/casos/{id}/desplazamiento", null)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{id}/atencion", await fabrica.EnElLugarAsync(id))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sereno.PostAsJsonAsync($"/api/sereno/casos/{id}/cierre",
-            new SolicitudCierreCaso(Robo, "Se verificó el lugar; la tienda estaba cerrada y sin daños.", null))).StatusCode);
+            new SolicitudCierreCaso(Robo, "Se verificó el lugar; la tienda estaba cerrada y sin daños.", null, "ResueltoEnElLugar"))).StatusCode);
 
         Assert.Equal(EstadoCaso.Cerrada, (await fabrica.ConBaseDatosAsync(db => db.Casos.AsNoTracking().SingleAsync(c => c.Id == id))).Estado);
         Assert.False(await fabrica.ConBaseDatosAsync(db => db.NotificacionesCiudadano.AnyAsync(n => n.CasoId == id)));

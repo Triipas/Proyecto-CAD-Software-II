@@ -1,0 +1,7 @@
+{
+ "fin_del_periodo": "2026-11-30T20:00:00-05:00",
+ "inicio_del_periodo": "2026-08-31T20:00:00-05:00",
+ "dias": 91,
+ "semilla": 20261027,
+ "nota": "Datos ficticios. Al cargar, desplazar todas las fechas en (ahora - fin_del_periodo)."
+}

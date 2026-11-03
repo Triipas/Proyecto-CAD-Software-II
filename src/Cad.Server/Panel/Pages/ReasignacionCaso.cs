@@ -14,5 +14,7 @@ public sealed class FormularioReasignacion
 {
     public Guid IdSolicitud { get; set; }
     public Guid SerenoId { get; set; }
+    // 27/10/2026: el motivo del catálogo MotivosReasignacion; Motivo es el detalle (obligatorio solo con «Otro motivo»).
+    public string? MotivoCodigo { get; set; }
     public string? Motivo { get; set; }
 }

@@ -182,6 +182,15 @@
   background: var(--color-reporte);
 }
 
+.central__contador--asignados {
+  background: var(--color-progreso);
+}
+
+.central__asignados {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
 .central__ayuda {
   margin: 0;
   font-size: var(--texto-xs);
@@ -220,6 +229,12 @@
   .central .sos:hover {
     box-shadow: var(--sombra-2);
   }
+}
+
+/* Un caso con sereno ya no es urgente: tarjeta neutra, sin el tinte rojo del SOS pendiente. El estado va en su chip. */
+.central .sos--asignado:not(.sos--reporte):not(.sos--seleccionado) {
+  border-color: var(--color-borde);
+  background: var(--color-superficie);
 }
 
 .central .sos--seleccionado {
@@ -806,9 +821,10 @@
   color: var(--color-texto-secundario);
 }
 
+/* Cada muestra es su marcador en pequeño: la misma forma y el mismo color. */
 .leyenda-mapa__muestra {
-  width: 0.625rem;
-  height: 0.625rem;
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 3px;
 }
 
@@ -821,7 +837,9 @@
 .central--sin-reporte .marcador-reporte,
 .central--sin-sereno .marcador-sereno,
 .central--sin-sereno .conjunto__etiqueta,
-.central--sin-sereno .linea-vinculo {
+.central--sin-sereno .linea-vinculo,
+.central--sin-sos .linea-vinculo--sos,
+.central--sin-reporte .linea-vinculo--reporte {
   display: none;
 }
 
@@ -829,19 +847,17 @@
    «En el lugar» debajo, para que se lea como una sola ubicación. */
 .marcador-conjunto .conjunto__caso {
   position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-  place-items: center;
-  width: 36px;
+  top: 1px;
+  left: 1px;
+  width: 32px;
   height: 32px;
 }
 
 .marcador-conjunto--reporte .conjunto__caso {
-  top: 3px;
-  left: 5px;
-  width: 26px;
-  height: 26px;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 34px;
 }
 
 .marcador-conjunto .conjunto__sereno {
@@ -868,7 +884,9 @@
 
 /* La leyenda sigue mandando sobre el marcador conjunto: después de sus estilos y con más especificidad que su display. */
 .central--sin-sos .marcador-conjunto .marcador-sos,
-.central--sin-reporte .marcador-conjunto .marcador-reporte {
+.central--sin-reporte .marcador-conjunto .marcador-reporte,
+.central--sin-sos .marcador-conjunto--sos .conjunto__etiqueta,
+.central--sin-reporte .marcador-conjunto--reporte .conjunto__etiqueta {
   display: none;
 }
 
@@ -877,57 +895,16 @@
   border-radius: 0.875rem;
 }
 
-/* ── Marcadores: la forma distingue la entidad; el color, su estado ── */
-/* Sin «position»: Leaflet coloca cada marcador con position: absolute, y eso también ancla su pulso. Con «relative» los
-   marcadores quedaban apilados uno debajo de otro y se desplazaban de su punto (más lejos cuanto menos zoom). */
-.marcador-sos {
-  border-radius: var(--radio-control);
-  background: var(--mapa-sos);
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 2px 6px rgba(13, 27, 51, 0.35);
-  color: #FFFFFF;
-}
-
-.marcador-sos .icono {
-  width: 1rem;
-  height: 1rem;
-}
-
+/* ── Marcadores: la forma, el icono y el estado los define panel.css (comunes con los mapas de detalle) ── */
 /* Pulso del SOS pendiente sin abrir: la única animación persistente de la central. */
 .marcador-sos--pulso::before {
   content: "";
   position: absolute;
   inset: -0.5rem;
   border: 2px solid var(--mapa-sos);
-  border-radius: 0.75rem;
+  border-radius: 18px;
   animation: pulso-marcador var(--pulso-sos) var(--curva-salida) infinite;
   pointer-events: none;
-}
-
-.marcador-reporte {
-  border-radius: 999px;
-  background: var(--mapa-reporte);
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 2px 6px rgba(13, 27, 51, 0.35);
-}
-
-.marcador-caso--en-curso.marcador-sos .icono {
-  color: var(--mapa-sos);
-}
-
-.marcador-sereno,
-.marcador-sereno--no-disponible {
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  filter: drop-shadow(0 2px 3px rgba(13, 27, 51, 0.35));
-}
-
-.marcador-sereno svg {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 .etiqueta-despacho {
@@ -1105,7 +1082,7 @@
 }
 
 .marcador-sos.marcador--elegido::after {
-  border-radius: 0.875rem;
+  border-radius: 19px;
 }
 
 .marcador-sereno.marcador--elegido::after {
@@ -1158,7 +1135,9 @@
 }
 
 .cola--solo-sos .central__reportes,
-.cola--solo-reportes .central__urgente {
+.cola--solo-reportes .central__urgente,
+.cola--solo-sos .sos--asignado.sos--reporte,
+.cola--solo-reportes .sos--asignado:not(.sos--reporte) {
   display: none;
 }
 

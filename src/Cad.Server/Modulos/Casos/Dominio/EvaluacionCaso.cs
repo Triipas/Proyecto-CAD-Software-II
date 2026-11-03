@@ -14,13 +14,16 @@ public sealed class EvaluacionCaso
     public Guid IdSolicitud { get; private set; }
     public int Puntuacion { get; private set; }
     public string? Comentario { get; private set; }
+    // 27/10/2026 — por qué evalúa así (códigos de Cad.Contratos.Casos.MotivosEvaluacion); opcional, puede estar vacío.
+    public string[] Motivos { get; private set; } = [];
     public DateTimeOffset EvaluadaEn { get; private set; }
 
     private EvaluacionCaso() { } // EF Core
 
     public static bool PuntuacionValida(int? puntuacion) => puntuacion is >= PuntuacionMinima and <= PuntuacionMaxima;
 
-    public static EvaluacionCaso Registrar(Caso caso, Guid idSolicitud, int puntuacion, string? comentario, DateTimeOffset ahora)
+    public static EvaluacionCaso Registrar(Caso caso, Guid idSolicitud, int puntuacion, string? comentario, DateTimeOffset ahora,
+        IReadOnlyCollection<string>? motivos = null)
     {
         if (caso.Estado != EstadoCaso.Cerrada)
             throw new InvalidOperationException("Solo un caso cerrado puede evaluarse.");
@@ -33,6 +36,7 @@ public sealed class EvaluacionCaso
             IdSolicitud = idSolicitud,
             Puntuacion = puntuacion,
             Comentario = string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(),
+            Motivos = motivos?.Distinct().ToArray() ?? [],
             EvaluadaEn = ahora,
         };
     }

@@ -58,7 +58,11 @@ public class DecisionReporteTests(FabricaCad fabrica)
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, Ruta(id)),
         };
         if (motivo is not null) campos["Decision.Motivo"] = motivo;
-        if (destino is not null) campos["Decision.Destino"] = destino;
+        // 27/10/2026: el destino es un código del catálogo; un texto libre de la prueba va como «Otra entidad» con su detalle.
+        if (!string.IsNullOrWhiteSpace(destino)) (campos["Decision.Destino"], campos["Decision.DetalleDestino"]) = ("Otro", destino);
+        else if (destino is not null) campos["Decision.Destino"] = destino;
+        if (tipo == "Admision") (campos["Decision.Prioridad"], campos["Decision.Heridos"]) = ("Media", "No");
+        if (tipo == "Descarte") campos["Decision.MotivoDescarte"] = "Duplicado";
         if (accion is not null) campos["Decision.Accion"] = accion;
         return await navegador.PostAsync($"{Ruta(id)}?handler=Decidir", new FormUrlEncodedContent(campos));
     }
@@ -138,11 +142,11 @@ public class DecisionReporteTests(FabricaCad fabrica)
         Assert.DoesNotMatch($"(?s)asignar__sugerido.*?value=\"{lejos.Id}\".*?asignar__otros", html);
         Assert.Contains($"value=\"{lejos.Id}\"", html);
 
-        // Asignar desde el propio reporte vuelve al reporte (no a la central) y lo deja asignado.
+        // Asignar desde el propio reporte (Volver = "detalle") vuelve al reporte (no a la central) y lo deja asignado.
         var ruta = Ruta(id);
         var respuesta = await operador.PostAsync($"{ruta}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Asignacion.SerenoId"] = cerca.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(),
+            ["Asignacion.SerenoId"] = cerca.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.Volver"] = "detalle",
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
         }));
         Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
@@ -161,7 +165,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
 
         var respuesta = await operador.PostAsync($"{ruta}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Asignacion.SerenoId"] = Guid.NewGuid().ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(),
+            ["Asignacion.SerenoId"] = Guid.NewGuid().ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.Volver"] = "detalle",
             ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta),
         }));
 
@@ -235,6 +239,31 @@ public class DecisionReporteTests(FabricaCad fabrica)
         Assert.DoesNotContain(id, central.Avisos); // no es un SOS: sin aviso sonoro de atención urgente
     }
 
+    // Consola de incidente (27/10/2026): el reporte admitido se asigna desde su propio detalle y se vuelve a él.
+    [Fact]
+    public async Task HU20_CA07_DesdeElDetalle_SeAsignaSinIrALaCentral_YVuelveAlReporte()
+    {
+        var id = await EnRevisionAsync();
+        var (operador, _) = await OperadorAsync();
+        await DecidirAsync(operador, id, "Admision", "Corresponde atenderlo");
+        var (_, sereno) = await SerenoOperativoAsync();
+
+        var detalle = await operador.GetStringAsync(Ruta(id));
+        Assert.Contains($"value=\"{sereno.Id}\"", detalle); // el sereno disponible se ofrece en el detalle
+        var respuesta = await operador.PostAsync($"{Ruta(id)}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Asignacion.SerenoId"] = sereno.Id.ToString(),
+            ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(),
+            ["Asignacion.Volver"] = "detalle",
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, Ruta(id)),
+        }));
+
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Equal(Ruta(id), respuesta.Headers.Location!.OriginalString);
+        Assert.Equal(EstadoCaso.Asignada, (await CasoAsync(id)).Estado);
+        Assert.Contains("Reporte asignado.", await operador.GetStringAsync(Ruta(id)));
+    }
+
     [Fact]
     public async Task HU20_CA07_UnReporteAdmitidoSinPunto_TambienSeAsigna_YElSerenoVeLaReferencia()
     {
@@ -259,7 +288,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
             .ReadFromJsonAsync<RespuestaReporte>())!.Id;
         var operador = await fabrica.CrearAsync(Roles.Operador);
 
-        var resultado = await DecidirDirectoAsync(recibido, new DatosDecision(TipoDecisionReporte.Admision, "Motivo"), operador.Id);
+        var resultado = await DecidirDirectoAsync(recibido, new DatosDecision(TipoDecisionReporte.Admision, "Motivo", Prioridad: "Media", Heridos: "No"), operador.Id);
 
         Assert.Equal(DecidirReporte.MotivoNoEnRevision, Assert.IsType<ResultadoDecision.Rechazado>(resultado).Motivo);
         Assert.Equal(EstadoCaso.Recibido, (await CasoAsync(recibido)).Estado);
@@ -290,8 +319,8 @@ public class DecisionReporteTests(FabricaCad fabrica)
         var b = await fabrica.CrearAsync(Roles.Operador);
 
         var resultado = await ConOtroOperadorAsync(
-            otro => otro.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Descarte, "No corresponde"), b.Id, CancellationToken.None),
-            propio => propio.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Corresponde"), a.Id, CancellationToken.None));
+            otro => otro.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Descarte, "No corresponde", MotivoDescarte: "Duplicado"), b.Id, CancellationToken.None),
+            propio => propio.EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Corresponde", Prioridad: "Media", Heridos: "No"), a.Id, CancellationToken.None));
 
         Assert.Contains("ya fue descartado por", Assert.IsType<ResultadoDecision.Rechazado>(resultado).Motivo);
         var decision = Assert.Single(await DecisionesAsync(id));
@@ -307,7 +336,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
         var tipos = new[] { TipoDecisionReporte.Admision, TipoDecisionReporte.Derivacion, TipoDecisionReporte.Descarte };
 
         var resultados = await Task.WhenAll(operadores.Select((o, i) => DecidirDirectoAsync(id,
-            new DatosDecision(tipos[i % 3], "Motivo", "Comisaría", "Llamada"), o.Id)));
+            new DatosDecision(tipos[i % 3], "Motivo", "Otro", "Llamada", "Comisaría", "Media", "No", "Duplicado"), o.Id)));
 
         Assert.Single(resultados, r => r is ResultadoDecision.Registrado);
         var decision = Assert.Single(await DecisionesAsync(id));

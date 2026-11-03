@@ -51,7 +51,7 @@
                                             <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Resultado}" IsVisible="{Binding HayResultado}" />
                                         </Grid>
                                     </Border>
-                                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Abrir}"
+                                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Abrir}"
                                             SemanticProperties.Description="{Binding Descripcion}" SemanticProperties.Hint="Muestra los avances del caso" />
                                 </Grid>
                             </DataTemplate>

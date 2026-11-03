@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Contratos.Reportes;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
@@ -5,6 +6,9 @@ using Cad.Server.Persistencia;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Casos.Aplicacion;
+
+// Reporte registrado por la central: canal de entrada, prioridad y heridos (27/10/2026) y, si los dio, quién avisó.
+public sealed record DatosReporteCentral(string? Canal, string? Prioridad, string? Heridos, string? ContactoNombre, string? ContactoTelefono);
 
 public abstract record ResultadoRegistroReporte
 {
@@ -33,6 +37,7 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
 
         var ahora = reloj.GetUtcNow();
         var (errores, descripcion, ubicacion) = await ValidarAsync(solicitud, ahora, ct);
+        var fotos = ValidarFotos(solicitud.Fotos, errores);
         if (errores.Count > 0)
             return new ResultadoRegistroReporte.Invalido(errores);
 
@@ -43,6 +48,8 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
         db.Casos.Add(caso);
         db.DetallesReporte.Add(DetalleReporte.Registrar(caso, caso.CategoriaId!.Value, descripcion!,
             solicitud.OcurridoAproximadamenteEn!.Value.ToUniversalTime(), u.Fuente, u.Latitud, u.Longitud, u.Precision, u.Referencia));
+        for (var n = 0; n < fotos.Count; n++)
+            db.FotosReporte.Add(FotoReporte.Registrar(caso, n + 1, fotos[n], ahora));
         db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteRegistrado, ciudadanoId, VisibilidadEvento.Publica, ahora));
         try
         {
@@ -55,8 +62,8 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
             return Reiteracion((await BuscarAsync(ciudadanoId, solicitud.IdSolicitud, ct))!);
         }
 
-        // Sin descripción, referencia ni coordenadas en el registro (RNF07): solo el identificador y la fuente.
-        registro.LogInformation("Reporte {CasoId} registrado (ubicación del hecho: {Fuente}).", caso.Id, u.Fuente);
+        // Sin descripción, referencia, coordenadas ni fotos en el registro (RNF07): solo el identificador, la fuente y cuántas fotos.
+        registro.LogInformation("Reporte {CasoId} registrado (ubicación del hecho: {Fuente}; fotos: {Fotos}).", caso.Id, u.Fuente, fotos.Count);
         await AvisarAsync(caso.Id);
         return new ResultadoRegistroReporte.Registrado(caso);
     }
@@ -67,8 +74,9 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
     public const string MotivoAdmisionCentral = "Registrado por la central: no requiere revisión.";
 
     public async Task<ResultadoRegistroReporte> RegistrarDeLaCentralAsync(Guid operadorId, SolicitudRegistroReporte solicitud,
-        string? contactoNombre, string? contactoTelefono, CancellationToken ct)
+        DatosReporteCentral datos, CancellationToken ct)
     {
+        var (contactoNombre, contactoTelefono) = (datos.ContactoNombre, datos.ContactoTelefono);
         if (solicitud.IdSolicitud == Guid.Empty)
             return new ResultadoRegistroReporte.Invalido(new() { ["idSolicitud"] = ["Falta el identificador de la solicitud."] });
         if (await BuscarDeLaCentralAsync(solicitud.IdSolicitud, ct) is { } existente)
@@ -82,15 +90,23 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
             errores["contactoNombre"] = [$"El nombre admite hasta {DetalleReporte.MaximoContactoNombre} caracteres."];
         if (telefono is not null && (telefono.Length > DetalleReporte.MaximoContactoTelefono || !telefono.All(c => char.IsDigit(c) || c is ' ' or '+' or '-')))
             errores["contactoTelefono"] = ["Escribe el teléfono solo con números (puede llevar +, espacios o guiones)."];
+        // 27/10/2026: por dónde llegó, y la prioridad y los heridos de su admisión (como en la revisión de un reporte).
+        if (!Catalogo.Contiene(CanalesEntrada.DeLaCentral, datos.Canal))
+            errores["canal"] = ["Elige por dónde llegó el reporte."];
+        if (!Catalogo.Contiene(PrioridadesCaso.Todas, datos.Prioridad))
+            errores["prioridad"] = ["Elige la prioridad del caso."];
+        if (!Catalogo.Contiene(PersonasHeridas.Todas, datos.Heridos))
+            errores["heridos"] = ["Indica si hay personas heridas (o que no se sabe)."];
         if (errores.Count > 0)
             return new ResultadoRegistroReporte.Invalido(errores);
 
         var caso = Caso.RegistrarReporteDeLaCentral(operadorId, solicitud.IdSolicitud, solicitud.CategoriaId!.Value, ahora);
+        caso.Priorizar(datos.Prioridad!, datos.Heridos!);
         var u = ubicacion!;
         db.Casos.Add(caso);
         db.DetallesReporte.Add(DetalleReporte.Registrar(caso, caso.CategoriaId!.Value, descripcion!,
             solicitud.OcurridoAproximadamenteEn!.Value.ToUniversalTime(), u.Fuente, u.Latitud, u.Longitud, u.Precision, u.Referencia,
-            operadorId, nombre, telefono));
+            operadorId, nombre, telefono, datos.Canal!));
         db.DecisionesReporte.Add(DecisionReporte.Registrar(caso, TipoDecisionReporte.Admision, MotivoAdmisionCentral, null, null, operadorId, ahora));
         db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteRegistrado, operadorId, VisibilidadEvento.Interna, ahora));
         db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.ReporteAdmitido, operadorId, VisibilidadEvento.Interna, ahora));
@@ -141,6 +157,33 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
         var ubicacion = ValidarUbicacion(solicitud.Ubicacion, Error);
 
         return (errores, descripcion, ubicacion);
+    }
+
+    // DP08 ampliada (26/10/2026): hasta tres fotos JPEG de hasta 1 MB. Se guardan sin metadatos (EXIF con la ubicación GPS,
+    // XMP, comentarios) aunque la app ya los quite: la app no es la única que puede llamar a la API.
+    private static List<byte[]> ValidarFotos(IReadOnlyList<byte[]>? fotos, Dictionary<string, string[]> errores)
+    {
+        var limpias = new List<byte[]>();
+        if (fotos is null or { Count: 0 })
+            return limpias;
+        if (fotos.Count > LimitesFotosReporte.Maximo)
+        {
+            errores["fotos"] = [$"Puedes adjuntar hasta {LimitesFotosReporte.Maximo} fotos."];
+            return limpias;
+        }
+        for (var n = 0; n < fotos.Count; n++)
+        {
+            var foto = fotos[n];
+            if (foto is not { Length: > 0 })
+                errores[$"fotos[{n}]"] = ["La foto está vacía."];
+            else if (foto.Length > LimitesFotosReporte.MaximoBytes)
+                errores[$"fotos[{n}]"] = ["Cada foto admite hasta 1 MB."];
+            else if (LimpiezaJpeg.QuitarMetadatos(foto) is { } limpia)
+                limpias.Add(limpia);
+            else
+                errores[$"fotos[{n}]"] = ["La foto debe ser una imagen JPEG."];
+        }
+        return limpias;
     }
 
     // HU25-CA05: la central incorpora el marcador sin recargar (sin el aviso sonoro de un SOS: no es urgente). Después de

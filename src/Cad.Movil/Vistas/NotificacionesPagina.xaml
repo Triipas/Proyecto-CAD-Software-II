@@ -51,7 +51,7 @@
                                             <v:Icono Grid.Column="2" Grid.RowSpan="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                                         </Grid>
                                     </Border>
-                                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Abrir}"
+                                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Abrir}"
                                             SemanticProperties.Description="{Binding Descripcion}" SemanticProperties.Hint="Abre el caso" />
                                 </Grid>
                             </DataTemplate>

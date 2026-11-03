@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- ADR-08 — PIN de 6 dígitos con teclado propio (teclas de 64 dp): crear y confirmar, restablecer o ingresar. El PIN nunca se
+<!-- ADR-08 — PIN de 6 dígitos con teclado propio (teclas de 72 dp desde el 26/10/2026): crear y confirmar, restablecer o ingresar. El PIN nunca se
      muestra; seis puntos indican cuántos dígitos van. -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -10,7 +10,7 @@
              Title="PIN">
     <ContentPage.Resources>
         <Style x:Key="TeclaPin" TargetType="Button">
-            <Setter Property="HeightRequest" Value="64" />
+            <Setter Property="HeightRequest" Value="72" />
             <Setter Property="FontFamily" Value="PublicSansSemiBold" />
             <Setter Property="FontSize" Value="26" />
             <Setter Property="CornerRadius" Value="12" />
@@ -44,51 +44,52 @@
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="0">
-            <v:EncabezadoPagina Titulo="{Binding Titulo}" Ayuda="{Binding Subtitulo}" />
+    <!-- Acomodo del 26/10/2026: sin el hueco bajo el teclado. Los puntos quedan en el centro del espacio de arriba y el teclado,
+         con teclas más altas, abajo, en la zona del pulgar; los enlaces, debajo de él. -->
+    <Grid RowDefinitions="Auto,*,Auto">
+        <v:EncabezadoPagina Titulo="{Binding Titulo}" Ayuda="{Binding Subtitulo}" />
 
-            <VerticalStackLayout Padding="16,24,16,32" Spacing="20" MaximumWidthRequest="420">
-                <!-- Seis puntos: lleno = dígito escrito. -->
-                <HorizontalStackLayout x:Name="PuntosPin" HorizontalOptions="Center" Spacing="16" BindableLayout.ItemsSource="{Binding Puntos}" v:Movimiento.SacudirAl="{Binding Mensaje}"
-                                       SemanticProperties.Description="Dígitos del PIN escritos">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="x:Boolean">
-                            <Border WidthRequest="18" HeightRequest="18" StrokeShape="RoundRectangle 9" StrokeThickness="2"
-                                    Stroke="{StaticResource ColorPrimario}" BackgroundColor="Transparent">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding .}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPrimario}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </HorizontalStackLayout>
-
-                <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
-
-                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-                    <Button Text="1" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="1" />
-                    <Button Grid.Column="1" Text="2" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="2" />
-                    <Button Grid.Column="2" Text="3" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="3" />
-                    <Button Grid.Row="1" Text="4" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="4" />
-                    <Button Grid.Row="1" Grid.Column="1" Text="5" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="5" />
-                    <Button Grid.Row="1" Grid.Column="2" Text="6" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="6" />
-                    <Button Grid.Row="2" Text="7" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="7" />
-                    <Button Grid.Row="2" Grid.Column="1" Text="8" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="8" />
-                    <Button Grid.Row="2" Grid.Column="2" Text="9" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="9" />
-                    <Button Grid.Row="3" Grid.Column="1" Text="0" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="0" />
-                    <Button Grid.Row="3" Grid.Column="2" Text="Borrar" Style="{StaticResource BotonTerciario}" Command="{Binding Borrar}" v:Movimiento.Tecla="True"
-                            HeightRequest="64" SemanticProperties.Description="Borrar el último dígito" />
-                </Grid>
-
-                <Button Text="Crear un PIN nuevo" Style="{StaticResource BotonPrincipal}" Command="{Binding OlvideMiPin}" IsVisible="{Binding Bloqueado}" />
-                <Button Text="Olvidé mi PIN" Style="{StaticResource BotonTerciario}" Command="{Binding OlvideMiPin}" IsVisible="{Binding EsIngreso}" />
-                <Button Text="¿No es tu número? Cambiarlo" Style="{StaticResource BotonTerciario}" Command="{Binding CambiarNumero}" IsVisible="{Binding EsIngreso}" />
-                <Button Text="Crear una cuenta nueva con este número (solo desarrollo)" Style="{StaticResource BotonTerciario}"
-                        Command="{Binding RegistrarDeNuevo}" IsVisible="{Binding PuedeRegistrarDeNuevo}" />
-            </VerticalStackLayout>
+        <!-- Seis puntos: lleno = dígito escrito. -->
+        <VerticalStackLayout Grid.Row="1" VerticalOptions="Center" Spacing="16" Padding="16,12">
+            <HorizontalStackLayout x:Name="PuntosPin" HorizontalOptions="Center" Spacing="18" BindableLayout.ItemsSource="{Binding Puntos}" v:Movimiento.SacudirAl="{Binding Mensaje}"
+                                   SemanticProperties.Description="Dígitos del PIN escritos">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="x:Boolean">
+                        <Border WidthRequest="20" HeightRequest="20" StrokeShape="RoundRectangle 10" StrokeThickness="2"
+                                Stroke="{StaticResource ColorPrimario}" BackgroundColor="Transparent">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding .}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource ColorPrimario}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+            <v:Aviso Emergente="True" Tipo="error" Texto="{Binding Mensaje}" Mostrar="{Binding HayMensaje}" />
         </VerticalStackLayout>
-    </ScrollView>
+
+        <VerticalStackLayout Grid.Row="2" Padding="16,0,16,20" Spacing="8" MaximumWidthRequest="420">
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="12" Margin="0,0,0,8">
+                <Button Text="1" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="1" />
+                <Button Grid.Column="1" Text="2" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="2" />
+                <Button Grid.Column="2" Text="3" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="3" />
+                <Button Grid.Row="1" Text="4" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="4" />
+                <Button Grid.Row="1" Grid.Column="1" Text="5" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="5" />
+                <Button Grid.Row="1" Grid.Column="2" Text="6" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="6" />
+                <Button Grid.Row="2" Text="7" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="7" />
+                <Button Grid.Row="2" Grid.Column="1" Text="8" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="8" />
+                <Button Grid.Row="2" Grid.Column="2" Text="9" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="9" />
+                <Button Grid.Row="3" Grid.Column="1" Text="0" Style="{StaticResource TeclaPin}" Command="{Binding Tecla}" CommandParameter="0" />
+                <Button Grid.Row="3" Grid.Column="2" Text="Borrar" Style="{StaticResource BotonTerciario}" Command="{Binding Borrar}" v:Movimiento.Tecla="True"
+                        HeightRequest="72" SemanticProperties.Description="Borrar el último dígito" />
+            </Grid>
+
+            <Button Text="Crear un PIN nuevo" Style="{StaticResource BotonPrincipal}" Command="{Binding OlvideMiPin}" IsVisible="{Binding Bloqueado}" />
+            <Button Text="Olvidé mi PIN" Style="{StaticResource BotonTerciario}" Command="{Binding OlvideMiPin}" IsVisible="{Binding EsIngreso}" />
+            <Button Text="¿No es tu número? Cambiarlo" Style="{StaticResource BotonTerciario}" Command="{Binding CambiarNumero}" IsVisible="{Binding EsIngreso}" />
+            <Button Text="Crear una cuenta nueva con este número (solo desarrollo)" Style="{StaticResource BotonTerciario}"
+                    Command="{Binding RegistrarDeNuevo}" IsVisible="{Binding PuedeRegistrarDeNuevo}" />
+        </VerticalStackLayout>
+    </Grid>
 </ContentPage>

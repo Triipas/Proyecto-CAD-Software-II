@@ -20,7 +20,12 @@ public sealed record HistorialCaso(
     EvaluacionCiudadano? Evaluacion = null);
 
 // HU33-CA01: puntuación de 1 a 5 y comentario, si existe.
-public sealed record EvaluacionCiudadano(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn);
+public sealed record EvaluacionCiudadano(int Puntuacion, string? Comentario, DateTimeOffset EvaluadaEn, string[]? Motivos = null)
+{
+    // 27/10/2026: los motivos que eligió, en el texto del catálogo.
+    public IReadOnlyList<string> TextosMotivos => (Motivos ?? [])
+        .Select(m => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosEvaluacion.Todos, m)).OfType<string>().ToList();
+}
 
 // CA02: un caso finalizado queda identificado con su resultado.
 public sealed record ResultadoFinal(string Estado, string Descripcion, DateTimeOffset En);
@@ -122,7 +127,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
         // HU09: cancelación por el titular, con su motivo; «Cancelada» es un resultado final identificable (HU27-CA02).
         if (await db.CancelacionesSos.AsNoTracking().SingleOrDefaultAsync(c => c.CasoId == casoId, ct) is { } cancelacion)
         {
-            entradas.Add(new(cancelacion.CanceladaEn, "SOS cancelado por el ciudadano", await NombreAsync(cancelacion.CiudadanoId), $"Motivo: {cancelacion.Motivo}"));
+            entradas.Add(new(cancelacion.CanceladaEn, caso.Origen == OrigenCaso.Reporte ? "Reporte retirado por el ciudadano" : "SOS cancelado por el ciudadano", await NombreAsync(cancelacion.CiudadanoId), $"Motivo: {cancelacion.Motivo}"));
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cancelada), $"Cancelado por el ciudadano. Motivo: {cancelacion.Motivo}", cancelacion.CanceladaEn);
         }
 
@@ -173,6 +178,9 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             var tipificacion = await CategoriaAsync(cierre.CategoriaId, ct);
             var responsable = await NombreAsync(cierre.ResponsableId);
             entradas.Add(new(cierre.CerradoEn, $"Caso cerrado · tipificación «{tipificacion}»", responsable, $"Resultado público: {cierre.ResultadoPublico}"));
+            // 27/10/2026: cómo terminó la atención (catálogo), solo para el personal.
+            if (Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.ResultadosAtencion.Todos, cierre.ResultadoAtencion) is { } comoTermino)
+                entradas.Add(new(cierre.CerradoEn, "Cómo terminó la atención", responsable, comoTermino, Interna: true));
             if (cierre.NotasInternas is { } notas)
                 entradas.Add(new(cierre.CerradoEn, "Notas internas del cierre", responsable, notas, Interna: true));
             resultado = new ResultadoFinal(EstadosCaso.Texto(EstadoCaso.Cerrada), $"{tipificacion}: {cierre.ResultadoPublico}", cierre.CerradoEn);
@@ -184,7 +192,7 @@ public sealed class ConsultarHistorialCaso(CadDbContext db)
             entradas.Select((e, i) => (e, i)).OrderBy(x => x.e.En).ThenBy(x => x.i).Select(x => x.e).ToList(), hechoOcurridoEn,
             // HU33: solo lectura, en la misma página restringida a operadores (CA03).
             await db.EvaluacionesCaso.AsNoTracking().Where(e => e.CasoId == casoId)
-                .Select(e => new EvaluacionCiudadano(e.Puntuacion, e.Comentario, e.EvaluadaEn)).SingleOrDefaultAsync(ct));
+                .Select(e => new EvaluacionCiudadano(e.Puntuacion, e.Comentario, e.EvaluadaEn, e.Motivos)).SingleOrDefaultAsync(ct));
     }
 
     private async Task<string> CategoriaAsync(Guid id, CancellationToken ct) =>

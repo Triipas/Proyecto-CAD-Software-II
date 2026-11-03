@@ -106,6 +106,9 @@ export async function sembrar(navegador, secretos) {
   await operador.getByRole('button', { name: 'Registrar intento' }).click();
   await operador.waitForLoadState('networkidle');
   await operador.getByLabel('Categoría', { exact: true }).selectOption({ index: 1 });
+  // 27/10/2026: la clasificación registra también la prioridad y si hay heridos.
+  await operador.getByLabel('Prioridad', { exact: true }).selectOption('Media');
+  await operador.getByLabel('¿Hay personas heridas?').selectOption('No');
   await operador.getByRole('button', { name: 'Clasificar el SOS' }).click();
   await operador.waitForLoadState('networkidle');
   // Sara es la única disponible y el SOS tiene ubicación: viene sugerida y se asigna con su botón.
@@ -119,7 +122,7 @@ export async function sembrar(navegador, secretos) {
   await api(`/api/sereno/casos/${sosCerrado.id}/atencion`, { token: sara });
   await api(`/api/sereno/casos/${sosCerrado.id}/cierre`, {
     token: sara,
-    cuerpo: { categoriaId: categoriasSereno[0].id, resultadoPublico: 'Se acompañó a la ciudadana hasta su domicilio y se le explicó cómo denunciar.', notasInternas: 'Sin incidencias (dato ficticio).' },
+    cuerpo: { categoriaId: categoriasSereno[0].id, resultadoAtencion: 'ResueltoEnElLugar', resultadoPublico: 'Se acompañó a la ciudadana hasta su domicilio y se le explicó cómo denunciar.', notasInternas: 'Sin incidencias (dato ficticio).' },
   });
   await api('/api/sereno/posiciones', { token: sara, cuerpo: { ...cerca(0.001, 0.001), precisionMetros: 6, obtenidaEn: ahora() } });
 
@@ -138,6 +141,8 @@ export async function sembrar(navegador, secretos) {
   await operador.getByRole('button', { name: 'Iniciar la revisión' }).click();
   await operador.waitForLoadState('networkidle');
   await operador.getByLabel('Admitir', { exact: true }).check();
+  await operador.locator('[name="Decision.Prioridad"]').selectOption('Baja');
+  await operador.locator('[name="Decision.Heridos"]').selectOption('No');
   for (const campo of ['Accion', 'Motivo', 'Destino']) {
     const control = operador.locator(`[name="Decision.${campo}"]`);
     if (await control.count() && await control.isVisible()) await control.fill('Enviar un sereno a verificar la zona (dato ficticio).');

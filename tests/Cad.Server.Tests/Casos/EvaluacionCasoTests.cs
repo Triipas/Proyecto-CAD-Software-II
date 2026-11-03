@@ -46,7 +46,7 @@ public class EvaluacionCasoTests(FabricaCad fabrica)
         if (estado == EstadoCaso.EnAtencion)
             return;
         Assert.IsType<ResultadoCierre.Cerrado>(await fabrica.ConServiciosAsync(s => s.GetRequiredService<CerrarCaso>().EjecutarAsync(casoId,
-            new DatosCierre(Robo, "Se orientó al ciudadano", null), sereno.Id, ActorAvance.Sereno, CancellationToken.None)));
+            new DatosCierre(Robo, "ResueltoEnElLugar", "Se orientó al ciudadano", null), sereno.Id, ActorAvance.Sereno, CancellationToken.None)));
     }
 
     private async Task<(HttpClient App, CuentaDePrueba Cuenta, Guid CasoId)> CasoCerradoAsync()

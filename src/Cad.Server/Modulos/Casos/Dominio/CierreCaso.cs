@@ -15,6 +15,8 @@ public sealed class CierreCaso
     public Guid CategoriaId { get; private set; }
 
     public string ResultadoPublico { get; private set; } = "";
+    // 27/10/2026 — cómo terminó la atención, del catálogo ResultadosAtencion (Cad.Contratos). Nulo solo en cierres anteriores.
+    public string? ResultadoAtencion { get; private set; }
     public string? NotasInternas { get; private set; }
 
     // CA01/CA05: el sereno asignado o el operador que cerró.
@@ -23,11 +25,12 @@ public sealed class CierreCaso
 
     private CierreCaso() { } // EF Core
 
-    public static CierreCaso Registrar(Caso caso, Guid categoriaId, string resultadoPublico, string? notasInternas,
+    public static CierreCaso Registrar(Caso caso, Guid categoriaId, string resultadoAtencion, string resultadoPublico, string? notasInternas,
         Guid responsableId, DateTimeOffset ahora) => new()
     {
         CasoId = caso.Id,
         CategoriaId = categoriaId,
+        ResultadoAtencion = resultadoAtencion,
         ResultadoPublico = resultadoPublico,
         NotasInternas = notasInternas,
         ResponsableId = responsableId,

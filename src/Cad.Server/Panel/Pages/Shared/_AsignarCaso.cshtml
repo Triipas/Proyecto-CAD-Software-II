@@ -13,6 +13,10 @@ else
         {
             <form method="post" asp-page-handler="Asignar" class="asignar__sugerido" data-formulario novalidate>
                 <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.IdSolicitud" />
+                @if (Model.Volver is not null)
+                {
+                    <input type="hidden" name="Asignacion.Volver" value="@Model.Volver" />
+                }
                 <input type="hidden" name="Asignacion.SerenoId" value="@sugerido.Id" />
                 <p class="asignar__nombre">@sugerido.Nombre</p>
                 <p class="asignar__datos">
@@ -32,6 +36,10 @@ else
                 <summary>@(Model.Sugerido is null ? "Serenos disponibles" : "Elegir a otro sereno") <span class="asignar__cuenta">(@otros.Count)</span></summary>
                 <form method="post" asp-page-handler="Asignar" class="formulario asignar__lista" data-formulario novalidate>
                     <input type="hidden" name="Asignacion.IdSolicitud" value="@Model.IdSolicitud" />
+                    @if (Model.Volver is not null)
+                    {
+                        <input type="hidden" name="Asignacion.Volver" value="@Model.Volver" />
+                    }
                     @if (otros.Count > 5)
                     {
                         <div class="campo">

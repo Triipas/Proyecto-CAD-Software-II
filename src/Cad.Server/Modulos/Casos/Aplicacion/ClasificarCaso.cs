@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
@@ -12,7 +13,8 @@ public abstract record ResultadoClasificacion
     public sealed record YaClasificado(string Categoria) : ResultadoClasificacion;
     public sealed record Rechazado(string Motivo) : ResultadoClasificacion;
     public sealed record CasoNoEncontrado : ResultadoClasificacion;
-    public sealed record Invalido(string Motivo) : ResultadoClasificacion;
+    // Campo: el dato que falta o no es válido («categoriaId», «prioridad» o «heridos»).
+    public sealed record Invalido(string Motivo, string Campo = "categoriaId") : ResultadoClasificacion;
 }
 
 // HU13 — Clasificar un SOS después de su registro (S2-T08). Solo operadores (DP09); la autorización la aplica
@@ -20,13 +22,16 @@ public abstract record ResultadoClasificacion
 public sealed class ClasificarCaso(CadDbContext db, TimeProvider reloj, INotificador notificador, ILogger<ClasificarCaso> registro)
 {
     public const string MotivoCategoriaInvalida = "Elige una categoría del catálogo.";
+    public const string MotivoPrioridadInvalida = "Elige la prioridad del caso.";
+    public const string MotivoHeridosInvalido = "Indica si hay personas heridas (o que no se sabe).";
     public const string MotivoCambioConcurrente = "El caso cambió mientras se clasificaba. Revisa su estado e inténtalo de nuevo.";
 
     // Si otro operador cambia el caso a la vez (otra clasificación o una asignación), se vuelve a evaluar
     // con los datos nuevos en lugar de rechazar por un conflicto que no afecta a esta decisión.
     private const int Intentos = 3;
 
-    public async Task<ResultadoClasificacion> EjecutarAsync(Guid casoId, Guid? categoriaId, Guid operadorId, CancellationToken ct)
+    public async Task<ResultadoClasificacion> EjecutarAsync(Guid casoId, Guid? categoriaId, string? prioridad, string? heridos, Guid operadorId,
+        CancellationToken ct)
     {
         // CA04: solo categorías del catálogo vigente.
         var categoria = categoriaId is { } id
@@ -34,6 +39,11 @@ public sealed class ClasificarCaso(CadDbContext db, TimeProvider reloj, INotific
             : null;
         if (categoria is null)
             return new ResultadoClasificacion.Invalido(MotivoCategoriaInvalida);
+        // 27/10/2026: la prioridad y si hay heridos, de sus catálogos (los tiempos se comparan por prioridad).
+        if (!Catalogo.Contiene(PrioridadesCaso.Todas, prioridad))
+            return new ResultadoClasificacion.Invalido(MotivoPrioridadInvalida, "prioridad");
+        if (!Catalogo.Contiene(PersonasHeridas.Todas, heridos))
+            return new ResultadoClasificacion.Invalido(MotivoHeridosInvalido, "heridos");
 
         for (var intento = 1; ; intento++)
         {
@@ -47,7 +57,7 @@ public sealed class ClasificarCaso(CadDbContext db, TimeProvider reloj, INotific
                     : new ResultadoClasificacion.Rechazado(await MotivoYaClasificadoAsync(caso.CategoriaId!.Value, ct));
 
             var ahora = reloj.GetUtcNow();
-            caso.Clasificar(categoria.Id, operadorId, ahora); // CA01: responsable, fecha y hora
+            caso.Clasificar(categoria.Id, prioridad!, heridos!, operadorId, ahora); // CA01: responsable, fecha y hora
             db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.CasoClasificado, operadorId, VisibilidadEvento.Interna, ahora));
 
             try

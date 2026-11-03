@@ -16,6 +16,11 @@ public sealed class DecisionReporte
     public TipoDecisionReporte Tipo { get; private set; }
     public string Motivo { get; private set; } = "";
     public string? Destino { get; private set; }
+    // 27/10/2026 — códigos de catálogo (Cad.Contratos.Casos): el destino de una derivación (DestinosDerivacion) y el motivo
+    // de un descarte (MotivosDescarte). Destino conserva el texto que se muestra: el detalle escrito o, sin él, el del catálogo.
+    // Nulos en las decisiones anteriores.
+    public string? DestinoCodigo { get; private set; }
+    public string? MotivoCodigo { get; private set; }
     public string? Accion { get; private set; }
     public Guid OperadorId { get; private set; }
     public DateTimeOffset DecididaEn { get; private set; }
@@ -23,12 +28,14 @@ public sealed class DecisionReporte
     private DecisionReporte() { } // EF Core
 
     public static DecisionReporte Registrar(Caso caso, TipoDecisionReporte tipo, string motivo, string? destino, string? accion,
-        Guid operadorId, DateTimeOffset ahora) => new()
+        Guid operadorId, DateTimeOffset ahora, string? destinoCodigo = null, string? motivoCodigo = null) => new()
     {
         CasoId = caso.Id,
         Tipo = tipo,
         Motivo = motivo,
         Destino = destino,
+        DestinoCodigo = destinoCodigo,
+        MotivoCodigo = motivoCodigo,
         Accion = accion,
         OperadorId = operadorId,
         DecididaEn = ahora,

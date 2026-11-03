@@ -164,6 +164,3 @@
   gap: var(--espacio-3);
 }
 
-.nuevo-reporte .marcador-hecho--reporte span {
-  background: var(--color-reporte);
-}

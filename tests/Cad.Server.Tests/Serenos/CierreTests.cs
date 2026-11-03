@@ -58,7 +58,7 @@ public class CierreTests(FabricaCad fabrica)
     }
 
     private static Task<HttpResponseMessage> CerrarAsync(SerenoDePrueba sereno, Guid casoId, Guid? categoria = null, string? resultado = Resultado, string? notas = Notas) =>
-        sereno.App.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre", new SolicitudCierreCaso(categoria ?? Robo, resultado, notas));
+        sereno.App.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre", new SolicitudCierreCaso(categoria ?? Robo, resultado, notas, "ResueltoEnElLugar"));
 
     private static async Task<HttpResponseMessage> CerrarDesdeElPanelAsync(HttpClient operador, Guid casoId, string? categoria = null,
         string resultado = Resultado, string notas = Notas, string? token = null)
@@ -67,7 +67,7 @@ public class CierreTests(FabricaCad fabrica)
         token ??= await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, ruta);
         return await operador.PostAsync($"{ruta}?handler=Cerrar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["Cierre.CategoriaId"] = categoria ?? Robo.ToString(), ["Cierre.ResultadoPublico"] = resultado,
+            ["Cierre.CategoriaId"] = categoria ?? Robo.ToString(), ["Cierre.ResultadoAtencion"] = "ResueltoEnElLugar", ["Cierre.ResultadoPublico"] = resultado,
             ["Cierre.NotasInternas"] = notas, ["__RequestVerificationToken"] = token,
         }));
     }
@@ -141,7 +141,7 @@ public class CierreTests(FabricaCad fabrica)
         var (casoId, _, _) = await CasoAsync(sereno, operador);
 
         var respuesta = await sereno.App.PostAsJsonAsync($"/api/sereno/casos/{casoId}/cierre",
-            new SolicitudCierreCaso(conCategoria ? Robo : null, conResultado ? Resultado : "   ", null));
+            new SolicitudCierreCaso(conCategoria ? Robo : null, conResultado ? Resultado : "   ", null, "ResueltoEnElLugar"));
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains(campo, await respuesta.Content.ReadAsStringAsync());

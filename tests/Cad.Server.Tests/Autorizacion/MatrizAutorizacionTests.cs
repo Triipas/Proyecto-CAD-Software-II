@@ -53,6 +53,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000"),
         // HU09 — cancelar un SOS propio pendiente. Sin cuerpo válido (o con un SOS inexistente o ajeno) el ciudadano llega al caso de
         // uso (400 o 404); el resto es rechazado antes, sin cancelar nada.
+        new("GET", "/api/casos/mios/{id:guid}/fotos/{numero:int}", "HU30 (fotos del reporte)", Acceso.SoloRol, Roles.Ciudadano,
+            Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/fotos/1"),
         new("POST", "/api/casos/mios/{id:guid}/cancelacion", "HU09", Acceso.SoloRol, Roles.Ciudadano,
             Ejemplo: "/api/casos/mios/00000000-0000-0000-0000-000000000000/cancelacion"),
         // HU32 — evaluar un caso propio cerrado. Sin cuerpo válido (o con un caso inexistente o ajeno) el ciudadano llega al caso de
@@ -126,6 +128,9 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/panel/casos", "HU26", Acceso.SoloRol, Roles.Operador),
         // HU29 — mapa de concentración (solo operadores).
         new("GET", "/panel/mapa-concentracion", "HU29", Acceso.SoloRol, Roles.Operador, Contenido: "data-seleccion"),
+        // Analítica («Preguntas del analista»): solo operadores. El informe CSV es la misma ruta con ?handler=Informe.
+        new("GET", "/panel/analitica/{pregunta?}", "Analítica", Acceso.SoloRol, Roles.Operador, Contenido: "data-analitica",
+            Ejemplo: "/panel/analitica/tiempo"),
         // HU27 — historial de un caso. Con un caso inexistente el operador llega a la página (404); el resto, rechazado antes.
         new("GET", "/panel/casos/{id:guid}/historial", "HU27", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/casos/00000000-0000-0000-0000-000000000000/historial"),

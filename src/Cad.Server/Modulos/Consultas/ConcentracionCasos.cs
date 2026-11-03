@@ -10,7 +10,11 @@ public sealed record FiltroConcentracion(DateTimeOffset Desde, DateTimeOffset Ha
 // Una celda de la cuadrícula con los casos de un origen; los límites, en grados. No lleva datos de ningún caso concreto.
 public sealed record CeldaConcentracion(OrigenCaso Origen, double Sur, double Oeste, double Norte, double Este, int Casos);
 
-public sealed record MapaConcentracion(IReadOnlyList<CeldaConcentracion> Celdas, int Sos, int Reportes, int SinUbicacion)
+// Un punto del mapa de calor: el centro de una celda fina (unos 110 m) y cuántos casos caen en ella, de los orígenes elegidos.
+public sealed record PuntoCalor(double Latitud, double Longitud, int Casos);
+
+public sealed record MapaConcentracion(IReadOnlyList<CeldaConcentracion> Celdas, int Sos, int Reportes, int SinUbicacion,
+    IReadOnlyList<PuntoCalor> Calor)
 {
     public int MaximoPorCelda => Celdas.Count == 0 ? 0 : Celdas.Max(c => c.Casos);
 }
@@ -20,6 +24,10 @@ public sealed class ConsultarConcentracion(CadDbContext db)
     // Tamaño de la celda: 0,005° (unos 550 m en Lima). Es una resolución de presentación, no una regla de negocio: agrupa
     // casos cercanos y evita mostrar el punto exacto de cada uno.
     public const double TamanoCelda = 0.005;
+
+    // Resolución del mapa de calor: 0,001° (unos 110 m). Más fina que la de las zonas para que el calor siga las calles, pero
+    // agrupada: tampoco muestra el punto exacto de un caso.
+    public const double TamanoCalor = 0.001;
 
     // CA03 (y HU17-CA04): los casos cancelados y los reportes descartados no son incidencias del mapa.
     public static readonly EstadoCaso[] EstadosExcluidos = [EstadoCaso.Cancelada, EstadoCaso.Descartada];
@@ -54,10 +62,14 @@ public sealed class ConsultarConcentracion(CadDbContext db)
                 g.Key.Fila * TamanoCelda, g.Key.Columna * TamanoCelda, (g.Key.Fila + 1) * TamanoCelda, (g.Key.Columna + 1) * TamanoCelda, g.Count()))
             .OrderBy(c => c.Origen).ThenByDescending(c => c.Casos)
             .ToList();
+        var calor = conUbicacion
+            .GroupBy(f => (Fila: Indice(f.Latitud!.Value, TamanoCalor), Columna: Indice(f.Longitud!.Value, TamanoCalor)))
+            .Select(g => new PuntoCalor(Math.Round((g.Key.Fila + 0.5) * TamanoCalor, 6), Math.Round((g.Key.Columna + 0.5) * TamanoCalor, 6), g.Count()))
+            .ToList();
         return new MapaConcentracion(celdas,
             conUbicacion.Count(f => f.Origen == OrigenCaso.Sos), conUbicacion.Count(f => f.Origen == OrigenCaso.Reporte),
-            filas.Count - conUbicacion.Count);
+            filas.Count - conUbicacion.Count, calor);
     }
 
-    private static long Indice(double grados) => (long)Math.Floor(grados / TamanoCelda);
+    private static long Indice(double grados, double tamano = TamanoCelda) => (long)Math.Floor(grados / tamano);
 }

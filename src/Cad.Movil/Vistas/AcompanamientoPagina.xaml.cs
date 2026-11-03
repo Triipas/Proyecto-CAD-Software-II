@@ -12,7 +12,7 @@ public partial class AcompanamientoPagina : ContentPage
     private const int Zoom = 14;
     private const string Teselas = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
     // Lo que tapan las tarjetas flotantes (aprox.): el recorrido se encuadra en la franja libre entre ellas.
-    private const int AltoArriba = 150, AltoDock = 340;
+    private const int AltoArriba = 90, AltoDock = 300; // acomodo del 26/10/2026
 
     private readonly AcompanamientoVistaModelo vistaModelo;
     private readonly IConfiguracionServidor servidor;

@@ -1,6 +1,7 @@
 namespace Cad.Server.Modulos.Casos.Dominio;
 
 // HU09-CA01 — cancelación de un SOS pendiente por su titular: motivo, fecha y hora. Una por caso (la clave es el caso).
+// Desde el 26/10/2026 registra también el retiro de un reporte sin decidir por su titular (mismo motivo obligatorio).
 public sealed class CancelacionSos
 {
     public const int MaximoMotivo = 500;
@@ -8,12 +9,16 @@ public sealed class CancelacionSos
     public Guid CasoId { get; private set; }
     public Guid CiudadanoId { get; private set; }
     public string Motivo { get; private set; } = "";
+    // 27/10/2026 — el motivo del catálogo MotivosCancelacion (Cad.Contratos.Casos). Motivo guarda lo que escribió el
+    // ciudadano o, sin texto, el del catálogo. Nulo antes.
+    public string? MotivoCodigo { get; private set; }
     public DateTimeOffset CanceladaEn { get; private set; }
 
     private CancelacionSos() { } // EF Core
 
-    public static CancelacionSos Registrar(Caso caso, string motivo, DateTimeOffset ahora) => new()
+    public static CancelacionSos Registrar(Caso caso, string motivoCodigo, string motivo, DateTimeOffset ahora) => new()
     {
+        MotivoCodigo = motivoCodigo,
         CasoId = caso.Id,
         CiudadanoId = caso.CiudadanoId!.Value,
         Motivo = motivo.Trim(),

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cad.Contratos.Casos;
+using Cad.Contratos.Reportes;
 using Cad.Movil.Servicios;
 
 namespace Cad.Movil.VistasModelo;
@@ -137,11 +138,23 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
 
     private bool formularioCancelacion, cancelando;
     private string motivoCancelacion = "", errorMotivo = "", confirmacion = "";
+    private Cad.Contratos.Casos.OpcionCatalogo? motivoElegido;
+    private readonly OfertaEvaluacion? oferta;
 
-    public MiCasoVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null)
+    public MiCasoVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null,
+        OfertaEvaluacion? oferta = null)
         : base(api, sesiones, navegacion, reloj, zona)
     {
-        Actualizar = new ComandoAsincrono(ActualizarAsync);
+        this.oferta = oferta;
+        MostrarEvaluacion = new ComandoAsincrono(() => { FormularioEvaluacion = true; return Task.CompletedTask; });
+        OmitirEvaluacion = new ComandoAsincrono(() =>
+        {
+            invitacionEvaluacion = false;
+            FormularioEvaluacion = false;
+            ErrorEvaluacion = "";
+            return Task.CompletedTask;
+        });
+        Actualizar = new ComandoAsincrono(() => ActualizarAsync());
         MostrarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = true; return Task.CompletedTask; });
         OcultarCancelacion = new ComandoAsincrono(() => { FormularioCancelacion = false; ErrorMotivo = ""; return Task.CompletedTask; });
         ConfirmarCancelacion = new ComandoAsincrono(CancelarAsync);
@@ -159,16 +172,73 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     public IReadOnlyList<ElementoAvance> Avances =>
         caso?.Avances.Select(a => new ElementoAvance(Local(a.En), a.Estado, a.Detalle)).ToList() ?? [];
 
+    // Decisión del PO del 26/10/2026: lo que el ciudadano dio en su reporte, en solo lectura (no se edita), con sus fotos.
+    public bool HayReporte => caso?.Reporte is not null;
+    public string ReporteCategoria => caso?.Reporte?.Categoria ?? "";
+    public string ReporteDescripcion => caso?.Reporte?.Descripcion ?? "";
+    public string ReporteOcurrido => caso?.Reporte is { } r ? Local(r.OcurridoAproximadamenteEn) : "";
+    public string ReporteLugar => caso?.Reporte switch
+    {
+        { FuenteUbicacion: FuentesUbicacionHecho.Texto } => "Indicado con una referencia",
+        { Latitud: { } lat, Longitud: { } lon } r => (r.FuenteUbicacion == FuentesUbicacionHecho.PosicionActual
+            ? "Tu posición al reportar" : "Punto marcado en el mapa") + $" ({lat.ToString("0.00000", CultureInfo.InvariantCulture)}, {lon.ToString("0.00000", CultureInfo.InvariantCulture)})",
+        _ => "",
+    };
+    public string ReporteReferencia => caso?.Reporte?.Referencia ?? "";
+    public bool HayReferencia => ReporteReferencia.Length > 0;
+    public System.Collections.ObjectModel.ObservableCollection<FotoDelCaso> FotosReporte { get; } = [];
+    public bool HayFotosReporte => caso?.Reporte is { Fotos: > 0 };
+    public string TextoFotosReporte => caso?.Reporte?.Fotos switch
+    {
+        null or 0 => "No adjuntaste fotos.",
+        1 => "1 foto adjunta",
+        var n => $"{n} fotos adjuntas",
+    };
+
+    // Las fotos se piden una por una después del detalle; una que no llegue simplemente no se muestra. Si otra carga empezó
+    // mientras tanto (al abrir la página y al deslizar para actualizar), solo la última reemplaza las fotos: no se duplican.
+    private int cargaFotos;
+
+    private async Task CargarFotosAsync(string token)
+    {
+        var esta = ++cargaFotos;
+        var fotos = new List<FotoDelCaso>();
+        for (var n = 1; n <= (caso?.Reporte?.Fotos ?? 0); n++)
+        {
+            if (await Api.ConsultarFotoMiCasoAsync(token, casoId, n, CancellationToken.None) is ResultadoApi<byte[]>.Correcto { Valor: { Length: > 0 } bytes })
+                fotos.Add(new FotoDelCaso(n, bytes));
+        }
+        if (esta != cargaFotos)
+            return;
+        FotosReporte.Clear();
+        foreach (var foto in fotos)
+            FotosReporte.Add(foto);
+    }
+
     // HU09 — cancelar un SOS propio mientras está pendiente (para su titular, «Recibido»: DP05), indicando el motivo (CA01, CA04).
     // Asignado o en un estado posterior ya no se ofrece; si cambió mientras tanto, el servidor lo rechaza (CA03).
+    // Decisión del PO del 26/10/2026: un reporte se retira igual, con motivo, mientras está «Recibido» o «En revisión».
     public const int MaximoMotivo = 500;
-    public bool PuedeCancelar => caso is { Origen: "SOS", Estado: EstadosPublicos.Recibido };
+    public bool EsReporte => caso is { Origen: "Reporte" };
+    public bool PuedeCancelar => caso is { Origen: "SOS", Estado: EstadosPublicos.Recibido }
+        or { Origen: "Reporte", Estado: EstadosPublicos.Recibido or EstadosPublicos.EnRevision };
+    public string TextoCancelar => EsReporte ? "Retirar este reporte" : "Cancelar este SOS";
+    public string AyudaCancelacion => EsReporte
+        ? "Solo se puede retirar mientras la central no haya decidido sobre él. Lo que reportaste no se borra: queda como retirado."
+        : "Solo se puede cancelar mientras la central no lo haya asignado. Si tienes un acompañamiento activo, sigue activo.";
+    public string IndicacionMotivo => EsReporte ? "Por qué retiras el reporte" : "Por qué ya no necesitas ayuda";
+    public string TextoConfirmarCancelacion => EsReporte ? "Confirmar el retiro" : "Confirmar la cancelación";
+    public string TextoNoCancelar => EsReporte ? "No retirar" : "No cancelar";
     public bool OfrecerCancelacion => PuedeCancelar && !formularioCancelacion;
     public bool FormularioCancelacion
     {
         get => formularioCancelacion && PuedeCancelar;
         private set { Asignar(ref formularioCancelacion, value); Notificar(nameof(OfrecerCancelacion)); }
     }
+    // 27/10/2026: el motivo se elige de una lista (compartida con el servidor); escribirlo solo hace falta con «Otro motivo».
+    public IReadOnlyList<Cad.Contratos.Casos.OpcionCatalogo> OpcionesMotivo => Cad.Contratos.Casos.MotivosCancelacion.Todos;
+    public Cad.Contratos.Casos.OpcionCatalogo? MotivoElegido { get => motivoElegido; set { Asignar(ref motivoElegido, value); Notificar(nameof(EtiquetaDetalleMotivo)); } }
+    public string EtiquetaDetalleMotivo => motivoElegido?.Codigo == Cad.Contratos.Casos.MotivosCancelacion.Otro ? "Cuéntanos el motivo" : "Detalle (opcional)";
     public string MotivoCancelacion { get => motivoCancelacion; set { Asignar(ref motivoCancelacion, value ?? ""); Notificar(nameof(ContadorMotivo)); } }
     public string ContadorMotivo => $"{motivoCancelacion.Length}/{MaximoMotivo}";
     public string ErrorMotivo { get => errorMotivo; private set { Asignar(ref errorMotivo, value); Notificar(nameof(HayErrorMotivo)); } }
@@ -189,14 +259,70 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     private Guid idEvaluacion = Guid.NewGuid();
 
     public bool PuedeEvaluar => caso is { Estado: EstadosPublicos.Cerrado, Evaluacion: null };
+
+    // 29/10/2026 — al cerrarse el caso, la evaluación se ofrece sola (una vez; ver OfertaEvaluacion): el formulario se abre con una
+    // invitación y «Ahora no» lo pliega sin enviar nada. Plegado, el caso sigue ofreciendo «Calificar la atención» cuando se quiera.
+    private bool formularioEvaluacion, invitacionEvaluacion;
+    public bool FormularioEvaluacion
+    {
+        get => formularioEvaluacion && PuedeEvaluar;
+        private set { Asignar(ref formularioEvaluacion, value); NotificarFormularioEvaluacion(); }
+    }
+    public bool OfrecerEvaluacion => PuedeEvaluar && !formularioEvaluacion;
+    public bool InvitacionEvaluacion => invitacionEvaluacion && FormularioEvaluacion;
+    public string TextoInvitacionEvaluacion => "Tu caso se cerró. Si quieres, cuéntanos cómo fue la atención. Es opcional: puedes omitirla y " +
+        "calificar más tarde desde este caso.";
+    public ComandoAsincrono MostrarEvaluacion { get; }
+    public ComandoAsincrono OmitirEvaluacion { get; }
+
+    private void NotificarFormularioEvaluacion()
+    {
+        foreach (var p in new[] { nameof(FormularioEvaluacion), nameof(OfrecerEvaluacion), nameof(InvitacionEvaluacion) })
+            Notificar(p);
+    }
+
+    // Abre la evaluación con la invitación; el caso queda marcado como ofrecido para que no se abra sola otra vez.
+    private void InvitarAEvaluar(Guid id)
+    {
+        oferta?.Marcar(id);
+        invitacionEvaluacion = true;
+        FormularioEvaluacion = true;
+    }
     public bool HayEvaluacion => caso?.Evaluacion is not null;
     public string TextoEvaluacion => caso?.Evaluacion is { } e ? $"Tu evaluación: {e.Puntuacion} de 5" : "";
     public string ComentarioRegistrado => caso?.Evaluacion is { } e ? e.Comentario is { } c ? $"Comentario: {c}" : "Sin comentario." : "";
+    public string MotivosRegistrados => caso?.Evaluacion?.Motivos is { Count: > 0 } m
+        ? "Motivos: " + string.Join(" · ", m.Select(c => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosEvaluacion.Todos, c) ?? c))
+        : "";
+    public bool HayMotivosRegistrados => MotivosRegistrados.Length > 0;
+
+    // 27/10/2026: por qué evalúa así, opcional y de varias opciones: con 4 o 5, lo que estuvo bien; con 1 a 3, lo que falló.
+    private readonly HashSet<string> motivosElegidos = [];
+    public IReadOnlyList<OpcionMotivoEvaluacion> OpcionesMotivoEvaluacion { get; private set; } = [];
+    public bool HayOpcionesMotivoEvaluacion => OpcionesMotivoEvaluacion.Count > 0;
+    public string TituloMotivosEvaluacion => puntuacion >= 4 ? "¿Qué estuvo bien? (opcional)" : "¿Qué falló? (opcional)";
+
+    private void ActualizarMotivos()
+    {
+        var disponibles = puntuacion is { } p ? Cad.Contratos.Casos.MotivosEvaluacion.Para(p) : [];
+        motivosElegidos.IntersectWith(disponibles.Select(o => o.Codigo)); // al cambiar de nota, se quitan los que ya no aplican
+        OpcionesMotivoEvaluacion = disponibles.Select(o => new OpcionMotivoEvaluacion(o.Codigo, o.Texto, motivosElegidos.Contains(o.Codigo),
+            new ComandoAsincrono(() =>
+            {
+                if (!motivosElegidos.Remove(o.Codigo))
+                    motivosElegidos.Add(o.Codigo);
+                ActualizarMotivos();
+                return Task.CompletedTask;
+            }))).ToList();
+        Notificar(nameof(OpcionesMotivoEvaluacion));
+        Notificar(nameof(HayOpcionesMotivoEvaluacion));
+        Notificar(nameof(TituloMotivosEvaluacion));
+    }
     public IReadOnlyList<OpcionPuntuacion> Opciones { get; private set; }
     public int? Puntuacion
     {
         get => puntuacion;
-        set { if (Asignar(ref puntuacion, value)) { Opciones = CrearOpciones(); Notificar(nameof(Opciones)); } }
+        set { if (Asignar(ref puntuacion, value)) { Opciones = CrearOpciones(); Notificar(nameof(Opciones)); ActualizarMotivos(); } }
     }
     public string Comentario { get => comentario; set { Asignar(ref comentario, value ?? ""); Notificar(nameof(ContadorComentario)); } }
     public string ContadorComentario => $"{comentario.Length}/{MaximoComentario}";
@@ -209,15 +335,28 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         Enumerable.Range(1, 5).Select(v => new OpcionPuntuacion(v, v == puntuacion,
             new ComandoAsincrono(() => { Puntuacion = v; ErrorEvaluacion = ""; return Task.CompletedTask; }))).ToList();
 
-    public Task CargarAsync(Guid id)
+    // ofrecerEvaluacion: la app abrió el caso porque acaba de cerrarse (ver OfertaEvaluacion); ya está marcado como ofrecido.
+    public Task CargarAsync(Guid id, bool ofrecerEvaluacion = false)
     {
         casoId = id;
+        if (ofrecerEvaluacion)
+        {
+            invitacionEvaluacion = true;
+            formularioEvaluacion = true;
+        }
         return ActualizarAsync();
     }
 
-    private async Task ActualizarAsync()
+    // Mientras el caso sigue abierto, la pantalla lo vuelve a consultar sola (sin avisos push); al cerrarse, ofrece la evaluación.
+    public bool EnCurso => caso is not null && caso.Estado is not (EstadosPublicos.Cerrado or EstadosPublicos.Derivado
+        or EstadosPublicos.Descartado or EstadosPublicos.Cancelado);
+    public static readonly TimeSpan IntervaloRevision = TimeSpan.FromSeconds(20);
+    public Task RevisarAsync() => ActualizarAsync(silencioso: true);
+
+    private async Task ActualizarAsync(bool silencioso = false)
     {
-        Cargando = true;
+        if (!silencioso)
+            Cargando = true;
         try
         {
             if (await TokenAsync() is not { } token)
@@ -225,9 +364,17 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
             var resultado = await Api.ConsultarMiCasoAsync(token, casoId, CancellationToken.None);
             if (resultado is ResultadoApi<MiCasoDetalle>.Correcto correcto)
             {
+                var estabaCerrado = caso is null || caso.Estado == EstadosPublicos.Cerrado;
                 Mensaje = "";
                 caso = correcto.Valor;
+                // El caso se cerró con la pantalla abierta: la evaluación se ofrece ahora mismo.
+                if (!estabaCerrado && oferta?.EsOfrecible(caso) == true)
+                    InvitarAEvaluar(caso.Id);
+                if (!silencioso)
+                    await CargarFotosAsync(token);
             }
+            else if (silencioso)
+                return; // una consulta de fondo que falla no avisa de nada: la próxima lo reintenta
             else
             {
                 // CA04: un caso ajeno o inexistente no se muestra.
@@ -239,7 +386,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         }
         finally
         {
-            Cargando = false;
+            if (!silencioso)
+                Cargando = false;
         }
     }
 
@@ -247,16 +395,26 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
     {
         foreach (var p in new[] { nameof(HayCaso), nameof(Titulo), nameof(Registrado), nameof(Identificador), nameof(Resultado),
                      nameof(HayResultado), nameof(Avances), nameof(PuedeCancelar), nameof(OfrecerCancelacion), nameof(FormularioCancelacion),
-                     nameof(PuedeEvaluar), nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado) })
+                     nameof(PuedeEvaluar), nameof(FormularioEvaluacion), nameof(OfrecerEvaluacion), nameof(InvitacionEvaluacion), nameof(EnCurso),
+                     nameof(HayEvaluacion), nameof(TextoEvaluacion), nameof(ComentarioRegistrado),
+                     nameof(MotivosRegistrados), nameof(HayMotivosRegistrados),
+                     nameof(HayReporte), nameof(ReporteCategoria), nameof(ReporteDescripcion), nameof(ReporteOcurrido), nameof(ReporteLugar),
+                     nameof(ReporteReferencia), nameof(HayReferencia), nameof(HayFotosReporte), nameof(TextoFotosReporte), nameof(EsReporte),
+                     nameof(TextoCancelar), nameof(AyudaCancelacion), nameof(IndicacionMotivo), nameof(TextoConfirmarCancelacion), nameof(TextoNoCancelar) })
             Notificar(p);
     }
 
     private async Task CancelarAsync()
     {
         var motivo = motivoCancelacion.Trim();
-        if (motivo.Length == 0)
+        if (motivoElegido is null)
         {
-            ErrorMotivo = "Indica el motivo de la cancelación.";
+            ErrorMotivo = EsReporte ? "Elige el motivo del retiro." : "Elige el motivo de la cancelación.";
+            return;
+        }
+        if (motivo.Length == 0 && motivoElegido.Codigo == Cad.Contratos.Casos.MotivosCancelacion.Otro)
+        {
+            ErrorMotivo = EsReporte ? "Indica el motivo del retiro." : "Indica el motivo de la cancelación.";
             return;
         }
         ErrorMotivo = "";
@@ -266,15 +424,16 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         Cancelando = true;
         try
         {
-            var resultado = await Api.CancelarSosAsync(token, casoId, new SolicitudCancelacionSos(motivo), CancellationToken.None);
+            var resultado = await Api.CancelarSosAsync(token, casoId, new SolicitudCancelacionSos(motivo.Length == 0 ? null : motivo, motivoElegido.Codigo), CancellationToken.None);
             switch (resultado)
             {
                 case ResultadoApi<MiCasoDetalle>.Correcto correcto:
                     caso = correcto.Valor;
                     FormularioCancelacion = false;
                     MotivoCancelacion = "";
+                    MotivoElegido = null;
                     Mensaje = "";
-                    Confirmacion = "Cancelaste el SOS. La central fue avisada.";
+                    Confirmacion = EsReporte ? "Retiraste el reporte. La central fue avisada." : "Cancelaste el SOS. La central fue avisada.";
                     break;
                 // CA03: la central ya lo asignó; se muestra el estado actual.
                 case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 409 } rechazo:
@@ -283,7 +442,8 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
                     Mensaje = rechazo.Mensaje;
                     break;
                 case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 400 } invalido:
-                    ErrorMotivo = invalido.Errores.TryGetValue("motivo", out var errores) && errores.Length > 0 ? errores[0] : invalido.Mensaje;
+                    ErrorMotivo = (invalido.Errores.TryGetValue("motivoCodigo", out var errores) || invalido.Errores.TryGetValue("motivo", out errores))
+                        && errores.Length > 0 ? errores[0] : invalido.Mensaje;
                     break;
                 case ResultadoApi<MiCasoDetalle>.Rechazado { Estado: 404 }:
                     caso = null;
@@ -293,11 +453,12 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
                     SinExito(resultado, "No se encontró el caso.");
                     break;
                 case ResultadoApi<MiCasoDetalle>.Rechazado:
-                    Mensaje = "No se pudo cancelar el SOS. Inténtalo de nuevo.";
+                    Mensaje = EsReporte ? "No se pudo retirar el reporte. Inténtalo de nuevo." : "No se pudo cancelar el SOS. Inténtalo de nuevo.";
                     break;
                 default:
                     // Sin respuesta: se puede reintentar sin duplicar (el servidor registra una sola cancelación, CA08).
-                    Mensaje = "No hay respuesta del servidor: el SOS no se canceló. Inténtalo de nuevo.";
+                    Mensaje = EsReporte ? "No hay respuesta del servidor: el reporte no se retiró. Inténtalo de nuevo."
+                        : "No hay respuesta del servidor: el SOS no se canceló. Inténtalo de nuevo.";
                     break;
             }
             NotificarCaso();
@@ -325,7 +486,9 @@ public sealed class MiCasoVistaModelo : ConsultaCiudadanoVistaModelo
         {
             // El mismo identificador en cada reintento técnico: el servidor no registra una segunda evaluación (CA03).
             var resultado = await Api.EvaluarCasoAsync(token, casoId,
-                new SolicitudEvaluacionCaso(idEvaluacion, valor, string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim()), CancellationToken.None);
+                new SolicitudEvaluacionCaso(idEvaluacion, valor, string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(),
+                    motivosElegidos.Count == 0 ? null : [.. Cad.Contratos.Casos.MotivosEvaluacion.Todos.Select(o => o.Codigo).Where(motivosElegidos.Contains)]),
+                CancellationToken.None);
             switch (resultado)
             {
                 case ResultadoApi<MiEvaluacion>.Correcto correcto when caso is not null:
@@ -369,4 +532,18 @@ public sealed record OpcionPuntuacion(int Valor, bool Elegida, ComandoAsincrono 
 {
     public string Texto => Valor.ToString(System.Globalization.CultureInfo.InvariantCulture);
     public string Descripcion => $"Puntuación {Valor} de 5{(Elegida ? ", elegida" : "")}";
+}
+
+// 27/10/2026: un motivo de la evaluación, que se marca o desmarca con un toque.
+public sealed record OpcionMotivoEvaluacion(string Codigo, string Texto, bool Elegida, ComandoAsincrono Alternar)
+{
+    public string Descripcion => $"{Texto}{(Elegida ? ", marcado" : "")}";
+}
+
+// 26/10/2026: una foto del reporte propio, para verla en «Mi caso».
+public sealed class FotoDelCaso(int numero, byte[] contenido)
+{
+    public int Numero { get; } = numero;
+    public ImageSource Vista { get; } = ImageSource.FromStream(() => new MemoryStream(contenido));
+    public string DescripcionAccesible => $"Foto {Numero} que adjuntaste";
 }

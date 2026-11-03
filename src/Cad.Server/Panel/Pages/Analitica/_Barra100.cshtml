@@ -1,0 +1,17 @@
+@model (IReadOnlyList<(string Nombre, int Valor, string Clase)> Partes, int Total)
+@* Una barra al 100 %: cada parte con su tono y, si cabe, su nombre; la leyenda repite nombre, cantidad y porcentaje (nunca solo color). *@
+@{
+    string Ancho(int parte) => (Model.Total == 0 ? 0 : 100.0 * parte / Model.Total).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}
+<div class="barra100" aria-hidden="true">
+    @foreach (var (nombre, valor, clase) in Model.Partes)
+    {
+        <span class="barra100__parte @clase" style="flex-basis:@Ancho(valor)%" title="@nombre: @valor">@(100.0 * valor / Math.Max(1, Model.Total) >= 22 ? nombre : "")</span>
+    }
+</div>
+<ul class="barra100__leyenda">
+    @foreach (var (nombre, valor, clase) in Model.Partes)
+    {
+        <li><i class="@clase"></i>@nombre <b>@valor</b> · @Formato.Porcentaje(100.0 * valor / Math.Max(1, Model.Total), 0)</li>
+    }
+</ul>

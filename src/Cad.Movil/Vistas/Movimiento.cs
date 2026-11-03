@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Cad.Movil.Vistas;
 
 // Movimiento de la app (26/10/2026): las mismas duraciones y curvas que el panel web (tokens.css), para que la app y la central
@@ -112,7 +114,8 @@ public static class Movimiento
     }
 
     // ---------- Botones (fase 2, 26/10/2026) ----------
-    // Pulsable (los estilos BotonPrincipal y BotonSecundario lo activan): al tocar, el botón se hunde un poco y vuelve.
+    // Pulsable (lo activan todos los estilos de botón): al tocar, el botón se hunde y vuelve. Desde el 26/10/2026 se siente como
+    // las teclas del PIN en toda la app: un golpe de vibración corto al presionar y el tinte de «presionado» de cada estilo.
     public static readonly BindableProperty PulsableProperty =
         BindableProperty.CreateAttached("Pulsable", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarPulsable);
 
@@ -131,7 +134,16 @@ public static class Movimiento
 
     private static void AlPresionar(object? emisor, EventArgs e)
     {
-        if (emisor is Button boton && !Reducido) _ = boton.ScaleToAsync(0.97, Instantanea, Salida);
+        if (emisor is not Button boton) return;
+        Vibrar();
+        // Un botón ancho se hunde un poco menos que una tecla: la misma sensación sin que el borde se mueva demasiado.
+        if (!Reducido) _ = boton.ScaleToAsync(boton.Width > 200 ? 0.97 : 0.95, Instantanea, Salida);
+    }
+
+    private static void Vibrar()
+    {
+        try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); }
+        catch (Exception) { /* sin vibración disponible: queda la respuesta visual */ }
     }
 
     private static void AlSoltar(object? emisor, EventArgs e)
@@ -163,9 +175,92 @@ public static class Movimiento
     private static void AlPresionarTecla(object? emisor, EventArgs e)
     {
         if (emisor is not Button boton) return;
-        try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); }
-        catch (Exception) { /* sin vibración disponible: queda la respuesta visual */ }
+        Vibrar();
         if (!Reducido) _ = boton.ScaleToAsync(0.94, Instantanea, Salida);
+    }
+
+    // Tarjeta (26/10/2026): un botón transparente sobre una tarjeta (Reportar, Acompañar, una fila de «Mis casos»…). Al presionarlo
+    // la tarjeta entera responde como una tecla del PIN: vibra, se hunde y su marco se tiñe de azul hasta soltarla.
+    public static readonly BindableProperty TarjetaProperty =
+        BindableProperty.CreateAttached("Tarjeta", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarTarjeta);
+
+    public static bool GetTarjeta(BindableObject vista) => (bool)vista.GetValue(TarjetaProperty);
+    public static void SetTarjeta(BindableObject vista, bool valor) => vista.SetValue(TarjetaProperty, valor);
+
+    // Colores del marco antes de presionar, para devolverlos al soltar.
+    private static readonly ConditionalWeakTable<Border, Tuple<Brush?, Color?, double>> marcos = new();
+
+    private static void AlCambiarTarjeta(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not Button boton) return;
+        boton.Pressed -= AlPresionarTarjeta;
+        boton.Released -= AlSoltarTarjeta;
+        if (!(bool)nuevo) return;
+        boton.Pressed += AlPresionarTarjeta;
+        boton.Released += AlSoltarTarjeta;
+    }
+
+    // La tarjeta es el contenedor del botón; su marco, el primer Border dentro de ella (o ella misma).
+    private static (VisualElement? Tarjeta, Border? Marco) TarjetaDe(Button boton)
+    {
+        var tarjeta = boton.Parent as VisualElement;
+        var marco = tarjeta as Border ?? (tarjeta as Layout)?.Children.OfType<Border>().FirstOrDefault();
+        return (tarjeta, marco);
+    }
+
+    private static void AlPresionarTarjeta(object? emisor, EventArgs e)
+    {
+        if (emisor is not Button boton) return;
+        Vibrar();
+        var (tarjeta, marco) = TarjetaDe(boton);
+        if (marco is not null && Application.Current?.Resources is { } recursos)
+        {
+            marcos.AddOrUpdate(marco, new Tuple<Brush?, Color?, double>(marco.Stroke, marco.BackgroundColor, marco.StrokeThickness));
+            if (recursos.TryGetValue("ColorPrimario", out var primario) && primario is Color azul)
+                marco.Stroke = new SolidColorBrush(azul);
+            marco.StrokeThickness = Math.Max(1.5, marco.StrokeThickness);
+            if (recursos.TryGetValue("ColorTenue", out var tenue) && tenue is Color fondo)
+                marco.BackgroundColor = fondo;
+        }
+        if (tarjeta is not null && !Reducido) _ = tarjeta.ScaleToAsync(tarjeta.Width > 200 ? 0.97 : 0.95, Instantanea, Salida);
+    }
+
+    private static void AlSoltarTarjeta(object? emisor, EventArgs e)
+    {
+        if (emisor is not Button boton) return;
+        var (tarjeta, marco) = TarjetaDe(boton);
+        if (marco is not null && marcos.TryGetValue(marco, out var antes))
+        {
+            marco.Stroke = antes.Item1;
+            marco.BackgroundColor = antes.Item2;
+            marco.StrokeThickness = antes.Item3;
+            marcos.Remove(marco);
+        }
+        if (tarjeta is null) return;
+        if (Reducido) tarjeta.Scale = 1;
+        else _ = tarjeta.ScaleToAsync(1, Rapida, Salida);
+    }
+
+    // Tocable (26/10/2026): una tarjeta con TapGestureRecognizer (los tipos del reporte). El toque no tiene «presionado», así que
+    // al tocarla vibra y se hunde un instante, como una tecla.
+    public static readonly BindableProperty TocableProperty =
+        BindableProperty.CreateAttached("Tocable", typeof(bool), typeof(Movimiento), false, propertyChanged: AlCambiarTocable);
+
+    public static bool GetTocable(BindableObject vista) => (bool)vista.GetValue(TocableProperty);
+    public static void SetTocable(BindableObject vista, bool valor) => vista.SetValue(TocableProperty, valor);
+
+    private static void AlCambiarTocable(BindableObject vista, object anterior, object nuevo)
+    {
+        if (vista is not View tarjeta || !(bool)nuevo || anterior is true) return;
+        var toque = new TapGestureRecognizer();
+        toque.Tapped += async (_, _) =>
+        {
+            Vibrar();
+            if (Reducido) return;
+            await tarjeta.ScaleToAsync(0.95, Instantanea, Salida);
+            await tarjeta.ScaleToAsync(1, Rapida, Salida);
+        };
+        tarjeta.GestureRecognizers.Add(toque);
     }
 
     // TextoEnvio (las acciones que se registran en la central, como «Voy en camino»): al tocar, el teléfono vibra un instante y,

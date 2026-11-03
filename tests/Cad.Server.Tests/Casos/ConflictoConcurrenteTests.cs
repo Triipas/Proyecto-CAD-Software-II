@@ -88,7 +88,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
 
         var resultado = await ConConflictosAsync(casoId, 1, (db, notificador) =>
             new CerrarCaso(db, TimeProvider.System, notificador, NullLogger<CerrarCaso>.Instance)
-                .EjecutarAsync(casoId, new DatosCierre(CategoriaIncidencia.Iniciales[0].Id, "Resultado ficticio", null), serenoId, ActorAvance.Sereno, CancellationToken.None));
+                .EjecutarAsync(casoId, new DatosCierre(CategoriaIncidencia.Iniciales[0].Id, "ResueltoEnElLugar", "Resultado ficticio", null), serenoId, ActorAvance.Sereno, CancellationToken.None));
 
         Assert.IsType<ResultadoCierre.Cerrado>(resultado);
         Assert.Equal(EstadoCaso.Cerrada, (await CasoAsync(casoId)).Estado);
@@ -115,7 +115,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
         var resultado = await ConConflictosAsync(casoId, 1, (db, notificador) =>
             new ReasignarCaso(db, TimeProvider.System, notificador, fabrica.Services.GetRequiredService<Cad.Server.Notificaciones.ColaAvisosDespacho>(),
                     NullLogger<ReasignarCaso>.Instance)
-                .EjecutarAsync(casoId, nuevo.Id, "El sereno no responde.", operador.Id, Guid.NewGuid(), CancellationToken.None));
+                .EjecutarAsync(casoId, nuevo.Id, "SerenoNoResponde", "El sereno no responde.", operador.Id, Guid.NewGuid(), CancellationToken.None));
 
         Assert.Equal(ReasignarCaso.MotivoCambioConcurrente, Assert.IsType<ResultadoReasignacion.Rechazado>(resultado).Motivo);
         Assert.Equal(anterior.Id, await fabrica.ConBaseDatosAsync(db => db.Asignaciones.Where(a => a.CasoId == casoId && a.Vigente).Select(a => a.SerenoId).SingleAsync()));
@@ -129,7 +129,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
 
         var resultado = await ConConflictosAsync(casoId, int.MaxValue, (db, notificador) =>
             new CerrarCaso(db, TimeProvider.System, notificador, NullLogger<CerrarCaso>.Instance)
-                .EjecutarAsync(casoId, new DatosCierre(CategoriaIncidencia.Iniciales[0].Id, "Resultado ficticio", null), serenoId, ActorAvance.Sereno, CancellationToken.None));
+                .EjecutarAsync(casoId, new DatosCierre(CategoriaIncidencia.Iniciales[0].Id, "ResueltoEnElLugar", "Resultado ficticio", null), serenoId, ActorAvance.Sereno, CancellationToken.None));
 
         Assert.Equal(CerrarCaso.MotivoCambioConcurrente, Assert.IsType<ResultadoCierre.Rechazado>(resultado).Motivo);
         Assert.Equal(EstadoCaso.EnAtencion, (await CasoAsync(casoId)).Estado);
@@ -240,7 +240,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
 
         var resultado = await ConConflictosAsync(casoId, 1, (db, notificador) =>
             new ClasificarCaso(db, TimeProvider.System, notificador, NullLogger<ClasificarCaso>.Instance)
-                .EjecutarAsync(casoId, Robo, operador.Id, CancellationToken.None));
+                .EjecutarAsync(casoId, Robo, "Media", "No", operador.Id, CancellationToken.None));
 
         Assert.IsType<ResultadoClasificacion.Clasificado>(resultado);
         Assert.Equal(Robo, (await CasoAsync(casoId)).CategoriaId);
@@ -254,7 +254,7 @@ public class ConflictoConcurrenteTests(FabricaCad fabrica)
 
         var resultado = await ConConflictosAsync(casoId, int.MaxValue, (db, notificador) =>
             new ClasificarCaso(db, TimeProvider.System, notificador, NullLogger<ClasificarCaso>.Instance)
-                .EjecutarAsync(casoId, Robo, operador.Id, CancellationToken.None));
+                .EjecutarAsync(casoId, Robo, "Media", "No", operador.Id, CancellationToken.None));
 
         Assert.Equal(ClasificarCaso.MotivoCambioConcurrente, Assert.IsType<ResultadoClasificacion.Rechazado>(resultado).Motivo);
         Assert.Null((await CasoAsync(casoId)).CategoriaId);

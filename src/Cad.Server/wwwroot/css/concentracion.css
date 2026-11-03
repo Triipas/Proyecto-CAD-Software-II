@@ -1,6 +1,7 @@
 /*
   Mapa de concentración (HU29) en el rediseño CAD v2, fase 3. Solo la carga /panel/mapa-concentracion.
-  Una barra de selección compacta, las cifras de la selección y el mapa como protagonista.
+  Una barra de selección compacta, la diferencia con las zonas de Analítica, las cifras de la selección y el mapa de
+  calor infrarrojo como protagonista.
 */
 
 /* ── Barra de selección ────────────────────────────────── */
@@ -100,49 +101,245 @@
   color: var(--color-texto-secundario);
 }
 
-/* ── Mapa protagonista ─────────────────────────────────── */
+/* ── Este mapa y las zonas de Analítica ────────────────── */
+/* Dos maneras de ver la ciudad, dichas antes del mapa: aquí el volumen (calor); en Analítica, el rendimiento por zona. */
+.dos-mapas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--espacio-3) var(--espacio-6);
+  margin-top: var(--espacio-4);
+  padding: var(--espacio-3) var(--espacio-5);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+}
+
+.dos-mapas__lado {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.dos-mapas__lado p {
+  margin: 0;
+  max-width: 62ch;
+}
+
+.dos-mapas__lado b {
+  display: block;
+  color: var(--color-marino);
+  font-weight: var(--peso-medio);
+}
+
+.dos-mapas__lado + .dos-mapas__lado {
+  padding-left: var(--espacio-6);
+  border-left: var(--grosor-borde) solid var(--color-borde);
+}
+
+/* Una muestra de cada mapa: el halo térmico y la cuadrícula de zonas en la rampa azul de Analítica. */
+.dos-mapas__muestra {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-top: 0.125rem;
+  border-radius: var(--radio-control);
+}
+
+.dos-mapas__muestra--calor {
+  background:
+    radial-gradient(circle at 42% 46%, #FFF8CD 0 8%, #FBC428 18%, #F47620 30%, #CE2E96 44%, #7622AA 58%, transparent 72%),
+    #14213D;
+}
+
+.dos-mapas__muestra--zonas {
+  background:
+    linear-gradient(90deg, #E6EEFD 0 33%, #9DB9F4 33% 66%, #3F6FE0 66%) top / 100% 33.4% no-repeat,
+    linear-gradient(90deg, #9DB9F4 0 33%, #1D4ED8 33% 66%, #BFD2F8 66%) center / 100% 33.4% no-repeat,
+    linear-gradient(90deg, #BFD2F8 0 33%, #7FA3EF 33% 66%, #E6EEFD 66%) bottom / 100% 33.4% no-repeat;
+  box-shadow: 0 0 0 1px var(--color-borde);
+}
+
+.dos-mapas__enlace {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+/* ── Mapa protagonista: la ciudad en infrarrojo ────────── */
 .concentracion__mapa {
   position: relative;
 }
 
 .concentracion__mapa .mapa {
-  height: max(28rem, calc(100vh - var(--alto-barra) - 12rem));
+  height: max(30rem, calc(100vh - var(--alto-barra) - 12rem));
+  border: 0;
   border-radius: var(--radio-superficie);
-  box-shadow: var(--sombra-1);
-}
-
-.leyenda-concentracion {
-  position: absolute;
-  left: var(--espacio-3);
-  bottom: var(--espacio-3);
-  z-index: 500;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--espacio-1) var(--espacio-3);
-  max-width: calc(100% - 7rem);
-  margin: 0;
-  padding: var(--espacio-2) var(--espacio-3);
-  border-radius: var(--radio-control);
-  font-size: var(--texto-xs);
-  color: var(--color-texto-secundario);
-  background: var(--color-superficie);
   box-shadow: var(--sombra-2);
 }
 
-/* Las marcas aparecen escalonadas al generar el mapa (una vez, solo opacidad y escala). */
+/* La ciudad de noche: teselas invertidas a azul marino, con las calles claras y apagadas, para que el calor sea lo único que
+   brilla. Sigue la regla de la ciudad apagada (nunca a todo color), solo que en oscuro. */
+.mapa--infrarrojo {
+  background: #0B1A33;
+}
+
+.mapa--infrarrojo .leaflet-tile-pane {
+  filter: grayscale(1) invert(1) sepia(1) hue-rotate(178deg) saturate(1.5) brightness(0.62) contrast(1.18);
+}
+
+.mapa--infrarrojo .leaflet-control-attribution {
+  background: rgb(11 26 51 / 0.72);
+  color: #9DB1D0;
+}
+
+.mapa--infrarrojo .leaflet-control-attribution a {
+  color: #D5E0F0;
+}
+
+/* El calor se suma a la ciudad oscura como luz («screen»): brilla sin tapar las calles. */
+.calor-concentracion {
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Cifras por zona: insignia oscura con la cifra en blanco y el borde del origen (rojo SOS en cuadro, violeta en círculo). */
 .celda-concentracion span {
+  background: rgb(6 20 46 / 0.86);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.45);
+  font-variant-numeric: tabular-nums;
   animation: celda-entra var(--duracion-lenta) var(--curva-salida) calc(var(--i, 0) * 40ms) both;
 }
 
+.celda-concentracion--sos span {
+  background: rgb(6 20 46 / 0.86);
+  border-color: #F04438;
+  border-radius: 6px;
+}
+
+.celda-concentracion--reporte span {
+  background: rgb(6 20 46 / 0.86);
+  border-color: #A78BFA;
+  border-radius: 50%;
+}
+
+.celda-concentracion:focus-visible {
+  outline: none;
+}
+
+.celda-concentracion:focus-visible span {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
+}
+
 @keyframes celda-entra {
-  from { opacity: 0; transform: scale(0.4); }
+  from { opacity: 0; transform: scale(0.6); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .celda-concentracion span {
     animation: none;
   }
+}
+
+/* Paneles flotantes sobre el mapa: capas arriba a la izquierda y leyenda abajo. */
+.capas-concentracion,
+.leyenda-concentracion {
+  position: absolute;
+  z-index: 500;
+  margin: 0;
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-2);
+}
+
+.capas-concentracion {
+  top: var(--espacio-3);
+  left: var(--espacio-3);
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-4);
+  padding: var(--espacio-1) var(--espacio-4);
+  border: 0;
+}
+
+.capas-concentracion__titulo {
+  float: left;
+  padding: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+}
+
+.capas-concentracion__opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 2.25rem;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+  cursor: pointer;
+}
+
+.capas-concentracion__opcion input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--color-primario);
+}
+
+.leyenda-concentracion {
+  left: var(--espacio-3);
+  bottom: var(--espacio-3);
+  display: grid;
+  gap: var(--espacio-2);
+  max-width: min(34rem, calc(100% - 7rem));
+  padding: var(--espacio-3) var(--espacio-4);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.leyenda-concentracion__calor {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 1fr) auto;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}
+
+/* La misma escala térmica del calor, sobre la ciudad oscura, para leerla como en el mapa. */
+.leyenda-concentracion__rampa {
+  height: 0.625rem;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgb(48 30 150 / 0.55), #7622AA 25%, #CE2E96 45%, #F47620 65%, #FBC428 82%, #FFF8CD),
+    #0B1A33;
+}
+
+.leyenda-concentracion__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-3);
+  margin: 0;
+}
+
+.leyenda-concentracion .leyenda {
+  margin-right: 0;
+}
+
+.leyenda-concentracion .leyenda::before {
+  background: #0B1A33;
+  border: 2px solid #F04438;
+  border-radius: 3px;
+}
+
+.leyenda-concentracion .leyenda--reporte::before {
+  border-color: #A78BFA;
+  border-radius: 50%;
 }
 
 /* ── Pantallas estrechas ───────────────────────────────── */
@@ -183,5 +380,28 @@
     box-shadow: none;
     background: transparent;
     padding: 0;
+  }
+
+  .capas-concentracion {
+    position: static;
+    margin-bottom: var(--espacio-2);
+    box-shadow: none;
+    border: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .dos-mapas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dos-mapas__lado + .dos-mapas__lado {
+    padding-left: 0;
+    padding-top: var(--espacio-3);
+    border-left: 0;
+    border-top: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .dos-mapas__enlace {
+    justify-self: stretch;
+    white-space: normal;
   }
 }

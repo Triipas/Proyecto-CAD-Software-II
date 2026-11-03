@@ -184,7 +184,9 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     }
 
     // HU24 — cierre por el sereno asignado. Devuelve true si el caso quedó cerrado (también ante un reenvío).
-    public async Task<bool> CerrarAsync(Guid? categoriaId, string? resultadoPublico, string? notasInternas, CancellationToken ct = default)
+    // resultadoAtencion (27/10/2026): código de Cad.Contratos.Casos.ResultadosAtencion; el servidor lo exige.
+    public async Task<bool> CerrarAsync(Guid? categoriaId, string? resultadoPublico, string? notasInternas, string? resultadoAtencion = null,
+        CancellationToken ct = default)
     {
         if (Actual is not { } despacho || !await consulta.WaitAsync(0, ct))
             return false;
@@ -197,7 +199,7 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
             if (sesion is null || !sesion.Vigente(reloj.GetUtcNow()))
                 return false;
             ErroresCierre = new Dictionary<string, string[]>();
-            switch (await api.CerrarCasoAsync(sesion.Token, despacho.CasoId, new SolicitudCierreCaso(categoriaId, resultadoPublico, notasInternas), ct))
+            switch (await api.CerrarCasoAsync(sesion.Token, despacho.CasoId, new SolicitudCierreCaso(categoriaId, resultadoPublico, notasInternas, resultadoAtencion), ct))
             {
                 case ResultadoApi<RespuestaCierreCaso>.Correcto c:
                     Actual = null;

@@ -72,7 +72,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding VerCasoActivo}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding VerCasoActivo}"
                             SemanticProperties.Description="{Binding TextoCasoActivo, StringFormat='Tu caso en curso: {0}'}"
                             SemanticProperties.Hint="Abre el detalle de tu caso" />
                 </Grid>
@@ -130,7 +130,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding VerNotificaciones}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding VerNotificaciones}"
                             SemanticProperties.Description="{Binding TextoNotificaciones}"
                             SemanticProperties.Hint="Muestra los avisos de cambios de estado de tus casos" />
                 </Grid>
@@ -140,11 +140,7 @@
         <!-- Abajo, en la zona del pulgar. -->
         <VerticalStackLayout VerticalOptions="End" Padding="12,0,12,14" Spacing="12" InputTransparent="True" CascadeInputTransparent="False">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <!-- Aviso obligatorio del MVP, siempre visible. -->
-                <Border StrokeThickness="0" StrokeShape="RoundRectangle 999" Padding="10,6" BackgroundColor="#EBFFFFFF"
-                        HorizontalOptions="Start" VerticalOptions="Center">
-                    <Label Text="MVP académico · datos simulados" FontSize="12" FontFamily="PublicSansMedium" TextColor="{StaticResource ColorTextoSecundario}" />
-                </Border>
+                <!-- 26/10/2026: sin el aviso «MVP académico · datos simulados» (pedido del usuario). -->
                 <Grid Grid.Column="1">
                     <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 999" Padding="14,0" HeightRequest="44">
                         <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
@@ -152,7 +148,7 @@
                             <Label Text="Centrar" FontFamily="PublicSansMedium" FontSize="14" TextColor="{StaticResource ColorMarino}" VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Centrar}" SemanticProperties.Description="Centrar"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Centrar}" SemanticProperties.Description="Centrar"
                             SemanticProperties.Hint="Muestra tu ubicación actual en el mapa; no la envía a la central" />
                 </Grid>
             </Grid>
@@ -169,7 +165,7 @@
                             <Label Text="Reportar" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Reportar}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Reportar}"
                             SemanticProperties.Description="Reportar una incidencia"
                             SemanticProperties.Hint="Abre el formulario de reporte; no es una alerta urgente" />
                 </Grid>
@@ -229,7 +225,7 @@
                             <Label Text="Acompañar" FontFamily="PublicSansSemiBold" FontSize="14" TextColor="{StaticResource ColorMarino}" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding Acompanar}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding Acompanar}"
                             SemanticProperties.Description="Acompañamiento"
                             SemanticProperties.Hint="Abre el acompañamiento temporal; no emite un SOS ni registra un reporte" />
                 </Grid>

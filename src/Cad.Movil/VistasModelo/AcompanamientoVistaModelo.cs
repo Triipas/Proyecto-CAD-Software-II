@@ -12,6 +12,9 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public const string TextoEntorno =
         "Tu ubicación se sigue enviando aunque cierres la aplicación o apagues la pantalla, mientras veas la notificación «Acompañamiento activo». Necesita conexión: sin ella, tu posición no llega a la central.";
 
+    // Acomodo del 26/10/2026: con el acompañamiento activo, lo mismo en una línea, para dejarle sitio al mapa.
+    public const string TextoEntornoBreve = "Sigue con la app cerrada mientras veas la notificación «Acompañamiento activo». Necesita conexión.";
+
     private readonly ServicioAcompanamiento servicio;
     private readonly IServicioUbicacion ubicacion;
     private readonly INavegacion navegacion;
@@ -126,6 +129,14 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
     public string TextoRestante => servicio.Restante is { } r && servicio.Sesion is { } s
         ? $"Quedan {Math.Max(1, (int)Math.Ceiling(r.TotalMinutes))} min · hasta las {s.VenceEn.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}"
         : "";
+
+    // La tarjeta de arriba, en una fila: los minutos que quedan y la hora de fin, aparte.
+    public string MinutosRestantes => servicio.Restante is { } r ? $"{Math.Max(1, (int)Math.Ceiling(r.TotalMinutes))} min" : "";
+    public string HoraFin => servicio.Sesion is { } s ? $"hasta {s.VenceEn.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}" : "";
+
+    // Solo lo más reciente entre el ciudadano y la central, en una línea (acomodo del 26/10/2026).
+    public LineaActividad? UltimaActividad => Actividad.FirstOrDefault();
+    public bool HayActividad => UltimaActividad is not null;
 
     // Lo último entre el ciudadano y la central, lo más reciente primero (el inicio siempre está al final).
     public IReadOnlyList<LineaActividad> Actividad
@@ -246,6 +257,7 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
                         Notificar(nameof(TextoLatido));
                         Notificar(nameof(ProgresoRestante));
                         Notificar(nameof(TextoRestante));
+                        Notificar(nameof(MinutosRestantes));
                     });
             }
             catch (OperationCanceledException) { }
@@ -260,7 +272,8 @@ public sealed class AcompanamientoVistaModelo : VistaModeloBase
                      nameof(MostrarPermitir), nameof(MostrarAjustes), nameof(HayConfirmacion), nameof(TextoConfirmacion),
                      nameof(RespondiendoConfirmacion), nameof(HayResultadoConfirmacion), nameof(ResultadoConfirmacion), nameof(TipoResultadoConfirmacion),
                      nameof(MostrarComoVas), nameof(InformandoEstado), nameof(HayResultadoEstado), nameof(ResultadoEstado), nameof(TipoResultadoEstado),
-                     nameof(MostrarFormulario), nameof(Ocupado), nameof(LatidoAlDia), nameof(TextoLatido), nameof(ProgresoRestante), nameof(TextoRestante), nameof(Actividad) })
+                     nameof(MostrarFormulario), nameof(Ocupado), nameof(LatidoAlDia), nameof(TextoLatido), nameof(ProgresoRestante), nameof(TextoRestante), nameof(Actividad),
+                     nameof(MinutosRestantes), nameof(HoraFin), nameof(UltimaActividad), nameof(HayActividad) })
             Notificar(p);
         // El mapa solo se vuelve a dibujar si llegó una posición nueva o cambió el estado de la transmisión.
         if (servicio.Recorrido.Count != puntosMostrados || LatidoAlDia != alDiaMostrado)

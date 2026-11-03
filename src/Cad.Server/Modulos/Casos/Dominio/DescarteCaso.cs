@@ -9,15 +9,18 @@ public sealed class DescarteCaso
     public Guid CasoId { get; private set; }
     public Guid OperadorId { get; private set; }
     public string Motivo { get; private set; } = "";
+    // 27/10/2026 — el motivo del catálogo MotivosDescarte (Cad.Contratos.Casos); Motivo queda como su detalle. Nulo antes.
+    public string? MotivoCodigo { get; private set; }
     public EstadoCaso EstadoPrevio { get; private set; }
     public DateTimeOffset DescartadoEn { get; private set; }
 
     private DescarteCaso() { } // EF Core
 
-    public static DescarteCaso Registrar(Caso caso, EstadoCaso estadoPrevio, Guid operadorId, string motivo, DateTimeOffset ahora) => new()
+    public static DescarteCaso Registrar(Caso caso, EstadoCaso estadoPrevio, Guid operadorId, string motivoCodigo, string motivo, DateTimeOffset ahora) => new()
     {
         CasoId = caso.Id,
         OperadorId = operadorId,
+        MotivoCodigo = motivoCodigo,
         Motivo = motivo.Trim(),
         EstadoPrevio = estadoPrevio,
         DescartadoEn = ahora,

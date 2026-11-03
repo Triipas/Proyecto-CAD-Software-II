@@ -38,7 +38,7 @@ public sealed class ServicioAvisosDespacho(ColaAvisosDespacho cola, IServiceScop
 }
 
 // Un aviso: por el canal en tiempo real (app abierta) y, si hay credencial y dispositivo, por push.
-public sealed class AvisarDespacho(CadDbContext db, INotificador notificador, IEnviadorPush push, ILogger<AvisarDespacho> registro)
+public sealed class AvisarDespacho(CadDbContext db, INotificador notificador, IEnviadorPush push, TimeProvider reloj, ILogger<AvisarDespacho> registro)
 {
     // Límite para no retener el servicio si FCM no responde.
     private static readonly TimeSpan EsperaPush = TimeSpan.FromSeconds(10);
@@ -61,6 +61,7 @@ public sealed class AvisarDespacho(CadDbContext db, INotificador notificador, IE
         if (dispositivo is null)
         {
             registro.LogInformation("El sereno {SerenoId} no tiene un dispositivo registrado para la notificación push.", serenoId);
+            await AnotarAsync(serenoId, Modulos.Analitica.EnvioPush.SinDispositivo, ct);
             return;
         }
 
@@ -74,5 +75,21 @@ public sealed class AvisarDespacho(CadDbContext db, INotificador notificador, IE
             await db.SaveChangesAsync(ct);
         }
         registro.LogInformation("Notificación push del despacho al sereno {SerenoId}: {Resultado}.", serenoId, resultado);
+        await AnotarAsync(serenoId, resultado.ToString(), ct);
+    }
+
+    // 27/10/2026: el resultado de cada intento queda para la salud del sistema (analítica). Si no se puede anotar, el aviso ya salió.
+    private async Task AnotarAsync(Guid serenoId, string resultado, CancellationToken ct)
+    {
+        try
+        {
+            db.EnviosPush.Add(Modulos.Analitica.EnvioPush.Registrar(serenoId, resultado, reloj.GetUtcNow()));
+            await db.SaveChangesAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            db.ChangeTracker.Clear();
+            registro.LogWarning(ex, "No se pudo anotar el resultado de la notificación push al sereno {SerenoId}.", serenoId);
+        }
     }
 }

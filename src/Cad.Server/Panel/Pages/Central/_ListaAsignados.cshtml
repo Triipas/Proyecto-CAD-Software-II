@@ -1,0 +1,48 @@
+@model Cad.Server.Panel.Pages.Central.ListaAsignados
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+}
+@* Casos con sereno (asignados, en camino o en atención): siguen en la cola tras los pendientes. La tarjeta entera es el botón
+   que lleva el mapa al caso y dibuja solo entonces el recorrido de su sereno (central.js). Fragmento que el servidor genera en
+   la carga inicial y al resincronizar. *@
+<div data-lista-asignados data-total="@Model.Casos.Count">
+    @if (Model.Casos.Count == 0)
+    {
+        <p class="texto-secundario">Todavía no hay casos con sereno asignado.</p>
+    }
+    else
+    {
+        <ol class="lista-sos">
+            @foreach (var c in Model.Casos)
+            {
+                var local = TimeZoneInfo.ConvertTime(c.AsignadaEn, Model.ZonaHoraria);
+                <li class="sos sos--asignado@(c.EsReporte ? " sos--reporte" : "")" id="asignado-@c.Id" tabindex="-1" data-asignado="@c.Id"
+                    data-origen="@(c.EsReporte ? "Reporte" : c.TextoOrigen)" data-sereno="@c.SerenoId" data-clave="@c.Id"
+                    data-lat="@c.Latitud?.ToString(inv)" data-lon="@c.Longitud?.ToString(inv)">
+                    <div class="sos__cabecera">
+                        @if (c.EsReporte)
+                        {
+                            <span class="etiqueta-reporte">Reporte</span>
+                        }
+                        else
+                        {
+                            <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@c.TextoOrigen</span>
+                        }
+                        <partial name="_ChipEstado" model="@((c.TextoEstado, false))" />
+                        <span class="sos__hora">desde las <time datetime="@c.AsignadaEn.ToString("O", inv)">@local.ToString("HH:mm", inv)</time></span>
+                    </div>
+                    <button type="button" class="sos__ciudadano sos__seleccionar" data-seleccionar-asignado aria-pressed="false"
+                            aria-describedby="asignado-@c.Id-sereno">@c.Ciudadano<span class="visualmente-oculto">: ver el caso y el recorrido de su sereno en el mapa</span></button>
+                    <p class="sos__dato-ubicacion" id="asignado-@c.Id-sereno">
+                        <partial name="_Icono" model="@("escudo")" />
+                        <span>Sereno: @c.Sereno@(c.UbicacionDisponible ? "" : " · sin ubicación en el mapa")</span>
+                    </p>
+                    <div class="sos__acciones">
+                        <a class="sos__detalle" href="@c.Detalle">Abrir el caso<span class="visualmente-oculto"> de @c.Ciudadano</span></a>
+                    </div>
+                </li>
+            }
+        </ol>
+    }
+</div>

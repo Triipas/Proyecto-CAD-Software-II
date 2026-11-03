@@ -30,13 +30,18 @@ public sealed class DetalleReporte
     public string? ContactoNombre { get; private set; }
     public string? ContactoTelefono { get; private set; }
     public bool DeLaCentral => RegistradoPorOperadorId is not null;
+    // 27/10/2026 — por dónde llegó (Cad.Contratos.Casos.CanalesEntrada): «App» para el ciudadano; llamada, radio, etc. para la
+    // central. Nulo en los reportes anteriores.
+    public string? Canal { get; private set; }
 
     private DetalleReporte() { } // EF Core
 
     public static DetalleReporte Registrar(Caso caso, Guid categoriaId, string descripcion, DateTimeOffset ocurridoEn, string fuente,
         double? latitud, double? longitud, double? precision, string? referencia,
-        Guid? registradoPorOperadorId = null, string? contactoNombre = null, string? contactoTelefono = null) => new()
+        Guid? registradoPorOperadorId = null, string? contactoNombre = null, string? contactoTelefono = null,
+        string canal = Cad.Contratos.Casos.CanalesEntrada.App) => new()
     {
+        Canal = canal,
         CasoId = caso.Id,
         CategoriaOriginalId = categoriaId,
         Descripcion = descripcion,

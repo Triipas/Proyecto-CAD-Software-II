@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
@@ -5,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Casos.Aplicacion;
 
-public sealed record DatosDecision(TipoDecisionReporte Tipo, string? Motivo, string? Destino = null, string? Accion = null);
+// 27/10/2026: Destino es un código de DestinosDerivacion y DetalleDestino, el texto que lo precisa (obligatorio con «Otro»);
+// la admisión registra la prioridad y si hay heridos; el descarte, su motivo del catálogo (MotivosDescarte).
+public sealed record DatosDecision(TipoDecisionReporte Tipo, string? Motivo, string? Destino = null, string? Accion = null,
+    string? DetalleDestino = null, string? Prioridad = null, string? Heridos = null, string? MotivoDescarte = null);
 
 public abstract record ResultadoDecision
 {
@@ -44,9 +48,14 @@ public sealed class DecidirReporte(CadDbContext db, TimeProvider reloj, INotific
 
             var ahora = reloj.GetUtcNow();
             caso.Decidir(datos.Tipo);
+            if (datos.Tipo == TipoDecisionReporte.Admision)
+                caso.Priorizar(datos.Prioridad!, datos.Heridos!);
+            var derivacion = datos.Tipo == TipoDecisionReporte.Derivacion;
             db.DecisionesReporte.Add(DecisionReporte.Registrar(caso, datos.Tipo, datos.Motivo!.Trim(),
-                datos.Tipo == TipoDecisionReporte.Derivacion ? datos.Destino!.Trim() : null,
-                datos.Tipo == TipoDecisionReporte.Derivacion ? datos.Accion!.Trim() : null, operadorId, ahora));
+                derivacion ? TextoDestino(datos) : null,
+                derivacion ? datos.Accion!.Trim() : null, operadorId, ahora,
+                derivacion ? datos.Destino : null,
+                datos.Tipo == TipoDecisionReporte.Descarte ? datos.MotivoDescarte : null));
             // DP05: «Admitido», «Derivado» y «Descartado» son estados públicos para el titular.
             db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEvento(datos.Tipo), operadorId, VisibilidadEvento.Publica, ahora));
 
@@ -92,11 +101,29 @@ public sealed class DecidirReporte(CadDbContext db, TimeProvider reloj, INotific
         });
         if (datos.Tipo == TipoDecisionReporte.Derivacion)
         {
-            Texto("destino", datos.Destino, DecisionReporte.MaximoDestino, "Indica a dónde se deriva.");
+            if (!Catalogo.Contiene(DestinosDerivacion.Todos, datos.Destino))
+                errores["destino"] = ["Elige a dónde se deriva."];
+            if (datos.Destino == DestinosDerivacion.Otro)
+                Texto("detalleDestino", datos.DetalleDestino, DecisionReporte.MaximoDestino, "Indica la entidad a la que se deriva.");
+            else if (datos.DetalleDestino?.Trim().Length > DecisionReporte.MaximoDestino)
+                errores["detalleDestino"] = [$"Admite hasta {DecisionReporte.MaximoDestino} caracteres."];
             Texto("accion", datos.Accion, DecisionReporte.MaximoAccion, "Indica la acción realizada.");
         }
+        if (datos.Tipo == TipoDecisionReporte.Admision)
+        {
+            if (!Catalogo.Contiene(PrioridadesCaso.Todas, datos.Prioridad))
+                errores["prioridad"] = ["Elige la prioridad del caso."];
+            if (!Catalogo.Contiene(PersonasHeridas.Todas, datos.Heridos))
+                errores["heridos"] = ["Indica si hay personas heridas (o que no se sabe)."];
+        }
+        if (datos.Tipo == TipoDecisionReporte.Descarte && !Catalogo.Contiene(MotivosDescarte.Todos, datos.MotivoDescarte))
+            errores["motivoDescarte"] = ["Elige el motivo del descarte."];
         return errores;
     }
+
+    // Lo que se muestra como destino: la entidad que escribió el operador o, sin detalle, la del catálogo.
+    private static string TextoDestino(DatosDecision datos) =>
+        string.IsNullOrWhiteSpace(datos.DetalleDestino) ? Catalogo.Texto(DestinosDerivacion.Todos, datos.Destino)! : datos.DetalleDestino.Trim();
 
     // El reporte ya salió de la revisión: un reenvío de la misma decisión por el mismo operador no es un error.
     private async Task<ResultadoDecision> PreviaAsync(Caso caso, TipoDecisionReporte tipo, Guid operadorId, CancellationToken ct)

@@ -41,8 +41,9 @@ public sealed record InformacionDespacho(DateTimeOffset RegistradaEn, string? In
 public sealed record SolicitudRegistroDispositivo(string Token);
 
 // HU24 — cierre del caso desde la app del sereno. Tipificación del catálogo (DP07) y resultado obligatorios (CA02);
-// notas internas opcionales y separadas del resultado público (CA04).
-public sealed record SolicitudCierreCaso(Guid? CategoriaId, string? ResultadoPublico, string? NotasInternas);
+// notas internas opcionales y separadas del resultado público (CA04). ResultadoAtencion (27/10/2026): código de
+// Cad.Contratos.Casos.ResultadosAtencion, obligatorio; al final y opcional en el tipo para que el contrato siga leyéndose.
+public sealed record SolicitudCierreCaso(Guid? CategoriaId, string? ResultadoPublico, string? NotasInternas, string? ResultadoAtencion = null);
 
 public sealed record RespuestaCierreCaso(Guid CasoId, string Estado, DateTimeOffset CerradoEn);
 

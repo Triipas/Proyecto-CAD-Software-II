@@ -112,7 +112,7 @@ public class CancelacionSosTests(FabricaCad fabrica)
         var db = alcance.ServiceProvider.GetRequiredService<CadDbContext>();
 
         var resultado = await new CancelarSos(db, TimeProvider.System, new NotificadorQueFalla(), NullLogger<CancelarSos>.Instance)
-            .EjecutarAsync(cuenta.Id, casoId, "Ya llegó la ayuda de un vecino.", CancellationToken.None);
+            .EjecutarAsync(cuenta.Id, casoId, "MeAyudaronOtros", "Ya llegó la ayuda de un vecino.", CancellationToken.None);
 
         Assert.IsType<ResultadoCancelacion.Cancelado>(resultado);
         Assert.Equal(EstadoCaso.Cancelada, (await CasoAsync(casoId)).Estado);
@@ -260,7 +260,7 @@ public class CancelacionSosTests(FabricaCad fabrica)
         using var alcance = fabrica.Services.CreateScope();
 
         var resultado = await new CancelarSos(db, TimeProvider.System, alcance.ServiceProvider.GetRequiredService<INotificador>(),
-            NullLogger<CancelarSos>.Instance).EjecutarAsync(cuenta.Id, casoId, "Ya no lo necesito.", CancellationToken.None);
+            NullLogger<CancelarSos>.Instance).EjecutarAsync(cuenta.Id, casoId, "YaNoLoNecesito", "Ya no lo necesito.", CancellationToken.None);
 
         var rechazo = Assert.IsType<ResultadoCancelacion.Rechazado>(resultado);
         Assert.Equal(CancelarSos.MotivoNoPendiente, rechazo.Motivo);

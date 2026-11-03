@@ -5,7 +5,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Cad.Server.Modulos.Consultas;
 
 // Descarte de un caso por la central (23/10/2026), para el detalle del caso en el panel: quién, cuándo, desde qué estado y por qué.
-public sealed record DescarteVista(string Operador, string EstadoPrevio, string Motivo, DateTimeOffset DescartadoEn);
+public sealed record DescarteVista(string Operador, string EstadoPrevio, string Motivo, DateTimeOffset DescartadoEn, string? MotivoCodigo = null)
+{
+    // 27/10/2026: el texto del catálogo; un descarte anterior no lo tiene.
+    public string? TextoMotivo => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosDescarte.Todos, MotivoCodigo);
+}
 
 public sealed class ConsultarDescarte(CadDbContext db)
 {
@@ -14,8 +18,8 @@ public sealed class ConsultarDescarte(CadDbContext db)
                join operador in db.Users.AsNoTracking() on descarte.OperadorId equals operador.Id
                join caso in db.Casos.AsNoTracking() on descarte.CasoId equals caso.Id
                where descarte.CasoId == casoId
-               select new { caso.Origen, descarte.EstadoPrevio, descarte.Motivo, descarte.DescartadoEn, Operador = operador.Nombres + " " + operador.Apellidos })
+               select new { caso.Origen, descarte.EstadoPrevio, descarte.Motivo, descarte.MotivoCodigo, descarte.DescartadoEn, Operador = operador.Nombres + " " + operador.Apellidos })
             .SingleOrDefaultAsync(ct) is { } d
-            ? new DescarteVista(d.Operador, EstadosCaso.Texto(d.Origen, d.EstadoPrevio), d.Motivo, d.DescartadoEn)
+            ? new DescarteVista(d.Operador, EstadosCaso.Texto(d.Origen, d.EstadoPrevio), d.Motivo, d.DescartadoEn, d.MotivoCodigo)
             : null;
 }

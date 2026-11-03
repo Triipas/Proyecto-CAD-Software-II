@@ -44,7 +44,8 @@ public class NuevoModel(RegistrarReporte registrar, ConsultarCategorias consulta
 
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
-        var resultado = await registrar.RegistrarDeLaCentralAsync(User.IdUsuario(), Solicitud(), Reporte.ContactoNombre, Reporte.ContactoTelefono, ct);
+        var resultado = await registrar.RegistrarDeLaCentralAsync(User.IdUsuario(), Solicitud(),
+            new DatosReporteCentral(Reporte.Canal, Reporte.Prioridad, Reporte.Heridos, Reporte.ContactoNombre, Reporte.ContactoTelefono), ct);
         switch (resultado)
         {
             case ResultadoRegistroReporte.Registrado or ResultadoRegistroReporte.YaRegistrado:
@@ -91,6 +92,9 @@ public class NuevoModel(RegistrarReporte registrar, ConsultarCategorias consulta
         public string? Latitud { get; set; }
         public string? Longitud { get; set; }
         public string? Referencia { get; set; }
+        public string? Canal { get; set; }
+        public string? Prioridad { get; set; }
+        public string? Heridos { get; set; }
         public string? ContactoNombre { get; set; }
         public string? ContactoTelefono { get; set; }
     }

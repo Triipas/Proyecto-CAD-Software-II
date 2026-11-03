@@ -1,3 +1,4 @@
+using Cad.Contratos.Casos;
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Persistencia;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Casos.Aplicacion;
 
-public sealed record DatosCierre(Guid? CategoriaId, string? ResultadoPublico, string? NotasInternas);
+public sealed record DatosCierre(Guid? CategoriaId, string? ResultadoAtencion, string? ResultadoPublico, string? NotasInternas);
 
 public abstract record ResultadoCierre
 {
@@ -55,7 +56,7 @@ public sealed class CerrarCaso(CadDbContext db, TimeProvider reloj, INotificador
             caso.Cerrar();
             if (asignacion is { Vigente: true })
                 asignacion.Finalizar(ahora);
-            var cierre = CierreCaso.Registrar(caso, datos.CategoriaId!.Value, datos.ResultadoPublico!.Trim(),
+            var cierre = CierreCaso.Registrar(caso, datos.CategoriaId!.Value, datos.ResultadoAtencion!, datos.ResultadoPublico!.Trim(),
                 string.IsNullOrWhiteSpace(datos.NotasInternas) ? null : datos.NotasInternas.Trim(), actorId, ahora);
             db.CierresCaso.Add(cierre);
             db.EventosCaso.Add(EventoCaso.Registrar(caso, TipoEventoCaso.CasoCerrado, actorId, VisibilidadEvento.Interna, ahora));
@@ -85,6 +86,9 @@ public sealed class CerrarCaso(CadDbContext db, TimeProvider reloj, INotificador
         // DP07: solo categorías del catálogo.
         if (datos.CategoriaId is not { } categoria || !await db.CategoriasIncidencia.AnyAsync(c => c.Id == categoria, ct))
             errores["categoriaId"] = ["Elige la tipificación final del catálogo."];
+        // 27/10/2026: cómo terminó la atención, del catálogo (base de la tasa de efectividad).
+        if (!Catalogo.Contiene(ResultadosAtencion.Todos, datos.ResultadoAtencion))
+            errores["resultadoAtencion"] = ["Elige cómo terminó la atención."];
         if (string.IsNullOrWhiteSpace(datos.ResultadoPublico))
             errores["resultadoPublico"] = ["Describe el resultado de la atención."];
         else if (datos.ResultadoPublico.Trim().Length > CierreCaso.MaximoResultado)

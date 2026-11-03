@@ -49,7 +49,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding IrAMisDatos}"
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding IrAMisDatos}"
                             SemanticProperties.Description="{Binding TextoDatos, StringFormat='Mis datos. {0}'}" />
                 </Grid>
 
@@ -67,7 +67,7 @@
                             <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                         </Grid>
                     </Border>
-                    <Button BackgroundColor="Transparent" BorderWidth="0" Command="{Binding CambiarPin}" SemanticProperties.Description="Cambiar mi PIN" />
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding CambiarPin}" SemanticProperties.Description="Cambiar mi PIN" />
                 </Grid>
                 <Border Style="{StaticResource Mosaico}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
@@ -102,8 +102,6 @@
                             <Button Grid.Column="2" Text="106&#10;SAMU" Style="{StaticResource BotonSecundario}" Clicked="AlLlamar" CommandParameter="106"
                                     LineBreakMode="WordWrap" FontSize="15" Padding="4" SemanticProperties.Description="Llamar al 106, SAMU" />
                         </Grid>
-                        <Label Text="CAD Móvil es un MVP académico con datos simulados; no es un canal oficial de emergencias."
-                               Style="{StaticResource TextoSecundario}" FontSize="13" />
                     </VerticalStackLayout>
                 </Border>
 

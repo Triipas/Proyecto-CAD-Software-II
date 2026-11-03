@@ -102,6 +102,19 @@ public class VerificacionSosTests(FabricaCad fabrica)
         Assert.Contains("Intento de contacto registrado.", await operador.GetStringAsync(Pagina(casoId)));
     }
 
+    // Consola de incidente (27/10/2026): otro operador con el mismo SOS abierto se entera del intento por el canal de la central.
+    [Fact]
+    public async Task UnIntentoRegistrado_AvisaALaCentral()
+    {
+        var casoId = await SosAsync();
+        var (operador, _) = await PanelAsync();
+        await using var central = await fabrica.OperadorEnCentralAsync();
+
+        await RegistrarAsync(operador, casoId, "SinRespuesta");
+
+        Assert.True(await CentralDePrueba.EsperarAsync(() => central.AvisosCasos.Contains(casoId)), "No llegó el aviso del caso.");
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

@@ -10,6 +10,8 @@ public class CancelacionSosTests
     private static readonly DateTimeOffset Ahora = new(2026, 10, 16, 15, 0, 0, TimeSpan.Zero);
     private static readonly TimeZoneInfo Lima = TimeZoneInfo.CreateCustomTimeZone("Lima", TimeSpan.FromHours(-5), "Lima", "Lima");
     private static readonly Guid Sos = Guid.NewGuid();
+    // 27/10/2026: el motivo se elige de la lista; con «Otro motivo» se escribe (como antes).
+    private static readonly OpcionCatalogo Otro = MotivosCancelacion.Todos.Single(o => o.Codigo == MotivosCancelacion.Otro);
 
     private readonly ApiFalsa api = new();
     private readonly SesionesFalsas sesiones = new() { Sesion = new SesionApp("token-ficticio", "Ciudadano", Ahora.AddHours(8)) };
@@ -45,6 +47,7 @@ public class CancelacionSosTests
         Assert.True(vm.FormularioCancelacion);
         Assert.False(vm.OfrecerCancelacion);
         vm.MotivoCancelacion = "  Fue una falsa alarma.  ";
+        vm.MotivoElegido = Otro;
         await vm.ConfirmarCancelacion.EjecutarAsync();
 
         Assert.Equal([(Sos, "Fue una falsa alarma.")], api.Cancelaciones);
@@ -62,8 +65,10 @@ public class CancelacionSosTests
     [InlineData(EstadosPublicos.EnAtencion, "SOS")]
     [InlineData(EstadosPublicos.Cerrado, "SOS")]
     [InlineData(EstadosPublicos.Cancelado, "SOS")]
-    [InlineData(EstadosPublicos.Recibido, "Reporte")]
-    public async Task CA03_SosAsignadoOPosterior_OUnReporte_NoOfreceCancelar(string estado, string origen)
+    // 26/10/2026: un reporte se retira solo antes de la decisión de la central.
+    [InlineData(EstadosPublicos.Admitido, "Reporte")]
+    [InlineData(EstadosPublicos.Derivado, "Reporte")]
+    public async Task CA03_SosAsignadoOPosterior_OUnReporteDecidido_NoOfreceCancelar(string estado, string origen)
     {
         var vm = await AbiertoAsync(estado, origen);
 
@@ -79,6 +84,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "Ya no lo necesito.";
+        vm.MotivoElegido = Otro;
         api.RespuestaCancelacion = (_, _) => new ResultadoApi<MiCasoDetalle>.Rechazado(409,
             "El SOS ya no está pendiente: la central lo asignó a un sereno y no se puede cancelar.", new Dictionary<string, string[]>());
         api.RespuestaMiCaso = _ => new ResultadoApi<MiCasoDetalle>.Correcto(Caso(EstadosPublicos.EnAtencion));
@@ -100,6 +106,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = motivo;
+        vm.MotivoElegido = Otro;
 
         await vm.ConfirmarCancelacion.EjecutarAsync();
 
@@ -115,6 +122,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "Motivo";
+        vm.MotivoElegido = Otro;
         api.RespuestaCancelacion = (_, _) => new ResultadoApi<MiCasoDetalle>.Rechazado(400, "No se canceló el SOS.",
             new Dictionary<string, string[]> { ["motivo"] = ["El motivo admite hasta 500 caracteres."] });
 
@@ -130,6 +138,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "Motivo";
+        vm.MotivoElegido = Otro;
 
         await vm.ConfirmarCancelacion.EjecutarAsync(); // el doble responde 404
 
@@ -144,6 +153,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "Fue una falsa alarma.";
+        vm.MotivoElegido = Otro;
         api.RespuestaCancelacion = (_, _) => new ResultadoApi<MiCasoDetalle>.SinRespuesta("No hay conexión con el servidor.");
 
         await vm.ConfirmarCancelacion.EjecutarAsync();
@@ -166,6 +176,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "Motivo";
+        vm.MotivoElegido = Otro;
         sesiones.Sesion = new SesionApp("token-ficticio", "Ciudadano", Ahora.AddMinutes(-1));
 
         await vm.ConfirmarCancelacion.EjecutarAsync();
@@ -180,6 +191,7 @@ public class CancelacionSosTests
         var vm = await AbiertoAsync();
         await vm.MostrarCancelacion.EjecutarAsync();
         vm.MotivoCancelacion = "";
+        vm.MotivoElegido = Otro;
         await vm.ConfirmarCancelacion.EjecutarAsync();
 
         await vm.OcultarCancelacion.EjecutarAsync();
@@ -188,5 +200,23 @@ public class CancelacionSosTests
         Assert.True(vm.OfrecerCancelacion);
         Assert.False(vm.HayErrorMotivo);
         Assert.Empty(api.Cancelaciones);
+    }
+
+    [Fact]
+    public async Task SinElegirMotivo_NoSeEnvia_YConUnMotivoDeLaListaNoHaceFaltaEscribirlo()
+    {
+        var vm = await AbiertoAsync();
+        await vm.MostrarCancelacion.EjecutarAsync();
+        await vm.ConfirmarCancelacion.EjecutarAsync();
+        Assert.Equal("Elige el motivo de la cancelación.", vm.ErrorMotivo);
+        Assert.Empty(api.Cancelaciones);
+
+        SolicitudCancelacionSos? enviada = null;
+        api.RespuestaCancelacion = (_, s) => { enviada = s; return new ResultadoApi<MiCasoDetalle>.Correcto(Cancelado("Lo envié por error")); };
+        vm.MotivoElegido = MotivosCancelacion.Todos.Single(o => o.Codigo == MotivosCancelacion.PorError);
+        await vm.ConfirmarCancelacion.EjecutarAsync();
+
+        Assert.Equal(new SolicitudCancelacionSos(null, MotivosCancelacion.PorError), enviada);
+        Assert.Equal("SOS · Cancelado", vm.Titulo);
     }
 }

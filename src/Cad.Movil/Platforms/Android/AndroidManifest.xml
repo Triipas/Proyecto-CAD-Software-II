@@ -19,8 +19,15 @@
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<!-- DP08 ampliada (26/10/2026): «Tomar una foto» del reporte. La galería usa el selector de fotos del sistema, sin permiso
+	     de almacenamiento. -->
+	<uses-permission android:name="android.permission.CAMERA" />
 	<!-- ADR-08: desde la bienvenida, «¿Emergencia ahora?» abre el marcador con 105, 116 o 106 (sin llamar por su cuenta). -->
 	<queries>
+		<!-- DP08 ampliada: la cámara del teléfono para las fotos del reporte. -->
+		<intent>
+			<action android:name="android.media.action.IMAGE_CAPTURE" />
+		</intent>
 		<intent>
 			<action android:name="android.intent.action.DIAL" />
 			<data android:scheme="tel" />

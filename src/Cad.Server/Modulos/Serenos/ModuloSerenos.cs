@@ -76,7 +76,7 @@ public static class ModuloSerenos
         // tipificación o el resultado (CA02); 409 si el estado lo impide (CA03); 404 si el caso no es suyo (CA06).
         sereno.MapPost("/casos/{id:guid}/cierre", async (Guid id, SolicitudCierreCaso solicitud, HttpContext contexto,
                 Casos.Aplicacion.CerrarCaso cerrar, CancellationToken ct) =>
-            await cerrar.EjecutarAsync(id, new Casos.Aplicacion.DatosCierre(solicitud.CategoriaId, solicitud.ResultadoPublico, solicitud.NotasInternas),
+            await cerrar.EjecutarAsync(id, new Casos.Aplicacion.DatosCierre(solicitud.CategoriaId, solicitud.ResultadoAtencion, solicitud.ResultadoPublico, solicitud.NotasInternas),
                     contexto.User.IdUsuario(), Casos.Aplicacion.ActorAvance.Sereno, ct) switch
             {
                 Casos.Aplicacion.ResultadoCierre.Cerrado c => Results.Ok(RespuestaCierre(c.Cierre)),

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Carga el dataset de J. L. Bustamante y Rivero en una base de datos del sistema (README del dataset). Usa las entidades del
+       servidor para que los datos queden como los dejaría la propia aplicación. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Cad.Server\Cad.Server.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="fotos\*.jpg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

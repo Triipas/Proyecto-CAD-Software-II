@@ -28,7 +28,7 @@ public class AtencionReporteTests(FabricaCad fabrica)
         var operador = await fabrica.CrearAsync(Roles.Operador);
         await fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(id, operador.Id, CancellationToken.None));
         Assert.IsType<ResultadoDecision.Registrado>(await fabrica.ConServiciosAsync(s => s.GetRequiredService<DecidirReporte>()
-            .EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Motivo ficticio"), operador.Id, CancellationToken.None)));
+            .EjecutarAsync(id, new DatosDecision(TipoDecisionReporte.Admision, "Motivo ficticio", Prioridad: "Media", Heridos: "No"), operador.Id, CancellationToken.None)));
         var sereno = await fabrica.CrearAsync(Roles.Sereno);
         var serenoApp = await fabrica.CrearClienteAppAsync(sereno);
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
@@ -102,7 +102,7 @@ public class AtencionReporteTests(FabricaCad fabrica)
         var respuesta = await EnviarAsync(operador, id, "Cerrar", new()
         {
             ["Cierre.CategoriaId"] = CategoriaIncidencia.Iniciales[3].Id.ToString(),
-            ["Cierre.ResultadoPublico"] = "Se retiró el obstáculo (ficticio)",
+            ["Cierre.ResultadoAtencion"] = "ResueltoEnElLugar", ["Cierre.ResultadoPublico"] = "Se retiró el obstáculo (ficticio)",
             ["Cierre.NotasInternas"] = "Nota interna ficticia",
         });
 
@@ -124,7 +124,7 @@ public class AtencionReporteTests(FabricaCad fabrica)
         Assert.Equal(HttpStatusCode.OK, (await serenoApp.PostAsync($"/api/sereno/casos/{id}/atencion", null)).StatusCode);
         var (operador, _) = await OperadorAsync();
 
-        var respuesta = await EnviarAsync(operador, id, "Cerrar", new() { ["Cierre.ResultadoPublico"] = "  " });
+        var respuesta = await EnviarAsync(operador, id, "Cerrar", new() { ["Cierre.ResultadoAtencion"] = "ResueltoEnElLugar", ["Cierre.ResultadoPublico"] = "  " });
 
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
         var html = System.Net.WebUtility.HtmlDecode(await respuesta.Content.ReadAsStringAsync());
@@ -148,7 +148,7 @@ public class AtencionReporteTests(FabricaCad fabrica)
             {
                 ["__RequestVerificationToken"] = token,
                 ["Cierre.CategoriaId"] = CategoriaIncidencia.Iniciales[3].Id.ToString(),
-                ["Cierre.ResultadoPublico"] = "Intento no autorizado",
+                ["Cierre.ResultadoAtencion"] = "ResueltoEnElLugar", ["Cierre.ResultadoPublico"] = "Intento no autorizado",
             }));
             Assert.Contains("/panel/acceso-denegado", respuesta.Headers.Location?.OriginalString);
         }

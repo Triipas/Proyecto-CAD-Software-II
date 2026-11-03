@@ -13,9 +13,22 @@
 <div class="pagina__encabezado">
     <div>
         <h1 class="titulo">Mapa de concentración</h1>
-        <p class="texto-secundario">Zonas con más casos en el periodo y el origen elegidos. No incluye casos cancelados ni reportes descartados, ni posiciones de acompañamientos o de serenos.</p>
+        <p class="texto-secundario">Dónde ocurren los SOS y reportes del periodo: cada caso con ubicación suma calor. No incluye casos cancelados ni reportes descartados, ni posiciones de acompañamientos o de serenos.</p>
     </div>
 </div>
+
+@* La diferencia con las zonas de Analítica, dicha antes del mapa: aquí el volumen; allá, el rendimiento. *@
+<aside class="dos-mapas" aria-label="Este mapa y las zonas de Analítica" data-diferencia>
+    <div class="dos-mapas__lado dos-mapas__lado--aqui">
+        <span class="dos-mapas__muestra dos-mapas__muestra--calor" aria-hidden="true"></span>
+        <p><b>Este mapa responde «¿dónde ocurren?»</b> Cuenta cada caso con ubicación, aunque sea uno solo, y lo muestra como calor sobre la ciudad.</p>
+    </div>
+    <div class="dos-mapas__lado">
+        <span class="dos-mapas__muestra dos-mapas__muestra--zonas" aria-hidden="true"></span>
+        <p><b>Analítica responde «¿cómo respondemos ahí?»</b> Tiempos, cobertura y zonas en alza, solo en zonas de unos 550 m con 3 casos o más y comparadas con el periodo anterior.</p>
+    </div>
+    <a class="boton boton--secundario boton--compacto dos-mapas__enlace" href="@Model.EnlaceAnalitica" data-enlace-analitica>Ver este periodo en Analítica</a>
+</aside>
 
 @* HU29-CA01 — selección de periodo (fecha de registro, DP17) y origen. Formulario GET: la selección queda en la dirección. *@
 <form method="get" action="/panel/mapa-concentracion" class="superficie barra-seleccion" aria-labelledby="titulo-seleccion" data-seleccion novalidate>
@@ -88,16 +101,43 @@
             </div>
         }
         <div class="concentracion__mapa">
-            <div id="mapa-concentracion" class="mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+            <div id="mapa-concentracion" class="mapa mapa--infrarrojo" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
                  data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" data-maximo="@m.MaximoPorCelda" role="region"
-                 aria-label="Mapa de concentración de casos"></div>
-            <p class="leyenda-concentracion">
-                @if (Model.Origen != "Reporte") { <span class="leyenda leyenda--sos">SOS: cuadros rojos</span> }
-                @if (Model.Origen != "Sos") { <span class="leyenda leyenda--reporte">Reportes: círculos violetas</span> }
-                <span>Cada marca agrupa una zona de unos 550 m; cuanto más grande e intensa, más casos.</span>
-            </p>
+                 aria-label="Mapa de calor de casos: más claro y amarillo donde se concentran más" aria-describedby="zonas-destacadas"></div>
+            @if (m.Celdas.Count > 0)
+            {
+                @* Capas: el calor (dónde se concentra) y las cifras por zona (cuántos hay). Se pueden apagar por separado. *@
+                <fieldset class="capas-concentracion" data-capas>
+                    <legend class="capas-concentracion__titulo">Capas</legend>
+                    <label class="capas-concentracion__opcion"><input type="checkbox" checked data-capa="calor" /> Calor</label>
+                    <label class="capas-concentracion__opcion"><input type="checkbox" checked data-capa="cifras" /> Cifras por zona</label>
+                </fieldset>
+            }
+            <div class="leyenda-concentracion">
+                <div class="leyenda-concentracion__calor">
+                    <span>Pocos casos</span>
+                    <span class="leyenda-concentracion__rampa" aria-hidden="true"></span>
+                    <span>Muchos casos</span>
+                </div>
+                <p class="leyenda-concentracion__cifras">
+                    @if (Model.Origen != "Reporte") { <span class="leyenda leyenda--sos">SOS: cifra en cuadro</span> }
+                    @if (Model.Origen != "Sos") { <span class="leyenda leyenda--reporte">Reportes: cifra en círculo</span> }
+                    <span>Las cifras marcan las zonas de unos 550 m con 3 casos o más; el resto lo muestra el calor.</span>
+                </p>
+            </div>
         </div>
+        <table class="visualmente-oculto" id="zonas-destacadas">
+            <caption>Zonas con más casos en la selección</caption>
+            <thead><tr><th scope="col">Zona</th><th scope="col">Origen</th><th scope="col">Casos</th></tr></thead>
+            <tbody>
+                @foreach (var (zona, origen, casos) in Model.ZonasDestacadas)
+                {
+                    <tr><td>@zona</td><td>@origen</td><td>@casos</td></tr>
+                }
+            </tbody>
+        </table>
         <script type="application/json" id="celdas-concentracion">@Html.Raw(Model.CeldasJson)</script>
+        <script type="application/json" id="calor-concentracion">@Html.Raw(Model.CalorJson)</script>
         <noscript><p class="texto-secundario">El mapa necesita JavaScript.</p></noscript>
     </section>
 }

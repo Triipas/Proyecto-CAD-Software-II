@@ -75,15 +75,19 @@ public static class MauiProgram
 #if ANDROID
         builder.Services.AddSingleton<IServicioSegundoPlano, Platforms.Android.SegundoPlanoAndroid>(); // DP13
         builder.Services.AddSingleton<IDictado, Platforms.Android.DictadoAndroid>();
+        builder.Services.AddSingleton<IFotosReporte, Platforms.Android.FotosAndroid>(); // DP08 ampliada
 #else
         builder.Services.AddSingleton<IServicioSegundoPlano, SegundoPlanoNoDisponible>();
         builder.Services.AddSingleton<IDictado, DictadoNoDisponible>();
+        builder.Services.AddSingleton<IFotosReporte, FotosNoDisponibles>();
 #endif
+        builder.Services.AddSingleton<OfertaEvaluacion>(); // HU32: la evaluación se ofrece sola, una vez, al cerrarse el caso
         builder.Services.AddSingleton<ServicioAcompanamiento>(); // la sesión y la transmisión sobreviven al cambio de pantalla
         builder.Services.AddTransient(s => new InicioCiudadanoVistaModelo(
             s.GetRequiredService<EmisorSos>(), s.GetRequiredService<PreparacionUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
-            s.GetRequiredService<ServicioBandeja>(), s.GetRequiredService<ServicioAcompanamiento>(), s.GetRequiredService<IApiCad>()));
+            s.GetRequiredService<ServicioBandeja>(), s.GetRequiredService<ServicioAcompanamiento>(), s.GetRequiredService<IApiCad>(),
+            s.GetRequiredService<OfertaEvaluacion>()));
         builder.Services.AddTransient(s => new AcompanamientoVistaModelo(s.GetRequiredService<ServicioAcompanamiento>(),
             s.GetRequiredService<IServicioUbicacion>(), s.GetRequiredService<INavegacion>(), AppInfo.Current.ShowSettingsUI,
             s.GetRequiredService<TimeProvider>()));
@@ -91,7 +95,7 @@ public static class MauiProgram
         builder.Services.AddTransient(s => new ReporteVistaModelo(
             s.GetRequiredService<IApiCad>(), s.GetRequiredService<RegistradorReporte>(), s.GetRequiredService<IServicioUbicacion>(),
             s.GetRequiredService<IAlmacenSesion>(), s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>(),
-            dictado: s.GetRequiredService<IDictado>()));
+            dictado: s.GetRequiredService<IDictado>(), fotos: s.GetRequiredService<IFotosReporte>()));
         builder.Services.AddSingleton<ServicioTurnoSereno>();
         builder.Services.AddSingleton<ICanalSereno, CanalSerenoSignalR>();
 #if ANDROID
@@ -129,7 +133,7 @@ public static class MauiProgram
         builder.Services.AddTransient(s => new MisCasosVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
             s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
         builder.Services.AddTransient(s => new MiCasoVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
-            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>()));
+            s.GetRequiredService<INavegacion>(), s.GetRequiredService<TimeProvider>(), oferta: s.GetRequiredService<OfertaEvaluacion>()));
         builder.Services.AddTransient<MisCasosPagina>();
         builder.Services.AddSingleton<ServicioBandeja>();
         builder.Services.AddTransient(s => new NotificacionesVistaModelo(s.GetRequiredService<IApiCad>(), s.GetRequiredService<IAlmacenSesion>(),
