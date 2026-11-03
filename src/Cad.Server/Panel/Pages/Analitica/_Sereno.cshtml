@@ -1,0 +1,265 @@
+@model (IndexModel M, IndexModel.VistaSerenos V)
+@using System.Text.Json
+@{
+    var (m, v) = Model;
+    var e = v.Actual;
+    var s = v.Elegido;
+    var antes = v.ElegidoAntes;
+    var o = m.Opciones;
+    var minimo = o.MinimoParaPercentiles;
+    string Pct(double x) => x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+}
+<a class="volver-a" href="@m.EnlaceSereno(null)" data-volver>
+    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+    Todos los serenos
+</a>
+@if (s is null)
+{
+    <partial name="_Vacio" model="@(new Vacio($"Este sereno no estuvo en turno ni tuvo casos en {m.TextoPeriodo}.",
+        "Su rendimiento sale de sus turnos, sus casos y sus posiciones del periodo. Prueba con un periodo más largo o vuelve a la lista.",
+        [("Volver a la lista", m.EnlaceSereno(null), true), .. (m.Periodo == "30" ? Array.Empty<(string, string, bool)>() : [("Ver los últimos 30 días", m.Enlace(periodo: "30"), false)])]))" />
+}
+else
+{
+    var senales = Rendimiento.Senales(s, e, o);
+    var horasZonas = s.Zonas.Sum(z => z.Horas);
+    var zonas = s.Zonas.Where(z => z.Horas > 0 || z.Casos > 0).ToList();
+    var zonasJson = JsonSerializer.Serialize(zonas.Select(z => new
+    {
+        sur = z.Zona.Sur, oeste = z.Zona.Oeste, norte = z.Zona.Norte, este = z.Zona.Este, nombre = m.Zonas.Nombre(z.Zona.Sur, z.Zona.Oeste),
+        valor = horasZonas <= 0 ? 0 : Math.Round(100 * z.Horas / horasZonas), horas = Formato.HorasDeTrabajo(z.Horas), casos = z.Casos,
+    }));
+    var maxHora = Math.Max(1, s.AtendidosPorHora.Max());
+    var pico = s.CasosAtendidos == 0 ? -1 : Array.IndexOf(s.AtendidosPorHora.ToArray(), s.AtendidosPorHora.Max());
+    string[] clases = ["barra100__a", "barra100__b", "barra100__c", "barra100__d", "barra100__e"];
+    var resultados = s.Resultados.Select((r, i) => (r.Texto, r.Veces, clases[i % clases.Length])).Where(r => r.Veces > 0).ToList();
+    var maxNota = Math.Max(1, s.Notas.Max());
+
+    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-sereno" data-respuesta="sereno" data-senales="@senales.Count">
+        <div class="sereno-a__cabecera">
+            <span class="sereno-a__inicial" aria-hidden="true">@Rendimiento.Iniciales(s.Nombre)</span>
+            <div class="respuesta__cabecera">
+                @if (s.LlegadaP50 is { } llegada)
+                {
+                    <h2 class="respuesta__titular" id="respuesta-sereno">@s.Nombre llega en una mediana de <em>@Formato.Minutos(llegada)</em>@(e.LlegadaP50 is { } eq ? $" (el equipo, {Formato.Minutos(eq)})" : "")@if (s.Calificacion is { } nota) {<text> y su atención se califica con <em>@Formato.Decimal(nota) de 5</em></text>}.</h2>
+                }
+                else
+                {
+                    <h2 class="respuesta__titular" id="respuesta-sereno">@s.Nombre <em>no inició ninguna atención</em> en @m.TextoPeriodo@(s.HorasOperativas > 0 ? $"; estuvo {Formato.HorasDeTrabajo(s.HorasOperativas)} en turno" : "").</h2>
+                }
+                <p class="respuesta__lectura">Comparado con el equipo en @m.TextoPeriodo@(s.Activo ? "" : " · su cuenta está desactivada").@(s.Llegadas.Count is > 0 and var llegadas && llegadas < minimo ? $" Con {Formato.Plural(llegadas, "caso atendido", "casos atendidos")} (mín. {minimo}) las cifras son solo orientativas: no se marca ninguna señal." : "")</p>
+            </div>
+        </div>
+        @if (senales.Count == 0)
+        {
+            <p class="estado-a estado-a--bien sereno-a__senales" data-sin-senales>✓ Nada fuera de lo normal frente al equipo</p>
+        }
+        else
+        {
+            <ul class="senales-sereno-a sereno-a__senales">@foreach (var x in senales) {<li data-senal="@x.Clave">▲ @x.Texto</li>}</ul>
+        }
+        <dl class="equipo-a" data-cifras-sereno>
+            <div><dt>Horas en turno</dt><dd>@Formato.HorasDeTrabajo(s.HorasOperativas)</dd><span class="tarjeta-a__nota">@(antes is null ? "sin turnos antes" : $"antes: {Formato.HorasDeTrabajo(antes.HorasOperativas)}")</span></div>
+            <div><dt>Tiempo con caso</dt><dd>@(s.PorcentajeOcupado is { } p ? Formato.Porcentaje(p, 0) : "—")</dd><span class="tarjeta-a__nota">equipo: @(e.PorcentajeOcupado is { } pe ? Formato.Porcentaje(pe, 0) : "—")</span></div>
+            <div><dt>Casos atendidos</dt><dd>@s.CasosAtendidos</dd><span class="tarjeta-a__nota">de @s.CasosAsignados asignados · @s.CasosCerrados cerrados</span></div>
+            <div><dt>Llegada</dt><dd>@Formato.Minutos(s.LlegadaP50)</dd><span class="tarjeta-a__nota">@(antes?.LlegadaP50 is { } la ? $"antes: {Formato.Minutos(la)}" : $"equipo: {Formato.Minutos(e.LlegadaP50)}")</span></div>
+            <div><dt>Calificación</dt><dd>@(s.Calificacion is { } c ? Formato.Decimal(c) : "—")<small> de 5</small></dd><span class="tarjeta-a__nota">@Formato.Plural(s.Evaluaciones, "evaluación", "evaluaciones")@(antes?.Calificacion is { } ca ? $" · antes: {Formato.Decimal(ca)}" : "")</span></div>
+        </dl>
+    </section>
+
+    <section class="tarjeta-a" aria-labelledby="titulo-llegada">
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-llegada">¿Cuánto tarda en llegar?</h3><span class="tarjeta-a__nota">de la asignación al inicio de la atención</span></div>
+        @if (s.Llegadas.Count == 0)
+        {
+            <p class="tarjeta-a__vacia">No inició ninguna atención en el periodo: no hay llegadas que medir.</p>
+        }
+        else
+        {
+            // Con medianas, la escala llega un poco más allá del p90 (un caso muy lento no aplasta la regla); con pocos casos, hasta el
+            // más lento, que se dibuja.
+            var maximo = s.Llegadas.Count >= minimo
+                ? Math.Max(10, Math.Max(s.LlegadaP90!.Value, e.LlegadaP50 ?? 0) * 1.2)
+                : Math.Max(10, Math.Max(s.Llegadas.Max(), e.LlegadaP50 ?? 0) * 1.15);
+            // Solo la mediana del equipo: la suya del periodo anterior va en las cifras de arriba (dos marcas grises cercanas se pisan).
+            var referencias = new List<(double, string)>();
+            if (e.LlegadaP50 is { } eq) referencias.Add((eq, $"equipo {Formato.Minutos(eq)}"));
+            var tramos = new List<(string, double, string)>();
+            if (s.Llegadas.Count >= minimo && s.ReaccionP50 is { } reaccion && s.LlegadaP50 is { } l50 && l50 > reaccion)
+            {
+                tramos.Add(("Sale", reaccion, "var(--rampa-4)"));
+                tramos.Add(("Llega al lugar", l50 - reaccion, "var(--rampa-6)"));
+            }
+            if (s.Llegadas.Count < minimo)
+            {
+                @(new Regla
+                {
+                    Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
+                    Puntos = s.Llegadas.Select(x => (x, (x > maximo ? "→ " : "") + Formato.Minutos(x), false)).ToList(),
+                    Anteriores = referencias,
+                }.Dibujar($"Cada llegada de {s.Nombre}: {string.Join(", ", s.Llegadas.Select(x => Formato.Minutos(x)))}; mediana del equipo {Formato.Minutos(e.LlegadaP50)}"))
+            }
+            else
+            {
+                @(new Regla
+                {
+                    Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
+                    Tramos = tramos,
+                    Marcas = [(s.LlegadaP50!.Value, true, Formato.Minutos(s.LlegadaP50), "la mitad llega"), (s.LlegadaP90!.Value, false, Formato.Minutos(s.LlegadaP90), "9 de 10")],
+                    Anteriores = referencias,
+                }.Dibujar($"Llegada de {s.Nombre}: la mitad de sus casos en {Formato.Minutos(s.LlegadaP50)} y 9 de cada 10 en {Formato.Minutos(s.LlegadaP90)} o menos; mediana del equipo {Formato.Minutos(e.LlegadaP50)}"))
+            }
+            <ul class="leyenda-a">
+                @if (s.Llegadas.Count >= minimo)
+                {
+                    <li><i class="leyenda-a__lleno"></i>Hasta aquí llega la mitad de sus casos (mediana)</li>
+                    <li><i class="leyenda-a__hueco"></i>Hasta aquí, 9 de cada 10 (p90)</li>
+                    @if (tramos.Count > 0) {<li><i style="background:var(--rampa-4)"></i>Sale (hasta «En camino») · <b>@Formato.Minutos(s.ReaccionP50)</b></li><li><i style="background:var(--rampa-6)"></i>Trayecto hasta el lugar · <b>@Formato.Minutos(s.LlegadaP50 - s.ReaccionP50)</b></li>}
+                }
+                else
+                {
+                    <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Cada caso atendido (menos de @minimo: sin medianas)</li>
+                }
+                <li><i class="leyenda-a__anterior"></i>Mediana del equipo</li>
+            </ul>
+        }
+    </section>
+
+    <div class="sereno-a__zonas">
+        <section class="tarjeta-a" aria-labelledby="titulo-zonas-sereno">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas-sereno">¿Por dónde patrulla?</h3><span class="tarjeta-a__nota">horas por zona, según sus posiciones en turno</span></div>
+            @if (zonas.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">No envió posiciones ni atendió casos con ubicación en el periodo.</p>
+            }
+            else
+            {
+                <div class="mapa-a" id="mapa-zonas" role="region" aria-label="Mapa: horas de @s.Nombre en cada zona" tabindex="0"
+                     data-teselas="@m.UrlTeselas" data-escala="frecuencia"><script type="application/json" data-zonas>@Html.Raw(zonasJson)</script></div>
+                <div class="leyenda-mapa-a">
+                    <div class="rampa-a" aria-hidden="true"><span>Menos tiempo</span><i></i><span>Más tiempo</span></div>
+                    <span class="leyenda-mapa-a__nota">El número es la parte de su tiempo en turno que pasó en la zona.</span>
+                </div>
+            }
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-zonas-tabla">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas-tabla">Zonas donde más está</h3><span class="tarjeta-a__nota">y los casos que atendió en cada una</span></div>
+            @if (zonas.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">Sin zonas en el periodo.</p>
+            }
+            else
+            {
+                <table class="tabla-a" data-zonas-sereno>
+                    <thead><tr><th scope="col">Zona</th><th scope="col">Parte de su turno</th><th scope="col" class="tabla-a__num">Horas</th><th scope="col" class="tabla-a__num">Casos</th></tr></thead>
+                    <tbody>
+                        @foreach (var z in zonas.Take(8))
+                        {
+                            var parte = horasZonas <= 0 ? 0 : 100 * z.Horas / horasZonas;
+                            <tr>
+                                <th scope="row">@m.Zonas.Nombre(z.Zona.Sur, z.Zona.Oeste)</th>
+                                <td><span class="medidor-a" aria-hidden="true"><i style="width:@Pct(parte)%"></i></span>@Formato.Porcentaje(parte, 0)</td>
+                                <td class="tabla-a__num">@Formato.HorasDeTrabajo(z.Horas)</td>
+                                <td class="tabla-a__num">@z.Casos</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (zonas.Count > 8)
+                {
+                    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Y @Formato.Plural(zonas.Count - 8, "zona más", "zonas más") con menos tiempo.</p>
+                }
+            }
+        </section>
+    </div>
+
+    <div class="rejilla-a rejilla-a--tres">
+        <section class="tarjeta-a" aria-labelledby="titulo-notas-sereno">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-notas-sereno">¿Qué opina el ciudadano?</h3><span class="tarjeta-a__nota">de los casos que cerró</span></div>
+            @if (s.Evaluaciones == 0)
+            {
+                <p class="tarjeta-a__vacia">Nadie evaluó sus casos en el periodo.@(s.CasosCerrados > 0 ? $" Cerró {Formato.Plural(s.CasosCerrados, "caso", "casos")}; evaluar es voluntario." : "")</p>
+            }
+            else
+            {
+                <div class="notas-a notas-a--compacta" aria-hidden="true">
+                    @for (var nota = 1; nota <= 5; nota++)
+                    {
+                        var n = s.Notas[nota - 1];
+                        <div class="notas-a__columna">
+                            <span class="notas-a__cifra">@n</span>
+                            <span class="notas-a__barra @(nota <= ConsultarEvaluaciones.UltimaBaja ? "notas-a__barra--baja" : "notas-a__barra--alta")" style="height:@Pct(Math.Max(n * 100.0 / maxNota, 3))%"></span>
+                            <span class="notas-a__estrellas">@(new string('★', nota))</span>
+                        </div>
+                    }
+                </div>
+                <table class="visualmente-oculto">
+                    <caption>Evaluaciones de @s.Nombre por puntuación</caption>
+                    <thead><tr><th>Puntuación</th><th>Evaluaciones</th></tr></thead>
+                    <tbody>@for (var nota = 1; nota <= 5; nota++) { <tr><td>@nota de 5</td><td>@s.Notas[nota - 1]</td></tr> }</tbody>
+                </table>
+                <ul class="leyenda-a">
+                    <li><i class="leyenda-a__baja"></i>Notas bajas (1 a 3)</li>
+                    <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Notas altas (4 y 5)</li>
+                </ul>
+                @if (s.Motivos.Count > 0)
+                {
+                    <p class="tramos-a__titulo">Lo que más marcan</p>
+                    <ul class="motivos-sereno-a">
+                        @foreach (var x in s.Motivos.Take(4))
+                        {
+                            var negativo = Cad.Contratos.Casos.MotivosEvaluacion.Negativos.Any(opcion => opcion.Codigo == x.Codigo);
+                            <li class="@(negativo ? "motivos-sereno-a__negativo" : "")">@(negativo ? "▲ " : "✓ ")@x.Texto <b>@x.Veces</b></li>
+                        }
+                    </ul>
+                }
+            }
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-resultados-sereno">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-resultados-sereno">¿Cómo terminan sus casos?</h3><span class="tarjeta-a__nota">@Formato.Plural(s.CasosCerrados, "cerrado", "cerrados")</span></div>
+            @if (resultados.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">No cerró casos en el periodo.</p>
+            }
+            else
+            {
+                <partial name="_Filas100" model="@(new List<(string, IReadOnlyList<(string, int, string)>)> { ("", resultados) } as IReadOnlyList<(string, IReadOnlyList<(string, int, string)>)>, resultados.Sum(r => r.Veces))" />
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">El resultado lo registra el sereno al cerrar. Muchos «no se encontró» pueden ser de llegar tarde o de reportes poco precisos: compáralo con su llegada.</p>
+            }
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-fiabilidad">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-fiabilidad">¿Se le quitan casos?</h3><span class="tarjeta-a__nota">y dónde inicia la atención</span></div>
+            <dl class="cifras-a" data-fiabilidad>
+                <div><dt>Casos que la central le quitó</dt><dd>@(senales.Any(x => x.Clave == "retiros") ? "▲ " : "")@s.Retirados<small> de @s.CasosAsignados</small></dd></div>
+                <div><dt>… porque no respondía</dt><dd>@s.RetiradosPorNoResponder</dd></div>
+                <div><dt>Inicios lejos del caso</dt><dd>@(senales.Any(x => x.Clave == "rango") ? "▲ " : "")@(s.PorcentajeFueraDeRango is { } f ? Formato.Porcentaje(f, 0) : "—")<small> @(s.IniciosConPunto > 0 ? $"{s.IniciosFueraDeRango} de {s.IniciosConPunto}" : "")</small></dd></div>
+                <div><dt>Distancia al iniciar (mediana)</dt><dd>@(s.DistanciaP50Metros is { } d ? $"{Formato.Decimal(d, 0)} m" : "—")</dd></div>
+                <div><dt>Inicios registrados por la central</dt><dd>@s.IniciosPorCentral<small> @(s.PorcentajePorCentral is { } pc ? Formato.Porcentaje(pc, 0) : "")</small></dd></div>
+            </dl>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">La central registra el inicio por él cuando no tiene señal o batería. Si se repite, conviene revisar su equipo antes que su desempeño.</p>
+        </section>
+    </div>
+
+    <section class="tarjeta-a" aria-labelledby="titulo-horas-sereno">
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-horas-sereno">¿A qué hora atiende?</h3><span class="tarjeta-a__nota">casos que inició por hora del día</span></div>
+        @if (s.CasosAtendidos == 0)
+        {
+            <p class="tarjeta-a__vacia">Sin atenciones en el periodo.</p>
+        }
+        else
+        {
+            <p class="horas-a__conclusion">Su hora con más atenciones es de <b>@pico a @(pico + 1) h</b> (@Formato.Plural(s.AtendidosPorHora[pico], "caso", "casos")).</p>
+            <div class="horas-a horas-a--una" aria-hidden="true">
+                <span class="horas-a__rotulo">Casos atendidos<small>hasta @maxHora por hora</small></span>
+                <div class="horas-a__barras">@for (var h = 0; h < 24; h++) { <span class="@(h == pico ? "horas-a__casos horas-a__casos--franja" : "horas-a__casos")" style="height:@Pct(Math.Max(s.AtendidosPorHora[h] * 100.0 / maxHora, s.AtendidosPorHora[h] > 0 ? 4 : 2))%" title="@h h: @s.AtendidosPorHora[h] casos"></span> }</div>
+                <span></span><div class="horas-a__eje"><span>0 h</span><span>6</span><span>12</span><span>18</span><span>23 h</span></div>
+            </div>
+            <table class="visualmente-oculto">
+                <caption>Casos atendidos por @s.Nombre por hora del día</caption>
+                <thead><tr><th>Hora</th><th>Casos</th></tr></thead>
+                <tbody>@for (var h = 0; h < 24; h++) { <tr><td>@h h</td><td>@s.AtendidosPorHora[h]</td></tr> }</tbody>
+            </table>
+        }
+    </section>
+
+    <partial name="_ComoSeMide" model="m" />
+}

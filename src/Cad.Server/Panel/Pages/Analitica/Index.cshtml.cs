@@ -21,6 +21,8 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     [BindProperty(SupportsGet = true)] public string? Desde { get; set; }
     [BindProperty(SupportsGet = true)] public string? Hasta { get; set; }
     [BindProperty(SupportsGet = true)] public string? Prioridad { get; set; }
+    // «¿Cómo rinde cada sereno?»: el sereno elegido; sin él, la lista de todos.
+    [BindProperty(SupportsGet = true)] public Guid? Sereno { get; set; }
 
     public Preguntas.Definicion Actual { get; private set; } = Preguntas.Todas[1];
     public PeriodoAnalitica Rango { get; private set; } = null!;
@@ -69,6 +71,18 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
             desde = (periodo ?? Periodo) == "rango" ? Desde : null,
             hasta = (periodo ?? Periodo) == "rango" ? Hasta : null,
             prioridad = (pregunta ?? Actual.Clave) == "tiempo" ? Prioridad : null,
+            sereno = (pregunta ?? Actual.Clave) == "serenos" ? Sereno : null,
+        })!;
+
+    // Un sereno (o, sin él, la lista de todos) en el mismo periodo.
+    public string EnlaceSereno(Guid? sereno) =>
+        Url.Page("/Analitica/Index", new
+        {
+            pregunta = "serenos",
+            periodo = Periodo,
+            desde = Periodo == "rango" ? Desde : null,
+            hasta = Periodo == "rango" ? Hasta : null,
+            sereno,
         })!;
 
     public string EnlaceInforme() => Url.Page("/Analitica/Index", "Informe", new { periodo = Periodo, desde = Desde, hasta = Hasta })!;
@@ -141,6 +155,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
                 "falsos" => await FalsosAsync(ct),
                 "cobertura" => await CoberturaAsync(ct),
                 "reasigna" => await ReasignaAsync(ct),
+                "serenos" => await SerenosAsync(ct),
                 "repite" => await RepiteAsync(ct),
                 "ciudadano" => await CiudadanoAsync(ct),
                 _ => await SistemaAsync(ct),
@@ -205,6 +220,19 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     private async Task<VistaReasigna> ReasignaAsync(CancellationToken ct) => new(
         await cache.ObtenerAsync(Clave("reasigna", Rango), () => S<ConsultarReasignaciones>().EjecutarAsync(Rango, ct)),
         await cache.ObtenerAsync(Clave("reasigna", Anterior), () => S<ConsultarReasignaciones>().EjecutarAsync(Anterior, ct)));
+
+    // Elegido: el sereno pedido, con su periodo anterior (nulo si ese periodo no tuvo turnos ni casos). Pedido sin Elegido: el
+    // sereno no estuvo en el periodo.
+    public sealed record VistaSerenos(RendimientoEquipo Actual, RendimientoEquipo Anterior, RendimientoSereno? Elegido, RendimientoSereno? ElegidoAntes,
+        Guid? Pedido);
+
+    private async Task<VistaSerenos> SerenosAsync(CancellationToken ct)
+    {
+        var actual = await cache.ObtenerAsync(Clave("serenos", Rango), () => S<ConsultarRendimientoSerenos>().EjecutarAsync(Rango, ct));
+        var anterior = await cache.ObtenerAsync(Clave("serenos", Anterior), () => S<ConsultarRendimientoSerenos>().EjecutarAsync(Anterior, ct));
+        return new VistaSerenos(actual, anterior,
+            actual.Serenos.FirstOrDefault(s => s.SerenoId == Sereno), anterior.Serenos.FirstOrDefault(s => s.SerenoId == Sereno), Sereno);
+    }
 
     public sealed record VistaRepite(IReadOnlyList<PuntoCritico> Puntos, IReadOnlyList<ZonaEnAlza> Alzas, DateTimeOffset FinSemana);
 
@@ -273,6 +301,14 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
                 : p > Opciones.ReferenciaReasignadosPorcentaje ? new Resumen($"▲ {Formato.Porcentaje(p, 0)} reasignados", "aviso")
                 : new Resumen($"{Formato.Porcentaje(p, 0)} reasignados");
         });
+        // Sin nombres en la columna (se ve desde todas las preguntas), y sin calcularla desde otra pregunta: lee las posiciones de
+        // todos los serenos. Solo si ya está en la caché, como la cobertura.
+        Resumenes["serenos"] = cache.SiExiste<RendimientoEquipo>(Clave("serenos", Rango)) is { } equipo
+            ? equipo.Serenos.Count == 0 ? new Resumen("Sin serenos en el periodo")
+                : equipo.Serenos.Count(s => Rendimiento.Senales(s, equipo, Opciones).Count > 0) is var mirar and > 0
+                    ? new Resumen($"▲ {mirar} {(mirar == 1 ? "sereno" : "serenos")} para mirar", "aviso")
+                    : new Resumen("✓ Ninguno fuera de lo normal", "bien")
+            : new Resumen("Llegada, notas y zonas");
         await Intentar("repite", async () =>
         {
             var puntos = (await cache.ObtenerAsync(Clave("puntos", Rango), () => S<ConsultarPuntosCriticos>().EjecutarAsync(Rango, ct))).Count;

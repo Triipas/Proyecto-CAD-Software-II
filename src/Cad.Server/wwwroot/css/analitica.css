@@ -2185,3 +2185,341 @@ a.fila-a__cifra {
   font-variant-numeric: tabular-nums;
   color: var(--color-marino);
 }
+
+.cifras-a dd small {
+  margin-left: var(--espacio-1);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+/* ── ¿Cómo rinde cada sereno? (03/11/2026) ─────────────────────────────────────────────────────────────── */
+/* Las cifras del equipo (o del sereno) bajo la respuesta: cifras sueltas, con cifras proporcionales (no van en columna). */
+.equipo-a {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--espacio-3);
+  margin: var(--espacio-4) 0 0;
+  padding-top: var(--espacio-4);
+  border-top: 1px solid var(--color-borde);
+}
+
+.equipo-a > div {
+  display: grid;
+  align-content: start;
+  gap: 0.125rem;
+}
+
+.equipo-a dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.equipo-a dd {
+  margin: 0;
+  font-size: var(--texto-xl);
+  font-weight: var(--peso-fuerte);
+  font-variant-numeric: normal;
+  line-height: 1.2;
+  color: var(--color-marino);
+}
+
+.equipo-a dd small {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+/* La tabla de serenos se desplaza dentro de su tarjeta en pantallas angostas; la página no. */
+.tabla-a__desplazable {
+  overflow-x: auto;
+  margin-inline: calc(-1 * var(--espacio-2));
+  padding-inline: var(--espacio-2);
+}
+
+.tabla-a--serenos {
+  min-width: 52rem;
+}
+
+.tabla-a--serenos td,
+.tabla-a--serenos tbody th {
+  vertical-align: middle;
+}
+
+/* Las cifras no se parten («16 min» en una línea); el nombre y las señales sí pueden. */
+.tabla-a--serenos td.tabla-a__num,
+.tabla-a--serenos td:nth-child(5),
+.tabla-a--serenos td:nth-child(6) {
+  white-space: nowrap;
+}
+
+.comparar-a__celda {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.tabla-a--serenos tbody tr:hover {
+  background: var(--color-superficie-hundida);
+}
+
+.tabla-a__ayuda {
+  display: block;
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-terciario);
+}
+
+.sereno-fila-a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 2.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.sereno-fila-a:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+  border-radius: var(--radio-control);
+}
+
+.sereno-fila-a__inicial,
+.sereno-a__inicial {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--rampa-1);
+  color: var(--rampa-7);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+}
+
+.sereno-fila-a__nombre {
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--duracion-rapida, 150ms) ease;
+}
+
+.sereno-fila-a:hover .sereno-fila-a__nombre {
+  text-decoration-color: currentColor;
+}
+
+.sereno-fila-a__turno {
+  display: block;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-terciario);
+}
+
+/* Llegada frente al equipo: una pista con la mediana del sereno (punto) y la del equipo (raya). Un solo tono; la alerta lleva ▲. */
+.comparar-a {
+  position: relative;
+  display: inline-block;
+  width: 6.5rem;
+  height: 1rem;
+  margin-right: var(--espacio-2);
+  vertical-align: middle;
+}
+
+.comparar-a::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 1px;
+  background: var(--color-borde);
+}
+
+.comparar-a__equipo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-texto-secundario);
+}
+
+.comparar-a__valor {
+  position: absolute;
+  top: 50%;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin: -0.3125rem 0 0 -0.3125rem;
+  border-radius: 50%;
+  background: var(--color-primario);
+  box-shadow: 0 0 0 2px var(--color-superficie);
+}
+
+.comparar-a__valor--alerta { background: var(--color-advertencia); }
+.comparar-a__valor--pocos { background: var(--color-superficie); border: 2px solid var(--color-primario); }
+.comparar-a__valor--pocos.comparar-a__valor--alerta { border-color: var(--color-advertencia); }
+
+.comparar-a__texto small { color: var(--color-texto-terciario); }
+
+.leyenda-a__equipo { width: 2px !important; height: 0.875rem !important; border-radius: 0 !important; background: var(--color-texto-secundario); }
+
+.estado-a {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+}
+
+.estado-a--bien { color: var(--color-exito); }
+
+.senales-sereno-a {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-advertencia);
+}
+
+/* El detalle de un sereno */
+.volver-a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  align-self: start;
+  min-height: 2.75rem;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  text-decoration: none;
+}
+
+.volver-a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.volver-a:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+  border-radius: var(--radio-control);
+}
+
+.sereno-a__cabecera {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--espacio-4);
+  align-items: start;
+}
+
+.sereno-a__inicial {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--texto-md);
+}
+
+.sereno-a__senales {
+  margin-top: var(--espacio-3);
+}
+
+.sereno-a__zonas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--espacio-4);
+  align-items: start;
+}
+
+.sereno-a__zonas .mapa-a {
+  height: 24rem;
+  margin-top: var(--espacio-3);
+}
+
+.notas-a--compacta {
+  height: 7.5rem;
+  margin-top: var(--espacio-3);
+}
+
+.motivos-sereno-a {
+  display: grid;
+  gap: var(--espacio-1);
+  margin: var(--espacio-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--texto-sm);
+}
+
+.motivos-sereno-a b { margin-left: var(--espacio-1); }
+.motivos-sereno-a__negativo { color: var(--tono-bajo); }
+
+.horas-a--una .horas-a__barras {
+  height: 6rem;
+}
+
+/* Cómo se mide: plegado por omisión, para quien quiere saber de dónde sale una cifra. */
+.como-se-mide-a summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--espacio-2);
+  min-height: 2.75rem;
+  align-content: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.como-se-mide-a summary::-webkit-details-marker { display: none; }
+
+.como-se-mide-a summary::before {
+  content: "";
+  align-self: center;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--color-texto-secundario);
+  border-bottom: 2px solid var(--color-texto-secundario);
+  transform: rotate(-45deg);
+  transition: transform var(--duracion-rapida, 150ms) ease;
+}
+
+.como-se-mide-a[open] summary::before { transform: rotate(45deg); }
+
+.como-se-mide-a summary:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+  border-radius: var(--radio-control);
+}
+
+.como-se-mide-a__lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-4) var(--espacio-6);
+  margin: var(--espacio-3) 0 0;
+}
+
+.como-se-mide-a__lista dt {
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}
+
+.como-se-mide-a__lista dd {
+  margin: var(--espacio-1) 0 0;
+  font-size: var(--texto-sm);
+  line-height: 1.5;
+  color: var(--color-texto-secundario);
+}
+
+.como-se-mide-a__regla {
+  display: block;
+  margin-top: var(--espacio-1);
+  color: var(--color-advertencia);
+}
+
+@media (max-width: 68rem) {
+  .sereno-a__zonas,
+  .como-se-mide-a__lista {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sereno-fila-a__nombre,
+  .como-se-mide-a summary::before {
+    transition: none;
+  }
+}

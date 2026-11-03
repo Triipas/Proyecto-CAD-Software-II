@@ -32,7 +32,7 @@
 
     // Una zona: celda separada de sus vecinas, en un tono de la rampa (más oscuro = más preocupante) y una etiqueta con su nombre y su
     // valor; el detalle completo va en el globo al pasar el cursor.
-    function zona(z, proporcion, texto, { alerta = false, valor = "" } = {}) {
+    function zona(z, proporcion, texto, { alerta = false, valor = "", etiqueta = true } = {}) {
       const color = rampa[Math.max(0, Math.min(rampa.length - 1, Math.round(proporcion * (rampa.length - 1))))];
       const hueco = 0.07; // la celda se encoge un poco para que se vea la cuadrícula
       const dLat = (z.norte - z.sur) * hueco, dLon = (z.este - z.oeste) * hueco;
@@ -47,6 +47,8 @@
       }).bindTooltip(texto, { direction: "top", className: "zona-globo", sticky: true }).addTo(mapa);
       celda.on("mouseover", () => celda.setStyle({ fillOpacity: 0.96, weight: alerta ? 3 : 2, opacity: 1 }));
       celda.on("mouseout", () => celda.setStyle({ fillOpacity: 0.86, weight: alerta ? 2.5 : 1, opacity: alerta ? 1 : 0.55 }));
+      limites.push([z.sur, z.oeste], [z.norte, z.este]);
+      if (!etiqueta) return;
       const oscura = proporcion > 0.45;
       L.marker([(z.sur + z.norte) / 2, (z.oeste + z.este) / 2], {
         icon: L.divIcon({
@@ -57,7 +59,6 @@
         interactive: false,
         keyboard: false,
       }).addTo(mapa);
-      limites.push([z.sur, z.oeste], [z.norte, z.este]);
     }
 
     if (escala === "minutos" || escala === "cobertura") {
@@ -77,6 +78,15 @@
         }).addTo(mapa);
         limites.push([s.lat, s.lon]);
       }
+    } else if (escala === "frecuencia") {
+      // «¿Cómo rinde cada sereno?»: cuánto de su turno pasó en cada zona (más oscuro = más tiempo) y los casos que atendió ahí. Las
+      // zonas de un sereno son vecinas: solo las 6 donde más está llevan etiqueta (todas juntas se pisan); las demás, su globo.
+      const zonas = leer("[data-zonas]");
+      const maximo = Math.max(1, ...zonas.map((z) => z.valor));
+      const rotuladas = new Set([...zonas].sort((a, b) => b.valor - a.valor).slice(0, 6));
+      for (const z of zonas)
+        zona(z, z.valor / maximo, `${z.nombre}: ${z.horas} (${z.valor} % de su turno) · ${z.casos} ${z.casos === 1 ? "caso atendido" : "casos atendidos"}`,
+          { valor: `${z.valor} %`, etiqueta: rotuladas.has(z) });
     } else if (escala === "repite") {
       // Zonas en alza: las que tienen alerta, con su etiqueta; las demás, apenas un trazo punteado.
       for (const a of leer("[data-alzas]")) {

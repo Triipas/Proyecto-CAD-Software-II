@@ -1,8 +1,8 @@
 namespace Cad.Server.Modulos.Analitica;
 
 // Analítica de la central (27/10/2026): cálculos para el dashboard del analista, sobre los datos que ya registran los demás
-// módulos. Solo lectura; no guarda nada. Todos los resultados son agregados: ninguno lleva datos de un caso, un ciudadano o
-// un sereno concreto.
+// módulos. Solo lectura; no guarda nada. Los resultados son agregados: ninguno lleva datos de un caso o un ciudadano concreto.
+// La única excepción es «¿Cómo rinde cada sereno?» (03/11/2026, a pedido del usuario), que nombra a cada sereno.
 public sealed class OpcionesAnalitica
 {
     public const string Seccion = "Analitica";
@@ -45,6 +45,16 @@ public sealed class OpcionesAnalitica
     // «¿Se reasigna mucho?» (29/10/2026): desde qué porcentaje de casos asignados reasignados conviene mirarlo. Provisional hasta que
     // el PO fije el objetivo del servicio.
     public double ReferenciaReasignadosPorcentaje { get; set; } = 10;
+
+    // «¿Cómo rinde cada sereno?» (03/11/2026): cuándo conviene mirar a un sereno frente al equipo. Provisionales hasta que el PO
+    // fije los objetivos del servicio. Llega lento: su mediana de llegada supera la del equipo en este factor. Calificación baja:
+    // su promedio queda por debajo del equipo por estos puntos. Inicia lejos: su porcentaje de inicios fuera del rango supera el
+    // del equipo en este factor y, además, la referencia (la misma de «¿Funciona el sistema?»). Solo la referencia marcaba a la
+    // mayoría del equipo con el dataset de demostración (12 % fuera de rango en el equipo): una señal que marca a casi todos no sirve.
+    public double ToleranciaLlegadaEquipo { get; set; } = 1.25;
+    public double ToleranciaCalificacionEquipo { get; set; } = 0.5;
+    public double ToleranciaFueraDeRangoEquipo { get; set; } = 1.5;
+    public double ReferenciaFueraDeRangoPorcentaje { get; set; } = 10;
 }
 
 public static class ModuloAnalitica
@@ -65,6 +75,7 @@ public static class ModuloAnalitica
         services.AddScoped<MarcasCentral>();
         services.AddScoped<ConsultarSaludSistema>();
         services.AddScoped<ConsultarReasignaciones>();
+        services.AddScoped<ConsultarRendimientoSerenos>();
         services.AddScoped<ConsultarCasosAtascados>();
         services.AddScoped<ConsultarDemandaEsperada>();
         services.AddScoped<GenerarInformePeriodo>();
