@@ -138,7 +138,7 @@
     apagarUltimo();
     const punto = marcador.getLatLng();
     const capa = L.marker(punto, {
-      icon: L.divIcon({ className: `sonar-llegada${claseLlegada(id) ? " sonar-llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [96, 96], iconAnchor: [48, 48] }),
+      icon: L.divIcon({ className: `sonar-llegada${claseLlegada(id) ? " sonar-llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [160, 160], iconAnchor: [80, 80] }),
       interactive: false,
       keyboard: false,
       zIndexOffset: -1000,
