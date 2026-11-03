@@ -43,6 +43,7 @@
   // Propósito: continuidad espacial (de la tarjeta al lugar). Con movimiento reducido el salto es inmediato.
   // Al elegir un caso sin sereno sugerido, el mapa acerca hasta el zoom máximo de las teselas (24/10/2026).
   const ZOOM_CERCANO = 19;
+  const ZOOM_LLEGADA = 17; // al enfocar un caso recién llegado: se ve el caso y su entorno, no solo la calle
   const DURACION_VUELO = 0.9; // segundos (Leaflet)
 
   // Franja horizontal del mapa que no tapan los paneles flotantes abiertos (en píxeles del contenedor).
@@ -121,6 +122,35 @@
     setTimeout(() => { anillo.remove(); if (llegada === anillo) llegada = null; }, 1300);
   }
 
+  // Último caso llegado (SOS o reporte, 03/11/2026): el mapa se enfoca en él y un sonar, como el de la vigilancia, late a su
+  // alrededor. Solo hay uno: el siguiente que llega lo releva. Se apaga al abrirlo el operador o al salir de la lista.
+  let ultimoLlegado = null; // { id, capa }
+  function apagarUltimo() {
+    if (!ultimoLlegado) return;
+    marcadores.get(ultimoLlegado.id)?.getElement()?.classList.remove("marcador--ultimo");
+    ultimoLlegado.capa.remove();
+    ultimoLlegado = null;
+  }
+
+  function destacarUltimo(id) {
+    const marcador = marcadores.get(id);
+    if (!marcador) return;
+    apagarUltimo();
+    const punto = marcador.getLatLng();
+    const capa = L.marker(punto, {
+      icon: L.divIcon({ className: `sonar-llegada${claseLlegada(id) ? " sonar-llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [96, 96], iconAnchor: [48, 48] }),
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: -1000,
+    }).addTo(mapa);
+    marcador.getElement()?.classList.add("marcador--ultimo");
+    ultimoLlegado = { id, capa };
+    traerMapaALaVista();
+    const destino = centroLibre(punto, ZOOM_LLEGADA);
+    if (reducido.matches) mapa.setView(destino, ZOOM_LLEGADA, { animate: false });
+    else mapa.flyTo(destino, ZOOM_LLEGADA, { duration: DURACION_VUELO, easeLinearity: 0.2 });
+  }
+
   // El marcador elegido queda «fijado»: un anillo se cierra sobre él y pasa por encima de los demás.
   function resaltar(conjunto, id) {
     for (const [clave, marcador] of conjunto) {
@@ -147,6 +177,7 @@
       const existente = marcadores.get(id);
       if (existente) {
         deslizar(existente, [Number(item.dataset.lat), Number(item.dataset.lon)]);
+        if (ultimoLlegado?.id === id) ultimoLlegado.capa.setLatLng([Number(item.dataset.lat), Number(item.dataset.lon)]);
         existente.getElement()?.classList.toggle("marcador-sos--pulso", nuevos.has(id));
         continue;
       }
@@ -183,6 +214,7 @@
     for (const [id, marcador] of marcadores) {
       if (vigentes.has(id)) continue;
       marcadores.delete(id);
+      if (ultimoLlegado?.id === id) apagarUltimo();
       retirar(marcador);
     }
   }
@@ -196,6 +228,7 @@
     const item = document.getElementById(`sos-${id}`);
     item?.querySelector("[data-seleccionar-sos]")?.setAttribute("aria-pressed", "true");
     if (nuevos.delete(id)) marcadores.get(id)?.getElement()?.classList.remove("marcador-sos--pulso");
+    if (ultimoLlegado?.id === id) apagarUltimo();
     if (item) {
       item.classList.add("sos--seleccionado");
       item.classList.remove("sos--nuevo");
@@ -865,7 +898,9 @@
   window.addEventListener("focus", marcarComoVisto);
 
   // ---------- Resincronización desde la base de datos ----------
+  let cargado = false;
   async function refrescar() {
+    let reporteLlegado = null;
     const respuesta = await fetch("/panel/central?handler=Lista", { headers: { Accept: "text/html" }, credentials: "same-origin" });
     if (respuesta.redirected || !respuesta.ok) {
       estadoConexion("desconectado", "La sesión terminó o no hay acceso. Vuelve a ingresar para recibir SOS.");
@@ -887,6 +922,7 @@
       if (reportes.ok && !reportes.redirected) {
         const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionReportes, await reportes.text(), { animar: true, despues: reponerSeleccion });
         // Un reporte que llega mientras la central está abierta se marca un momento (un anillo que se apaga solo).
+        if (cargado && llegados.length) reporteLlegado = llegados.at(-1);
         for (const id of llegados) {
           const tarjeta = document.getElementById(`sos-${id}`);
           tarjeta?.classList.add("sos--llegada");
@@ -905,6 +941,9 @@
     if (sosSeleccionado) resaltar(marcadores, sosSeleccionado);
     actualizarAsignacion();
     actualizarIndicadores();
+    // Un reporte llegado con la central abierta releva al último caso del mapa (la primera carga no cuenta como llegada).
+    if (reporteLlegado) destacarUltimo(reporteLlegado);
+    cargado = true;
     return true;
   }
 
@@ -923,6 +962,7 @@
   conexion.on("SosRecibido", async ({ id }) => {
     if (!(await refrescar())) return;
     avisar(id);
+    destacarUltimo(id);
     // RNF02 (solo con la medición activada): acuse cuando el SOS ya se muestra y se ha avisado.
     if (seccion.dataset.medicion === "true" && document.getElementById(`sos-${id}`))
       conexion.invoke("ConfirmarPresentacion", id).catch(() => {});
