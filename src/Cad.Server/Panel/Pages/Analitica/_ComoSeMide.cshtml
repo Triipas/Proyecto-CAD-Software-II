@@ -1,0 +1,47 @@
+@model IndexModel
+@{
+    var o = Model.Opciones;
+}
+@* «¿Cómo rinde cada sereno?»: de dónde sale cada cifra y desde cuándo marca una señal. Las referencias son provisionales. *@
+<details class="tarjeta-a como-se-mide-a" data-como-se-mide>
+    <summary><h3>Cómo se mide cada cifra</h3><span class="tarjeta-a__nota">y cuándo se marca una señal</span></summary>
+    <dl class="como-se-mide-a__lista">
+        <div>
+            <dt>Llegada</dt>
+            <dd>Minutos desde que la central le asigna el caso hasta que inicia la atención en el lugar. Se usa la mediana (la mitad de sus casos llega en ese tiempo o menos) y no el promedio: un caso muy lento no la mueve. No incluye lo que tardó la central en asignar, que no depende del sereno.
+                <span class="como-se-mide-a__regla">▲ Llega más lento que el equipo: su mediana supera en más de @Formato.Porcentaje((o.ToleranciaLlegadaEquipo - 1) * 100, 0) la del equipo.</span></dd>
+        </div>
+        <div>
+            <dt>Reacción y traslado</dt>
+            <dd>La llegada se parte en dos: de la asignación a «En camino» (cuánto tarda en salir) y de «En camino» al inicio de la atención (cuánto tarda el trayecto). Una reacción lenta suele ser de aviso o de equipo; un traslado lento, de distancia o tránsito.</dd>
+        </div>
+        <div>
+            <dt>Calificación</dt>
+            <dd>Promedio de las evaluaciones (1 a 5) que el ciudadano dejó en los casos que el sereno cerró. Evaluar es voluntario, así que se muestra cuántas hay.
+                <span class="como-se-mide-a__regla">▲ Calificación por debajo del equipo: más de @Formato.Decimal(o.ToleranciaCalificacionEquipo) puntos bajo el promedio del equipo.</span></dd>
+        </div>
+        <div>
+            <dt>Tiempo con caso</dt>
+            <dd>De sus horas en turno (según su estado operativo), qué parte tuvo un caso asignado. Mucho tiempo con caso es carga alta; muy poco, que le llegan pocos casos o pasa mucho tiempo sin señal.</dd>
+        </div>
+        <div>
+            <dt>Casos que se le quitan</dt>
+            <dd>Reasignaciones en las que la central le quitó el caso para dárselo a otro, con su motivo. No cuentan los retiros por desactivar la cuenta.
+                <span class="como-se-mide-a__regla">▲ Se le quitan casos: 2 o más y más del @Formato.Porcentaje(o.ReferenciaReasignadosPorcentaje, 0) de sus casos asignados.</span></dd>
+        </div>
+        <div>
+            <dt>Inicio lejos del caso</dt>
+            <dd>Inicios de atención fuera del rango del punto del caso (o sin posición), sobre los que tenían un punto con el que comparar. También se cuentan los inicios que registró la central por él (sin señal, sin batería).
+                <span class="como-se-mide-a__regla">▲ Inicia la atención lejos del caso: su porcentaje supera en @Formato.Decimal(o.ToleranciaFueraDeRangoEquipo) veces el del equipo y, además, el @Formato.Porcentaje(o.ReferenciaFueraDeRangoPorcentaje, 0).</span></dd>
+        </div>
+        <div>
+            <dt>Zonas</dt>
+            <dd>Horas que pasó en cada zona de la cuadrícula del mapa de concentración, según sus posiciones en turno (cada posición vale hasta la siguiente, con un tope de @o.AntiguedadPosicionMinutos min). Junto a ellas, los casos que atendió en cada zona.</dd>
+        </div>
+        <div>
+            <dt>Casos suficientes</dt>
+            <dd>Ninguna señal se marca con menos de @o.MinimoParaPercentiles casos (o evaluaciones, o inicios): con dos casos, uno lento lo cambia todo. Esas cifras se muestran, pero solo como orientación.</dd>
+        </div>
+    </dl>
+    <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Las referencias son provisionales hasta que el servicio fije sus objetivos. Ninguna cifra reemplaza la conversación con el sereno: el historial de cada caso dice qué pasó.</p>
+</details>

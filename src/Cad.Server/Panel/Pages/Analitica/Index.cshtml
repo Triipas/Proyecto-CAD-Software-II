@@ -4,9 +4,11 @@
     ViewData["Title"] = $"Analítica · {Model.Actual.Titulo}";
     ViewData["ClasePagina"] = "pagina--analitica";
     var enVivo = Model.Actual.Clave == "ahora";
+    // El detalle de un sereno lleva el mapa de las zonas por donde patrulla.
+    var conMapa = Model.Actual.Clave is "tiempo" or "cobertura" or "repite" || (Model.Actual.Clave == "serenos" && Model.Sereno is not null);
 }
 @section Estilos {
-    @if (Model.Actual.Clave is "tiempo" or "cobertura" or "repite")
+    @if (conMapa)
     {
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
@@ -67,6 +69,10 @@
                         {
                             <input type="hidden" name="prioridad" value="@prioridadRango" />
                         }
+                        @if (Model.Actual.Clave == "serenos" && Model.Sereno is { } serenoRango)
+                        {
+                            <input type="hidden" name="sereno" value="@serenoRango" />
+                        }
                         <button type="submit" class="boton boton--principal boton--compacto">Ver</button>
                     </form>
                 </details>
@@ -111,6 +117,8 @@
                 case IndexModel.VistaFalsos v: <partial name="_Falsos" model="(Model, v)" /> break;
                 case IndexModel.VistaCobertura v: <partial name="_Cobertura" model="(Model, v)" /> break;
                 case IndexModel.VistaReasigna v: <partial name="_Reasignaciones" model="(Model, v)" /> break;
+                case IndexModel.VistaSerenos v when v.Pedido is null: <partial name="_Serenos" model="(Model, v)" /> break;
+                case IndexModel.VistaSerenos v: <partial name="_Sereno" model="(Model, v)" /> break;
                 case IndexModel.VistaRepite v: <partial name="_Repite" model="(Model, v)" /> break;
                 case IndexModel.VistaCiudadano v: <partial name="_Ciudadano" model="(Model, v)" /> break;
                 case IndexModel.VistaSistema v: <partial name="_Sistema" model="(Model, v)" /> break;
@@ -120,7 +128,7 @@
     </div>
 </div>
 @section Scripts {
-    @if (Model.Actual.Clave is "tiempo" or "cobertura" or "repite")
+    @if (conMapa)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
     }

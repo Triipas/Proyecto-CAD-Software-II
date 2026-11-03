@@ -118,6 +118,10 @@ public sealed class LineaDeTiempoSerenos
     public double SegundosOperativos(DateTimeOffset desde, DateTimeOffset hasta) => Sumar(operativo, desde, hasta);
     public double SegundosDisponibles(DateTimeOffset desde, DateTimeOffset hasta) => Sumar(disponible, desde, hasta);
 
+    // De un solo sereno, en todo el periodo cargado (los intervalos ya están recortados a él).
+    public double SegundosOperativos(Guid sereno) => operativo.GetValueOrDefault(sereno)?.Sum(i => i.Segundos) ?? 0;
+    public double SegundosDisponibles(Guid sereno) => disponible.GetValueOrDefault(sereno)?.Sum(i => i.Segundos) ?? 0;
+
     private static double Sumar(Dictionary<Guid, List<Intervalo>> intervalos, DateTimeOffset desde, DateTimeOffset hasta) =>
         intervalos.Values.SelectMany(l => l).Sum(i =>
         {

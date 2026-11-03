@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Html;
 
 namespace Cad.Server.Panel.Pages.Analitica;
 
-// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las ocho preguntas, los nombres de zona, la regla y los
+// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las nueve preguntas, los nombres de zona, la regla y los
 // carriles (dibujados en SVG desde el servidor: sin JavaScript para leer una respuesta) y las señales de la salud del sistema.
 public static class Formato
 {
@@ -34,6 +34,9 @@ public static class Formato
     public static string Horas(double? horas) =>
         horas is not { } h ? "—" : h < 1 ? Minutos(h * 60) : h < 48 ? $"{Decimal(h)} h" : $"{Decimal(h / 24)} días";
 
+    // Horas de trabajo («200 h», «45 min»): sumadas en un periodo, no son días seguidos, así que nunca se pasan a días.
+    public static string HorasDeTrabajo(double horas) => horas < 1 ? Minutos(horas * 60) : $"{Decimal(horas, 0)} h";
+
     public static string Plural(int n, string uno, string varios) => $"{n} {(n == 1 ? uno : varios)}";
 }
 
@@ -49,6 +52,7 @@ public static class Preguntas
         new("falsos", "¿Cuánto de lo que entra es falso?", "<path d=\"M12 3 21 19H3z\"/><path d=\"M12 10v4m0 3v.01\"/>"),
         new("cobertura", "¿Dónde falta cobertura?", "<path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>"),
         new("reasigna", "¿Se reasigna mucho?", "<path d=\"M4 8h13m-3-3 3 3-3 3\"/><path d=\"M20 16H7m3-3-3 3 3 3\"/>"),
+        new("serenos", "¿Cómo rinde cada sereno?", "<path d=\"M12 3 19 6v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z\"/><path d=\"m9 12 2 2 4-4\"/>"),
         new("repite", "¿Qué se repite?", "<path d=\"M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3\"/><path d=\"M18 3v4h-4M6 21v-4h4\"/>"),
         new("ciudadano", "¿Qué opina el ciudadano?", "<circle cx=\"12\" cy=\"8\" r=\"3.5\"/><path d=\"M5 20c1-4 4-6 7-6s6 2 7 6\"/>"),
         new("sistema", "¿Funciona el sistema?", "<rect x=\"4\" y=\"5\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M9 20h6M12 16v4\"/>"),
@@ -285,6 +289,47 @@ public static class Sistema
             : "";
         return new HtmlString($"<svg class=\"senal__regla\" viewBox=\"-8 0 {Ancho + 16} 26\" aria-hidden=\"true\">{banda}<line class=\"senal__linea\" x1=\"0\" y1=\"13\" x2=\"{Ancho}\" y2=\"13\"/><line class=\"senal__limite\" x1=\"{N(X(senal.Limite))}\" y1=\"2\" x2=\"{N(X(senal.Limite))}\" y2=\"24\"/>{punto}</svg>");
     }
+}
+
+// «¿Cómo rinde cada sereno?»: lo que conviene mirar de un sereno frente al equipo. Cada señal pide casos suficientes (con dos casos
+// un sereno no es «lento») y va con su texto: nunca solo color.
+public static class Rendimiento
+{
+    // Texto: la señal de un sereno. Uno y Varios: cómo se cuenta en la respuesta («1 llega…», «2 llegan…»).
+    public sealed record Senal(string Clave, string Texto, string Uno, string Varios);
+
+    private static readonly Senal Lento = new("llegada", "Llega más lento que el equipo", "llega más lento que el equipo", "llegan más lento que el equipo");
+    private static readonly Senal NotaBaja = new("calificacion", "Calificación por debajo del equipo", "tiene la calificación por debajo del equipo", "tienen la calificación por debajo del equipo");
+    private static readonly Senal Retiros = new("retiros", "Se le quitan casos", "pierde casos por reasignación", "pierden casos por reasignación");
+    private static readonly Senal Lejos = new("rango", "Inicia la atención lejos del caso", "inicia la atención lejos del caso", "inician la atención lejos del caso");
+
+    public static IReadOnlyList<Senal> Senales(RendimientoSereno s, RendimientoEquipo e, OpcionesAnalitica o)
+    {
+        var minimo = o.MinimoParaPercentiles;
+        var senales = new List<Senal>();
+        if (s.Llegadas.Count >= minimo && s.LlegadaP50 is { } llegada && e.LlegadaP50 is { } equipo && llegada > equipo * o.ToleranciaLlegadaEquipo)
+            senales.Add(Lento);
+        if (s.Evaluaciones >= minimo && s.Calificacion is { } nota && e.Calificacion is { } notaEquipo && nota < notaEquipo - o.ToleranciaCalificacionEquipo)
+            senales.Add(NotaBaja);
+        if (s.Retirados >= 2 && s.PorcentajeRetirados is { } retirados && retirados > o.ReferenciaReasignadosPorcentaje)
+            senales.Add(Retiros);
+        if (s.IniciosConPunto >= minimo && s.PorcentajeFueraDeRango is { } fuera && fuera > o.ReferenciaFueraDeRangoPorcentaje
+            && fuera > (e.PorcentajeFueraDeRango ?? 0) * o.ToleranciaFueraDeRangoEquipo)
+            senales.Add(Lejos);
+        return senales;
+    }
+
+    // «8 inician la atención lejos del caso, 4 tienen la calificación por debajo del equipo y 2 llegan más lento que el equipo».
+    public static string Resumen(IEnumerable<Senal> senales)
+    {
+        var partes = senales.GroupBy(s => s.Clave).OrderByDescending(g => g.Count())
+            .Select(g => $"{g.Count()} {(g.Count() == 1 ? g.First().Uno : g.First().Varios)}").ToList();
+        return partes.Count <= 1 ? string.Concat(partes) : $"{string.Join(", ", partes[..^1])} y {partes[^1]}";
+    }
+
+    // «Ana Pérez» → «AP», para el distintivo de la tabla.
+    public static string Iniciales(string nombre) =>
+        string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
 }
 
 // Una respuesta sin datos (estado vacío): qué falta, por qué y qué probar.
