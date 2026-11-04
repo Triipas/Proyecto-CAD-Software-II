@@ -38,5 +38,12 @@
       }).addTo(mapa);
     }
   }
-  if (limites.length > 0) mapa.fitBounds(limites, { padding: [16, 16], maxZoom: 15 });
+  // El contenedor toma su tamaño final cuando termina de cargar la hoja de estilos: se recalcula antes de encuadrar las zonas.
+  const encuadrar = () => {
+    mapa.invalidateSize();
+    if (limites.length > 0) mapa.fitBounds(limites, { padding: [24, 24], maxZoom: 15 });
+  };
+  encuadrar();
+  if (document.readyState !== "complete") window.addEventListener("load", encuadrar, { once: true });
+  new ResizeObserver(() => mapa.invalidateSize()).observe(contenedor);
 })();

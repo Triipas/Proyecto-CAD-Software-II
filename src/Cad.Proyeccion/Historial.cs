@@ -65,9 +65,9 @@ public sealed class Historial
         return i < 0 ? tope : Math.Min(tope, (bloque - lista[i]) * Bloques.Horas);
     }
 
-    // Las categorías de los casos de la celda en [desde, hasta), para explicar la zona («6 de robo o hurto»).
-    public IEnumerable<int> Categorias(Celda celda, long desde, long hasta) =>
-        categoriasPorCelda.TryGetValue(celda, out var lista) ? lista.Where(c => c.Bloque >= desde && c.Bloque < hasta).Select(c => c.Categoria) : [];
+    // Las categorías de los casos de la celda en [desde, hasta), con su bloque, para explicar la zona («6 de robo o hurto»).
+    public IEnumerable<(long Bloque, int Categoria)> Categorias(Celda celda, long desde, long hasta) =>
+        categoriasPorCelda.TryGetValue(celda, out var lista) ? lista.Where(c => c.Bloque >= desde && c.Bloque < hasta) : [];
 
     // Índice del primer elemento ≥ valor.
     private static int Primero(List<long> lista, long valor)

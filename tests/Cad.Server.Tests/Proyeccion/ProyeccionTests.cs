@@ -101,7 +101,9 @@ public sealed class ProyeccionTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Equal(Cad.Proyeccion.Celda.De(LatFoco, LonFoco).Clave, primera.Clave);
         Assert.Equal(NivelFoco.Alto, primera.Nivel);
         Assert.Contains("Lunes 08–12 h: ", primera.Explicacion);
-        Assert.Contains("en las últimas 4 semanas", primera.Explicacion);
+        Assert.Contains("en esa franja en las últimas 4 semanas", primera.Explicacion);
+        // Los SOS sembrados no tienen categoría: la explicación no trae el paréntesis.
+        Assert.Matches(@"^Lunes 08–12 h: \d+ casos en esa franja en las últimas 4 semanas\.$", primera.Explicacion);
         var excluida = Cad.Proyeccion.Celda.De(LatExcluidos, LonExcluidos).Clave;
         Assert.DoesNotContain(proyeccion.Principales(3), z => z.Clave == excluida);
         // CA04: sin sereno operativo a menos de 1,5 km, «Sin cobertura cercana».

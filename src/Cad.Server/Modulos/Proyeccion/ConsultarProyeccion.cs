@@ -140,22 +140,24 @@ public sealed class ConsultarProyeccion(CadDbContext db, ModeloProyeccion modelo
         return niveles;
     }
 
-    // «Viernes 20–24 h: 9 casos en las últimas 4 semanas (6 de robo o hurto)».
+    // «Viernes 20–24 h: 9 casos en esa franja en las últimas 4 semanas (6 de robo o hurto)». La categoría se cuenta sobre los mismos
+    // casos que la cifra: los de la franja o, si no hubo, los de la zona.
     private static (string Texto, string? Categoria) Explicar(Historial h, Celda celda, long bloque)
     {
         var franja = Bloques.TextoFranja(bloque);
-        var mismaFranja = Enumerable.Range(1, 4).Sum(k => h.Casos(celda, bloque - (long)k * Bloques.PorSemana));
         var desde = bloque - 4L * Bloques.PorSemana;
-        var categorias = h.Categorias(celda, desde, bloque).Where(c => c >= 0 && c < CategoriaIncidencia.Iniciales.Count)
-            .GroupBy(c => c).OrderByDescending(g => g.Count()).FirstOrDefault();
-        var categoria = categorias is null ? null : CategoriaIncidencia.Iniciales[categorias.Key].Nombre.ToLowerInvariant();
-        var enLaZona = h.Casos(celda, desde, bloque);
+        var enLaFranja = h.Categorias(celda, desde, bloque).Where(c => Bloques.Franja(c.Bloque) == Bloques.Franja(bloque)).ToList();
+        var mismaFranja = Enumerable.Range(1, 4).Sum(k => h.Casos(celda, bloque - (long)k * Bloques.PorSemana));
+        var contadas = mismaFranja > 0 ? enLaFranja : h.Categorias(celda, desde, bloque).ToList();
+        var dominante = contadas.Where(c => c.Categoria >= 0 && c.Categoria < CategoriaIncidencia.Iniciales.Count)
+            .GroupBy(c => c.Categoria).OrderByDescending(g => g.Count()).FirstOrDefault();
+        var categoria = dominante is null ? null : CategoriaIncidencia.Iniciales[dominante.Key].Nombre.ToLowerInvariant();
         var mayuscula = char.ToUpperInvariant(franja[0]) + franja[1..];
         var texto = mismaFranja > 0
-            ? $"{mayuscula}: {mismaFranja} {(mismaFranja == 1 ? "caso" : "casos")} en las últimas 4 semanas en esa franja"
-            : $"{mayuscula}: sin casos en esa franja; {enLaZona} en la zona en las últimas 4 semanas";
-        if (categorias is not null)
-            texto += $" ({categorias.Count()} de {categoria})";
+            ? $"{mayuscula}: {mismaFranja} {(mismaFranja == 1 ? "caso" : "casos")} en esa franja en las últimas 4 semanas"
+            : $"{mayuscula}: sin casos en esa franja; {h.Casos(celda, desde, bloque)} en la zona en las últimas 4 semanas";
+        if (dominante is not null)
+            texto += $" ({dominante.Count()} de {categoria})";
         return (texto + ".", categoria);
     }
 
