@@ -42,7 +42,7 @@ public sealed class AsistenteFalso : IAsistenteReportes
     public Task<ResultadoAsistente?> VerificarAsync(EntradaAnalisis entrada, CancellationToken ct) => Verificar(entrada, ct);
 }
 
-// HU44 (S6-T12) y HU45 (S6-T10, S6-T11, S6-T13) — la sugerencia del asistente sobre un reporte, de punta a punta: cola en segundo
+// HU46 (S6-T12) y HU47 (S6-T10, S6-T11, S6-T13) — la sugerencia del asistente sobre un reporte, de punta a punta: cola en segundo
 // plano, tabla, aviso en vivo, tarjeta del detalle, etiqueta de la lista y candidatos a duplicado. Con un asistente falso: las
 // pruebas nunca llaman a un proveedor externo (plan, 11). Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
@@ -118,10 +118,10 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     private Task<ResultadoRevision> IniciarRevisionAsync(Guid id, Guid operadorId) =>
         fabrica.ConServiciosAsync(s => s.GetRequiredService<RevisarReporte>().IniciarAsync(id, operadorId, CancellationToken.None));
 
-    // ----- HU44 -----
+    // ----- HU46 -----
 
     [Fact]
-    public async Task HU44_CA01_AlRegistrarse_ElAnalisisGuardaLaSugerenciaYAvisaALaCentral()
+    public async Task HU46_CA01_AlRegistrarse_ElAnalisisGuardaLaSugerenciaYAvisaALaCentral()
     {
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.RoboOHurto.Id));
         await using var central = await fabrica.OperadorEnCentralAsync(servidor);
@@ -142,14 +142,14 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU44_CA02_ConSugerenciaDistinta_UsarEstaCategoriaSoloEnRevisionYRegistraLaCorreccionComoHoy()
+    public async Task HU46_CA02_ConSugerenciaDistinta_UsarEstaCategoriaSoloEnRevisionYRegistraLaCorreccionComoHoy()
     {
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.RoboOHurto.Id));
         var (id, _) = await RegistrarAsync("Me arrebataron la cartera en el paradero", CategoriaIncidencia.Otros.Id);
         await EsperarSugerenciaAsync(id);
         var operador = await OperadorAsync();
 
-        // «Recibido»: la tarjeta pide iniciar la revisión (HU45-CA06) y no ofrece el botón.
+        // «Recibido»: la tarjeta pide iniciar la revisión (HU47-CA06) y no ofrece el botón.
         var recibido = WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/reportes/{id}"));
         Assert.Contains("data-tarjeta-sugerencia", recibido);
         Assert.Contains("Sugerencia automática · datos simulados · revísala antes de decidir", recibido); // CA06
@@ -181,7 +181,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU44_CA03_SiElAsistenteFallaOTarda_ElReporteSeRegistraIgualYNoHaySugerencia()
+    public async Task HU46_CA03_SiElAsistenteFallaOTarda_ElReporteSeRegistraIgualYNoHaySugerencia()
     {
         falso.Responder = (_, _) => throw new HttpRequestException("sin red");
         var cronometro = Stopwatch.StartNew();
@@ -201,7 +201,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU44_CA03_ConLaIaApagada_NoSeAnalizaNiSeMuestraLaTarjeta()
+    public async Task HU46_CA03_ConLaIaApagada_NoSeAnalizaNiSeMuestraLaTarjeta()
     {
         // El servidor compartido tiene Ia:Habilitada = false (valor por defecto).
         var (id, _) = await RegistrarAsync("Me robaron el celular en la esquina", CategoriaIncidencia.RoboOHurto.Id, en: fabrica);
@@ -213,7 +213,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU44_CA05_RespuestaConCategoriaFueraDelCatalogo_SeDescarta()
+    public async Task HU46_CA05_RespuestaConCategoriaFueraDelCatalogo_SeDescarta()
     {
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(Guid.NewGuid()));
         var (id, _) = await RegistrarAsync("Me robaron el celular en la esquina", CategoriaIncidencia.RoboOHurto.Id);
@@ -224,7 +224,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU44_CA07_NadaDeLaSugerenciaApareceEnLoQueVeElCiudadano()
+    public async Task HU46_CA07_NadaDeLaSugerenciaApareceEnLoQueVeElCiudadano()
     {
         const string justificacion = "Justificación interna exclusiva de esta prueba.";
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.RoboOHurto.Id, justificacion: justificacion,
@@ -244,7 +244,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU44_EnLaListaDeReportes_LaCategoriaSugeridaApareceSoloSiDifiere()
+    public async Task HU46_EnLaListaDeReportes_LaCategoriaSugeridaApareceSoloSiDifiere()
     {
         falso.Responder = (e, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.RoboOHurto.Id));
         var (distinta, _) = await RegistrarAsync("Me arrebataron la mochila", CategoriaIncidencia.Otros.Id);
@@ -278,10 +278,10 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Single(await SugerenciasAsync(id));
     }
 
-    // ----- HU45 -----
+    // ----- HU47 -----
 
     [Fact]
-    public async Task HU45_CA01_CA02_DecisionSugerida_UsarEsteMotivoSoloRellenaElFormulario()
+    public async Task HU47_CA01_CA02_DecisionSugerida_UsarEsteMotivoSoloRellenaElFormulario()
     {
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.Otros.Id, DecisionSugerida.Derivar,
             NivelConfianza.Media, "El hecho no es de seguridad ciudadana y corresponde a Bomberos (116)."));
@@ -306,7 +306,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU45_PosibleUrgencia_AvisoDestacadoYNuncaDescartar()
+    public async Task HU47_PosibleUrgencia_AvisoDestacadoYNuncaDescartar()
     {
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.RoboOHurto.Id, DecisionSugerida.Descartar,
             urgencia: true));
@@ -322,7 +322,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU45_CA05_CandidatosADuplicado_SinIa_CercanosDeCualquierCategoriaYNoDescartados()
+    public async Task HU47_CA05_CandidatosADuplicado_SinIa_CercanosDeCualquierCategoriaYNoDescartados()
     {
         var (lat, lon) = PuntoAlAzar();
         var desplazado = (double metros) => (lat + metros / 111_320, lon);
@@ -356,7 +356,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HU45_ElModeloConfirmaUnDuplicadoDeLosCandidatos_SeMarcaEnLaTarjeta()
+    public async Task HU47_ElModeloConfirmaUnDuplicadoDeLosCandidatos_SeMarcaEnLaTarjeta()
     {
         var (lat, lon) = PuntoAlAzar();
         falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(null);

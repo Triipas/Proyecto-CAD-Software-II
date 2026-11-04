@@ -33,7 +33,7 @@ public readonly record struct Celda(long Fila, long Columna)
     }
 }
 
-// HU46 (plan, 8.3) — la unidad de tiempo: bloques de 4 h en la hora local de Arequipa (UTC−5, sin horario de verano), numerados
+// HU48 (plan, 8.3) — la unidad de tiempo: bloques de 4 h en la hora local de Arequipa (UTC−5, sin horario de verano), numerados
 // desde un lunes de referencia. Seis por día y 42 por semana: la «franja semanal» es el día de la semana con el bloque.
 public static class Bloques
 {

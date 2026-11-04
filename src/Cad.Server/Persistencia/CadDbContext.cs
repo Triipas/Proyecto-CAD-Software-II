@@ -659,7 +659,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             perfil.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Cuentas.Dominio.PerfilCiudadano>(p => p.UsuarioId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        // HU44 y HU45 (S6-T07): sugerencias del asistente, solo inserción; una por reporte y versión del prompt.
+        // HU46 y HU47 (S6-T07): sugerencias del asistente, solo inserción; una por reporte y versión del prompt.
         builder.Entity<Modulos.Asistencia.Dominio.SugerenciaReporte>(sugerencia =>
         {
             sugerencia.ToTable("SugerenciasReporte", tabla =>
@@ -693,7 +693,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             sugerencia.HasOne<Caso>().WithMany().HasForeignKey(s => s.DuplicadoDeId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        // HU45 (S6-T15): el interruptor de la admisión automática (una sola fila, apagada) y su historial de cambios.
+        // HU47 (S6-T15): el interruptor de la admisión automática (una sola fila, apagada) y su historial de cambios.
         builder.Entity<Modulos.Asistencia.Dominio.AjusteIa>(ajuste =>
         {
             ajuste.ToTable("AjustesIa", tabla => tabla.HasCheckConstraint("CK_AjustesIa_Unico", $"\"Id\" = {Modulos.Asistencia.Dominio.AjusteIa.IdUnico}"));
@@ -715,7 +715,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cambio.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ActorId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        // HU45 (S6-T16): qué concluyó la admisión automática sobre cada reporte, solo inserción.
+        // HU47 (S6-T16): qué concluyó la admisión automática sobre cada reporte, solo inserción.
         builder.Entity<Modulos.Asistencia.Dominio.EvaluacionAdmision>(evaluacion =>
         {
             evaluacion.ToTable("EvaluacionesAdmision", tabla => tabla.HasCheckConstraint("CK_EvaluacionesAdmision_Elegible",

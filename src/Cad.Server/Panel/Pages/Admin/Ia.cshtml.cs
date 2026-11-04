@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace Cad.Server.Panel.Pages.Admin;
 
-// HU45 (S6-T15; plan de asistencia con IA, 7.1 y 7.2) — el administrador cambia el modo de la admisión automática y sus
+// HU47 (S6-T15; plan de asistencia con IA, 7.1 y 7.2) — el administrador cambia el modo de la admisión automática y sus
 // parámetros, con un motivo que queda en el historial. Solo administradores (también en el servidor).
 [Authorize(Policy = Politicas.Administrador)]
 public class IaModel(ConsultarAsistencia consultar, CambiarAjusteIa cambiar, IOptions<OpcionesIa> opciones, IConfiguration configuracion) : PageModel

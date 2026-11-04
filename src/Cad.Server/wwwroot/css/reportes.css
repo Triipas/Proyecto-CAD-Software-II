@@ -165,7 +165,7 @@
 }
 
 
-/* HU44: la categoría que sugiere el asistente cuando difiere de la vigente (texto, no solo color). */
+/* HU46: la categoría que sugiere el asistente cuando difiere de la vigente (texto, no solo color). */
 .reportes__sugerida {
   display: block;
   margin-top: var(--espacio-1);

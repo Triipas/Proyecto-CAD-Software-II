@@ -10,7 +10,7 @@ namespace Cad.Server.Panel.Pages.Mapa;
 
 // HU29 — Consultar el mapa de concentración de incidencias (S5-T13). Solo operadores, también ante una solicitud directa.
 // La selección va en la dirección (GET), como en la búsqueda de «Casos».
-// HU46 (S6-T20): la misma página tiene la vista «Proyección» (Vista=proyeccion), con la ventana como parámetro GET.
+// HU48 (S6-T20): la misma página tiene la vista «Proyección» (Vista=proyeccion), con la ventana como parámetro GET.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration configuracion) : PageModel
 {

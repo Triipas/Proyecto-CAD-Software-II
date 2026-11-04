@@ -12,7 +12,7 @@ public abstract record ResultadoAjusteIa
     public sealed record Invalido(Dictionary<string, string[]> Errores) : ResultadoAjusteIa;
 }
 
-// HU45 (S6-T15; plan de asistencia con IA, 7.1 y 7.2) — cambiar el modo de la admisión automática. El administrador cambia el
+// HU47 (S6-T15; plan de asistencia con IA, 7.1 y 7.2) — cambiar el modo de la admisión automática. El administrador cambia el
 // modo y los parámetros con un motivo; el operador solo puede pausar (pasar a «Apagada»): detener es siempre seguro y reactivar es
 // del administrador. La página aplica la autorización; el operador solo dispone de PausarAsync, que no recibe un modo. Cada
 // cambio queda en CambiosAjusteIa (quién, cuándo, de qué modo a cuál y por qué).

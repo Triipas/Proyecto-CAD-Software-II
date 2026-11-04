@@ -14,7 +14,7 @@ public sealed record AccionParte(string Zona, string Texto, string? Sereno);
 // Resumen y acciones sugeridas; Modelo es null si es el parte plantilla.
 public sealed record ParteVista(string Resumen, IReadOnlyList<AccionParte> Acciones, string? Modelo);
 
-// HU46 (S6-T21; plan, 8.6) — el parte de patrullaje: un modelo de lenguaje redacta, con las cifras ya calculadas, un resumen y acciones
+// HU48 (S6-T21; plan, 8.6) — el parte de patrullaje: un modelo de lenguaje redacta, con las cifras ya calculadas, un resumen y acciones
 // sugeridas. Solo redacta: recibe las 10 zonas (con alias, nivel, casos esperados, explicación) y la distancia del sereno más cercano a
 // cada una, nunca casos concretos ni datos personales. La salida se valida: cada zona y sereno debe estar en la entrada y cada cifra
 // del texto también (CA09); si algo falla, o la IA está apagada (CA10), se muestra el parte plantilla con las mismas cifras. Se guarda

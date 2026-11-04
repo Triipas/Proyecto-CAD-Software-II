@@ -20,7 +20,7 @@ public sealed record CorreccionVista(string Anterior, string Nueva, string Opera
 public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En,
     string? MotivoCodigo = null, string? Prioridad = null, string? Heridos = null, bool Automatica = false)
 {
-    // HU45 (S6-T16): Automatica = «Admitido automáticamente» (el responsable es el usuario del sistema).
+    // HU47 (S6-T16): Automatica = «Admitido automáticamente» (el responsable es el usuario del sistema).
     // 27/10/2026: los textos de los catálogos (motivo del descarte; prioridad y heridos de la admisión). Nulos si la decisión
     // es anterior a los catálogos.
     public string? TextoMotivoDescarte => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosDescarte.Todos, MotivoCodigo);

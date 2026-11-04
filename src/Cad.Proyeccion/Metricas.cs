@@ -1,6 +1,6 @@
 namespace Cad.Proyeccion;
 
-// HU46 (plan, 9.3) — cómo se mide una proyección en un bloque: de los casos que ocurrieron, qué parte cayó en el 10 % de celdas con
+// HU48 (plan, 9.3) — cómo se mide una proyección en un bloque: de los casos que ocurrieron, qué parte cayó en el 10 % de celdas con
 // más casos esperados (acierto) y cuánto mejor que el azar es eso por unidad de área (PAI = acierto ÷ fracción de área; 1 es azar).
 // También la desviación de Poisson y el error absoluto, que miden el número y no solo el orden.
 public static class Metricas

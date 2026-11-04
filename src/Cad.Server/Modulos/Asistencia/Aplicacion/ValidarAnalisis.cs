@@ -6,9 +6,9 @@ using Cad.Server.Modulos.Casos.Dominio;
 namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 
 // Plan de asistencia con IA, 5.5 — la respuesta del asistente se valida en el servidor antes de guardarla. Lo que contradice el
-// catálogo o los candidatos entregados invalida toda la sugerencia (HU44-CA05: no hay sugerencia antes que una equivocada); los
+// catálogo o los candidatos entregados invalida toda la sugerencia (HU46-CA05: no hay sugerencia antes que una equivocada); los
 // textos largos se recortan a los límites del dominio. Nunca baja una urgencia: con posible urgencia no se sugiere descartar
-// (HU45-CA04).
+// (HU47-CA04).
 public static class ValidarAnalisis
 {
     public static AnalisisReporte? Aplicar(AnalisisReporte analisis, EntradaAnalisis entrada)

@@ -3,7 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Cad.Contratos\Cad.Contratos.csproj" />
     <ProjectReference Include="..\Cad.Calles\Cad.Calles.csproj" />
-    <!-- HU46: cuadrícula, rasgos, línea base y el predictor que carga el modelo de focos (ML.NET). -->
+    <!-- HU48: cuadrícula, rasgos, línea base y el predictor que carga el modelo de focos (ML.NET). -->
     <ProjectReference Include="..\Cad.Proyeccion\Cad.Proyeccion.csproj" />
   </ItemGroup>
 
@@ -12,7 +12,7 @@
     <EmbeddedResource Include="Modulos\Asistencia\Recursos\criterios-triaje.md" LogicalName="Cad.Server.Modulos.Asistencia.Recursos.criterios-triaje.md" />
   </ItemGroup>
 
-  <!-- HU46 (S6-T24): el modelo de focos que exporta la herramienta ia-evaluacion (pequeño y versionado). -->
+  <!-- HU48 (S6-T24): el modelo de focos que exporta la herramienta ia-evaluacion (pequeño y versionado). -->
   <ItemGroup>
     <EmbeddedResource Include="Recursos\modelo-focos.zip" LogicalName="Cad.Server.Recursos.modelo-focos.zip" />
   </ItemGroup>

@@ -2,7 +2,7 @@ using Cad.IaEvaluacion;
 
 // Herramienta de evaluación de la asistencia con IA (plan de asistencia con IA, 4.6 y 9).
 //   reportes  S6-T14: clasificación y triaje sugeridos frente a lo que decidieron los operadores.
-//   generar, backtest, entrenar, exportar  S6-T24: mundos simulados y modelo de la proyección de focos (HU46).
+//   generar, backtest, entrenar, exportar  S6-T24: mundos simulados y modelo de la proyección de focos (HU48).
 var comando = args.FirstOrDefault();
 var opciones = Opciones.Leer(args.Skip(1).ToArray());
 return comando switch

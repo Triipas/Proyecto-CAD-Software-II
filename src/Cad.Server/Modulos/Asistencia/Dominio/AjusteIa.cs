@@ -1,6 +1,6 @@
 namespace Cad.Server.Modulos.Asistencia.Dominio;
 
-// HU45 (plan de asistencia con IA, 7.1) — modo de la admisión automática. Apagada por defecto. En «Sombra» se calcula qué se
+// HU47 (plan de asistencia con IA, 7.1) — modo de la admisión automática. Apagada por defecto. En «Sombra» se calcula qué se
 // habría admitido sin actuar; en «Activa» se admite. Detener es siempre seguro: el operador puede pausar (pasar a Apagada).
 public enum ModoAdmision { Apagada, Sombra, Activa }
 

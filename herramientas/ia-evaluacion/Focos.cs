@@ -6,7 +6,7 @@ using Cad.Proyeccion;
 
 namespace Cad.IaEvaluacion;
 
-// HU46 (S6-T24; plan, 4.6 y 9.3) — generar mundos, comparar modelos con un backtest hacia delante, entrenar el modelo final y
+// HU48 (S6-T24; plan, 4.6 y 9.3) — generar mundos, comparar modelos con un backtest hacia delante, entrenar el modelo final y
 // exportarlo al servidor. Los rasgos los calcula Cad.Proyeccion: el mismo código que usa el servidor al predecir.
 public static class Focos
 {

@@ -9,7 +9,7 @@ namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 // Lo que la evaluación necesita del reporte, ya leído por AnalizarReporte.
 public sealed record ReporteParaAdmision(Guid CasoId, bool DeLaApp, bool Recibido, Guid CategoriaCiudadanoId, bool ConPunto, int LargoDescripcion);
 
-// HU45 (S6-T16; plan de asistencia con IA, 7.3) — ¿se puede admitir solo este reporte? Todas las condiciones a la vez: modo
+// HU47 (S6-T16; plan de asistencia con IA, 7.3) — ¿se puede admitir solo este reporte? Todas las condiciones a la vez: modo
 // «Sombra» o «Activa»; reporte de la app en «Recibido»; decisión sugerida «Admitir» con confianza alta; sin posible urgencia ni
 // duplicado; categoría igual a la del ciudadano (salvo PermitirCorregirCategoria); con punto en el mapa y descripción suficiente;
 // segunda opinión independiente que coincide en decisión, categoría y ausencia de urgencia; y dentro del cupo por hora. La segunda

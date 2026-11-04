@@ -1898,7 +1898,7 @@ button.sos__ubicacion:active .icono {
   }
 }
 
-/* HU45 (S6-T15): aviso del modo de la admisión automática, con su pausa a la derecha. */
+/* HU47 (S6-T15): aviso del modo de la admisión automática, con su pausa a la derecha. */
 .admision-automatica {
   align-items: center;
 }

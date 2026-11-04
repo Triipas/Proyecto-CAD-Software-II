@@ -2,7 +2,7 @@ using Microsoft.ML.Data;
 
 namespace Cad.Proyeccion;
 
-// HU46 (plan, 8.3) — los rasgos de una celda en un bloque, tal como los recibe el modelo. Label: casos en el bloque (solo al
+// HU48 (plan, 8.3) — los rasgos de una celda en un bloque, tal como los recibe el modelo. Label: casos en el bloque (solo al
 // entrenar). El mismo constructor sirve para entrenar y para predecir en el servidor.
 public sealed class FilaRasgos
 {

@@ -5,8 +5,8 @@ using Cad.Server.Modulos.Casos.Dominio;
 
 namespace Cad.Server.Panel.Pages.Reportes;
 
-// HU44 y HU45 (S6-T12, S6-T13) — lo que necesita la tarjeta «Sugerencia del sistema» del detalle del reporte. Los candidatos a
-// duplicado se calculan sin IA y se muestran aunque no haya sugerencia (HU45-CA05).
+// HU46 y HU47 (S6-T12, S6-T13) — lo que necesita la tarjeta «Sugerencia del sistema» del detalle del reporte. Los candidatos a
+// duplicado se calculan sin IA y se muestran aunque no haya sugerencia (HU47-CA05).
 public sealed record VistaSugerencia(
     Guid CasoId,
     EstadoCaso Estado,

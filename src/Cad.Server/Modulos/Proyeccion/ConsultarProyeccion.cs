@@ -70,7 +70,7 @@ public sealed class ModeloProyeccion(ILogger<ModeloProyeccion> registro)
     }
 }
 
-// HU46 (S6-T19; plan, 8.2 a 8.5) — la proyección de focos con los datos vivos de la base: casos SOS y reportes con ubicación válida,
+// HU48 (S6-T19; plan, 8.2 a 8.5) — la proyección de focos con los datos vivos de la base: casos SOS y reportes con ubicación válida,
 // sin cancelados ni descartados (los mismos que el mapa de concentración, CA02). Por celda y bloque de 4 h de la ventana: casos esperados
 // con el modelo y la línea base en conjunto; luego el nivel por percentil (5 % Alto, 15 % Medio), una explicación calculada y la
 // distancia al sereno operativo más cercano. Solo celdas: nunca el punto ni los datos de un caso (CA03).

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 
-// HU45 (S6-T09; plan de asistencia con IA, 5.4) — decisiones que la central ya tomó sobre reportes parecidos, para que el modelo
+// HU47 (S6-T09; plan de asistencia con IA, 5.4) — decisiones que la central ya tomó sobre reportes parecidos, para que el modelo
 // decida y redacte como ella. Búsqueda de texto completo de PostgreSQL en español: los reportes que comparten palabras con el nuevo,
 // por parecido (ts_rank). La mitad son los más parecidos; la otra mitad equilibra las decisiones (admitir, derivar, descartar) para
 // que la mayoría no arrastre al modelo. Excluye el propio caso, los reportes de la central (entran admitidos sin revisión) y las

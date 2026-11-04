@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace Cad.Server.Panel.Pages.Reportes;
 
 // E5 — página «Reportes»: reportes recibidos y en revisión (HU14). Solo operadores.
-// HU44: la categoría que sugiere el asistente, cuando difiere de la vigente. HU45 (S6-T15): aviso del modo de la admisión
+// HU46: la categoría que sugiere el asistente, cuando difiere de la vigente. HU47 (S6-T15): aviso del modo de la admisión
 // automática y su pausa.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class IndexModel(ConsultarReportes consultar, ConsultarAsistencia consultarAsistencia, IConfiguration configuracion) : PageModel
@@ -34,7 +34,7 @@ public class IndexModel(ConsultarReportes consultar, ConsultarAsistencia consult
         Programadas = await consultarAsistencia.ProgramadasAsync(Reportes.Select(r => r.Id).ToList(), ct);
     }
 
-    // HU45 (7.2): el operador solo puede pausar la admisión automática (pasa a «Apagada»). Vuelve a donde estaba (Reportes o Central).
+    // HU47 (7.2): el operador solo puede pausar la admisión automática (pasa a «Apagada»). Vuelve a donde estaba (Reportes o Central).
     public async Task<IActionResult> OnPostPausarAsync([FromServices] CambiarAjusteIa cambiar, CancellationToken ct)
     {
         Mensaje = await cambiar.PausarAsync(User.IdUsuario(), ct) is ResultadoAjusteIa.Cambiado

@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Cad.Server.Tests.Asistencia;
 
-// HU45 (S6-T16; plan de asistencia con IA, 7.3 a 7.8) — la admisión automática con un asistente falso: «Sombra» calcula sin
+// HU47 (S6-T16; plan de asistencia con IA, 7.3 a 7.8) — la admisión automática con un asistente falso: «Sombra» calcula sin
 // actuar, «Activa» admite pasado el retraso con el usuario del sistema, el operador que toma la revisión gana, la pausa la detiene,
 // cada condición por separado impide admitir y el freno pasa a «Sombra». El ajuste es global: cada prueba lo deja «Apagada».
 // Datos ficticios.

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Cad.Server.Modulos.Asistencia;
 
-// Asistencia con IA para reportes (HU44, HU45; plan de asistencia con IA, 5.1). Con Ia:Habilitada = false (por defecto) no hay
+// Asistencia con IA para reportes (HU46, HU47; plan de asistencia con IA, 5.1). Con Ia:Habilitada = false (por defecto) no hay
 // asistente y nada cambia: el registro de un reporte nunca espera a la IA ni depende de ella.
 public static class ModuloAsistencia
 {
@@ -35,7 +35,7 @@ public static class ModuloAsistencia
                 : principal;
         });
 
-        // HU46 (S6-T21): el modelo de lenguaje para redactar (el parte de patrullaje), del proveedor configurado.
+        // HU48 (S6-T21): el modelo de lenguaje para redactar (el parte de patrullaje), del proveedor configurado.
         services.AddScoped<IModeloLenguaje>(sp =>
         {
             var opciones = sp.GetRequiredService<IOptions<OpcionesIa>>().Value;

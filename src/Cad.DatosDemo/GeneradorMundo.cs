@@ -20,7 +20,7 @@ public sealed record CasoSimulado(Guid Id, bool EsSos, DateTimeOffset Registrado
 public sealed record Mundo(string Nombre, int Semilla, DateTimeOffset Inicio, int Semanas, IReadOnlyList<CasoSimulado> Casos,
     IReadOnlyDictionary<(Celda, long), double> Intensidad, IReadOnlyList<Celda> Celdas);
 
-// HU46 (S6-T02; plan, 4.1 a 4.3) — un proceso generador más rico que el modelo que tiene que encontrarlo: focos fijos con perfil
+// HU48 (S6-T02; plan, 4.1 a 4.3) — un proceso generador más rico que el modelo que tiene que encontrarlo: focos fijos con perfil
 // propio sobre lugares reales del distrito J. L. Bustamante y Rivero, un foco que aparece, uno que se apaga y uno que se desplaza,
 // repetición cercana (cada caso aumenta la probabilidad de otro cerca en las horas siguientes), calendario (quincenas, feriados,
 // aniversario de Arequipa), ruido uniforme y sesgo de reporte (una zona reporta menos). Guarda la intensidad de fondo verdadera de cada
