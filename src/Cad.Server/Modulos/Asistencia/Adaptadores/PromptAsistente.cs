@@ -31,7 +31,8 @@ public static class PromptAsistente
            en peligro) y explica por qué.
         5. Confianza «Alta» solo si el texto es claro y la decisión no admite dudas.
         6. duplicadoDeId: solo el id de uno de los candidatos dados si describe EL MISMO hecho (aunque esté redactado distinto); si no, null.
-        7. motivoBorrador: formal, una o dos frases, en español, sin nombres, teléfonos ni datos personales.
+        7. motivoBorrador: formal, una o dos frases, en español, sin nombres, teléfonos ni datos personales. Explica por qué se
+           decide; no afirmes acciones que nadie hizo todavía (enviar una unidad, llamar, avisar a otra entidad).
         8. Códigos: destinoCodigo ({string.Join(", ", DestinosDerivacion.Todos.Select(o => o.Codigo))}) solo al derivar;
            motivoDescarteCodigo ({string.Join(", ", MotivosDescarte.Todos.Select(o => o.Codigo))}) solo al descartar;
            prioridad ({string.Join(", ", PrioridadesCaso.Todas.Select(o => o.Codigo))}) solo al admitir.

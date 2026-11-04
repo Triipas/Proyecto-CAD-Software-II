@@ -131,7 +131,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         var sugerencia = await EsperarSugerenciaAsync(id);
         Assert.Equal((CategoriaIncidencia.RoboOHurto.Id, DecisionSugerida.Admitir, NivelConfianza.Alta, "modelo-de-prueba"),
             (sugerencia.CategoriaSugeridaId, sugerencia.Decision, sugerencia.Confianza, sugerencia.Modelo));
-        Assert.Equal("2026-11-a", sugerencia.VersionPrompt);
+        Assert.Equal("2026-11-b", sugerencia.VersionPrompt);
         // El aviso llega dos veces: por el registro y por la sugerencia.
         Assert.True(await CentralDePrueba.EsperarAsync(() => central.AvisosCasos.Count(c => c == id) >= 2), "La central no recibió el aviso de la sugerencia.");
         // Plan, 10: al asistente no le llega el teléfono.
@@ -196,7 +196,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Empty(await SugerenciasAsync(conError));
         Assert.Empty(await SugerenciasAsync(lento));
         var html = await (await OperadorAsync()).GetStringAsync($"/panel/reportes/{conError}");
-        Assert.DoesNotContain("data-tarjeta-sugerencia", html);
+        Assert.DoesNotContain("data-rotulo-sugerencia", html);
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         await Task.Delay(500);
         Assert.Empty(await SugerenciasAsync(id));
         Assert.DoesNotContain(falso.Recibidas, e => e.CasoId == id);
-        Assert.DoesNotContain("data-tarjeta-sugerencia", await (await OperadorAsync(fabrica)).GetStringAsync($"/panel/reportes/{id}"));
+        Assert.DoesNotContain("data-rotulo-sugerencia", await (await OperadorAsync(fabrica)).GetStringAsync($"/panel/reportes/{id}"));
     }
 
     [Fact]

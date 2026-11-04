@@ -23,11 +23,14 @@ public sealed class OpcionesIa
     public int Ejemplos { get; set; } = 6;
 
     public int TiempoMaximoSegundos { get; set; } = 10;
+    // La segunda opinión no apura a nadie (en «Activa» igual se espera el retraso): un modelo mayor puede tardar más. Medido el
+    // 04/11/2026: Gemini 3.8 Flash tardó 9,5 s.
+    public int TiempoMaximoVerificadorSegundos { get; set; } = 25;
     public int MaximoPorMinuto { get; set; } = 30;
     // Cortacircuitos: al agotarse, el asistente deja de llamar a la API hasta el día siguiente (UTC).
     public int PresupuestoDiarioTokens { get; set; } = 500_000;
     // Cambia cuando cambia el prompt: hay una sugerencia por reporte y versión, y se pueden comparar versiones.
-    public string VersionPrompt { get; set; } = "2026-11-a";
+    public string VersionPrompt { get; set; } = "2026-11-b";
     // Versión del documento de criterios de triaje (docs/criterios-triaje.md, S6-T01) con que se decidió.
     public string VersionCriterios { get; set; } = "borrador";
     public OpcionesDuplicados Duplicados { get; set; } = new();

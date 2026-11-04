@@ -75,10 +75,11 @@ public sealed class AsistenteGemini(HttpClient http, IOptions<OpcionesIa> opcion
             solicitud.Headers.Add("x-goog-api-key", Gemini.ClaveApi);
             using var respuesta = await http.SendAsync(solicitud, ct);
 
-            if (respuesta.StatusCode == HttpStatusCode.TooManyRequests && intento < Reintentos)
+            // 429: cuota agotada; 503: servicio sobrecargado (medido el 04/11/2026 en el nivel gratuito). Ambos se reintentan con espera.
+            if (respuesta.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable && intento < Reintentos)
             {
                 var espera = respuesta.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(Math.Pow(2, intento));
-                registro.LogWarning("Asistente Gemini: cuota agotada en {Modelo} (429); nuevo intento en {Segundos} s.", modelo, espera.TotalSeconds);
+                registro.LogWarning("Asistente Gemini: {Modelo} respondió {Estado}; nuevo intento en {Segundos} s.", modelo, (int)respuesta.StatusCode, espera.TotalSeconds);
                 await Task.Delay(espera, reloj, ct);
                 continue;
             }

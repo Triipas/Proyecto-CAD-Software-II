@@ -125,10 +125,33 @@ public class AsistenteGroqTests
     {
         var principal = new AsistenteFalso { Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(new(DatosAsistencia.Analisis(), "principal")) };
         var otro = new AsistenteFalso { Verificar = (_, _) => Task.FromResult<ResultadoAsistente?>(new(DatosAsistencia.Analisis(), "otro")) };
-        var compuesto = new AsistenteConVerificador(principal, otro);
+        var compuesto = new AsistenteConVerificador(principal, otro, TimeSpan.FromSeconds(5), NullLogger<AsistenteConVerificador>.Instance);
 
         Assert.Equal("principal", (await compuesto.AnalizarAsync(DatosAsistencia.Entrada("texto"), CancellationToken.None))!.Modelo);
         Assert.Equal("otro", (await compuesto.VerificarAsync(DatosAsistencia.Entrada("texto"), CancellationToken.None))!.Modelo);
         Assert.Empty(otro.Recibidas); // el verificador no analiza
+    }
+
+    [Theory]
+    [InlineData("error")]
+    [InlineData("tarde")]
+    [InlineData("nulo")]
+    public async Task AsistenteConVerificador_SiElOtroFallaOTarda_LaSegundaOpinionLaDaElPrincipal(string fallo)
+    {
+        var principal = new AsistenteFalso { Verificar = (_, _) => Task.FromResult<ResultadoAsistente?>(new(DatosAsistencia.Analisis(), "principal-preciso")) };
+        var otro = new AsistenteFalso
+        {
+            Verificar = fallo switch
+            {
+                "error" => (_, _) => throw new HttpRequestException("503"),
+                "tarde" => async (_, ct) => { await Task.Delay(TimeSpan.FromSeconds(30), ct); return null; },
+                _ => (_, _) => Task.FromResult<ResultadoAsistente?>(null),
+            },
+        };
+        var compuesto = new AsistenteConVerificador(principal, otro, TimeSpan.FromMilliseconds(300), NullLogger<AsistenteConVerificador>.Instance);
+
+        var segunda = await compuesto.VerificarAsync(DatosAsistencia.Entrada("texto"), CancellationToken.None);
+
+        Assert.Equal("principal-preciso", segunda!.Modelo);
     }
 }

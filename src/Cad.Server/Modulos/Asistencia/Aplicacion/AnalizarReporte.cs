@@ -80,7 +80,7 @@ public sealed class AnalizarReporte(CadDbContext db, IAsistenteReportes asistent
         var admision = await evaluar.EjecutarAsync(
             new ReporteParaAdmision(casoId, reporte.CiudadanoId is not null && d.RegistradoPorOperadorId is null, reporte.Estado == EstadoCaso.Recibido,
                 d.CategoriaOriginalId, d.LatitudHecho is not null && d.LongitudHecho is not null, d.Descripcion.Length),
-            valido, entrada, TimeSpan.FromSeconds(Math.Max(1, config.TiempoMaximoSegundos)), ahora, ct);
+            valido, entrada, TimeSpan.FromSeconds(Math.Max(1, config.TiempoMaximoVerificadorSegundos)), ahora, ct);
         if (admision is not null && !await db.EvaluacionesAdmision.AnyAsync(e => e.CasoId == casoId, ct))
             db.EvaluacionesAdmision.Add(admision);
         try

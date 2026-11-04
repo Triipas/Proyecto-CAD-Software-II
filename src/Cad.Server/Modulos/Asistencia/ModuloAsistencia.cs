@@ -29,7 +29,10 @@ public static class ModuloAsistencia
                 || string.Equals(opciones.ProveedorVerificador, opciones.Proveedor, StringComparison.OrdinalIgnoreCase))
                 return principal;
             var verificador = Proveedor(sp, opciones.ProveedorVerificador);
-            return verificador.Disponible ? new AsistenteConVerificador(principal, verificador) : principal;
+            return verificador.Disponible
+                ? new AsistenteConVerificador(principal, verificador, TimeSpan.FromSeconds(Math.Max(1, opciones.TiempoMaximoSegundos)),
+                    sp.GetRequiredService<ILogger<AsistenteConVerificador>>())
+                : principal;
         });
 
         services.AddSingleton<ColaAnalisis>();
@@ -62,12 +65,32 @@ public static class ModuloAsistencia
     }
 }
 
-// Análisis con un proveedor y segunda opinión con otro (Ia:ProveedorVerificador).
-public sealed class AsistenteConVerificador(IAsistenteReportes principal, IAsistenteReportes verificador) : IAsistenteReportes
+// Análisis con un proveedor y segunda opinión con otro (Ia:ProveedorVerificador). Si el otro no responde a tiempo (el 04/11/2026
+// Gemini respondió 503 o no respondió en el nivel gratuito), la segunda opinión la da el modelo preciso del proveedor principal con
+// el prompt del segundo revisor, como en el diseño original del plan (5.3).
+public sealed class AsistenteConVerificador(IAsistenteReportes principal, IAsistenteReportes verificador, TimeSpan limiteVerificador,
+    ILogger<AsistenteConVerificador> registro) : IAsistenteReportes
 {
     public bool Disponible => principal.Disponible;
 
     public Task<ResultadoAsistente?> AnalizarAsync(EntradaAnalisis entrada, CancellationToken ct) => principal.AnalizarAsync(entrada, ct);
 
-    public Task<ResultadoAsistente?> VerificarAsync(EntradaAnalisis entrada, CancellationToken ct) => verificador.VerificarAsync(entrada, ct);
+    public async Task<ResultadoAsistente?> VerificarAsync(EntradaAnalisis entrada, CancellationToken ct)
+    {
+        using (var limite = CancellationTokenSource.CreateLinkedTokenSource(ct))
+        {
+            limite.CancelAfter(limiteVerificador);
+            try
+            {
+                if (await verificador.VerificarAsync(entrada, limite.Token) is { } segunda)
+                    return segunda;
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                registro.LogWarning("Reporte {CasoId}: el proveedor de la segunda opinión no respondió ({Error}); la da el proveedor principal.",
+                    entrada.CasoId, ex.GetType().Name);
+            }
+        }
+        return await principal.VerificarAsync(entrada, ct);
+    }
 }
