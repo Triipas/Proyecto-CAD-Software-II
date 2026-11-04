@@ -14,7 +14,7 @@ namespace Cad.Server.Modulos.Asistencia.Adaptadores;
 // salida estructurada estricta (response_format json_schema) y modelos abiertos (gpt-oss 20b y 120b, según la documentación de
 // Groq del 03/11/2026). La misma cascada, verificación y controles que el de Gemini, con el mismo prompt (PromptAsistente).
 public sealed class AsistenteGroq(HttpClient http, IOptions<OpcionesIa> opciones, ControlConsumoIa consumo, TimeProvider reloj,
-    ILogger<AsistenteGroq> registro) : IAsistenteReportes
+    ILogger<AsistenteGroq> registro) : IAsistenteReportes, IModeloLenguaje
 {
     private const int Reintentos = 2;
     // Espera máxima que se acepta del encabezado retry-after: más que eso agota el tiempo del análisis igual.
@@ -41,6 +41,19 @@ public sealed class AsistenteGroq(HttpClient http, IOptions<OpcionesIa> opciones
 
     private async Task<ResultadoAsistente?> LlamarAsync(string modelo, string sistema, string usuario, CancellationToken ct)
     {
+        if (await PedirAsync(modelo, sistema, usuario, "analisis_reporte", PromptAsistente.Esquema(), ct) is not { } respuesta)
+            return null;
+        var analisis = PromptAsistente.Leer(respuesta.Texto);
+        if (analisis is null)
+            registro.LogWarning("Asistente Groq: la respuesta de {Modelo} no se pudo leer.", modelo);
+        return analisis is null ? null : new ResultadoAsistente(analisis, modelo, false, respuesta.TokensEntrada, respuesta.TokensSalida);
+    }
+
+    public Task<RespuestaModelo?> CompletarJsonAsync(string sistema, string usuario, JsonObject esquema, CancellationToken ct) =>
+        PedirAsync(Groq.ModeloRapido, sistema, usuario, "respuesta", esquema, ct);
+
+    private async Task<RespuestaModelo?> PedirAsync(string modelo, string sistema, string usuario, string nombreEsquema, JsonObject esquema, CancellationToken ct)
+    {
         if (!consumo.Reservar(opciones.Value.MaximoPorMinuto, opciones.Value.PresupuestoDiarioTokens))
         {
             registro.LogWarning("Asistente Groq: cupo por minuto o presupuesto diario de tokens agotado; no se llama a {Modelo}.", modelo);
@@ -56,7 +69,7 @@ public sealed class AsistenteGroq(HttpClient http, IOptions<OpcionesIa> opciones
             ["response_format"] = new JsonObject
             {
                 ["type"] = "json_schema",
-                ["json_schema"] = new JsonObject { ["name"] = "analisis_reporte", ["strict"] = true, ["schema"] = PromptAsistente.Esquema() },
+                ["json_schema"] = new JsonObject { ["name"] = nombreEsquema, ["strict"] = true, ["schema"] = esquema },
             },
             ["temperature"] = 0,
         };
@@ -94,10 +107,7 @@ public sealed class AsistenteGroq(HttpClient http, IOptions<OpcionesIa> opciones
             var json = await respuesta.Content.ReadFromJsonAsync<JsonElement>(ct);
             var (entrada, salida) = Uso(json);
             consumo.Anotar(entrada + salida);
-            var analisis = PromptAsistente.Leer(Texto(json));
-            if (analisis is null)
-                registro.LogWarning("Asistente Groq: la respuesta de {Modelo} no se pudo leer.", modelo);
-            return analisis is null ? null : new ResultadoAsistente(analisis, modelo, false, entrada, salida);
+            return Texto(json) is { } texto ? new RespuestaModelo(texto, modelo, entrada, salida) : null;
         }
     }
 

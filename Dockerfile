@@ -7,6 +7,7 @@ WORKDIR /fuente
 COPY global.json ./
 COPY src/Cad.Contratos/Cad.Contratos.csproj src/Cad.Contratos/
 COPY src/Cad.Calles/Cad.Calles.csproj src/Cad.Calles/
+COPY src/Cad.Proyeccion/Cad.Proyeccion.csproj src/Cad.Proyeccion/
 COPY src/Cad.Server/Cad.Server.csproj src/Cad.Server/
 RUN dotnet restore src/Cad.Server/Cad.Server.csproj
 COPY src/ src/

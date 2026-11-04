@@ -5,6 +5,8 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Cad.Contratos/Cad.Contratos.csproj" />
+    <Project Path="src/Cad.DatosDemo/Cad.DatosDemo.csproj" />
+    <Project Path="src/Cad.Proyeccion/Cad.Proyeccion.csproj" />
     <Project Path="src/Cad.Server/Cad.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">

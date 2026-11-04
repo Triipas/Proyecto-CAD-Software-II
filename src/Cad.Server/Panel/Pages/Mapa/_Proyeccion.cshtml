@@ -1,0 +1,121 @@
+@model Cad.Server.Panel.Pages.Mapa.ConcentracionModel
+@using System.Globalization
+@using Cad.Server.Modulos.Proyeccion
+@* HU46 (S6-T20, S6-T21) — vista «Proyección»: zonas con más casos esperados en la ventana elegida, con su nivel en texto y no solo en
+   color (CA08), por qué, la cobertura de serenos (CA04) y el parte de patrullaje. Solo celdas, nunca casos (CA03). *@
+@{
+    var p = Model.Proyeccion!;
+    var inv = CultureInfo.InvariantCulture;
+    var local = (DateTimeOffset t) => TimeZoneInfo.ConvertTime(t, Model.ZonaHoraria);
+    static string Nivel(NivelFoco n) => n switch { NivelFoco.Alto => "Alto", NivelFoco.Medio => "Medio", _ => "Bajo" };
+    static string Km(int metros) => (metros / 1000.0).ToString("0.0", CultureInfo.GetCultureInfo("es-PE")) + " km";
+}
+
+<form method="get" action="/panel/mapa-concentracion" class="superficie barra-seleccion" aria-labelledby="titulo-ventana" data-seleccion-proyeccion>
+    <h2 id="titulo-ventana" class="visualmente-oculto">Ventana de la proyección</h2>
+    <input type="hidden" name="Vista" value="proyeccion" />
+    <div class="campo">
+        <label class="campo__etiqueta" for="ventana">Ventana</label>
+        <select class="campo__control campo__control--seleccion" id="ventana" name="Ventana">
+            @foreach (var (codigo, texto, _) in Cad.Server.Panel.Pages.Mapa.ConcentracionModel.Ventanas)
+            {
+                <option value="@codigo" selected="@(Model.Ventana == codigo)">@texto</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="boton boton--principal barra-seleccion__enviar"><partial name="_Icono" model="@("filtro")" />Proyectar</button>
+    <p class="campo__ayuda barra-seleccion__ayuda">Desde las @local(p.Desde).ToString("HH:mm", inv) del @local(p.Desde).ToString("dd/MM", inv) hasta las @local(p.Hasta).ToString("HH:mm", inv) del @local(p.Hasta).ToString("dd/MM", inv).</p>
+</form>
+
+<p class="aviso aviso--informacion proyeccion__aviso" role="note" data-aviso-proyeccion>
+    <partial name="_Icono" model="@("informacion")" />
+    <span><strong>Proyección calculada sobre datos simulados</strong> · orienta el patrullaje, no predice delitos individuales.</span>
+</p>
+
+@if (!p.Suficiente)
+{
+    <div class="aviso aviso--advertencia" role="status" data-sin-datos-proyeccion>
+        <partial name="_Icono" model="@("advertencia")" />
+        <p class="aviso__texto">No hay datos suficientes para proyectar: hacen falta al menos @Model.MinimoCasos casos con ubicación en las últimas 8 semanas (hay @p.CasosRecientes).</p>
+    </div>
+}
+else
+{
+    var principales = p.Principales(10);
+    <section class="concentracion" aria-labelledby="titulo-proyeccion">
+        <h2 id="titulo-proyeccion" class="concentracion__titulo">Zonas con más casos esperados en @p.TextoVentana</h2>
+        <div class="concentracion__mapa">
+            <div id="mapa-proyeccion" class="mapa mapa--infrarrojo" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+                 data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region"
+                 aria-label="Mapa de la proyección: zonas de nivel alto, medio y bajo" aria-describedby="zonas-proyectadas"></div>
+            <div class="leyenda-concentracion leyenda-proyeccion">
+                <p class="leyenda-concentracion__cifras">
+                    <span class="leyenda-proyeccion__nivel leyenda-proyeccion__nivel--alto">Alto: 5 % de zonas con más casos esperados</span>
+                    <span class="leyenda-proyeccion__nivel leyenda-proyeccion__nivel--medio">Medio: el 15 % siguiente</span>
+                    <span class="leyenda-proyeccion__nivel leyenda-proyeccion__nivel--bajo">Bajo: el resto</span>
+                    <span class="leyenda-proyeccion__nivel leyenda-proyeccion__nivel--sin">Borde discontinuo: sin cobertura cercana</span>
+                </p>
+            </div>
+        </div>
+
+        @if (Model.Parte is { } parte)
+        {
+            <section class="superficie parte-patrullaje" aria-labelledby="titulo-parte" data-parte data-parte-origen="@(parte.Modelo is null ? "plantilla" : "modelo")">
+                <h3 id="titulo-parte" class="concentracion__titulo">Parte sugerido</h3>
+                <p data-parte-resumen>@parte.Resumen</p>
+                @if (parte.Acciones.Count > 0)
+                {
+                    <ul class="parte-patrullaje__acciones">
+                        @foreach (var a in parte.Acciones)
+                        {
+                            <li>@a.Texto</li>
+                        }
+                    </ul>
+                }
+                <p class="campo__ayuda">@(parte.Modelo is null ? "Parte plantilla con las cifras calculadas (sin modelo de lenguaje)." : $"Redactado por {parte.Modelo} con las cifras calculadas y comprobado: no trae cifras, zonas ni serenos fuera de la proyección.") Es una ayuda de lectura: reposicionar serenos lo decide la central.</p>
+            </section>
+        }
+
+        <div class="tabla-contenedor" tabindex="0" role="region" aria-labelledby="leyenda-zonas-proyectadas">
+            <table class="tabla" id="zonas-proyectadas" data-zonas-proyectadas>
+                <caption id="leyenda-zonas-proyectadas">Las @principales.Count zonas con más casos esperados</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Zona</th>
+                        <th scope="col">Nivel</th>
+                        <th scope="col">Casos esperados</th>
+                        <th scope="col">Por qué</th>
+                        <th scope="col">Sereno operativo más cercano</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var z in principales)
+                    {
+                        <tr data-zona="@z.Clave" data-nivel="@z.Nivel">
+                            <th scope="row">@z.Zona</th>
+                            <td><span class="nivel-foco nivel-foco--@z.Nivel.ToString().ToLowerInvariant()">@Nivel(z.Nivel)</span></td>
+                            <td>@z.Esperados.ToString("0.0", inv)</td>
+                            <td>@z.Explicacion</td>
+                            <td>
+                                @if (z.SinCobertura)
+                                {
+                                    <strong class="proyeccion__sin-cobertura" data-sin-cobertura>Sin cobertura cercana</strong>
+                                }
+                                @if (z.MetrosSerenoCercano is { } m)
+                                {
+                                    <span>@z.SerenoCercano, a @Km(m)</span>
+                                }
+                                else
+                                {
+                                    <span class="texto-secundario">No hay serenos operativos con ubicación</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="campo__ayuda" data-metodo-proyeccion>Casos esperados por zona de unos 550 m: @p.Metodo, con los SOS y reportes con ubicación de las últimas 26 semanas (sin cancelados ni descartados). Modelo entrenado con datos simulados.</p>
+        <script type="application/json" id="celdas-proyeccion">@Html.Raw(Model.ProyeccionJson)</script>
+    </section>
+}

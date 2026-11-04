@@ -10,9 +10,32 @@ namespace Cad.Server.Panel.Pages.Mapa;
 
 // HU29 — Consultar el mapa de concentración de incidencias (S5-T13). Solo operadores, también ante una solicitud directa.
 // La selección va en la dirección (GET), como en la búsqueda de «Casos».
+// HU46 (S6-T20): la misma página tiene la vista «Proyección» (Vista=proyeccion), con la ventana como parámetro GET.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration configuracion) : PageModel
 {
+    [Microsoft.AspNetCore.Mvc.BindProperty(SupportsGet = true)] public string? Vista { get; set; }
+    [Microsoft.AspNetCore.Mvc.BindProperty(SupportsGet = true)] public string? Ventana { get; set; }
+
+    public bool EsProyeccion => Vista == "proyeccion";
+    public int MinimoCasos => int.TryParse(configuracion["Proyeccion:MinimoCasos"], out var n) ? n : 50;
+    public Modulos.Proyeccion.ResultadoProyeccion? Proyeccion { get; private set; }
+    public Modulos.Proyeccion.ParteVista? Parte { get; private set; }
+
+    public static readonly (string Codigo, string Texto, Modulos.Proyeccion.VentanaProyeccion Ventana)[] Ventanas =
+    [
+        ("6h", "Próximas 6 horas", Modulos.Proyeccion.VentanaProyeccion.ProximasSeisHoras),
+        ("noche", "Esta noche (18–24 h)", Modulos.Proyeccion.VentanaProyeccion.EstaNoche),
+        ("manana", "Mañana", Modulos.Proyeccion.VentanaProyeccion.Manana),
+    ];
+
+    // Celdas de la proyección para el mapa: límites, nivel, casos esperados y cobertura (nunca datos de un caso, CA03).
+    public string ProyeccionJson => JsonSerializer.Serialize((Proyeccion?.Zonas ?? []).Select(z => new
+    {
+        clave = z.Clave, zona = z.Zona, sur = z.Sur, oeste = z.Oeste, norte = z.Norte, este = z.Este,
+        nivel = z.Nivel.ToString(), esperados = z.Esperados, sinCobertura = z.SinCobertura,
+    }));
+
     // Selección inicial de la página: los últimos 30 días y los dos orígenes. Es un valor de presentación; el operador la cambia.
     public const int DiasIniciales = 30;
 
@@ -54,8 +77,20 @@ public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration
 
     public string TextoOrigen => Origen switch { "Sos" => "SOS", "Reporte" => "reportes", _ => "SOS y reportes" };
 
-    public async Task OnGetAsync(CancellationToken ct)
+    public async Task OnGetAsync([Microsoft.AspNetCore.Mvc.FromServices] Modulos.Proyeccion.ConsultarProyeccion consultarProyeccion,
+        [Microsoft.AspNetCore.Mvc.FromServices] Modulos.Proyeccion.RedactarParte redactar, CancellationToken ct)
     {
+        if (EsProyeccion)
+        {
+            var ventana = Ventanas.FirstOrDefault(v => v.Codigo == Ventana);
+            if (ventana.Codigo is null)
+                (Ventana, ventana) = ("6h", Ventanas[0]);
+            Proyeccion = await consultarProyeccion.EjecutarAsync(ventana.Ventana, ct);
+            if (Proyeccion.Suficiente)
+                Parte = await redactar.EjecutarAsync(Proyeccion, int.TryParse(configuracion["Proyeccion:ZonasPrincipales"], out var n) ? n : 10, ct);
+            return;
+        }
+
         var hoy = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, ZonaHoraria).DateTime);
         Desde ??= hoy.AddDays(-(DiasIniciales - 1)).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         Hasta ??= hoy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);

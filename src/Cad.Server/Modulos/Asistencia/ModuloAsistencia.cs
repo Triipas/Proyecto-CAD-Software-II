@@ -35,6 +35,19 @@ public static class ModuloAsistencia
                 : principal;
         });
 
+        // HU46 (S6-T21): el modelo de lenguaje para redactar (el parte de patrullaje), del proveedor configurado.
+        services.AddScoped<IModeloLenguaje>(sp =>
+        {
+            var opciones = sp.GetRequiredService<IOptions<OpcionesIa>>().Value;
+            IModeloLenguaje? modelo = !opciones.Habilitada ? null : opciones.Proveedor.ToLowerInvariant() switch
+            {
+                "groq" => sp.GetRequiredService<AsistenteGroq>(),
+                "gemini" => sp.GetRequiredService<AsistenteGemini>(),
+                _ => null,
+            };
+            return modelo is { Disponible: true } ? modelo : new ModeloLenguajeNulo();
+        });
+
         services.AddSingleton<ColaAnalisis>();
         services.AddSingleton<IColaAnalisisReportes>(sp => sp.GetRequiredService<ColaAnalisis>());
         services.AddHostedService<ServicioAnalisis>();
@@ -64,6 +77,15 @@ public static class ModuloAsistencia
                 .LogWarning("Ia: el proveedor {Proveedor} no tiene clave de API configurada (Ia:{Proveedor}:ClaveApi).", nombre, nombre);
         return asistente.Disponible ? asistente : sp.GetRequiredService<AsistenteNulo>();
     }
+}
+
+// Sin IA (apagada, por reglas o sin clave): nadie redacta y se usan las plantillas.
+public sealed class ModeloLenguajeNulo : IModeloLenguaje
+{
+    public bool Disponible => false;
+
+    public Task<RespuestaModelo?> CompletarJsonAsync(string sistema, string usuario, System.Text.Json.Nodes.JsonObject esquema, CancellationToken ct) =>
+        Task.FromResult<RespuestaModelo?>(null);
 }
 
 // Análisis con un proveedor y segunda opinión con otro (Ia:ProveedorVerificador). Si el otro no responde a tiempo (el 04/11/2026

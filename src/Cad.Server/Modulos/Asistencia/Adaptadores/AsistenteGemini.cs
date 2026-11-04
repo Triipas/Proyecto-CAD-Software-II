@@ -17,7 +17,7 @@ namespace Cad.Server.Modulos.Asistencia.Adaptadores;
 // pasada independiente con el modelo preciso y otro prompt. Controles: cupo por minuto, presupuesto diario de tokens y reintentos
 // con espera ante el error 429. Nunca registra el texto enviado ni la respuesta (RNF07).
 public sealed class AsistenteGemini(HttpClient http, IOptions<OpcionesIa> opciones, ControlConsumoIa consumo, TimeProvider reloj,
-    ILogger<AsistenteGemini> registro) : IAsistenteReportes
+    ILogger<AsistenteGemini> registro) : IAsistenteReportes, IModeloLenguaje
 {
     private const int Reintentos = 2;
 
@@ -45,6 +45,19 @@ public sealed class AsistenteGemini(HttpClient http, IOptions<OpcionesIa> opcion
 
     private async Task<ResultadoAsistente?> LlamarAsync(string modelo, string sistema, string usuario, CancellationToken ct)
     {
+        if (await PedirAsync(modelo, sistema, usuario, PromptAsistente.Esquema(), ct) is not { } respuesta)
+            return null;
+        var analisis = PromptAsistente.Leer(respuesta.Texto);
+        if (analisis is null)
+            registro.LogWarning("Asistente Gemini: la respuesta de {Modelo} no se pudo leer.", modelo);
+        return analisis is null ? null : new ResultadoAsistente(analisis, modelo, false, respuesta.TokensEntrada, respuesta.TokensSalida);
+    }
+
+    public Task<RespuestaModelo?> CompletarJsonAsync(string sistema, string usuario, JsonObject esquema, CancellationToken ct) =>
+        PedirAsync(Gemini.ModeloRapido, sistema, usuario, esquema, ct);
+
+    private async Task<RespuestaModelo?> PedirAsync(string modelo, string sistema, string usuario, JsonObject esquema, CancellationToken ct)
+    {
         if (!consumo.Reservar(opciones.Value.MaximoPorMinuto, opciones.Value.PresupuestoDiarioTokens))
         {
             registro.LogWarning("Asistente Gemini: cupo por minuto o presupuesto diario de tokens agotado; no se llama a {Modelo}.", modelo);
@@ -62,7 +75,7 @@ public sealed class AsistenteGemini(HttpClient http, IOptions<OpcionesIa> opcion
             ["generationConfig"] = new JsonObject
             {
                 ["responseMimeType"] = "application/json",
-                ["responseJsonSchema"] = PromptAsistente.Esquema(),
+                ["responseJsonSchema"] = esquema,
             },
         };
 
@@ -92,10 +105,7 @@ public sealed class AsistenteGemini(HttpClient http, IOptions<OpcionesIa> opcion
             var json = await respuesta.Content.ReadFromJsonAsync<JsonElement>(ct);
             var (entrada, salida) = Uso(json);
             consumo.Anotar(entrada + salida);
-            var analisis = PromptAsistente.Leer(Texto(json));
-            if (analisis is null)
-                registro.LogWarning("Asistente Gemini: la respuesta de {Modelo} no se pudo leer.", modelo);
-            return analisis is null ? null : new ResultadoAsistente(analisis, modelo, false, entrada, salida);
+            return Texto(json) is { } texto ? new RespuestaModelo(texto, modelo, entrada, salida) : null;
         }
     }
 

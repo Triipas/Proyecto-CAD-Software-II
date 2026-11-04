@@ -70,5 +70,17 @@ public sealed record AnalisisReporte(
     Guid? DuplicadoDeId,
     IReadOnlyList<SenalTriaje> Senales);
 
+// HU46 (S6-T21) — una respuesta JSON de un modelo de lenguaje para otra tarea que no es el análisis de un reporte (el parte de
+// patrullaje). El texto ya cumple el esquema pedido; quien llama lo valida igual.
+public sealed record RespuestaModelo(string Texto, string Modelo, int TokensEntrada, int TokensSalida);
+
+public interface IModeloLenguaje
+{
+    bool Disponible { get; }
+
+    // null: sin respuesta (error, cuota o tiempo agotado). Con el modelo rápido del proveedor.
+    Task<RespuestaModelo?> CompletarJsonAsync(string sistema, string usuario, System.Text.Json.Nodes.JsonObject esquema, CancellationToken ct);
+}
+
 // El análisis y lo que costó: qué modelo respondió, si pasó al modelo preciso y los tokens.
 public sealed record ResultadoAsistente(AnalisisReporte Analisis, string Modelo, bool Escalada = false, int TokensEntrada = 0, int TokensSalida = 0);
