@@ -1,0 +1,201 @@
+/*
+  HU44 y HU45 — tarjeta «Sugerencia del sistema» en el detalle del reporte. Va entre lo que reportó el ciudadano y la decisión:
+  se lee antes de decidir. Borde punteado y rótulo visible: es ayuda automática, no un dato del caso (principio 5 del plan).
+*/
+
+/* El contenedor existe siempre para actualizarlo en vivo; vacío no ocupa lugar en la columna. */
+.sugerencia__contenedor {
+  display: contents;
+}
+
+.sugerencia {
+  border-style: dashed;
+  border-color: var(--color-informacion-borde);
+}
+
+.sugerencia__cabecera {
+  display: grid;
+  gap: var(--espacio-1);
+}
+
+.sugerencia__rotulo {
+  margin: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-informacion);
+}
+
+.sugerencia__bloques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--espacio-5);
+}
+
+.sugerencia__bloque {
+  display: grid;
+  align-content: start;
+  gap: var(--espacio-2);
+  min-width: 0;
+}
+
+.sugerencia__subtitulo {
+  margin: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.sugerencia__valor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  font-size: var(--texto-lg);
+}
+
+.sugerencia__confianza {
+  padding: 0 var(--espacio-2);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  line-height: 1.5rem;
+  color: var(--color-texto-secundario);
+}
+
+.sugerencia__confianza--alta {
+  border-color: var(--color-exito-borde);
+  color: var(--color-exito);
+  background: var(--color-exito-fondo);
+}
+
+.sugerencia__confianza--baja {
+  border-color: var(--color-advertencia-borde);
+  color: var(--color-advertencia);
+  background: var(--color-advertencia-fondo);
+}
+
+.sugerencia__detalle,
+.sugerencia__porque,
+.sugerencia__estado,
+.sugerencia__motivo {
+  margin: 0;
+}
+
+.sugerencia__porque {
+  font-size: var(--texto-sm);
+}
+
+.sugerencia__estado {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  color: var(--color-exito);
+  font-weight: var(--peso-medio);
+}
+
+/* El motivo borrador se lee como una cita: es el texto que se copiaría al formulario. */
+.sugerencia__motivo {
+  padding: var(--espacio-2) var(--espacio-3);
+  border-left: 3px solid var(--color-informacion-borde);
+  background: var(--color-superficie-hundida);
+  border-radius: 0 var(--radio-control) var(--radio-control) 0;
+}
+
+.sugerencia__senales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sugerencia__accion {
+  display: grid;
+  justify-items: start;
+  gap: var(--espacio-1);
+  margin-top: var(--espacio-1);
+}
+
+.sugerencia__urgencia {
+  margin: 0;
+}
+
+.sugerencia__duplicados {
+  display: grid;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sugerencia__duplicado {
+  display: grid;
+  gap: var(--espacio-1);
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+}
+
+.sugerencia__duplicado--mismo {
+  border-color: var(--color-advertencia-borde);
+  background: var(--color-advertencia-fondo);
+}
+
+.sugerencia__mismo {
+  font-size: var(--texto-sm);
+  color: var(--color-advertencia);
+}
+
+.sugerencia__datos > div {
+  grid-template-columns: 8rem 1fr;
+}
+
+/* S6-T16: qué hará (o habría hecho) la admisión automática con este reporte. */
+.sugerencia__admision {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  background: var(--color-superficie-hundida);
+}
+
+.sugerencia__admision .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+}
+
+/* S6-T01: la página de criterios de triaje. */
+.criterios {
+  display: grid;
+  gap: var(--espacio-3);
+  line-height: var(--interlineado-texto, 1.6);
+}
+
+.criterios p,
+.criterios ul,
+.criterios ol {
+  margin: 0;
+}
+
+.criterios ul,
+.criterios ol {
+  display: grid;
+  gap: var(--espacio-1);
+  padding-left: var(--espacio-6);
+}
+
+.criterios__titulo {
+  margin: var(--espacio-3) 0 0;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}

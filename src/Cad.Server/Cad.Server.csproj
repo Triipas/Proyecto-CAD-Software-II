@@ -5,6 +5,11 @@
     <ProjectReference Include="..\Cad.Calles\Cad.Calles.csproj" />
   </ItemGroup>
 
+  <!-- S6-T01: criterios de triaje, una sola fuente para el prompt del asistente y la página que leen los operadores. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Modulos\Asistencia\Recursos\criterios-triaje.md" LogicalName="Cad.Server.Modulos.Asistencia.Recursos.criterios-triaje.md" />
+  </ItemGroup>
+
   <!-- Red de calles de la zona (la misma que viaja en la app) para dibujar en la central el recorrido del sereno. -->
   <ItemGroup>
     <None Include="..\Cad.Movil\Resources\Raw\mapa\red-viaria.bin" Link="Calles\red-viaria.bin" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

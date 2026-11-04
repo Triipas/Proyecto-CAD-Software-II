@@ -17,8 +17,12 @@ namespace Cad.Server.Panel.Pages.Reportes;
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
     ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
     ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte, ReasignarCaso reasignar, ConsultarSerenos consultarSerenos,
-    IConfiguration configuracion) : PageModel
+    Modulos.Asistencia.ConsultarAsistencia consultarAsistencia, Modulos.Asistencia.Aplicacion.BuscarDuplicados buscarDuplicados,
+    Microsoft.Extensions.Options.IOptions<Modulos.Asistencia.OpcionesIa> opcionesIa, IConfiguration configuracion) : PageModel
 {
+    // HU44 y HU45 (S6-T12, S6-T13): sugerencia del asistente y candidatos a duplicado, mientras el reporte espera la decisión.
+    public VistaSugerencia? Sugerencia { get; private set; }
+
     [BindProperty]
     public FormularioCierre Cierre { get; set; } = new();
 
@@ -397,6 +401,10 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
             ? (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList()
             : [];
         Descartado = reporte.Estado == EstadoCaso.Descartada ? await consultarDescarte.EjecutarAsync(id, ct) : null;
+        if (reporte.Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision)
+            Sugerencia = new VistaSugerencia(id, reporte.Estado, await consultarAsistencia.SugerenciaAsync(id, ct),
+                await buscarDuplicados.EjecutarAsync(id, ct), reporte.CategoriaOriginal, reporte.CategoriaActual, ZonaHoraria,
+                opcionesIa.Value.Duplicados.Metros, opcionesIa.Value.Duplicados.Minutos, await consultarAsistencia.EvaluacionAsync(id, ct));
         return true;
     }
 

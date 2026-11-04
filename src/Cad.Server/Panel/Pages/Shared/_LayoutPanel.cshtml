@@ -8,7 +8,7 @@
     var enlaces = rol switch
     {
         Roles.Operador => new[] { ("/panel/central", "Central"), ("/panel/reportes", "Reportes"), ("/panel/casos", "Casos"), ("/panel/mapa-concentracion", "Mapa de concentración"), ("/panel/acompanamientos", "Acompañamientos"), ("/panel/analitica", "Analítica") },
-        Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales") },
+        Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales"), ("/panel/admin/ia", "Asistencia con IA") },
         _ => Array.Empty<(string, string)>(),
     };
 }

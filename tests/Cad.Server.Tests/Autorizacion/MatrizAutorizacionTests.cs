@@ -110,6 +110,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/panel/reportes", "HU14", Acceso.SoloRol, Roles.Operador),
         // 23/10/2026: reporte registrado por la central (p. ej. por una llamada).
         new("GET", "/panel/reportes/nuevo", "Reporte de la central", Acceso.SoloRol, Roles.Operador),
+        // S6-T01 — los criterios de triaje que también recibe el asistente: solo operadores.
+        new("GET", "/panel/criterios-triaje", "HU45 (criterios)", Acceso.SoloRol, Roles.Operador, "Cuándo admitir, derivar o descartar"),
         new("POST", "/panel/reportes/nuevo", "Reporte de la central", Acceso.SoloRol, Roles.Operador),
         new("GET", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
@@ -164,6 +166,12 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // Un identificador inexistente basta: el administrador llega a la página (404) y el resto es rechazado antes.
         new("GET", "/panel/admin/cuentas/{id:guid}/editar", "HU04", Acceso.SoloRol, Roles.Administrador,
             Ejemplo: "/panel/admin/cuentas/00000000-0000-0000-0000-000000000000/editar"),
+        // HU45 (S6-T15) — modo de la admisión automática: solo el administrador lo ve y lo cambia. Sin token antifalsificación, el
+        // administrador llega a la página (400) y el resto es rechazado antes, sin cambiar nada.
+        new("GET", "/panel/admin/ia", "HU45", Acceso.SoloRol, Roles.Administrador, "Admisión automática de reportes"),
+        new("POST", "/panel/admin/ia", "HU45", Acceso.SoloRol, Roles.Administrador),
+        // HU45 — el operador solo puede pausarla, desde «Reportes» (o el aviso de la central, que envía a la misma página).
+        new("POST", "/panel/reportes", "HU45 (pausa)", Acceso.SoloRol, Roles.Operador, Ejemplo: "/panel/reportes?handler=Pausar"),
     ];
 
     private static readonly string?[] Perfiles = [null, Roles.Ciudadano, Roles.Operador, Roles.Sereno, Roles.Administrador];

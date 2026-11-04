@@ -1,0 +1,198 @@
+@page "/panel/admin/ia"
+@model Cad.Server.Panel.Pages.Admin.IaModel
+@using System.Globalization
+@using Cad.Server.Modulos.Asistencia
+@using Cad.Server.Modulos.Asistencia.Dominio
+@{
+    ViewData["Title"] = "Asistencia con IA";
+    ViewData["ClasePagina"] = "pagina--estrecha";
+    var inv = CultureInfo.InvariantCulture;
+    var f = Model.Formulario;
+    var modos = new[]
+    {
+        (ModoAdmision.Apagada, "Apagada", "No hace nada. Los operadores revisan y deciden todos los reportes."),
+        (ModoAdmision.Sombra, "Sombra", "Calcula qué reportes habría admitido, sin admitir ninguno, para medir su precisión antes de activarla."),
+        (ModoAdmision.Activa, "Activa", "Admite sola los reportes que cumplan todas las condiciones, pasado el retraso. Un operador puede pausarla."),
+    };
+    var numeros = new[]
+    {
+        ("RetrasoSegundos", "Retraso antes de admitir (segundos)", f.RetrasoSegundos, ParametrosAdmision.RangoRetraso, "Mientras tanto, un operador puede tomar la revisión y el sistema se aparta."),
+        ("MaximoPorHora", "Máximo de admisiones por hora", f.MaximoPorHora, ParametrosAdmision.RangoMaximoPorHora, "Cupo: pasado el máximo, los reportes esperan a un operador."),
+        ("LongitudMinimaDescripcion", "Longitud mínima de la descripción (caracteres)", f.LongitudMinimaDescripcion, ParametrosAdmision.RangoLongitud, "Un texto más corto nunca se admite solo."),
+        ("FrenoMinimoAdmisiones", "Freno: admisiones mínimas en 24 h", f.FrenoMinimoAdmisiones, ParametrosAdmision.RangoFrenoMinimo, "Con al menos estas admisiones automáticas en 24 h se evalúa el freno."),
+        ("FrenoPorcentajeDescartes", "Freno: porcentaje de descartes (%)", f.FrenoPorcentajeDescartes, ParametrosAdmision.RangoFrenoPorcentaje, "Si los operadores descartan más que esto, el modo pasa solo a «Sombra»."),
+    };
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+}
+<div class="pagina__encabezado">
+    <div>
+        <h1 class="titulo">Asistencia con IA</h1>
+        <p class="texto-secundario">Admisión automática de reportes: modo, condiciones e historial de cambios. Las sugerencias de categoría y de decisión que ven los operadores no dependen de este modo.</p>
+    </div>
+</div>
+
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <p class="aviso__titulo">@Model.Mensaje</p>
+    </div>
+}
+
+<section class="superficie ajuste-ia" aria-labelledby="titulo-estado-ia" data-estado-ia>
+    <h2 id="titulo-estado-ia" class="ajuste-ia__titulo">Estado</h2>
+    <dl class="datos">
+        <div><dt>Admisión automática</dt><dd data-modo-vigente="@Model.Ajuste.Modo"><strong>@ConsultarAsistencia.Texto(Model.Ajuste.Modo)</strong>@(Model.Ajuste.CambiadoEn is { } en ? $" desde el {TimeZoneInfo.ConvertTime(en, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv)}" : " (valor inicial)")</dd></div>
+        <div><dt>Asistente de sugerencias</dt><dd data-asistente>@Model.Asistente</dd></div>
+    </dl>
+    @if (Model.Ajuste.Freno is { } freno)
+    {
+        <p class="aviso aviso--advertencia ajuste-ia__nota" data-freno>
+            <partial name="_Icono" model="@("advertencia")" />
+            <span>@freno</span>
+        </p>
+    }
+</section>
+
+@* S6-T17: qué tan seguido los operadores aceptan lo que sugiere el asistente, cuánto tarda y cuánto gasta. *@
+<section class="superficie ajuste-ia" aria-labelledby="titulo-rendimiento-ia" data-rendimiento-ia>
+    <h2 id="titulo-rendimiento-ia" class="ajuste-ia__titulo">Rendimiento del asistente (últimos @IaModel.DiasRendimiento días)</h2>
+    @if (Model.Rendimiento.Count == 0)
+    {
+        <p class="texto-secundario">No hubo sugerencias en estos días.</p>
+    }
+    else
+    {
+        <div class="tabla-contenedor" tabindex="0" role="region" aria-labelledby="titulo-rendimiento-ia">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th scope="col">Modelo</th>
+                        <th scope="col">Sugerencias</th>
+                        <th scope="col">Categoría aceptada</th>
+                        <th scope="col">Decisión aceptada</th>
+                        <th scope="col">Pasaron al modelo preciso</th>
+                        <th scope="col">Tiempo (mediana · p90)</th>
+                        <th scope="col">Tokens (entrada + salida)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Rendimiento)
+                    {
+                        <tr data-modelo="@r.Modelo">
+                            <th scope="row">@r.Modelo</th>
+                            <td>@r.Sugerencias</td>
+                            <td>@(r.PorcentajeCategoria is { } pc ? $"{pc} % de {r.Decididas} decididas" : "sin decisiones aún")</td>
+                            <td>@(r.PorcentajeDecision is { } pd ? $"{pd} % de {r.DecisionComparable}" : "—")</td>
+                            <td>@r.Escaladas</td>
+                            <td>@((r.LatenciaMedianaMs / 1000.0).ToString("0.0", inv)) s · @((r.LatenciaP90Ms / 1000.0).ToString("0.0", inv)) s</td>
+                            <td>@r.TokensEntrada.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-PE")) + @r.TokensSalida.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-PE"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="campo__ayuda">Aceptada: la categoría final del reporte o la decisión que registró el operador coinciden con la sugerida. «Revisar con cuidado» no cuenta para la decisión. Las admisiones automáticas no cuentan como aceptadas. Criterios vigentes: versión @Cad.Server.Modulos.Asistencia.CriteriosTriaje.Version.</p>
+    }
+</section>
+
+@* 7.7: con los datos de «Sombra» se decide si pasar a «Activa». *@
+<section class="superficie ajuste-ia" aria-labelledby="titulo-sombra-ia" data-precision-sombra>
+    <h2 id="titulo-sombra-ia" class="ajuste-ia__titulo">Lo que habría admitido en «Sombra»</h2>
+    @if (Model.Sombra.Elegibles == 0)
+    {
+        <p class="texto-secundario">Todavía no hay reportes que el modo «Sombra» habría admitido.</p>
+    }
+    else
+    {
+        var s = Model.Sombra;
+        <p data-sombra-resumen>De <strong>@s.Elegibles</strong> @(s.Elegibles == 1 ? "reporte que habría admitido" : "reportes que habría admitido"),
+            los operadores ya decidieron @s.Decididos y admitieron <strong>@s.Admitidos</strong>@(s.Porcentaje is { } p ? $" ({p} %)" : "").</p>
+        <p class="campo__ayuda">Pasa a «Activa» solo con al menos @IaModel.CasosMinimosSombra casos decididos y una precisión de @IaModel.PrecisionObjetivo % o más (propuesta, a confirmar con el PO).</p>
+        @if (s.NoAdmitidos.Count > 0)
+        {
+            <ul class="ajuste-ia__no-admitidos" data-sombra-no-admitidos>
+                @foreach (var n in s.NoAdmitidos)
+                {
+                    <li><a href="/panel/reportes/@n.CasoId">@n.Categoria</a> · @n.Decision por un operador · evaluado el @TimeZoneInfo.ConvertTime(n.EvaluadaEn, Model.ZonaHoraria).ToString("dd/MM HH:mm", inv)</li>
+                }
+            </ul>
+        }
+    }
+</section>
+
+<section class="superficie ajuste-ia" aria-labelledby="titulo-cambiar-ia">
+    <h2 id="titulo-cambiar-ia" class="ajuste-ia__titulo">Cambiar el modo o las condiciones</h2>
+    <form method="post" class="formulario" data-formulario novalidate>
+        <partial name="_ResumenErrores" model="@Model.Errores.Count" />
+        <fieldset class="opciones">
+            <legend class="campo__etiqueta">Modo</legend>
+            @foreach (var (modo, texto, ayuda) in modos)
+            {
+                var id = $"Formulario_Modo_{modo}";
+                <label class="opcion ajuste-ia__modo" for="@id">
+                    <input type="radio" id="@id" name="Formulario.Modo" value="@modo" checked="@(f.Modo == modo)" aria-describedby="@id-ayuda" />
+                    <span><strong>@texto</strong><span id="@id-ayuda" class="campo__ayuda">@ayuda</span></span>
+                </label>
+            }
+        </fieldset>
+
+        <div class="ajuste-ia__numeros formulario--columnas">
+            @foreach (var (campo, etiqueta, valor, rango, ayuda) in numeros)
+            {
+                <partial name="_Campo" model="@(new CampoFormulario($"Formulario_{campo}", $"Formulario.{campo}", etiqueta, "number", valor.ToString(inv),
+                    Model.ErrorDe(char.ToLowerInvariant(campo[0]) + campo[1..]), $"{ayuda} Entre {rango.Minimo} y {rango.Maximo}."))" />
+            }
+        </div>
+
+        <label class="opcion" for="Formulario_PermitirCorregirCategoria">
+            <input type="checkbox" id="Formulario_PermitirCorregirCategoria" name="Formulario.PermitirCorregirCategoria" value="true"
+                   checked="@f.PermitirCorregirCategoria" aria-describedby="ayuda-corregir" />
+            <span>Admitir también cuando el sistema corrige la categoría del ciudadano
+                <span id="ayuda-corregir" class="campo__ayuda">Solo si las dos opiniones del modelo coinciden en la otra categoría; la corrección queda a nombre del sistema.</span></span>
+        </label>
+
+        <div class="campo">
+            <label class="campo__etiqueta" for="Formulario_Motivo">Motivo del cambio</label>
+            <textarea class="campo__control campo__control--texto" id="Formulario_Motivo" name="Formulario.Motivo" rows="2" maxlength="@CambioAjusteIa.MaximoMotivo"
+                      aria-invalid="@(Model.ErrorDe("motivo") is null ? null : "true")"
+                      aria-describedby="Formulario_Motivo-ayuda@(Model.ErrorDe("motivo") is null ? "" : " Formulario_Motivo-error")">@f.Motivo</textarea>
+            <p id="Formulario_Motivo-ayuda" class="campo__ayuda">Queda en el historial con tu nombre, la fecha y la hora.</p>
+            @if (Model.ErrorDe("motivo") is { } errorMotivo)
+            {
+                <p id="Formulario_Motivo-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorMotivo</span></p>
+            }
+        </div>
+
+        <div class="acciones">
+            <button type="submit" class="boton boton--principal" data-texto-carga="Guardando…">Guardar el cambio</button>
+        </div>
+    </form>
+</section>
+
+<section class="superficie ajuste-ia" aria-labelledby="titulo-historial-ia">
+    <h2 id="titulo-historial-ia" class="ajuste-ia__titulo">Historial de cambios</h2>
+    @if (Model.Historial.Count == 0)
+    {
+        <p class="texto-secundario" data-historial-vacio>Nadie ha cambiado el modo todavía: está «Apagada» desde el inicio.</p>
+    }
+    else
+    {
+        <ol class="historial" data-historial-ia>
+            @foreach (var c in Model.Historial)
+            {
+                <li class="historial__elemento">
+                    <p class="historial__cabecera">
+                        <span>@ConsultarAsistencia.Texto(c.Anterior) → <strong>@ConsultarAsistencia.Texto(c.Nuevo)</strong></span>
+                        <time datetime="@c.En.ToString("O", inv)">@TimeZoneInfo.ConvertTime(c.En, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv)</time>
+                        <span class="texto-secundario">· @c.Actor</span>
+                    </p>
+                    <p class="historial__texto">@c.Motivo</p>
+                    <p class="campo__ayuda">@c.Parametros</p>
+                </li>
+            }
+        </ol>
+    }
+</section>

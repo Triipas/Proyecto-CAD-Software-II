@@ -1,0 +1,20 @@
+@page "/panel/criterios-triaje"
+@model Cad.Server.Panel.Pages.Reportes.CriteriosModel
+@{
+    ViewData["Title"] = "Criterios de triaje";
+    ViewData["ClasePagina"] = "pagina--estrecha";
+}
+@section Estilos {
+    <link rel="stylesheet" href="~/css/sugerencia.css" asp-append-version="true" />
+}
+<p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
+<div class="pagina__encabezado">
+    <div>
+        <h1 class="titulo">Criterios de triaje</h1>
+        <p class="texto-secundario">Cuándo admitir, derivar o descartar un reporte. El asistente de sugerencias recibe este mismo texto: si un criterio cambia, cambian las dos cosas.</p>
+    </div>
+</div>
+<article class="superficie criterios" data-criterios data-version="@Model.Version">
+    <p class="sugerencia__rotulo">Versión @Model.Version</p>
+    @Model.Contenido
+</article>

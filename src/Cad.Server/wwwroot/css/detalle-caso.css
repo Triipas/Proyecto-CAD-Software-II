@@ -946,3 +946,14 @@
 .asignar__lista .acciones {
   justify-content: flex-start;
 }
+
+/* S6-T16: la decisión la registró la admisión automática. */
+.decision-automatica {
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-left: 3px solid var(--color-informacion-borde);
+  background: var(--color-informacion-fondo);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-informacion);
+}

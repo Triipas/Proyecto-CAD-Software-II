@@ -1,6 +1,7 @@
 using Cad.Server.Compartido;
 using Cad.Server.Modulos.Acompanamiento;
 using Cad.Server.Modulos.Analitica;
+using Cad.Server.Modulos.Asistencia;
 using Cad.Server.Modulos.Casos;
 using Cad.Server.Modulos.Cuentas;
 using Cad.Server.Modulos.Mediciones;
@@ -67,6 +68,8 @@ builder.Services.AddModuloMediciones(builder.Configuration);
 builder.Services.AddModuloSerenos(builder.Configuration);
 builder.Services.AddModuloAnalitica(builder.Configuration);
 builder.Services.AddModuloAcompanamiento(builder.Configuration);
+// HU44 y HU45: asistencia con IA para reportes (apagada salvo Ia:Habilitada).
+builder.Services.AddModuloAsistencia(builder.Configuration);
 
 // Tiempo real (HU11): eventos a la central después de cada confirmación.
 builder.Services.AddSignalR();

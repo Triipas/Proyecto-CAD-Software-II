@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Herramienta de evaluación de la asistencia con IA (plan de asistencia con IA, 4.6 y 9). Usa el código del servidor para que lo que
+       se mide sea exactamente lo que corre en el panel. Lee las claves de API de los user-secrets del servidor. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <UserSecretsId>9ad5770a-a2bb-4267-8ded-529c4c72d3ef</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Cad.Server\Cad.Server.csproj" />
+  </ItemGroup>
+
+</Project>

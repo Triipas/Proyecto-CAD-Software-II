@@ -458,6 +458,280 @@ namespace Cad.Server.Persistencia.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.AjusteIa", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CambiadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FrenoMinimoAdmisiones")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FrenoPorcentajeDescartes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LongitudMinimaDescripcion")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaximoPorHora")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Modo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("PermitirCorregirCategoria")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("RetrasoSegundos")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AjustesIa", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AjustesIa_Unico", "\"Id\" = 1");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            FrenoMinimoAdmisiones = 20,
+                            FrenoPorcentajeDescartes = 5,
+                            LongitudMinimaDescripcion = 40,
+                            MaximoPorHora = 60,
+                            Modo = "Apagada",
+                            PermitirCorregirCategoria = false,
+                            RetrasoSegundos = 30
+                        });
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.CambioAjusteIa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("En")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModoAnterior")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ModoNuevo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Parametros")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("En");
+
+                    b.ToTable("CambiosAjusteIa", (string)null);
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AdmitirDesde")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Condicion")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("Elegible")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("EvaluadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModeloVerificador")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Modo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Prioridad")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool?>("VerificadorCoincide")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("AdmitirDesde")
+                        .HasFilter("\"AdmitirDesde\" IS NOT NULL");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("EvaluadaEn");
+
+                    b.ToTable("EvaluacionesAdmision", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EvaluacionesAdmision_Elegible", "(\"Elegible\" AND \"Condicion\" IS NULL) OR (NOT \"Elegible\" AND \"Condicion\" IS NOT NULL AND \"AdmitirDesde\" IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.SugerenciaReporte", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccionBorrador")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CategoriaAlternativaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoriaSugeridaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<short>("Confianza")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset>("CreadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<short>("Decision")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("DestinoCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid?>("DuplicadoDeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Escalada")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Justificacion")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("LatenciaMs")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Modelo")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("ModeloVerificador")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("MotivoBorrador")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("MotivoDescarteCodigo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("MotivoUrgencia")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("PosibleUrgencia")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Prioridad")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Senales")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("TokensEntrada")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TokensSalida")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("VerificadorCoincide")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("VersionCriterios")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("VersionPrompt")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaAlternativaId");
+
+                    b.HasIndex("CategoriaSugeridaId");
+
+                    b.HasIndex("DuplicadoDeId");
+
+                    b.HasIndex("CasoId", "VersionPrompt")
+                        .IsUnique();
+
+                    b.ToTable("SugerenciasReporte", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SugerenciasReporte_Confianza", "\"Confianza\" BETWEEN 0 AND 2");
+
+                            t.HasCheckConstraint("CK_SugerenciasReporte_Decision", "\"Decision\" BETWEEN 0 AND 3");
+
+                            t.HasCheckConstraint("CK_SugerenciasReporte_Destino", "\"DestinoCodigo\" IS NULL OR \"DestinoCodigo\" IN ('Pnp', 'Fiscalia', 'Cem', 'Samu', 'Bomberos', 'Municipalidad', 'Otro')");
+
+                            t.HasCheckConstraint("CK_SugerenciasReporte_MotivoDescarte", "\"MotivoDescarteCodigo\" IS NULL OR \"MotivoDescarteCodigo\" IN ('FalsoOMalintencionado', 'Duplicado', 'NoVerificable', 'FueraDeAlcance', 'ActivacionAccidental', 'Otro')");
+
+                            t.HasCheckConstraint("CK_SugerenciasReporte_Prioridad", "\"Prioridad\" IS NULL OR \"Prioridad\" IN ('Alta', 'Media', 'Baja')");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Asignacion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1479,6 +1753,28 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0199d6a0-0000-7000-8000-0000000000a1"),
+                            AccessFailedCount = 0,
+                            Activo = false,
+                            Apellidos = "CAD (automático)",
+                            ConcurrencyStamp = "0199d6a0-0000-7000-8000-0000000000a1",
+                            CreadoEn = new DateTimeOffset(new DateTime(2026, 11, 3, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            DebeCambiarContrasena = false,
+                            EmailConfirmed = false,
+                            IntentosPinFallidos = 0,
+                            LockoutEnabled = true,
+                            LockoutEnd = new DateTimeOffset(new DateTime(9999, 12, 31, 23, 59, 59, 999, DateTimeKind.Unspecified).AddTicks(9999), new TimeSpan(0, 0, 0, 0, 0)),
+                            Nombres = "Sistema",
+                            NormalizedUserName = "SISTEMA.CAD",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "0199d6a0-0000-7000-8000-0000000000a1",
+                            TwoFactorEnabled = false,
+                            UserName = "sistema.cad"
+                        });
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Cuentas.Dominio.VerificacionCelular", b =>
@@ -1997,6 +2293,55 @@ namespace Cad.Server.Persistencia.Migraciones
                         .HasForeignKey("SerenoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.CambioAjusteIa", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision", "CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.SugerenciaReporte", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaAlternativaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaSugeridaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithMany()
+                        .HasForeignKey("DuplicadoDeId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Cad.Server.Modulos.Casos.Dominio.Asignacion", b =>
