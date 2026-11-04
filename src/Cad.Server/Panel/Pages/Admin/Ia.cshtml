@@ -47,12 +47,38 @@
         <div><dt>Admisión automática</dt><dd data-modo-vigente="@Model.Ajuste.Modo"><strong>@ConsultarAsistencia.Texto(Model.Ajuste.Modo)</strong>@(Model.Ajuste.CambiadoEn is { } en ? $" desde el {TimeZoneInfo.ConvertTime(en, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv)}" : " (valor inicial)")</dd></div>
         <div><dt>Asistente de sugerencias</dt><dd data-asistente>@Model.Asistente</dd></div>
     </dl>
-    @* S6-T16 (admitir de verdad) necesita el modelo de lenguaje y su verificador independiente: hasta entonces el modo se registra
-       y se muestra a los operadores, pero no admite ni calcula nada. Se dice tal cual (principio 3 de PRODUCT.md). *@
-    <p class="aviso aviso--informacion ajuste-ia__nota" data-sin-efecto>
-        <partial name="_Icono" model="@("informacion")" />
-        <span>Por ahora ningún modo admite reportes ni calcula la precisión en «Sombra»: eso llega con el modelo de lenguaje y su verificador independiente. El modo elegido ya se registra y los operadores lo ven.</span>
-    </p>
+    @if (Model.Ajuste.Freno is { } freno)
+    {
+        <p class="aviso aviso--advertencia ajuste-ia__nota" data-freno>
+            <partial name="_Icono" model="@("advertencia")" />
+            <span>@freno</span>
+        </p>
+    }
+</section>
+
+@* 7.7: con los datos de «Sombra» se decide si pasar a «Activa». *@
+<section class="superficie ajuste-ia" aria-labelledby="titulo-sombra-ia" data-precision-sombra>
+    <h2 id="titulo-sombra-ia" class="ajuste-ia__titulo">Lo que habría admitido en «Sombra»</h2>
+    @if (Model.Sombra.Elegibles == 0)
+    {
+        <p class="texto-secundario">Todavía no hay reportes que el modo «Sombra» habría admitido.</p>
+    }
+    else
+    {
+        var s = Model.Sombra;
+        <p data-sombra-resumen>De <strong>@s.Elegibles</strong> @(s.Elegibles == 1 ? "reporte que habría admitido" : "reportes que habría admitido"),
+            los operadores ya decidieron @s.Decididos y admitieron <strong>@s.Admitidos</strong>@(s.Porcentaje is { } p ? $" ({p} %)" : "").</p>
+        <p class="campo__ayuda">Pasa a «Activa» solo con al menos @IaModel.CasosMinimosSombra casos decididos y una precisión de @IaModel.PrecisionObjetivo % o más (propuesta, a confirmar con el PO).</p>
+        @if (s.NoAdmitidos.Count > 0)
+        {
+            <ul class="ajuste-ia__no-admitidos" data-sombra-no-admitidos>
+                @foreach (var n in s.NoAdmitidos)
+                {
+                    <li><a href="/panel/reportes/@n.CasoId">@n.Categoria</a> · @n.Decision por un operador · evaluado el @TimeZoneInfo.ConvertTime(n.EvaluadaEn, Model.ZonaHoraria).ToString("dd/MM HH:mm", inv)</li>
+                }
+            </ul>
+        }
+    }
 </section>
 
 <section class="superficie ajuste-ia" aria-labelledby="titulo-cambiar-ia">

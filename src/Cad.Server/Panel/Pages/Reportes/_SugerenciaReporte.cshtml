@@ -20,6 +20,28 @@
             }
         </div>
 
+        @* S6-T16: si el sistema lo admitirá solo (y cuándo), o qué habría hecho en «Sombra». *@
+        @if (Model.Admision is { } admision && s is not null)
+        {
+            var activa = admision.Modo == Cad.Server.Modulos.Asistencia.Dominio.ModoAdmision.Activa;
+            var hora = admision.AdmitirDesde is { } desde ? TimeZoneInfo.ConvertTime(desde, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : null;
+            <p class="sugerencia__admision" data-admision-evaluada="@(admision.Elegible ? "elegible" : admision.Condicion.ToString())">
+                <partial name="_Icono" model="@("reloj")" />
+                @if (activa && admision.Elegible && Model.Estado == Cad.Server.Modulos.Casos.Dominio.EstadoCaso.Recibido)
+                {
+                    <span>El sistema lo admitirá solo a las <strong>@hora</strong> si nadie inicia la revisión antes. Al iniciarla, decides tú.</span>
+                }
+                else if (admision.Elegible)
+                {
+                    <span>@(activa ? "Cumplía las condiciones para admitirlo solo." : "En modo «Sombra», el sistema lo habría admitido solo.")</span>
+                }
+                else
+                {
+                    <span>No se admitiría solo: @Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision.Texto(admision.Condicion!.Value).</span>
+                }
+            </p>
+        }
+
         @if (s is { PosibleUrgencia: true })
         {
             <div class="aviso aviso--error sugerencia__urgencia" data-sugerencia-urgencia>

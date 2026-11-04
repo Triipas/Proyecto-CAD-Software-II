@@ -11,9 +11,11 @@
         <partial name="_Icono" model="@(activa ? "advertencia" : "informacion")" />
         <div class="admision-automatica__texto">
             <p class="aviso__titulo">Admisión automática: «@ConsultarAsistencia.Texto(Model.Modo)»</p>
-            <p class="aviso__texto">@(activa
-                ? "Puede admitir sola los reportes que cumplan todas las condiciones; si ves algo raro, páusala. Por ahora solo queda registrado: todavía no admite ningún reporte."
-                : "Calcula qué reportes habría admitido, sin admitir ninguno. Por ahora solo queda registrado: todavía no calcula nada.")</p>
+            <p class="aviso__texto">@(Model.Freno is { } freno
+                ? $"Pasó sola a «Sombra». {freno} Solo el administrador puede reactivarla."
+                : activa
+                    ? $"Admite sola los reportes que cumplan todas las condiciones, {Model.Parametros.RetrasoSegundos} s después de llegar si nadie inicia la revisión. Si ves algo raro, páusala."
+                    : "Calcula qué reportes habría admitido, sin admitir ninguno.")</p>
         </div>
         <form method="post" asp-page="/Reportes/Index" asp-page-handler="Pausar" class="admision-automatica__pausa">
             <button type="submit" class="boton boton--secundario boton--compacto" data-pausar-admision data-texto-carga="Pausando…">Pausar</button>

@@ -153,3 +153,22 @@
 .sugerencia__datos > div {
   grid-template-columns: 8rem 1fr;
 }
+
+/* S6-T16: qué hará (o habría hecho) la admisión automática con este reporte. */
+.sugerencia__admision {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-control);
+  font-size: var(--texto-sm);
+  background: var(--color-superficie-hundida);
+}
+
+.sugerencia__admision .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+}

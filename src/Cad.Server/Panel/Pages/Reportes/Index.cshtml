@@ -75,7 +75,14 @@ else
                         <td>@reporte.Ciudadano</td>
                         <td class="reportes__hecho">@hecho.ToString("dd/MM/yyyy HH:mm", inv)</td>
                         <td>@Fuente(reporte.FuenteUbicacion)</td>
-                        <td><a href="/panel/reportes/@reporte.Id" data-abrir-caso>Revisar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></a></td>
+                        <td>
+                            <a href="/panel/reportes/@reporte.Id" data-abrir-caso>@(Model.Programadas.ContainsKey(reporte.Id) ? "Revisar yo" : "Revisar")<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></a>
+                            @* S6-T16 (7.4): mientras corre el retraso, la lista avisa que se admitirá solo; abrirlo e iniciar la revisión lo detiene. *@
+                            @if (Model.Programadas.TryGetValue(reporte.Id, out var programada))
+                            {
+                                <span class="reportes__programada" data-admision-programada>Se admitirá solo a las @TimeZoneInfo.ConvertTime(programada, Model.ZonaHoraria).ToString("HH:mm:ss", inv)</span>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>

@@ -34,7 +34,20 @@ public sealed record SugerenciaVista(
     public bool PorReglas => Modelo == AsistenteReglas.Modelo;
 }
 
-public sealed record AjusteIaVista(ModoAdmision Modo, ParametrosAdmision Parametros, DateTimeOffset? CambiadoEn);
+// Freno: el motivo, si el modo vigente lo puso el freno automático (7.6), para avisarlo en el panel.
+public sealed record AjusteIaVista(ModoAdmision Modo, ParametrosAdmision Parametros, DateTimeOffset? CambiadoEn, string? Freno = null);
+
+// S6-T16: lo que concluyó la admisión automática sobre un reporte.
+public sealed record EvaluacionAdmisionVista(ModoAdmision Modo, bool Elegible, CondicionAdmision? Condicion, DateTimeOffset? AdmitirDesde,
+    string? ModeloVerificador);
+
+// 7.7: en «Sombra», lo que habría admitido frente a lo que decidieron los operadores.
+public sealed record PrecisionSombra(int Elegibles, int Decididos, int Admitidos, IReadOnlyList<NoAdmitidoEnSombra> NoAdmitidos)
+{
+    public int? Porcentaje => Decididos == 0 ? null : (int)Math.Floor(100.0 * Admitidos / Decididos);
+}
+
+public sealed record NoAdmitidoEnSombra(Guid CasoId, string Categoria, string Decision, DateTimeOffset EvaluadaEn);
 
 public sealed record CambioAjusteVista(ModoAdmision Anterior, ModoAdmision Nuevo, string Parametros, string Motivo, string Actor, DateTimeOffset En);
 
@@ -73,7 +86,48 @@ public sealed class ConsultarAsistencia(CadDbContext db)
     public async Task<AjusteIaVista> AjusteAsync(CancellationToken ct)
     {
         var ajuste = await db.AjustesIa.AsNoTracking().SingleOrDefaultAsync(a => a.Id == AjusteIa.IdUnico, ct) ?? AjusteIa.PorDefecto();
-        return new AjusteIaVista(ajuste.Modo, ajuste.Parametros, ajuste.CambiadoEn);
+        var ultimo = ajuste.Modo == ModoAdmision.Sombra
+            ? await db.CambiosAjusteIa.AsNoTracking().OrderByDescending(c => c.En).FirstOrDefaultAsync(ct)
+            : null;
+        var freno = ultimo is { ModoNuevo: ModoAdmision.Sombra } && ultimo.ActorId == Cuentas.Dominio.UsuarioSistema.Id ? ultimo.Motivo : null;
+        return new AjusteIaVista(ajuste.Modo, ajuste.Parametros, ajuste.CambiadoEn, freno);
+    }
+
+    public async Task<EvaluacionAdmisionVista?> EvaluacionAsync(Guid casoId, CancellationToken ct) =>
+        await db.EvaluacionesAdmision.AsNoTracking().Where(e => e.CasoId == casoId)
+            .Select(e => new EvaluacionAdmisionVista(e.Modo, e.Elegible, e.Condicion, e.AdmitirDesde, e.ModeloVerificador))
+            .SingleOrDefaultAsync(ct);
+
+    // 7.4: en la lista, cuándo se admitirá solo cada reporte que espera el retraso (solo con el modo en «Activa»).
+    public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> ProgramadasAsync(IReadOnlyCollection<Guid> casos, CancellationToken ct)
+    {
+        if (casos.Count == 0 || (await AjusteAsync(ct)).Modo != ModoAdmision.Activa)
+            return new Dictionary<Guid, DateTimeOffset>();
+        return await (from e in db.EvaluacionesAdmision.AsNoTracking()
+                      join caso in db.Casos.AsNoTracking() on e.CasoId equals caso.Id
+                      where casos.Contains(e.CasoId) && e.Modo == ModoAdmision.Activa && e.Elegible && e.AdmitirDesde != null
+                            && caso.Estado == Casos.Dominio.EstadoCaso.Recibido
+                      select new { e.CasoId, AdmitirDesde = e.AdmitirDesde!.Value })
+            .ToDictionaryAsync(e => e.CasoId, e => e.AdmitirDesde, ct);
+    }
+
+    // 7.7: de los reportes que «Sombra» habría admitido y que un operador ya decidió, cuántos admitió; y la lista de los que no.
+    public async Task<PrecisionSombra> PrecisionSombraAsync(CancellationToken ct)
+    {
+        var filas = await (from e in db.EvaluacionesAdmision.AsNoTracking()
+                           join caso in db.Casos.AsNoTracking() on e.CasoId equals caso.Id
+                           join categoria in db.CategoriasIncidencia.AsNoTracking() on e.CategoriaId equals categoria.Id
+                           from d in db.DecisionesReporte.AsNoTracking().Where(d => d.CasoId == e.CasoId).DefaultIfEmpty()
+                           where e.Modo == ModoAdmision.Sombra && e.Elegible
+                           select new { e.CasoId, e.EvaluadaEn, Categoria = categoria.Nombre, Tipo = (Casos.Dominio.TipoDecisionReporte?)d.Tipo })
+            .ToListAsync(ct);
+        var decididos = filas.Where(f => f.Tipo is not null).ToList();
+        var noAdmitidos = decididos.Where(f => f.Tipo != Casos.Dominio.TipoDecisionReporte.Admision)
+            .OrderByDescending(f => f.EvaluadaEn)
+            .Select(f => new NoAdmitidoEnSombra(f.CasoId, f.Categoria, f.Tipo == Casos.Dominio.TipoDecisionReporte.Derivacion ? "Derivado" : "Descartado", f.EvaluadaEn))
+            .Take(20)
+            .ToList();
+        return new PrecisionSombra(filas.Count, decididos.Count, decididos.Count(f => f.Tipo == Casos.Dominio.TipoDecisionReporte.Admision), noAdmitidos);
     }
 
     public async Task<IReadOnlyList<CambioAjusteVista>> HistorialAsync(int maximo, CancellationToken ct) =>

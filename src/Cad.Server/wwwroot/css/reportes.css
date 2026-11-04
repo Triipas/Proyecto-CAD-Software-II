@@ -173,3 +173,11 @@
   font-weight: var(--peso-medio);
   color: var(--color-informacion);
 }
+
+/* S6-T16: el reporte se admitirá solo cuando termine el retraso. */
+.reportes__programada {
+  display: block;
+  margin-top: var(--espacio-1);
+  font-size: var(--texto-xs);
+  color: var(--color-advertencia);
+}

@@ -404,7 +404,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         if (reporte.Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision)
             Sugerencia = new VistaSugerencia(id, reporte.Estado, await consultarAsistencia.SugerenciaAsync(id, ct),
                 await buscarDuplicados.EjecutarAsync(id, ct), reporte.CategoriaOriginal, reporte.CategoriaActual, ZonaHoraria,
-                opcionesIa.Value.Duplicados.Metros, opcionesIa.Value.Duplicados.Minutos);
+                opcionesIa.Value.Duplicados.Metros, opcionesIa.Value.Duplicados.Minutos, await consultarAsistencia.EvaluacionAsync(id, ct));
         return true;
     }
 

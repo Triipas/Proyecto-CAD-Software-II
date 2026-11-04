@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Cad.Server.Modulos.Asistencia;
 using Cad.Server.Modulos.Asistencia.Adaptadores;
+using Cad.Server.Modulos.Asistencia.Aplicacion;
 using Cad.Server.Modulos.Asistencia.Puertos;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

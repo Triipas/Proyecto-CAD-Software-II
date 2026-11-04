@@ -17,7 +17,9 @@ public sealed record VistaSugerencia(
     TimeZoneInfo ZonaHoraria,
     // Hasta dónde y cuánto tiempo se buscan los candidatos (Ia:Duplicados).
     int RadioMetros,
-    int VentanaMinutos)
+    int VentanaMinutos,
+    // S6-T16: lo que concluyó la admisión automática (null con el modo apagado o sin análisis).
+    EvaluacionAdmisionVista? Admision = null)
 {
     public bool Visible => Sugerencia is not null || Duplicados.Count > 0;
     public bool EnRevision => Estado == EstadoCaso.EnRevision;

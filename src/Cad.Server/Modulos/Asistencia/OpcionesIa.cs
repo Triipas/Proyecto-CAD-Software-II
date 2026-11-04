@@ -9,10 +9,18 @@ public sealed class OpcionesIa
     // Interruptor de infraestructura: hay o no hay asistente. La admisión automática es otro interruptor (AjusteIa, en la base).
     public bool Habilitada { get; set; }
 
-    // «Gemini» (modelo de lenguaje) o «Reglas» (palabras clave, sin red; sirve para demostrar el flujo sin clave).
+    // «Gemini» o «Groq» (modelos de lenguaje con nivel gratuito) o «Reglas» (palabras clave, sin red; demuestra el flujo sin clave).
     public string Proveedor { get; set; } = ProveedoresIa.Gemini;
 
+    // Quién da la segunda opinión de la admisión automática (S6-T16). Vacío: el modelo preciso del mismo proveedor. Otro proveedor
+    // hace las dos opiniones más independientes y reparte las cuotas gratuitas.
+    public string? ProveedorVerificador { get; set; }
+
     public OpcionesGemini Gemini { get; set; } = new();
+    public OpcionesGroq Groq { get; set; } = new();
+
+    // S6-T09: decisiones anteriores parecidas que acompañan cada análisis (3 por parecido y el resto para equilibrar las decisiones).
+    public int Ejemplos { get; set; } = 6;
 
     public int TiempoMaximoSegundos { get; set; } = 10;
     public int MaximoPorMinuto { get; set; } = 30;
@@ -23,11 +31,14 @@ public sealed class OpcionesIa
     // Versión del documento de criterios de triaje (docs/criterios-triaje.md, S6-T01) con que se decidió.
     public string VersionCriterios { get; set; } = "borrador";
     public OpcionesDuplicados Duplicados { get; set; } = new();
+    // Cada cuánto se buscan admisiones automáticas vencidas (S6-T16).
+    public int IntervaloAdmisionSegundos { get; set; } = 5;
 }
 
 public static class ProveedoresIa
 {
     public const string Gemini = "Gemini";
+    public const string Groq = "Groq";
     public const string Reglas = "Reglas";
 }
 
@@ -38,6 +49,17 @@ public sealed class OpcionesGemini
     public string ModeloRapido { get; set; } = "gemini-3.1-flash-lite";
     public string ModeloPreciso { get; set; } = "gemini-3.8-flash";
     public string UrlBase { get; set; } = "https://generativelanguage.googleapis.com/v1beta/";
+}
+
+// Groq (API compatible con OpenAI). Modelos con salida estructurada estricta según su documentación del 03/11/2026.
+public sealed class OpcionesGroq
+{
+    public string? ClaveApi { get; set; }
+    public string ModeloRapido { get; set; } = "openai/gpt-oss-20b";
+    public string ModeloPreciso { get; set; } = "openai/gpt-oss-120b";
+    public string UrlBase { get; set; } = "https://api.groq.com/openai/v1/";
+    // «low», «medium» o «high» (modelos que razonan); vacío para no enviarlo.
+    public string? EsfuerzoRazonamiento { get; set; } = "low";
 }
 
 // HU45: candidatos a duplicado, sin IA (≤ 150 m y ≤ 2 h, hasta 5).

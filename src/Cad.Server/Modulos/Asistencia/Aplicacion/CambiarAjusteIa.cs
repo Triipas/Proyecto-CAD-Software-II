@@ -29,6 +29,13 @@ public sealed class CambiarAjusteIa(CadDbContext db, TimeProvider reloj, ILogger
         return await AplicarAsync(modo, parametros, motivo!.Trim(), administradorId, ct);
     }
 
+    // 7.6 — el freno automático: pasa de «Activa» a «Sombra», con el sistema como responsable y el motivo calculado.
+    public async Task<ResultadoAjusteIa> FrenarAsync(string motivo, CancellationToken ct)
+    {
+        var ajuste = await LeerAsync(ct);
+        return await AplicarAsync(ModoAdmision.Sombra, ajuste.Parametros, motivo, Modulos.Cuentas.Dominio.UsuarioSistema.Id, ct);
+    }
+
     public async Task<ResultadoAjusteIa> PausarAsync(Guid operadorId, CancellationToken ct)
     {
         var ajuste = await LeerAsync(ct);

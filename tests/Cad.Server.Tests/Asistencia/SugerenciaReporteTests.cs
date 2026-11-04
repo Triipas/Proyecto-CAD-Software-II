@@ -35,7 +35,11 @@ public sealed class AsistenteFalso : IAsistenteReportes
         return Responder(entrada, ct);
     }
 
-    public Task<ResultadoAsistente?> VerificarAsync(EntradaAnalisis entrada, CancellationToken ct) => Task.FromResult<ResultadoAsistente?>(null);
+    // Segunda opinión (admisión automática): por defecto no hay.
+    public Func<EntradaAnalisis, CancellationToken, Task<ResultadoAsistente?>> Verificar { get; set; } =
+        (_, _) => Task.FromResult<ResultadoAsistente?>(null);
+
+    public Task<ResultadoAsistente?> VerificarAsync(EntradaAnalisis entrada, CancellationToken ct) => Verificar(entrada, ct);
 }
 
 // HU44 (S6-T12) y HU45 (S6-T10, S6-T11, S6-T13) — la sugerencia del asistente sobre un reporte, de punta a punta: cola en segundo

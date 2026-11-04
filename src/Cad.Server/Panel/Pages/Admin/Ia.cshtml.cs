@@ -19,6 +19,11 @@ public class IaModel(ConsultarAsistencia consultar, CambiarAjusteIa cambiar, IOp
 
     public AjusteIaVista Ajuste { get; private set; } = null!;
     public IReadOnlyList<CambioAjusteVista> Historial { get; private set; } = [];
+    public PrecisionSombra Sombra { get; private set; } = new(0, 0, 0, []);
+
+    // 7.7: recomendación para pasar de «Sombra» a «Activa» (a confirmar con el PO).
+    public const int CasosMinimosSombra = 100;
+    public const int PrecisionObjetivo = 98;
     public Dictionary<string, string[]> Errores { get; private set; } = [];
 
     [TempData]
@@ -37,13 +42,23 @@ public class IaModel(ConsultarAsistencia consultar, CambiarAjusteIa cambiar, IOp
             var o = opciones.Value;
             if (!o.Habilitada)
                 return "Apagado (Ia:Habilitada = false): no hay sugerencias.";
-            if (string.Equals(o.Proveedor, ProveedoresIa.Reglas, StringComparison.OrdinalIgnoreCase))
-                return "Reglas por palabras clave, sin modelo de lenguaje (para demostrar el flujo).";
-            return string.IsNullOrWhiteSpace(o.Gemini.ClaveApi)
-                ? "Gemini sin clave de API configurada: no hay sugerencias."
-                : $"Gemini ({o.Gemini.ModeloRapido}; escala a {o.Gemini.ModeloPreciso}).";
+            var principal = Describir(o, o.Proveedor);
+            return string.IsNullOrWhiteSpace(o.ProveedorVerificador) || string.Equals(o.ProveedorVerificador, o.Proveedor, StringComparison.OrdinalIgnoreCase)
+                ? principal
+                : $"{principal} Segunda opinión: {Describir(o, o.ProveedorVerificador)}";
         }
     }
+
+    private static string Describir(OpcionesIa o, string proveedor) => proveedor.ToLowerInvariant() switch
+    {
+        "reglas" => "Reglas por palabras clave, sin modelo de lenguaje: no da segunda opinión, así que nunca admite solo.",
+        "groq" => string.IsNullOrWhiteSpace(o.Groq.ClaveApi)
+            ? "Groq sin clave de API configurada: no hay sugerencias."
+            : $"Groq ({o.Groq.ModeloRapido}; escala a {o.Groq.ModeloPreciso}).",
+        _ => string.IsNullOrWhiteSpace(o.Gemini.ClaveApi)
+            ? "Gemini sin clave de API configurada: no hay sugerencias."
+            : $"Gemini ({o.Gemini.ModeloRapido}; escala a {o.Gemini.ModeloPreciso}).",
+    };
 
     public async Task OnGetAsync(CancellationToken ct)
     {
@@ -77,6 +92,7 @@ public class IaModel(ConsultarAsistencia consultar, CambiarAjusteIa cambiar, IOp
     {
         Ajuste = await consultar.AjusteAsync(ct);
         Historial = await consultar.HistorialAsync(20, ct);
+        Sombra = await consultar.PrecisionSombraAsync(ct);
     }
 
     public sealed class FormularioAjuste

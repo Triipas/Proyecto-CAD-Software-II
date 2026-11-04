@@ -17,6 +17,8 @@ public class IndexModel(ConsultarReportes consultar, ConsultarAsistencia consult
     public IReadOnlyList<ReporteEnBandeja> Reportes { get; private set; } = [];
     public IReadOnlyDictionary<Guid, string> CategoriasSugeridas { get; private set; } = new Dictionary<Guid, string>();
     public AjusteIaVista Ajuste { get; private set; } = null!;
+    // S6-T16: cuándo se admitirá solo cada reporte que espera el retraso.
+    public IReadOnlyDictionary<Guid, DateTimeOffset> Programadas { get; private set; } = new Dictionary<Guid, DateTimeOffset>();
 
     [TempData]
     public string? Mensaje { get; set; }
@@ -29,6 +31,7 @@ public class IndexModel(ConsultarReportes consultar, ConsultarAsistencia consult
         Reportes = await consultar.EjecutarAsync(ct);
         CategoriasSugeridas = await consultarAsistencia.CategoriasDistintasAsync(Reportes.Select(r => r.Id).ToList(), ct);
         Ajuste = await consultarAsistencia.AjusteAsync(ct);
+        Programadas = await consultarAsistencia.ProgramadasAsync(Reportes.Select(r => r.Id).ToList(), ct);
     }
 
     // HU45 (7.2): el operador solo puede pausar la admisión automática (pasa a «Apagada»). Vuelve a donde estaba (Reportes o Central).

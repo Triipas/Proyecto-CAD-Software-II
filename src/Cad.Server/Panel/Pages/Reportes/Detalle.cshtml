@@ -95,6 +95,10 @@
     // HU15–HU17: la decisión registrada, en la tarjeta (derivado o descartado) o en el contexto (admitido).
     void DatosDecision(Cad.Server.Modulos.Consultas.DecisionVista d)
     {
+        @if (d.Automatica)
+        {
+            <p class="decision-automatica" data-admitido-automaticamente>Admitido automáticamente por el sistema. La central puede descartarlo o reasignarlo como cualquier otro.</p>
+        }
         <dl class="datos datos--en-linea" data-decision="@d.Tipo">
             <div><dt>Decisión</dt><dd>@d.Texto</dd></div>
             @if (d.Destino is { } destino)

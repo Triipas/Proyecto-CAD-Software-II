@@ -18,8 +18,9 @@ public sealed record CorreccionVista(string Anterior, string Nueva, string Opera
 
 // HU15–HU17: la decisión registrada sobre el reporte.
 public sealed record DecisionVista(TipoDecisionReporte Tipo, string Motivo, string? Destino, string? Accion, string Operador, DateTimeOffset En,
-    string? MotivoCodigo = null, string? Prioridad = null, string? Heridos = null)
+    string? MotivoCodigo = null, string? Prioridad = null, string? Heridos = null, bool Automatica = false)
 {
+    // HU45 (S6-T16): Automatica = «Admitido automáticamente» (el responsable es el usuario del sistema).
     // 27/10/2026: los textos de los catálogos (motivo del descarte; prioridad y heridos de la admisión). Nulos si la decisión
     // es anterior a los catálogos.
     public string? TextoMotivoDescarte => Cad.Contratos.Casos.Catalogo.Texto(Cad.Contratos.Casos.MotivosDescarte.Todos, MotivoCodigo);
@@ -142,7 +143,8 @@ public sealed class ConsultarDetalleReporte(CadDbContext db)
                               join caso in db.Casos.AsNoTracking() on registro.CasoId equals caso.Id
                               where registro.CasoId == casoId
                               select new DecisionVista(registro.Tipo, registro.Motivo, registro.Destino, registro.Accion,
-                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn, registro.MotivoCodigo, caso.Prioridad, caso.Heridos))
+                                  operador.Nombres + " " + operador.Apellidos, registro.DecididaEn, registro.MotivoCodigo, caso.Prioridad, caso.Heridos,
+                                  registro.OperadorId == Cuentas.Dominio.UsuarioSistema.Id))
             .SingleOrDefaultAsync(ct);
 
         var fotos = await db.FotosReporte.AsNoTracking().CountAsync(f => f.CasoId == casoId, ct);

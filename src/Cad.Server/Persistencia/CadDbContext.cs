@@ -56,6 +56,7 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Asistencia.Dominio.SugerenciaReporte> SugerenciasReporte => Set<Modulos.Asistencia.Dominio.SugerenciaReporte>();
     public DbSet<Modulos.Asistencia.Dominio.AjusteIa> AjustesIa => Set<Modulos.Asistencia.Dominio.AjusteIa>();
     public DbSet<Modulos.Asistencia.Dominio.CambioAjusteIa> CambiosAjusteIa => Set<Modulos.Asistencia.Dominio.CambioAjusteIa>();
+    public DbSet<Modulos.Asistencia.Dominio.EvaluacionAdmision> EvaluacionesAdmision => Set<Modulos.Asistencia.Dominio.EvaluacionAdmision>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
     // su titular; un cambio interno que no cambia el estado público (en camino, inicio de la atención) no la genera.
@@ -712,6 +713,23 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             cambio.Property(c => c.Motivo).HasMaxLength(Modulos.Asistencia.Dominio.CambioAjusteIa.MaximoMotivo);
             cambio.HasIndex(c => c.En);
             cambio.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ActorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU45 (S6-T16): qué concluyó la admisión automática sobre cada reporte, solo inserción.
+        builder.Entity<Modulos.Asistencia.Dominio.EvaluacionAdmision>(evaluacion =>
+        {
+            evaluacion.ToTable("EvaluacionesAdmision", tabla => tabla.HasCheckConstraint("CK_EvaluacionesAdmision_Elegible",
+                "(\"Elegible\" AND \"Condicion\" IS NULL) OR (NOT \"Elegible\" AND \"Condicion\" IS NOT NULL AND \"AdmitirDesde\" IS NULL)"));
+            evaluacion.HasKey(e => e.CasoId);
+            evaluacion.Property(e => e.Modo).HasConversion<string>().HasMaxLength(20);
+            evaluacion.Property(e => e.Condicion).HasConversion<string>().HasMaxLength(30);
+            evaluacion.Property(e => e.ModeloVerificador).HasMaxLength(80);
+            evaluacion.Property(e => e.Prioridad).HasMaxLength(LargoCodigo);
+            evaluacion.Property(e => e.Motivo).HasMaxLength(Modulos.Asistencia.Dominio.EvaluacionAdmision.MaximoMotivo);
+            evaluacion.HasIndex(e => e.AdmitirDesde).HasFilter("\"AdmitirDesde\" IS NOT NULL");
+            evaluacion.HasIndex(e => e.EvaluadaEn);
+            evaluacion.HasOne<Caso>().WithOne().HasForeignKey<Modulos.Asistencia.Dominio.EvaluacionAdmision>(e => e.CasoId).OnDelete(DeleteBehavior.Restrict);
+            evaluacion.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(e => e.CategoriaId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // S6-T05: el usuario del sistema, actor de las acciones automáticas. Sin contraseña, sin rol y desactivado: no puede

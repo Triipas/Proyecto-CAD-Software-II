@@ -15,6 +15,7 @@ public static class ModuloAsistencia
         services.Configure<OpcionesIa>(configuracion.GetSection(OpcionesIa.Seccion));
         services.AddSingleton<ControlConsumoIa>();
         services.AddHttpClient<AsistenteGemini>();
+        services.AddHttpClient<AsistenteGroq>();
         services.AddSingleton<AsistenteReglas>();
         services.AddSingleton<AsistenteNulo>();
         // El proveedor se elige al pedirlo: las pruebas pueden cambiar la configuración o reemplazar el asistente.
@@ -23,14 +24,12 @@ public static class ModuloAsistencia
             var opciones = sp.GetRequiredService<IOptions<OpcionesIa>>().Value;
             if (!opciones.Habilitada)
                 return sp.GetRequiredService<AsistenteNulo>();
-            if (string.Equals(opciones.Proveedor, ProveedoresIa.Reglas, StringComparison.OrdinalIgnoreCase))
-                return sp.GetRequiredService<AsistenteReglas>();
-            var gemini = sp.GetRequiredService<AsistenteGemini>();
-            if (gemini.Disponible)
-                return gemini;
-            sp.GetRequiredService<ILogger<AsistenteGemini>>().LogWarning(
-                "Ia:Habilitada está activa pero falta Ia:Gemini:ClaveApi: no hay asistente.");
-            return sp.GetRequiredService<AsistenteNulo>();
+            var principal = Proveedor(sp, opciones.Proveedor);
+            if (!principal.Disponible || string.IsNullOrWhiteSpace(opciones.ProveedorVerificador)
+                || string.Equals(opciones.ProveedorVerificador, opciones.Proveedor, StringComparison.OrdinalIgnoreCase))
+                return principal;
+            var verificador = Proveedor(sp, opciones.ProveedorVerificador);
+            return verificador.Disponible ? new AsistenteConVerificador(principal, verificador) : principal;
         });
 
         services.AddSingleton<ColaAnalisis>();
@@ -38,8 +37,37 @@ public static class ModuloAsistencia
         services.AddHostedService<ServicioAnalisis>();
         services.AddScoped<AnalizarReporte>();
         services.AddScoped<BuscarDuplicados>();
+        services.AddScoped<IRecuperadorEjemplos, RecuperarEjemplos>();
+        services.AddScoped<EvaluarAdmision>();
+        services.AddScoped<AdmitirAutomaticamente>();
+        services.AddHostedService<ServicioAdmisionAutomatica>();
         services.AddScoped<CambiarAjusteIa>();
         services.AddScoped<ConsultarAsistencia>();
         return services;
     }
+
+    // Un proveedor sin clave no está disponible: se avisa una vez por solicitud y no hay sugerencias (o no hay verificación).
+    private static IAsistenteReportes Proveedor(IServiceProvider sp, string nombre)
+    {
+        IAsistenteReportes asistente = nombre.ToLowerInvariant() switch
+        {
+            "reglas" => sp.GetRequiredService<AsistenteReglas>(),
+            "groq" => sp.GetRequiredService<AsistenteGroq>(),
+            _ => sp.GetRequiredService<AsistenteGemini>(),
+        };
+        if (!asistente.Disponible)
+            sp.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ModuloAsistencia))
+                .LogWarning("Ia: el proveedor {Proveedor} no tiene clave de API configurada (Ia:{Proveedor}:ClaveApi).", nombre, nombre);
+        return asistente.Disponible ? asistente : sp.GetRequiredService<AsistenteNulo>();
+    }
+}
+
+// Análisis con un proveedor y segunda opinión con otro (Ia:ProveedorVerificador).
+public sealed class AsistenteConVerificador(IAsistenteReportes principal, IAsistenteReportes verificador) : IAsistenteReportes
+{
+    public bool Disponible => principal.Disponible;
+
+    public Task<ResultadoAsistente?> AnalizarAsync(EntradaAnalisis entrada, CancellationToken ct) => principal.AnalizarAsync(entrada, ct);
+
+    public Task<ResultadoAsistente?> VerificarAsync(EntradaAnalisis entrada, CancellationToken ct) => verificador.VerificarAsync(entrada, ct);
 }

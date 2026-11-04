@@ -551,6 +551,63 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.ToTable("CambiosAjusteIa", (string)null);
                 });
 
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision", b =>
+                {
+                    b.Property<Guid>("CasoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AdmitirDesde")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Condicion")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("Elegible")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("EvaluadaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModeloVerificador")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Modo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Prioridad")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool?>("VerificadorCoincide")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("CasoId");
+
+                    b.HasIndex("AdmitirDesde")
+                        .HasFilter("\"AdmitirDesde\" IS NOT NULL");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("EvaluadaEn");
+
+                    b.ToTable("EvaluacionesAdmision", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EvaluacionesAdmision_Elegible", "(\"Elegible\" AND \"Condicion\" IS NULL) OR (NOT \"Elegible\" AND \"Condicion\" IS NOT NULL AND \"AdmitirDesde\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.SugerenciaReporte", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2243,6 +2300,21 @@ namespace Cad.Server.Persistencia.Migraciones
                     b.HasOne("Cad.Server.Modulos.Cuentas.Dominio.Usuario", null)
                         .WithMany()
                         .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision", b =>
+                {
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.Caso", null)
+                        .WithOne()
+                        .HasForeignKey("Cad.Server.Modulos.Asistencia.Dominio.EvaluacionAdmision", "CasoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cad.Server.Modulos.Casos.Dominio.CategoriaIncidencia", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

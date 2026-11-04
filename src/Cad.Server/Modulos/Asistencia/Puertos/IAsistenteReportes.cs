@@ -26,8 +26,17 @@ public sealed record CategoriaParaAnalisis(Guid Id, string Nombre, string Ayuda)
 // Otro reporte cercano en el espacio y en el tiempo (BuscarDuplicados): el modelo dice si describe el mismo hecho.
 public sealed record CandidatoDuplicado(Guid CasoId, string Descripcion, string Categoria, int Metros, int Minutos);
 
-// Una decisión ya tomada por la central sobre un reporte parecido (S6-T09). Vacío hasta que exista RecuperarEjemplos.
-public sealed record EjemploDecidido(string Descripcion, string Categoria, DecisionSugerida Decision, string Motivo);
+// Una decisión ya tomada por la central sobre un reporte parecido (S6-T09), con sus códigos de catálogo: el modelo imita el estilo
+// del motivo y el destino o el motivo del descarte que usa la central.
+public sealed record EjemploDecidido(string Descripcion, string Categoria, DecisionSugerida Decision, string Motivo,
+    string? DestinoCodigo = null, string? MotivoDescarteCodigo = null);
+
+// Plan, 5.4 — de dónde salen los ejemplos. La primera versión usa la búsqueda de texto completo de PostgreSQL; la interfaz permite
+// cambiarla por embeddings si la evaluación demuestra que mejora.
+public interface IRecuperadorEjemplos
+{
+    Task<IReadOnlyList<EjemploDecidido>> RecuperarAsync(Guid casoId, string descripcion, int cantidad, CancellationToken ct);
+}
 
 // Lo que viaja al asistente (10): textos ya anonimizados; sin contacto, identidad del ciudadano ni coordenadas exactas.
 public sealed record EntradaAnalisis(
