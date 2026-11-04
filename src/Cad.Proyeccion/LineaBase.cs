@@ -3,7 +3,7 @@ namespace Cad.Proyeccion;
 // Parámetros de la línea base (plan, 8.4); van en Proyeccion:* y se ajustan en el mundo A.
 public sealed record ParametrosLineaBase(int Semanas = 26, double VidaMedia = 6, double Encogimiento = 3, double Suavizado = 0.3);
 
-// HU46 (plan, 8.4) — línea base estadística: casos esperados en una celda y un bloque.
+// HU48 (plan, 8.4) — línea base estadística: casos esperados en una celda y un bloque.
 //   1. Por semana atrás, los casos en la misma franja semanal (día y bloque), con memoria corta: peso 0,5^(k / vida media).
 //   2. Reducción hacia lo general: con pocos casos, pesa más la tasa total de la celda repartida según la franja en toda la ciudad.
 //   3. Suavizado espacial con las 8 celdas vecinas.

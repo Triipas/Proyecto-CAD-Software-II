@@ -1,6 +1,6 @@
 namespace Cad.Server.Modulos.Asistencia.Puertos;
 
-// HU44 y HU45 (plan de asistencia con IA, 5.2) — el puerto del asistente. Una sola llamada por reporte devuelve a la vez la
+// HU46 y HU47 (plan de asistencia con IA, 5.2) — el puerto del asistente. Una sola llamada por reporte devuelve a la vez la
 // categoría y el triaje. Lo implementan un asistente por reglas (sin red), el de Gemini y, en las pruebas, uno falso.
 public interface IAsistenteReportes
 {
@@ -70,7 +70,7 @@ public sealed record AnalisisReporte(
     Guid? DuplicadoDeId,
     IReadOnlyList<SenalTriaje> Senales);
 
-// HU46 (S6-T21) — una respuesta JSON de un modelo de lenguaje para otra tarea que no es el análisis de un reporte (el parte de
+// HU48 (S6-T21) — una respuesta JSON de un modelo de lenguaje para otra tarea que no es el análisis de un reporte (el parte de
 // patrullaje). El texto ya cumple el esquema pedido; quien llama lo valida igual.
 public sealed record RespuestaModelo(string Texto, string Modelo, int TokensEntrada, int TokensSalida);
 

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- HU46 (S6-T18) — proyección de focos: cuadrícula, bloques de 4 h, rasgos, línea base, métricas y el predictor que carga el modelo
+  <!-- HU48 (S6-T18) — proyección de focos: cuadrícula, bloques de 4 h, rasgos, línea base, métricas y el predictor que carga el modelo
        entrenado. La comparten la herramienta de entrenamiento y el servidor: los rasgos se calculan con el mismo código al entrenar y al
        predecir. -->
   <PropertyGroup>

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 
-// HU44 y HU45 (S6-T11; plan de asistencia con IA, 5.6) — analiza un reporte recién registrado: arma la entrada anonimizada con los
+// HU46 y HU47 (S6-T11; plan de asistencia con IA, 5.6) — analiza un reporte recién registrado: arma la entrada anonimizada con los
 // candidatos a duplicado y decisiones parecidas ya tomadas (S6-T09), llama al asistente con tiempo máximo, valida la respuesta, la
 // guarda y avisa a la central. Con la admisión automática en «Sombra» o «Activa», además evalúa si se admitiría sola (S6-T16) y lo
 // guarda en la misma transacción. Es idempotente (una sugerencia por reporte y versión del prompt). Si algo falla no se guarda nada

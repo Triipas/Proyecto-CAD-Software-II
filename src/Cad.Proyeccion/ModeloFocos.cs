@@ -3,7 +3,7 @@ using Microsoft.ML;
 
 namespace Cad.Proyeccion;
 
-// HU46 (plan, 8.3 y 8.5) — el modelo de aprendizaje automático: árboles de decisión con objetivo de conteo (FastTree con pérdida de
+// HU48 (plan, 8.3 y 8.5) — el modelo de aprendizaje automático: árboles de decisión con objetivo de conteo (FastTree con pérdida de
 // Tweedie, adecuada para conteos con muchos ceros). Se entrena fuera del servidor (herramienta ia-evaluacion) y el servidor solo lo
 // carga para predecir. Con el modelo viaja el peso del conjunto con la línea base, elegido en el backtest.
 public sealed record MetadatosModelo(string Version, double PesoModelo, string Mundo, int Semanas, DateTimeOffset EntrenadoEn, string[] Rasgos);

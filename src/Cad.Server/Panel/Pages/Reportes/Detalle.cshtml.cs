@@ -20,7 +20,7 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     Modulos.Asistencia.ConsultarAsistencia consultarAsistencia, Modulos.Asistencia.Aplicacion.BuscarDuplicados buscarDuplicados,
     Microsoft.Extensions.Options.IOptions<Modulos.Asistencia.OpcionesIa> opcionesIa, IConfiguration configuracion) : PageModel
 {
-    // HU44 y HU45 (S6-T12, S6-T13): sugerencia del asistente y candidatos a duplicado, mientras el reporte espera la decisión.
+    // HU46 y HU47 (S6-T12, S6-T13): sugerencia del asistente y candidatos a duplicado, mientras el reporte espera la decisión.
     public VistaSugerencia? Sugerencia { get; private set; }
 
     [BindProperty]

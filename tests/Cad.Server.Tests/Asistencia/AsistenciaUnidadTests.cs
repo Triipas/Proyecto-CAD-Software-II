@@ -45,7 +45,7 @@ public class AnonimizadorTests
     public void ConservaDireccionesHorasYNumerosCortos(string texto) => Assert.Equal(texto, Anonimizador.Limpiar(texto));
 }
 
-// HU44-CA05 y HU45-CA04/CA08 (plan, 5.5): la respuesta se valida antes de guardarla.
+// HU46-CA05 y HU47-CA04/CA08 (plan, 5.5): la respuesta se valida antes de guardarla.
 public class ValidarAnalisisTests
 {
     [Fact]
@@ -81,7 +81,7 @@ public class ValidarAnalisisTests
     }
 
     [Fact]
-    public void HU45_CA04_DescartarConPosibleUrgencia_SeReemplazaPorRevisarConCuidado()
+    public void HU47_CA04_DescartarConPosibleUrgencia_SeReemplazaPorRevisarConCuidado()
     {
         var valido = ValidarAnalisis.Aplicar(DatosAsistencia.Analisis(decision: DecisionSugerida.Descartar, urgencia: true,
             motivoDescarte: MotivosDescarte.FalsoOMalintencionado), DatosAsistencia.Entrada("texto"));
@@ -92,7 +92,7 @@ public class ValidarAnalisisTests
     }
 
     [Fact]
-    public void HU45_CA08_TextosLargosSeRecortanYLosCodigosAjenosSeQuitan()
+    public void HU47_CA08_TextosLargosSeRecortanYLosCodigosAjenosSeQuitan()
     {
         var valido = ValidarAnalisis.Aplicar(DatosAsistencia.Analisis(decision: DecisionSugerida.Derivar, motivo: new string('m', 3000),
             destino: "Inventado") with { Justificacion = new string('j', 900), AccionBorrador = new string('a', 2500) }, DatosAsistencia.Entrada("texto"));

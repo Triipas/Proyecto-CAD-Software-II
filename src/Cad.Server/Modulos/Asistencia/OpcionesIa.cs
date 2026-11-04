@@ -63,7 +63,7 @@ public sealed class OpcionesGroq
     public string? EsfuerzoRazonamiento { get; set; } = "low";
 }
 
-// HU45: candidatos a duplicado, sin IA (≤ 150 m y ≤ 2 h, hasta 5).
+// HU47: candidatos a duplicado, sin IA (≤ 150 m y ≤ 2 h, hasta 5).
 public sealed class OpcionesDuplicados
 {
     public int Metros { get; set; } = 150;

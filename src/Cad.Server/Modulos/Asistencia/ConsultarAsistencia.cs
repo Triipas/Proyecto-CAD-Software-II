@@ -61,7 +61,7 @@ public sealed record RendimientoModelo(string Modelo, int Sugerencias, int Decid
 
 public sealed record CambioAjusteVista(ModoAdmision Anterior, ModoAdmision Nuevo, string Parametros, string Motivo, string Actor, DateTimeOffset En);
 
-// Lecturas del módulo para el panel: la sugerencia de un reporte (HU44, HU45), las categorías sugeridas de la lista de reportes, y
+// Lecturas del módulo para el panel: la sugerencia de un reporte (HU46, HU47), las categorías sugeridas de la lista de reportes, y
 // el modo de la admisión automática con su historial (S6-T15).
 public sealed class ConsultarAsistencia(CadDbContext db)
 {
@@ -79,7 +79,7 @@ public sealed class ConsultarAsistencia(CadDbContext db)
             s.PosibleUrgencia, s.MotivoUrgencia, s.ListaSenales, s.DuplicadoDeId, s.Modelo, s.Escalada, s.CreadaEn);
     }
 
-    // HU44: en la lista de reportes, la categoría sugerida solo cuando difiere de la vigente.
+    // HU46: en la lista de reportes, la categoría sugerida solo cuando difiere de la vigente.
     public async Task<IReadOnlyDictionary<Guid, string>> CategoriasDistintasAsync(IReadOnlyCollection<Guid> casos, CancellationToken ct)
     {
         if (casos.Count == 0)

@@ -1,4 +1,4 @@
-// HU45 (S6-T13) — «Usar este motivo»: copia la decisión sugerida al formulario «Decidir» (tipo, motivo y, según la decisión, la
+// HU47 (S6-T13) — «Usar este motivo»: copia la decisión sugerida al formulario «Decidir» (tipo, motivo y, según la decisión, la
 // prioridad, el destino y la acción, o el motivo del descarte). No registra nada (CA02): el operador revisa, edita y pulsa
 // «Registrar la decisión». Delegado en el documento: la tarjeta se reemplaza en vivo cuando llega la sugerencia (consola.js).
 (() => {

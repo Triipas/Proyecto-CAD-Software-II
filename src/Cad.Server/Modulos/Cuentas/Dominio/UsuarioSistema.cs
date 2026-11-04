@@ -1,6 +1,6 @@
 namespace Cad.Server.Modulos.Cuentas.Dominio;
 
-// S6-T05 — actor de las acciones automáticas (admisión automática, HU45; plan de asistencia con IA, 7.5). Los eventos y las
+// S6-T05 — actor de las acciones automáticas (admisión automática, HU47; plan de asistencia con IA, 7.5). Los eventos y las
 // decisiones guardan su responsable como clave foránea a Usuarios, así que el sistema es un usuario real: se siembra en la
 // migración con identificador fijo, sin contraseña, sin rol y desactivado. No puede iniciar sesión y, sin rol, no aparece en
 // las listas de cuentas, operadores ni serenos (todas filtran por rol).

@@ -1,4 +1,4 @@
-// HU46 (S6-T20) — mapa de la vista «Proyección»: cada zona de unos 550 m se pinta según su nivel (alto, medio, bajo) y las de nivel
+// HU48 (S6-T20) — mapa de la vista «Proyección»: cada zona de unos 550 m se pinta según su nivel (alto, medio, bajo) y las de nivel
 // alto y medio llevan además el nivel escrito (CA08: no solo color). Una zona de nivel alto sin sereno operativo cerca lleva el borde
 // discontinuo. Solo celdas: el mapa no recibe ni muestra casos (CA03).
 (() => {

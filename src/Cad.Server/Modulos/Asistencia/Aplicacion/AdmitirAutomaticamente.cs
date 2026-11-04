@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 
-// HU45 (S6-T16; plan de asistencia con IA, 7.4 y 7.6) — la admisión automática en «Activa». Pasado el retraso, cada reporte
+// HU47 (S6-T16; plan de asistencia con IA, 7.4 y 7.6) — la admisión automática en «Activa». Pasado el retraso, cada reporte
 // elegible que sigue «Recibido» se admite con los mismos casos de uso que un operador, con el usuario del sistema como responsable:
 // iniciar la revisión (si un operador ya la tomó, IniciarAsync rechaza y el sistema se aparta, CA04), corregir la categoría si está
 // permitido y admitir con el motivo «Admitido automáticamente por el sistema: …». Si el modo se pausó durante el retraso, no se admite

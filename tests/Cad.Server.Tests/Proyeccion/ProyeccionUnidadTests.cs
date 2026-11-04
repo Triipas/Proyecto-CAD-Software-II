@@ -5,7 +5,7 @@ using Cad.Server.Modulos.Proyeccion;
 
 namespace Cad.Server.Tests.Proyeccion;
 
-// HU46 (S6-T18; plan, 8.3 a 8.6 y 9.3) — piezas de la proyección sin base de datos. Datos simulados.
+// HU48 (S6-T18; plan, 8.3 a 8.6 y 9.3) — piezas de la proyección sin base de datos. Datos simulados.
 public class ProyeccionUnidadTests
 {
     private static readonly DateTimeOffset LunesDiezDeLaManana = new(2003, 6, 2, 10, 0, 0, TimeSpan.FromHours(-5));

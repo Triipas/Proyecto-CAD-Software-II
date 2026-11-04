@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Cad.Server.Tests.Asistencia;
 
-// HU45 (S6-T15; plan de asistencia con IA, 7.1, 7.2 y 7.8) — el interruptor de la admisión automática: el administrador cambia el
+// HU47 (S6-T15; plan de asistencia con IA, 7.1, 7.2 y 7.8) — el interruptor de la admisión automática: el administrador cambia el
 // modo con un motivo, el operador solo puede pausarlo, cada cambio queda en el historial y un aviso muestra el modo vigente en
 // «Reportes» y «Central». El ajuste es global: cada prueba lo deja «Apagada» al terminar. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]

@@ -2,7 +2,7 @@ using Cad.Server.Modulos.Asistencia.Puertos;
 
 namespace Cad.Server.Modulos.Asistencia.Dominio;
 
-// HU44 y HU45 (S6-T07) — la sugerencia del asistente sobre un reporte. Solo inserción: una por reporte y versión del prompt.
+// HU46 y HU47 (S6-T07) — la sugerencia del asistente sobre un reporte. Solo inserción: una por reporte y versión del prompt.
 // Lo que hizo el operador no se guarda aquí: se deduce de la categoría vigente, las correcciones y la decisión registradas, así
 // el dominio de los casos no depende de la IA.
 public sealed class SugerenciaReporte

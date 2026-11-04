@@ -9,7 +9,7 @@ namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 public sealed record DuplicadoPosible(Guid CasoId, string Categoria, string Descripcion, EstadoCaso Estado, int Metros, int Minutos,
     DateTimeOffset RegistradoEn);
 
-// HU45 (S6-T10) — candidatos a duplicado, sin IA: otros reportes no cancelados ni descartados registrados a ≤ 150 m y ≤ 2 h, con
+// HU47 (S6-T10) — candidatos a duplicado, sin IA: otros reportes no cancelados ni descartados registrados a ≤ 150 m y ≤ 2 h, con
 // punto en ambos, hasta 5 y los más cercanos primero. No se exige la misma categoría: el ciudadano pudo equivocarse. Se muestran
 // aunque la IA esté apagada (CA05); confirmar que describen el mismo hecho le corresponde al modelo.
 public sealed class BuscarDuplicados(CadDbContext db, IOptions<OpcionesIa> opciones)

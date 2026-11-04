@@ -66,7 +66,7 @@ else
                         <td data-estado><partial name="_ChipEstado" model="@((reporte.Estado, false))" /></td>
                         <td class="reportes__categoria">
                             @reporte.Categoria
-                            @* HU44: la categoría sugerida por el asistente, solo cuando difiere de la vigente. *@
+                            @* HU46: la categoría sugerida por el asistente, solo cuando difiere de la vigente. *@
                             @if (Model.CategoriasSugeridas.TryGetValue(reporte.Id, out var sugerida))
                             {
                                 <span class="reportes__sugerida" data-categoria-sugerida>Sugerida: @sugerida</span>

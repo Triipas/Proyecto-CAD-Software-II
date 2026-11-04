@@ -1,7 +1,7 @@
 namespace Cad.Proyeccion;
 
 // Un caso del histórico, reducido a lo que la proyección necesita: cuándo, dónde (para saber la celda) y su categoría (para explicar
-// la zona). Nunca sale de la proyección: lo que se muestra son celdas (HU29-CA05, HU46-CA03).
+// la zona). Nunca sale de la proyección: lo que se muestra son celdas (HU29-CA05, HU48-CA03).
 public readonly record struct CasoHistorico(DateTimeOffset RegistradoEn, double Latitud, double Longitud, int Categoria = -1);
 
 // Los casos indexados por celda y bloque, para contar en tiempo constante. Todo lo que se calcula para un bloque usa solo los casos

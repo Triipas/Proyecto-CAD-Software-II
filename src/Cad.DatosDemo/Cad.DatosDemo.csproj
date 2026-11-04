@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- HU46 (S6-T02) — generador de «mundos» simulados para entrenar y medir la proyección de focos: casos con focos fijos y cambiantes,
+  <!-- HU48 (S6-T02) — generador de «mundos» simulados para entrenar y medir la proyección de focos: casos con focos fijos y cambiantes,
        repetición cercana, calendario, ruido y sesgo de reporte, más la intensidad verdadera de cada celda (el oráculo). -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>

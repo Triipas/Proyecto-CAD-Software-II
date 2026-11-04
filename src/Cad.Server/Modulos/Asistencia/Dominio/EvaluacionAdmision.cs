@@ -1,6 +1,6 @@
 namespace Cad.Server.Modulos.Asistencia.Dominio;
 
-// HU45 (S6-T16; plan de asistencia con IA, 7.3) — la primera condición que no se cumplió para admitir solo un reporte. Se guarda
+// HU47 (S6-T16; plan de asistencia con IA, 7.3) — la primera condición que no se cumplió para admitir solo un reporte. Se guarda
 // la primera, en el orden de 7.3, para poder contar por qué no se admite.
 public enum CondicionAdmision
 {

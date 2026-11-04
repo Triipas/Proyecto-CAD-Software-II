@@ -20,7 +20,7 @@ public abstract record ResultadoRegistroReporte
 
 // HU10 — Registrar un reporte de incidencia (parte de servidor de S3-T01 y S3-T02). Mismo mecanismo de idempotencia
 // que el SOS (S1-T14). Un reporte no es un SOS: no avisa a la sección de atención urgente (CA06).
-// HU44 y HU45 (S6-T11): después de confirmar, un reporte de la app se encola para el análisis del asistente, sin esperarlo. Los de
+// HU46 y HU47 (S6-T11): después de confirmar, un reporte de la app se encola para el análisis del asistente, sin esperarlo. Los de
 // la central no: entran ya admitidos y no pasan por la revisión, que es donde sirve la sugerencia.
 public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compartido.INotificador notificador, ILogger<RegistrarReporte> registro,
     IColaAnalisisReportes? analisis = null)

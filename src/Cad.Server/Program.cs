@@ -69,9 +69,9 @@ builder.Services.AddModuloMediciones(builder.Configuration);
 builder.Services.AddModuloSerenos(builder.Configuration);
 builder.Services.AddModuloAnalitica(builder.Configuration);
 builder.Services.AddModuloAcompanamiento(builder.Configuration);
-// HU44 y HU45: asistencia con IA para reportes (apagada salvo Ia:Habilitada).
+// HU46 y HU47: asistencia con IA para reportes (apagada salvo Ia:Habilitada).
 builder.Services.AddModuloAsistencia(builder.Configuration);
-// HU46: proyección de focos de incidencias.
+// HU48: proyección de focos de incidencias.
 builder.Services.AddModuloProyeccion(builder.Configuration);
 
 // Tiempo real (HU11): eventos a la central después de cada confirmación.

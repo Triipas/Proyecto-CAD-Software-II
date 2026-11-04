@@ -29,7 +29,7 @@
     @if (Model.Mensaje is not null || Model.ErrorAccion is not null || admision.Modo != Cad.Server.Modulos.Asistencia.Dominio.ModoAdmision.Apagada)
     {
         <div class="central__avisos">
-            @* HU45 (S6-T15): el modo vigente de la admisión automática, con su pausa. *@
+            @* HU47 (S6-T15): el modo vigente de la admisión automática, con su pausa. *@
             <partial name="_AdmisionAutomatica" model="admision" />
             @if (Model.Mensaje is not null)
             {

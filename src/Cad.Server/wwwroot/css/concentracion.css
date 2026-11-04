@@ -406,7 +406,7 @@
   }
 }
 
-/* ── HU46 (S6-T20): vista «Proyección» ─────────────────── */
+/* ── HU48 (S6-T20): vista «Proyección» ─────────────────── */
 .vista-mapa {
   display: inline-flex;
   gap: var(--espacio-1);

@@ -19,7 +19,7 @@
     </div>
 </div>
 
-@* HU46 (S6-T20): «Vista: Histórico | Proyección». Enlaces GET, como los filtros. *@
+@* HU48 (S6-T20): «Vista: Histórico | Proyección». Enlaces GET, como los filtros. *@
 <nav class="vista-mapa" aria-label="Vista del mapa" data-vista="@(Model.EsProyeccion ? "proyeccion" : "historico")">
     <a class="vista-mapa__opcion" href="/panel/mapa-concentracion" aria-current="@(Model.EsProyeccion ? null : "page")">Histórico</a>
     <a class="vista-mapa__opcion" href="/panel/mapa-concentracion?Vista=proyeccion&amp;Ventana=6h" aria-current="@(Model.EsProyeccion ? "page" : null)">Proyección</a>

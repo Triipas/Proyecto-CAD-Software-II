@@ -16,7 +16,7 @@ public sealed class RelojAjustable(DateTimeOffset ahora) : TimeProvider
     public override DateTimeOffset GetUtcNow() => Ahora.ToUniversalTime();
 }
 
-// HU46 (S6-T19 a S6-T21; plan, 8.7) — la proyección de focos contra PostgreSQL, con casos sembrados en 2003 (un periodo que ninguna otra
+// HU48 (S6-T19 a S6-T21; plan, 8.7) — la proyección de focos contra PostgreSQL, con casos sembrados en 2003 (un periodo que ninguna otra
 // prueba usa) y un reloj fijo. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public sealed class ProyeccionTests(FabricaCad fabrica) : IAsyncLifetime
