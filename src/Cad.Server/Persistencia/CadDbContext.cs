@@ -53,6 +53,9 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
     public DbSet<Modulos.Cuentas.Dominio.DispositivoCiudadano> DispositivosCiudadano => Set<Modulos.Cuentas.Dominio.DispositivoCiudadano>();
     public DbSet<Modulos.Cuentas.Dominio.VerificacionCelular> VerificacionesCelular => Set<Modulos.Cuentas.Dominio.VerificacionCelular>();
     public DbSet<Modulos.Cuentas.Dominio.PerfilCiudadano> PerfilesCiudadano => Set<Modulos.Cuentas.Dominio.PerfilCiudadano>();
+    public DbSet<Modulos.Asistencia.Dominio.SugerenciaReporte> SugerenciasReporte => Set<Modulos.Asistencia.Dominio.SugerenciaReporte>();
+    public DbSet<Modulos.Asistencia.Dominio.AjusteIa> AjustesIa => Set<Modulos.Asistencia.Dominio.AjusteIa>();
+    public DbSet<Modulos.Asistencia.Dominio.CambioAjusteIa> CambiosAjusteIa => Set<Modulos.Asistencia.Dominio.CambioAjusteIa>();
 
     // HU31-CA01/CA05: cada cambio del estado público de un caso genera, en la misma transacción, una notificación para
     // su titular; un cambio interno que no cambia el estado público (en camino, inicio de la atención) no la genera.
@@ -653,6 +656,79 @@ public class CadDbContext(DbContextOptions<CadDbContext> options)
             perfil.Property(p => p.ContactoTelefono).HasMaxLength(9);
             perfil.HasIndex(p => new { p.TipoDocumento, p.NumeroDocumento }).IsUnique().HasFilter("\"NumeroDocumento\" IS NOT NULL");
             perfil.HasOne<Usuario>().WithOne().HasForeignKey<Modulos.Cuentas.Dominio.PerfilCiudadano>(p => p.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // HU44 y HU45 (S6-T07): sugerencias del asistente, solo inserción; una por reporte y versión del prompt.
+        builder.Entity<Modulos.Asistencia.Dominio.SugerenciaReporte>(sugerencia =>
+        {
+            sugerencia.ToTable("SugerenciasReporte", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_SugerenciasReporte_Confianza", "\"Confianza\" BETWEEN 0 AND 2");
+                tabla.HasCheckConstraint("CK_SugerenciasReporte_Decision", "\"Decision\" BETWEEN 0 AND 3");
+                tabla.HasCheckConstraint("CK_SugerenciasReporte_Destino", EnCatalogo("DestinoCodigo", DestinosDerivacion.Todos));
+                tabla.HasCheckConstraint("CK_SugerenciasReporte_MotivoDescarte", EnCatalogo("MotivoDescarteCodigo", MotivosDescarte.Todos));
+                tabla.HasCheckConstraint("CK_SugerenciasReporte_Prioridad", EnCatalogo("Prioridad", PrioridadesCaso.Todas));
+            });
+            sugerencia.HasKey(s => s.Id);
+            sugerencia.HasIndex(s => new { s.CasoId, s.VersionPrompt }).IsUnique();
+            sugerencia.Property(s => s.VersionPrompt).HasMaxLength(40);
+            sugerencia.Property(s => s.VersionCriterios).HasMaxLength(40);
+            sugerencia.Property(s => s.Modelo).HasMaxLength(80);
+            sugerencia.Property(s => s.ModeloVerificador).HasMaxLength(80);
+            sugerencia.Property(s => s.Confianza).HasConversion<short>();
+            sugerencia.Property(s => s.Decision).HasConversion<short>();
+            sugerencia.Property(s => s.Justificacion).HasMaxLength(Modulos.Asistencia.Dominio.SugerenciaReporte.MaximoJustificacion);
+            sugerencia.Property(s => s.MotivoBorrador).HasMaxLength(DecisionReporte.MaximoMotivo);
+            sugerencia.Property(s => s.AccionBorrador).HasMaxLength(DecisionReporte.MaximoAccion);
+            sugerencia.Property(s => s.DestinoCodigo).HasMaxLength(LargoCodigo);
+            sugerencia.Property(s => s.MotivoDescarteCodigo).HasMaxLength(LargoCodigo);
+            sugerencia.Property(s => s.Prioridad).HasMaxLength(LargoCodigo);
+            sugerencia.Property(s => s.MotivoUrgencia).HasMaxLength(Modulos.Asistencia.Dominio.SugerenciaReporte.MaximoMotivoUrgencia);
+            sugerencia.Property(s => s.Senales).HasMaxLength(300);
+            sugerencia.Ignore(s => s.ListaSenales);
+            sugerencia.HasOne<Caso>().WithMany().HasForeignKey(s => s.CasoId).OnDelete(DeleteBehavior.Restrict);
+            sugerencia.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(s => s.CategoriaSugeridaId).OnDelete(DeleteBehavior.Restrict);
+            sugerencia.HasOne<CategoriaIncidencia>().WithMany().HasForeignKey(s => s.CategoriaAlternativaId).OnDelete(DeleteBehavior.Restrict);
+            sugerencia.HasOne<Caso>().WithMany().HasForeignKey(s => s.DuplicadoDeId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // HU45 (S6-T15): el interruptor de la admisión automática (una sola fila, apagada) y su historial de cambios.
+        builder.Entity<Modulos.Asistencia.Dominio.AjusteIa>(ajuste =>
+        {
+            ajuste.ToTable("AjustesIa", tabla => tabla.HasCheckConstraint("CK_AjustesIa_Unico", $"\"Id\" = {Modulos.Asistencia.Dominio.AjusteIa.IdUnico}"));
+            ajuste.HasKey(a => a.Id);
+            ajuste.Property(a => a.Id).ValueGeneratedNever();
+            ajuste.Property(a => a.Modo).HasConversion<string>().HasMaxLength(20);
+            ajuste.Ignore(a => a.Parametros);
+            ajuste.HasData(Modulos.Asistencia.Dominio.AjusteIa.PorDefecto());
+        });
+        builder.Entity<Modulos.Asistencia.Dominio.CambioAjusteIa>(cambio =>
+        {
+            cambio.ToTable("CambiosAjusteIa");
+            cambio.HasKey(c => c.Id);
+            cambio.Property(c => c.ModoAnterior).HasConversion<string>().HasMaxLength(20);
+            cambio.Property(c => c.ModoNuevo).HasConversion<string>().HasMaxLength(20);
+            cambio.Property(c => c.Parametros).HasMaxLength(400);
+            cambio.Property(c => c.Motivo).HasMaxLength(Modulos.Asistencia.Dominio.CambioAjusteIa.MaximoMotivo);
+            cambio.HasIndex(c => c.En);
+            cambio.HasOne<Usuario>().WithMany().HasForeignKey(c => c.ActorId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // S6-T05: el usuario del sistema, actor de las acciones automáticas. Sin contraseña, sin rol y desactivado: no puede
+        // iniciar sesión y no figura en ninguna lista de cuentas.
+        builder.Entity<Usuario>().HasData(new Usuario
+        {
+            Id = Modulos.Cuentas.Dominio.UsuarioSistema.Id,
+            UserName = Modulos.Cuentas.Dominio.UsuarioSistema.NombreUsuario,
+            NormalizedUserName = Modulos.Cuentas.Dominio.UsuarioSistema.NombreUsuario.ToUpperInvariant(),
+            Nombres = Modulos.Cuentas.Dominio.UsuarioSistema.Nombres,
+            Apellidos = Modulos.Cuentas.Dominio.UsuarioSistema.Apellidos,
+            Activo = false,
+            LockoutEnabled = true,
+            LockoutEnd = DateTimeOffset.MaxValue,
+            SecurityStamp = "0199d6a0-0000-7000-8000-0000000000a1",
+            ConcurrencyStamp = "0199d6a0-0000-7000-8000-0000000000a1",
+            CreadoEn = new DateTimeOffset(2026, 11, 3, 0, 0, 0, TimeSpan.Zero),
         });
 
         // Calificado: dentro de IdentityDbContext, «Roles» es el DbSet de roles.

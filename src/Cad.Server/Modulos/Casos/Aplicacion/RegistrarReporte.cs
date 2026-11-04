@@ -20,7 +20,10 @@ public abstract record ResultadoRegistroReporte
 
 // HU10 — Registrar un reporte de incidencia (parte de servidor de S3-T01 y S3-T02). Mismo mecanismo de idempotencia
 // que el SOS (S1-T14). Un reporte no es un SOS: no avisa a la sección de atención urgente (CA06).
-public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compartido.INotificador notificador, ILogger<RegistrarReporte> registro)
+// HU44 y HU45 (S6-T11): después de confirmar, un reporte de la app se encola para el análisis del asistente, sin esperarlo. Los de
+// la central no: entran ya admitidos y no pasan por la revisión, que es donde sirve la sugerencia.
+public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compartido.INotificador notificador, ILogger<RegistrarReporte> registro,
+    IColaAnalisisReportes? analisis = null)
 {
     // DP08: la fecha y hora del hecho no pueden ser futuras. Margen técnico para la diferencia entre el reloj del
     // teléfono y el del servidor (no es una regla de negocio): sin él, «ahora» en un teléfono adelantado se rechazaría.
@@ -65,6 +68,7 @@ public sealed class RegistrarReporte(CadDbContext db, TimeProvider reloj, Compar
         // Sin descripción, referencia, coordenadas ni fotos en el registro (RNF07): solo el identificador, la fuente y cuántas fotos.
         registro.LogInformation("Reporte {CasoId} registrado (ubicación del hecho: {Fuente}; fotos: {Fotos}).", caso.Id, u.Fuente, fotos.Count);
         await AvisarAsync(caso.Id);
+        analisis?.Encolar(caso.Id);
         return new ResultadoRegistroReporte.Registrado(caso);
     }
 
