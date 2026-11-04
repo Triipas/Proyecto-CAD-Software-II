@@ -124,10 +124,11 @@
     }
     <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/consola.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/sugerencia.css" asp-append-version="true" />
 }
 
 <header class="consola__barra" data-caso="@r.Id" data-origen-estado="Reporte @r.TextoEstado"
-        data-regiones="[aria-labelledby='titulo-categoria'],[aria-labelledby='titulo-revision'],[data-tiempos]"
+        data-regiones="[aria-labelledby='titulo-categoria'],[aria-labelledby='titulo-revision'],[data-tiempos],[data-sugerencia]"
         data-texto-cancelado="El ciudadano retiró este reporte mientras escribías. Lo que escribiste no se registró.">
     <div class="consola__ancho">
         <a class="consola__volver" href="/panel/reportes" aria-label="Volver a los reportes" title="Reportes">
@@ -226,6 +227,11 @@
         @if (hechoPrimero)
         {
             Hecho();
+        }
+        @* HU44 y HU45: la sugerencia llega en vivo (CasoActualizado); el contenedor existe siempre para poder actualizarlo en su sitio. *@
+        @if (Model.Sugerencia is { } sugerencia)
+        {
+            <div class="sugerencia__contenedor" data-sugerencia><partial name="_SugerenciaReporte" model="sugerencia" /></div>
         }
         <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente">
             @switch (siguiente)
@@ -624,6 +630,7 @@
     <script src="~/js/asignar-caso.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/consola.js" asp-append-version="true"></script>
+    <script src="~/js/sugerencia.js" asp-append-version="true"></script>
     @if (r.ConPunto)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>

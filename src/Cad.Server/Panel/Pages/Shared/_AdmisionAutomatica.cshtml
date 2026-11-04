@@ -1,0 +1,22 @@
+@model Cad.Server.Modulos.Asistencia.AjusteIaVista
+@using Cad.Server.Modulos.Asistencia
+@using Cad.Server.Modulos.Asistencia.Dominio
+@* HU45 (S6-T15; plan de asistencia con IA, 7.2) — aviso del modo vigente de la admisión automática en «Reportes» y «Central», para
+   que nadie se sorprenda, con el botón para pausarla (el operador solo puede detenerla; reactivarla es del administrador).
+   Apagada: no se muestra nada. *@
+@if (Model.Modo != ModoAdmision.Apagada)
+{
+    var activa = Model.Modo == ModoAdmision.Activa;
+    <div class="aviso @(activa ? "aviso--advertencia" : "aviso--informacion") admision-automatica" role="status" data-admision-automatica="@Model.Modo">
+        <partial name="_Icono" model="@(activa ? "advertencia" : "informacion")" />
+        <div class="admision-automatica__texto">
+            <p class="aviso__titulo">Admisión automática: «@ConsultarAsistencia.Texto(Model.Modo)»</p>
+            <p class="aviso__texto">@(activa
+                ? "Puede admitir sola los reportes que cumplan todas las condiciones; si ves algo raro, páusala. Por ahora solo queda registrado: todavía no admite ningún reporte."
+                : "Calcula qué reportes habría admitido, sin admitir ninguno. Por ahora solo queda registrado: todavía no calcula nada.")</p>
+        </div>
+        <form method="post" asp-page="/Reportes/Index" asp-page-handler="Pausar" class="admision-automatica__pausa">
+            <button type="submit" class="boton boton--secundario boton--compacto" data-pausar-admision data-texto-carga="Pausando…">Pausar</button>
+        </form>
+    </div>
+}

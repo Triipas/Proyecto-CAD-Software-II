@@ -1,0 +1,166 @@
+@model Cad.Server.Panel.Pages.Reportes.VistaSugerencia
+@using System.Globalization
+@using Cad.Server.Modulos.Asistencia.Puertos
+@using Cad.Server.Panel.Pages.Reportes
+@* HU44 y HU45 (S6-T12, S6-T13) — la tarjeta «Sugerencia del sistema». La IA sugiere y la persona decide: «Usar esta categoría»
+   registra la corrección como siempre (con el operador como responsable) y «Usar este motivo» solo rellena el formulario de la
+   decisión. Sin sugerencia ni candidatos a duplicado no se muestra nada (HU44-CA03). *@
+@{
+    var s = Model.Sugerencia;
+    var inv = CultureInfo.InvariantCulture;
+}
+@if (Model.Visible)
+{
+    <section class="superficie seccion-caso sugerencia" aria-labelledby="titulo-sugerencia" data-tarjeta-sugerencia>
+        <div class="sugerencia__cabecera">
+            <h2 id="titulo-sugerencia" class="seccion-caso__titulo">@(s is null ? "Posibles duplicados" : "Sugerencia del sistema")</h2>
+            @if (s is not null)
+            {
+                <p class="sugerencia__rotulo" data-rotulo-sugerencia>Sugerencia automática · datos simulados · revísala antes de decidir</p>
+            }
+        </div>
+
+        @if (s is { PosibleUrgencia: true })
+        {
+            <div class="aviso aviso--error sugerencia__urgencia" data-sugerencia-urgencia>
+                <partial name="_Icono" model="@("urgente")" />
+                <div>
+                    <p class="aviso__titulo">Posible emergencia en curso</p>
+                    <p class="aviso__texto">Considera contactar al ciudadano o priorizar el reporte.@(s.MotivoUrgencia is { } motivo ? $" {motivo}" : "")</p>
+                </div>
+            </div>
+        }
+
+        @if (s is not null)
+        {
+            var (textoDecision, tono, icono) = VistaSugerencia.Decision(s.Decision);
+            var tipo = VistaSugerencia.TipoFormulario(s.Decision);
+            <div class="sugerencia__bloques">
+                <div class="sugerencia__bloque" data-sugerencia-categoria="@s.CategoriaSugeridaId">
+                    <h3 class="sugerencia__subtitulo">Categoría</h3>
+                    <p class="sugerencia__valor">
+                        <strong data-categoria-sugerida>@s.CategoriaSugerida</strong>
+                        <span class="sugerencia__confianza sugerencia__confianza--@s.Confianza.ToString().ToLowerInvariant()" data-confianza="@s.Confianza">@VistaSugerencia.Confianza(s.Confianza)</span>
+                    </p>
+                    <p class="texto-secundario sugerencia__detalle">Elegida por el ciudadano: @Model.CategoriaCiudadano@(s.CategoriaAlternativa is { } alternativa ? $" · también podría ser «{alternativa}»" : "")</p>
+                    @if (!string.IsNullOrEmpty(s.Justificacion))
+                    {
+                        <p class="sugerencia__porque" data-justificacion>@s.Justificacion</p>
+                    }
+                    @if (Model.CoincideConCiudadano)
+                    {
+                        <p class="sugerencia__estado" data-coincide><partial name="_Icono" model="@("exito")" />Coincide con la categoría elegida.</p>
+                    }
+                    else if (Model.YaCorregida)
+                    {
+                        <p class="sugerencia__estado" data-ya-corregida><partial name="_Icono" model="@("exito")" />La categoría ya está corregida a la sugerida.</p>
+                    }
+                    else if (Model.EnRevision)
+                    {
+                        <form method="post" asp-page-handler="Corregir" class="sugerencia__accion" data-formulario>
+                            <input type="hidden" name="CategoriaId" value="@s.CategoriaSugeridaId" />
+                            <button type="submit" class="boton @(s.Confianza == NivelConfianza.Baja ? "boton--secundario" : "boton--principal") boton--compacto"
+                                    data-usar-categoria data-texto-carga="Corrigiendo…">Usar esta categoría</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="texto-secundario" data-usar-categoria-inactivo>Inicia la revisión para corregir la categoría.</p>
+                    }
+                    @if (s.Confianza == NivelConfianza.Baja)
+                    {
+                        <p class="campo__ayuda" data-confianza-baja>Con confianza baja, tómala solo como una pista.</p>
+                    }
+                </div>
+
+                <div class="sugerencia__bloque" data-sugerencia-decision="@s.Decision">
+                    <h3 class="sugerencia__subtitulo">Decisión sugerida</h3>
+                    <p class="sugerencia__valor"><span class="chip chip--@tono"><partial name="_Icono" model="@icono" />@textoDecision</span></p>
+                    @if (!string.IsNullOrEmpty(s.MotivoBorrador))
+                    {
+                        <p class="sugerencia__motivo" data-motivo-borrador>@s.MotivoBorrador</p>
+                    }
+                    @if (s.TextoDestino is not null || s.TextoMotivoDescarte is not null || s.TextoPrioridad is not null)
+                    {
+                        <dl class="datos datos--en-linea sugerencia__datos">
+                            @if (s.TextoDestino is { } destino)
+                            {
+                                <div><dt>Destino</dt><dd data-destino-sugerido>@destino</dd></div>
+                            }
+                            @if (s.AccionBorrador is { } accion)
+                            {
+                                <div><dt>Acción</dt><dd>@accion</dd></div>
+                            }
+                            @if (s.TextoMotivoDescarte is { } motivoDescarte)
+                            {
+                                <div><dt>Motivo del descarte</dt><dd>@motivoDescarte</dd></div>
+                            }
+                            @if (s.TextoPrioridad is { } prioridad)
+                            {
+                                <div><dt>Prioridad</dt><dd data-prioridad-sugerida>@prioridad</dd></div>
+                            }
+                        </dl>
+                    }
+                    @if (s.Senales.Count > 0)
+                    {
+                        <ul class="sugerencia__senales" role="list" aria-label="Señales" data-senales>
+                            @foreach (var senal in s.Senales)
+                            {
+                                <li class="chip chip--@(senal == SenalTriaje.PosibleUrgencia ? "urgente" : "advertencia")" data-senal="@senal">@VistaSugerencia.Senal(senal)</li>
+                            }
+                        </ul>
+                    }
+                    @if (tipo is not null && Model.EnRevision)
+                    {
+                        <div class="sugerencia__accion">
+                            <button type="button" class="boton boton--secundario boton--compacto" data-usar-motivo
+                                    data-sugerencia-tipo="@tipo" data-sugerencia-motivo="@s.MotivoBorrador"
+                                    data-sugerencia-destino="@s.DestinoCodigo" data-sugerencia-accion="@s.AccionBorrador"
+                                    data-sugerencia-motivo-descarte="@s.MotivoDescarteCodigo" data-sugerencia-prioridad="@s.Prioridad"
+                                    aria-describedby="ayuda-usar-motivo">Usar este motivo</button>
+                            <p id="ayuda-usar-motivo" class="campo__ayuda">Rellena el formulario de la decisión. No registra nada: revísalo y pulsa «Registrar la decisión».</p>
+                        </div>
+                    }
+                    else if (tipo is not null)
+                    {
+                        <p class="texto-secundario" data-iniciar-para-decidir>Inicia la revisión antes de decidir.</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.Duplicados.Count > 0)
+        {
+            <div class="sugerencia__bloque" data-duplicados>
+                @if (s is not null)
+                {
+                    <h3 class="sugerencia__subtitulo">Posibles duplicados</h3>
+                }
+                <p class="texto-secundario sugerencia__detalle">Otros reportes a menos de @Model.RadioMetros.ToString(inv) m, registrados con menos de @VistaSugerencia.Minutos(Model.VentanaMinutos) de diferencia. Compáralos antes de decidir.</p>
+                <ul class="sugerencia__duplicados" role="list">
+                    @foreach (var d in Model.Duplicados)
+                    {
+                        var mismo = s?.DuplicadoDeId == d.CasoId;
+                        var hora = TimeZoneInfo.ConvertTime(d.RegistradoEn, Model.ZonaHoraria).ToString("HH:mm", inv);
+                        <li class="sugerencia__duplicado@(mismo ? " sugerencia__duplicado--mismo" : "")" data-duplicado="@d.CasoId">
+                            <a href="/panel/reportes/@d.CasoId">@d.Categoria · @Cad.Server.Modulos.Casos.Dominio.EstadosCaso.Texto(Cad.Server.Modulos.Casos.Dominio.OrigenCaso.Reporte, d.Estado)</a>
+                            <span class="texto-secundario">a @d.Metros.ToString(inv) m · registrado a las @hora (@VistaSugerencia.Minutos(d.Minutos) de diferencia)</span>
+                            @if (mismo)
+                            {
+                                <strong class="sugerencia__mismo" data-mismo-hecho>El sistema cree que describe el mismo hecho</strong>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (s is not null)
+        {
+            <p class="texto-secundario detalle-caso__nota" data-origen-sugerencia>
+                Calculada a las @TimeZoneInfo.ConvertTime(s.CreadaEn, Model.ZonaHoraria).ToString("HH:mm", inv)
+                @(s.PorReglas ? "por reglas de palabras clave (sin modelo de lenguaje)" : $"por el modelo {s.Modelo}")@(s.Escalada ? ", con segunda opinión del modelo preciso" : "").
+            </p>
+        }
+    </section>
+}

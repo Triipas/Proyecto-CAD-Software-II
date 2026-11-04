@@ -3,9 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.CargadorDataset;
 
-// Deja la base de datos como recién desplegada: sin casos, acompañamientos ni cuentas, salvo el administrador. Conserva lo que el
-// sistema necesita para arrancar (historial de migraciones, roles, categorías y claves de las cookies del panel). Corre dentro
-// de la transacción de la carga: si algo falla después, la base de datos queda como estaba.
+// Deja la base de datos como recién desplegada: sin casos, acompañamientos ni cuentas, salvo el administrador y el usuario del
+// sistema (actor de las acciones automáticas, S6-T05). Conserva lo que el sistema necesita para arrancar (historial de migraciones,
+// roles, categorías y claves de las cookies del panel). La admisión automática vuelve a «Apagada»: sin su fila, el servidor usa el
+// valor por defecto. Corre dentro de la transacción de la carga: si algo falla después, la base de datos queda como estaba.
 public static class Vaciado
 {
     private static readonly string[] Conservadas =
@@ -25,11 +26,11 @@ public static class Vaciado
             END $$;
             """);
 
-        // Las cuentas: solo queda el administrador.
-        await db.Database.ExecuteSqlRawAsync("""
+        // Las cuentas: solo quedan el administrador y el usuario del sistema (que no tiene rol).
+        await db.Database.ExecuteSqlRawAsync($$"""
             DELETE FROM "AspNetUserRoles" WHERE "UserId" NOT IN (
               SELECT ur."UserId" FROM "AspNetUserRoles" ur JOIN "AspNetRoles" r ON r."Id" = ur."RoleId" WHERE r."Name" = 'Administrador');
-            DELETE FROM "AspNetUsers" WHERE "Id" NOT IN (SELECT "UserId" FROM "AspNetUserRoles");
+            DELETE FROM "AspNetUsers" WHERE "Id" NOT IN (SELECT "UserId" FROM "AspNetUserRoles") AND "Id" <> '{{Cad.Server.Modulos.Cuentas.Dominio.UsuarioSistema.Id}}';
             """);
     }
 }

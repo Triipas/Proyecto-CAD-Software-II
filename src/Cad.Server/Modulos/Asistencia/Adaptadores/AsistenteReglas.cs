@@ -24,7 +24,7 @@ public sealed class AsistenteReglas : IAsistenteReportes
     private static readonly Dictionary<Guid, string[]> PalabrasPorCategoria = new()
     {
         [Id(0)] = ["mi esposo", "mi pareja", "mi marido", "mi conviviente", "le pega a su", "golpea a su", "maltrat", "violencia familiar", "agrede a su", "pegando a su"],
-        [Id(1)] = ["robo", "robar", "robaron", "arrebat", "hurto", "asalt", "me quitaron", "celular", "cartera", "billetera", "carter", "ladron", "choro", "raqueteo", "bolso"],
+        [Id(1)] = ["robo", "robar", "robaron", "arrebat", "hurto", "asalt", "quitar", "celular", "telefono", "cartera", "billetera", "carter", "ladron", "choro", "raqueteo", "bolso"],
         [Id(2)] = ["droga", "marihuana", "fumon", "pasta basica", "venden drogas", "vendiendo", "microcomercializ", "fumando", "terokal", "pbc"],
         [Id(4)] = ["acoso", "acosa", "me sigue", "me siguio", "tocamiento", "toco", "manose", "piropo", "exhibicion", "persigu"],
         [Id(5)] = ["extorsi", "cupo", "amenaz", "carta extorsiva", "me cobran", "chalequ", "gota a gota"],
@@ -57,7 +57,8 @@ public sealed class AsistenteReglas : IAsistenteReportes
 
     public static AnalisisReporte Analizar(EntradaAnalisis entrada)
     {
-        var texto = Normalizar(entrada.Descripcion + " " + entrada.ReferenciaHecho);
+        // Solo la descripción: la referencia del lugar («frente al parque», «Urb. …») no dice qué pasó y confundiría las palabras clave.
+        var texto = Normalizar(entrada.Descripcion);
         var nombre = (Guid id) => entrada.Catalogo.FirstOrDefault(c => c.Id == id)?.Nombre ?? "";
         var senales = new List<SenalTriaje>();
 

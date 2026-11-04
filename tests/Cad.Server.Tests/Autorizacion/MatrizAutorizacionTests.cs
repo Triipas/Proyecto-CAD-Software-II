@@ -164,6 +164,12 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         // Un identificador inexistente basta: el administrador llega a la página (404) y el resto es rechazado antes.
         new("GET", "/panel/admin/cuentas/{id:guid}/editar", "HU04", Acceso.SoloRol, Roles.Administrador,
             Ejemplo: "/panel/admin/cuentas/00000000-0000-0000-0000-000000000000/editar"),
+        // HU45 (S6-T15) — modo de la admisión automática: solo el administrador lo ve y lo cambia. Sin token antifalsificación, el
+        // administrador llega a la página (400) y el resto es rechazado antes, sin cambiar nada.
+        new("GET", "/panel/admin/ia", "HU45", Acceso.SoloRol, Roles.Administrador, "Admisión automática de reportes"),
+        new("POST", "/panel/admin/ia", "HU45", Acceso.SoloRol, Roles.Administrador),
+        // HU45 — el operador solo puede pausarla, desde «Reportes» (o el aviso de la central, que envía a la misma página).
+        new("POST", "/panel/reportes", "HU45 (pausa)", Acceso.SoloRol, Roles.Operador, Ejemplo: "/panel/reportes?handler=Pausar"),
     ];
 
     private static readonly string?[] Perfiles = [null, Roles.Ciudadano, Roles.Operador, Roles.Sereno, Roles.Administrador];

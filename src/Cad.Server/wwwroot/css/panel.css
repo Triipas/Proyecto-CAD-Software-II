@@ -1897,3 +1897,17 @@ button.sos__ubicacion:active .icono {
     animation-timing-function: var(--curva-estandar);
   }
 }
+
+/* HU45 (S6-T15): aviso del modo de la admisión automática, con su pausa a la derecha. */
+.admision-automatica {
+  align-items: center;
+}
+
+.admision-automatica__texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.admision-automatica__pausa {
+  flex: none;
+}

@@ -1,5 +1,6 @@
 @page "/panel/central"
 @model Cad.Server.Panel.Pages.Central.IndexModel
+@inject Cad.Server.Modulos.Asistencia.ConsultarAsistencia ConsultarAsistencia
 @{
     ViewData["Title"] = "Central";
     // Dirección «Mapa protagonista» (rediseño CAD v2, fase 3): el mapa ocupa la pantalla y el trabajo flota encima.
@@ -24,9 +25,12 @@
     <div id="mapa" class="mapa mapa--central" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
          data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de casos y serenos con ubicación"></div>
 
-    @if (Model.Mensaje is not null || Model.ErrorAccion is not null)
+    @{ var admision = await ConsultarAsistencia.AjusteAsync(ViewContext.HttpContext.RequestAborted); }
+    @if (Model.Mensaje is not null || Model.ErrorAccion is not null || admision.Modo != Cad.Server.Modulos.Asistencia.Dominio.ModoAdmision.Apagada)
     {
         <div class="central__avisos">
+            @* HU45 (S6-T15): el modo vigente de la admisión automática, con su pausa. *@
+            <partial name="_AdmisionAutomatica" model="admision" />
             @if (Model.Mensaje is not null)
             {
                 <div class="aviso aviso--exito central__aviso" role="status" tabindex="-1" data-enfocar>

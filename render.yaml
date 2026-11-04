@@ -30,3 +30,7 @@ services:
         sync: false
       - key: Admin__ClaveInicial
         sync: false
+      - key: Ia__Habilitada
+        value: "false"          # asistencia con IA para reportes (HU44, HU45): apagada hasta decidirlo
+      - key: Ia__Gemini__ClaveApi
+        sync: false             # clave de Google AI Studio; nunca en el repositorio

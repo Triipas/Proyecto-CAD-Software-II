@@ -164,3 +164,32 @@
     margin-top: calc(var(--texto-sm) * 1.5 + var(--espacio-2));
   }
 }
+
+/* ── Asistencia con IA (HU45, S6-T15) ──────────────────── */
+.ajuste-ia {
+  display: grid;
+  gap: var(--espacio-4);
+  margin-bottom: var(--espacio-5);
+}
+
+.ajuste-ia__titulo {
+  margin: 0;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}
+
+.ajuste-ia__nota {
+  margin: 0;
+}
+
+/* Cada modo con su explicación debajo del nombre. */
+.ajuste-ia__modo > span {
+  display: grid;
+  gap: var(--espacio-1);
+}
+
+.ajuste-ia__numeros {
+  display: grid;
+  gap: var(--espacio-4);
+}

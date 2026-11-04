@@ -23,6 +23,15 @@
     <a class="boton boton--principal" href="/panel/reportes/nuevo"><partial name="_Icono" model="@("documento")" />Nuevo reporte</a>
 </div>
 
+@if (Model.Mensaje is not null)
+{
+    <div class="aviso aviso--exito" role="status" tabindex="-1" data-enfocar>
+        <partial name="_Icono" model="@("exito")" />
+        <p class="aviso__titulo">@Model.Mensaje</p>
+    </div>
+}
+<partial name="_AdmisionAutomatica" model="Model.Ajuste" />
+
 @if (Model.Reportes.Count == 0)
 {
     <div class="superficie estado-vacio reportes__vacio">
@@ -55,7 +64,14 @@ else
                     <tr data-reporte="@reporte.Id">
                         <th scope="row"><time class="reportes__fecha" datetime="@reporte.RegistradoEn.ToString("O", inv)"><b>@registrado.ToString("HH:mm", inv)</b> <span>@registrado.ToString("dd/MM/yyyy", inv)</span></time></th>
                         <td data-estado><partial name="_ChipEstado" model="@((reporte.Estado, false))" /></td>
-                        <td class="reportes__categoria">@reporte.Categoria</td>
+                        <td class="reportes__categoria">
+                            @reporte.Categoria
+                            @* HU44: la categoría sugerida por el asistente, solo cuando difiere de la vigente. *@
+                            @if (Model.CategoriasSugeridas.TryGetValue(reporte.Id, out var sugerida))
+                            {
+                                <span class="reportes__sugerida" data-categoria-sugerida>Sugerida: @sugerida</span>
+                            }
+                        </td>
                         <td>@reporte.Ciudadano</td>
                         <td class="reportes__hecho">@hecho.ToString("dd/MM/yyyy HH:mm", inv)</td>
                         <td>@Fuente(reporte.FuenteUbicacion)</td>
