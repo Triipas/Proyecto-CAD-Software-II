@@ -51,10 +51,12 @@ public sealed class CambiarAjusteIa(CadDbContext db, TimeProvider reloj, ILogger
         return new ResultadoAjusteIa.Cambiado(modo);
     }
 
-    // La fila se siembra en la migración; si faltara, se crea con los valores por defecto.
+    // La fila se siembra en la migración; si faltara (p. ej. una base vaciada a mano), se crea con los valores por defecto. Primero
+    // lo que ya sigue este contexto: una fila recién creada todavía no está en la base.
     private async Task<AjusteIa> LeerAsync(CancellationToken ct)
     {
-        var ajuste = await db.AjustesIa.SingleOrDefaultAsync(a => a.Id == AjusteIa.IdUnico, ct);
+        var ajuste = db.AjustesIa.Local.SingleOrDefault(a => a.Id == AjusteIa.IdUnico)
+            ?? await db.AjustesIa.SingleOrDefaultAsync(a => a.Id == AjusteIa.IdUnico, ct);
         if (ajuste is not null)
             return ajuste;
         ajuste = AjusteIa.PorDefecto();

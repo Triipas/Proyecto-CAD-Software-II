@@ -60,6 +60,30 @@ public sealed class AjusteIaTests(FabricaCad fabrica) : IAsyncLifetime
         }));
 
     [Fact]
+    public async Task SinLaFilaDelAjuste_ElPanelMuestraApagadaYPausarNoFalla()
+    {
+        await fabrica.ConBaseDatosAsync(db => db.Database.ExecuteSqlRawAsync("DELETE FROM \"AjustesIa\""));
+        try
+        {
+            var (operador, cuenta) = await ConSesionAsync(Roles.Operador);
+            Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/reportes"));
+            Assert.Equal(HttpStatusCode.Redirect, (await PausarAsync(operador)).StatusCode);
+            var (administrador, _) = await ConSesionAsync(Roles.Administrador);
+
+            Assert.Equal(HttpStatusCode.Redirect, (await CambiarAsync(administrador, "Sombra", "Recrear el ajuste")).StatusCode);
+            Assert.Equal(ModoAdmision.Sombra, (await AjusteAsync()).Modo);
+            Assert.Empty(await CambiosDeAsync(cuenta.Id)); // pausar lo que ya estaba apagado no registra nada
+        }
+        finally
+        {
+            // Las demás pruebas cuentan con la fila sembrada por la migración.
+            await fabrica.ConBaseDatosAsync(db => db.Database.ExecuteSqlRawAsync(
+                "INSERT INTO \"AjustesIa\" (\"Id\", \"Modo\", \"RetrasoSegundos\", \"MaximoPorHora\", \"LongitudMinimaDescripcion\", \"PermitirCorregirCategoria\", " +
+                "\"FrenoMinimoAdmisiones\", \"FrenoPorcentajeDescartes\") VALUES (1, 'Apagada', 30, 60, 40, false, 20, 5) ON CONFLICT (\"Id\") DO NOTHING"));
+        }
+    }
+
+    [Fact]
     public async Task CA01_PorDefecto_ApagadaYSinAvisoEnReportesNiCentral()
     {
         Assert.Equal(ModoAdmision.Apagada, (await AjusteAsync()).Modo);
