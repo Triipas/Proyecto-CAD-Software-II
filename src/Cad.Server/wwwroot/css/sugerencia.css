@@ -172,3 +172,30 @@
   height: 1rem;
   margin-top: 0.125rem;
 }
+
+/* S6-T01: la página de criterios de triaje. */
+.criterios {
+  display: grid;
+  gap: var(--espacio-3);
+  line-height: var(--interlineado-texto, 1.6);
+}
+
+.criterios p,
+.criterios ul,
+.criterios ol {
+  margin: 0;
+}
+
+.criterios ul,
+.criterios ol {
+  display: grid;
+  gap: var(--espacio-1);
+  padding-left: var(--espacio-6);
+}
+
+.criterios__titulo {
+  margin: var(--espacio-3) 0 0;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+}

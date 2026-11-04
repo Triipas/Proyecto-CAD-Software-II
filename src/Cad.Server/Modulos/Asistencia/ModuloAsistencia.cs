@@ -40,6 +40,7 @@ public static class ModuloAsistencia
         services.AddHostedService<ServicioAnalisis>();
         services.AddScoped<AnalizarReporte>();
         services.AddScoped<BuscarDuplicados>();
+        services.AddScoped<ArmarEntrada>();
         services.AddScoped<IRecuperadorEjemplos, RecuperarEjemplos>();
         services.AddScoped<EvaluarAdmision>();
         services.AddScoped<AdmitirAutomaticamente>();

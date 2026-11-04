@@ -49,6 +49,16 @@ public sealed record PrecisionSombra(int Elegibles, int Decididos, int Admitidos
 
 public sealed record NoAdmitidoEnSombra(Guid CasoId, string Categoria, string Decision, DateTimeOffset EvaluadaEn);
 
+// S6-T17 (plan, 9.2) — el rendimiento del asistente en el uso real, por modelo: cuántas sugerencias aceptaron los operadores (la
+// categoría final y la decisión registrada frente a las sugeridas), cuánto tardó y cuántos tokens gastó. Lo que hizo el operador se
+// deduce de los datos de siempre: la sugerencia nunca se modifica.
+public sealed record RendimientoModelo(string Modelo, int Sugerencias, int Decididas, int CategoriaAceptada, int DecisionComparable,
+    int DecisionAceptada, int Escaladas, int LatenciaMedianaMs, int LatenciaP90Ms, long TokensEntrada, long TokensSalida)
+{
+    public int? PorcentajeCategoria => Decididas == 0 ? null : (int)Math.Round(100.0 * CategoriaAceptada / Decididas);
+    public int? PorcentajeDecision => DecisionComparable == 0 ? null : (int)Math.Round(100.0 * DecisionAceptada / DecisionComparable);
+}
+
 public sealed record CambioAjusteVista(ModoAdmision Anterior, ModoAdmision Nuevo, string Parametros, string Motivo, string Actor, DateTimeOffset En);
 
 // Lecturas del módulo para el panel: la sugerencia de un reporte (HU44, HU45), las categorías sugeridas de la lista de reportes, y
@@ -91,6 +101,38 @@ public sealed class ConsultarAsistencia(CadDbContext db)
             : null;
         var freno = ultimo is { ModoNuevo: ModoAdmision.Sombra } && ultimo.ActorId == Cuentas.Dominio.UsuarioSistema.Id ? ultimo.Motivo : null;
         return new AjusteIaVista(ajuste.Modo, ajuste.Parametros, ajuste.CambiadoEn, freno);
+    }
+
+    public async Task<IReadOnlyList<RendimientoModelo>> RendimientoAsync(DateTimeOffset desde, CancellationToken ct)
+    {
+        var sistema = Cuentas.Dominio.UsuarioSistema.Id;
+        var filas = await (from s in db.SugerenciasReporte.AsNoTracking()
+                           join caso in db.Casos.AsNoTracking() on s.CasoId equals caso.Id
+                           from d in db.DecisionesReporte.AsNoTracking().Where(d => d.CasoId == s.CasoId && d.OperadorId != sistema).DefaultIfEmpty()
+                           where s.CreadaEn >= desde
+                           select new
+                           {
+                               s.Modelo, s.Decision, s.CategoriaSugeridaId, caso.CategoriaId, s.Escalada, s.LatenciaMs, s.TokensEntrada, s.TokensSalida,
+                               Tipo = (Casos.Dominio.TipoDecisionReporte?)d.Tipo,
+                           })
+            .ToListAsync(ct);
+        static bool Coincide(DecisionSugerida s, Casos.Dominio.TipoDecisionReporte t) => (s, t) switch
+        {
+            (DecisionSugerida.Admitir, Casos.Dominio.TipoDecisionReporte.Admision) => true,
+            (DecisionSugerida.Derivar, Casos.Dominio.TipoDecisionReporte.Derivacion) => true,
+            (DecisionSugerida.Descartar, Casos.Dominio.TipoDecisionReporte.Descarte) => true,
+            _ => false,
+        };
+        static int Percentil(List<int> ordenadas, double p) => ordenadas.Count == 0 ? 0 : ordenadas[(int)Math.Min(ordenadas.Count - 1, Math.Floor(p * ordenadas.Count))];
+        return filas.GroupBy(f => f.Modelo).Select(g =>
+        {
+            var decididas = g.Where(f => f.Tipo is not null).ToList();
+            var comparables = decididas.Where(f => f.Decision != DecisionSugerida.RevisarConCuidado).ToList();
+            var latencias = g.Select(f => f.LatenciaMs).Order().ToList();
+            return new RendimientoModelo(g.Key, g.Count(), decididas.Count, decididas.Count(f => f.CategoriaId == f.CategoriaSugeridaId),
+                comparables.Count, comparables.Count(f => Coincide(f.Decision, f.Tipo!.Value)), g.Count(f => f.Escalada),
+                Percentil(latencias, 0.5), Percentil(latencias, 0.9), g.Sum(f => (long)f.TokensEntrada), g.Sum(f => (long)f.TokensSalida));
+        }).OrderByDescending(r => r.Sugerencias).ToList();
     }
 
     public async Task<EvaluacionAdmisionVista?> EvaluacionAsync(Guid casoId, CancellationToken ct) =>

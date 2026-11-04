@@ -15,7 +15,7 @@ namespace Cad.Server.Modulos.Asistencia.Aplicacion;
 // guarda en la misma transacción. Es idempotente (una sugerencia por reporte y versión del prompt). Si algo falla no se guarda nada
 // y el operador trabaja como hoy (CA03).
 // Nunca registra la descripción, la justificación ni la respuesta: solo identificadores, latencia, tokens y el resultado (RNF07).
-public sealed class AnalizarReporte(CadDbContext db, IAsistenteReportes asistente, BuscarDuplicados duplicados, IRecuperadorEjemplos ejemplos,
+public sealed class AnalizarReporte(CadDbContext db, IAsistenteReportes asistente, ArmarEntrada armar,
     EvaluarAdmision evaluar, IOptions<OpcionesIa> opciones, TimeProvider reloj, INotificador notificador, ILogger<AnalizarReporte> registro)
 {
     public async Task EjecutarAsync(Guid casoId, CancellationToken ct)
@@ -37,15 +37,7 @@ public sealed class AnalizarReporte(CadDbContext db, IAsistenteReportes asistent
             return;
 
         var d = reporte.detalle;
-        var catalogo = await db.CategoriasIncidencia.AsNoTracking().OrderBy(c => c.Orden)
-            .Select(c => new CategoriaParaAnalisis(c.Id, c.Nombre, c.Ayuda)).ToListAsync(ct);
-        var candidatos = (await duplicados.EjecutarAsync(casoId, ct))
-            .Select(c => new CandidatoDuplicado(c.CasoId, Anonimizador.Limpiar(c.Descripcion), c.Categoria, c.Metros, c.Minutos))
-            .ToList();
-        var parecidos = await ejemplos.RecuperarAsync(casoId, d.Descripcion, config.Ejemplos, ct);
-        var entrada = new EntradaAnalisis(casoId, Anonimizador.Limpiar(d.Descripcion), d.CategoriaOriginalId, d.FuenteUbicacion,
-            d.LatitudHecho is not null, d.ReferenciaHecho is { } referencia ? Anonimizador.Limpiar(referencia) : null,
-            d.OcurridoAproximadamenteEn, reporte.RegistradoEn, catalogo, parecidos, candidatos);
+        var entrada = await armar.EjecutarAsync(d, reporte.RegistradoEn, ct);
 
         using var limite = CancellationTokenSource.CreateLinkedTokenSource(ct);
         limite.CancelAfter(TimeSpan.FromSeconds(Math.Max(1, config.TiempoMaximoSegundos)));
@@ -74,7 +66,7 @@ public sealed class AnalizarReporte(CadDbContext db, IAsistenteReportes asistent
         }
 
         var ahora = reloj.GetUtcNow();
-        var sugerencia = SugerenciaReporte.Registrar(casoId, config.VersionPrompt, config.VersionCriterios, resultado with { Analisis = valido },
+        var sugerencia = SugerenciaReporte.Registrar(casoId, config.VersionPrompt, CriteriosTriaje.Version, resultado with { Analisis = valido },
             latencia, ahora);
         db.SugerenciasReporte.Add(sugerencia);
         var admision = await evaluar.EjecutarAsync(
@@ -95,7 +87,7 @@ public sealed class AnalizarReporte(CadDbContext db, IAsistenteReportes asistent
         registro.LogInformation(
             "Reporte {CasoId}: sugerencia {Decision} con confianza {Confianza} ({Modelo}{Escalada}; {LatenciaMs} ms; {TokensEntrada}+{TokensSalida} tokens; {Ejemplos} ejemplos).",
             casoId, sugerencia.Decision, sugerencia.Confianza, sugerencia.Modelo, sugerencia.Escalada ? ", escalada" : "", latencia,
-            sugerencia.TokensEntrada, sugerencia.TokensSalida, parecidos.Count);
+            sugerencia.TokensEntrada, sugerencia.TokensSalida, entrada.Ejemplos.Count);
         if (admision is not null)
             registro.LogInformation("Reporte {CasoId}: admisión automática ({Modo}) {Resultado}.", casoId, admision.Modo,
                 admision.Elegible ? "elegible" : $"no elegible: {admision.Condicion}");

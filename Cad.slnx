@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/herramientas/">
     <Project Path="herramientas/dataset-jlbyr/cargador/Cad.CargadorDataset.csproj" />
+    <Project Path="herramientas/ia-evaluacion/Cad.IaEvaluacion.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Cad.Contratos/Cad.Contratos.csproj" />

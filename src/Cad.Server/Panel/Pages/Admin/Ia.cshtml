@@ -56,6 +56,48 @@
     }
 </section>
 
+@* S6-T17: qué tan seguido los operadores aceptan lo que sugiere el asistente, cuánto tarda y cuánto gasta. *@
+<section class="superficie ajuste-ia" aria-labelledby="titulo-rendimiento-ia" data-rendimiento-ia>
+    <h2 id="titulo-rendimiento-ia" class="ajuste-ia__titulo">Rendimiento del asistente (últimos @IaModel.DiasRendimiento días)</h2>
+    @if (Model.Rendimiento.Count == 0)
+    {
+        <p class="texto-secundario">No hubo sugerencias en estos días.</p>
+    }
+    else
+    {
+        <div class="tabla-contenedor" tabindex="0" role="region" aria-labelledby="titulo-rendimiento-ia">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th scope="col">Modelo</th>
+                        <th scope="col">Sugerencias</th>
+                        <th scope="col">Categoría aceptada</th>
+                        <th scope="col">Decisión aceptada</th>
+                        <th scope="col">Pasaron al modelo preciso</th>
+                        <th scope="col">Tiempo (mediana · p90)</th>
+                        <th scope="col">Tokens (entrada + salida)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Rendimiento)
+                    {
+                        <tr data-modelo="@r.Modelo">
+                            <th scope="row">@r.Modelo</th>
+                            <td>@r.Sugerencias</td>
+                            <td>@(r.PorcentajeCategoria is { } pc ? $"{pc} % de {r.Decididas} decididas" : "sin decisiones aún")</td>
+                            <td>@(r.PorcentajeDecision is { } pd ? $"{pd} % de {r.DecisionComparable}" : "—")</td>
+                            <td>@r.Escaladas</td>
+                            <td>@((r.LatenciaMedianaMs / 1000.0).ToString("0.0", inv)) s · @((r.LatenciaP90Ms / 1000.0).ToString("0.0", inv)) s</td>
+                            <td>@r.TokensEntrada.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-PE")) + @r.TokensSalida.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-PE"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="campo__ayuda">Aceptada: la categoría final del reporte o la decisión que registró el operador coinciden con la sugerida. «Revisar con cuidado» no cuenta para la decisión. Las admisiones automáticas no cuentan como aceptadas. Criterios vigentes: versión @Cad.Server.Modulos.Asistencia.CriteriosTriaje.Version.</p>
+    }
+</section>
+
 @* 7.7: con los datos de «Sombra» se decide si pasar a «Activa». *@
 <section class="superficie ajuste-ia" aria-labelledby="titulo-sombra-ia" data-precision-sombra>
     <h2 id="titulo-sombra-ia" class="ajuste-ia__titulo">Lo que habría admitido en «Sombra»</h2>

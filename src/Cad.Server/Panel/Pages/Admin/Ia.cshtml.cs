@@ -20,6 +20,9 @@ public class IaModel(ConsultarAsistencia consultar, CambiarAjusteIa cambiar, IOp
     public AjusteIaVista Ajuste { get; private set; } = null!;
     public IReadOnlyList<CambioAjusteVista> Historial { get; private set; } = [];
     public PrecisionSombra Sombra { get; private set; } = new(0, 0, 0, []);
+    // S6-T17: rendimiento de los últimos DiasRendimiento días.
+    public IReadOnlyList<RendimientoModelo> Rendimiento { get; private set; } = [];
+    public const int DiasRendimiento = 7;
 
     // 7.7: recomendación para pasar de «Sombra» a «Activa» (a confirmar con el PO).
     public const int CasosMinimosSombra = 100;
@@ -93,6 +96,7 @@ public class IaModel(ConsultarAsistencia consultar, CambiarAjusteIa cambiar, IOp
         Ajuste = await consultar.AjusteAsync(ct);
         Historial = await consultar.HistorialAsync(20, ct);
         Sombra = await consultar.PrecisionSombraAsync(ct);
+        Rendimiento = await consultar.RendimientoAsync(DateTimeOffset.UtcNow.AddDays(-DiasRendimiento), ct);
     }
 
     public sealed class FormularioAjuste

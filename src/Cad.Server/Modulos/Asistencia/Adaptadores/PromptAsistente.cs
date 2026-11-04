@@ -7,8 +7,8 @@ using Cad.Server.Modulos.Asistencia.Puertos;
 namespace Cad.Server.Modulos.Asistencia.Adaptadores;
 
 // El prompt (5.4) y el esquema de salida (5.5), comunes a todos los proveedores (Gemini, Groq). Bloques estables primero (rol, reglas, catálogo) para aprovechar el caché del
-// prefijo; el reporte va al final, delimitado y marcado como dato. Los criterios de triaje (docs/criterios-triaje.md, S6-T01) y los
-// ejemplos recuperados (S6-T09) se añadirán aquí cuando existan.
+// prefijo; el reporte va al final, delimitado y marcado como dato. Los criterios de triaje (S6-T01) van literales al final del bloque
+// estable; los ejemplos recuperados (S6-T09), con el reporte.
 public static class PromptAsistente
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -39,6 +39,9 @@ public static class PromptAsistente
 
         Catálogo de categorías (id: nombre — ayuda):
         {string.Join("\n", catalogo.Select(c => $"- {c.Id}: {c.Nombre} — {c.Ayuda}"))}
+
+        Criterios de triaje de la central (los mismos que leen los operadores; síguelos):
+        {CriteriosTriaje.Texto}
         """;
 
     public static string Verificador(IReadOnlyList<CategoriaParaAnalisis> catalogo) =>

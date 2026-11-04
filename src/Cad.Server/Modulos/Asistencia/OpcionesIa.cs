@@ -30,9 +30,7 @@ public sealed class OpcionesIa
     // Cortacircuitos: al agotarse, el asistente deja de llamar a la API hasta el día siguiente (UTC).
     public int PresupuestoDiarioTokens { get; set; } = 500_000;
     // Cambia cuando cambia el prompt: hay una sugerencia por reporte y versión, y se pueden comparar versiones.
-    public string VersionPrompt { get; set; } = "2026-11-b";
-    // Versión del documento de criterios de triaje (docs/criterios-triaje.md, S6-T01) con que se decidió.
-    public string VersionCriterios { get; set; } = "borrador";
+    public string VersionPrompt { get; set; } = "2026-11-c";
     public OpcionesDuplicados Duplicados { get; set; } = new();
     // Cada cuánto se buscan admisiones automáticas vencidas (S6-T16).
     public int IntervaloAdmisionSegundos { get; set; } = 5;

@@ -110,6 +110,8 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("GET", "/panel/reportes", "HU14", Acceso.SoloRol, Roles.Operador),
         // 23/10/2026: reporte registrado por la central (p. ej. por una llamada).
         new("GET", "/panel/reportes/nuevo", "Reporte de la central", Acceso.SoloRol, Roles.Operador),
+        // S6-T01 — los criterios de triaje que también recibe el asistente: solo operadores.
+        new("GET", "/panel/criterios-triaje", "HU45 (criterios)", Acceso.SoloRol, Roles.Operador, "Cuándo admitir, derivar o descartar"),
         new("POST", "/panel/reportes/nuevo", "Reporte de la central", Acceso.SoloRol, Roles.Operador),
         new("GET", "/panel/reportes/{id:guid}", "HU14", Acceso.SoloRol, Roles.Operador,
             Ejemplo: "/panel/reportes/00000000-0000-0000-0000-000000000000"),
