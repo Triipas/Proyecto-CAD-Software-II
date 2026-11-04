@@ -13,10 +13,24 @@
 <div class="pagina__encabezado">
     <div>
         <h1 class="titulo">Mapa de concentración</h1>
-        <p class="texto-secundario">Dónde ocurren los SOS y reportes del periodo: cada caso con ubicación suma calor. No incluye casos cancelados ni reportes descartados, ni posiciones de acompañamientos o de serenos.</p>
+        <p class="texto-secundario">@(Model.EsProyeccion
+            ? "Qué zonas tienen más casos esperados en las próximas horas y si hay serenos cerca, para reposicionarlos antes de que lleguen los casos."
+            : "Dónde ocurren los SOS y reportes del periodo: cada caso con ubicación suma calor. No incluye casos cancelados ni reportes descartados, ni posiciones de acompañamientos o de serenos.")</p>
     </div>
 </div>
 
+@* HU46 (S6-T20): «Vista: Histórico | Proyección». Enlaces GET, como los filtros. *@
+<nav class="vista-mapa" aria-label="Vista del mapa" data-vista="@(Model.EsProyeccion ? "proyeccion" : "historico")">
+    <a class="vista-mapa__opcion" href="/panel/mapa-concentracion" aria-current="@(Model.EsProyeccion ? null : "page")">Histórico</a>
+    <a class="vista-mapa__opcion" href="/panel/mapa-concentracion?Vista=proyeccion&amp;Ventana=6h" aria-current="@(Model.EsProyeccion ? "page" : null)">Proyección</a>
+</nav>
+
+@if (Model.EsProyeccion)
+{
+    <partial name="_Proyeccion" model="Model" />
+}
+else
+{
 @* La diferencia con las zonas de Analítica, dicha antes del mapa: aquí el volumen; allá, el rendimiento. *@
 <aside class="dos-mapas" aria-label="Este mapa y las zonas de Analítica" data-diferencia>
     <div class="dos-mapas__lado dos-mapas__lado--aqui">
@@ -141,8 +155,16 @@
         <noscript><p class="texto-secundario">El mapa necesita JavaScript.</p></noscript>
     </section>
 }
+}
 
 @section Scripts {
     <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
-    <script src="~/js/concentracion.js" asp-append-version="true"></script>
+    @if (Model.EsProyeccion)
+    {
+        <script src="~/js/proyeccion.js" asp-append-version="true"></script>
+    }
+    else
+    {
+        <script src="~/js/concentracion.js" asp-append-version="true"></script>
+    }
 }

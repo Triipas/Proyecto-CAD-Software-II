@@ -499,3 +499,6 @@ artefactos/
 DESIGN.md
 PRODUCT.md
 docs/
+
+# HU46: mundos simulados y modelos de la herramienta ia-evaluacion (se regeneran con semilla fija; solo se versiona el modelo exportado al servidor).
+datos/
