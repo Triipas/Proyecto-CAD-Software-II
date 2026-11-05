@@ -8,7 +8,7 @@ const clave = () => `Clave-${randomUUID().slice(0, 8)}9`;
 const ahora = () => new Date().toISOString();
 const cerca = (dLat, dLon) => ({ latitud: LIMA.latitud + dLat, longitud: LIMA.longitud + dLon });
 
-async function api(ruta, { cuerpo, token, metodo = 'POST' } = {}) {
+export async function api(ruta, { cuerpo, token, metodo = 'POST' } = {}) {
   const respuesta = await fetch(`${URL_BASE}${ruta}`, {
     method: metodo,
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -19,7 +19,7 @@ async function api(ruta, { cuerpo, token, metodo = 'POST' } = {}) {
   return texto ? JSON.parse(texto) : null;
 }
 
-const token = async (correo, contrasena) =>
+export const token = async (correo, contrasena) =>
   (await api('/api/auth/token', { cuerpo: { correo, contrasena } })).token;
 
 // Con { provisional }, la cuenta entra con la contraseña del administrador y la cambia por la suya, como pide el panel.

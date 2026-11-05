@@ -130,27 +130,37 @@
 
   // Último caso llegado (SOS o reporte, 03/11/2026): el mapa se enfoca en él y un sonar, como el de la vigilancia, late a su
   // alrededor. Solo hay uno: el siguiente que llega lo releva. Se apaga al abrirlo el operador o al salir de la lista.
-  let ultimoLlegado = null; // { id, capa }
+  // 04/11/2026: el reporte por revisar (Recibido o En revisión, enviado desde la app) no está en la cola sino entre los casos
+  // en curso del mapa (marcadoresEnCurso); antes el sonar solo lo buscaba en la cola y ese reporte llegaba sin enfoque.
+  let ultimoLlegado = null; // { id, capa, marcador }
   function apagarUltimo() {
     if (!ultimoLlegado) return;
-    marcadores.get(ultimoLlegado.id)?.getElement()?.classList.remove("marcador--ultimo");
+    ultimoLlegado.marcador.getElement()?.classList.remove("marcador--ultimo");
     ultimoLlegado.capa.remove();
     ultimoLlegado = null;
   }
 
-  function destacarUltimo(id) {
-    const marcador = marcadores.get(id);
+  // El marcador del caso (en la cola o en curso) se rehizo o se movió: el sonar lo sigue.
+  function seguirUltimo(id, marcador) {
+    if (ultimoLlegado?.id !== id) return;
+    ultimoLlegado.marcador = marcador;
+    ultimoLlegado.capa.setLatLng(marcador.getLatLng());
+    marcador.getElement()?.classList.add("marcador--ultimo");
+  }
+
+  function destacarUltimo(id, { reporte = claseLlegada(id) !== "" } = {}) {
+    const marcador = marcadores.get(id) ?? marcadoresEnCurso.get(id);
     if (!marcador) return;
     apagarUltimo();
     const punto = marcador.getLatLng();
     const capa = L.marker(punto, {
-      icon: L.divIcon({ className: `sonar-llegada${claseLlegada(id) ? " sonar-llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [160, 160], iconAnchor: [80, 80] }),
+      icon: L.divIcon({ className: `sonar-llegada${reporte ? " sonar-llegada--reporte" : ""}`, html: "<span></span><span></span>", iconSize: [160, 160], iconAnchor: [80, 80] }),
       interactive: false,
       keyboard: false,
       zIndexOffset: -1000,
     }).addTo(mapa);
     marcador.getElement()?.classList.add("marcador--ultimo");
-    ultimoLlegado = { id, capa };
+    ultimoLlegado = { id, capa, marcador };
     traerMapaALaVista();
     const destino = centroLibre(punto, ZOOM_LLEGADA);
     if (reducido.matches) mapa.setView(destino, ZOOM_LLEGADA, { animate: false });
@@ -183,7 +193,7 @@
       const existente = marcadores.get(id);
       if (existente) {
         deslizar(existente, [Number(item.dataset.lat), Number(item.dataset.lon)]);
-        if (ultimoLlegado?.id === id) ultimoLlegado.capa.setLatLng([Number(item.dataset.lat), Number(item.dataset.lon)]);
+        seguirUltimo(id, existente);
         existente.getElement()?.classList.toggle("marcador-sos--pulso", nuevos.has(id));
         continue;
       }
@@ -220,7 +230,7 @@
     for (const [id, marcador] of marcadores) {
       if (vigentes.has(id)) continue;
       marcadores.delete(id);
-      if (ultimoLlegado?.id === id) apagarUltimo();
+      if (ultimoLlegado?.marcador === marcador) apagarUltimo();
       retirar(marcador);
     }
   }
@@ -282,6 +292,7 @@
   function seleccionarAsignado(id, { desdeMapa = false } = {}) {
     if (sosSeleccionado) deseleccionar();
     casoConRuta = id;
+    if (ultimoLlegado?.id === id) apagarUltimo();
     marcarAsignado(id);
     const item = document.getElementById(`asignado-${id}`);
     if (item && desdeMapa) {
@@ -323,6 +334,24 @@
     const boton = evento.target.closest("[data-seleccionar-asignado]");
     if (boton) seleccionarAsignado(boton.closest("[data-asignado]").dataset.asignado);
   });
+
+  // ---------- Un clic en un hueco del mapa suelta lo elegido (04/11/2026) ----------
+  // Igual que soltarlo desde la cola: el caso (SOS o reporte, en la cola o en curso) pierde su resaltado, su línea de despacho
+  // o su recorrido, y el sereno elegido también se suelta. Leaflet no emite el «click» del mapa al tocar un marcador (no
+  // burbujea), un globo o un control, ni al terminar un arrastre; el doble clic que acerca cancela el clic que lo precede.
+  let soltarPendiente = null;
+  function soltarTodo() {
+    soltarPendiente = null;
+    if (sosSeleccionado) deseleccionar();
+    soltarAsignado();
+    marcarSereno(null);
+    resaltar(marcadoresSerenos, null);
+  }
+  mapa.on("click", () => {
+    clearTimeout(soltarPendiente);
+    soltarPendiente = setTimeout(soltarTodo, 250);
+  });
+  mapa.on("dblclick", () => clearTimeout(soltarPendiente));
 
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
   // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
@@ -387,6 +416,7 @@
       const existente = marcadoresEnCurso.get(id);
       if (existente?.forma === `${clase}|${texto}`) {
         deslizar(existente, [Number(item.dataset.lat), Number(item.dataset.lon)]);
+        seguirUltimo(id, existente);
         existente.setPopupContent(detalle);
         continue;
       }
@@ -403,11 +433,13 @@
       marcador.claves = [`caso:${id}`];
       marcador.forma = `${clase}|${texto}`;
       marcadoresEnCurso.set(id, marcador);
+      seguirUltimo(id, marcador);
       if (!existente) entrar(marcador);
     }
     for (const [id, marcador] of marcadoresEnCurso) {
       if (vigentes.has(id)) continue;
       marcadoresEnCurso.delete(id);
+      if (ultimoLlegado?.marcador === marcador) apagarUltimo();
       retirar(marcador);
     }
   }
@@ -1031,7 +1063,16 @@
     }
     if (regionCasosMapa) {
       const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
-      if (enCurso.ok && !enCurso.redirected) cadMovimiento.actualizarRegion(regionCasosMapa, await enCurso.text());
+      if (enCurso.ok && !enCurso.redirected) {
+        const { nuevos: entrantes } = cadMovimiento.actualizarRegion(regionCasosMapa, await enCurso.text());
+        // El reporte por revisar que llega desde la app también es un caso llegado: se enfoca y lleva el sonar como un SOS.
+        // Solo cuenta el que aparece en Recibido o En revisión (no el SOS que pasa a en curso al asignarlo).
+        const porRevisar = entrantes.filter((clave) => {
+          const el = regionCasosMapa.querySelector(`[data-caso-mapa="${CSS.escape(clave)}"]`);
+          return el?.dataset.origen === "Reporte" && (el.dataset.estado === "Recibido" || el.dataset.estado === "En revisión");
+        });
+        if (cargado && porRevisar.length) reporteLlegado = porRevisar.at(-1);
+      }
     }
     // El caso con recorrido que ya no está en curso (se cerró) deja de tenerlo.
     if (casoConRuta && !regionCasosMapa?.querySelector(`[data-caso-mapa="${CSS.escape(casoConRuta)}"]`)) casoConRuta = null;
@@ -1043,7 +1084,7 @@
     actualizarIndicadores();
     contarAsignados();
     // Un reporte llegado con la central abierta releva al último caso del mapa (la primera carga no cuenta como llegada).
-    if (reporteLlegado) destacarUltimo(reporteLlegado);
+    if (reporteLlegado) destacarUltimo(reporteLlegado, { reporte: true });
     cargado = true;
     return true;
   }

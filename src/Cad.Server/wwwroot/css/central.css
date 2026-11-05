@@ -1007,6 +1007,12 @@
   animation-delay: 1.2s;
 }
 
+/* El sonar sigue al filtro de la cola: con «SOS» no late sobre un reporte oculto, ni al revés. */
+.central--sin-sos .sonar-llegada:not(.sonar-llegada--reporte),
+.central--sin-reporte .sonar-llegada--reporte {
+  display: none;
+}
+
 .marcador--ultimo.marcador-sos--pulso::before {
   display: none;
 }
