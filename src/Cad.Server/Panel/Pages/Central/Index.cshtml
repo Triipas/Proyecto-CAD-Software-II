@@ -15,7 +15,7 @@
     <ul class="barra__indicadores" aria-label="Situación de la central">
         <li class="indicador indicador--sos@(Model.Pendientes.Count > 0 ? " indicador--activo" : "")" data-indicador="sos"><b data-valor>@Model.Pendientes.Count</b> SOS</li>
         <li class="indicador" data-indicador="por-asignar"><b data-valor>@Model.PorAsignar</b> por asignar</li>
-        <li class="indicador" data-indicador="serenos-libres"><b data-valor>@Model.SerenosLibres</b> <span data-etiqueta>@(Model.SerenosLibres == 1 ? "sereno libre" : "serenos libres")</span></li>
+        <li class="indicador" data-indicador="serenos-libres"><b data-valor>@Model.SerenosLibres</b> <span data-etiqueta>@(Model.SerenosLibres == 1 ? "sereno disponible" : "serenos disponibles")</span></li>
         <li class="indicador"><a href="/panel/acompanamientos"><b>@Model.AcompanamientosActivos</b> @(Model.AcompanamientosActivos == 1 ? "acompañamiento" : "acompañamientos")</a></li>
     </ul>
 }
@@ -154,7 +154,7 @@
         <button type="button" aria-pressed="true" data-capa="sos"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--sos"></i>SOS</button>
         <button type="button" aria-pressed="true" data-capa="reporte"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--reporte"></i>Reportes</button>
         <button type="button" aria-pressed="true" data-capa="sereno"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--sereno"></i>Serenos</button>
-        <span>Relleno: sin asignar · Borde: en curso</span>
+        <span>Color lleno: sin asignar · Solo borde: en curso</span>
     </div>
 
     @* Asignación rápida: al elegir un caso aparece aquí el sereno disponible más cercano (un clic) y un buscador por nombre

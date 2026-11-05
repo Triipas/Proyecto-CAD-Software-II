@@ -320,7 +320,7 @@
                         <h2 class="siguiente__titulo" id="titulo-siguiente">Asigna el reporte a un sereno disponible</h2>
                         <span class="siguiente__paso">@fase</span>
                     </div>
-                    <p data-pendiente-asignacion>Pendiente de asignación. El sereno disponible más cercano al lugar del hecho viene sugerido; también puedes asignarlo desde el mapa de la central, como un SOS.</p>
+                    <p class="texto-secundario" data-pendiente-asignacion>El más cercano al lugar del hecho viene sugerido. También puedes asignarlo desde el mapa de la central.</p>
                     <partial name="_AsignarCaso" model="Model.VistaAsignacion" />
                     <div class="acciones">
                         <a class="boton boton--secundario" href="/panel/central#titulo-reportes">Ver en el mapa de la central</a>
@@ -575,7 +575,9 @@
                     <div><dt>Referencia</dt><dd data-referencia>@referencia</dd></div>
                 }
             </dl>
-            <p class="texto-secundario detalle-caso__nota">Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.</p>
+            <p class="texto-secundario detalle-caso__nota">@(r.FuenteUbicacion == "PosicionActual"
+                ? "El ciudadano indicó que el hecho ocurrió donde estaba al enviar el reporte."
+                : "Es el lugar del hecho que indicó el ciudadano, no la ubicación de su dispositivo.")</p>
         </section>
 
         <section class="superficie seccion-caso" aria-labelledby="titulo-categoria">

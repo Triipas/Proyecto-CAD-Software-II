@@ -192,7 +192,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         {
             case ResultadoIntentoContacto.Registrado or ResultadoIntentoContacto.YaRegistrado:
                 Mensaje = "Intento de contacto registrado.";
-                DetalleMensaje = "Puedes registrar más intentos.";
+                // El aviso dice qué sigue: con contacto, clasificar; sin él, se puede volver a llamar.
+                DetalleMensaje = Formulario.Resultado == nameof(ResultadoContacto.Contactado)
+                    ? "Ahora clasifica el SOS según lo que te contaron."
+                    : "Puedes volver a llamar y registrar otro intento, o despachar a un sereno si es urgente.";
                 return RedirectToPage(new { id }); // PRG: recargar no vuelve a enviar el formulario
             case ResultadoIntentoContacto.Invalido invalido when await CargarAsync(id, ct):
                 Errores = invalido.Errores;
@@ -247,9 +250,9 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         switch (resultado)
         {
             case ResultadoClasificacion.Clasificado c:
-                return Clasificado(id, c.Categoria);
+                return await ClasificadoAsync(id, c.Categoria, ct);
             case ResultadoClasificacion.YaClasificado c:
-                return Clasificado(id, c.Categoria);
+                return await ClasificadoAsync(id, c.Categoria, ct);
             case ResultadoClasificacion.CasoNoEncontrado:
                 return NotFound();
             default:
@@ -365,10 +368,14 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         }
     }
 
-    private RedirectToPageResult Clasificado(Guid id, string categoria)
+    private async Task<RedirectToPageResult> ClasificadoAsync(Guid id, string categoria, CancellationToken ct)
     {
         Mensaje = "SOS clasificado.";
-        DetalleMensaje = $"Tipo: {categoria}.";
+        // El paso siguiente según el caso: si ya se despachó antes de clasificarlo («Despachar ahora»), no se pide otro sereno.
+        var conSereno = (await consultar.EjecutarAsync(id, ct))?.Asignacion is { FinalizadaEn: null };
+        DetalleMensaje = conSereno
+            ? $"Tipo: {categoria}. El caso ya tiene sereno asignado."
+            : $"Tipo: {categoria}. Ahora asígnalo a un sereno disponible.";
         return RedirectToPage(new { id }); // PRG
     }
 

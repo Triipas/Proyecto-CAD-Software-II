@@ -917,7 +917,7 @@
     fijarIndicador("sos", sos);
     document.querySelector('[data-indicador="sos"]')?.classList.toggle("indicador--activo", sos > 0);
     fijarIndicador("por-asignar", sos + reportes);
-    fijarIndicador("serenos-libres", libres, libres === 1 ? "sereno libre" : "serenos libres");
+    fijarIndicador("serenos-libres", libres, libres === 1 ? "sereno disponible" : "serenos disponibles");
     for (const [clave, valor] of [["sos", sos], ["reportes", reportes]]) {
       cadMovimiento.fijarCifra(document.querySelector(`[data-filtro-total="${clave}"]`), valor);
     }
@@ -1166,11 +1166,12 @@
     const reporte = item.dataset.origen === "Reporte";
     const sugerido = sosSeleccionado === item.dataset.sos ? sugerencia : null;
     return ficha({
-      tipo: reporte ? "reporte" : "sos", etiqueta: reporte ? "Reporte" : "SOS", estado: "Pendiente",
-      hora: `${reporte ? "Admitido" : "Recibido"} ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
+      // El mismo estado y las mismas palabras que la tarjeta de la cola (un reporte de la cola está «Admitido»; un SOS, «Pendiente»).
+      tipo: reporte ? "reporte" : "sos", etiqueta: reporte ? "Reporte" : "SOS", estado: reporte ? "Admitido" : "Pendiente",
+      hora: `${reporte ? "a las" : "Registrado"} ${item.dataset.hora}`, titulo: item.dataset.ciudadano,
       datos: [
         ["Tipo", reporte ? item.dataset.categoria : item.dataset.clase],
-        ["Ubicación", reporte ? "" : `Teléfono del ciudadano · ± ${item.dataset.precision} m`],
+        ["Ubicación", reporte ? "" : `Del dispositivo · ± ${item.dataset.precision} m`],
         ["Sugerido", sugerido ? `${sugerido.nombre} · a ${sugerido.texto}` : "Ningún sereno disponible con ubicación"],
       ],
       acciones: accion(item.dataset.detalle, reporte ? "Abrir el reporte" : "Abrir el SOS", false),
