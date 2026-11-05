@@ -41,7 +41,7 @@ async function ingresarPanel(contexto, correo, contrasena, { provisional } = {})
 }
 
 // Cuentas del personal (22/10/2026): DNI obligatorio y contraseña inicial provisional, que se cambia al primer ingreso.
-async function crearCuenta(pagina, { nombres, apellidos, dni, correo, telefono, rol, contrasena }) {
+export async function crearCuenta(pagina, { nombres, apellidos, dni, correo, telefono, rol, contrasena }) {
   await pagina.goto(`${URL_BASE}/panel/admin/cuentas/nueva`);
   await pagina.getByLabel('Nombres').fill(nombres);
   await pagina.getByLabel('Apellidos').fill(apellidos);
@@ -55,7 +55,7 @@ async function crearCuenta(pagina, { nombres, apellidos, dni, correo, telefono, 
 }
 
 // El sereno cambia la provisional desde la app (API) antes de operar.
-async function estrenarSereno(correo, provisional, contrasena) {
+export async function estrenarSereno(correo, provisional, contrasena) {
   await api('/api/cuentas/contrasena', {
     token: await token(correo, provisional),
     cuerpo: { actual: provisional, nueva: contrasena, confirmacion: contrasena },
