@@ -86,6 +86,7 @@ for (const [i, [descripcion, parte, estado, minutos, soloReferencia]] of reporte
     cuerpo: { idSolicitud: nuevoId(), categoriaId: cat(parte), descripcion: descripcion + demo, ocurridoAproximadamenteEn: new Date(Date.now() - minutos * 60_000).toISOString(), ubicacion },
   });
   const ruta = `/panel/reportes/${id}`;
+  let logrado = estado;
   try {
     if (estado !== 'Recibido') await panel.enviar(ruta, 'IniciarRevision');
     if (['Admitido', 'Asignada', 'En camino', 'Derivado', 'Descartado'].includes(estado)) {
@@ -105,10 +106,10 @@ for (const [i, [descripcion, parte, estado, minutos, soloReferencia]] of reporte
         await panel.enviar(ruta, 'Asignar', { 'Asignacion.SerenoId': await idSereno(libre), 'Asignacion.IdSolicitud': nuevoId(), 'Asignacion.Volver': 'detalle' });
         libre.ocupado = true;
         if (estado === 'En camino') await api(`/api/sereno/casos/${id}/desplazamiento`, { token: libre.token, metodo: 'POST' });
-      } else console.log(`  (sin serenos libres para asignar «${descripcion.slice(0, 30)}…»: queda admitido)`);
+      } else logrado = 'Admitido (sin sereno libre)';
     }
     creados++;
-    console.log(`  reporte ${String(i + 1).padStart(2)}: ${estado.padEnd(11)} ${descripcion.slice(0, 60)}`);
+    console.log(`  reporte ${String(i + 1).padStart(2)}: ${logrado.padEnd(11)} ${descripcion.slice(0, 60)}`);
   } catch (error) {
     console.log(`  reporte ${String(i + 1).padStart(2)}: se creó, pero no llegó a «${estado}»: ${error.message}`);
   }
@@ -121,6 +122,7 @@ for (const [i, estado] of planSos.entries()) {
   const punto = alrededor(centro, 1300);
   const { id } = await api('/api/sos', { token: ciudadano.token, cuerpo: { idSolicitud: nuevoId(), activadoEn: ahora(), ubicacion: { ...punto, precisionMetros: 8, obtenidaEn: ahora() } } });
   const ruta = `/panel/central/sos/${id}`;
+  let logrado = estado;
   try {
     if (estado !== 'Pendiente') {
       await panel.enviar(ruta, null, { 'Formulario.IdSolicitud': nuevoId(), 'Formulario.Resultado': 'Contactado', 'Formulario.InformacionHecho': 'La ciudadana informa que la siguen dos personas' + demo });
@@ -133,9 +135,9 @@ for (const [i, estado] of planSos.entries()) {
       if (libre) {
         await panel.enviar(ruta, 'Asignar', { 'Asignacion.SerenoId': await idSereno(libre), 'Asignacion.IdSolicitud': nuevoId() });
         libre.ocupado = true;
-      }
+      } else logrado = 'Clasificado (sin sereno libre)';
     }
-    console.log(`  SOS ${i + 1}: ${estado} · ${ciudadano.nombre}`);
+    console.log(`  SOS ${i + 1}: ${logrado} · ${ciudadano.nombre}`);
   } catch (error) {
     console.log(`  SOS ${i + 1}: se creó, pero no llegó a «${estado}»: ${error.message}`);
   }

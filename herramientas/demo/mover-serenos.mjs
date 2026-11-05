@@ -30,7 +30,7 @@ let vuelta = 0;
 for (;;) {
   for (const m of moviles) {
     try {
-      // Punto de partida: el que se indique en CAD_CENTRO o uno cerca del primer caso; si no, el centro de Lima-Arequipa del mapa.
+      // Punto de partida: cerca de CAD_CENTRO (el centro del mapa de la central); sin él, el centro por defecto del panel (Arequipa).
       if (!m.punto) {
         m.base = centro ? alrededor(centro, 1200) : alrededor({ latitud: -16.3988, longitud: -71.5369 }, 1200);
         m.punto = m.base;
@@ -39,9 +39,12 @@ for (;;) {
       if (vuelta % 3 === 0) {
         const despacho = await api('/api/sereno/despacho', { token: m.token }).catch(() => null);
         const lugar = despacho?.ubicacion ?? (despacho?.lugarHecho?.latitud != null ? despacho.lugarHecho : null);
-        m.caso = despacho && lugar ? { id: despacho.casoId, estado: despacho.estado, punto: { latitud: lugar.latitud, longitud: lugar.longitud } } : null;
+        // Se conserva el paso que ya dio este guion (el despacho puede tardar un instante en reflejarlo).
+        const previo = m.caso && despacho && m.caso.id === despacho.casoId ? m.caso.estado : null;
+        m.caso = despacho && lugar ? { id: despacho.casoId, estado: previo === 'En atención' ? previo : despacho.estado, punto: { latitud: lugar.latitud, longitud: lugar.longitud } } : null;
         if (m.caso && avanzar && m.caso.estado === 'Asignada') {
           await api(`/api/sereno/casos/${m.caso.id}/desplazamiento`, { token: m.token, metodo: 'POST' }).catch(() => {});
+          m.caso.estado = 'En camino';
           console.log(`  ${m.correo}: en camino al caso`);
         }
       }
@@ -53,6 +56,7 @@ for (;;) {
         if (m.caso) {
           if (avanzar && m.caso.estado === 'En camino') {
             await api(`/api/sereno/casos/${m.caso.id}/atencion`, { token: m.token, metodo: 'POST' }).catch(() => {});
+            m.caso.estado = 'En atención';
             console.log(`  ${m.correo}: llegó e inició la atención`);
           }
         } else m.destino = null; // patrulla: otro punto

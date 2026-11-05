@@ -26,6 +26,29 @@ async function reporteNuevo() {
 test.describe('Central: panel del caso', () => {
   test.use({ storageState: sesion('operador'), reducedMotion: 'reduce' });
 
+  // 05/11/2026: el sereno más cercano se recalcula en vivo en el panel cuando un sereno envía su posición.
+  test('El más cercano se recalcula en vivo en el panel cuando un sereno se mueve', async ({ page }) => {
+    const { cuentas, ids } = leerSemilla();
+    const pedro = await token(cuentas.suplente.correo, cuentas.suplente.clave);
+    await api('/api/sereno/estado', { metodo: 'PUT', token: pedro, cuerpo: { operativo: true, ubicacionAutorizada: true } });
+    await api('/api/sereno/posiciones', { token: pedro, cuerpo: { latitud: LIMA.latitud - 0.02, longitud: LIMA.longitud + 0.02, precisionMetros: 6, obtenidaEn: ahora() } });
+
+    await prepararPagina(page);
+    await abrir(page, '/panel/central');
+    await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+    await page.locator(`#sos-${ids.reporteAdmitido}`).getByRole('link', { name: /Ver el reporte/ }).click();
+    const marco = page.frameLocator('[data-marco-caso]');
+    const bloque = marco.locator('[data-asignacion-vivo]');
+    await expect(bloque).toContainText('Más cercano');
+    const antes = (await bloque.locator('.asignar__distancia').first().textContent()).trim();
+
+    // El sereno se acerca al lugar del hecho: el panel lo muestra sin recargarse.
+    await api('/api/sereno/posiciones', { token: pedro, cuerpo: { latitud: LIMA.latitud - 0.0058, longitud: LIMA.longitud + 0.0038, precisionMetros: 6, obtenidaEn: ahora() } });
+    await expect.poll(async () => (await bloque.locator('.asignar__distancia').first().textContent()).trim(), { timeout: 15_000 }).not.toBe(antes);
+    expect(await marco.locator('body').evaluate(() => performance.getEntriesByType('navigation').length)).toBe(1);
+    await page.locator('[data-cerrar-panel]').click();
+  });
+
   test('Un reporte se revisa, se decide y se asigna sin salir de la central', async ({ page }, info) => {
     const { cuentas } = leerSemilla();
     // El suplente, operativo y cerca del hecho (en Lima, como el escenario): otras pruebas de este proyecto dejan a Sara con
