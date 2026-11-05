@@ -17,6 +17,8 @@ public sealed record FiltroCasos(
     Guid? CategoriaId = null,
     bool SinTipo = false,
     EstadoCaso? Estado = null,
+    // Rediseño del 05/11/2026: una vista agrupa varios estados (en curso, finalizados, sin efecto). Se combina con Estado (ambos se cumplen).
+    IReadOnlyList<EstadoCaso>? Estados = null,
     // Un caso «tiene» al sereno si estuvo asignado a él, también si la asignación ya terminó (casos cerrados).
     Guid? SerenoId = null);
 
@@ -55,7 +57,8 @@ public sealed class ConsultarCasos(CadDbContext db)
 
     private static readonly Guid RolSereno = Roles.Todos.Single(r => r.Nombre == Roles.Sereno).Id;
 
-    public async Task<PaginaCasos> EjecutarAsync(FiltroCasos filtro, int pagina, CancellationToken ct)
+    // Los casos que cumplen el filtro (todos los criterios se combinan, CA01).
+    private IQueryable<Caso> Filtrar(FiltroCasos filtro)
     {
         var casos = db.Casos.AsNoTracking().AsQueryable();
         if (filtro.Desde is { } desde)
@@ -70,12 +73,38 @@ public sealed class ConsultarCasos(CadDbContext db)
             casos = casos.Where(c => (db.CierresCaso.Where(x => x.CasoId == c.Id).Select(x => (Guid?)x.CategoriaId).FirstOrDefault() ?? c.CategoriaId) == categoria);
         if (filtro.Estado is { } estado)
             casos = casos.Where(c => c.Estado == estado);
+        if (filtro.Estados is { } estados)
+            casos = casos.Where(c => estados.Contains(c.Estado));
         if (filtro.SerenoId is { } sereno)
             casos = casos.Where(c => db.Asignaciones.Any(a => a.CasoId == c.Id && a.SerenoId == sereno));
+        return casos;
+    }
 
+    public async Task<PaginaCasos> EjecutarAsync(FiltroCasos filtro, int pagina, CancellationToken ct)
+    {
+        var casos = Filtrar(filtro);
         var total = await casos.CountAsync(ct);
         pagina = Math.Clamp(pagina, 1, Math.Max(1, (int)Math.Ceiling(total / (double)TamanoPagina)));
+        return new PaginaCasos(await LeerAsync(casos, (pagina - 1) * TamanoPagina, TamanoPagina, ct), total, pagina, TamanoPagina);
+    }
 
+    // Los casos con el filtro puesto, sin el estado ni la vista, agrupados por origen y estado: de ahí salen las cifras de las vistas y
+    // el resumen de la selección con una sola consulta.
+    public async Task<IReadOnlyDictionary<(OrigenCaso Origen, EstadoCaso Estado), int>> ResumenAsync(FiltroCasos filtro, CancellationToken ct)
+    {
+        var filas = await Filtrar(filtro with { Estado = null, Estados = null })
+            .GroupBy(c => new { c.Origen, c.Estado })
+            .Select(g => new { g.Key.Origen, g.Key.Estado, Casos = g.Count() })
+            .ToListAsync(ct);
+        return filas.ToDictionary(f => (f.Origen, f.Estado), f => f.Casos);
+    }
+
+    // Un caso por su identificador, con los mismos datos que una fila de la búsqueda (para la vista previa).
+    public async Task<CasoEncontrado?> ObtenerAsync(Guid id, CancellationToken ct) =>
+        (await LeerAsync(db.Casos.AsNoTracking().Where(c => c.Id == id), 0, 1, ct)).SingleOrDefault();
+
+    private async Task<List<CasoEncontrado>> LeerAsync(IQueryable<Caso> casos, int saltar, int tomar, CancellationToken ct)
+    {
         var filas = await (from caso in casos
                            from ciudadano in db.Users.AsNoTracking().Where(u => u.Id == caso.CiudadanoId).DefaultIfEmpty()
                            let tipo = db.CierresCaso.Where(x => x.CasoId == caso.Id).Select(x => (Guid?)x.CategoriaId).FirstOrDefault() ?? caso.CategoriaId
@@ -104,14 +133,12 @@ public sealed class ConsultarCasos(CadDbContext db)
                                AtencionIniciadaEn = db.EventosCaso.Where(e => e.CasoId == caso.Id && e.Tipo == TipoEventoCaso.AtencionIniciada)
                                    .OrderBy(e => e.OcurridoEn).Select(e => (DateTimeOffset?)e.OcurridoEn).FirstOrDefault(),
                            })
-                          .Skip((pagina - 1) * TamanoPagina)
-                          .Take(TamanoPagina)
+                          .Skip(saltar)
+                          .Take(tomar)
                           .ToListAsync(ct);
 
-        return new PaginaCasos(
-            filas.Select(f => new CasoEncontrado(f.Id, f.Origen, EstadosCaso.Texto(f.Origen, f.Estado), f.RegistradoEn, f.Ciudadano, f.Tipo, f.Sereno,
-                f.Latitud, f.Longitud, new TiemposCaso(f.Origen, f.RegistradoEn, f.DecididoEn, f.Decision, f.AtencionIniciadaEn))).ToList(),
-            total, pagina, TamanoPagina);
+        return filas.Select(f => new CasoEncontrado(f.Id, f.Origen, EstadosCaso.Texto(f.Origen, f.Estado), f.RegistradoEn, f.Ciudadano, f.Tipo, f.Sereno,
+            f.Latitud, f.Longitud, new TiemposCaso(f.Origen, f.RegistradoEn, f.DecididoEn, f.Decision, f.AtencionIniciadaEn))).ToList();
     }
 
     // Serenos para el filtro: todas las cuentas de sereno, también las desactivadas (pueden tener casos anteriores).

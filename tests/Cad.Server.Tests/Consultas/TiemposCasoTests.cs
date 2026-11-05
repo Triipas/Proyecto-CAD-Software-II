@@ -134,7 +134,8 @@ public class TiemposCasoTests(FabricaCad fabrica)
         var fila = html.IndexOf($"data-caso=\"{id}\"", StringComparison.Ordinal);
         Assert.True(fila >= 0, "El caso no aparece en la búsqueda.");
         var inicio = html.IndexOf('>', html.IndexOf(atributo, fila, StringComparison.Ordinal)) + 1;
-        return System.Net.WebUtility.HtmlDecode(html[inicio..html.IndexOf("</td>", inicio, StringComparison.Ordinal)]);
+        // Rediseño del 05/11/2026: los tiempos son elementos de una misma celda; el valor llega hasta la siguiente etiqueta.
+        return System.Net.WebUtility.HtmlDecode(html[inicio..html.IndexOf('<', inicio)]);
     }
 
     private static string Dato(string html, string atributo)
@@ -154,7 +155,9 @@ public class TiemposCasoTests(FabricaCad fabrica)
         Assert.Equal("3 min 20 s", Dato(await operador.GetStringAsync($"/panel/central/sos/{id}"), "data-tiempo-respuesta"));
         var busqueda = await operador.GetStringAsync("/panel/casos?Origen=Sos&Estado=EnAtencion");
         Assert.Equal("3 min 20 s", Celda(busqueda, id, "data-tiempo-atencion"));
-        Assert.Equal(TiemposCaso.NoCorresponde, Celda(busqueda, id, "data-tiempo-decision"));
+        // El tiempo que no corresponde ya no ocupa lugar en la lista (la vista previa lo dice).
+        var fila = busqueda[busqueda.IndexOf($"data-caso=\"{id}\"", StringComparison.Ordinal)..];
+        Assert.DoesNotContain("data-tiempo-decision", fila[..fila.IndexOf("</tr>", StringComparison.Ordinal)]);
     }
 
     [Fact]
