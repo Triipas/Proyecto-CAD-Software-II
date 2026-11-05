@@ -189,3 +189,184 @@ body[data-en-panel="true"] {
 .pagina--en-panel .consola .siguiente__titulo {
   font-size: var(--texto-lg);
 }
+
+/* ══ Panel de revisión, rediseño (05/11/2026) ═════════════════════════════════════════════════════════════════════════
+   Primero el caso, después la acción. La cabecera ocupa lo justo (titular, estado, cronómetro y paso a paso compacto), el
+   cuerpo se lee de corrido sin tarjetas dentro de tarjetas, y la acción del paso se pliega a una línea para leer con calma. */
+
+/* El botón de cerrar de la central va en la esquina: la cabecera le deja sitio. */
+.pagina--en-panel .consola__barra .consola__ancho {
+  padding-right: 3.25rem;
+  padding-block: var(--espacio-3) var(--espacio-1);
+  min-height: 0;
+}
+
+.pagina--en-panel .consola__barra > .progreso {
+  padding: var(--espacio-1) var(--espacio-3) var(--espacio-2);
+}
+
+.pagina--en-panel .progreso__paso {
+  gap: 4px;
+}
+
+/* El aviso de éxito en una línea; se retira solo a los pocos segundos (panel-caso.js). */
+.pagina--en-panel > .aviso--exito .aviso__texto {
+  display: none;
+}
+
+.pagina--en-panel > .aviso--exito {
+  align-items: center;
+}
+
+/* Cuerpo: secciones de corrido, separadas por una línea, sobre blanco. */
+.panel-caso__cuerpo {
+  background: var(--color-superficie);
+}
+
+.panel-caso__seccion {
+  gap: 0;
+  padding: 0 var(--espacio-4) var(--espacio-5);
+}
+
+.panel-caso__seccion > .superficie,
+.panel-caso__seccion > .seccion-caso,
+.panel-caso__seccion > details,
+.panel-caso__seccion > .sugerencia__contenedor {
+  padding: var(--espacio-4) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panel-caso__seccion > * + * {
+  border-top: var(--grosor-borde) solid var(--color-borde) !important;
+}
+
+.panel-caso__seccion .seccion-caso__titulo,
+.panel-caso__seccion .hecho__cabecera h2 {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.panel-caso__seccion .hecho__descripcion {
+  font-size: var(--texto-base);
+  line-height: 1.55;
+  color: var(--color-texto);
+}
+
+/* El pie: la acción del paso. */
+.pagina--en-panel .siguiente__paso {
+  display: none; /* ya lo dice el paso a paso */
+}
+
+.panel-caso__pie > .siguiente {
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-4);
+}
+
+.panel-caso__pie .siguiente__cabecera {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.panel-caso__pie .siguiente__titulo {
+  margin: 0;
+  font-size: var(--texto-base);
+  line-height: 1.3;
+}
+
+.panel-caso__pie--plegado > .siguiente {
+  padding-block: var(--espacio-3);
+}
+
+.panel-caso__pie--plegado .siguiente__titulo {
+  cursor: pointer;
+}
+
+.panel-caso__plegar {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: 2rem;
+  padding: 0 var(--espacio-2);
+  border: var(--grosor-borde) solid var(--color-borde-control);
+  border-radius: var(--radio-control);
+  font: var(--peso-medio) var(--texto-xs)/1 var(--fuente);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+  cursor: pointer;
+}
+
+.panel-caso__plegar .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel-caso__plegar:hover {
+    color: var(--color-texto);
+    background: var(--color-superficie-hundida);
+  }
+}
+
+.panel-caso__plegar:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.panel-caso__accion {
+  display: grid;
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-3);
+}
+
+.panel-caso__accion[hidden] {
+  display: none;
+}
+
+/* Formularios del pie, más densos: los segmentos en una fila y los dos catálogos de la admisión lado a lado. */
+.pagina--en-panel .panel-caso__pie .opciones__segmentos {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pagina--en-panel .panel-caso__pie .opciones--segmentadas .opcion {
+  min-height: 2.25rem;
+}
+
+.panel-caso__pie .formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+}
+
+.panel-caso__pie .formulario > * {
+  grid-column: 1 / -1;
+}
+
+.panel-caso__pie .formulario > .campo--admision {
+  grid-column: auto;
+}
+
+.panel-caso__pie .campo__control--texto {
+  min-height: 4.5rem;
+}
+
+.panel-caso__pie .acciones {
+  margin: 0;
+}
+
+.panel-caso__pie .acciones .boton--principal {
+  width: 100%;
+  justify-content: center;
+}
+
+/* La consola hereda «align-items: start» de su rejilla: en la columna del panel, cada pieza ocupa el ancho entero. */
+.pagina--en-panel .consola {
+  align-items: stretch;
+}

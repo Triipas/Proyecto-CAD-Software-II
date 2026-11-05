@@ -110,6 +110,15 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('[data-region-revisar] [data-estado="En revisión"]').getByRole('link', { name: /^Decidir/ })).toBeVisible();
     await expect(page.locator('[data-contador-revisar]')).toHaveText('2');
 
+    // Tocar la tarjeta de un reporte por revisar (no su botón) lo elige: con punto, su marcador queda elegido en el mapa.
+    const enRevision = page.locator('[data-region-revisar] [data-estado="En revisión"]');
+    const caja = await enRevision.boundingBox();
+    await page.mouse.click(caja.x + caja.width * 0.75, caja.y + 20);
+    await expect(enRevision).toHaveClass(/sos--seleccionado/);
+    await expect(enRevision.locator('[data-seleccionar-revisar]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#mapa .marcador-caso--revision.marcador--elegido')).toHaveCount(1);
+    await page.keyboard.press('Escape');
+
     // El mapa no se toca al abrir los serenos: mismo centro y mismo tamaño; el panel lo tapa.
     const vista = () => page.evaluate(() => JSON.stringify([window.cadCentral.mapa.getCenter(), window.cadCentral.mapa.getSize()]));
     const antes = await vista();

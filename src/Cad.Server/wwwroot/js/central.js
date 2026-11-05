@@ -288,11 +288,12 @@
 
   // ---------- Casos con sereno en la cola ----------
   // Elegirlo lleva el mapa al caso con su sereno y dibuja el recorrido de ese sereno; ningún otro recorrido se dibuja.
+  // Casos con sereno y reportes por revisar: los dos se eligen con su marcador de casos en curso.
   function marcarAsignado(id) {
-    for (const item of document.querySelectorAll("[data-asignado]")) {
-      const elegido = item.dataset.asignado === id;
+    for (const item of document.querySelectorAll("[data-asignado], [data-revisar]")) {
+      const elegido = (item.dataset.asignado ?? item.dataset.revisar) === id;
       item.classList.toggle("sos--seleccionado", elegido);
-      item.querySelector("[data-seleccionar-asignado]")?.setAttribute("aria-pressed", String(elegido));
+      item.querySelector("[data-seleccionar-asignado], [data-seleccionar-revisar]")?.setAttribute("aria-pressed", String(elegido));
     }
   }
 
@@ -301,7 +302,7 @@
     casoConRuta = id;
     if (ultimoLlegado?.id === id) apagarUltimo();
     marcarAsignado(id);
-    const item = document.getElementById(`asignado-${id}`);
+    const item = document.getElementById(`asignado-${id}`) ?? document.getElementById(`revisar-${id}`);
     if (item && desdeMapa) {
       item.scrollIntoView({ block: "nearest" });
       item.focus();
@@ -332,6 +333,15 @@
     if (!contadorAsignados) return;
     cadMovimiento.fijarCifra(contadorAsignados, document.querySelectorAll("[data-asignado]").length);
   }
+
+  // El reporte por revisar se elige como un caso en curso (su marcador discontinuo); sin punto en el mapa, se abre en el panel.
+  regionRevisar?.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("[data-seleccionar-revisar]");
+    if (!boton) return;
+    const id = boton.closest("[data-revisar]").dataset.revisar;
+    if (marcadoresEnCurso.has(id)) seleccionarAsignado(id);
+    else abrirPanel(`/panel/reportes/${id}`);
+  });
 
   regionAsignados?.addEventListener("click", (evento) => {
     const boton = evento.target.closest("[data-seleccionar-asignado]");
@@ -1080,7 +1090,7 @@
     if (regionRevisar) {
       const revisar = await fetch("/panel/central?handler=PorRevisar", { headers: { Accept: "text/html" }, credentials: "same-origin" });
       if (revisar.ok && !revisar.redirected) {
-        const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionRevisar, await revisar.text(), { animar: true });
+        const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionRevisar, await revisar.text(), { animar: true, despues: () => marcarAsignado(casoConRuta) });
         // El reporte que llega a revisar entra con el mismo anillo que un reporte admitido (y el sonar en el mapa).
         if (cargado) {
           for (const id of llegados) {

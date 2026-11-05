@@ -1854,13 +1854,16 @@
   from { opacity: 0; transform: translateX(12px); }
 }
 
+/* Sin barra propia: el botón de cerrar va en la esquina, sobre la cabecera del caso (que deja ese sitio libre). */
 .panel-caso__marco-cabecera {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2);
-  padding: var(--espacio-2) var(--espacio-2) var(--espacio-2) var(--espacio-4);
-  border-bottom: var(--grosor-borde) solid var(--color-borde);
+  position: absolute;
+  z-index: 1;
+  top: var(--espacio-2);
+  right: var(--espacio-2);
+}
+
+.panel-caso__marco-cabecera .panel-caso__cerrar {
+  background: var(--color-superficie);
 }
 
 .panel-caso__marco-titulo {

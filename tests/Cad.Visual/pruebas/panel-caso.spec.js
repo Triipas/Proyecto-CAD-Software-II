@@ -55,6 +55,18 @@ test.describe('Central: panel del caso', () => {
     await expect(page.locator(`#revisar-${id}`)).toContainText('En revisión'); // la bandeja ya lo sabe
     await page.screenshot({ path: info.outputPath('panel-revisar.png') });
 
+    // La acción del paso se pliega a una línea para leer el caso con todo el alto, y se vuelve a abrir.
+    const plegar = marco.locator('.panel-caso__plegar');
+    await expect(plegar).toHaveAttribute('aria-expanded', 'true');
+    const cuerpoAbierto = (await marco.locator('.panel-caso__cuerpo').boundingBox()).height;
+    await plegar.click();
+    await expect(plegar).toHaveAttribute('aria-expanded', 'false');
+    await expect(marco.locator('#accion-del-paso')).toBeHidden();
+    expect((await marco.locator('.panel-caso__cuerpo').boundingBox()).height).toBeGreaterThan(cuerpoAbierto + 150);
+    await page.screenshot({ path: info.outputPath('panel-plegado.png') });
+    await plegar.click();
+    await expect(marco.locator('#accion-del-paso')).toBeVisible();
+
     // El aviso de «el caso cambió mientras escribías» sigue en la página del panel.
     await expect(marco.locator('[data-caso-cambio]')).toHaveCount(1);
 
