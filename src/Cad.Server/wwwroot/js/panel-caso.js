@@ -114,6 +114,50 @@
   consola.replaceChildren(...[lista, cambio, cuerpo, pie].filter(Boolean));
   if (lateral && !lateral.isConnected) lateral.remove();
 
+  // ---------- La acción del paso se pliega (05/11/2026) ----------
+  // Plegada queda solo su título, en una línea, y el caso se lee con todo el alto del panel. Se despliega sola si trae un
+  // error o si el operador ya empezó a llenarla; cada operador la encuentra como la dejó (solo en esta pestaña del navegador).
+  if (siguiente) {
+    let cabecera = siguiente.querySelector(":scope > .siguiente__cabecera");
+    if (!cabecera) {
+      cabecera = document.createElement("div");
+      cabecera.className = "siguiente__cabecera";
+      const titulo = siguiente.querySelector(":scope > h2, :scope > .siguiente__titulo");
+      if (titulo) cabecera.append(titulo);
+      siguiente.prepend(cabecera);
+    }
+    const contenido = document.createElement("div");
+    contenido.className = "panel-caso__accion";
+    contenido.id = "accion-del-paso";
+    contenido.append(...[...siguiente.childNodes].filter((n) => n !== cabecera));
+    siguiente.append(contenido);
+    const plegar = document.createElement("button");
+    plegar.type = "button";
+    plegar.className = "panel-caso__plegar";
+    plegar.setAttribute("aria-controls", contenido.id);
+    cabecera.append(plegar);
+    const CLAVE = "cad-panel-accion";
+    function plegarAccion(plegada, { recordar = true } = {}) {
+      contenido.hidden = plegada;
+      pie.classList.toggle("panel-caso__pie--plegado", plegada);
+      plegar.setAttribute("aria-expanded", String(!plegada));
+      plegar.innerHTML = `<span>${plegada ? "Mostrar" : "Ocultar"}</span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${plegada ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"}"/></svg>`;
+      plegar.setAttribute("aria-label", `${plegada ? "Mostrar" : "Ocultar"} ${cabecera.querySelector(".siguiente__titulo, h2")?.textContent.trim() ?? "la acción"}`);
+      if (recordar) { try { sessionStorage.setItem(CLAVE, plegada ? "plegada" : "abierta"); } catch { /* sin almacenamiento */ } }
+    }
+    plegar.addEventListener("click", () => plegarAccion(!contenido.hidden));
+    // El título también la abre: es la parte que queda a la vista.
+    cabecera.querySelector(".siguiente__titulo, h2")?.addEventListener("click", () => { if (contenido.hidden) plegarAccion(false); });
+    let recordada = null;
+    try { recordada = sessionStorage.getItem(CLAVE); } catch { /* sin almacenamiento */ }
+    const hayError = contenido.querySelector(".campo__error, .aviso--error, [aria-invalid='true']");
+    plegarAccion(recordada === "plegada" && !hayError, { recordar: false });
+  }
+
+  // Un aviso de éxito queda en una línea y se retira solo: lo que pasó ya se ve en el paso a paso y en el pie.
+  const exito = document.querySelector(".pagina--en-panel > .aviso--exito");
+  if (exito) setTimeout(() => exito.remove(), 6000);
+
   // Abre la pestaña con un error de formulario; si no, «Caso».
   const conError = paneles.findIndex((p) => p.querySelector(".campo__error, .aviso--error"));
   activar(conError >= 0 ? conError : 0);

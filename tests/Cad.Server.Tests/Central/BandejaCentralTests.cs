@@ -55,6 +55,7 @@ public partial class BandejaCentralTests(FabricaCad fabrica)
         Assert.Contains($"action=\"/panel/reportes/{id}?handler=IniciarRevision\"", tarjeta);
         Assert.Contains("name=\"__RequestVerificationToken\"", tarjeta);
         Assert.Contains(">Revisar<", tarjeta);
+        Assert.Contains("data-seleccionar-revisar", tarjeta); // la tarjeta entera lo elige, como las demás de la bandeja
         Assert.DoesNotContain("data-sos=", tarjeta); // no es un caso por asignar: no se dibuja dos veces en el mapa
     }
 
