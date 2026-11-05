@@ -245,8 +245,9 @@ public class MisDatosTests(FabricaCad fabrica)
 
         var html = await navegador.GetStringAsync($"/panel/central/sos/{sos!.Id}");
 
-        Assert.Contains("<dt>Documento</dt><dd>No registrado</dd>", html);
-        Assert.Contains("<dt>Edad</dt><dd>No registrada</dd>", html);
+        // 05/11/2026: los que faltan se nombran juntos, en una línea.
+        Assert.Contains("Sin registrar: contacto de emergencia, documento, edad y dirección.", html);
+        Assert.DoesNotContain("<dt>Documento</dt>", html);
     }
 
     [Fact]

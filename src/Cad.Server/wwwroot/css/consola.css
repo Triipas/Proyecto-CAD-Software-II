@@ -710,3 +710,113 @@
     transition: none;
   }
 }
+
+/* ══ Expediente más legible (05/11/2026) ═══════════════════════════════════════════════════════════════════════════════
+   En pantallas anchas el paso a paso deja la columna izquierda y cruza la página bajo la barra del caso, en horizontal, como
+   en el panel de la central; el resumen (registrado, ocurrió, identificador) va a su derecha. La ficha del ciudadano se queda
+   sola en su columna, fija al desplazar. El orden del HTML no cambia: solo la rejilla. */
+@media (min-width: 80rem) {
+  .consola {
+    grid-template-areas:
+      "pasos pasos pasos"
+      "lateral trabajo expediente";
+  }
+
+  .consola:not(:has(.ficha-ciudadano)) {
+    grid-template-areas:
+      "pasos pasos pasos"
+      "trabajo trabajo expediente";
+  }
+
+  .consola__lateral {
+    display: contents;
+  }
+
+  .consola__lateral > :not(.consola__pasos) {
+    grid-area: lateral;
+    align-self: start;
+    position: sticky;
+    top: calc(60px + var(--alto-barra-caso) + var(--espacio-5));
+  }
+
+  .consola__trabajo { grid-area: trabajo; }
+  .consola__expediente { grid-area: expediente; }
+
+  .consola__pasos {
+    grid-area: pasos;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--espacio-6);
+    padding: var(--espacio-2) var(--espacio-4);
+    border: var(--grosor-borde) solid var(--color-borde);
+    border-radius: var(--radio-superficie);
+    background: var(--color-superficie);
+  }
+
+  .consola__pasos .progreso {
+    grid-auto-flow: column;
+    grid-auto-rows: auto;
+    padding: var(--espacio-2) 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .consola__pasos .progreso__paso {
+    grid-template-columns: none;
+    justify-items: center;
+    gap: 6px;
+    padding-inline: 0;
+    text-align: center;
+    font-size: var(--texto-xs);
+    background: transparent;
+  }
+
+  .consola__pasos .progreso__paso::before {
+    top: 11px;
+    bottom: auto;
+    left: -50%;
+    right: 50%;
+    width: auto;
+    height: 2px;
+    transform-origin: 0 50%;
+    animation-name: trazo;
+  }
+
+  .consola__pasos .progreso__paso--actual {
+    background: transparent;
+  }
+
+  .consola__resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-2) var(--espacio-5);
+    margin: 0;
+    padding: 0 0 0 var(--espacio-5);
+    border-top: 0;
+    border-left: var(--grosor-borde) solid var(--color-borde);
+  }
+}
+
+/* Corregir la categoría, junto a la categoría. */
+.consola .corregir-categoria {
+  padding: var(--espacio-3) var(--espacio-5);
+  box-shadow: none;
+}
+
+.consola .corregir-categoria > summary {
+  cursor: pointer;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+}
+
+.consola .corregir-categoria[open] > summary {
+  margin-bottom: var(--espacio-3);
+}
+
+/* Ficha: los datos que faltan, en una línea. */
+.ficha__faltan {
+  margin: var(--espacio-2) 0 0;
+  font-size: var(--texto-sm);
+}

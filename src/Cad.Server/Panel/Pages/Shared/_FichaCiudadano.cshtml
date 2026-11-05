@@ -1,5 +1,5 @@
 @model Cad.Server.Modulos.Consultas.FichaCiudadano
-@* ADR-08, fase D: datos del ciudadano para atender su caso. Los opcionales que no completó se indican como «No registrado».
+@* ADR-08, fase D: datos del ciudadano para atender su caso. Los opcionales que no completó se nombran juntos, al final.
    Rediseño del 27/10/2026: el nombre y el teléfono primero, con sus iniciales; los demás datos debajo.
    29/10/2026: el contacto de emergencia va primero entre ellos; en el detalle de un caso la ficha vive en la columna izquierda, siempre a la vista. *@
 @{
@@ -27,22 +27,47 @@
             </p>
         </div>
     </div>
-    <dl class="datos datos--en-linea">
-        <div class="dato--ancho@(Model.TieneContacto ? null : " dato--vacio")">
-            <dt>Contacto de emergencia</dt>
-            <dd data-contacto-emergencia>
-                @if (Model.TieneContacto)
-                {
-                    <span>@Model.ContactoNombre (@Model.ContactoParentesco) · </span><a class="datos__telefono" href="tel:@Model.ContactoTelefono">@Model.ContactoTelefono</a>
-                }
-                else
-                {
-                    <span>No registrado</span>
-                }
-            </dd>
-        </div>
-        <div class="@(Model.Documento is null ? "dato--vacio" : null)"><dt>Documento</dt><dd>@(Model.Documento ?? "No registrado")</dd></div>
-        <div class="@(Model.Edad is null ? "dato--vacio" : null)"><dt>Edad</dt><dd>@(Model.Edad is { } edad ? $"{edad} años" : "No registrada")</dd></div>
-        <div class="dato--ancho@(Model.Direccion is null ? " dato--vacio" : null)"><dt>Dirección</dt><dd>@(Model.Direccion ?? "No registrada")</dd></div>
-    </dl>
+    @* 05/11/2026: solo los datos que el ciudadano completó; los que faltan se juntan en una línea (antes, un «No registrado» por
+       dato). El contacto de emergencia sigue primero cuando existe. *@
+    @{
+        var faltan = new List<string>();
+        if (!Model.TieneContacto) faltan.Add("contacto de emergencia");
+        if (Model.Documento is null) faltan.Add("documento");
+        if (Model.Edad is null) faltan.Add("edad");
+        if (Model.Direccion is null) faltan.Add("dirección");
+        var textoFaltan = faltan.Count switch
+        {
+            0 => null,
+            1 => faltan[0],
+            _ => string.Join(", ", faltan.Take(faltan.Count - 1)) + " y " + faltan[^1],
+        };
+    }
+    @if (faltan.Count < 4)
+    {
+        <dl class="datos datos--en-linea">
+            @if (Model.TieneContacto)
+            {
+                <div class="dato--ancho">
+                    <dt>Contacto de emergencia</dt>
+                    <dd data-contacto-emergencia><span>@Model.ContactoNombre (@Model.ContactoParentesco) · </span><a class="datos__telefono" href="tel:@Model.ContactoTelefono">@Model.ContactoTelefono</a></dd>
+                </div>
+            }
+            @if (Model.Documento is not null)
+            {
+                <div><dt>Documento</dt><dd>@Model.Documento</dd></div>
+            }
+            @if (Model.Edad is { } edad)
+            {
+                <div><dt>Edad</dt><dd>@edad años</dd></div>
+            }
+            @if (Model.Direccion is not null)
+            {
+                <div class="dato--ancho"><dt>Dirección</dt><dd>@Model.Direccion</dd></div>
+            }
+        </dl>
+    }
+    @if (textoFaltan is not null)
+    {
+        <p class="ficha__faltan texto-secundario" data-datos-faltantes>Sin registrar: @textoFaltan.</p>
+    }
 </section>

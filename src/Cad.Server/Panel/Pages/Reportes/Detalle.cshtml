@@ -460,39 +460,6 @@
             }
         </section>
 
-        @if (r.PuedeCorregirCategoria)
-        {
-            @* HU14-CA03/CA04 — la categoría solo se corrige mientras el reporte está «En revisión». *@
-            <details class="superficie otras-acciones" open="@abrirOtras">
-                <summary>Otras acciones</summary>
-                <div class="otras-acciones__cuerpo">
-                    <section aria-labelledby="titulo-corregir">
-                        <h3 id="titulo-corregir" class="otras-acciones__titulo">Corregir la categoría elegida por el ciudadano</h3>
-                        <form method="post" asp-page-handler="Corregir" class="formulario" data-formulario novalidate>
-                            <div class="campo">
-                                <label class="campo__etiqueta" for="CategoriaId">Corregir a</label>
-                                <select class="campo__control campo__control--seleccion" id="CategoriaId" name="CategoriaId" required
-                                        aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
-                                        aria-describedby="@(Model.ErrorCategoria is null ? null : "CategoriaId-error")">
-                                    @foreach (var categoria in Model.Categorias)
-                                    {
-                                        <option value="@categoria.Id" selected="@(Model.CategoriaId == categoria.Id)">@categoria.Nombre</option>
-                                    }
-                                </select>
-                                @if (Model.ErrorCategoria is not null)
-                                {
-                                    <p id="CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
-                                }
-                            </div>
-                            <div class="acciones">
-                                <button type="submit" class="boton boton--secundario" data-texto-carga="Guardando…">Corregir la categoría</button>
-                            </div>
-                        </form>
-                    </section>
-                </div>
-            </details>
-        }
-
         @if (!hechoPrimero)
         {
             Hecho();
@@ -604,9 +571,41 @@
             }
             @if (r.PuedeIniciarRevision)
             {
-                <p class="texto-secundario detalle-caso__nota">Podrás corregirla cuando inicies la revisión.</p>
+                <p class="texto-secundario detalle-caso__nota">Podrás corregirla aquí cuando inicies la revisión.</p>
             }
         </section>
+
+        @if (r.PuedeCorregirCategoria)
+        {
+            @* HU14-CA03/CA04 — la categoría solo se corrige mientras el reporte está «En revisión». 05/11/2026: junto a la categoría,
+               en el expediente (antes en «Otras acciones»); sección propia para que el refresco en vivo de «Categoría» no la toque. *@
+            <details class="superficie seccion-caso corregir-categoria" open="@abrirOtras" data-corregir-categoria>
+                <summary>Corregir la categoría</summary>
+                <section aria-labelledby="titulo-corregir">
+                    <h3 id="titulo-corregir" class="visualmente-oculto">Corregir la categoría elegida por el ciudadano</h3>
+                    <form method="post" asp-page-handler="Corregir" class="formulario" data-formulario novalidate>
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="CategoriaId">Corregir a</label>
+                            <select class="campo__control campo__control--seleccion" id="CategoriaId" name="CategoriaId" required
+                                    aria-invalid="@(Model.ErrorCategoria is null ? null : "true")"
+                                    aria-describedby="@(Model.ErrorCategoria is null ? null : "CategoriaId-error")">
+                                @foreach (var categoria in Model.Categorias)
+                                {
+                                    <option value="@categoria.Id" selected="@(Model.CategoriaId == categoria.Id)">@categoria.Nombre</option>
+                                }
+                            </select>
+                            @if (Model.ErrorCategoria is not null)
+                            {
+                                <p id="CategoriaId-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@Model.ErrorCategoria</span></p>
+                            }
+                        </div>
+                        <div class="acciones">
+                            <button type="submit" class="boton boton--secundario" data-texto-carga="Guardando…">Corregir la categoría</button>
+                        </div>
+                    </form>
+                </section>
+            </details>
+        }
 
         <section class="superficie seccion-caso" aria-labelledby="titulo-revision">
             <h2 id="titulo-revision" class="seccion-caso__titulo">@(r.Decision is not null && siguiente != Accion.VerDecision ? "Revisión y decisión" : "Revisión")</h2>
