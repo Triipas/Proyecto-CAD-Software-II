@@ -43,7 +43,7 @@ for (;;) {
         const previo = m.caso && despacho && m.caso.id === despacho.casoId ? m.caso.estado : null;
         m.caso = despacho && lugar ? { id: despacho.casoId, estado: previo === 'En atención' ? previo : despacho.estado, punto: { latitud: lugar.latitud, longitud: lugar.longitud } } : null;
         if (m.caso && avanzar && m.caso.estado === 'Asignada') {
-          await api(`/api/sereno/casos/${m.caso.id}/desplazamiento`, { token: m.token, metodo: 'POST' }).catch(() => {});
+          await api(`/api/sereno/casos/${m.caso.id}/desplazamiento`, { token: m.token, metodo: 'POST' }); // si falla, se reintenta luego
           m.caso.estado = 'En camino';
           console.log(`  ${m.correo}: en camino al caso`);
         }
@@ -55,7 +55,8 @@ for (;;) {
         m.punto = objetivo;
         if (m.caso) {
           if (avanzar && m.caso.estado === 'En camino') {
-            await api(`/api/sereno/casos/${m.caso.id}/atencion`, { token: m.token, metodo: 'POST' }).catch(() => {});
+            // Sin .catch: si el servidor no la registra, el error llega al manejador de abajo y se reintenta en la próxima vuelta.
+            await api(`/api/sereno/casos/${m.caso.id}/atencion`, { token: m.token, metodo: 'POST' });
             m.caso.estado = 'En atención';
             console.log(`  ${m.correo}: llegó e inició la atención`);
           }

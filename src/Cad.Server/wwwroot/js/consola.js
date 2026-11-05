@@ -97,15 +97,17 @@
       asignacionPendiente = setTimeout(asignacionEnVivo, Math.max(espera, 500));
       return;
     }
-    const enUso = bloques.some((b) => b.querySelector("input[type=radio]:checked")
+    // El operador está eligiendo: se mira antes de pedir y otra vez antes de reemplazar (puede tocarlo mientras llega la respuesta).
+    const enUso = () => bloques.some((b) => b.querySelector("input[type=radio]:checked")
       || b.querySelector("[data-asignar-buscar]")?.value || b.contains(document.activeElement) && document.activeElement.matches("input, select"));
-    if (enUso) return;
+    if (enUso()) return;
     pidiendoAsignacion = true;
     ultimaAsignacion = Date.now();
     try {
       const respuesta = await fetch(location.pathname, { headers: { "X-Requested-With": "fetch" }, credentials: "same-origin" });
       if (!respuesta.ok || respuesta.redirected) return;
       const nuevos = new DOMParser().parseFromString(await respuesta.text(), "text/html").querySelectorAll("[data-asignacion-vivo]");
+      if (enUso()) return;
       bloques.forEach((bloque, i) => {
         if (!nuevos[i] || bloque.innerHTML === nuevos[i].innerHTML) return;
         const abierto = bloque.querySelector("details.asignar__otros")?.open;
