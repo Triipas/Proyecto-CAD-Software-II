@@ -139,6 +139,7 @@ try
                 longitud = ultimaPosicion.TryGetValue(s.Id, out var v) ? v.Lon : (double?)null,
             })
             .ToList();
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(rutaServicio))!);
         await File.WriteAllTextAsync(rutaServicio, System.Text.Json.JsonSerializer.Serialize(enServicio));
         Console.WriteLine($"  Serenos en servicio: {enServicio.Count} (lista en {rutaServicio})");
     }
