@@ -1824,3 +1824,21 @@
     margin: 0 0 var(--espacio-3);
   }
 }
+
+/* Enlace secundario de la tarjeta (el detalle completo), junto a su acción principal; sobre el área que elige la tarjeta. */
+.central .sos__enlace {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  text-underline-offset: 0.2em;
+}
+
+/* El botón del panel de serenos ahora lo cierra: se ve también en pantallas estrechas (antes se ocultaba con el plegado). */
+@media (max-width: 47.5rem) {
+  .central .serenos-flotante .panel-flotante__plegar {
+    display: grid;
+  }
+}

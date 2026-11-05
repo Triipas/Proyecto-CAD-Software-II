@@ -124,10 +124,24 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('#panel-serenos')).toBeHidden();
     await expect(page.locator('.mapa-herramientas [data-abrir-serenos]')).toBeFocused();
 
+    // El reporte admitido conserva el enlace a su detalle (sin punto en el mapa no hay globo desde donde abrirlo).
+    await expect(page.locator('.central__reportes').getByRole('link', { name: /^Ver el reporte/ })).toHaveAttribute('href', /\/panel\/reportes\//);
     // «Asignar» en un reporte admitido abre la barra de asignación con el sereno sugerido.
     await page.locator('.central__reportes').getByRole('button', { name: /^Asignar/ }).click();
     await expect(page.locator('[data-asignar-rapido]')).toBeVisible();
     await expect(page.locator('[data-ar-sugerido]')).toContainText('Sara Serena Ficticia');
+  });
+
+  test('en el teléfono, el panel de serenos se abre sobre el mapa y se cierra con su botón', async ({ page }, info) => {
+    test.skip(info.project.name !== 'movil-390', 'solo en pantallas estrechas');
+    await prepararPagina(page);
+    await abrir(page, '/panel/central');
+    await page.locator('.mapa-herramientas [data-abrir-serenos]').click();
+    const cerrar = page.getByRole('button', { name: 'Cerrar la lista de serenos' });
+    await expect(cerrar).toBeVisible();
+    await expect(cerrar).toBeFocused();
+    await cerrar.click();
+    await expect(page.locator('#panel-serenos')).toBeHidden();
   });
 
   test('los casos con sereno siguen en la cola y su recorrido solo se dibuja al elegirlos', async ({ page }, info) => {
