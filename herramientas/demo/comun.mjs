@@ -30,16 +30,43 @@ export async function configuracion({ pedirOperador = false, pedirSerenos = fals
 }
 
 async function preguntar(texto, oculta = false) {
-  const { createInterface } = await import('node:readline/promises');
-  process.stdout.write(texto);
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
-  if (oculta) rl._writeToOutput = () => {}; // no se repite lo que se teclea
-  try {
-    return (await rl.question('')).trim();
-  } finally {
-    rl.close();
-    if (oculta) process.stdout.write('\n');
+  if (!oculta) {
+    const { createInterface } = await import('node:readline/promises');
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      return (await rl.question(texto)).trim();
+    } finally {
+      rl.close();
+    }
   }
+  // Contraseña: la terminal en modo crudo no repite lo tecleado; solo se muestra un * por carácter.
+  process.stdout.write(texto);
+  const entrada = process.stdin;
+  return new Promise((resolver) => {
+    let valor = '';
+    const terminar = () => {
+      entrada.off('data', alTeclear);
+      entrada.setRawMode(false);
+      entrada.pause();
+      process.stdout.write('\n');
+    };
+    const alTeclear = (trozo) => {
+      for (const c of trozo) {
+        if (c === '\r' || c === '\n') { terminar(); resolver(valor); return; }
+        if (c === '\u0003') { terminar(); process.exit(130); } // Ctrl+C
+        if (c === '\u007f' || c === '\b') {
+          if (valor) { valor = valor.slice(0, -1); process.stdout.write('\b \b'); }
+        } else if (c >= ' ') {
+          valor += c;
+          process.stdout.write('*');
+        }
+      }
+    };
+    entrada.setRawMode(true);
+    entrada.setEncoding('utf8');
+    entrada.on('data', alTeclear);
+    entrada.resume();
+  });
 }
 
 function leerConfiguracion() {
