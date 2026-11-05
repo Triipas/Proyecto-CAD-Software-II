@@ -1,6 +1,6 @@
 # Dataset de demostración: José Luis Bustamante y Rivero (Arequipa)
 
-Cuatro mil casos **simulados** para mostrar todo el sistema en la presentación: la central, el historial de cada caso, el mapa de
+Unos cinco mil casos **simulados** para mostrar todo el sistema en la presentación: la central, el historial de cada caso, el mapa de
 concentración, la analítica (tiempos, falsos, cobertura, lo que se repite, el ciudadano y la salud del sistema) y los
 acompañamientos.
 
@@ -18,7 +18,7 @@ proporciones (de dónde salen se explica abajo) y la geografía del distrito, to
 | `fuentes/limite-jlbyr.geojson` | Límite administrativo del distrito (OSM, relación 1887802). |
 | `fuentes/lugares.json` | 656 lugares del distrito (OSM): 28 mercados, 65 paraderos, 71 colegios, 151 parques, bancos, grifos, locales nocturnos y 129 urbanizaciones. |
 | `fuentes/vias.json` | 597 vías con nombre y su trazado (OSM): avenidas principales y calles residenciales. |
-| `salida/casos.json` | Los casos (4000 del periodo y los que quedan en curso al cargar) con su historial completo, evento por evento. |
+| `salida/casos.json` | Los casos (unos 5000 del periodo y los 25 que quedan en curso al cargar) con su historial completo, evento por evento. |
 | `salida/personas.json` | 1300 ciudadanos (con perfil y contacto de emergencia), 36 serenos y 6 operadores. |
 | `salida/acompanamientos.json` | 360 sesiones de acompañamiento con su recorrido (una posición cada 20 s), confirmaciones y avisos. |
 | `salida/turnos.json` | Qué sereno trabajó cada día, en qué turno y en qué sector (descanso rotativo de un día por semana). |
@@ -32,20 +32,22 @@ Para regenerar: `python generar.py` (desde esta carpeta).
 
 ## Cifras del dataset
 
-- **Volumen:** 4000 casos en 13 semanas (unos 44 por día, el orden de las intervenciones de un serenazgo de un distrito parecido), más los fines de semana y creciendo hacia el final, porque la app gana usuarios.
+- **Volumen:** 5017 casos en 13 semanas (unos 55 por día, el orden de las intervenciones de un serenazgo de un distrito parecido), más los fines de semana y creciendo hacia el final, porque la app gana usuarios.
 - **Origen:** 70 % reportes (de ellos, 28 % registrados por la central: llamadas, presencial, redes, radio), 29 % SOS y 24 casos urgentes que salen de un acompañamiento.
 - **Categorías:** las 13 del sistema, con sus identificadores reales. Encabeza robo o hurto; siguen persona o vehículo sospechoso, alcohol en la vía pública y ruidos molestos.
 - **Tiempos de respuesta** (del registro al inicio de la atención):
   - SOS: mediana de unos 13 min, p90 de unos 27 min.
   - Reportes: mediana de unos 35 min.
 - **Evaluaciones:** el 42 % de los casos cerrados con ciudadano se evalúa, con un promedio de unos 3,9 de 5. La nota baja cuando el sereno tarda más de lo esperado o no encuentra a nadie.
-- **Al cargar** quedan abiertos 15 SOS y 40 reportes de los últimos minutos, para mostrar la central en vivo (detalle en
-  [salida/RESUMEN.md](salida/RESUMEN.md), «Abiertos al cargar»):
-  - SOS: 12 pendientes (sin abrir, con la central intentando contactar y ya clasificados), 1 en camino y 2 en atención.
-  - Reportes: 12 recibidos, 6 en revisión, 19 admitidos esperando sereno (5 registrados por la central), 1 en camino y 2 en atención.
-  - Casi todos sin sereno: quedan 4 serenos de turno libres para asignar durante la presentación.
+- **Al cargar** quedan abiertos exactamente **5 SOS y 20 reportes** de los últimos minutos, para mostrar la central en vivo (detalle
+  en [salida/RESUMEN.md](salida/RESUMEN.md), «Abiertos al cargar»):
+  - SOS: 1 sin abrir, 1 con la central intentando contactar, 1 clasificado esperando sereno, 1 en camino y 1 en atención.
+  - Reportes: 6 recibidos, 3 en revisión, 7 admitidos esperando sereno (2 registrados por la central), 1 asignado, 1 en camino y
+    2 en atención. Los derivados y descartados recientes salen del periodo.
+  - Seis serenos de turno quedan ocupados; el resto, libres para asignar durante la presentación.
 
-  Son unos 50 casos más sobre los 4000 del periodo, con su propia semilla (`EN_CURSO_AL_CARGAR` en `generar.py`): el resto del dataset no cambia.
+  Son 25 casos con su propia semilla (`EN_CURSO_AL_CARGAR` en `generar.py`); los pocos del periodo que quedarían abiertos se
+  quitan, para que lo abierto sea solo esa lista.
 
 Las cifras exactas están en [salida/RESUMEN.md](salida/RESUMEN.md).
 
