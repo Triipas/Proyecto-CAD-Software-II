@@ -31,6 +31,8 @@
   const progreso = lateral?.querySelector(".progreso");
   const ciudadano = de(lateral, ":scope > :not(.consola__pasos)");
   const siguiente = trabajo.querySelector(":scope > .siguiente");
+  // El aviso de «el caso cambió mientras escribías» (consola.js) se conserva, sobre las pestañas.
+  const cambio = trabajo.querySelector(":scope > .consola__cambio");
   // «Caso»: primero lo que se reportó (y la sugerencia del asistente), luego el lugar y la clasificación, y al final las
   // acciones secundarias (otras acciones, descartar).
   const deTrabajo = de(trabajo, ":scope > :not(.siguiente):not(.consola__cambio)").filter((el) => !historial.includes(el));
@@ -109,7 +111,7 @@
   const pie = document.createElement("div");
   pie.className = "panel-caso__pie";
   if (siguiente) pie.append(siguiente);
-  consola.replaceChildren(lista, cuerpo, pie);
+  consola.replaceChildren(...[lista, cambio, cuerpo, pie].filter(Boolean));
   if (lateral && !lateral.isConnected) lateral.remove();
 
   // Abre la pestaña con un error de formulario; si no, «Caso».
@@ -123,6 +125,21 @@
     const indice = destino ? paneles.findIndex((p) => p.contains(destino)) : -1;
     if (indice >= 0) activar(indice);
   }, true);
+
+  // Esc dentro del panel también lo cierra (el teclado no sale del marco), salvo con un formulario a medias: lo escrito no se
+  // pierde por una tecla.
+  const aMedias = () => [...document.querySelectorAll(".consola form")].some((formulario) =>
+    [...formulario.elements].some((campo) => {
+      if (campo.type === "hidden" || campo.type === "submit" || campo.type === "button" || campo.disabled) return false;
+      if (campo.type === "radio" || campo.type === "checkbox") return campo.checked !== campo.defaultChecked;
+      // Sin una opción marcada en el HTML, el navegador muestra la primera: eso no es un cambio (la misma regla de consola.js).
+      if (campo.tagName === "SELECT") return campo.selectedIndex !== Math.max(0, [...campo.options].findIndex((o) => o.defaultSelected));
+      return "value" in campo && "defaultValue" in campo && campo.value !== campo.defaultValue;
+    }));
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Escape" || evento.defaultPrevented || window.parent === window || aMedias()) return;
+    window.parent.postMessage({ tipo: "cad-panel-cerrar" }, location.origin);
+  });
 
   // ---------- Aviso a la central ----------
   if (window.parent !== window) {

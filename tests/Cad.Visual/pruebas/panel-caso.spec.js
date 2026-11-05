@@ -55,10 +55,19 @@ test.describe('Central: panel del caso', () => {
     await expect(page.locator(`#revisar-${id}`)).toContainText('En revisión'); // la bandeja ya lo sabe
     await page.screenshot({ path: info.outputPath('panel-revisar.png') });
 
+    // El aviso de «el caso cambió mientras escribías» sigue en la página del panel.
+    await expect(marco.locator('[data-caso-cambio]')).toHaveCount(1);
+
     // La ficha del ciudadano, en su pestaña.
     await marco.getByRole('tab', { name: 'Ciudadano' }).click();
     await expect(marco.locator('#panel-ciudadano')).toContainText('Elsa Ficticia');
-    await marco.getByRole('tab', { name: 'Caso' }).click();
+
+    // Esc con el foco dentro del panel lo cierra (nada a medias); «Decidir» lo vuelve a abrir.
+    await marco.getByRole('tab', { name: 'Ciudadano' }).press('Escape');
+    await expect(panel).toBeHidden();
+    await page.locator(`#revisar-${id}`).getByRole('link', { name: /^Decidir/ }).click();
+    await expect(panel).toBeVisible();
+    await expect(marco.locator('.panel-caso__pie')).toContainText('Decide qué hacer con el reporte');
 
     // Decidir: admitir. El pie pasa a la asignación.
     const pie = marco.locator('.panel-caso__pie');
@@ -66,6 +75,9 @@ test.describe('Central: panel del caso', () => {
     await pie.locator('[name="Decision.Prioridad"]').selectOption({ index: 2 });
     await pie.locator('[name="Decision.Heridos"]').selectOption({ index: 2 });
     await pie.locator('[name="Decision.Motivo"]').fill('Enviar un sereno a verificar (dato ficticio).');
+    // Con el formulario a medias, Esc no cierra el panel: lo escrito no se pierde por una tecla.
+    await pie.locator('[name="Decision.Motivo"]').press('Escape');
+    await expect(panel).toBeVisible();
     await pie.getByRole('button', { name: 'Registrar la decisión' }).click();
     await expect(pie).toContainText('Asigna el reporte a un sereno disponible');
     await expect(page.locator(`.central__reportes #sos-${id}`)).toBeVisible(); // pasó a «Por asignar»

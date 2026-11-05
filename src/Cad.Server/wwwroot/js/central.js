@@ -1277,7 +1277,9 @@
   // «Revisar» envía su formulario al marco: la revisión se inicia y el reporte se abre en el panel.
   document.addEventListener("submit", (evento) => {
     const formulario = evento.target.closest("form[data-abrir-panel]");
-    if (formulario) abrirPanel(formulario.getAttribute("action"), { cargar: false });
+    if (!formulario) return;
+    formulario.target = "panel-caso"; // sin JavaScript se envía a la página del reporte, como siempre
+    abrirPanel(formulario.getAttribute("action"), { cargar: false });
   });
   panelCaso.querySelector("[data-cerrar-panel]").addEventListener("click", () => cerrarPanel());
   document.addEventListener("keydown", (evento) => {
@@ -1286,7 +1288,10 @@
     cerrarPanel();
   });
   window.addEventListener("message", async (evento) => {
-    if (evento.origin !== location.origin || evento.source !== marcoCaso.contentWindow || evento.data?.tipo !== "cad-panel-caso") return;
+    if (evento.origin !== location.origin || evento.source !== marcoCaso.contentWindow) return;
+    // Esc dentro del panel (panel-caso.js lo reenvía si no hay nada a medias).
+    if (evento.data?.tipo === "cad-panel-cerrar") { cerrarPanel(); return; }
+    if (evento.data?.tipo !== "cad-panel-caso") return;
     const { id, estado, mensaje, titulo } = evento.data;
     tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";
     if (id) casoEnPanel = id;

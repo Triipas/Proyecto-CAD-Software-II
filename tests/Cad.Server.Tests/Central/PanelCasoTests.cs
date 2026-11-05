@@ -92,7 +92,7 @@ public class PanelCasoTests(FabricaCad fabrica)
         Assert.Contains("data-panel-caso hidden", html);
         Assert.Contains("name=\"panel-caso\"", html);
         var formulario = System.Text.RegularExpressions.Regex.Match(html, $"<form[^>]*/panel/reportes/{id}\\?handler=IniciarRevision[^>]*>").Value;
-        Assert.Contains("target=\"panel-caso\"", formulario);
         Assert.Contains("data-abrir-panel", formulario);
+        Assert.DoesNotContain("target=", formulario); // sin JavaScript, «Revisar» va a la página del reporte
     }
 }
