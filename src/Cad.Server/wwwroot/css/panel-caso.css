@@ -370,3 +370,9 @@ body[data-en-panel="true"] {
 .pagina--en-panel .consola {
   align-items: stretch;
 }
+
+/* Sin minimapa en el panel (05/11/2026): el mapa de la central, al lado, ya muestra el caso, los serenos y la línea al sugerido.
+   El expediente (la página completa) lo conserva. */
+.pagina--en-panel .mapa--detalle {
+  display: none;
+}

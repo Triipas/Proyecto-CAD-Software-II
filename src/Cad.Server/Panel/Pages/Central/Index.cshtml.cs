@@ -57,6 +57,7 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
         Pendientes = await consultar.EjecutarAsync(ct);
         ReportesAdmitidos = await consultarReportes.EjecutarAsync(ct);
         Serenos = await consultarSerenos.EjecutarAsync(ct);
+        SerenosRegistrados = await consultarSerenos.RegistradosAsync(ct);
         CasosEnMapa = await consultarCasosEnMapa.EjecutarAsync(ct);
         Asignados = await consultarAsignados.EjecutarAsync(ct);
         PorRevisar = await CargarPorRevisarAsync(ct);
@@ -68,6 +69,8 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public int PorAsignar => Pendientes.Count + ReportesAdmitidos.Count;
     public int SerenosLibres => Serenos.Count(s => s.Disponible);
     public int SerenosOperativos => Serenos.Count(s => s.Operativo);
+    // 05/11/2026: la cifra de la cabecera y del mapa dice cuántos serenos están activos (operativos) de los registrados.
+    public int SerenosRegistrados { get; private set; }
 
     // HU25-CA05: fragmento de los casos en curso del mapa, que el panel pide al resincronizar.
     public async Task<IActionResult> OnGetCasosMapaAsync(CancellationToken ct) =>
@@ -99,7 +102,7 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
 
     // HU19-CA03: fragmento de los serenos, que el panel pide al recibir «SerenoActualizado» o al reconectar.
     public async Task<IActionResult> OnGetSerenosAsync(CancellationToken ct) =>
-        Partial("_ListaSerenos", new ListaSerenos(await consultarSerenos.EjecutarAsync(ct), ZonaHoraria()));
+        Partial("_ListaSerenos", new ListaSerenos(await consultarSerenos.EjecutarAsync(ct), ZonaHoraria(), await consultarSerenos.RegistradosAsync(ct)));
 
     // Recorrido por calles de cada sereno hasta su caso; el panel lo pide cuando un sereno con caso cambia de posición.
     // Puntos como [latitud, longitud], el formato de Leaflet.
@@ -115,7 +118,7 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public ListaSos Lista => new(Pendientes, ZonaHoraria());
     public ListaReportes ListaDeReportes => new(ReportesAdmitidos, ZonaHoraria());
     public ListaAsignados ListaDeAsignados => new(Asignados, ZonaHoraria());
-    public ListaSerenos ListaDeSerenos => new(Serenos, ZonaHoraria());
+    public ListaSerenos ListaDeSerenos => new(Serenos, ZonaHoraria(), SerenosRegistrados);
 
     private TimeZoneInfo ZonaHoraria() =>
         TimeZoneInfo.FindSystemTimeZoneById(configuracion["Panel:ZonaHoraria"] ?? "America/Lima");
@@ -133,4 +136,5 @@ public sealed record ListaAsignados(IReadOnlyList<CasoAsignado> Casos, TimeZoneI
 public sealed record ListaPorRevisar(IReadOnlyList<ReporteEnBandeja> Reportes, IReadOnlyDictionary<Guid, string> CategoriasSugeridas,
     IReadOnlyDictionary<Guid, DateTimeOffset> Programadas, TimeZoneInfo ZonaHoraria);
 
-public sealed record ListaSerenos(IReadOnlyList<SerenoMonitoreo> Serenos, TimeZoneInfo ZonaHoraria);
+// Registrados: todos los serenos del sistema, también los de cuenta desactivada (la lista solo trae las activas).
+public sealed record ListaSerenos(IReadOnlyList<SerenoMonitoreo> Serenos, TimeZoneInfo ZonaHoraria, int Registrados);

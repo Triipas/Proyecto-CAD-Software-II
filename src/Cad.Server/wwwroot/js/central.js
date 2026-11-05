@@ -245,6 +245,7 @@
   let sosSeleccionado = null;
 
   function seleccionar(id, { desdeMapa = false, conSereno = false } = {}) {
+    seguirEnPanel(id);
     soltarAsignado();
     sosSeleccionado = id;
     for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
@@ -298,6 +299,7 @@
   }
 
   function seleccionarAsignado(id, { desdeMapa = false } = {}) {
+    seguirEnPanel(id);
     if (sosSeleccionado) deseleccionar();
     casoConRuta = id;
     if (ultimoLlegado?.id === id) apagarUltimo();
@@ -970,13 +972,15 @@
 
   function actualizarIndicadores() {
     const sos = Number(contador.textContent) || 0;
-    const libres = regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]').length;
-    const operativos = Number(regionSerenos.querySelector("[data-lista-serenos]")?.dataset.operativos) || 0;
+    const lista = regionSerenos.querySelector("[data-lista-serenos]");
+    const operativos = Number(lista?.dataset.operativos) || 0;
+    const registrados = Number(lista?.dataset.registrados) || 0;
     fijarIndicador("sos", sos);
     document.querySelector('[data-indicador="sos"]')?.classList.toggle("indicador--activo", sos > 0);
-    fijarIndicador("serenos-libres", libres, `de ${operativos} ${operativos === 1 ? "sereno disponible" : "serenos disponibles"}`);
-    cadMovimiento.fijarCifra(document.querySelector("[data-serenos-disponibles]"), libres);
-    cadMovimiento.fijarCifra(document.querySelector("[data-serenos-operativos]"), operativos);
+    // Los activos (operativos) de los registrados; cuántos están disponibles se ve en el panel de serenos.
+    fijarIndicador("serenos-libres", operativos, `de ${registrados} ${registrados === 1 ? "sereno activo" : "serenos activos"}`);
+    cadMovimiento.fijarCifra(document.querySelector("[data-serenos-activos]"), operativos);
+    cadMovimiento.fijarCifra(document.querySelector("[data-serenos-registrados]"), registrados);
   }
 
   // ---------- Aviso visual y sonoro ----------
@@ -1248,6 +1252,22 @@
   let origenPanel = null;
 
   const idDeRuta = (href) => href?.match(/\/panel\/(?:reportes|central\/sos)\/([0-9a-f-]{36})/i)?.[1] ?? null;
+
+  // 05/11/2026: con el panel abierto, elegir otro caso (su tarjeta o su marcador) lo carga en el panel.
+  function detalleDe(id) {
+    return document.getElementById(`sos-${id}`)?.dataset.detalle
+      ?? regionCasosMapa?.querySelector(`[data-caso-mapa="${CSS.escape(id)}"]`)?.dataset.detalle
+      ?? document.querySelector(`#asignado-${CSS.escape(id)} a[data-abrir-panel]`)?.getAttribute("href")
+      ?? (document.getElementById(`revisar-${id}`) ? `/panel/reportes/${id}` : null);
+  }
+
+  function seguirEnPanel(id) {
+    if (!panelCaso || panelCaso.hidden || !id || id === casoEnPanel) return;
+    const href = detalleDe(id);
+    if (!href) return;
+    casoEnPanel = id;
+    marcoCaso.src = href;
+  }
 
   function abrirPanel(href, { cargar = true } = {}) {
     origenPanel = document.activeElement;

@@ -123,6 +123,9 @@ test.describe('Central: interacción', () => {
     const vista = () => page.evaluate(() => JSON.stringify([window.cadCentral.mapa.getCenter(), window.cadCentral.mapa.getSize()]));
     const antes = await vista();
     const cifra = page.locator('.barra [data-abrir-serenos]');
+    // La cifra dice cuántos serenos están activos de los registrados (el escenario: Sara activa, Pedro no).
+    await expect(cifra).toHaveText(/1\s+de 2 serenos activos/);
+    await expect(page.locator('.mapa-herramientas [data-abrir-serenos]')).toHaveText(/1\s+de 2 activos/);
     await expect(page.locator('#panel-serenos')).toBeHidden();
     await cifra.click();
     await expect(page.locator('#panel-serenos')).toBeVisible();
