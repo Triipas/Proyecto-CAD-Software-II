@@ -2,6 +2,9 @@
 @* Asignación a un sereno disponible, en el detalle de un SOS o de un reporte (HU20, 29/10/2026). Si se puede medir, el más
    cercano al caso viene sugerido con su distancia y se asigna con un solo botón; los demás, ordenados por cercanía, se buscan
    por nombre (asignar-caso.js). Es un formulario normal (PRG) con el mismo identificador de solicitud que antes. *@
+@* 05/11/2026: el contenedor se rehace en vivo cuando un sereno se mueve o cambia de estado (consola.js): el más cercano y las
+   distancias siguen la última ubicación de cada sereno. *@
+<div class="asignar__vivo" data-asignacion-vivo>
 @if (Model.Disponibles.Count == 0)
 {
     <p class="texto-secundario">No hay serenos disponibles en este momento (operativos y sin asignación vigente).</p>
@@ -70,3 +73,4 @@ else
         }
     </div>
 }
+</div>
