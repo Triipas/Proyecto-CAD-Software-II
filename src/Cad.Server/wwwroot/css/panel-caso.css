@@ -1,0 +1,191 @@
+/*
+  Panel del caso (05/11/2026): el detalle de un SOS o de un reporte dentro de la central, en un marco sobre el mapa.
+  La página es la misma; aquí ocupa el alto del marco: cabecera con el paso a paso, pestañas que se desplazan y la acción
+  del paso fija al pie. El marco es estrecho, así que rigen las reglas de pantalla estrecha de consola.css.
+*/
+html,
+body {
+  height: 100%;
+}
+
+body[data-en-panel="true"] {
+  overflow: hidden;
+  background: var(--color-superficie);
+}
+
+.pagina--en-panel {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Cabecera: sin «volver» ni acciones de la página completa (el panel tiene su propio cierre y su enlace al expediente). */
+.pagina--en-panel .consola__barra {
+  position: static;
+  flex: none;
+  box-shadow: none;
+}
+
+.pagina--en-panel .consola__volver,
+.pagina--en-panel .consola__acciones {
+  display: none;
+}
+
+.pagina--en-panel .consola__barra .consola__ancho {
+  padding-inline: var(--espacio-4);
+}
+
+.pagina--en-panel .consola__titular {
+  flex-basis: 100%;
+}
+
+.pagina--en-panel .consola__barra > .progreso {
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3) var(--espacio-3);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pagina--en-panel .progreso__paso {
+  font-size: 0.6875rem;
+}
+
+.pagina--en-panel > .aviso {
+  flex: none;
+  width: auto;
+  margin: var(--espacio-3) var(--espacio-4) 0;
+}
+
+/* Pestañas, cuerpo y pie. */
+.pagina--en-panel .consola {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  max-width: none;
+}
+
+.panel-caso__pestanas {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: var(--espacio-4);
+  padding: 0 var(--espacio-4);
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+  background: var(--color-superficie);
+}
+
+.panel-caso__pestanas [role="tab"] {
+  padding: var(--espacio-3) 0 var(--espacio-2);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: var(--peso-medio) var(--texto-sm)/1.2 var(--fuente);
+  color: var(--color-texto-secundario);
+  background: transparent;
+  cursor: pointer;
+}
+
+.panel-caso__pestanas [role="tab"][aria-selected="true"] {
+  border-bottom-color: var(--color-primario);
+  color: var(--color-primario);
+  font-weight: var(--peso-fuerte);
+}
+
+.panel-caso__pestanas [role="tab"]:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.panel-caso__expediente {
+  margin-left: auto;
+  align-self: center;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  text-underline-offset: 0.2em;
+}
+
+.panel-caso__cuerpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--color-fondo);
+}
+
+.panel-caso__seccion {
+  display: grid;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-4);
+}
+
+.panel-caso__seccion:focus {
+  outline: none;
+}
+
+.panel-caso__seccion > .superficie,
+.panel-caso__seccion > .seccion-caso {
+  margin: 0;
+  padding: var(--espacio-4);
+  box-shadow: none;
+}
+
+.panel-caso__seccion .mapa--detalle {
+  margin-inline: 0;
+  border-radius: var(--radio-control);
+}
+
+/* La acción del paso, siempre a mano: fija al pie, con su propio desplazamiento si el formulario es largo. */
+.panel-caso__pie {
+  flex: none;
+  max-height: 58%;
+  overflow-y: auto;
+  border-top: var(--grosor-borde) solid var(--color-borde);
+  background: var(--color-superficie);
+  box-shadow: 0 -6px 16px -12px rgb(11 31 68 / 0.28);
+}
+
+.panel-caso__pie > .siguiente {
+  margin: 0;
+  padding: var(--espacio-4);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Compacto: el marco es bajo y lo que manda es el cuerpo y la acción. */
+.pagina--en-panel .progreso__marca {
+  width: 18px;
+  height: 18px;
+}
+
+.pagina--en-panel .progreso__paso::before {
+  top: 8px;
+}
+
+.pagina--en-panel .progreso__marca .icono {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.pagina--en-panel > .aviso {
+  padding: var(--espacio-2) var(--espacio-3);
+  font-size: var(--texto-sm);
+}
+
+.pagina--en-panel > .aviso .aviso__texto {
+  font-size: var(--texto-xs);
+}
+
+/* Dentro de la central sobra el enlace a la propia central. */
+.pagina--en-panel .siguiente a[href^="/panel/central#"] {
+  display: none;
+}
+
+.pagina--en-panel .consola .siguiente__titulo {
+  font-size: var(--texto-lg);
+}

@@ -1825,6 +1825,135 @@
   }
 }
 
+/* ── Panel del caso (05/11/2026): encima del mapa, a la derecha; el mapa no se mueve ── */
+.central {
+  --ancho-panel-caso: 30rem;
+}
+
+.panel-caso {
+  position: absolute;
+  z-index: 560;
+  top: var(--espacio-3);
+  right: var(--espacio-3);
+  bottom: var(--espacio-3);
+  width: min(var(--ancho-panel-caso), calc(100% - 2rem));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+  animation: panel-caso-entra var(--duracion-base) var(--curva-salida);
+}
+
+.panel-caso[hidden] {
+  display: none;
+}
+
+@keyframes panel-caso-entra {
+  from { opacity: 0; transform: translateX(12px); }
+}
+
+.panel-caso__marco-cabecera {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  padding: var(--espacio-2) var(--espacio-2) var(--espacio-2) var(--espacio-4);
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+}
+
+.panel-caso__marco-titulo {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.panel-caso__cerrar {
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radio-control);
+  color: var(--color-texto-secundario);
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel-caso__cerrar:hover {
+    color: var(--color-texto);
+    background: var(--color-superficie-hundida);
+  }
+}
+
+.panel-caso__marco {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+}
+
+/* Con el panel abierto, las herramientas y sus paneles pasan a su izquierda; la barra de asignación rápida se retira (la
+   asignación se hace en el panel). */
+.central--con-panel .mapa-herramientas,
+.central--con-panel .serenos-flotante,
+.central--con-panel .clave-mapa {
+  right: calc(min(var(--ancho-panel-caso), calc(100% - 2rem)) + 1.5rem);
+}
+
+.central--con-panel .asignar-rapido {
+  display: none;
+}
+
+.central__aviso-flotante {
+  position: absolute;
+  z-index: 570;
+  left: var(--espacio-4);
+  bottom: var(--espacio-4);
+  max-width: min(28rem, calc(100% - 2rem));
+  margin: 0;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-control);
+  font-weight: var(--peso-medio);
+  color: #FFFFFF;
+  background: var(--color-marino);
+  box-shadow: var(--sombra-2);
+}
+
+.central__aviso-flotante[hidden] {
+  display: none;
+}
+
+@media (max-width: 47.5rem) {
+  /* En el teléfono el panel ocupa la pantalla bajo la barra: el mapa es demasiado pequeño para compartirlo. */
+  .panel-caso {
+    position: fixed;
+    top: var(--alto-barra);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    border-radius: 0;
+    z-index: 1200;
+  }
+
+  .central--con-panel .mapa-herramientas,
+  .central--con-panel .serenos-flotante,
+  .central--con-panel .clave-mapa {
+    right: var(--espacio-3);
+  }
+}
+
 /* Enlace secundario de la tarjeta (el detalle completo), junto a su acción principal; sobre el área que elige la tarjeta. */
 .central .sos__enlace {
   position: relative;

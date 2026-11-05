@@ -134,6 +134,8 @@
 
   function nuevoSos(id) {
     if (id === casoId) return;
+    // Dentro del panel de la central, la central ya avisa del SOS nuevo (sin sonido doble).
+    if (document.body.dataset.enPanel === "true") return;
     const aviso = document.querySelector("[data-otro-sos]");
     if (!aviso) return;
     aviso.hidden = false;
