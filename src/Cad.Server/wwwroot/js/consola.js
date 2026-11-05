@@ -85,6 +85,44 @@
         return "value" in campo && campo.value !== campo.defaultValue;
       }));
 
+  let pidiendoAsignacion = false;
+  let ultimaAsignacion = 0;
+  let asignacionPendiente = null;
+  async function asignacionEnVivo() {
+    const bloques = [...document.querySelectorAll("[data-asignacion-vivo]")];
+    if (!bloques.length) return;
+    const espera = 4000 - (Date.now() - ultimaAsignacion);
+    if (pidiendoAsignacion || espera > 0) {
+      clearTimeout(asignacionPendiente);
+      asignacionPendiente = setTimeout(asignacionEnVivo, Math.max(espera, 500));
+      return;
+    }
+    // El operador está eligiendo: se mira antes de pedir y otra vez antes de reemplazar (puede tocarlo mientras llega la respuesta).
+    const enUso = () => bloques.some((b) => b.querySelector("input[type=radio]:checked")
+      || b.querySelector("[data-asignar-buscar]")?.value || b.contains(document.activeElement) && document.activeElement.matches("input, select"));
+    if (enUso()) return;
+    pidiendoAsignacion = true;
+    ultimaAsignacion = Date.now();
+    try {
+      const respuesta = await fetch(location.pathname, { headers: { "X-Requested-With": "fetch" }, credentials: "same-origin" });
+      if (!respuesta.ok || respuesta.redirected) return;
+      const nuevos = new DOMParser().parseFromString(await respuesta.text(), "text/html").querySelectorAll("[data-asignacion-vivo]");
+      if (enUso()) return;
+      bloques.forEach((bloque, i) => {
+        if (!nuevos[i] || bloque.innerHTML === nuevos[i].innerHTML) return;
+        const abierto = bloque.querySelector("details.asignar__otros")?.open;
+        bloque.innerHTML = nuevos[i].innerHTML;
+        const otros = bloque.querySelector("details.asignar__otros");
+        if (otros && abierto !== undefined) otros.open = abierto;
+      });
+      document.dispatchEvent(new CustomEvent("cad:asignacion-actualizada"));
+    } catch {
+      /* sin red: se vuelve a intentar con el próximo aviso */
+    } finally {
+      pidiendoAsignacion = false;
+    }
+  }
+
   async function ponerAlDia({ cancelado = false } = {}) {
     if (!formularioAMedias()) {
       sessionStorage.setItem("consola-desplazamiento", String(window.scrollY));
@@ -152,6 +190,10 @@
   conexion.on("CasoActualizado", ({ id }) => { if (id === casoId) ponerAlDia(); });
   conexion.on("SosCancelado", ({ id }) => { if (id === casoId) ponerAlDia({ cancelado: true }); });
   conexion.on("SosRecibido", ({ id }) => nuevoSos(id));
+  // El sereno más cercano en vivo (05/11/2026): cuando un sereno envía su posición o cambia de estado, el bloque de asignación
+  // se rehace con el servidor (el más cercano y las distancias, con la última ubicación). No se toca si el operador ya marcó un
+  // sereno o escribe en el buscador; como mucho una vez cada pocos segundos, aunque se muevan varios a la vez.
+  conexion.on("SerenoActualizado", () => asignacionEnVivo());
   conexion.onreconnecting(() => estadoVivo("reconectando", "Reconectando…"));
   conexion.onreconnected(() => { estadoVivo("conectado", "En vivo"); ponerAlDia(); });
   conexion.onclose(() => { estadoVivo("desconectado", "Sin conexión en vivo"); setTimeout(iniciar, 5000); });

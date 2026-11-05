@@ -76,6 +76,39 @@ public class AsignacionTests(FabricaCad fabrica)
         Assert.DoesNotMatch($"(?s)asignar__sugerido.*?value=\"{lejos.Id}\".*?asignar__otros", html);
     }
 
+    [Fact]
+    public async Task ElMasCercanoSigueALosSerenos_CuandoUnoSeAcerca_ElBloqueDeAsignacionLoSugiereAEl()
+    {
+        // 05/11/2026: el bloque de asignación (data-asignacion-vivo) es el que consola.js rehace cuando un sereno se mueve; el
+        // servidor lo calcula con la última ubicación de cada uno. Los dos quedan más cerca del SOS que cualquier sereno que
+        // otra prueba haya dejado junto a ese punto, y al final se retiran.
+        var casoId = await SosAsync(); // -12.0464, -77.0428
+        var (operador, _) = await PanelAsync();
+        var (unoApp, uno) = await SerenoAsync();
+        var (otroApp, otro) = await SerenoAsync();
+        await unoApp.PostAsJsonAsync("/api/sereno/posiciones", new PosicionSerenoEnviada(-12.04642, -77.04281, 7, DateTimeOffset.UtcNow));
+        await otroApp.PostAsJsonAsync("/api/sereno/posiciones", new PosicionSerenoEnviada(-12.0900, -77.0100, 7, DateTimeOffset.UtcNow));
+        string Sugerido(string html) => System.Text.RegularExpressions.Regex.Match(html,
+            "(?s)data-asignacion-vivo.*?asignar__sugerido.*?name=\"Asignacion.SerenoId\" value=\"([0-9a-f-]+)\"").Groups[1].Value;
+
+        string antes, despues;
+        try
+        {
+            antes = Sugerido(await operador.GetStringAsync(Detalle(casoId)));
+            await otroApp.PostAsJsonAsync("/api/sereno/posiciones", new PosicionSerenoEnviada(-12.0464, -77.0428, 7, DateTimeOffset.UtcNow.AddSeconds(1)));
+            despues = Sugerido(await operador.GetStringAsync(Detalle(casoId)));
+        }
+        finally
+        {
+            // La base es compartida: estos dos serenos no deben quedar disponibles junto al punto de los SOS de otras pruebas.
+            await unoApp.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(false, true));
+            await otroApp.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(false, true));
+        }
+
+        Assert.Equal(uno.Id.ToString(), antes);
+        Assert.Equal(otro.Id.ToString(), despues);
+    }
+
     private Task<List<Asignacion>> AsignacionesDelCasoAsync(Guid casoId) =>
         fabrica.ConBaseDatosAsync(db => db.Asignaciones.AsNoTracking().Where(a => a.CasoId == casoId).ToListAsync());
 

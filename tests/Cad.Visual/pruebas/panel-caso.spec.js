@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { LIMA, leerSemilla, sesion } from '../soporte/entorno.js';
 import { abrir, prepararPagina } from '../soporte/pagina.js';
-import { api, token } from '../soporte/semilla.js';
+import { api, crearCuenta, estrenarSereno, token } from '../soporte/semilla.js';
 
 const ahora = () => new Date().toISOString();
 
@@ -25,6 +25,60 @@ async function reporteNuevo() {
 
 test.describe('Central: panel del caso', () => {
   test.use({ storageState: sesion('operador'), reducedMotion: 'reduce' });
+
+  // 05/11/2026: el sereno más cercano se recalcula en vivo en el panel cuando un sereno envía su posición.
+  test('El más cercano se recalcula en vivo en el panel cuando un sereno se mueve', async ({ page, browser }) => {
+    const { cuentas, ids } = leerSemilla();
+    // Un sereno propio de esta prueba, a unos 700 m del reporte: así hay a quién relevar aunque Sara ya tenga un caso.
+    const teo = { correo: `teo.${randomUUID().slice(0, 8)}@cad.test`, clave: `Clave-${randomUUID().slice(0, 8)}9` };
+    const provisional = `Prov-${randomUUID().slice(0, 8)}9`;
+    const admin = await browser.newContext({ storageState: sesion('admin') });
+    await crearCuenta(await admin.newPage(), {
+      nombres: 'Teo', apellidos: 'Refuerzo Ficticio', dni: String(70_000_000 + Math.floor(Math.random() * 9_999_999)),
+      correo: teo.correo, telefono: String(900_000_000 + Math.floor(Math.random() * 99_999_999)), rol: 'Sereno', contrasena: provisional,
+    });
+    await admin.close();
+    await estrenarSereno(teo.correo, provisional, teo.clave);
+    const tokenTeo = await token(teo.correo, teo.clave);
+    const pedro = await token(cuentas.suplente.correo, cuentas.suplente.clave);
+    const posicion = (t, dLat, dLon) => api('/api/sereno/posiciones', { token: t, cuerpo: { latitud: LIMA.latitud + dLat, longitud: LIMA.longitud + dLon, precisionMetros: 6, obtenidaEn: ahora() } });
+    try {
+      for (const t of [tokenTeo, pedro]) await api('/api/sereno/estado', { metodo: 'PUT', token: t, cuerpo: { operativo: true, ubicacionAutorizada: true } });
+      await posicion(tokenTeo, 0, 0.004);
+      await posicion(pedro, -0.02, 0.02); // a unos 2,4 km
+
+      await prepararPagina(page);
+      await abrir(page, '/panel/central');
+      await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+      await page.locator(`#sos-${ids.reporteAdmitido}`).getByRole('link', { name: /Ver el reporte/ }).click();
+      const marco = page.frameLocator('[data-marco-caso]');
+      const bloque = marco.locator('[data-asignacion-vivo]');
+      await expect(bloque).toContainText('Más cercano');
+      // Lejos, Pedro no es el sugerido: figura en «Elegir a otro sereno» con su distancia.
+      await expect(bloque.locator('.asignar__nombre')).not.toContainText('Pedro');
+      const antes = (await bloque.locator('.asignar__distancia').first().textContent()).trim();
+      const opcionPedro = bloque.locator('[data-asignar-opcion][data-nombre^="Pedro"]');
+      const texto = async (l) => (await l.textContent()).replace(/\s+/g, ' ').trim();
+      const distanciaAntes = await texto(opcionPedro);
+
+      // Se acerca sin llegar a ser el más cercano: su distancia en la lista cambia sola.
+      await posicion(pedro, -0.015, 0.015);
+      await expect.poll(() => texto(opcionPedro), { timeout: 15_000 }).not.toBe(distanciaAntes);
+      await expect(bloque.locator('.asignar__nombre')).not.toContainText('Pedro');
+
+      // Llega junto al lugar del hecho: pasa a ser el sugerido, con su distancia y el botón directo, sin recargar el panel.
+      await posicion(pedro, -0.0058, 0.0038);
+      await expect(bloque.locator('.asignar__nombre')).toContainText('Pedro', { timeout: 15_000 });
+      await expect(bloque.getByRole('button', { name: /^Asignar a Pedro/ })).toBeVisible();
+      expect((await bloque.locator('.asignar__distancia').first().textContent()).trim()).not.toBe(antes);
+      await expect(bloque.locator('[data-asignar-opcion][data-nombre^="Teo"]')).toBeAttached();
+      expect(await marco.locator('body').evaluate(() => performance.getEntriesByType('navigation').length)).toBe(1);
+      await page.locator('[data-cerrar-panel]').click();
+    } finally {
+      // Teo deja de estar operativo para no alterar las pruebas siguientes.
+      await api('/api/sereno/estado', { metodo: 'PUT', token: tokenTeo, cuerpo: { operativo: false, ubicacionAutorizada: true } }).catch(() => {});
+    }
+  });
 
   test('Un reporte se revisa, se decide y se asigna sin salir de la central', async ({ page }, info) => {
     const { cuentas } = leerSemilla();
