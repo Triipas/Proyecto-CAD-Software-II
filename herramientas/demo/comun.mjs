@@ -29,7 +29,7 @@ export async function configuracion({ pedirOperador = false, pedirSerenos = fals
   return conf;
 }
 
-async function preguntar(texto, oculta = false) {
+export async function preguntar(texto, oculta = false) {
   if (!oculta) {
     const { createInterface } = await import('node:readline/promises');
     const rl = createInterface({ input: process.stdin, output: process.stdout });
