@@ -48,4 +48,15 @@ public sealed class ConsultarRutasEnCamino(ConsultarSerenos serenos, ConsultarCa
         }
         return rutas;
     }
+
+    // Detalle de un caso (05/11/2026): el recorrido del sereno con la asignación vigente de ese caso hasta su punto, para el
+    // minimapa. Nulo si nadie lo tiene asignado o el sereno no tiene ubicación; sin ruta por calles, Puntos es nulo.
+    public RutaEnCamino? DelCaso(Guid casoId, double latitud, double longitud, IEnumerable<SerenoMonitoreo> serenos)
+    {
+        if (serenos.FirstOrDefault(s => s.CasoAsignadoId == casoId) is not { Latitud: { } lat, Longitud: { } lon } sereno)
+            return null;
+        return red.Calcular(new PuntoRuta(lat, lon), new PuntoRuta(latitud, longitud)) is ResultadoRuta.Encontrada e
+            ? new RutaEnCamino(sereno.Id, casoId, e.Puntos, e.Metros)
+            : new RutaEnCamino(sereno.Id, casoId, null, null);
+    }
 }

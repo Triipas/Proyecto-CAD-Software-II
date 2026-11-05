@@ -29,12 +29,12 @@ export default defineConfig({
     reducedMotion: 'reduce',
     trace: 'retain-on-failure',
   },
-  // llegada.spec.js crea casos nuevos (un reporte y un SOS desde la API de la app): corre en su propio proyecto, después de
-  // las capturas, para no cambiar el escenario que ellas comparan.
+  // llegada.spec.js y minimapa.spec.js crean casos nuevos (reportes y SOS desde la API de la app): corren en su propio
+  // proyecto, después de las capturas, para no cambiar el escenario que ellas comparan.
   projects: [
-    { name: 'escritorio-1366', testIgnore: /llegada\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 } } },
-    { name: 'escritorio-1920', testIgnore: /llegada\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1920, height: 1080 } } },
-    { name: 'movil-390', testIgnore: /llegada\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } },
-    { name: 'llegadas', testMatch: /llegada\.spec\.js/, dependencies: ['escritorio-1366', 'escritorio-1920', 'movil-390'], use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 } } },
+    { name: 'escritorio-1366', testIgnore: /(llegada|minimapa)\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 } } },
+    { name: 'escritorio-1920', testIgnore: /(llegada|minimapa)\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1920, height: 1080 } } },
+    { name: 'movil-390', testIgnore: /(llegada|minimapa)\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } },
+    { name: 'llegadas', testMatch: /(llegada|minimapa)\.spec\.js/, dependencies: ['escritorio-1366', 'escritorio-1920', 'movil-390'], use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 } } },
   ],
 });

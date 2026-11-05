@@ -16,7 +16,7 @@ namespace Cad.Server.Panel.Pages.Reportes;
 // curso, como en un SOS. Desde el 23/10/2026, la central también descarta un reporte falso o erróneo ya admitido.
 public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revisar, DecidirReporte decidir, AsignarCaso asignar,
     ConsultarCategorias consultarCategorias, ConsultarDetalleSos consultarSeguimiento, AvanzarCaso avanzar, CerrarCaso cerrar,
-    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte, ReasignarCaso reasignar, ConsultarSerenos consultarSerenos,
+    ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte, ReasignarCaso reasignar, ConsultarSerenos consultarSerenos, ConsultarRutasEnCamino consultarRutas,
     Modulos.Asistencia.ConsultarAsistencia consultarAsistencia, Modulos.Asistencia.Aplicacion.BuscarDuplicados buscarDuplicados,
     Microsoft.Extensions.Options.IOptions<Modulos.Asistencia.OpcionesIa> opcionesIa, IConfiguration configuracion) : PageModel
 {
@@ -40,6 +40,10 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     public Dictionary<string, string[]> ErroresReasignacion { get; private set; } = [];
     public string? ErrorReasignacion { get; private set; }
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
+
+    // Minimapa (05/11/2026): los serenos operativos con ubicación y el recorrido del asignado hasta el lugar del hecho.
+    private IReadOnlyList<SerenoMonitoreo> serenos = [];
+    public VistaMinimapa Minimapa => VistaMinimapa.Crear(Reporte.Id, Reporte.LatitudHecho, Reporte.LongitudHecho, serenos, consultarRutas, ZonaHoraria);
     public bool PuedeReasignarse => Seguimiento?.Asignacion is { FinalizadaEn: null } && Reporte.Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino;
     public VistaReasignacion VistaReasignacion => new($"/panel/reportes/{Reporte.Id}", Seguimiento?.Asignacion?.Sereno ?? "",
         SerenosDisponibles.Select(s => new SerenoParaReasignar(s.Id, s.Nombre, s.UltimaPosicionEn is { } h
@@ -397,8 +401,9 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
         CategoriaId ??= reporte.CategoriaActualId;
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
         // 27/10/2026: también admitido (Pendiente), para asignarlo desde aquí sin ir a la central.
+        serenos = await consultarSerenos.EjecutarAsync(ct);
         SerenosDisponibles = Seguimiento?.Asignacion is { FinalizadaEn: null } || reporte.Estado == EstadoCaso.Pendiente
-            ? (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList()
+            ? serenos.Where(s => s.Disponible).ToList()
             : [];
         Descartado = reporte.Estado == EstadoCaso.Descartada ? await consultarDescarte.EjecutarAsync(id, ct) : null;
         if (reporte.Estado is EstadoCaso.Recibido or EstadoCaso.EnRevision)

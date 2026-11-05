@@ -1,0 +1,14 @@
+@model Cad.Server.Panel.Pages.VistaMinimapa
+@using System.Globalization
+@* Serenos para el minimapa del detalle (05/11/2026): solo datos para mapa-hecho.js, que dibuja sus escudos, el recorrido del
+   sereno asignado (data-ruta) y la línea recta al sereno elegido para asignar. *@
+<ul class="visualmente-oculto" data-serenos-minimapa data-ruta="@Model.Ruta">
+    @foreach (var s in Model.Serenos)
+    {
+        <li data-sereno="@s.Id" data-nombre="@s.Nombre" data-disponible="@(s.Disponible ? "true" : "false")" data-asignado="@(s.Asignado ? "true" : "false")"
+            data-lat="@s.Latitud.ToString(CultureInfo.InvariantCulture)" data-lon="@s.Longitud.ToString(CultureInfo.InvariantCulture)"
+            data-distancia="@s.Distancia" data-hora="@s.Hora">
+            @s.Nombre · @(s.Asignado ? "asignado a este caso" : s.Disponible ? "disponible" : "no disponible") · a @s.Distancia
+        </li>
+    }
+</ul>

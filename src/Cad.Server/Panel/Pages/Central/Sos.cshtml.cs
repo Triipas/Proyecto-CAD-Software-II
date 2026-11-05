@@ -18,7 +18,7 @@ namespace Cad.Server.Panel.Pages.Central;
 public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto registrar, AsignarCaso asignar,
     ClasificarCaso clasificar, AvanzarCaso avanzar, CerrarCaso cerrar, ConsultarSerenos consultarSerenos, ConsultarCategorias consultarCategorias,
     ConsultarTiemposCaso consultarTiempos, ConsultarFichaCiudadano consultarFicha, DescartarCaso descartar, ConsultarDescarte consultarDescarte, ReasignarCaso reasignar,
-    IConfiguration configuracion) : PageModel
+    ConsultarRutasEnCamino consultarRutas, IConfiguration configuracion) : PageModel
 {
     [BindProperty]
     public FormularioIntento Formulario { get; set; } = new();
@@ -62,6 +62,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
 
     // HU20: serenos que pueden recibir el caso (operativos y sin asignación vigente).
     public IReadOnlyList<SerenoMonitoreo> SerenosDisponibles { get; private set; } = [];
+
+    // Minimapa (05/11/2026): los serenos operativos con ubicación y el recorrido del asignado hasta el SOS.
+    private IReadOnlyList<SerenoMonitoreo> serenos = [];
+    public VistaMinimapa Minimapa => VistaMinimapa.Crear(Sos.Id, Sos.Latitud, Sos.Longitud, serenos, consultarRutas, ZonaHoraria);
 
     // Los mismos, ordenados por cercanía al SOS y con el más cercano sugerido (29/10/2026).
     public VistaAsignacion VistaAsignacion => VistaAsignacion.Crear(Asignacion.IdSolicitud == Guid.Empty ? Guid.NewGuid() : Asignacion.IdSolicitud, "al SOS",
@@ -374,7 +378,8 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
             return false;
         Sos = sos;
         Ficha = await consultarFicha.PorCasoAsync(id, ct);
-        SerenosDisponibles = (await consultarSerenos.EjecutarAsync(ct)).Where(s => s.Disponible).ToList();
+        serenos = await consultarSerenos.EjecutarAsync(ct);
+        SerenosDisponibles = serenos.Where(s => s.Disponible).ToList();
         Categorias = await consultarCategorias.EjecutarAsync(ct);
         Tiempos = await consultarTiempos.EjecutarAsync(id, ct);
         Descartado = await consultarDescarte.EjecutarAsync(id, ct);
