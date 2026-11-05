@@ -8,7 +8,41 @@ import { readFileSync } from 'node:fs';
 // CAD_URL: dirección del servidor (por defecto, el local de la revisión visual).
 // CAD_CREDENCIALES: archivo JSON { "operador": { "correo", "clave" }, "serenos": [ { "correo", "clave" }, ... ] }.
 // O bien CAD_OPERADOR="correo:clave" y CAD_SERENOS="correo:clave;correo:clave".
-export function configuracion() {
+// Lo que falte se pregunta en la terminal (la contraseña no se ve al escribirla) y queda solo en memoria: así quien tiene las
+// cuentas las escribe en su propia terminal, sin guardarlas en ningún archivo ni en el historial.
+let recordada = null;
+export async function configuracion({ pedirOperador = false, pedirSerenos = false } = {}) {
+  recordada ??= leerConfiguracion();
+  const conf = recordada;
+  if (pedirOperador && !conf.operador && process.stdin.isTTY) {
+    console.log(`Cuenta de operador del panel en ${conf.url}`);
+    conf.operador = { correo: await preguntar('  Correo: '), clave: await preguntar('  Contraseña: ', true) };
+  }
+  if (pedirSerenos && !conf.serenos.length && process.stdin.isTTY) {
+    console.log('Cuentas de los serenos que se moverán (Enter con el correo vacío para terminar):');
+    for (let i = 1; ; i++) {
+      const correo = await preguntar(`  Sereno ${i}, correo: `);
+      if (!correo) break;
+      conf.serenos.push({ correo, clave: await preguntar(`  Sereno ${i}, contraseña: `, true) });
+    }
+  }
+  return conf;
+}
+
+async function preguntar(texto, oculta = false) {
+  const { createInterface } = await import('node:readline/promises');
+  process.stdout.write(texto);
+  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+  if (oculta) rl._writeToOutput = () => {}; // no se repite lo que se teclea
+  try {
+    return (await rl.question('')).trim();
+  } finally {
+    rl.close();
+    if (oculta) process.stdout.write('\n');
+  }
+}
+
+function leerConfiguracion() {
   const url = (process.env.CAD_URL ?? 'http://localhost:5240').replace(/\/+$/, '');
   let operador = null;
   let serenos = [];

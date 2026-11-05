@@ -7,7 +7,7 @@
 // Ctrl+C lo detiene (los serenos quedan operativos en su última posición).
 import { ahora, alrededor, configuracion, crearApi, desplazar, distancia, esperar } from './comun.mjs';
 
-const { url, serenos } = configuracion();
+const { url, serenos } = await configuracion({ pedirSerenos: true });
 if (!serenos.length) {
   console.error('Faltan los serenos: CAD_SERENOS="correo:clave;correo:clave" (o CAD_CREDENCIALES). Ver herramientas/demo/README.md.');
   process.exit(1);

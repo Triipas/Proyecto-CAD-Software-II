@@ -9,9 +9,9 @@
 // sereno más cercano. Después, mover-serenos.mjs los hace moverse solos.
 import { ahora, alrededor, centroDelMapa, configuracion, crearApi, crearPanel, nuevoId } from './comun.mjs';
 
-const { url, operador, serenos } = configuracion();
+const { url, operador, serenos } = await configuracion({ pedirOperador: true, pedirSerenos: true });
 if (!operador) {
-  console.error('Falta la cuenta del operador: CAD_OPERADOR="correo:clave" (o CAD_CREDENCIALES con un JSON). Ver herramientas/demo/README.md.');
+  console.error('Falta la cuenta del operador: ejecútalo en una terminal para que la pida, o usa CAD_OPERADOR="correo:clave" (o CAD_CREDENCIALES con un JSON). Ver herramientas/demo/README.md.');
   process.exit(1);
 }
 const { api, token } = crearApi(url);
@@ -144,7 +144,13 @@ for (const [i, estado] of planSos.entries()) {
 }
 
 console.log(`Listo: ${creados} de ${reportes.length} reportes en su estado y ${planSos.length} SOS. Serenos con caso: ${tokensSerenos.filter((s) => s.ocupado).length} de ${tokensSerenos.length}.`);
-console.log('Para que los serenos se muevan solos: node herramientas/demo/mover-serenos.mjs (con las mismas variables).');
+// Con CAD_MOVER=1 sigue con mover-serenos.mjs en el mismo proceso: usa las mismas cuentas sin volver a pedirlas.
+if (process.env.CAD_MOVER === '1' && serenos.length) {
+  process.env.CAD_CENTRO ??= `${centro.latitud},${centro.longitud}`;
+  await import('./mover-serenos.mjs');
+} else {
+  console.log('Para que los serenos se muevan solos: node herramientas/demo/mover-serenos.mjs (o CAD_MOVER=1 con este guion).');
+}
 
 // El identificador del sereno: el panel lo muestra en la lista de serenos de la central (data-sereno con su nombre).
 async function idSereno(sereno) {
