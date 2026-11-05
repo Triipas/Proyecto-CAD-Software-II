@@ -24,17 +24,28 @@ public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration
 
     public static readonly (string Codigo, string Texto, Modulos.Proyeccion.VentanaProyeccion Ventana)[] Ventanas =
     [
-        ("6h", "Próximas 6 horas", Modulos.Proyeccion.VentanaProyeccion.ProximasSeisHoras),
-        ("noche", "Esta noche (18–24 h)", Modulos.Proyeccion.VentanaProyeccion.EstaNoche),
+        ("6h", "Próximas 6 h", Modulos.Proyeccion.VentanaProyeccion.ProximasSeisHoras),
+        ("noche", "Esta noche", Modulos.Proyeccion.VentanaProyeccion.EstaNoche),
         ("manana", "Mañana", Modulos.Proyeccion.VentanaProyeccion.Manana),
     ];
 
-    // Celdas de la proyección para el mapa: límites, nivel, casos esperados y cobertura (nunca datos de un caso, CA03).
+    // Celdas de la proyección para el mapa: límites, nivel, casos esperados y cobertura (nunca datos de un caso, CA03). Con lo esperado en
+    // cada bloque de 4 h de la ventana, su nivel y por qué, el mapa cambia de bloque sin volver al servidor.
     public string ProyeccionJson => JsonSerializer.Serialize((Proyeccion?.Zonas ?? []).Select(z => new
     {
         clave = z.Clave, zona = z.Zona, sur = z.Sur, oeste = z.Oeste, norte = z.Norte, este = z.Este,
         nivel = z.Nivel.ToString(), esperados = z.Esperados, sinCobertura = z.SinCobertura,
+        porQue = z.Explicacion, metros = z.MetrosSerenoCercano, sereno = z.SerenoCercano,
+        bloques = z.PorBloque, niveles = z.NivelesPorBloque?.Select(n => n.ToString()), porQueBloques = z.ExplicacionesPorBloque,
     }));
+
+    // Los bloques de 4 h de la ventana, los umbrales de nivel y los serenos operativos con ubicación, para el mapa de la proyección.
+    public string ContextoProyeccionJson => JsonSerializer.Serialize(new
+    {
+        umbralAlto = Proyeccion?.UmbralAlto, umbralMedio = Proyeccion?.UmbralMedio, umbralCobertura = Proyeccion?.UmbralCoberturaMetros,
+        bloques = (Proyeccion?.Bloques ?? []).Select(b => new { rotulo = b.Rotulo, dia = b.Dia, fraccion = b.Fraccion, total = b.Total, ahora = b.EsAhora }),
+        serenos = (Proyeccion?.Serenos ?? []).Select(s => new { nombre = s.Nombre, lat = s.Latitud, lon = s.Longitud, disponible = s.Disponible }),
+    });
 
     // Selección inicial de la página: los últimos 30 días y los dos orígenes. Es un valor de presentación; el operador la cambia.
     public const int DiasIniciales = 30;
@@ -65,10 +76,32 @@ public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration
     // Puntos del mapa de calor: el centro de una celda fina y sus casos (sin datos de ningún caso concreto).
     public string CalorJson => JsonSerializer.Serialize((Mapa?.Calor ?? []).Select(p => new { lat = p.Latitud, lon = p.Longitud, casos = p.Casos }));
 
-    // Las zonas con más casos, con el mismo nombre que usa Analítica («Zona K10»), para la tabla del lector de pantalla.
-    public IReadOnlyList<(string Zona, string Origen, int Casos)> ZonasDestacadas =>
+    // Las zonas con más casos, con el mismo nombre que usa Analítica («Zona K10»): el ranking del panel y su equivalente para el lector de
+    // pantalla. Cada una lleva su centro para que el mapa vuele hasta ella.
+    public sealed record ZonaDestacada(string Zona, string Origen, int Casos, double Latitud, double Longitud);
+
+    public IReadOnlyList<ZonaDestacada> ZonasDestacadas =>
         (Mapa?.Celdas ?? []).OrderByDescending(c => c.Casos).Take(10)
-            .Select(c => (Zonas.Nombre(c.Sur, c.Oeste), c.Origen == OrigenCaso.Sos ? "SOS" : "Reportes", c.Casos)).ToList();
+            .Select(c => new ZonaDestacada(Zonas.Nombre(c.Sur, c.Oeste), c.Origen == OrigenCaso.Sos ? "SOS" : "Reportes", c.Casos,
+                (c.Sur + c.Norte) / 2, (c.Oeste + c.Este) / 2)).ToList();
+
+    // Atajos de periodo: los últimos 7, 30 o 90 días, con el origen elegido. El activo es el que coincide con la selección.
+    public sealed record PeriodoRapido(string Texto, string Enlace, bool Activo);
+
+    public IReadOnlyList<PeriodoRapido> PeriodosRapidos
+    {
+        get
+        {
+            var hoy = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, ZonaHoraria).DateTime);
+            return new[] { 7, 30, 90 }.Select(dias =>
+            {
+                var desde = hoy.AddDays(-(dias - 1)).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                var hasta = hoy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                var origen = Origen is "Sos" or "Reporte" ? $"&Origen={Origen}" : "";
+                return new PeriodoRapido($"{dias} días", $"/panel/mapa-concentracion?Desde={desde}&Hasta={hasta}{origen}", Desde == desde && Hasta == hasta);
+            }).ToList();
+        }
+    }
 
     public Analitica.Zonas Zonas => new(configuracion);
 

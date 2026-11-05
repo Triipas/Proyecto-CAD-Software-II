@@ -244,6 +244,39 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         Assert.Contains("href=\"/panel/analitica/repite?periodo=rango&desde=2026-01-01&hasta=2026-01-31\"", html);
     }
 
+    // Rediseño del 05/11/2026: mapa a sangre con un panel; atajos de periodo y el ranking de zonas con su vuelo al mapa.
+    [Fact]
+    public async Task Pagina_EsUnMapaConPanel_ConAtajosDePeriodoYElRankingDeZonas()
+    {
+        var zona = ZonaNueva();
+        var app = await CiudadanoAsync();
+        await SosAsync(app, zona);
+        await ReporteAsync(app, zona);
+        var hoy = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("America/Lima")).DateTime);
+
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion"));
+
+        Assert.Contains("data-focos data-vista=\"historico\"", html);
+        Assert.Contains("class=\"focos__panel\"", html);
+        // Los tres atajos; el de 30 días es el de la selección inicial.
+        Assert.Contains($"href=\"/panel/mapa-concentracion?Desde={hoy.AddDays(-6):yyyy-MM-dd}&Hasta={hoy:yyyy-MM-dd}\"", html);
+        Assert.Contains($"href=\"/panel/mapa-concentracion?Desde={hoy.AddDays(-89):yyyy-MM-dd}&Hasta={hoy:yyyy-MM-dd}\"", html);
+        Assert.Contains($"href=\"/panel/mapa-concentracion?Desde={hoy.AddDays(-29):yyyy-MM-dd}&Hasta={hoy:yyyy-MM-dd}\" aria-current=\"true\"", html);
+        // El ranking de zonas es visible y cada zona lleva su centro para volar a ella.
+        Assert.Contains("id=\"zonas-destacadas\" data-ranking-historico", html);
+        Assert.Contains("data-vuelo", html);
+        Assert.Contains("data-lat=\"", html);
+    }
+
+    [Fact]
+    public async Task Pagina_ElAtajoConservaElOrigenElegido()
+    {
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion?Origen=Sos"));
+
+        Assert.Contains("&Origen=Sos\"", html);
+        Assert.DoesNotContain("&Origen=Reporte\"", html);
+    }
+
     [Fact]
     public async Task CA01_Pagina_SinSeleccion_MuestraLosUltimos30DiasYAmbosOrigenes()
     {

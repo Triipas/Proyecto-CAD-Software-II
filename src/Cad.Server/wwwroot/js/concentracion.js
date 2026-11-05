@@ -129,7 +129,40 @@
   }
   // El encuadre abarca todo lo que tiene calor, no solo las zonas con cifra.
   const encuadre = puntos.length ? puntos.map((p) => [p.lat, p.lon]) : celdas.map((c) => [(c.sur + c.norte) / 2, (c.oeste + c.este) / 2]);
-  if (encuadre.length) mapa.fitBounds(L.latLngBounds(encuadre).pad(0.12), { maxZoom: 15 });
+  // El panel flota a la izquierda y tapa parte del mapa: el encuadre deja libre esa franja (solo cuando el panel está sobre el mapa).
+  const panel = document.querySelector(".focos__panel");
+  const relleno = () => {
+    const encima = panel && getComputedStyle(panel).position === "absolute";
+    return { paddingTopLeft: [encima ? panel.offsetWidth + 40 : 24, 24], paddingBottomRight: [encima ? 72 : 24, encima ? 96 : 24] };
+  };
+  const encuadrar = () => {
+    mapa.invalidateSize();
+    if (encuadre.length) mapa.fitBounds(L.latLngBounds(encuadre).pad(0.12), { ...relleno(), maxZoom: 15, animate: false });
+  };
+  encuadrar();
+  if (document.readyState !== "complete") window.addEventListener("load", encuadrar, { once: true });
+  new ResizeObserver(() => mapa.invalidateSize()).observe(contenedor);
+
+  // ---------- Ranking: cada zona lleva el mapa hasta ella ----------
+  // Dos anillos del color del mapa se abren una vez sobre la zona (el mismo gesto que el vuelo al caso de la central).
+  let sonar = null;
+  document.querySelector("[data-ranking-historico]")?.addEventListener("click", (e) => {
+    const boton = e.target.closest("[data-vuelo]");
+    if (!boton) return;
+    const punto = [Number(boton.dataset.lat), Number(boton.dataset.lon)];
+    const caja = L.latLngBounds(punto, punto).pad(0.0015 / 0.01);
+    if (window.cadMovimiento?.reducido()) mapa.fitBounds(caja, { ...relleno(), maxZoom: 16, animate: false });
+    else mapa.flyToBounds(caja, { ...relleno(), maxZoom: 16, duration: 0.9 });
+    sonar?.remove();
+    if (window.cadMovimiento?.reducido()) return;
+    sonar = L.marker(punto, {
+      interactive: false, keyboard: false, zIndexOffset: -100,
+      icon: L.divIcon({ className: "", html: '<span class="sonar-foco"><i></i><i></i></span>', iconSize: [120, 120], iconAnchor: [60, 60] }),
+    }).addTo(mapa);
+    setTimeout(() => { sonar?.remove(); sonar = null; }, 1800);
+    for (const b of document.querySelectorAll("[data-vuelo]")) b.removeAttribute("aria-current");
+    boton.setAttribute("aria-current", "true");
+  });
 
   // ---------- Capas ----------
   for (const control of document.querySelectorAll("[data-capa]")) {

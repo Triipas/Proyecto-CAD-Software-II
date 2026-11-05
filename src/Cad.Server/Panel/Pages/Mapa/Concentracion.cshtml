@@ -3,6 +3,8 @@
 @using Cad.Server.Modulos.Consultas
 @{
     ViewData["Title"] = "Mapa de concentración";
+    // Rediseño del 05/11/2026: como la central y la vigilancia, el mapa ocupa la pantalla y el trabajo flota encima, en un panel.
+    ViewData["ClasePagina"] = "pagina--focos";
     var m = Model.Mapa;
     static string Casos(int n) => n == 1 ? "caso" : "casos";
 }
@@ -10,157 +12,183 @@
     <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/concentracion.css" asp-append-version="true" />
 }
-<div class="pagina__encabezado">
-    <div>
-        <h1 class="titulo">Mapa de concentración</h1>
-        <p class="texto-secundario">@(Model.EsProyeccion
-            ? "Qué zonas tienen más casos esperados en las próximas horas y si hay serenos cerca, para reposicionarlos antes de que lleguen los casos."
-            : "Dónde ocurren los SOS y reportes del periodo: cada caso con ubicación suma calor. No incluye casos cancelados ni reportes descartados, ni posiciones de acompañamientos o de serenos.")</p>
-    </div>
-</div>
 
-@* HU46 (S6-T20): «Vista: Histórico | Proyección». Enlaces GET, como los filtros. *@
-<nav class="vista-mapa" aria-label="Vista del mapa" data-vista="@(Model.EsProyeccion ? "proyeccion" : "historico")">
-    <a class="vista-mapa__opcion" href="/panel/mapa-concentracion" aria-current="@(Model.EsProyeccion ? null : "page")">Histórico</a>
-    <a class="vista-mapa__opcion" href="/panel/mapa-concentracion?Vista=proyeccion&amp;Ventana=6h" aria-current="@(Model.EsProyeccion ? "page" : null)">Proyección</a>
-</nav>
-
+<div class="focos" data-focos data-vista="@(Model.EsProyeccion ? "proyeccion" : "historico")">
 @if (Model.EsProyeccion)
 {
     <partial name="_Proyeccion" model="Model" />
 }
 else
 {
-@* La diferencia con las zonas de Analítica, dicha antes del mapa: aquí el volumen; allá, el rendimiento. *@
-<aside class="dos-mapas" aria-label="Este mapa y las zonas de Analítica" data-diferencia>
-    <div class="dos-mapas__lado dos-mapas__lado--aqui">
-        <span class="dos-mapas__muestra dos-mapas__muestra--calor" aria-hidden="true"></span>
-        <p><b>Este mapa responde «¿dónde ocurren?»</b> Cuenta cada caso con ubicación, aunque sea uno solo, y lo muestra como calor sobre la ciudad.</p>
-    </div>
-    <div class="dos-mapas__lado">
-        <span class="dos-mapas__muestra dos-mapas__muestra--zonas" aria-hidden="true"></span>
-        <p><b>Analítica responde «¿cómo respondemos ahí?»</b> Tiempos, cobertura y zonas en alza, solo en zonas de unos 550 m con 3 casos o más y comparadas con el periodo anterior.</p>
-    </div>
-    <a class="boton boton--secundario boton--compacto dos-mapas__enlace" href="@Model.EnlaceAnalitica" data-enlace-analitica>Ver este periodo en Analítica</a>
-</aside>
-
-@* HU29-CA01 — selección de periodo (fecha de registro, DP17) y origen. Formulario GET: la selección queda en la dirección. *@
-<form method="get" action="/panel/mapa-concentracion" class="superficie barra-seleccion" aria-labelledby="titulo-seleccion" data-seleccion novalidate>
-    <h2 id="titulo-seleccion" class="visualmente-oculto">Selección</h2>
-    @foreach (var (id, etiqueta, valor) in new[] { ("desde", "Desde", Model.Desde), ("hasta", "Hasta", Model.Hasta) })
+    @if (m is not null)
     {
-        var error = Model.ErrorDe(id);
-        <div class="campo">
-            <label class="campo__etiqueta" for="@id">@etiqueta</label>
-            <input class="campo__control" type="date" id="@id" name="@(id == "desde" ? "Desde" : "Hasta")" value="@valor" required
-                   aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? "periodo-ayuda" : $"{id}-error periodo-ayuda")" />
-            @if (error is not null)
-            {
-                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-            }
-        </div>
+        <div id="mapa-concentracion" class="mapa mapa--infrarrojo focos__mapa" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" data-maximo="@m.MaximoPorCelda" role="region"
+             aria-label="Mapa de calor de casos: más claro y amarillo donde se concentran más" aria-describedby="zonas-destacadas"></div>
     }
-    @{ var errorOrigen = Model.ErrorDe("origen"); }
-    <div class="campo">
-        <label class="campo__etiqueta" for="origen">Origen</label>
-        <select class="campo__control campo__control--seleccion" id="origen" name="Origen"
-                aria-invalid="@(errorOrigen is null ? null : "true")" aria-describedby="@(errorOrigen is null ? null : "origen-error")">
-            <option value="" selected="@string.IsNullOrEmpty(Model.Origen)">SOS y reportes</option>
-            <option value="Sos" selected="@(Model.Origen == "Sos")">Solo SOS</option>
-            <option value="Reporte" selected="@(Model.Origen == "Reporte")">Solo reportes</option>
-        </select>
-        @if (errorOrigen is not null)
-        {
-            <p id="origen-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorOrigen</span></p>
-        }
-    </div>
-    <button type="submit" class="boton boton--principal barra-seleccion__enviar"><partial name="_Icono" model="@("filtro")" />Generar el mapa</button>
-    <p id="periodo-ayuda" class="campo__ayuda barra-seleccion__ayuda">Las fechas son las de registro del caso.</p>
-</form>
+    else
+    {
+        <div class="mapa mapa--infrarrojo focos__mapa focos__mapa--vacio" aria-hidden="true"></div>
+    }
 
-@if (m is not null)
-{
-    <section class="concentracion" aria-labelledby="titulo-mapa-concentracion">
-        <h2 id="titulo-mapa-concentracion" class="concentracion__titulo">Concentración de @Model.TextoOrigen</h2>
-        @* HU29-CA04: SOS y reportes diferenciados por color y por forma; las cifras resumen la selección. *@
-        <dl class="cifras" data-resumen>
-            @if (Model.Origen != "Reporte")
-            {
-                <div class="cifra cifra--sos" data-total-sos="@m.Sos">
-                    <dt><span class="cifra__muestra" aria-hidden="true"></span>SOS</dt>
-                    <dd><strong>@m.Sos</strong> @Casos(m.Sos)</dd>
+    <aside class="focos__panel" aria-label="Mapa de concentración">
+        <header class="focos__cabecera">
+            <h1 class="titulo focos__titulo">Mapa de concentración</h1>
+            <partial name="_VistaMapa" model="Model" />
+        </header>
+
+        <div class="focos__cuerpo" tabindex="0" role="region" aria-label="Selección y zonas con más casos">
+            @* HU29-CA01 — selección de periodo (fecha de registro, DP17) y origen. Formulario GET: la selección queda en la dirección. *@
+            <form method="get" action="/panel/mapa-concentracion" class="focos__seleccion" aria-labelledby="titulo-seleccion" data-seleccion novalidate>
+                <h2 id="titulo-seleccion" class="visualmente-oculto">Selección</h2>
+                <div class="atajos" role="group" aria-label="Periodos frecuentes">
+                    <span class="atajos__titulo" aria-hidden="true">Últimos</span>
+                    @foreach (var atajo in Model.PeriodosRapidos)
+                    {
+                        <a class="atajos__opcion" href="@atajo.Enlace" aria-current="@(atajo.Activo ? "true" : null)">@atajo.Texto</a>
+                    }
                 </div>
-            }
-            @if (Model.Origen != "Sos")
-            {
-                <div class="cifra cifra--reporte" data-total-reportes="@m.Reportes">
-                    <dt><span class="cifra__muestra" aria-hidden="true"></span>Reportes</dt>
-                    <dd><strong>@m.Reportes</strong> @Casos(m.Reportes)</dd>
+                <div class="focos__fechas">
+                    @foreach (var (id, etiqueta, valor) in new[] { ("desde", "Desde", Model.Desde), ("hasta", "Hasta", Model.Hasta) })
+                    {
+                        var error = Model.ErrorDe(id);
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                            <input class="campo__control" type="date" id="@id" name="@(id == "desde" ? "Desde" : "Hasta")" value="@valor" required
+                                   aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? "periodo-ayuda" : $"{id}-error periodo-ayuda")" />
+                            @if (error is not null)
+                            {
+                                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                            }
+                        </div>
+                    }
                 </div>
-            }
-            <div class="cifra">
-                <dt>Zona con más casos</dt>
-                <dd><strong>@m.MaximoPorCelda</strong> @Casos(m.MaximoPorCelda)</dd>
-            </div>
-            <div class="cifra cifra--secundaria" data-sin-ubicacion="@m.SinUbicacion">
-                <dt>Sin ubicación válida</dt>
-                <dd><strong>@m.SinUbicacion</strong> no aparecen en el mapa</dd>
-            </div>
-        </dl>
-        @if (m.Celdas.Count == 0)
-        {
-            <div class="aviso aviso--informacion" role="status" data-sin-casos>
-                <partial name="_Icono" model="@("informacion")" />
-                <p class="aviso__texto">No hay casos con ubicación válida en la selección.</p>
-            </div>
-        }
-        <div class="concentracion__mapa">
-            <div id="mapa-concentracion" class="mapa mapa--infrarrojo" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-                 data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" data-maximo="@m.MaximoPorCelda" role="region"
-                 aria-label="Mapa de calor de casos: más claro y amarillo donde se concentran más" aria-describedby="zonas-destacadas"></div>
-            @if (m.Celdas.Count > 0)
-            {
-                @* Capas: el calor (dónde se concentra) y las cifras por zona (cuántos hay). Se pueden apagar por separado. *@
-                <fieldset class="capas-concentracion" data-capas>
-                    <legend class="capas-concentracion__titulo">Capas</legend>
-                    <label class="capas-concentracion__opcion"><input type="checkbox" checked data-capa="calor" /> Calor</label>
-                    <label class="capas-concentracion__opcion"><input type="checkbox" checked data-capa="cifras" /> Cifras por zona</label>
-                </fieldset>
-            }
-            <div class="leyenda-concentracion">
-                <div class="leyenda-concentracion__calor">
-                    <span>Pocos casos</span>
-                    <span class="leyenda-concentracion__rampa" aria-hidden="true"></span>
-                    <span>Muchos casos</span>
+                @{ var errorOrigen = Model.ErrorDe("origen"); }
+                <div class="focos__origen">
+                <div class="campo">
+                    <label class="campo__etiqueta" for="origen">Origen</label>
+                    <select class="campo__control campo__control--seleccion" id="origen" name="Origen"
+                            aria-invalid="@(errorOrigen is null ? null : "true")" aria-describedby="@(errorOrigen is null ? null : "origen-error")">
+                        <option value="" selected="@string.IsNullOrEmpty(Model.Origen)">SOS y reportes</option>
+                        <option value="Sos" selected="@(Model.Origen == "Sos")">Solo SOS</option>
+                        <option value="Reporte" selected="@(Model.Origen == "Reporte")">Solo reportes</option>
+                    </select>
+                    @if (errorOrigen is not null)
+                    {
+                        <p id="origen-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorOrigen</span></p>
+                    }
                 </div>
-                <p class="leyenda-concentracion__cifras">
-                    @if (Model.Origen != "Reporte") { <span class="leyenda leyenda--sos">SOS: cifra en cuadro</span> }
-                    @if (Model.Origen != "Sos") { <span class="leyenda leyenda--reporte">Reportes: cifra en círculo</span> }
-                    <span>Las cifras marcan las zonas de unos 550 m con 3 casos o más; el resto lo muestra el calor.</span>
-                </p>
-            </div>
-        </div>
-        <table class="visualmente-oculto" id="zonas-destacadas">
-            <caption>Zonas con más casos en la selección</caption>
-            <thead><tr><th scope="col">Zona</th><th scope="col">Origen</th><th scope="col">Casos</th></tr></thead>
-            <tbody>
-                @foreach (var (zona, origen, casos) in Model.ZonasDestacadas)
+                <button type="submit" class="boton boton--principal focos__enviar"><partial name="_Icono" model="@("filtro")" />Generar el mapa</button>
+                </div>
+                <p id="periodo-ayuda" class="visualmente-oculto">Las fechas son las de registro del caso.</p>
+            </form>
+
+            @if (m is not null)
+            {
+                <section class="focos__seccion" aria-labelledby="titulo-mapa-concentracion">
+                    <h2 id="titulo-mapa-concentracion" class="focos__subtitulo">Concentración de @Model.TextoOrigen<span class="focos__nota"> · por fecha de registro</span></h2>
+                    @* HU29-CA04: SOS y reportes diferenciados por color y por forma; las cifras resumen la selección. *@
+                    <dl class="cifras" data-resumen>
+                        @if (Model.Origen != "Reporte")
+                        {
+                            <div class="cifra cifra--sos" data-total-sos="@m.Sos">
+                                <dt><span class="cifra__muestra" aria-hidden="true"></span>SOS</dt>
+                                <dd><strong>@m.Sos</strong> @Casos(m.Sos)</dd>
+                            </div>
+                        }
+                        @if (Model.Origen != "Sos")
+                        {
+                            <div class="cifra cifra--reporte" data-total-reportes="@m.Reportes">
+                                <dt><span class="cifra__muestra" aria-hidden="true"></span>Reportes</dt>
+                                <dd><strong>@m.Reportes</strong> @Casos(m.Reportes)</dd>
+                            </div>
+                        }
+                        <div class="cifra">
+                            <dt>Zona con más casos</dt>
+                            <dd><strong>@m.MaximoPorCelda</strong> @Casos(m.MaximoPorCelda)</dd>
+                        </div>
+                        <div class="cifra cifra--secundaria" data-sin-ubicacion="@m.SinUbicacion">
+                            <dt>Sin ubicación válida</dt>
+                            <dd><strong>@m.SinUbicacion</strong> fuera del mapa</dd>
+                        </div>
+                    </dl>
+                    @if (m.Celdas.Count == 0)
+                    {
+                        <div class="aviso aviso--informacion" role="status" data-sin-casos>
+                            <partial name="_Icono" model="@("informacion")" />
+                            <p class="aviso__texto">No hay casos con ubicación válida en la selección.</p>
+                        </div>
+                    }
+                </section>
+
+                @if (m.Celdas.Count > 0)
                 {
-                    <tr><td>@zona</td><td>@origen</td><td>@casos</td></tr>
+                    <section class="focos__seccion" aria-labelledby="titulo-zonas">
+                        <h2 id="titulo-zonas" class="focos__subtitulo">Zonas con más casos</h2>
+                        @* Las 10 zonas con más casos: el equivalente del mapa para el lector de pantalla y un atajo para volar a cada una. *@
+                        <ol class="ranking" id="zonas-destacadas" data-ranking-historico>
+                            @foreach (var (zona, i) in Model.ZonasDestacadas.Select((z, i) => (z, i)))
+                            {
+                                var sos = zona.Origen == "SOS";
+                                <li class="ranking__item">
+                                    <button type="button" class="ranking__boton" data-vuelo data-lat="@zona.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-lon="@zona.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                        <span class="ranking__orden num" aria-hidden="true">@(i + 1)</span>
+                                        <span class="ranking__nombre">@zona.Zona</span>
+                                        <span class="ranking__cifra num"><strong>@zona.Casos</strong> @Casos(zona.Casos)</span>
+                                        <span class="ranking__origen ranking__origen--@(sos ? "sos" : "reporte")"><span class="ranking__marca" aria-hidden="true"></span>@zona.Origen</span>
+                                    </button>
+                                </li>
+                            }
+                        </ol>
+                    </section>
                 }
-            </tbody>
-        </table>
+
+                @* La diferencia con las zonas de Analítica, dicha en una línea: aquí el volumen; allá, el rendimiento. *@
+                <p class="focos__aparte" data-diferencia>
+                    Este mapa responde «¿dónde ocurren?» y cuenta cada caso con ubicación. Para ver cómo se responde en cada zona,
+                    <a href="@Model.EnlaceAnalitica" data-enlace-analitica>abre este periodo en Analítica</a>.
+                    No incluye casos cancelados ni reportes descartados, ni posiciones de acompañamientos o de serenos.
+                </p>
+            }
+        </div>
+    </aside>
+
+    @if (m is not null)
+    {
+        @if (m.Celdas.Count > 0)
+        {
+            @* Capas: el calor (dónde se concentra) y las cifras por zona (cuántos hay). Se pueden apagar por separado. *@
+            <fieldset class="capas-concentracion" data-capas>
+                <legend class="capas-concentracion__titulo">Capas</legend>
+                <label class="capas-concentracion__opcion"><input type="checkbox" checked data-capa="calor" /> Calor</label>
+                <label class="capas-concentracion__opcion"><input type="checkbox" checked data-capa="cifras" /> Cifras por zona</label>
+            </fieldset>
+        }
+        <div class="leyenda-concentracion">
+            <div class="leyenda-concentracion__calor">
+                <span>Pocos casos</span>
+                <span class="leyenda-concentracion__rampa" aria-hidden="true"></span>
+                <span>Muchos casos</span>
+            </div>
+            <p class="leyenda-concentracion__cifras">
+                @if (Model.Origen != "Reporte") { <span class="leyenda leyenda--sos">SOS: cifra en cuadro</span> }
+                @if (Model.Origen != "Sos") { <span class="leyenda leyenda--reporte">Reportes: cifra en círculo</span> }
+                <span>Las cifras marcan las zonas de unos 550 m con 3 casos o más; el resto lo muestra el calor.</span>
+            </p>
+        </div>
         <script type="application/json" id="celdas-concentracion">@Html.Raw(Model.CeldasJson)</script>
         <script type="application/json" id="calor-concentracion">@Html.Raw(Model.CalorJson)</script>
         <noscript><p class="texto-secundario">El mapa necesita JavaScript.</p></noscript>
-    </section>
+    }
 }
-}
+</div>
 
 @section Scripts {
     <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
     @if (Model.EsProyeccion)
     {
+        <script src="~/js/marcadores.js" asp-append-version="true"></script>
         <script src="~/js/proyeccion.js" asp-append-version="true"></script>
     }
     else

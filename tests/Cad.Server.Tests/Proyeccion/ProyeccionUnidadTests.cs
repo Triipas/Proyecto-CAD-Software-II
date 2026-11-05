@@ -47,16 +47,35 @@ public class ProyeccionUnidadTests
     }
 
     [Fact]
-    public void Niveles_CincoPorCientoAltoYQuincePorCientoMedio()
+    public void Niveles_Absolutos_PorCasosEsperadosEnUnBloqueDeCuatroHoras()
     {
-        var esperados = Enumerable.Range(1, 40).Select(i => (double)i).Append(0).ToArray();
+        var o = new OpcionesProyeccion(); // Alto desde 0,30; Medio desde 0,15
 
-        var niveles = ConsultarProyeccion.Niveles(esperados);
+        Assert.Equal(NivelFoco.Alto, ConsultarProyeccion.NivelDe(0.30, o));
+        Assert.Equal(NivelFoco.Alto, ConsultarProyeccion.NivelDe(4.2, o));
+        Assert.Equal(NivelFoco.Medio, ConsultarProyeccion.NivelDe(0.29, o));
+        Assert.Equal(NivelFoco.Medio, ConsultarProyeccion.NivelDe(0.15, o));
+        Assert.Equal(NivelFoco.Bajo, ConsultarProyeccion.NivelDe(0.14, o));
+        Assert.Equal(NivelFoco.Bajo, ConsultarProyeccion.NivelDe(0, o));
+    }
 
-        Assert.Equal(2, niveles.Count(n => n == NivelFoco.Alto));   // 5 % de 40
-        Assert.Equal(6, niveles.Count(n => n == NivelFoco.Medio));  // 20 % − 5 %
-        Assert.Equal(NivelFoco.Alto, niveles[39]);
-        Assert.Equal(NivelFoco.Bajo, niveles[40]);                  // sin casos esperados: no compite
+    [Fact]
+    public void Niveles_UnaSemanaTranquila_NoMarcaAltoSoloPorSerLaZonaMasAlta()
+    {
+        var o = new OpcionesProyeccion();
+        var tranquila = new[] { 0.09, 0.07, 0.05, 0.01 }; // la más alta de la ciudad espera menos que el umbral Medio
+
+        Assert.All(tranquila, v => Assert.Equal(NivelFoco.Bajo, ConsultarProyeccion.NivelDe(v, o)));
+    }
+
+    [Fact]
+    public void Niveles_LosUmbralesSeAjustanEnLaConfiguracion()
+    {
+        var o = new OpcionesProyeccion { UmbralAlto = 2, UmbralMedio = 1 };
+
+        Assert.Equal(NivelFoco.Medio, ConsultarProyeccion.NivelDe(0.5 + 0.5, o));
+        Assert.Equal(NivelFoco.Bajo, ConsultarProyeccion.NivelDe(0.99, o));
+        Assert.Equal(NivelFoco.Alto, ConsultarProyeccion.NivelDe(2, o));
     }
 
     [Fact]
