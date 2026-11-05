@@ -14,6 +14,7 @@
   const lineaTiempo = document.querySelector("[data-linea-tiempo]");
   const lista = document.getElementById("zonas-proyectadas");
   const textoBloque = document.querySelector("[data-vista-bloque]");
+  const avisoTranquila = document.querySelector("[data-tranquila]");
   const reducido = () => window.cadMovimiento?.reducido() ?? matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const HIELO = "#E8F8FF", CELESTE = "#5CC8FF", AMBAR = "#F5B544";
@@ -95,7 +96,7 @@
     for (const z of zonas) {
       const r = rectangulos.get(z.clave);
       r.setStyle(estilo(z));
-      r.setTooltipContent(textoZona(z));
+      r.setTooltipContent(escapar(textoZona(z)));
     }
     let etiquetadas = 0;
     for (const z of ordenadas) {
@@ -120,18 +121,25 @@
         ? "Toda la ventana; el nivel es el promedio por bloque de 4 horas. Elige un bloque en la línea de tiempo para verlo solo."
         : `${b.dia}, de ${b.rotulo}: ${cifra.format(b.total)} casos esperados en toda la ciudad.`;
       const tranquila = !ordenadas.some((z) => nivelDe(z) !== "Bajo");
-      textoBloque.textContent = tranquila ? `${base} Ninguna zona llega a ${umbral.format(ctx.umbralMedio)} casos esperados en un bloque de 4 horas.` : base;
+      // En la ventana entera el nivel es el promedio por bloque: si algún bloque sí llega al umbral, se dice y no se llama tranquila.
+      const algunBloque = zonas.some((z) => z.niveles?.some((n) => n !== "Bajo"));
+      const aviso = bloque >= 0 ? "en este bloque" : algunBloque ? "en promedio, pero algún bloque sí: míralo en la línea de tiempo" : "en ningún bloque";
+      textoBloque.textContent = tranquila ? `${base} Ninguna zona llega a ${umbral.format(ctx.umbralMedio)} casos esperados ${aviso}.` : base;
     }
+    // El aviso de la lista solo describe la ventana entera: con un bloque elegido lo dice el texto de arriba.
+    if (avisoTranquila) avisoTranquila.hidden = bloque >= 0;
   }
 
   // ---------- Serenos ----------
   const marcasSerenos = [];
   for (const s of serenos) {
+    const estadoSereno = s.disponible ? "disponible" : "atendiendo un caso";
     const m = L.marker([s.lat, s.lon], {
       icon: L.divIcon(window.cadMarcadores ? window.cadMarcadores.sereno(s.disponible) : { className: "", html: "" }),
-      title: `${s.nombre} · ${s.disponible ? "disponible" : "atendiendo"}`, alt: `${s.nombre}, sereno ${s.disponible ? "disponible" : "atendiendo un caso"}`,
+      title: `${s.nombre} · ${estadoSereno}`, alt: `${s.nombre}, sereno ${estadoSereno}`,
       keyboard: false, zIndexOffset: 900,
-    }).bindTooltip(`${s.nombre} · ${s.disponible ? "disponible" : "atendiendo un caso"}`).addTo(mapa);
+      // Leaflet asigna el contenido de un tooltip con innerHTML: el nombre de la cuenta va escapado.
+    }).bindTooltip(escapar(`${s.nombre} · ${estadoSereno}`)).addTo(mapa);
     marcasSerenos.push(m);
   }
 

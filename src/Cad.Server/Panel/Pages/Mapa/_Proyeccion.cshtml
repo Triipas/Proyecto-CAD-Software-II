@@ -85,9 +85,18 @@ else
                 <p class="campo__ayuda" data-vista-bloque aria-live="polite">Toda la ventana; el nivel es el promedio por bloque de 4 horas. Elige un bloque en la línea de tiempo para verlo solo.</p>
                 @if (p.Tranquila)
                 {
+                    @* El nivel de la ventana es el promedio por bloque: si algún bloque sí llega al umbral, no se la llama tranquila. *@
+                    var algunBloque = p.Zonas.Any(z => z.NivelesPorBloque?.Any(n => n != NivelFoco.Bajo) == true);
                     <div class="aviso aviso--informacion" role="status" data-tranquila>
                         <partial name="_Icono" model="@("informacion")" />
-                        <p class="aviso__texto">Semana tranquila: ninguna zona llega a @Umbral(p.UmbralMedio) casos esperados en un bloque de 4 horas. Se listan las que más tienen.</p>
+                        @if (algunBloque)
+                        {
+                            <p class="aviso__texto">En promedio, ninguna zona llega a @Umbral(p.UmbralMedio) casos esperados por bloque de 4 horas, pero algún bloque sí: míralo en la línea de tiempo.</p>
+                        }
+                        else
+                        {
+                            <p class="aviso__texto">Semana tranquila: ninguna zona llega a @Umbral(p.UmbralMedio) casos esperados por bloque de 4 horas. Se listan las que más tienen.</p>
+                        }
                     </div>
                 }
                 <ol class="ranking ranking--proyeccion" id="zonas-proyectadas" data-zonas-proyectadas>
