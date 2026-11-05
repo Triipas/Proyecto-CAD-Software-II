@@ -31,10 +31,12 @@ async function enviarReporte(ciudadano, punto, descripcion) {
 const enviarSos = (ciudadano, punto) =>
   api('/api/sos', { token: ciudadano, cuerpo: { idSolicitud: randomUUID(), activadoEn: ahora(), ubicacion: { ...punto, precisionMetros: 5, obtenidaEn: ahora() } } });
 
-async function abrirCentral(page) {
+async function abrirCentral(page, pestana = null) {
   await prepararPagina(page);
   await abrir(page, '/panel/central');
   await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+  // 05/11/2026: la bandeja tiene pestañas y el mapa muestra solo los casos de la elegida.
+  if (pestana) await page.getByRole('tab', { name: new RegExp(`^${pestana}`) }).click();
 }
 
 // Distancia en píxeles del punto al centro de la franja del mapa que no tapan los paneles.
@@ -77,7 +79,7 @@ test.describe('Central: último caso llegado', () => {
   test.use({ storageState: sesion('operador'), reducedMotion: 'no-preference' });
 
   test('El reporte por revisar que llega desde la app se enfoca y lleva el sonar, como un SOS', async ({ page }, info) => {
-    await abrirCentral(page);
+    await abrirCentral(page, 'Reportes');
     const ciudadano = await ciudadanoNuevo();
     // Lejos del encuadre inicial: si el mapa no se enfocara en él, el reporte quedaría fuera de la vista.
     const puntoReporte = cerca(0.03, 0.025);
@@ -97,15 +99,18 @@ test.describe('Central: último caso llegado', () => {
     await expect.poll(() => desvioDelCentroLibre(page, puntoReporte), { timeout: 5_000 }).toBeLessThan(12);
     await page.screenshot({ path: info.outputPath('reporte-llegado.png') });
 
-    // Un SOS que llega después releva al reporte: sigue habiendo un solo sonar, ahora sobre el SOS.
+    // Un SOS que llega después releva al reporte: sigue habiendo un solo sonar, ahora sobre el SOS. Sin otro caso entre manos,
+    // el SOS trae su pestaña.
     const puntoSos = cerca(-0.025, -0.03);
     await enviarSos(ciudadano, puntoSos);
+    await expect(page.getByRole('tab', { name: /^SOS/ })).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 });
     await expect(sonar).toHaveCount(1, { timeout: 10_000 });
     await expect(sonar).not.toHaveClass(/sonar-llegada--reporte/);
     await expect(page.locator('.marcador--ultimo')).toHaveClass(/marcador-sos/);
     await expect.poll(() => desvioDelCentroLibre(page, puntoSos), { timeout: 5_000 }).toBeLessThan(12);
 
-    // Un nuevo reporte vuelve a relevarlo; al abrirlo el operador (clic en su marcador), el sonar se apaga.
+    // Un nuevo reporte vuelve a relevarlo (mirando «Reportes»); al abrirlo el operador (clic en su marcador), el sonar se apaga.
+    await page.getByRole('tab', { name: /^Reportes/ }).click();
     const otroPunto = cerca(0.02, -0.02);
     await enviarReporte(ciudadano, otroPunto, 'Vehículo abandonado con las lunas rotas (dato ficticio).');
     await expect(sonar).toHaveClass(/sonar-llegada--reporte/, { timeout: 10_000 });
@@ -117,7 +122,7 @@ test.describe('Central: último caso llegado', () => {
 
   test('Sin movimiento, el reporte por revisar llegado queda marcado con un anillo fijo', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await abrirCentral(page);
+    await abrirCentral(page, 'Reportes');
     const ciudadano = await ciudadanoNuevo();
     await enviarReporte(ciudadano, cerca(-0.02, 0.02), 'Basura acumulada que bloquea la vereda (dato ficticio).');
     const anillo = page.locator('.sonar-llegada--reporte span').first();
@@ -169,7 +174,7 @@ test.describe('Central: clic en un hueco del mapa', () => {
   });
 
   test('Suelta el reporte por revisar elegido desde su marcador', async ({ page }) => {
-    await abrirCentral(page);
+    await abrirCentral(page, 'Reportes');
     // El reporte en revisión del escenario se elige desde su marcador (no está en la cola).
     const marcador = page.locator('.marcador-caso--revision[title*="En revisión"]').first();
     await page.evaluate(() => {

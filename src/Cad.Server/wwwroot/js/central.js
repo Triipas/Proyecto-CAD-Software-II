@@ -22,6 +22,7 @@
   const regionRevisar = document.querySelector("[data-region-revisar]");
   const contadorRevisar = document.querySelector("[data-contador-revisar]");
   let casoConRuta = null;
+  let pestana = "sos"; // pestaña de la bandeja que se mira (ver «Pestañas de la bandeja»)
   // HU25: casos en curso con ubicación (no asignables), con su origen y su estado.
   const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
   const marcadoresEnCurso = new Map();
@@ -245,6 +246,7 @@
   let sosSeleccionado = null;
 
   function seleccionar(id, { desdeMapa = false, conSereno = false } = {}) {
+    irAPestanaDe(id);
     seguirEnPanel(id);
     soltarAsignado();
     sosSeleccionado = id;
@@ -299,6 +301,7 @@
   }
 
   function seleccionarAsignado(id, { desdeMapa = false } = {}) {
+    irAPestanaDe(id);
     seguirEnPanel(id);
     if (sosSeleccionado) deseleccionar();
     casoConRuta = id;
@@ -896,6 +899,84 @@
   });
   try { if (localStorage.getItem(CLAVE_SERENOS) === "abierto") mostrarSerenos(true, { recordar: false }); } catch { /* sin almacenamiento */ }
   const central = document.querySelector(".central");
+
+  // ---------- Pestañas de la bandeja (05/11/2026) ----------
+  // SOS, reportes (por revisar y por asignar) y en curso. La elegida decide qué casos se ven en el mapa (central.css, por
+  // data-pestana); los serenos se ven siempre. Si llega algo a otra pestaña, esa pestaña lo avisa con un punto; un SOS nuevo,
+  // además, trae su pestaña si el operador no está con otro caso. Cada operador la encuentra como la dejó.
+  const pestanas = [...document.querySelectorAll("[data-pestana]")];
+  const CLAVE_PESTANA = "cad-central-pestana";
+  const cuerpoCola = document.getElementById("cuerpo-cola");
+  function pestanaDe(id) {
+    if (!id) return null;
+    const clave = CSS.escape(id);
+    if (region.querySelector(`#sos-${clave}`)) return "sos";
+    if (regionReportes?.querySelector(`#sos-${clave}`) || document.getElementById(`revisar-${id}`)) return "reportes";
+    if (document.getElementById(`asignado-${id}`)) return "en-curso";
+    const enMapa = regionCasosMapa?.querySelector(`[data-caso-mapa="${clave}"]`);
+    if (!enMapa) return null;
+    return enMapa.dataset.estado === "Recibido" || enMapa.dataset.estado === "En revisión" ? "reportes" : "en-curso";
+  }
+  function elegirPestana(nombre, { enfocar = false, soltar = true } = {}) {
+    if (!pestanas.length || !pestanas.some((b) => b.dataset.pestana === nombre)) return;
+    const cambia = nombre !== pestana;
+    pestana = nombre;
+    for (const boton of pestanas) {
+      const elegida = boton.dataset.pestana === nombre;
+      boton.setAttribute("aria-selected", String(elegida));
+      boton.tabIndex = elegida ? 0 : -1;
+      if (elegida) boton.classList.remove("bandeja__pestana--aviso");
+      if (elegida && enfocar) boton.focus();
+    }
+    for (const grupo of document.querySelectorAll("[data-grupo-pestana]")) grupo.hidden = grupo.dataset.grupoPestana !== nombre;
+    central.dataset.pestana = nombre;
+    try { localStorage.setItem(CLAVE_PESTANA, nombre); } catch { /* sin almacenamiento: vale para esta visita */ }
+    if (!cambia) return;
+    cuerpoCola.scrollTop = 0;
+    // El globo de un caso que la nueva pestaña oculta tampoco queda a la vista (con su enlace).
+    mapa.closePopup();
+    // Lo elegido en otra pestaña ya no se ve en el mapa: se suelta (el panel del caso, si está abierto, sigue).
+    if (soltar) soltarTodo();
+  }
+  // Elegir un caso de otra pestaña (desde el panel, un enlace o el código) lleva a su pestaña, sin soltarlo.
+  function irAPestanaDe(id) {
+    const suya = pestanaDe(id);
+    if (suya && suya !== pestana) elegirPestana(suya, { soltar: false });
+  }
+  function avisarPestana(nombre) {
+    if (nombre !== pestana) pestanas.find((b) => b.dataset.pestana === nombre)?.classList.add("bandeja__pestana--aviso");
+  }
+  function contarPestanas() {
+    const total = (selector, raiz) => Number(raiz?.querySelector(selector)?.dataset.total) || 0;
+    const cifras = {
+      sos: total("[data-lista-sos]", region),
+      reportes: total("[data-lista-por-revisar]", regionRevisar) + total("[data-lista-reportes]", regionReportes),
+      "en-curso": document.querySelectorAll("[data-asignado]").length,
+    };
+    for (const [nombre, valor] of Object.entries(cifras)) {
+      const cifra = document.querySelector(`[data-cifra-pestana="${nombre}"]`);
+      if (cifra) cadMovimiento.fijarCifra(cifra, valor);
+    }
+  }
+  if (pestanas.length) {
+    document.querySelector("[data-pestanas]").hidden = false;
+    for (const boton of pestanas) boton.addEventListener("click", () => elegirPestana(boton.dataset.pestana));
+    // Flechas, Inicio y Fin entre pestañas (patrón de pestañas de WAI-ARIA, activación automática).
+    document.querySelector("[data-pestanas]").addEventListener("keydown", (evento) => {
+      const i = pestanas.findIndex((b) => b.dataset.pestana === pestana);
+      const destino = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: pestanas.length - 1 }[evento.key];
+      if (destino === undefined) return;
+      evento.preventDefault();
+      elegirPestana(pestanas[(destino + pestanas.length) % pestanas.length].dataset.pestana, { enfocar: true });
+    });
+    // «N SOS» de la cabecera lleva a la pestaña de los SOS.
+    for (const enlace of document.querySelectorAll("[data-ir-sos]")) enlace.addEventListener("click", () => elegirPestana("sos"));
+    let guardada = null;
+    try { guardada = localStorage.getItem(CLAVE_PESTANA); } catch { /* sin almacenamiento */ }
+    elegirPestana(guardada ?? "sos", { soltar: false });
+    if (central.dataset.pestana !== (guardada ?? "sos")) elegirPestana("sos", { soltar: false });
+    contarPestanas();
+  }
   // La leyenda y el filtro de la cola mandan sobre la misma capa: el chip siempre dice lo que se ve.
   function fijarCapa(capa, visible) {
     document.querySelector(`[data-capa="${capa}"]`)?.setAttribute("aria-pressed", String(visible));
@@ -1133,8 +1214,11 @@
     actualizarAsignacion();
     actualizarIndicadores();
     contarAsignados();
+    contarPestanas();
     // Un reporte llegado con la central abierta releva al último caso del mapa (la primera carga no cuenta como llegada).
-    if (reporteLlegado) destacarUltimo(reporteLlegado, { reporte: true });
+    // Si se mira otra pestaña, no se lleva el mapa a un caso que no se ve: la pestaña «Reportes» lo avisa.
+    if (reporteLlegado && pestana === "reportes") destacarUltimo(reporteLlegado, { reporte: true });
+    else if (reporteLlegado) avisarPestana("reportes");
     cargado = true;
     return true;
   }
@@ -1154,7 +1238,10 @@
   conexion.on("SosRecibido", async ({ id }) => {
     if (!(await refrescar())) return;
     avisar(id);
-    destacarUltimo(id);
+    // Un SOS nuevo trae su pestaña si el operador no está con otro caso; si lo está, «SOS» lo avisa y el mapa no se mueve.
+    if (pestana !== "sos" && !panelAbierto() && !sosSeleccionado && !casoConRuta) elegirPestana("sos", { soltar: false });
+    if (pestana === "sos") destacarUltimo(id);
+    else avisarPestana("sos");
     // Acuse cuando el SOS ya se muestra y se ha avisado: el servidor anota su primera presentación (analítica) y, con la
     // medición activada, la de RNF02.
     if (document.getElementById(`sos-${id}`))

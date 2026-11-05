@@ -19,3 +19,12 @@ O por separado, con variables de entorno:
 CAD_URL=https://<servicio>.onrender.com CAD_OPERADOR="operador@correo:clave" CAD_SERENOS="s1@correo:clave;s2@correo:clave" node herramientas/demo/sembrar.mjs
 CAD_URL=https://<servicio>.onrender.com CAD_SERENOS="s1@correo:clave;s2@correo:clave" CAD_CENTRO="-16.3988,-71.5369" node herramientas/demo/mover-serenos.mjs
 ```
+
+## Dejar la central limpia
+
+`limpiar.mjs` borra **todos** los SOS y reportes (con su historial, asignaciones, revisiones, fotos y notificaciones) y el acompañamiento, y deja a los serenos fuera de servicio; conserva las cuentas, las categorías y los ajustes de la IA. Pide la cadena de conexión de PostgreSQL (la de Neon, sin mostrarla), enseña cuántos casos hay y espera que escribas `BORRAR`. Todo va en una transacción: si algo falla, no se borra nada. Con `CAD_PROBAR=1` hace lo mismo y lo deshace al final.
+
+```powershell
+node herramientas/demo/limpiar.mjs
+```
+

@@ -50,6 +50,7 @@ test.describe('Central: panel del caso', () => {
       await prepararPagina(page);
       await abrir(page, '/panel/central');
       await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+      await page.getByRole('tab', { name: /^Reportes/ }).click(); // los reportes, en su pestaña (05/11/2026)
       await page.locator(`#sos-${ids.reporteAdmitido}`).getByRole('link', { name: /Ver el reporte/ }).click();
       const marco = page.frameLocator('[data-marco-caso]');
       const bloque = marco.locator('[data-asignacion-vivo]');
@@ -92,6 +93,7 @@ test.describe('Central: panel del caso', () => {
     await prepararPagina(page);
     await abrir(page, '/panel/central');
     await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('tab', { name: /^Reportes/ }).click(); // los reportes, en su pestaña (05/11/2026)
     const tamano = () => page.evaluate(() => JSON.stringify(window.cadCentral.mapa.getSize()));
     const antes = await tamano();
 
@@ -128,9 +130,13 @@ test.describe('Central: panel del caso', () => {
     await expect(marco.locator('.mapa--detalle')).toBeHidden();
 
     // Con el panel abierto, elegir otro caso en la bandeja (su tarjeta) lo carga en el panel; volver al reporte también.
+    // Cambiar de pestaña no cierra el panel.
     const { ids } = leerSemilla();
+    await page.getByRole('tab', { name: /^SOS/ }).click();
+    await expect(panel).toBeVisible();
     await page.locator(`#sos-${ids.sosPendiente} [data-seleccionar-sos]`).first().click();
     await expect(marco.locator(`.consola__barra[data-caso="${ids.sosPendiente}"]`)).toBeAttached({ timeout: 10_000 });
+    await page.getByRole('tab', { name: /^Reportes/ }).click();
     await page.locator(`#revisar-${id} [data-seleccionar-revisar]`).click();
     await expect(marco.locator(`.consola__barra[data-caso="${id}"]`)).toBeAttached({ timeout: 10_000 });
     await expect(marco.locator('.panel-caso__pie')).toContainText('Decide qué hacer con el reporte');
@@ -164,6 +170,10 @@ test.describe('Central: panel del caso', () => {
     await pie.locator('.asignar__sugerido').getByRole('button', { name: /^Asignar a / }).click();
     await expect(panel).toBeHidden({ timeout: 10_000 });
     await expect(page.locator('[data-aviso-flotante]')).toHaveText('Reporte asignado.');
+    // Se sigue en «Reportes» para continuar con los demás; el caso ya está en «En curso».
+    await expect(page.locator(`#asignado-${id}`)).toBeAttached();
+    await expect(page.getByRole('tab', { name: /^Reportes/ })).toHaveAttribute('aria-selected', 'true');
+    await page.getByRole('tab', { name: /^En curso/ }).click();
     await expect(page.locator(`#asignado-${id}`)).toBeVisible();
     expect(await tamano()).toBe(antes);
   });
