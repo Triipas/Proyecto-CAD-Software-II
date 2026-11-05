@@ -93,4 +93,26 @@ public partial class BandejaCentralTests(FabricaCad fabrica)
         Assert.Contains("id=\"panel-serenos\" aria-labelledby=\"titulo-serenos\" data-panel hidden", pagina);
         Assert.DoesNotContain("data-filtro-cola", pagina);
     }
+
+    // La cifra cuenta todos los serenos registrados, también los de cuenta desactivada (no salen en el monitoreo).
+    private static (int Activos, int Registrados) CifraSerenos(string pagina)
+    {
+        var m = Regex.Match(pagina, @"data-abrir-serenos>\s*<b data-valor>(\d+)</b> <span data-etiqueta>de (\d+) serenos? activos?</span>");
+        Assert.True(m.Success, "No está la cifra de serenos en la cabecera.");
+        return (int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value));
+    }
+
+    [Fact]
+    public async Task UnSerenoConLaCuentaDesactivada_CuentaComoRegistrado_PeroNoComoActivo()
+    {
+        var (operador, _) = await OperadorAsync();
+        var antes = CifraSerenos(await operador.GetStringAsync(Central));
+
+        await fabrica.CrearAsync(Roles.Sereno, activa: false);
+        var despues = CifraSerenos(await operador.GetStringAsync(Central));
+
+        Assert.Equal(antes.Registrados + 1, despues.Registrados);
+        Assert.Equal(antes.Activos, despues.Activos);
+        Assert.Contains($"data-registrados=\"{despues.Registrados}\"", await operador.GetStringAsync("/panel/central?handler=Serenos"));
+    }
 }

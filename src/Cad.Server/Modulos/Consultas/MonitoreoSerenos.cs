@@ -30,6 +30,11 @@ public sealed class ConsultarSerenos(CadDbContext db)
 {
     private static readonly Guid RolSereno = Roles.Todos.Single(r => r.Nombre == Roles.Sereno).Id;
 
+    // 05/11/2026: todos los serenos registrados en el sistema, también los de cuenta desactivada (no salen en el monitoreo),
+    // para la cifra «activos de los registrados» de la central.
+    public Task<int> RegistradosAsync(CancellationToken ct) =>
+        db.Users.AsNoTracking().CountAsync(u => db.UserRoles.Any(r => r.UserId == u.Id && r.RoleId == RolSereno), ct);
+
     public async Task<IReadOnlyList<SerenoMonitoreo>> EjecutarAsync(CancellationToken ct)
     {
         var filas = await (from usuario in db.Users.AsNoTracking()
