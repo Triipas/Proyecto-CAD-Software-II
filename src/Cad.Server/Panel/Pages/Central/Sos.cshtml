@@ -439,6 +439,7 @@
                 <div id="mapa-hecho" class="mapa mapa--detalle" role="region" aria-label="Mapa con la ubicación del dispositivo"
                      data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)" data-teselas="@Model.UrlTeselas"
                      data-titulo="Ubicación del dispositivo"></div>
+                <partial name="_SerenosMinimapa" model="Model.Minimapa" />
                 <dl class="datos datos--en-linea">
                     <div><dt>Coordenadas</dt><dd>@sos.Latitud?.ToString("0.00000", inv), @sos.Longitud?.ToString("0.00000", inv)</dd></div>
                     <div><dt>Precisión</dt><dd>± @sos.PrecisionMetros?.ToString("0", inv) m</dd></div>

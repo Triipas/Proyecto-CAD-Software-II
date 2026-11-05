@@ -234,6 +234,26 @@
   border-radius: var(--radio-control);
 }
 
+/* Minimapa con serenos (05/11/2026): la distancia al sereno elegido para asignar, como en la central. */
+.mapa--detalle .etiqueta-despacho {
+  padding: 0.125rem var(--espacio-2);
+  border: 0;
+  border-radius: 999px;
+  font: var(--peso-medio) var(--texto-xs)/1.5 var(--fuente);
+  font-variant-numeric: tabular-nums;
+  color: #FFFFFF;
+  background: var(--color-marino);
+  box-shadow: none;
+}
+
+.mapa--detalle .etiqueta-despacho::before {
+  display: none;
+}
+
+.mapa--detalle .marcador-sereno.marcador--elegido::after {
+  inset: -7px;
+}
+
 /* ── Siguiente acción ──────────────────────────────────── */
 .siguiente {
   display: grid;

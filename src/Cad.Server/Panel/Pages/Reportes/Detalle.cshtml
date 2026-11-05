@@ -558,6 +558,7 @@
                 <div id="mapa-hecho" class="mapa mapa--detalle" role="region" aria-label="Mapa con el lugar del hecho"
                      data-lat="@r.LatitudHecho?.ToString(inv)" data-lon="@r.LongitudHecho?.ToString(inv)" data-teselas="@Model.UrlTeselas"
                      data-clase-marcador="marcador-hecho marcador-hecho--reporte" data-titulo="Lugar del hecho"></div>
+                <partial name="_SerenosMinimapa" model="Model.Minimapa" />
             }
             <dl class="datos datos--en-linea">
                 <div><dt>Indicada como</dt><dd data-fuente>@fuente</dd></div>

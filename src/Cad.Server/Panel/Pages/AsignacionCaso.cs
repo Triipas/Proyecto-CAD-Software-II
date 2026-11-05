@@ -7,7 +7,10 @@ namespace Cad.Server.Panel.Pages;
 // por cercanía al caso y, si hay ubicación de ambos lados, el más cercano como sugerencia.
 public sealed record SerenoParaAsignar(Guid Id, string Nombre, string Detalle, double? Metros)
 {
-    public string Distancia => Metros is not { } m ? "" : m < 1000 ? $"{Math.Round(m):0} m" : $"{m / 1000:0.0} km".Replace('.', ',');
+    public string Distancia => Metros is not { } m ? "" : Texto(m);
+
+    public static string Texto(double metros) =>
+        metros < 1000 ? $"{Math.Round(metros):0} m" : $"{metros / 1000:0.0} km".Replace('.', ',');
 }
 
 public sealed record VistaAsignacion(Guid IdSolicitud, string Lugar, IReadOnlyList<SerenoParaAsignar> Disponibles, string? Volver = null)
