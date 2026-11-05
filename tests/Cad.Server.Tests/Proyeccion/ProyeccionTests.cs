@@ -136,6 +136,105 @@ public sealed class ProyeccionTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.True(manana.Zonas.Sum(z => z.Esperados) > noche.Zonas.Sum(z => z.Esperados)); // 24 h esperan más casos que 6
     }
 
+    // Un foco los lunes entre las 8 y las 12, más un fondo repartido por el distrito, con el reloj en lunes a las 10:00.
+    private async Task SembrarFocoYFondoAsync()
+    {
+        reloj.Ahora = new DateTimeOffset(2003, 6, 2, 10, 0, 0, TimeSpan.FromHours(-5));
+        var ciudadano = (await fabrica.CrearAsync(Roles.Ciudadano)).Id;
+        var azar = new Random(46);
+        await SembrarAsync(ciudadano, Enumerable.Range(1, 8).SelectMany(k => Enumerable.Range(0, 6)
+            .Select(n => (reloj.Ahora.AddDays(-7 * k).AddMinutes(-60 + 20 * n), LatFoco + azar.NextDouble() * 0.002, LonFoco + azar.NextDouble() * 0.002))));
+        await SembrarAsync(ciudadano, Enumerable.Range(0, 120).Select(_ => (reloj.Ahora.AddHours(-azar.Next(1, 56 * 24)),
+            -16.4546 + azar.NextDouble() * 0.0435, -71.5471 + azar.NextDouble() * 0.0428)));
+    }
+
+    // Rediseño del 05/11/2026: la línea de tiempo trae los bloques de 4 h de la ventana y lo esperado en cada uno.
+    [Fact]
+    public async Task LaVentana_TraeSusBloquesDeCuatroHoras_ConLoEsperadoEnCadaUnoYSuExplicacion()
+    {
+        await SembrarFocoYFondoAsync();
+
+        var proyeccion = await ProyectarAsync();
+
+        // 10:00 a 16:00: la mitad del bloque de 8 a 12 (que está en curso) y el de 12 a 16 entero.
+        Assert.Equal(["08–12 h", "12–16 h"], proyeccion.Bloques!.Select(b => b.Rotulo));
+        Assert.Equal([0.5, 1.0], proyeccion.Bloques!.Select(b => b.Fraccion));
+        Assert.Equal([true, false], proyeccion.Bloques!.Select(b => b.EsAhora));
+        Assert.All(proyeccion.Bloques, b => Assert.Equal("Hoy", b.Dia));
+        var foco = proyeccion.Zonas[0];
+        Assert.Equal(2, foco.PorBloque!.Count);
+        // La ventana suma lo esperado en cada bloque por la parte que cae dentro (cada cifra va redondeada a dos decimales).
+        var suma = foco.PorBloque[0] * 0.5 + foco.PorBloque[1];
+        Assert.InRange(foco.Esperados, suma - 0.02, suma + 0.02);
+        Assert.Equal(foco.PorBloque.Select(v => ConsultarProyeccion.NivelDe(v, new OpcionesProyeccion())), foco.NivelesPorBloque);
+        // El total de cada bloque es lo esperado en toda la ciudad, y el foco de los lunes por la mañana pesa más en el bloque de 8 a 12.
+        // (cada zona va redondeada a dos decimales, así que la suma puede apartarse unas centésimas del total).
+        Assert.InRange(proyeccion.Bloques![0].Total, proyeccion.Zonas.Sum(z => z.PorBloque![0]) - 0.5, proyeccion.Zonas.Sum(z => z.PorBloque![0]) + 0.5);
+        Assert.True(foco.PorBloque[0] > foco.PorBloque[1]);
+        Assert.Contains("Lunes 08–12 h: ", foco.ExplicacionesPorBloque![0]);
+    }
+
+    [Fact]
+    public async Task LaPagina_EsUnMapaConPanel_ConLaLineaDeTiempoElAvisoSobreElMapaYLaVentanaElegida()
+    {
+        await SembrarFocoYFondoAsync();
+
+        var html = WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion?Vista=proyeccion&Ventana=6h"));
+
+        Assert.Contains("data-focos data-vista=\"proyeccion\"", html);
+        Assert.Contains("class=\"aviso-mapa\" role=\"note\" data-aviso-proyeccion", html);
+        Assert.Contains("data-linea-tiempo", html);
+        Assert.Contains("data-bloque=\"-1\"", html);
+        Assert.Contains("data-bloque=\"0\"", html);
+        Assert.Contains("data-bloque=\"1\"", html);
+        Assert.DoesNotContain("data-bloque=\"2\"", html);
+        Assert.Contains("name=\"Ventana\" value=\"6h\" class=\"segmentos__opcion\" aria-pressed=\"true\"", html);
+        Assert.Contains("name=\"Ventana\" value=\"noche\" class=\"segmentos__opcion\" aria-pressed=\"false\"", html);
+        // El mapa recibe los bloques, los umbrales y los serenos (nunca un caso).
+        Assert.Contains("id=\"contexto-proyeccion\"", html);
+        Assert.Contains("\"umbralAlto\":0.3", html);
+        Assert.Contains("\"rotulo\":\"08", html); // el guion largo del rótulo va escapado dentro del JSON
+        Assert.Contains("id=\"zonas-proyectadas\" data-zonas-proyectadas", html);
+    }
+
+    // Nivel absoluto: sin focos que lleguen al umbral Medio, nada se marca Alto ni Medio y la pantalla lo dice.
+    [Fact]
+    public async Task UnaSemanaTranquila_NoMarcaNingunaZonaYLaPantallaLoDice()
+    {
+        reloj.Ahora = new DateTimeOffset(2003, 6, 2, 10, 0, 0, TimeSpan.FromHours(-5));
+        var ciudadano = (await fabrica.CrearAsync(Roles.Ciudadano)).Id;
+        var azar = new Random(7);
+        await SembrarAsync(ciudadano, Enumerable.Range(0, 80).Select(_ => (reloj.Ahora.AddHours(-azar.Next(1, 56 * 24)),
+            -16.4546 + azar.NextDouble() * 0.0435, -71.5471 + azar.NextDouble() * 0.0428)));
+
+        var proyeccion = await ProyectarAsync();
+        var html = WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion?Vista=proyeccion&Ventana=6h"));
+
+        Assert.True(proyeccion.Suficiente);
+        Assert.True(proyeccion.Tranquila);
+        Assert.All(proyeccion.Zonas, z => Assert.Equal(NivelFoco.Bajo, z.Nivel));
+        Assert.Contains("data-tranquila", html);
+        Assert.Contains("Semana tranquila: ninguna zona llega a 0.15 casos esperados", html);
+        Assert.DoesNotContain("nivel-foco--alto", html);
+    }
+
+    [Fact]
+    public async Task ElNivelEsAbsoluto_ElFocoDeLosLunesEsAltoYLasZonasDeFondoNo()
+    {
+        await SembrarFocoYFondoAsync();
+
+        var proyeccion = await ProyectarAsync();
+
+        Assert.False(proyeccion.Tranquila);
+        var altas = proyeccion.Zonas.Where(z => z.Nivel == NivelFoco.Alto).ToList();
+        Assert.NotEmpty(altas);
+        // Alto exige 0,30 casos esperados por bloque: el promedio por bloque de cada zona alta lo alcanza.
+        var cobertura = proyeccion.Bloques!.Sum(b => b.Fraccion);
+        Assert.All(altas, z => Assert.True(z.Esperados / cobertura >= proyeccion.UmbralAlto - 0.005));
+        // Y las de fondo, que esperan casi nada, quedan en Bajo en lugar de «Medio» por estar entre las más altas.
+        Assert.Contains(proyeccion.Zonas, z => z.Nivel == NivelFoco.Bajo);
+    }
+
     [Fact]
     public void ElModeloIncrustado_SeCargaConSuPesoYSeMideSuMemoria()
     {

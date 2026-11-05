@@ -1,48 +1,274 @@
 /*
-  Mapa de concentración (HU29) en el rediseño CAD v2, fase 3. Solo la carga /panel/mapa-concentracion.
-  Una barra de selección compacta, la diferencia con las zonas de Analítica, las cifras de la selección y el mapa de
-  calor infrarrojo como protagonista.
+  Mapa de concentración y proyección de focos (HU29, HU48). Rediseño del 05/11/2026: la misma gramática que la central y la vigilancia,
+  con el mapa a sangre y un panel flotante a la izquierda. El histórico arde (escala térmica) y la proyección es sonar (celeste sobre
+  la ciudad de noche); así nunca se confunde lo ocurrido con lo esperado. Por debajo de 760 px el panel se apila bajo el mapa.
 */
 
-/* ── Barra de selección ────────────────────────────────── */
-.barra-seleccion {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  align-items: end;
-  gap: var(--espacio-3) var(--espacio-4);
-  padding: var(--espacio-4) var(--espacio-5);
-}
-
-.barra-seleccion .campo {
+/* ── Marco: mapa a sangre y panel flotante ─────────────── */
+.pagina--focos {
+  max-width: none;
   margin: 0;
+  padding: 0;
+  display: block;
 }
 
-.barra-seleccion__enviar {
-  align-self: end;
+.focos {
+  --foco-celeste: #5CC8FF;
+  --foco-hielo: #E8F8FF;
+  --foco-ambar: #F5B544;
+  --foco-ancho-panel: 24rem;
+  position: relative;
+  height: calc(100vh - var(--alto-barra));
+  min-height: 38rem;
+  overflow: hidden;
 }
 
-.barra-seleccion__ayuda {
-  grid-column: 1 / -1;
-  margin: 0;
+.focos__mapa {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
 }
 
-/* ── Cifras de la selección ────────────────────────────── */
-.concentracion {
+.focos__panel {
+  position: absolute;
+  z-index: 500; /* sobre las capas del mapa, bajo sus controles (1000) */
+  top: var(--espacio-4);
+  bottom: var(--espacio-4);
+  left: var(--espacio-4);
+  width: var(--foco-ancho-panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+}
+
+.focos__cabecera {
   display: grid;
-  gap: var(--espacio-4);
-  margin-top: var(--espacio-6);
+  gap: var(--espacio-3);
+  padding: var(--espacio-4) var(--espacio-4) var(--espacio-3);
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
 }
 
-.concentracion__titulo {
+.focos__titulo {
   margin: 0;
   font-size: var(--texto-xl);
+}
+
+.focos__cuerpo {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--espacio-5);
+  padding: var(--espacio-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.focos__cuerpo:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: calc(var(--grosor-foco) * -1);
+}
+
+.focos__seccion {
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+.focos__subtitulo {
+  margin: 0;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-semi);
+  line-height: var(--interlineado-titulo);
   color: var(--color-marino);
 }
 
-/* Una sola franja dividida: el resumen de la selección se lee de corrido, sin tarjetas de cifras sueltas. */
-.cifras {
+.ranking__boton[aria-current="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-tenue);
+}
+
+.focos__seccion > .campo__ayuda,
+.focos__cuerpo > .campo__ayuda {
+  margin: 0;
+}
+
+.focos__aparte {
+  margin: 0;
+  max-width: var(--medida-lectura);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.focos__aparte a {
+  color: var(--color-primario);
+  text-underline-offset: 0.2em;
+}
+
+/* Sin mapa (selección con errores o sin datos): la ciudad de noche, vacía. */
+.focos__mapa--vacio {
+  background: #0B1A33;
+}
+
+/* ── Selección del histórico ───────────────────────────── */
+.focos__seleccion {
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+.focos__seleccion .campo {
+  margin: 0;
+}
+
+.focos__fechas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+}
+
+.focos__origen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--espacio-3);
+}
+
+.focos__nota {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+.focos__seleccion > .campo__ayuda {
+  margin: 0;
+}
+
+/* Periodos frecuentes: tres atajos que rellenan las fechas. */
+.atajos {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.atajos__titulo {
+  margin-right: var(--espacio-1);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.atajos__opcion {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alto-control-compacto);
+  padding: 0 var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde-control);
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+  text-decoration: none;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar), border-color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.atajos__opcion:hover {
+  background: var(--color-tenue);
+}
+
+.atajos__opcion[aria-current="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-tenue);
+  color: var(--color-primario);
+}
+
+/* ── Selector Histórico | Proyección ───────────────────── */
+.vista-mapa {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-1);
+  padding: var(--espacio-1);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie-hundida);
+}
+
+.vista-mapa__opcion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  border-radius: var(--radio-pequeno);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+  text-decoration: none;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar), color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.vista-mapa__opcion:hover {
+  color: var(--color-marino);
+}
+
+.vista-mapa__opcion[aria-current="page"] {
+  color: var(--color-marino);
+  font-weight: var(--peso-semi);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+/* Ventana de la proyección: tres opciones de un mismo selector. */
+.segmentos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espacio-1);
+}
+
+.segmentos__opcion {
+  min-height: var(--alto-control-compacto);
+  padding: 0 var(--espacio-2);
+  border: var(--grosor-borde) solid var(--color-borde-control);
+  border-radius: var(--radio-control);
+  font: inherit;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+  background: var(--color-superficie);
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar), border-color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.segmentos__opcion:hover {
+  background: var(--color-tenue);
+}
+
+.segmentos__opcion:active {
+  transform: scale(0.97);
+}
+
+.segmentos__opcion[aria-pressed="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-tenue);
+  color: var(--color-primario);
+}
+
+.segmentos__opcion:focus-visible,
+.atajos__opcion:focus-visible,
+.ranking__boton:focus-visible,
+.linea-tiempo__bloque:focus-visible,
+.vista-mapa__opcion:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: var(--separacion-foco);
+}
+
+/* ── Cifras de la selección: una lista dividida ────────── */
+.cifras {
+  display: grid;
   margin: 0;
   border: var(--grosor-borde) solid var(--color-borde);
   border-radius: var(--radio-superficie);
@@ -50,17 +276,15 @@
 }
 
 .cifra {
-  flex: 1 1 11rem;
   display: flex;
-  flex-wrap: wrap;
-  align-content: center;
   align-items: baseline;
-  gap: var(--espacio-1) var(--espacio-3);
-  padding: var(--espacio-3) var(--espacio-4);
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-4);
 }
 
 .cifra + .cifra {
-  border-left: var(--grosor-borde) solid var(--color-borde);
+  border-top: var(--grosor-borde) solid var(--color-borde);
 }
 
 .cifra dt {
@@ -75,11 +299,12 @@
   margin: 0;
   font-size: var(--texto-sm);
   color: var(--color-texto-secundario);
+  text-align: right;
 }
 
 .cifra dd strong {
   margin-right: var(--espacio-1);
-  font-size: var(--texto-xl);
+  font-size: var(--texto-lg);
   font-weight: var(--peso-fuerte);
   font-variant-numeric: tabular-nums;
   color: var(--color-marino);
@@ -101,85 +326,410 @@
   color: var(--color-texto-secundario);
 }
 
-/* ── Este mapa y las zonas de Analítica ────────────────── */
-/* Dos maneras de ver la ciudad, dichas antes del mapa: aquí el volumen (calor); en Analítica, el rendimiento por zona. */
-.dos-mapas {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--espacio-3) var(--espacio-6);
-  margin-top: var(--espacio-4);
-  padding: var(--espacio-3) var(--espacio-5);
-  border: var(--grosor-borde) solid var(--color-borde);
-  border-radius: var(--radio-superficie);
-  background: var(--color-superficie);
+.num {
+  font-variant-numeric: tabular-nums;
 }
 
-.dos-mapas__lado {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--espacio-3);
+/* ── Ranking de zonas ──────────────────────────────────── */
+/* La lista de zonas en orden: la tarjeta entera es el botón que lleva el mapa a la zona. */
+.ranking {
+  display: grid;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranking__item {
+  margin: 0;
+}
+
+.ranking__boton {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-3);
+  padding: var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  cursor: pointer;
+  transition: border-color var(--duracion-rapida) var(--curva-estandar), background-color var(--duracion-rapida) var(--curva-estandar),
+    box-shadow var(--duracion-rapida) var(--curva-estandar);
+}
+
+.ranking__boton:hover {
+  border-color: var(--color-borde-control);
+  box-shadow: var(--sombra-1);
+}
+
+.ranking__boton:active {
+  transform: scale(0.99);
+}
+
+.ranking__boton[aria-pressed="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-tenue);
+  box-shadow: var(--sombra-2);
+}
+
+.ranking__item--sin-cobertura .ranking__boton {
+  border-color: var(--color-advertencia-borde);
+  background: var(--color-advertencia-fondo);
+}
+
+.ranking__item--sin-cobertura .ranking__boton[aria-pressed="true"] {
+  border-color: var(--color-advertencia);
+}
+
+.ranking__orden {
+  grid-row: 1 / span 4;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.125rem;
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-sobre-primario);
+  background: var(--color-marino);
+}
+
+.ranking__nombre {
+  grid-column: 2;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+}
+
+.ranking__cifra {
+  grid-column: 3;
+  grid-row: 1;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+}
+
+.ranking__cifra strong {
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-marino);
+}
+
+.ranking__porque,
+.ranking__sereno {
+  grid-column: 2 / -1;
+  font-size: var(--texto-sm);
+  line-height: var(--interlineado-compacto);
+  color: var(--color-texto-secundario);
+}
+
+.ranking__sereno strong {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  margin-right: var(--espacio-2);
+  color: var(--color-advertencia);
+}
+
+.ranking__sereno .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ranking__origen {
+  grid-column: 2 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  justify-self: start;
   font-size: var(--texto-sm);
   color: var(--color-texto-secundario);
 }
 
-.dos-mapas__lado p {
+.ranking__marca {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: var(--mapa-sos);
+}
+
+.ranking__origen--reporte .ranking__marca {
+  border-radius: 999px;
+  background: var(--mapa-reporte);
+}
+
+/* Nivel de un foco: texto siempre, más un glifo (flechas hacia arriba) y el tono. Nunca solo color. */
+.nivel-foco {
+  grid-column: 2;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  padding: 0 var(--espacio-2) 0 var(--espacio-1);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  line-height: 1.375rem;
+}
+
+.nivel-foco::before {
+  content: "";
+  width: 0.875rem;
+  height: 0.875rem;
+  background: currentColor;
+  -webkit-mask: var(--glifo) center / contain no-repeat;
+  mask: var(--glifo) center / contain no-repeat;
+}
+
+.nivel-foco--alto {
+  --glifo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 6-6 6 6M6 19l6-6 6 6'/%3E%3C/svg%3E");
+  color: var(--color-sobre-primario);
+  background: var(--color-marino);
+  border-color: var(--color-marino);
+}
+
+.nivel-foco--medio {
+  --glifo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 15 6-6 6 6'/%3E%3C/svg%3E");
+  color: var(--color-progreso);
+  background: var(--color-progreso-fondo);
+  border-color: var(--color-progreso-borde);
+}
+
+.nivel-foco--bajo {
+  --glifo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
+  color: var(--color-neutro);
+  background: var(--color-neutro-fondo);
+  border-color: var(--color-neutro-borde);
+}
+
+/* ── Proyección: avisos y parte ────────────────────────── */
+/* El aviso del prototipo, sobre el mapa y siempre visible (al lado del panel; bajo el mapa en pantallas estrechas). */
+.aviso-mapa {
+  position: absolute;
+  z-index: 500;
+  top: var(--espacio-4);
+  left: calc(var(--foco-ancho-panel) + var(--espacio-4) * 2);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+  max-width: min(30rem, calc(100% - var(--foco-ancho-panel) - 20rem));
   margin: 0;
-  max-width: 62ch;
-}
-
-.dos-mapas__lado b {
-  display: block;
-  color: var(--color-marino);
-  font-weight: var(--peso-medio);
-}
-
-.dos-mapas__lado + .dos-mapas__lado {
-  padding-left: var(--espacio-6);
-  border-left: var(--grosor-borde) solid var(--color-borde);
-}
-
-/* Una muestra de cada mapa: el halo térmico y la cuadrícula de zonas en la rampa azul de Analítica. */
-.dos-mapas__muestra {
-  flex: none;
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-top: 0.125rem;
+  padding: var(--espacio-2) var(--espacio-3);
   border-radius: var(--radio-control);
-}
-
-.dos-mapas__muestra--calor {
-  background:
-    radial-gradient(circle at 42% 46%, #FFF8CD 0 8%, #FBC428 18%, #F47620 30%, #CE2E96 44%, #7622AA 58%, transparent 72%),
-    #14213D;
-}
-
-.dos-mapas__muestra--zonas {
-  background:
-    linear-gradient(90deg, #E6EEFD 0 33%, #9DB9F4 33% 66%, #3F6FE0 66%) top / 100% 33.4% no-repeat,
-    linear-gradient(90deg, #9DB9F4 0 33%, #1D4ED8 33% 66%, #BFD2F8 66%) center / 100% 33.4% no-repeat,
-    linear-gradient(90deg, #BFD2F8 0 33%, #7FA3EF 33% 66%, #E6EEFD 66%) bottom / 100% 33.4% no-repeat;
-  box-shadow: 0 0 0 1px var(--color-borde);
-}
-
-.dos-mapas__enlace {
-  justify-self: end;
-  white-space: nowrap;
-}
-
-/* ── Mapa protagonista: la ciudad en infrarrojo ────────── */
-.concentracion__mapa {
-  position: relative;
-}
-
-.concentracion__mapa .mapa {
-  height: max(30rem, calc(100vh - var(--alto-barra) - 12rem));
-  border: 0;
-  border-radius: var(--radio-superficie);
+  font-size: var(--texto-xs);
+  line-height: var(--interlineado-compacto);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
   box-shadow: var(--sombra-2);
 }
 
-/* La ciudad de noche: teselas invertidas a azul marino, con las calles claras y apagadas, para que el calor sea lo único que
+.aviso-mapa .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-informacion);
+}
+
+.aviso-mapa strong {
+  color: var(--color-marino);
+}
+
+.parte-patrullaje {
+  display: grid;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4);
+  border: var(--grosor-borde) solid var(--color-informacion-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-informacion-fondo);
+}
+
+.parte-patrullaje p,
+.parte-patrullaje ul {
+  margin: 0;
+  font-size: var(--texto-sm);
+}
+
+.parte-patrullaje__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-md);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+  cursor: pointer;
+}
+
+.parte-patrullaje__titulo .icono {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--color-informacion);
+}
+
+.parte-patrullaje__acciones {
+  display: grid;
+  gap: var(--espacio-1);
+  padding-left: var(--espacio-5);
+}
+
+/* ── Línea de tiempo: la ventana y sus bloques de 4 h ──── */
+.linea-tiempo {
+  position: absolute;
+  z-index: 500;
+  left: calc(var(--foco-ancho-panel) + var(--espacio-4) * 2);
+  right: 4.5rem;
+  bottom: var(--espacio-4);
+  display: flex;
+  gap: var(--espacio-2);
+  padding: var(--espacio-2);
+  overflow-x: auto;
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+}
+
+.linea-tiempo__bloque {
+  flex: 1 1 0;
+  min-width: 6.25rem;
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: var(--espacio-2) var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-control);
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+  cursor: pointer;
+  transition: border-color var(--duracion-rapida) var(--curva-estandar), background-color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.linea-tiempo__bloque--todo {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+}
+
+.linea-tiempo__bloque:hover {
+  border-color: var(--color-borde-control);
+}
+
+.linea-tiempo__bloque:active {
+  transform: scale(0.98);
+}
+
+.linea-tiempo__bloque[aria-pressed="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-tenue);
+  color: var(--color-marino);
+}
+
+.linea-tiempo__dia {
+  font-size: var(--texto-xs);
+  white-space: nowrap;
+}
+
+.linea-tiempo__hora {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+  white-space: nowrap;
+}
+
+.linea-tiempo__barra {
+  display: block;
+  height: 4px;
+  margin: 2px 0;
+  border-radius: 999px;
+  background: var(--color-borde);
+  overflow: hidden;
+}
+
+.linea-tiempo__barra i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primario);
+  transition: width var(--duracion-base) var(--curva-estandar);
+}
+
+.linea-tiempo__cifra {
+  font-size: var(--texto-xs);
+  white-space: nowrap;
+}
+
+/* ── Leyenda de la proyección ──────────────────────────── */
+.leyenda-focos {
+  position: absolute;
+  z-index: 500;
+  top: var(--espacio-4);
+  right: var(--espacio-4);
+  display: grid;
+  gap: var(--espacio-1);
+  margin: 0;
+  padding: var(--espacio-3);
+  list-style: none;
+  border-radius: var(--radio-control);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-2);
+}
+
+.leyenda-focos li {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.leyenda-focos__muestra {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 3px;
+  border: 2px solid var(--color-marino);
+  background: var(--foco-celeste);
+}
+
+.leyenda-focos__muestra--alto {
+  background: var(--foco-celeste);
+  border-color: var(--color-marino);
+}
+
+.leyenda-focos__muestra--medio {
+  background: rgb(92 200 255 / 0.4);
+  border-color: var(--color-progreso);
+}
+
+.leyenda-focos__muestra--bajo {
+  background: rgb(92 200 255 / 0.1);
+  border: 1px solid var(--color-borde-control);
+}
+
+.leyenda-focos__muestra--sin {
+  background: var(--color-superficie);
+  border: 2px dashed var(--color-advertencia);
+}
+
+.leyenda-focos__muestra--sereno {
+  width: 0.875rem;
+  height: 1rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--mapa-sereno);
+  clip-path: polygon(50% 0, 100% 18%, 100% 52%, 50% 100%, 0 52%, 0 18%);
+}
+
+/* ── Mapa: la ciudad en infrarrojo ─────────────────────── */
+/* La ciudad de noche: teselas invertidas a azul marino, con las calles claras y apagadas, para que lo que se muestra sea lo único que
    brilla. Sigue la regla de la ciudad apagada (nunca a todo color), solo que en oscuro. */
 .mapa--infrarrojo {
   background: #0B1A33;
@@ -237,13 +787,112 @@
   from { opacity: 0; transform: scale(0.6); }
 }
 
+/* Proyección: el brillo de las zonas (un panel propio, desenfocado), la insignia de orden y nivel, y el sonar al elegir una. */
+.leaflet-brillo-pane {
+  mix-blend-mode: screen;
+  filter: blur(9px);
+  pointer-events: none;
+}
+
+.zona-foco {
+  transition: fill-opacity var(--duracion-base) var(--curva-estandar), stroke-opacity var(--duracion-base) var(--curva-estandar);
+}
+
+.insignia-foco {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  padding: 2px 8px 2px 2px;
+  border: 2px solid #0B1A33;
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
+  white-space: nowrap;
+  color: var(--color-marino);
+  background: var(--foco-hielo);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.45);
+  transform: translate(-50%, -50%);
+  animation: insignia-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+.insignia-foco b {
+  display: grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-sobre-primario);
+  background: var(--color-marino);
+}
+
+.insignia-foco:not(:has(b)) {
+  padding-left: 8px;
+}
+
+/* De lejos: solo el número; las zonas sin número, ocultas. */
+.focos--lejos .insignia-foco:has(b) {
+  padding: 2px;
+}
+
+.focos--lejos .insignia-foco:has(b) .insignia-foco__nivel,
+.focos--lejos .insignia-foco:not(:has(b)):not(.insignia-foco--distancia) {
+  display: none;
+}
+
+.insignia-foco--medio {
+  background: var(--foco-celeste);
+}
+
+.insignia-foco--sin-cobertura {
+  border-color: var(--foco-ambar);
+}
+
+.insignia-foco--elegida {
+  box-shadow: 0 0 0 3px var(--foco-hielo), 0 2px 8px rgb(0 0 0 / 0.45);
+}
+
+@keyframes insignia-entra {
+  from { opacity: 0; margin-top: 8px; }
+}
+
+/* Sonar de la zona elegida: dos anillos que se abren una vez (el mismo lenguaje que el vuelo al caso de la central). */
+.sonar-foco {
+  position: relative;
+  pointer-events: none;
+}
+
+.sonar-foco i {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--foco-hielo);
+  border-radius: 999px;
+  animation: sonar-foco 1.2s var(--curva-salida) both;
+}
+
+.sonar-foco i:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+@keyframes sonar-foco {
+  from { opacity: 0.9; transform: scale(0.25); }
+  to { opacity: 0; transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .celda-concentracion span {
+  .celda-concentracion span,
+  .insignia-foco,
+  .sonar-foco i {
     animation: none;
+  }
+
+  .sonar-foco {
+    display: none;
   }
 }
 
-/* Paneles flotantes sobre el mapa: capas arriba a la izquierda y leyenda abajo. */
+/* ── Capas y leyenda del histórico ─────────────────────── */
 .capas-concentracion,
 .leyenda-concentracion {
   position: absolute;
@@ -255,8 +904,8 @@
 }
 
 .capas-concentracion {
-  top: var(--espacio-3);
-  left: var(--espacio-3);
+  top: var(--espacio-4);
+  right: var(--espacio-4);
   display: flex;
   align-items: center;
   gap: var(--espacio-4);
@@ -291,11 +940,11 @@
 }
 
 .leyenda-concentracion {
-  left: var(--espacio-3);
-  bottom: var(--espacio-3);
+  left: calc(var(--foco-ancho-panel) + var(--espacio-4) * 2);
+  bottom: var(--espacio-4);
   display: grid;
   gap: var(--espacio-2);
-  max-width: min(34rem, calc(100% - 7rem));
+  max-width: min(34rem, calc(100% - 30rem));
   padding: var(--espacio-3) var(--espacio-4);
   font-size: var(--texto-xs);
   color: var(--color-texto-secundario);
@@ -343,164 +992,70 @@
 }
 
 /* ── Pantallas estrechas ───────────────────────────────── */
-@media (max-width: 60rem) {
-  .barra-seleccion {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .barra-seleccion__enviar {
-    grid-column: 1 / -1;
-    justify-self: end;
-  }
-}
-
+/* Por debajo de 760 px el panel y la línea de tiempo se apilan bajo el mapa, solo con CSS. */
 @media (max-width: 47.5rem) {
-  .barra-seleccion {
-    grid-template-columns: minmax(0, 1fr);
-    padding: var(--espacio-4);
+  .focos {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
   }
 
-  .barra-seleccion__enviar {
-    justify-self: stretch;
-  }
-
-  .cifra + .cifra {
-    border-left: 0;
-    border-top: var(--grosor-borde) solid var(--color-borde);
-  }
-
-  .concentracion__mapa .mapa {
+  .focos__mapa {
+    position: relative;
+    inset: auto;
+    flex: none;
     height: 60vh;
+    min-height: 20rem;
   }
 
+  .focos__panel,
+  .aviso-mapa,
+  .linea-tiempo,
+  .leyenda-focos,
+  .capas-concentracion,
   .leyenda-concentracion {
     position: static;
+    width: auto;
     max-width: none;
-    margin-top: var(--espacio-2);
+  }
+
+  .focos__panel {
+    order: 2;
+    border-radius: 0;
     box-shadow: none;
-    background: transparent;
-    padding: 0;
+  }
+
+  .focos__cuerpo {
+    overflow: visible;
+  }
+
+  .linea-tiempo {
+    order: 1;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .aviso-mapa {
+    order: 1;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: var(--grosor-borde) solid var(--color-borde);
+  }
+
+  .leyenda-focos,
+  .capas-concentracion,
+  .leyenda-concentracion {
+    order: 3;
+    border-radius: 0;
+    box-shadow: none;
+    border-top: var(--grosor-borde) solid var(--color-borde);
   }
 
   .capas-concentracion {
-    position: static;
-    margin-bottom: var(--espacio-2);
-    box-shadow: none;
-    border: var(--grosor-borde) solid var(--color-borde);
+    order: 1;
+    flex-wrap: wrap;
   }
-
-  .dos-mapas {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .dos-mapas__lado + .dos-mapas__lado {
-    padding-left: 0;
-    padding-top: var(--espacio-3);
-    border-left: 0;
-    border-top: var(--grosor-borde) solid var(--color-borde);
-  }
-
-  .dos-mapas__enlace {
-    justify-self: stretch;
-    white-space: normal;
-  }
-}
-
-/* ── HU46 (S6-T20): vista «Proyección» ─────────────────── */
-.vista-mapa {
-  display: inline-flex;
-  gap: var(--espacio-1);
-  margin-bottom: var(--espacio-4);
-  padding: var(--espacio-1);
-  border-radius: var(--radio-control);
-  background: var(--color-superficie-hundida);
-}
-
-.vista-mapa__opcion {
-  padding: var(--espacio-1) var(--espacio-4);
-  border-radius: var(--radio-control);
-  font-weight: var(--peso-medio);
-  color: var(--color-texto-secundario);
-  text-decoration: none;
-}
-
-.vista-mapa__opcion[aria-current="page"] {
-  color: var(--color-marino);
-  background: var(--color-superficie);
-  box-shadow: var(--sombra-1);
-}
-
-.proyeccion__aviso {
-  margin: var(--espacio-4) 0;
-}
-
-.proyeccion__sin-cobertura {
-  display: block;
-  color: var(--color-advertencia);
-}
-
-.nivel-foco {
-  display: inline-block;
-  padding: 0 var(--espacio-2);
-  border: 1px solid var(--color-borde);
-  border-radius: 999px;
-  font-size: var(--texto-xs);
-  font-weight: var(--peso-medio);
-  line-height: 1.5rem;
-}
-
-.nivel-foco--alto { color: #7c2d12; background: #ffedd5; border-color: #fdba74; }
-.nivel-foco--medio { color: #713f12; background: #fef9c3; border-color: #fde047; }
-.nivel-foco--bajo { color: var(--color-texto-secundario); background: var(--color-superficie-hundida); }
-
-/* El nivel escrito sobre la zona, legible sobre el mapa. */
-.etiqueta-nivel {
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  transform: translate(-50%, -50%);
-}
-
-.etiqueta-nivel--alto { color: #fff; background: #9a3412; }
-.etiqueta-nivel--medio { color: #422006; background: #fde047; }
-
-.leyenda-proyeccion__nivel::before {
-  content: "";
-  display: inline-block;
-  width: 0.75rem;
-  height: 0.75rem;
-  margin-right: var(--espacio-1);
-  vertical-align: -1px;
-  border: 1px solid;
-}
-
-.leyenda-proyeccion__nivel--alto::before { background: #f97316; border-color: #9a3412; }
-.leyenda-proyeccion__nivel--medio::before { background: #facc15; border-color: #a16207; }
-.leyenda-proyeccion__nivel--bajo::before { background: #cbd5e1; border-color: #64748b; }
-.leyenda-proyeccion__nivel--sin::before { background: transparent; border: 2px dashed #9a3412; }
-
-.leyenda-proyeccion .leyenda-concentracion__cifras {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espacio-2) var(--espacio-4);
-}
-
-.parte-patrullaje {
-  display: grid;
-  gap: var(--espacio-2);
-  margin: var(--espacio-4) 0;
-  border-left: 4px solid var(--color-informacion-borde);
-}
-
-.parte-patrullaje p,
-.parte-patrullaje ul {
-  margin: 0;
-}
-
-.parte-patrullaje__acciones {
-  display: grid;
-  gap: var(--espacio-1);
-  padding-left: var(--espacio-5);
 }
