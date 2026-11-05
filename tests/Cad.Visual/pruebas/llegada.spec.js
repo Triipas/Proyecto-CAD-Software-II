@@ -42,11 +42,11 @@ async function desvioDelCentroLibre(page, { latitud, longitud }) {
   return page.evaluate(([lat, lon]) => {
     const { mapa } = window.cadCentral;
     const ancho = mapa.getContainer().clientWidth;
-    const cola = document.getElementById('panel-cola').getBoundingClientRect();
-    const serenos = document.getElementById('panel-serenos').getBoundingClientRect();
+    const panel = document.getElementById('panel-serenos');
+    const serenos = panel.hidden ? null : panel.getBoundingClientRect();
     const caja = mapa.getContainer().getBoundingClientRect();
-    const izquierda = cola.right - caja.left;
-    const derecha = Math.min(ancho, serenos.left - caja.left);
+    const izquierda = 0;
+    const derecha = serenos ? Math.min(ancho, serenos.left - caja.left) : ancho;
     const p = mapa.latLngToContainerPoint([lat, lon]);
     return Math.hypot(p.x - (izquierda + derecha) / 2, p.y - mapa.getContainer().clientHeight / 2);
   }, [latitud, longitud]);
@@ -57,8 +57,9 @@ async function huecoDelMapa(page) {
   return page.evaluate(() => {
     const mapa = window.cadCentral.mapa.getContainer();
     const caja = mapa.getBoundingClientRect();
-    const cola = document.getElementById('panel-cola').getBoundingClientRect();
-    const serenos = document.getElementById('panel-serenos').getBoundingClientRect();
+    const panel = document.getElementById('panel-serenos');
+    const serenos = panel.hidden ? { left: caja.right } : panel.getBoundingClientRect();
+    const cola = { right: caja.left };
     const ocupados = [...mapa.querySelectorAll('.leaflet-marker-icon, .leaflet-popup, .leaflet-control, .leaflet-tooltip, path')]
       .map((el) => el.getBoundingClientRect());
     for (let y = caja.top + 120; y < caja.bottom - 120; y += 30) {
@@ -91,7 +92,9 @@ test.describe('Central: último caso llegado', () => {
     await expect(destacado).toHaveClass(/marcador-caso--revision/);
     await expect(destacado).toHaveAttribute('title', /Reporte · Recibido/);
     await expect.poll(() => desvioDelCentroLibre(page, puntoReporte), { timeout: 5_000 }).toBeLessThan(12);
-    expect(await page.evaluate(() => window.cadCentral.mapa.getZoom())).toBe(17);
+    // Se espera al final del vuelo: con la bandeja fuera del mapa, el punto pasa por el centro antes de aterrizar.
+    await expect.poll(() => page.evaluate(() => window.cadCentral.mapa.getZoom()), { timeout: 5_000 }).toBe(17);
+    await expect.poll(() => desvioDelCentroLibre(page, puntoReporte), { timeout: 5_000 }).toBeLessThan(12);
     await page.screenshot({ path: info.outputPath('reporte-llegado.png') });
 
     // Un SOS que llega después releva al reporte: sigue habiendo un solo sonar, ahora sobre el SOS.

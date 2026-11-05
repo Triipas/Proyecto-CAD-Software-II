@@ -13,6 +13,7 @@ namespace Cad.Server.Panel.Pages.Central;
 [Authorize(Policy = Politicas.OperadorAutorizado)]
 public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consultarSerenos, ConsultarReportesAdmitidos consultarReportes,
     ConsultarCasosEnMapa consultarCasosEnMapa, ConsultarCasosAsignados consultarAsignados, ConsultarRutasEnCamino consultarRutas, ConsultarAcompanamientos consultarAcompanamientos, IConfiguration configuracion,
+    ConsultarReportes consultarPorRevisar, Modulos.Asistencia.ConsultarAsistencia consultarAsistencia,
     Microsoft.Extensions.Options.IOptions<Modulos.Mediciones.OpcionesMedicion> medicion) : PageModel
 {
     // RNF02: con la medición activada, el panel envía el acuse de presentación de cada SOS.
@@ -21,6 +22,10 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public IReadOnlyList<SosPendiente> Pendientes { get; private set; } = [];
 
     public IReadOnlyList<ReporteAdmitido> ReportesAdmitidos { get; private set; } = [];
+
+    // Bandeja (05/11/2026): los reportes recibidos y en revisión también están en la central, con la sugerencia del asistente
+    // (HU44) y la admisión programada (HU45); la página «Reportes» sigue como lista completa.
+    public ListaPorRevisar PorRevisar { get; private set; } = null!;
 
     // HU25: casos en curso con ubicación (los pendientes de asignación ya están en las listas).
     public IReadOnlyList<CasoEnMapa> CasosEnMapa { get; private set; } = [];
@@ -54,6 +59,7 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
         Serenos = await consultarSerenos.EjecutarAsync(ct);
         CasosEnMapa = await consultarCasosEnMapa.EjecutarAsync(ct);
         Asignados = await consultarAsignados.EjecutarAsync(ct);
+        PorRevisar = await CargarPorRevisarAsync(ct);
         AcompanamientosActivos = (await consultarAcompanamientos.ActivasAsync(ct)).Count;
     }
 
@@ -61,6 +67,7 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public int AcompanamientosActivos { get; private set; }
     public int PorAsignar => Pendientes.Count + ReportesAdmitidos.Count;
     public int SerenosLibres => Serenos.Count(s => s.Disponible);
+    public int SerenosOperativos => Serenos.Count(s => s.Operativo);
 
     // HU25-CA05: fragmento de los casos en curso del mapa, que el panel pide al resincronizar.
     public async Task<IActionResult> OnGetCasosMapaAsync(CancellationToken ct) =>
@@ -73,6 +80,18 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     // Fragmento de los reportes admitidos: se pide junto con la lista de SOS al resincronizar.
     public async Task<IActionResult> OnGetReportesAsync(CancellationToken ct) =>
         Partial("_ListaReportes", new ListaReportes(await consultarReportes.EjecutarAsync(ct), ZonaHoraria()));
+
+    // Fragmento de los reportes por revisar, que la bandeja pide con el resto de las listas al resincronizar.
+    public async Task<IActionResult> OnGetPorRevisarAsync(CancellationToken ct) =>
+        Partial("_ListaPorRevisar", await CargarPorRevisarAsync(ct));
+
+    private async Task<ListaPorRevisar> CargarPorRevisarAsync(CancellationToken ct)
+    {
+        var reportes = await consultarPorRevisar.EjecutarAsync(ct);
+        var ids = reportes.Select(r => r.Id).ToList();
+        return new ListaPorRevisar(reportes, await consultarAsistencia.CategoriasDistintasAsync(ids, ct),
+            await consultarAsistencia.ProgramadasAsync(ids, ct), ZonaHoraria());
+    }
 
     // Fragmento de la lista: el panel lo pide al recibir un aviso o al reconectar (resincronización).
     public async Task<IActionResult> OnGetListaAsync(CancellationToken ct) =>
@@ -110,5 +129,8 @@ public sealed record ListaSos(IReadOnlyList<SosPendiente> Pendientes, TimeZoneIn
 public sealed record ListaReportes(IReadOnlyList<ReporteAdmitido> Admitidos, TimeZoneInfo ZonaHoraria);
 
 public sealed record ListaAsignados(IReadOnlyList<CasoAsignado> Casos, TimeZoneInfo ZonaHoraria);
+
+public sealed record ListaPorRevisar(IReadOnlyList<ReporteEnBandeja> Reportes, IReadOnlyDictionary<Guid, string> CategoriasSugeridas,
+    IReadOnlyDictionary<Guid, DateTimeOffset> Programadas, TimeZoneInfo ZonaHoraria);
 
 public sealed record ListaSerenos(IReadOnlyList<SerenoMonitoreo> Serenos, TimeZoneInfo ZonaHoraria);

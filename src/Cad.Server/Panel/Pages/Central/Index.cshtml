@@ -11,82 +11,44 @@
     <link rel="stylesheet" href="~/css/central.css" asp-append-version="true" />
 }
 @section IndicadoresBarra {
-    @* Lo primero que ve el operador: cuántos SOS hay, cuánto queda por asignar y con cuántos serenos cuenta. central.js los mantiene al día. *@
+    @* Lo primero que ve el operador: cuántos SOS hay y con cuántos serenos cuenta. 05/11/2026: cada cifra lleva a lo que cuenta
+       (los SOS de la bandeja, el panel de serenos); «por asignar» ya se ve en la bandeja. central.js los mantiene al día. *@
     <ul class="barra__indicadores" aria-label="Situación de la central">
-        <li class="indicador indicador--sos@(Model.Pendientes.Count > 0 ? " indicador--activo" : "")" data-indicador="sos"><b data-valor>@Model.Pendientes.Count</b> SOS</li>
-        <li class="indicador" data-indicador="por-asignar"><b data-valor>@Model.PorAsignar</b> por asignar</li>
-        <li class="indicador" data-indicador="serenos-libres"><b data-valor>@Model.SerenosLibres</b> <span data-etiqueta>@(Model.SerenosLibres == 1 ? "sereno disponible" : "serenos disponibles")</span></li>
+        <li class="indicador indicador--sos@(Model.Pendientes.Count > 0 ? " indicador--activo" : "")" data-indicador="sos"><a href="#titulo-urgente" data-ir-sos><b data-valor>@Model.Pendientes.Count</b> SOS</a></li>
+        <li class="indicador" data-indicador="serenos-libres">
+            <button type="button" class="indicador__boton" aria-controls="panel-serenos" aria-expanded="false" data-abrir-serenos>
+                <b data-valor>@Model.SerenosLibres</b> <span data-etiqueta>de @Model.SerenosOperativos @(Model.SerenosOperativos == 1 ? "sereno disponible" : "serenos disponibles")</span>
+            </button>
+        </li>
         <li class="indicador"><a href="/panel/acompanamientos"><b>@Model.AcompanamientosActivos</b> @(Model.AcompanamientosActivos == 1 ? "acompañamiento" : "acompañamientos")</a></li>
     </ul>
 }
 <h1 class="visualmente-oculto titulo">Central de monitoreo</h1>
 
+@* Bandeja y mapa (05/11/2026): la bandeja es una columna fija con el trabajo en el orden en que se hace (SOS, reportes por
+   revisar, por asignar y en curso); el mapa ocupa el resto. Los serenos y la leyenda se abren encima del mapa cuando se piden
+   y lo tapan sin moverlo. *@
 <div class="central">
-    <div id="mapa" class="mapa mapa--central" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
-         data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de casos y serenos con ubicación"></div>
-
     @{ var admision = await ConsultarAsistencia.AjusteAsync(ViewContext.HttpContext.RequestAborted); }
-    @if (Model.Mensaje is not null || Model.ErrorAccion is not null || admision.Modo != Cad.Server.Modulos.Asistencia.Dominio.ModoAdmision.Apagada)
-    {
-        <div class="central__avisos">
-            @* HU45 (S6-T15): el modo vigente de la admisión automática, con su pausa. *@
-            <partial name="_AdmisionAutomatica" model="admision" />
-            @if (Model.Mensaje is not null)
-            {
-                <div class="aviso aviso--exito central__aviso" role="status" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("exito")" />
-                    <div>
-                        <p class="aviso__titulo">@Model.Mensaje</p>
-                        <p class="aviso__texto">@Model.DetalleMensaje</p>
-                    </div>
-                </div>
-            }
-            @if (Model.ErrorAccion is not null)
-            {
-                <div class="aviso aviso--error central__aviso" role="alert" tabindex="-1" data-enfocar>
-                    <partial name="_Icono" model="@("error")" />
-                    <div>
-                        <p class="aviso__titulo">No se pudo asignar el caso</p>
-                        <p class="aviso__texto">@Model.ErrorAccion</p>
-                    </div>
-                </div>
-            }
+    <section class="bandeja" id="panel-cola" aria-labelledby="titulo-cola">
+        <div class="bandeja__cabecera">
+            <h2 class="bandeja__titulo" id="titulo-cola">Bandeja</h2>
+            @* Estado del canal en tiempo real: icono + texto + color (nunca solo color). Conectado es un punto discreto; si se
+               corta, el aviso se hace visible (central.css). *@
+            <p class="conexion conexion--conectando" role="status" data-conexion data-estado="conectando">
+                <span data-icono="conectando"><partial name="_Icono" model="@("informacion")" /></span>
+                <span data-icono="conectado"><partial name="_Icono" model="@("exito")" /></span>
+                <span data-icono="reconectando"><partial name="_Icono" model="@("advertencia")" /></span>
+                <span data-icono="desconectado"><partial name="_Icono" model="@("error")" /></span>
+                <span data-texto>Conectando al tiempo real…</span>
+            </p>
         </div>
-    }
-
-    @* Cola de trabajo: SOS (siempre arriba) y reportes admitidos, en un panel flotante plegable. *@
-    <section class="panel-flotante cola" id="panel-cola" aria-labelledby="titulo-cola" data-panel>
-        <div class="panel-flotante__cabecera">
-            <h2 class="panel-flotante__titulo" id="titulo-cola">Cola de trabajo</h2>
-            <button type="button" class="panel-flotante__plegar" aria-expanded="true" aria-controls="cuerpo-cola" data-plegar>
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
-                <span class="visualmente-oculto">Plegar la cola de trabajo</span>
-            </button>
-        </div>
-        <div class="panel-flotante__cuerpo" id="cuerpo-cola">
-            @* Filtro de la cola: todo, solo SOS o solo reportes. Los acompañamientos tienen su propia sección: no se asignan. *@
-            <div class="cola__filtro" role="group" aria-label="Mostrar en la cola">
-                <button type="button" aria-pressed="true" data-filtro-cola="todo">Todo</button>
-                <button type="button" aria-pressed="false" data-filtro-cola="sos">SOS <span data-filtro-total="sos">@Model.Pendientes.Count</span></button>
-                <button type="button" aria-pressed="false" data-filtro-cola="reportes">Reportes <span data-filtro-total="reportes">@Model.ReportesAdmitidos.Count</span></button>
-            </div>
-            <div class="central__controles">
-                @* Estado del canal en tiempo real: icono + texto + color (nunca solo color). *@
-                <p class="conexion conexion--conectando" role="status" data-conexion data-estado="conectando">
-                    <span data-icono="conectando"><partial name="_Icono" model="@("informacion")" /></span>
-                    <span data-icono="conectado"><partial name="_Icono" model="@("exito")" /></span>
-                    <span data-icono="reconectando"><partial name="_Icono" model="@("advertencia")" /></span>
-                    <span data-icono="desconectado"><partial name="_Icono" model="@("error")" /></span>
-                    <span data-texto>Conectando al tiempo real…</span>
-                </p>
-            </div>
-
-            <section class="central__urgente" aria-labelledby="titulo-urgente" data-avisos-sonoros="0"
-                     data-medicion="@(Model.MedicionActiva ? "true" : "false")">
+        <div class="bandeja__cuerpo" id="cuerpo-cola">
+            <section class="central__urgente bandeja__grupo" aria-labelledby="titulo-urgente" data-avisos-sonoros="0"
+                     data-medicion="@(Model.MedicionActiva ? "true" : "false")" tabindex="-1">
                 <h3 id="titulo-urgente" class="central__titulo">
                     Atención urgente · SOS <span class="central__contador" data-contador>@Model.Pendientes.Count</span>
                 </h3>
-                <p class="central__ayuda">Del más reciente al más antiguo.</p>
                 @* HU09-CA02 — aviso de un SOS cancelado por su titular (lo muestra central.js al recibirlo). *@
                 <div class="aviso aviso--advertencia central__aviso" role="status" data-aviso-cancelacion hidden>
                     <partial name="_Icono" model="@("advertencia")" />
@@ -98,24 +60,33 @@
                 <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
             </section>
 
-            @* HU15-CA02 y HU20-CA07 — reportes admitidos, separados de los SOS (no son urgentes) y asignables igual. *@
-            <section class="central__reportes" aria-labelledby="titulo-reportes">
-                <h3 id="titulo-reportes" class="central__titulo">
-                    Reportes admitidos <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
+            @* HU14 en la central (05/11/2026): los reportes recibidos y en revisión, con el modo de la admisión automática (HU45). *@
+            <section class="central__revisar bandeja__grupo" aria-labelledby="titulo-revisar">
+                <h3 id="titulo-revisar" class="central__titulo">
+                    Por revisar · reportes <span class="central__contador central__contador--revisar" data-contador-revisar>@Model.PorRevisar.Reportes.Count</span>
                 </h3>
-                <p class="central__ayuda">Revisados y pendientes de asignar. No son urgentes.</p>
+                <partial name="_AdmisionAutomatica" model="admision" />
+                <div data-region-revisar>
+                    <partial name="_ListaPorRevisar" model="@Model.PorRevisar" />
+                </div>
+            </section>
+
+            @* HU15-CA02 y HU20-CA07 — reportes admitidos, separados de los SOS (no son urgentes) y asignables igual. *@
+            <section class="central__reportes bandeja__grupo" aria-labelledby="titulo-reportes">
+                <h3 id="titulo-reportes" class="central__titulo">
+                    Por asignar · reportes <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
+                </h3>
                 <div data-region-reportes>
                     <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
                 </div>
             </section>
 
             @* Los casos que ya tienen sereno siguen a la vista, tras los pendientes: al elegir uno, el mapa va a él y dibuja solo
-               entonces el recorrido de su sereno. El filtro de la cola también los separa en SOS y reportes. *@
-            <section class="central__asignados" aria-labelledby="titulo-asignados">
+               entonces el recorrido de su sereno. *@
+            <section class="central__asignados bandeja__grupo" aria-labelledby="titulo-asignados">
                 <h3 id="titulo-asignados" class="central__titulo">
-                    Con sereno asignado <span class="central__contador central__contador--asignados" data-contador-asignados>@Model.Asignados.Count</span>
+                    En curso · con sereno <span class="central__contador central__contador--asignados" data-contador-asignados>@Model.Asignados.Count</span>
                 </h3>
-                <p class="central__ayuda">Asignados, en camino o en atención. Elige uno para ver el recorrido de su sereno.</p>
                 <div data-region-asignados>
                     <partial name="_ListaAsignados" model="@Model.ListaDeAsignados" />
                 </div>
@@ -123,46 +94,85 @@
         </div>
     </section>
 
-    @* HU19 — estado y disponibilidad de los serenos, actualizados sin recargar. *@
-    <section class="panel-flotante serenos-flotante" id="panel-serenos" aria-labelledby="titulo-serenos" data-panel>
-        <div class="panel-flotante__cabecera">
-            <h2 class="panel-flotante__titulo" id="titulo-serenos">Serenos</h2>
-            <button type="button" class="panel-flotante__plegar" aria-expanded="true" aria-controls="cuerpo-serenos" data-plegar>
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
-                <span class="visualmente-oculto">Plegar la lista de serenos</span>
+    <div class="central__mapa">
+        <div id="mapa" class="mapa mapa--central" data-centro-lat="@Model.CentroLatitud" data-centro-lon="@Model.CentroLongitud"
+             data-zoom="@Model.Zoom" data-teselas="@Model.UrlTeselas" role="region" aria-label="Mapa de casos y serenos con ubicación"></div>
+
+        @* Herramientas del mapa: los serenos (con su cifra) y las capas con la clave de iconos. Abren paneles encima del mapa. *@
+        <div class="mapa-herramientas">
+            <button type="button" class="mapa-herramientas__boton" aria-controls="panel-serenos" aria-expanded="false" data-abrir-serenos>
+                <i class="leyenda-icono leyenda-icono--sereno marcador-sereno" data-muestra="sereno" aria-hidden="true"></i>
+                <span><b data-serenos-disponibles>@Model.SerenosLibres</b> de <span data-serenos-operativos>@Model.SerenosOperativos</span> disponibles</span>
+            </button>
+            <button type="button" class="mapa-herramientas__boton leyenda-mapa__clave" aria-expanded="false" aria-controls="clave-mapa" data-abrir-clave>
+                <partial name="_Icono" model="@("informacion")" />Capas y leyenda
             </button>
         </div>
-        <div class="panel-flotante__cuerpo" id="cuerpo-serenos">
-            <p class="central__ayuda">Disponible: operativo y sin caso asignado. Elige un sereno para verlo en el mapa.</p>
-            @* Filtro por nombre: la lista crece y buscar a ojo no escala. central.js lo reaplica al resincronizar. *@
-            <div class="serenos-filtro">
-                <div class="campo-busqueda">
-                    <label class="visualmente-oculto" for="filtro-serenos">Buscar un sereno por nombre</label>
-                    <span class="campo-busqueda__icono"><partial name="_Icono" model="@("lupa")" /></span>
-                    <input class="campo__control campo-busqueda__control" id="filtro-serenos" type="search" placeholder="Buscar sereno por nombre" autocomplete="off" data-filtro-serenos />
-                </div>
-                <p class="texto-secundario" role="status" data-sin-coincidencias hidden>Ningún sereno se llama así.</p>
-            </div>
-            <div data-region-serenos>
-                <partial name="_ListaSerenos" model="@Model.ListaDeSerenos" />
-            </div>
-        </div>
-    </section>
 
-    @* Leyenda del mapa: cada capa se puede ocultar, con el icono que la representa en el mapa. 05/11/2026: la frase «relleno /
-       borde» no bastaba para leer los iconos; «Qué significa cada icono» abre la clave con cada marcador y cada línea tal como
-       se ven (central.js dibuja las muestras con marcadores.js, las mismas que el mapa). *@
-    <div class="leyenda-mapa" role="group" aria-label="Capas del mapa">
-        <button type="button" aria-pressed="true" data-capa="sos"><i class="leyenda-icono marcador-sos" data-muestra="sos" aria-hidden="true"></i>SOS</button>
-        <button type="button" aria-pressed="true" data-capa="reporte"><i class="leyenda-icono marcador-reporte" data-muestra="reporte" aria-hidden="true"></i>Reportes</button>
-        <button type="button" aria-pressed="true" data-capa="sereno"><i class="leyenda-icono leyenda-icono--sereno marcador-sereno" data-muestra="sereno" aria-hidden="true"></i>Serenos</button>
-        <button type="button" class="leyenda-mapa__clave" aria-expanded="false" aria-controls="clave-mapa" data-abrir-clave>
-            <partial name="_Icono" model="@("informacion")" />Qué significa cada icono
-        </button>
+        @if (Model.Mensaje is not null || Model.ErrorAccion is not null)
+        {
+            <div class="central__avisos">
+                @if (Model.Mensaje is not null)
+                {
+                    <div class="aviso aviso--exito central__aviso" role="status" tabindex="-1" data-enfocar>
+                        <partial name="_Icono" model="@("exito")" />
+                        <div>
+                            <p class="aviso__titulo">@Model.Mensaje</p>
+                            <p class="aviso__texto">@Model.DetalleMensaje</p>
+                        </div>
+                    </div>
+                }
+                @if (Model.ErrorAccion is not null)
+                {
+                    <div class="aviso aviso--error central__aviso" role="alert" tabindex="-1" data-enfocar>
+                        <partial name="_Icono" model="@("error")" />
+                        <div>
+                            <p class="aviso__titulo">No se pudo asignar el caso</p>
+                            <p class="aviso__texto">@Model.ErrorAccion</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @* HU19 — estado y disponibilidad de los serenos, actualizados sin recargar. Se abre desde su cifra (cabecera o mapa) o al
+           tocar un sereno en el mapa, y tapa el mapa sin moverlo. *@
+        <section class="panel-flotante serenos-flotante" id="panel-serenos" aria-labelledby="titulo-serenos" data-panel hidden>
+            <div class="panel-flotante__cabecera">
+                <h2 class="panel-flotante__titulo" id="titulo-serenos">Serenos</h2>
+                <button type="button" class="panel-flotante__plegar" data-cerrar-serenos>
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                    <span class="visualmente-oculto">Cerrar la lista de serenos</span>
+                </button>
+            </div>
+            <div class="panel-flotante__cuerpo" id="cuerpo-serenos">
+                <p class="central__ayuda">Disponible: operativo y sin caso asignado. Elige un sereno para verlo en el mapa.</p>
+                @* Filtro por nombre: la lista crece y buscar a ojo no escala. central.js lo reaplica al resincronizar. *@
+                <div class="serenos-filtro">
+                    <div class="campo-busqueda">
+                        <label class="visualmente-oculto" for="filtro-serenos">Buscar un sereno por nombre</label>
+                        <span class="campo-busqueda__icono"><partial name="_Icono" model="@("lupa")" /></span>
+                        <input class="campo__control campo-busqueda__control" id="filtro-serenos" type="search" placeholder="Buscar sereno por nombre" autocomplete="off" data-filtro-serenos />
+                    </div>
+                    <p class="texto-secundario" role="status" data-sin-coincidencias hidden>Ningún sereno se llama así.</p>
+                </div>
+                <div data-region-serenos>
+                    <partial name="_ListaSerenos" model="@Model.ListaDeSerenos" />
+                </div>
+            </div>
+        </section>
+
+        @* Capas y clave de iconos (05/11/2026): cada capa se puede ocultar, con el icono que la representa, y cada marcador y cada
+           línea se explican tal como se ven (central.js dibuja las muestras con marcadores.js, las mismas que el mapa). *@
         <section class="clave-mapa" id="clave-mapa" aria-labelledby="titulo-clave-mapa" hidden data-clave-mapa>
             <div class="clave-mapa__cabecera">
-                <h2 class="clave-mapa__titulo" id="titulo-clave-mapa">Qué significa cada icono</h2>
-                <button type="button" class="clave-mapa__cerrar" aria-label="Cerrar la clave del mapa" data-cerrar-clave>×</button>
+                <h2 class="clave-mapa__titulo" id="titulo-clave-mapa">Capas y leyenda</h2>
+                <button type="button" class="clave-mapa__cerrar" aria-label="Cerrar las capas y la leyenda" data-cerrar-clave>×</button>
+            </div>
+            <div class="leyenda-mapa" role="group" aria-label="Capas del mapa">
+                <button type="button" aria-pressed="true" data-capa="sos"><i class="leyenda-icono marcador-sos" data-muestra="sos" aria-hidden="true"></i>SOS</button>
+                <button type="button" aria-pressed="true" data-capa="reporte"><i class="leyenda-icono marcador-reporte" data-muestra="reporte" aria-hidden="true"></i>Reportes</button>
+                <button type="button" aria-pressed="true" data-capa="sereno"><i class="leyenda-icono leyenda-icono--sereno marcador-sereno" data-muestra="sereno" aria-hidden="true"></i>Serenos</button>
             </div>
             <div class="clave-mapa__grupos">
                 <div>
@@ -192,37 +202,37 @@
                 </div>
             </div>
         </section>
-    </div>
 
-    @* Asignación rápida: al elegir un caso aparece aquí el sereno disponible más cercano (un clic) y un buscador por nombre
-       (se enfoca con «/»; flechas y Intro). No hace falta abrir el panel de serenos. Pide la misma confirmación que el panel. *@
-    <section class="asignar-rapido" aria-label="Asignar el caso elegido" data-asignar-rapido hidden>
-        <div class="asignar-rapido__cabecera">
-            <h2 class="asignar-rapido__titulo" data-ar-caso></h2>
-            <button type="button" class="asignar-rapido__cerrar" data-ar-cerrar aria-label="Cerrar la asignación rápida">
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
-            </button>
-        </div>
-        <p class="texto-secundario" data-ar-vacio hidden>No hay serenos disponibles en este momento.</p>
-        <div class="asignar-rapido__fila" data-ar-fila>
-            <button type="button" class="boton boton--principal asignar-rapido__sugerido" data-ar-sugerido hidden>
-                <span class="asignar-rapido__accion" data-ar-sugerido-nombre></span>
-                <span class="asignar-rapido__meta" data-ar-sugerido-meta></span>
-            </button>
-            <div class="campo-busqueda asignar-rapido__buscar">
-                <label class="visualmente-oculto" for="ar-buscar">Buscar otro sereno disponible por nombre</label>
-                <span class="campo-busqueda__icono"><partial name="_Icono" model="@("lupa")" /></span>
-                <input class="campo__control campo-busqueda__control" id="ar-buscar" type="search" role="combobox" aria-expanded="false" aria-controls="ar-lista"
-                       aria-autocomplete="list" placeholder="Buscar otro sereno" autocomplete="off" data-ar-buscar />
-                <kbd class="asignar-rapido__atajo" aria-hidden="true">/</kbd>
-                <ul class="asignar-rapido__lista" id="ar-lista" role="listbox" aria-label="Serenos disponibles" data-ar-lista hidden></ul>
+        @* Asignación rápida: al elegir un caso aparece aquí el sereno disponible más cercano (un clic) y un buscador por nombre
+           (se enfoca con «/»; flechas y Intro). No hace falta abrir el panel de serenos. Pide la misma confirmación que el panel. *@
+        <section class="asignar-rapido" aria-label="Asignar el caso elegido" data-asignar-rapido hidden>
+            <div class="asignar-rapido__cabecera">
+                <h2 class="asignar-rapido__titulo" data-ar-caso></h2>
+                <button type="button" class="asignar-rapido__cerrar" data-ar-cerrar aria-label="Cerrar la asignación rápida">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                </button>
             </div>
-        </div>
-        <p class="visualmente-oculto" role="status" data-ar-anuncio></p>
-    </section>
+            <p class="texto-secundario" data-ar-vacio hidden>No hay serenos disponibles en este momento.</p>
+            <div class="asignar-rapido__fila" data-ar-fila>
+                <button type="button" class="boton boton--principal asignar-rapido__sugerido" data-ar-sugerido hidden>
+                    <span class="asignar-rapido__accion" data-ar-sugerido-nombre></span>
+                    <span class="asignar-rapido__meta" data-ar-sugerido-meta></span>
+                </button>
+                <div class="campo-busqueda asignar-rapido__buscar">
+                    <label class="visualmente-oculto" for="ar-buscar">Buscar otro sereno disponible por nombre</label>
+                    <span class="campo-busqueda__icono"><partial name="_Icono" model="@("lupa")" /></span>
+                    <input class="campo__control campo-busqueda__control" id="ar-buscar" type="search" role="combobox" aria-expanded="false" aria-controls="ar-lista"
+                           aria-autocomplete="list" placeholder="Buscar otro sereno" autocomplete="off" data-ar-buscar />
+                    <kbd class="asignar-rapido__atajo" aria-hidden="true">/</kbd>
+                    <ul class="asignar-rapido__lista" id="ar-lista" role="listbox" aria-label="Serenos disponibles" data-ar-lista hidden></ul>
+                </div>
+            </div>
+            <p class="visualmente-oculto" role="status" data-ar-anuncio></p>
+        </section>
 
-    <div data-region-casos-mapa>
-        <partial name="_CasosMapa" model="@Model.CasosEnMapa" />
+        <div data-region-casos-mapa>
+            <partial name="_CasosMapa" model="@Model.CasosEnMapa" />
+        </div>
     </div>
     <noscript><p class="central__sin-js">El mapa y los avisos en tiempo real necesitan JavaScript. La lista se actualiza al recargar.</p></noscript>
 </div>

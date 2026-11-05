@@ -14,9 +14,20 @@
     else
     {
         <p class="texto-secundario" data-suave>@operativos operativo@(operativos == 1 ? "" : "s") · @disponibles disponible@(disponibles == 1 ? "" : "s")</p>
-        <ul class="lista-serenos">
-            @foreach (var sereno in Model.Serenos)
-            {
+        @* 05/11/2026: agrupados por lo que importa al asignar: disponibles, con caso y fuera de servicio (cada tarjeta, igual). *@
+        @foreach (var (titulo, grupo, clave) in new[]
+        {
+            ("Disponibles", Model.Serenos.Where(s => s.Disponible).ToList(), "disponibles"),
+            ("Con caso", Model.Serenos.Where(s => !s.Disponible && s.ConAsignacion).ToList(), "con-caso"),
+            ("Fuera de servicio", Model.Serenos.Where(s => !s.Disponible && !s.ConAsignacion).ToList(), "fuera"),
+        })
+        {
+            if (grupo.Count == 0) continue;
+            <section class="serenos__grupo" data-grupo-serenos="@clave" aria-label="@titulo">
+                <h3 class="serenos__grupo-titulo">@titulo <span>@grupo.Count</span></h3>
+                <ul class="lista-serenos">
+                    @foreach (var sereno in grupo)
+                    {
                 <li class="sereno @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
                     data-sereno="@sereno.Id" data-nombre="@sereno.Nombre"
                     data-disponible="@(sereno.Disponible ? "true" : "false")"
@@ -70,7 +81,9 @@
                         </p>
                     }
                 </li>
-            }
-        </ul>
+                    }
+                </ul>
+            </section>
+        }
     }
 </div>

@@ -130,7 +130,7 @@ public class CasosAsignadosCentralTests(FabricaCad fabrica)
 
         var pagina = await operador.GetStringAsync("/panel/central");
 
-        Assert.Contains("Con sereno asignado", pagina);
+        Assert.Contains("En curso · con sereno", pagina);
         Assert.Contains("data-region-asignados", pagina);
         Assert.Contains($"data-asignado=\"{sosId}\"", pagina);
         // Ya no está entre los pendientes de «Atención urgente».
