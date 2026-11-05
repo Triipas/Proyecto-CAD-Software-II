@@ -43,7 +43,8 @@
                         </p>
                     }
                     <div class="sos__acciones">
-                        <a class="sos__detalle" href="/panel/reportes/@reporte.Id">Ver el reporte<span class="visualmente-oculto"> de @reporte.Ciudadano</span></a>
+                        @* Admitido: solo espera a su sereno. El botón lo elige en el mapa con el sugerido; el reporte se abre desde su globo. *@
+                        <button type="button" class="sos__detalle" data-seleccionar-sos>Asignar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano a un sereno</span></button>
                     </div>
                 </li>
             }

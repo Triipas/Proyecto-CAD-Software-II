@@ -12,7 +12,9 @@ public sealed record ReporteEnBandeja(
     string Ciudadano,
     string Categoria,
     DateTimeOffset OcurridoAproximadamenteEn,
-    string FuenteUbicacion);
+    string FuenteUbicacion,
+    // 05/11/2026: cuántas fotos adjuntó el ciudadano, para la bandeja de la central.
+    int Fotos = 0);
 
 public sealed record CorreccionVista(string Anterior, string Nueva, string Operador, DateTimeOffset En);
 
@@ -105,9 +107,10 @@ public sealed class ConsultarReportes(CadDbContext db)
                            {
                                caso.Id, caso.Estado, caso.RegistradoEn, Ciudadano = ciudadano == null ? (detalle.ContactoNombre == null ? AutorReporte.DeLaCentral : detalle.ContactoNombre + AutorReporte.SufijoContacto) : ciudadano.Nombres + " " + ciudadano.Apellidos,
                                Categoria = categoria.Nombre, detalle.OcurridoAproximadamenteEn, detalle.FuenteUbicacion,
+                               Fotos = db.FotosReporte.Count(f => f.CasoId == caso.Id),
                            }).ToListAsync(ct);
         return filas.Select(f => new ReporteEnBandeja(f.Id, EstadosCaso.Texto(f.Estado), f.RegistradoEn, f.Ciudadano, f.Categoria,
-            f.OcurridoAproximadamenteEn, f.FuenteUbicacion)).ToList();
+            f.OcurridoAproximadamenteEn, f.FuenteUbicacion, f.Fotos)).ToList();
     }
 }
 

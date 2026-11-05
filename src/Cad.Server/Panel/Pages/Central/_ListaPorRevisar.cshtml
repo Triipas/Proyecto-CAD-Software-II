@@ -1,0 +1,67 @@
+@model Cad.Server.Panel.Pages.Central.ListaPorRevisar
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+}
+@* Bandeja de la central (05/11/2026): los reportes recibidos y en revisión, para revisarlos sin ir a otra página. «Revisar»
+   inicia la revisión (HU14: quien la inicia queda como responsable) y abre el reporte; «Decidir» abre el que ya está en
+   revisión. Las etiquetas dicen qué trae cada uno: fotos, cómo se indicó el lugar, la categoría que sugiere el asistente
+   (HU44) y la admisión automática programada (HU45). Fragmento que el servidor genera en la carga y al resincronizar. *@
+<div data-lista-por-revisar data-total="@Model.Reportes.Count">
+    @if (Model.Reportes.Count == 0)
+    {
+        <p class="texto-secundario bandeja__vacio">No hay reportes por revisar.</p>
+    }
+    else
+    {
+        <ol class="lista-sos">
+            @foreach (var reporte in Model.Reportes)
+            {
+                var local = TimeZoneInfo.ConvertTime(reporte.RegistradoEn, Model.ZonaHoraria);
+                var recibido = reporte.Estado == Cad.Server.Modulos.Casos.Dominio.EstadosCaso.Texto(Cad.Server.Modulos.Casos.Dominio.EstadoCaso.Recibido);
+                var lugar = reporte.FuenteUbicacion switch
+                {
+                    "Mapa" => "Punto en el mapa",
+                    "PosicionActual" => "Posición del ciudadano",
+                    _ => "Solo referencia",
+                };
+                <li class="sos sos--reporte sos--por-revisar" id="revisar-@reporte.Id" tabindex="-1" data-revisar="@reporte.Id" data-estado="@reporte.Estado" data-clave="@reporte.Id">
+                    <div class="sos__cabecera">
+                        <span class="etiqueta-reporte">Reporte</span>
+                        <partial name="_ChipEstado" model="@((reporte.Estado, false))" />
+                        <time class="sos__hora" datetime="@reporte.RegistradoEn.ToString("O", inv)">@local.ToString("HH:mm", inv)</time>
+                    </div>
+                    <p class="sos__ciudadano">@reporte.Categoria</p>
+                    <p class="sos__tipo">De @reporte.Ciudadano</p>
+                    <ul class="bandeja__etiquetas" aria-label="Lo que trae el reporte">
+                        @if (reporte.Fotos > 0)
+                        {
+                            <li class="bandeja__etiqueta bandeja__etiqueta--fotos">@reporte.Fotos @(reporte.Fotos == 1 ? "foto" : "fotos")</li>
+                        }
+                        <li class="bandeja__etiqueta">@lugar</li>
+                        @if (Model.CategoriasSugeridas.TryGetValue(reporte.Id, out var sugerida))
+                        {
+                            <li class="bandeja__etiqueta bandeja__etiqueta--ia" data-categoria-sugerida>Sugerida: @sugerida</li>
+                        }
+                        @if (Model.Programadas.TryGetValue(reporte.Id, out var programada))
+                        {
+                            <li class="bandeja__etiqueta bandeja__etiqueta--ia" data-admision-programada>Se admitirá solo a las @TimeZoneInfo.ConvertTime(programada, Model.ZonaHoraria).ToString("HH:mm", inv)</li>
+                        }
+                    </ul>
+                    <div class="sos__acciones">
+                        @if (recibido)
+                        {
+                            <form method="post" asp-page="/Reportes/Detalle" asp-route-id="@reporte.Id" asp-page-handler="IniciarRevision" class="bandeja__formulario">
+                                <button type="submit" class="sos__detalle" data-texto-carga="Abriendo…">Revisar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="sos__detalle" href="/panel/reportes/@reporte.Id">Decidir<span class="visualmente-oculto"> sobre el reporte de @reporte.Ciudadano</span></a>
+                        }
+                    </div>
+                </li>
+            }
+        </ol>
+    }
+</div>

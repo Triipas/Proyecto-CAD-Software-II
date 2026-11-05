@@ -1493,3 +1493,334 @@
 .ficha-globo .ficha__acciones a.boton--secundario {
   color: var(--color-marino);
 }
+
+/* ══ Bandeja y mapa (05/11/2026) ═══════════════════════════════════════════════════════════════════════════════════════
+   La bandeja deja de flotar: es una columna fija con el trabajo en el orden en que se hace. El mapa ocupa el resto y nada lo
+   mueve: los serenos y las capas con su leyenda se abren encima, cuando se piden, y lo tapan sin reencuadrarlo. */
+.central {
+  display: grid;
+  grid-template-columns: 23rem minmax(0, 1fr);
+}
+
+.central__mapa {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bandeja {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--color-superficie);
+  border-right: 1px solid var(--color-borde);
+}
+
+.bandeja__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-2);
+}
+
+.bandeja__titulo {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--color-marino);
+}
+
+.bandeja__cuerpo {
+  display: grid;
+  align-content: start;
+  gap: var(--espacio-5);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--espacio-1) var(--espacio-3) var(--espacio-6) var(--espacio-4);
+}
+
+.bandeja__grupo {
+  display: grid;
+  gap: var(--espacio-2);
+  scroll-margin-top: var(--espacio-2);
+}
+
+.bandeja__grupo:focus {
+  outline: none;
+}
+
+.bandeja__vacio {
+  margin: 0;
+  font-size: var(--texto-sm);
+}
+
+.central__contador--revisar {
+  background: var(--color-reporte);
+}
+
+/* La admisión automática (HU45) se lee dentro de «Por revisar», que es lo que afecta. */
+.central__revisar .admision-automatica {
+  margin: 0;
+  font-size: var(--texto-xs);
+}
+
+/* Conectado: un punto y una palabra. Reconectando o sin conexión, el aviso completo y con color (nunca solo color). */
+.bandeja .conexion {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: var(--texto-xs);
+}
+
+.bandeja .conexion--reconectando,
+.bandeja .conexion--desconectado {
+  padding: var(--espacio-1) var(--espacio-3);
+  border-radius: 999px;
+}
+
+.bandeja .conexion--reconectando { background: var(--color-advertencia-fondo); }
+.bandeja .conexion--desconectado { background: var(--color-error-fondo); }
+
+/* Tarjetas: la acción es un enlace o un botón con el verbo del paso, y se ve igual en los dos casos. */
+.central button.sos__detalle {
+  border-color: var(--color-primario);
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .central button.sos__detalle:hover {
+    background: var(--color-primario-hover);
+  }
+}
+
+.bandeja__formulario {
+  display: contents;
+}
+
+.bandeja__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bandeja__etiqueta {
+  padding: 0.0625rem var(--espacio-2);
+  border-radius: 999px;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-hundida);
+}
+
+.bandeja__etiqueta--fotos {
+  color: var(--color-primario);
+  background: var(--color-informacion-fondo);
+}
+
+.bandeja__etiqueta--ia {
+  color: var(--color-reporte);
+  background: var(--color-reporte-fondo, var(--color-superficie-hundida));
+}
+
+.central .sos--por-revisar .sos__ciudadano {
+  font-weight: var(--peso-fuerte);
+}
+
+/* Mapa: ocupa su columna entera; sus herramientas van arriba a la derecha. */
+.central .mapa--central {
+  position: absolute;
+  inset: 0;
+}
+
+.mapa-herramientas {
+  position: absolute;
+  z-index: 520;
+  top: var(--espacio-3);
+  right: var(--espacio-3);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+}
+
+.mapa-herramientas__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 2.25rem;
+  padding: 0 var(--espacio-3);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  font: var(--peso-medio) var(--texto-sm)/1 var(--fuente);
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-2);
+  cursor: pointer;
+}
+
+.mapa-herramientas__boton b {
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-herramientas__boton .icono {
+  width: 1rem;
+  height: 1rem;
+}
+
+.mapa-herramientas__boton[aria-expanded="true"] {
+  border-color: var(--color-primario);
+  color: var(--color-primario);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mapa-herramientas__boton:hover {
+    background: var(--color-superficie-hundida);
+  }
+}
+
+/* Panel de serenos: encima del mapa, bajo sus herramientas; se abre y se cierra, ya no se pliega. */
+.central .serenos-flotante {
+  top: calc(var(--espacio-3) + 2.75rem);
+  right: var(--espacio-3);
+  bottom: auto;
+  width: 21rem;
+  max-height: calc(100% - 4.5rem);
+  transform: none;
+}
+
+.central .serenos-flotante[hidden] {
+  display: none;
+}
+
+.central .serenos-flotante .panel-flotante__cabecera {
+  padding-left: var(--espacio-4);
+}
+
+.central .serenos-flotante .panel-flotante__plegar {
+  order: 0;
+  margin-left: auto;
+}
+
+.serenos__grupo {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
+.serenos__grupo + .serenos__grupo {
+  margin-top: var(--espacio-3);
+}
+
+.serenos__grupo-titulo {
+  margin: 0;
+  display: flex;
+  gap: var(--espacio-2);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.serenos__grupo-titulo span {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Capas y leyenda: también encima del mapa, bajo su botón. Las capas van primero. */
+.central .clave-mapa {
+  z-index: 530;
+  top: calc(var(--espacio-3) + 2.75rem);
+  right: var(--espacio-3);
+  left: auto;
+  bottom: auto;
+  width: min(36rem, calc(100% - 2rem));
+  min-width: 0;
+  max-height: calc(100% - 4.5rem);
+}
+
+.central .clave-mapa .leyenda-mapa {
+  position: static;
+  margin-bottom: var(--espacio-3);
+  box-shadow: none;
+  border-radius: var(--radio-control);
+  background: var(--color-superficie-hundida);
+  justify-content: flex-start;
+}
+
+/* La barra de asignación rápida y los avisos se centran en el mapa (ya no en la pantalla entera). */
+.central .asignar-rapido {
+  left: var(--espacio-4);
+  right: auto;
+  width: min(40rem, calc(100% - 2rem));
+  bottom: var(--espacio-4);
+}
+
+.central .central__avisos {
+  top: auto;
+  bottom: var(--espacio-4);
+}
+
+.central:has(.asignar-rapido:not([hidden])) .central__avisos {
+  bottom: 9rem;
+}
+
+/* El indicador de serenos de la cabecera es un botón: abre el panel. */
+.indicador__boton {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--espacio-1);
+  padding: 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.indicador:has(.indicador__boton[aria-expanded="true"]) {
+  box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+/* Pantallas estrechas: el mapa arriba, sus herramientas y paneles encima de él; la bandeja debajo. */
+@media (max-width: 47.5rem) {
+  .central {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .central__mapa {
+    order: -1;
+    height: 52vh;
+  }
+
+  .central .mapa--central {
+    position: absolute;
+    height: auto;
+  }
+
+  .bandeja {
+    border-right: 0;
+  }
+
+  .bandeja__cuerpo {
+    overflow: visible;
+  }
+
+  .central .serenos-flotante,
+  .central .clave-mapa {
+    position: absolute;
+    left: var(--espacio-3);
+    right: var(--espacio-3);
+    width: auto;
+    margin: 0;
+  }
+
+  .central .clave-mapa .leyenda-mapa {
+    margin: 0 0 var(--espacio-3);
+  }
+}

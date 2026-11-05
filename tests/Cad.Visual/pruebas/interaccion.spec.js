@@ -73,6 +73,8 @@ test.describe('Central: interacción', () => {
     await abrir(page, '/panel/central');
     await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
 
+    // Los serenos se abren encima del mapa desde su cifra (05/11/2026).
+    await page.locator('.mapa-herramientas [data-abrir-serenos]').click();
     const tarjeta = page.locator('.sereno:has([data-ver-sereno])').first();
     const boton = tarjeta.locator('[data-ver-sereno]');
     await expect(boton).toHaveAttribute('aria-pressed', 'false');
@@ -91,56 +93,41 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('.sereno', { hasText: 'Ubicación no disponible' }).locator('[data-ver-sereno]')).toHaveCount(0);
   });
 
-  test('el filtro de la cola también filtra el mapa: «SOS» solo SOS, «Reportes» solo reportes', async ({ page }, info) => {
+  // Bandeja (05/11/2026): el trabajo en el orden en que se hace, y los serenos encima del mapa cuando se piden.
+  test('la bandeja ordena el trabajo y los serenos se abren encima del mapa sin moverlo', async ({ page }, info) => {
     test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
     await prepararPagina(page);
     await abrir(page, '/panel/central');
     await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
 
-    const capa = (nombre) => page.locator(`[data-capa="${nombre}"]`);
-    const filtro = (nombre) => page.locator(`[data-filtro-cola="${nombre}"]`);
-    // Qué marcadores del mapa se ven (por estilo: la semilla no los deja dentro del encuadre; la leyenda usa las mismas clases).
-    const vistos = (selector) => page.evaluate((s) => [...document.querySelectorAll(s)].map((e) => getComputedStyle(e).display !== 'none'), selector);
+    // Los grupos, en el orden del trabajo; los reportes por revisar ya están en la central, con su acción.
+    const titulos = await page.locator('.bandeja__grupo .central__titulo').allTextContents();
+    expect(titulos.map((t) => t.replace(/\s*\d+\s*$/, '').trim())).toEqual(
+      ['Atención urgente · SOS', 'Por revisar · reportes', 'Por asignar · reportes', 'En curso · con sereno']);
+    const revisar = page.locator('[data-region-revisar] [data-revisar]');
+    await expect(revisar).toHaveCount(2);
+    await expect(page.locator('[data-region-revisar] [data-estado="Recibido"]').getByRole('button', { name: /^Revisar/ })).toBeVisible();
+    await expect(page.locator('[data-region-revisar] [data-estado="En revisión"]').getByRole('link', { name: /^Decidir/ })).toBeVisible();
+    await expect(page.locator('[data-contador-revisar]')).toHaveText('2');
 
-    // Con todo, se ve todo.
-    expect(await vistos('#mapa .marcador-sos')).toContain(true);
-    expect(await vistos('#mapa .marcador-reporte')).toContain(true);
+    // El mapa no se toca al abrir los serenos: mismo centro y mismo tamaño; el panel lo tapa.
+    const vista = () => page.evaluate(() => JSON.stringify([window.cadCentral.mapa.getCenter(), window.cadCentral.mapa.getSize()]));
+    const antes = await vista();
+    const cifra = page.locator('.barra [data-abrir-serenos]');
+    await expect(page.locator('#panel-serenos')).toBeHidden();
+    await cifra.click();
+    await expect(page.locator('#panel-serenos')).toBeVisible();
+    await expect(cifra).toHaveAttribute('aria-expanded', 'true');
+    expect(await vista()).toBe(antes);
+    await expect(page.locator('[data-grupo-serenos="disponibles"]')).toContainText('Sara Serena Ficticia');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#panel-serenos')).toBeHidden();
+    await expect(page.locator('.mapa-herramientas [data-abrir-serenos]')).toBeFocused();
 
-    // «SOS»: ningún reporte en el mapa (ni el pendiente ni el que está en curso), y su chip lo dice.
-    await filtro('sos').click();
-    await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'false');
-    await expect(capa('sos')).toHaveAttribute('aria-pressed', 'true');
-    const reportes = await vistos('#mapa .marcador-reporte');
-    expect(reportes.length).toBeGreaterThan(0);
-    expect(reportes).not.toContain(true);
-    expect(await vistos('#mapa .marcador-sos')).toContain(true);
-
-    // «Reportes»: ningún SOS.
-    await filtro('reportes').click();
-    await expect(capa('sos')).toHaveAttribute('aria-pressed', 'false');
-    await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'true');
-    expect(await vistos('#mapa .marcador-sos')).not.toContain(true);
-    expect(await vistos('#mapa .marcador-reporte')).toContain(true);
-
-    // «Todo» los devuelve.
-    await filtro('todo').click();
-    await expect(capa('sos')).toHaveAttribute('aria-pressed', 'true');
-    await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'true');
-    expect(await vistos('#mapa .marcador-reporte')).toContain(true);
-
-    // El caso elegido que queda fuera del filtro se suelta: la barra de asignación se cierra.
-    const barra = page.locator('[data-asignar-rapido]');
-    await page.locator('.central__reportes [data-seleccionar-sos]').first().click();
-    await expect(barra).toBeVisible();
-    await filtro('sos').click();
-    await expect(barra).toBeHidden();
-    await expect(page.locator('.sos--seleccionado')).toHaveCount(0);
-
-    // Uno de su propio grupo sí se conserva.
-    await page.locator('.central__urgente [data-seleccionar-sos]').first().click();
-    await expect(barra).toBeVisible();
-    await filtro('sos').click();
-    await expect(barra).toBeVisible();
+    // «Asignar» en un reporte admitido abre la barra de asignación con el sereno sugerido.
+    await page.locator('.central__reportes').getByRole('button', { name: /^Asignar/ }).click();
+    await expect(page.locator('[data-asignar-rapido]')).toBeVisible();
+    await expect(page.locator('[data-ar-sugerido]')).toContainText('Sara Serena Ficticia');
   });
 
   test('los casos con sereno siguen en la cola y su recorrido solo se dibuja al elegirlos', async ({ page }, info) => {
@@ -182,13 +169,6 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('path.linea-vinculo--reporte').first()).toBeAttached();
     await expect(page.locator('path.linea-vinculo--sos')).toHaveCount(0);
 
-    // El filtro de la cola los separa: «SOS» deja el SOS asignado y suelta el recorrido del reporte.
-    await page.locator('[data-filtro-cola="sos"]').click();
-    await expect(page.locator('[data-asignado]:visible')).toHaveCount(1);
-    await expect(page.locator('[data-contador-asignados]')).toHaveText('1');
-    await expect(page.locator('path.linea-vinculo')).toHaveCount(0);
-    await page.locator('[data-filtro-cola="todo"]').click();
-
     // Elegir un caso pendiente suelta al asignado: ninguna ruta.
     await botonSos.click();
     await expect(page.locator('path.linea-vinculo--sos').first()).toBeAttached();
@@ -197,18 +177,12 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('path.linea-vinculo')).toHaveCount(0);
   });
 
-  test('los paneles se pliegan y las capas del mapa se ocultan desde la leyenda', async ({ page }, info) => {
+  test('las capas del mapa se ocultan desde «Capas y leyenda»', async ({ page }, info) => {
     test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
     await prepararPagina(page);
     await abrir(page, '/panel/central');
 
-    const plegar = page.locator('#panel-cola [data-plegar]');
-    await plegar.click();
-    await expect(plegar).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('#panel-cola')).toHaveClass(/panel-flotante--plegado/);
-    await plegar.click();
-    await expect(plegar).toHaveAttribute('aria-expanded', 'true');
-
+    await page.getByRole('button', { name: 'Capas y leyenda' }).click();
     const capaSos = page.locator('[data-capa="sos"]');
     await capaSos.click();
     await expect(capaSos).toHaveAttribute('aria-pressed', 'false');
@@ -222,30 +196,29 @@ test.describe('Central: interacción', () => {
     await abrir(page, '/panel/central');
     await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
 
-    // Cada capa lleva su icono real (el de marcadores.js), no un cuadrado de color.
-    await expect(page.locator('[data-capa] .leyenda-icono svg')).toHaveCount(3);
-
-    const boton = page.getByRole('button', { name: 'Qué significa cada icono' });
+        const boton = page.getByRole('button', { name: 'Capas y leyenda' });
     await expect(boton).toHaveAttribute('aria-expanded', 'false');
     await boton.click();
-    const clave = page.getByRole('region', { name: 'Qué significa cada icono' });
+    const clave = page.getByRole('region', { name: 'Capas y leyenda' });
     await expect(clave).toBeVisible();
     await expect(boton).toHaveAttribute('aria-expanded', 'true');
+    // Cada capa lleva su icono real (el de marcadores.js), no un cuadrado de color.
+    await expect(clave.locator('[data-capa] .leyenda-icono svg')).toHaveCount(3);
     for (const texto of ['SOS por asignar', 'SOS en curso', 'Reporte admitido', 'Reporte por revisar', 'Reporte en curso',
       'Disponible', 'No disponible', 'En el lugar', 'Sereno sugerido', 'Recorrido', 'Anillos'])
       await expect(clave.getByText(texto, { exact: true })).toBeVisible();
     // Las muestras son los mismos marcadores: el reporte por revisar lleva el borde discontinuo.
     expect(await clave.locator('.marcador-caso--revision').evaluate((el) => getComputedStyle(el).borderTopStyle)).toBe('dashed');
-    await expect(clave.locator('.leyenda-icono svg')).toHaveCount(9);
+    await expect(clave.locator('.clave-mapa__grupos .leyenda-icono svg')).toHaveCount(9);
     const caja = await clave.boundingBox();
     expect(caja.y).toBeGreaterThanOrEqual(0); // no se sale de la pantalla por arriba
 
     // Ocultar una capa esconde sus marcadores del mapa, no sus muestras de la clave.
-    await page.locator('[data-capa="sos"]').click();
+    await clave.locator('[data-capa="sos"]').click();
     await expect(clave.locator('.marcador-sos').first()).toBeVisible();
-    await page.locator('[data-capa="sos"]').click();
+    await clave.locator('[data-capa="sos"]').click();
 
-    await clave.getByRole('button', { name: 'Cerrar la clave del mapa' }).focus();
+    await clave.getByRole('button', { name: 'Cerrar las capas y la leyenda' }).focus();
     await page.keyboard.press('Escape');
     await expect(clave).toBeHidden();
     await expect(boton).toBeFocused();

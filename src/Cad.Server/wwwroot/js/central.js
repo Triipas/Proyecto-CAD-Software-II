@@ -17,6 +17,10 @@
   // solo entonces, el recorrido de su sereno (29/10/2026).
   const regionAsignados = document.querySelector("[data-region-asignados]");
   const contadorAsignados = document.querySelector("[data-contador-asignados]");
+  // Bandeja (05/11/2026): los reportes recibidos y en revisión, con su propio fragmento (sin marcador propio: ya están entre los
+  // casos en curso del mapa).
+  const regionRevisar = document.querySelector("[data-region-revisar]");
+  const contadorRevisar = document.querySelector("[data-contador-revisar]");
   let casoConRuta = null;
   // HU25: casos en curso con ubicación (no asignables), con su origen y su estado.
   const regionCasosMapa = document.querySelector("[data-region-casos-mapa]");
@@ -56,7 +60,7 @@
     const ancho = contenedorMapa.clientWidth;
     let izquierda = 0;
     let derecha = ancho;
-    for (const panel of document.querySelectorAll("[data-panel]:not(.panel-flotante--plegado)")) {
+    for (const panel of document.querySelectorAll("[data-panel]:not([hidden])")) {
       if (getComputedStyle(panel).position !== "absolute") continue; // por debajo de 760 px van bajo el mapa
       if (panel.offsetLeft + panel.offsetWidth / 2 < ancho / 2) izquierda = Math.max(izquierda, panel.offsetLeft + panel.offsetWidth);
       else derecha = Math.min(derecha, panel.offsetLeft);
@@ -321,13 +325,9 @@
     dibujarRecorridos(vinculos());
   }
 
-  // El contador de la sección dice cuántos se ven con el filtro de la cola.
   function contarAsignados() {
     if (!contadorAsignados) return;
-    const filtro = document.querySelector('[data-filtro-cola][aria-pressed="true"]')?.dataset.filtroCola ?? "todo";
-    const visibles = [...document.querySelectorAll("[data-asignado]")].filter((i) =>
-      filtro === "todo" || (filtro === "reportes") === (i.dataset.origen === "Reporte")).length;
-    cadMovimiento.fijarCifra(contadorAsignados, visibles);
+    cadMovimiento.fijarCifra(contadorAsignados, document.querySelectorAll("[data-asignado]").length);
   }
 
   regionAsignados?.addEventListener("click", (evento) => {
@@ -641,6 +641,7 @@
   }
 
   function seleccionarSereno(id, { desdeMapa = false } = {}) {
+    if (desdeMapa) mostrarSerenos(true);
     const item = marcarSereno(id);
     if (item) {
       if (desdeMapa) {
@@ -854,18 +855,31 @@
     else if (!evento.shiftKey && document.activeElement === ultimo) { evento.preventDefault(); primero.focus(); }
   });
 
-  // ---------- Paneles plegables y capas del mapa ----------
-  function desplegar(panel) {
-    if (!panel?.classList.contains("panel-flotante--plegado")) return;
-    panel.classList.remove("panel-flotante--plegado");
-    panel.querySelector("[data-plegar]").setAttribute("aria-expanded", "true");
+  // ---------- Panel de serenos y capas del mapa ----------
+  // 05/11/2026: el panel de serenos se abre encima del mapa cuando se pide (su cifra en la cabecera o en el mapa, o un sereno
+  // tocado en el mapa) y lo tapa sin moverlo ni reencuadrarlo. Cada operador lo encuentra como lo dejó (solo en su navegador).
+  const panelSerenos = document.getElementById("panel-serenos");
+  const CLAVE_SERENOS = "cad-central-serenos";
+  function mostrarSerenos(abierto, { devolverFoco = null, recordar = true } = {}) {
+    panelSerenos.hidden = !abierto;
+    for (const boton of document.querySelectorAll("[data-abrir-serenos]")) boton.setAttribute("aria-expanded", String(abierto));
+    if (recordar) { try { localStorage.setItem(CLAVE_SERENOS, abierto ? "abierto" : "cerrado"); } catch { /* sin almacenamiento */ } }
+    devolverFoco?.focus();
   }
-  for (const boton of document.querySelectorAll("[data-plegar]")) {
+  for (const boton of document.querySelectorAll("[data-abrir-serenos]")) {
     boton.addEventListener("click", () => {
-      const plegado = boton.closest("[data-panel]").classList.toggle("panel-flotante--plegado");
-      boton.setAttribute("aria-expanded", String(!plegado));
+      mostrarSerenos(panelSerenos.hidden);
+      if (!panelSerenos.hidden) panelSerenos.querySelector("[data-cerrar-serenos]").focus();
     });
   }
+  panelSerenos.querySelector("[data-cerrar-serenos]").addEventListener("click", () =>
+    mostrarSerenos(false, { devolverFoco: document.querySelector(".mapa-herramientas [data-abrir-serenos]") }));
+  panelSerenos.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Escape" || evento.defaultPrevented) return;
+    evento.preventDefault();
+    mostrarSerenos(false, { devolverFoco: document.querySelector(".mapa-herramientas [data-abrir-serenos]") });
+  });
+  try { if (localStorage.getItem(CLAVE_SERENOS) === "abierto") mostrarSerenos(true, { recordar: false }); } catch { /* sin almacenamiento */ }
   const central = document.querySelector(".central");
   // La leyenda y el filtro de la cola mandan sobre la misma capa: el chip siempre dice lo que se ve.
   function fijarCapa(capa, visible) {
@@ -943,40 +957,13 @@
 
   function actualizarIndicadores() {
     const sos = Number(contador.textContent) || 0;
-    const reportes = Number(contadorReportes?.textContent) || 0;
     const libres = regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]').length;
+    const operativos = Number(regionSerenos.querySelector("[data-lista-serenos]")?.dataset.operativos) || 0;
     fijarIndicador("sos", sos);
     document.querySelector('[data-indicador="sos"]')?.classList.toggle("indicador--activo", sos > 0);
-    fijarIndicador("por-asignar", sos + reportes);
-    fijarIndicador("serenos-libres", libres, libres === 1 ? "sereno disponible" : "serenos disponibles");
-    for (const [clave, valor] of [["sos", sos], ["reportes", reportes]]) {
-      cadMovimiento.fijarCifra(document.querySelector(`[data-filtro-total="${clave}"]`), valor);
-    }
-  }
-
-  const cola = document.getElementById("panel-cola");
-  for (const boton of document.querySelectorAll("[data-filtro-cola]")) {
-    boton.addEventListener("click", () => {
-      for (const otro of document.querySelectorAll("[data-filtro-cola]")) otro.setAttribute("aria-pressed", String(otro === boton));
-      const filtro = boton.dataset.filtroCola;
-      cola.classList.toggle("cola--solo-sos", filtro === "sos");
-      cola.classList.toggle("cola--solo-reportes", filtro === "reportes");
-      // 29/10/2026: «SOS» deja solo los SOS en el mapa y «Reportes» solo los reportes (con las líneas de sus serenos);
-      // «Todo» vuelve a mostrar ambos. Con muchos reportes, el mapa no se llena de lo que no se está trabajando.
-      fijarCapa("sos", filtro !== "reportes");
-      fijarCapa("reporte", filtro !== "sos");
-      // El caso elegido que queda fuera del filtro se suelta: ni su tarjeta ni su marcador están a la vista.
-      const elegido = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
-      const esReporte = elegido?.dataset.origen === "Reporte";
-      if (elegido && ((filtro === "sos" && esReporte) || (filtro === "reportes" && !esReporte))) deseleccionar();
-      const asignado = casoConRuta && document.getElementById(`asignado-${casoConRuta}`);
-      const asignadoEsReporte = asignado?.dataset.origen === "Reporte";
-      if (asignado && ((filtro === "sos" && asignadoEsReporte) || (filtro === "reportes" && !asignadoEsReporte))) {
-        mapa.closePopup();
-        soltarAsignado();
-      }
-      contarAsignados();
-    });
+    fijarIndicador("serenos-libres", libres, `de ${operativos} ${operativos === 1 ? "sereno disponible" : "serenos disponibles"}`);
+    cadMovimiento.fijarCifra(document.querySelector("[data-serenos-disponibles]"), libres);
+    cadMovimiento.fijarCifra(document.querySelector("[data-serenos-operativos]"), operativos);
   }
 
   // ---------- Aviso visual y sonoro ----------
@@ -1085,6 +1072,21 @@
         }
         cadMovimiento.fijarCifra(contadorReportes, regionReportes.querySelector("[data-lista-reportes]").dataset.total);
         avisarReportesNuevos();
+      }
+    }
+    if (regionRevisar) {
+      const revisar = await fetch("/panel/central?handler=PorRevisar", { headers: { Accept: "text/html" }, credentials: "same-origin" });
+      if (revisar.ok && !revisar.redirected) {
+        const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionRevisar, await revisar.text(), { animar: true });
+        // El reporte que llega a revisar entra con el mismo anillo que un reporte admitido (y el sonar en el mapa).
+        if (cargado) {
+          for (const id of llegados) {
+            const tarjeta = document.getElementById(`revisar-${id}`);
+            tarjeta?.classList.add("sos--llegada");
+            tarjeta?.addEventListener("animationend", () => tarjeta.classList.remove("sos--llegada"), { once: true });
+          }
+        }
+        cadMovimiento.fijarCifra(contadorRevisar, regionRevisar.querySelector("[data-lista-por-revisar]").dataset.total);
       }
     }
     if (regionAsignados) {

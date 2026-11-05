@@ -9,11 +9,11 @@ import { abrir, prepararPagina } from '../soporte/pagina.js';
 test.describe('Central: vuelo al caso', () => {
   test.use({ storageState: sesion('operador'), reducedMotion: 'no-preference' });
 
-  // Franja del mapa que no tapan la cola (izquierda) ni los serenos (derecha).
+  // Franja del mapa que no tapan los paneles (05/11/2026: la bandeja ya no está sobre el mapa; los serenos, solo si se abren).
   async function franjaLibre(page) {
-    const cola = await page.locator('#panel-cola').boundingBox();
-    const serenos = await page.locator('#panel-serenos').boundingBox();
-    return { izquierda: cola.x + cola.width, derecha: serenos.x };
+    const mapa = await page.locator('#mapa').boundingBox();
+    const serenos = await page.locator('#panel-serenos').isVisible() ? await page.locator('#panel-serenos').boundingBox() : null;
+    return { izquierda: mapa.x, derecha: serenos ? serenos.x : mapa.x + mapa.width };
   }
 
   test('Elegir el caso en la cola lo encuadra con su sereno sugerido y lo deja a la vista', async ({ page }, info) => {
@@ -31,7 +31,6 @@ test.describe('Central: vuelo al caso', () => {
     await expect(globo).toContainText('Pendiente');
     await expect(globo).toContainText('Sugerido'); // el globo nombra al sereno sugerido
     await expect(globo.getByRole('link', { name: 'Abrir el SOS' })).toBeVisible();
-    await expect(page.locator('#panel-serenos')).not.toHaveClass(/panel-flotante--plegado/);
     expect(await page.evaluate(() => window.cadCentral.mapa.getZoom())).toBeLessThanOrEqual(17);
 
     const { izquierda, derecha } = await franjaLibre(page);
