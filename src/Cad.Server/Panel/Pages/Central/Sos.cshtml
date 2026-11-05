@@ -3,7 +3,7 @@
 @using System.Globalization
 @using Accion = Cad.Server.Panel.Pages.Central.SosModel.SiguienteAccion
 @{
-    ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "Verificar SOS";
+    ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "SOS";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
     ViewData["ClasePagina"] = "pagina--consola";
     var inv = CultureInfo.InvariantCulture;
@@ -88,7 +88,7 @@
         <partial name="_Icono" model="@("exito")" />
         <div>
             <p class="aviso__titulo">@Model.Mensaje</p>
-            <p class="aviso__texto">El SOS está en estado @sos.Estado. @Model.DetalleMensaje</p>
+            <p class="aviso__texto">@Model.DetalleMensaje</p>
         </div>
     </div>
 }
@@ -125,7 +125,7 @@
                 <div><dt>Registrado</dt><dd><time datetime="@sos.RegistradoEn.ToString("O", inv)">@Corta(sos.RegistradoEn)</time></dd></div>
                 @if (sos.Clasificacion is { } clasificado)
                 {
-                    <div><dt>Tipificación</dt><dd>@clasificado.Categoria</dd></div>
+                    <div><dt>Tipo</dt><dd>@clasificado.Categoria</dd></div>
                 }
                 @if (sos.Asignacion is { FinalizadaEn: null } enCurso)
                 {
@@ -174,14 +174,14 @@
                     @if (asignarComoOtra && Model.SerenosDisponibles.Count > 0)
                     {
                         <p class="siguiente__atajo">
-                            <span>¿Es urgente? Puedes despachar a un sereno ahora y verificar después.</span>
+                            <span>¿Es urgente? Puedes despachar a un sereno ahora y clasificar después.</span>
                             <button type="button" class="boton boton--secundario boton--compacto" data-ir-a="titulo-asignar-directo">Despachar ahora</button>
                         </p>
                     }
                     break;
                 case Accion.Asignar:
                     <div class="siguiente__cabecera">
-                        <h2 class="siguiente__titulo" id="titulo-siguiente">Elige al sereno que atenderá el caso</h2>
+                        <h2 class="siguiente__titulo" id="titulo-siguiente">Asigna el SOS a un sereno disponible</h2>
                         <span class="siguiente__paso">@fase</span>
                     </div>
                     <partial name="_SosAsignar" model="Model" />

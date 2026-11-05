@@ -49,7 +49,8 @@
                         </p>
                     }
                     <div class="sos__acciones">
-                        <a class="sos__detalle" href="/panel/central/sos/@sos.Id">Verificar y registrar contacto<span class="visualmente-oculto"> del SOS de @sos.Ciudadano</span></a>
+                        @* El enlace nombra el paso que sigue: un SOS ya clasificado solo espera a su sereno. *@
+                        <a class="sos__detalle" href="/panel/central/sos/@sos.Id">@(sos.Tipo is null ? "Verificar y registrar contacto" : "Asignar a un sereno")<span class="visualmente-oculto"> del SOS de @sos.Ciudadano</span></a>
                     </div>
                 </li>
             }

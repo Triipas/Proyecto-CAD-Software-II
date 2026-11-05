@@ -188,7 +188,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
         {
             case ResultadoIntentoContacto.Registrado or ResultadoIntentoContacto.YaRegistrado:
                 Mensaje = "Intento de contacto registrado.";
-                DetalleMensaje = "Puedes registrar más intentos.";
+                // El aviso dice qué sigue: con contacto, clasificar; sin él, se puede volver a llamar.
+                DetalleMensaje = Formulario.Resultado == nameof(ResultadoContacto.Contactado)
+                    ? "Ahora clasifica el SOS según lo que te contaron."
+                    : "Puedes volver a llamar y registrar otro intento, o despachar a un sereno si es urgente.";
                 return RedirectToPage(new { id }); // PRG: recargar no vuelve a enviar el formulario
             case ResultadoIntentoContacto.Invalido invalido when await CargarAsync(id, ct):
                 Errores = invalido.Errores;
@@ -364,7 +367,7 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     private RedirectToPageResult Clasificado(Guid id, string categoria)
     {
         Mensaje = "SOS clasificado.";
-        DetalleMensaje = $"Tipo: {categoria}.";
+        DetalleMensaje = $"Tipo: {categoria}. Ahora asígnalo a un sereno disponible.";
         return RedirectToPage(new { id }); // PRG
     }
 
