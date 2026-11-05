@@ -50,7 +50,10 @@
       const respuesta = await fetch(`/panel/casos?handler=Vista&id=${encodeURIComponent(fila.dataset.caso)}`, { credentials: "same-origin" });
       if (mio !== pedido) return;
       if (!respuesta.ok) throw new Error(String(respuesta.status));
-      panel.innerHTML = await respuesta.text();
+      const html = await respuesta.text();
+      // El cuerpo puede llegar tarde: si mientras tanto se eligió otro caso o se vació el panel, esta respuesta ya no vale.
+      if (mio !== pedido) return;
+      panel.innerHTML = html;
     } catch {
       if (mio !== pedido) return;
       // Sin resumen no se pierde nada: el caso se abre desde la fila.
