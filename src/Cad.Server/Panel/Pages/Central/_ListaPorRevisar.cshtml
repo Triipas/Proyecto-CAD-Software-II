@@ -51,13 +51,13 @@
                     <div class="sos__acciones">
                         @if (recibido)
                         {
-                            <form method="post" asp-page="/Reportes/Detalle" asp-route-id="@reporte.Id" asp-page-handler="IniciarRevision" class="bandeja__formulario">
+                            <form method="post" asp-page="/Reportes/Detalle" asp-route-id="@reporte.Id" asp-page-handler="IniciarRevision" class="bandeja__formulario" data-abrir-panel>
                                 <button type="submit" class="sos__detalle" data-texto-carga="Abriendo…">Revisar<span class="visualmente-oculto"> el reporte de @reporte.Ciudadano</span></button>
                             </form>
                         }
                         else
                         {
-                            <a class="sos__detalle" href="/panel/reportes/@reporte.Id">Decidir<span class="visualmente-oculto"> sobre el reporte de @reporte.Ciudadano</span></a>
+                            <a class="sos__detalle" href="/panel/reportes/@reporte.Id" data-abrir-panel>Decidir<span class="visualmente-oculto"> sobre el reporte de @reporte.Ciudadano</span></a>
                         }
                     </div>
                 </li>

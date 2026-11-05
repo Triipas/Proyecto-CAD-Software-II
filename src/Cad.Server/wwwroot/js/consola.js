@@ -72,7 +72,8 @@
 
   // ¿Hay algo escrito o elegido que se perdería al recargar?
   const formularioAMedias = () =>
-    [...document.querySelectorAll(".consola__trabajo form")].some((formulario) =>
+    // En el panel de la central (panel-caso.js) los formularios quedan en sus pestañas y en el pie, dentro de .consola.
+    [...document.querySelectorAll(".consola__trabajo form, .pagina--en-panel .consola form")].some((formulario) =>
       [...formulario.elements].some((campo) => {
         if (campo.type === "hidden" || campo.type === "submit" || campo.disabled) return false;
         if (campo.type === "radio" || campo.type === "checkbox") return campo.checked !== campo.defaultChecked;
@@ -134,6 +135,8 @@
 
   function nuevoSos(id) {
     if (id === casoId) return;
+    // Dentro del panel de la central, la central ya avisa del SOS nuevo (sin sonido doble).
+    if (document.body.dataset.enPanel === "true") return;
     const aviso = document.querySelector("[data-otro-sos]");
     if (!aviso) return;
     aviso.hidden = false;

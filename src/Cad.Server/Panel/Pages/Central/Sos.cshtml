@@ -6,6 +6,7 @@
     ViewData["Title"] = Model.Sos.EsCasoUrgente ? "Caso urgente" : "SOS";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el intento";
     ViewData["ClasePagina"] = "pagina--consola";
+    ViewData[Cad.Server.Panel.ModoPanel.ClaveVista] = true;
     var inv = CultureInfo.InvariantCulture;
     var sos = Model.Sos;
     var siguiente = Model.Siguiente;

@@ -4,6 +4,8 @@
 @{
     var rol = User.FindFirstValue(Autenticacion.ReclamoRol);
     var ruta = Context.Request.Path.Value ?? "";
+    // Panel del caso (05/11/2026): las páginas que lo permiten se muestran sin la barra dentro de la central (Panel/ModoPanel.cs).
+    var enPanel = ViewData[Cad.Server.Panel.ModoPanel.ClaveVista] is true && Cad.Server.Panel.ModoPanel.Activo(Context.Request);
     // Navegación orientativa por rol: los permisos los decide siempre el servidor (HU03).
     var enlaces = rol switch
     {
@@ -22,10 +24,16 @@
     <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
     @await RenderSectionAsync("Estilos", required: false)
+    @if (enPanel)
+    {
+        <link rel="stylesheet" href="~/css/panel-caso.css" asp-append-version="true" />
+    }
 </head>
-<body data-sonido="@TempData[Cad.Server.Panel.SonidoPanel.Clave]">
+<body data-sonido="@TempData[Cad.Server.Panel.SonidoPanel.Clave]" data-en-panel="@(enPanel ? "true" : "false")">
     @* Barra superior del rediseño CAD v2 (dirección «Mapa protagonista»): marca, secciones y sesión.
        Por debajo de 1100 px las secciones pasan a un menú desplegable (data-menu, formulario.js). *@
+    @if (!enPanel)
+    {
     <header class="barra" data-barra>
         @if (enlaces.Length > 0)
         {
@@ -70,12 +78,17 @@
             </form>
         }
     </header>
-    <main class="pagina @ViewData["ClasePagina"]">
+    }
+    <main class="pagina @ViewData["ClasePagina"]@(enPanel ? " pagina--en-panel" : "")">
         @RenderBody()
     </main>
     <script src="~/js/movimiento.js" asp-append-version="true"></script>
     <script src="~/js/sonidos.js" asp-append-version="true"></script>
     <script src="~/js/formulario.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    @if (enPanel)
+    {
+        <script src="~/js/panel-caso.js" asp-append-version="true"></script>
+    }
 </body>
 </html>

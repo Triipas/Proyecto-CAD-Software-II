@@ -55,6 +55,8 @@
   const ZOOM_LLEGADA = 17; // al enfocar un caso recién llegado: se ve el caso y su entorno, no solo la calle
   const DURACION_VUELO = 0.9; // segundos (Leaflet)
 
+  const panelAbierto = () => document.querySelector(".central")?.classList.contains("central--con-panel") ?? false;
+
   // Franja horizontal del mapa que no tapan los paneles flotantes abiertos (en píxeles del contenedor).
   function franjaLibre() {
     const ancho = contenedorMapa.clientWidth;
@@ -91,7 +93,8 @@
   function volarA(marcador, { zoom = ZOOM_CERCANO, clase = "" } = {}) {
     const punto = marcador.getLatLng();
     const destino = centroLibre(punto, zoom);
-    const llegar = () => { marcador.openPopup(); marcarLlegada(punto, clase); };
+    // Con el panel del caso abierto, el globo repetiría lo que el panel ya muestra.
+    const llegar = () => { if (!panelAbierto()) marcador.openPopup(); marcarLlegada(punto, clase); };
     traerMapaALaVista();
     if (reducido.matches) {
       mapa.setView(destino, zoom, { animate: false });
@@ -106,7 +109,7 @@
   function encuadrar(limites, marcador, clase) {
     const { izquierda, derecha, ancho } = franjaLibre();
     const opciones = { paddingTopLeft: [izquierda + 48, 72], paddingBottomRight: [ancho - derecha + 48, 72], maxZoom: 17 };
-    const llegar = () => { marcador?.openPopup(); if (marcador) marcarLlegada(marcador.getLatLng(), clase); };
+    const llegar = () => { if (!panelAbierto()) marcador?.openPopup(); if (marcador) marcarLlegada(marcador.getLatLng(), clase); };
     traerMapaALaVista();
     if (reducido.matches) {
       mapa.fitBounds(limites, { ...opciones, animate: false });
@@ -1190,7 +1193,7 @@
   }
 
   function accion(href, texto, principal) {
-    return `<a class="boton ${principal ? "boton--principal" : "boton--secundario"} boton--compacto" href="${escapar(href)}">${escapar(texto)}</a>`;
+    return `<a class="boton ${principal ? "boton--principal" : "boton--secundario"} boton--compacto" href="${escapar(href)}" data-abrir-panel>${escapar(texto)}</a>`;
   }
 
   // Detalle de un caso pendiente: informativo, con el sereno sugerido si el caso está elegido. La acción es elegirlo (ya
@@ -1221,5 +1224,85 @@
   iniciar();
 
   // Acceso para la verificación automatizada (estado de la conexión y vista del mapa, sin datos).
-  window.cadCentral = { conexion, refrescar, refrescarSerenos, mapa };
+  // ---------- Panel del caso (05/11/2026) ----------
+  // El detalle del caso elegido se abre en un marco encima del mapa (no lo mueve). Los enlaces y formularios marcados con
+  // data-abrir-panel lo cargan ahí; sin JavaScript siguen yendo a la página del caso. Tras cada paso, la página del panel
+  // avisa (panel-caso.js): la central rehace la bandeja y, si el caso ya salió del trabajo pendiente, cierra el panel y
+  // confirma lo hecho en un aviso breve.
+  const panelCaso = document.querySelector("[data-panel-caso]");
+  const marcoCaso = panelCaso.querySelector("[data-marco-caso]");
+  const tituloPanel = panelCaso.querySelector("[data-panel-titulo]");
+  const avisoFlotante = document.querySelector("[data-aviso-flotante]");
+  const ESTADOS_PENDIENTES = new Set(["Recibido", "En revisión", "Pendiente", "Admitido"]);
+  let casoEnPanel = null;
+  let origenPanel = null;
+
+  const idDeRuta = (href) => href?.match(/\/panel\/(?:reportes|central\/sos)\/([0-9a-f-]{36})/i)?.[1] ?? null;
+
+  function abrirPanel(href, { cargar = true } = {}) {
+    origenPanel = document.activeElement;
+    casoEnPanel = idDeRuta(href);
+    if (cargar) marcoCaso.src = href;
+    panelCaso.hidden = false;
+    central.classList.add("central--con-panel");
+    // El caso se marca en el mapa (de la cola, con su sereno sugerido; en curso o por revisar, con su marcador).
+    if (casoEnPanel && document.getElementById(`sos-${casoEnPanel}`)) seleccionar(casoEnPanel, { conSereno: true });
+    else if (casoEnPanel && (marcadoresEnCurso.has(casoEnPanel) || document.getElementById(`asignado-${casoEnPanel}`))) seleccionarAsignado(casoEnPanel);
+  }
+
+  function cerrarPanel({ devolverFoco = true } = {}) {
+    if (panelCaso.hidden) return;
+    panelCaso.hidden = true;
+    central.classList.remove("central--con-panel");
+    marcoCaso.removeAttribute("src");
+    casoEnPanel = null;
+    soltarTodo();
+    if (devolverFoco) origenPanel?.isConnected ? origenPanel.focus() : document.getElementById("titulo-cola")?.focus();
+  }
+
+  function avisarBreve(texto) {
+    avisoFlotante.textContent = texto;
+    avisoFlotante.hidden = false;
+    clearTimeout(avisarBreve.temporizador);
+    avisarBreve.temporizador = setTimeout(() => { avisoFlotante.hidden = true; }, 6000);
+  }
+
+  document.addEventListener("click", (evento) => {
+    const enlace = evento.target.closest("a[data-abrir-panel]");
+    if (!enlace || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.button !== 0) return;
+    evento.preventDefault();
+    mapa.closePopup();
+    abrirPanel(enlace.getAttribute("href"));
+  });
+  // «Revisar» envía su formulario al marco: la revisión se inicia y el reporte se abre en el panel.
+  document.addEventListener("submit", (evento) => {
+    const formulario = evento.target.closest("form[data-abrir-panel]");
+    if (!formulario) return;
+    formulario.target = "panel-caso"; // sin JavaScript se envía a la página del reporte, como siempre
+    abrirPanel(formulario.getAttribute("action"), { cargar: false });
+  });
+  panelCaso.querySelector("[data-cerrar-panel]").addEventListener("click", () => cerrarPanel());
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Escape" || panelCaso.hidden || evento.defaultPrevented) return;
+    if (!panelSerenos.hidden || (clave && !clave.hidden) || !confirmacion.hidden) return;
+    cerrarPanel();
+  });
+  window.addEventListener("message", async (evento) => {
+    if (evento.origin !== location.origin || evento.source !== marcoCaso.contentWindow) return;
+    // Esc dentro del panel (panel-caso.js lo reenvía si no hay nada a medias).
+    if (evento.data?.tipo === "cad-panel-cerrar") { cerrarPanel(); return; }
+    if (evento.data?.tipo !== "cad-panel-caso") return;
+    const { id, estado, mensaje, titulo } = evento.data;
+    tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";
+    if (id) casoEnPanel = id;
+    // Lo que se hizo en el panel cambia la bandeja: se rehace desde el servidor.
+    if (mensaje) { await refrescar(); await refrescarSerenos(); }
+    if (mensaje && !ESTADOS_PENDIENTES.has(estado)) {
+      cerrarPanel({ devolverFoco: false });
+      avisarBreve(mensaje);
+      document.getElementById("titulo-cola")?.focus();
+    }
+  });
+
+  window.cadCentral = { conexion, refrescar, refrescarSerenos, mapa, abrirPanel, cerrarPanel };
 })();
