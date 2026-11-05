@@ -116,8 +116,9 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         Assert.Equal(3, Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&desde={hoy}&hasta={hoy}")).Count);
         // CA05: un reporte con punto muestra el lugar del hecho; un SOS con ubicación, la del dispositivo.
         var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}"));
-        Assert.Contains("<td data-ubicacion>Lugar del hecho</td>", Regex.Match(html, $"<tr data-caso=\"{reporteRobo}\">.*?</tr>", RegexOptions.Singleline).Value);
-        Assert.Contains("<td data-ubicacion>Del dispositivo</td>", Regex.Match(html, $"<tr data-caso=\"{sosRobo}\">.*?</tr>", RegexOptions.Singleline).Value);
+        // Rediseño del 05/11/2026: en la lista, la zona («Zona K10»); el título dice de dónde viene el punto.
+        Assert.Matches("data-ubicacion title=\"Lugar del hecho\">Zona [A-Z]-?\\d+</span>", Regex.Match(html, $"<tr data-caso=\"{reporteRobo}\">.*?</tr>", RegexOptions.Singleline).Value);
+        Assert.Matches("data-ubicacion title=\"Del dispositivo\">Zona [A-Z]-?\\d+</span>", Regex.Match(html, $"<tr data-caso=\"{sosRobo}\">.*?</tr>", RegexOptions.Singleline).Value);
     }
 
     [Fact]
@@ -198,8 +199,8 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         Assert.Equal([enCurso], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&tipo={Robo}")));
         Assert.Equal([cerrado], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&tipo={Otros}")));
         var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}"));
-        Assert.Contains($"<td data-tipo>{CategoriaIncidencia.Iniciales[3].Nombre}</td>", Regex.Match(html, $"<tr data-caso=\"{cerrado}\">.*?</tr>", RegexOptions.Singleline).Value);
-        Assert.Contains($"<td data-tipo>{CategoriaIncidencia.Iniciales[1].Nombre}</td>", Regex.Match(html, $"<tr data-caso=\"{enCurso}\">.*?</tr>", RegexOptions.Singleline).Value);
+        Assert.Contains($"<b data-tipo>{CategoriaIncidencia.Iniciales[3].Nombre}</b>", Regex.Match(html, $"<tr data-caso=\"{cerrado}\">.*?</tr>", RegexOptions.Singleline).Value);
+        Assert.Contains($"<b data-tipo>{CategoriaIncidencia.Iniciales[1].Nombre}</b>", Regex.Match(html, $"<tr data-caso=\"{enCurso}\">.*?</tr>", RegexOptions.Singleline).Value);
         Assert.Contains("En los casos cerrados, la tipificación final.", html);
     }
 
@@ -240,8 +241,9 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
         var conFiltros = await operador.GetStringAsync("/panel/casos?origen=Sos&estado=Pendiente");
         var sinFiltros = await operador.GetStringAsync("/panel/casos");
 
-        Assert.Contains("<a class=\"boton boton--secundario\" href=\"/panel/casos\" data-limpiar>Limpiar filtros</a>", conFiltros);
-        Assert.Contains("<option value=\"Sos\" selected=\"selected\">", conFiltros);
+        Assert.Contains("<a class=\"boton boton--secundario boton--compacto\" href=\"/panel/casos\" data-limpiar>Limpiar filtros</a>", conFiltros);
+        // El origen es un selector de cuatro opciones: la elegida lleva aria-current.
+        Assert.Matches("<a class=\"selector__opcion\" href=\"[^\"]*\" aria-current=\"true\">SOS</a>", conFiltros);
         Assert.DoesNotContain("selected=\"selected\"", sinFiltros);
         Assert.DoesNotContain("con los filtros aplicados", sinFiltros);
     }
@@ -289,8 +291,141 @@ public partial class BusquedaCasosTests(FabricaCad fabrica)
 
         var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}"));
 
-        Assert.Equal(2, Regex.Matches(html, "<td data-ubicacion>Sin ubicación</td>").Count);
+        Assert.Equal(2, Regex.Matches(html, "data-ubicacion>Sin ubicación</span>").Count);
         Assert.DoesNotContain("-12.", html);
+    }
+
+    // ----- Rediseño del 05/11/2026: vistas, resumen, día y vista previa -----
+
+    [Fact]
+    public async Task LasVistas_AgrupanEstados_ConSuCifraYElResumenDeLaSeleccion()
+    {
+        var sereno = await SerenoAsync();
+        var sosCerrado = await SosAsync();
+        Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(sosCerrado, sereno.Id));
+        await Cerrar(sosCerrado, sereno.Id);
+        var sosCancelado = await SosAsync(); // sin sereno: cancelado antes de asignarse
+        await fabrica.ConBaseDatosAsync(async db =>
+        {
+            var caso = await db.Casos.FindAsync(sosCancelado);
+            caso!.Cancelar();
+            await db.SaveChangesAsync();
+            return 0;
+        });
+        var reporte = await ReporteAdmitidoAsync(Robo);
+        Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(reporte, sereno.Id)); // en curso
+        var operador = await OperadorAsync();
+
+        Assert.Equal([reporte], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&grupo=en-curso")));
+        Assert.Equal([sosCerrado], Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&grupo=finalizados")));
+        Assert.Empty(Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&grupo=sin-efecto")));
+        // Sin efecto: lo cancelado o descartado (los casos más recientes son los de esta prueba).
+        var sinEfecto = Ids(await operador.GetStringAsync("/panel/casos?grupo=sin-efecto"));
+        Assert.Contains(sosCancelado, sinEfecto);
+        Assert.DoesNotContain(sosCerrado, sinEfecto);
+        Assert.DoesNotContain(reporte, sinEfecto);
+        // La vista se combina con los demás filtros, también con el estado exacto (los dos se cumplen).
+        Assert.Empty(Ids(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&grupo=finalizados&estado=Cancelada")));
+
+        var html = await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}&grupo=en-curso");
+        // Las cifras de las vistas cuentan con los demás filtros puestos, sin la vista ni el estado.
+        Assert.Matches(@"data-vista=""todos"">\s*Todos\s*<span class=""vistas__cifra num"">2</span>", html);
+        Assert.Matches(@"data-vista=""en-curso"">\s*En curso\s*<span class=""vistas__cifra num"">1</span>", html);
+        Assert.Matches(@"data-vista=""finalizados"">\s*Finalizados\s*<span class=""vistas__cifra num"">1</span>", html);
+        Assert.Matches(@"data-vista=""sin-efecto"">\s*Sin efecto\s*<span class=""vistas__cifra num"">0</span>", html);
+        Assert.Contains("aria-current=\"page\" data-vista=\"en-curso\"", html);
+        // El resumen es el de la selección: la vista «En curso» tiene un reporte.
+        var resumen = Regex.Replace(Regex.Match(html, "data-resumen-casos[^>]*>(.*?)</p>", RegexOptions.Singleline).Groups[1].Value, "<[^>]+>|\\s+", " ").Trim();
+        Assert.Equal("1 caso · 0 SOS · 1 reporte · 1 en curso", Regex.Replace(resumen, " +", " "));
+        // La vista se conserva al cambiar de página y se quita con «Limpiar filtros» (que también queda a la vista).
+        Assert.Contains("data-limpiar", html);
+    }
+
+    [Fact]
+    public async Task UnaVistaNoValida_SeExplicaYNoSeBusca()
+    {
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/casos?grupo=inventada"));
+
+        Assert.Contains("Elige una vista de la lista.", html);
+        Assert.DoesNotContain("data-casos ", html);
+    }
+
+    [Fact]
+    public async Task LaLista_AgrupaPorDia_ConLaHoraEnCadaFilaYLaZonaDelCaso()
+    {
+        var sereno = await SerenoAsync();
+        var sos = await SosAsync();
+        Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(sos, sereno.Id));
+        var operador = await OperadorAsync();
+
+        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?sereno={sereno.Id}"));
+
+        Assert.Matches("<tr class=\"casos__dia\"><th scope=\"rowgroup\" colspan=\"6\">Hoy, \\d{1,2} de [a-záéíóú]+</th></tr>", html); // en minúscula
+        var fila = Regex.Match(html, $"<tr data-caso=\"{sos}\">.*?</tr>", RegexOptions.Singleline).Value;
+        Assert.Matches("<time class=\"casos__hora\"[^>]*>\\d{2}:\\d{2}</time>", fila);
+        Assert.Contains("data-ver-caso", fila);
+        Assert.Contains("href=\"/panel/central/sos/" + sos + "\" data-abrir-caso", fila);
+    }
+
+    [Fact]
+    public async Task LaVistaPrevia_TraeElResumenDelCasoYSusUltimasActuaciones_SoloParaOperadores()
+    {
+        var sereno = await SerenoAsync();
+        var sos = await SosAsync();
+        await Clasificar(sos, Robo);
+        Assert.IsType<ResultadoAsignacion.Asignado>(await Asignar(sos, sereno.Id));
+        await Cerrar(sos, sereno.Id);
+        var reporte = await ReporteAdmitidoAsync(Robo);
+        var operador = await OperadorAsync();
+
+        var vistaSos = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?handler=Vista&id={sos}"));
+        var vistaReporte = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/casos?handler=Vista&id={reporte}"));
+
+        Assert.Contains($"data-vista-caso=\"{sos}\"", vistaSos);
+        Assert.Contains(CategoriaIncidencia.Iniciales[1].Nombre, vistaSos);
+        Assert.Contains("Últimas actuaciones", vistaSos);
+        Assert.Contains("Hasta la atención", vistaSos);
+        Assert.DoesNotContain("Hasta la decisión", vistaSos);        // un SOS no pasa por la revisión
+        Assert.Contains($"href=\"/panel/central/sos/{sos}\" data-abrir-caso", vistaSos);
+        Assert.Contains($"href=\"/panel/casos/{sos}/historial\"", vistaSos);
+        Assert.Contains("Hasta la decisión", vistaReporte);
+        Assert.Contains($"href=\"/panel/reportes/{reporte}\" data-abrir-caso", vistaReporte);
+        // Solo se cuentan las actuaciones; el detalle de las notas internas se lee en el historial.
+        Assert.DoesNotContain("Solo personal autorizado", vistaSos);
+    }
+
+    [Fact]
+    public async Task LaVistaPrevia_UnCasoQueNoExiste_NoEncuentraNada()
+    {
+        var respuesta = await (await OperadorAsync()).GetAsync($"/panel/casos?handler=Vista&id={Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Ciudadano)]
+    [InlineData(Roles.Sereno)]
+    public async Task LaVistaPrevia_LaAppDeOtrosPerfiles_NoLaConsulta(string rol)
+    {
+        var sos = await SosAsync();
+        var app = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(rol));
+
+        var respuesta = await app.GetAsync($"/panel/casos?handler=Vista&id={sos}");
+
+        Assert.False(respuesta.IsSuccessStatusCode, $"{(int)respuesta.StatusCode}");
+    }
+
+    [Fact]
+    public async Task LaVistaPrevia_UnAdministrador_NoLaConsulta()
+    {
+        var sos = await SosAsync();
+        var navegador = fabrica.CrearNavegador();
+        await navegador.IngresarAlPanelAsync(fabrica.AdminCorreo, fabrica.AdminClave);
+
+        var respuesta = await navegador.GetAsync($"/panel/casos?handler=Vista&id={sos}");
+
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Contains("/panel/acceso-denegado", respuesta.Headers.Location!.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     // ----- CA06 -----

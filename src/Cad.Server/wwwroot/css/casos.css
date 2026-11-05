@@ -1,38 +1,198 @@
 /*
-  Búsqueda de casos (HU26) en el rediseño CAD v2, fase 3. Solo la carga /panel/casos.
-  Filtros plegables con los aplicados como chips, y una tabla escaneable: chips de estado, origen con icono,
-  ciudadano y sereno en una celda, tiempos alineados a la derecha y fila pulsable.
+  Casos (HU26) — rediseño del 05/11/2026. Una lista que se lee de arriba abajo: vistas con su cifra, filtros rápidos, casos agrupados
+  por día y, desde 1200 px, un panel a la derecha con el resumen del caso elegido. Solo la carga /panel/casos.
 */
 
-/* ── Filtros ───────────────────────────────────────────── */
-.filtros {
+/* ── Marco ─────────────────────────────────────────────── */
+.pagina--casos {
+  max-width: 96rem;
+}
+
+.casos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--espacio-5);
+  align-items: start;
+}
+
+.casos__lista {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--espacio-4);
+  min-width: 0;
+}
+
+@media (min-width: 75rem) {
+  .casos {
+    grid-template-columns: minmax(0, 1fr) 25rem;
+  }
+
+  /* El panel acompaña a la lista al desplazarla. */
+  .casos__vista {
+    position: sticky;
+    top: calc(var(--alto-barra) + var(--espacio-4));
+    max-height: calc(100vh - var(--alto-barra) - var(--espacio-8));
+  }
+}
+
+/* ── Barra: vistas, filtros rápidos y resumen ──────────── */
+.casos__barra {
   gap: 0;
   padding: 0;
 }
 
-.filtros__panel {
-  border-bottom: 1px solid var(--color-borde);
+.vistas {
+  display: flex;
+  gap: var(--espacio-1);
+  padding: 0 var(--espacio-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
 }
 
-.filtros__resumen {
-  display: flex;
+.vistas__opcion {
+  --tono: var(--color-primario);
+  display: inline-flex;
   align-items: center;
-  min-height: 3.25rem;
-  padding: 0 var(--espacio-5);
+  gap: var(--espacio-2);
+  min-height: 3rem;
+  margin-bottom: -1px;
+  padding: 0 var(--espacio-3);
+  border-bottom: 3px solid transparent;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  color: var(--color-texto-secundario);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--duracion-rapida) var(--curva-estandar), border-color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.vistas__opcion[aria-current="page"] {
+  border-bottom-color: var(--tono);
+  color: var(--color-marino);
+  font-weight: var(--peso-fuerte);
+}
+
+.vistas__opcion:hover:not([aria-current]) {
+  color: var(--color-texto);
+  border-bottom-color: var(--color-borde-fuerte);
+}
+
+.vistas__opcion:focus-visible,
+.selector__opcion:focus-visible,
+.atajos__opcion:focus-visible,
+.casos__ver:focus-visible,
+.casos__ir a:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: var(--separacion-foco);
+}
+
+.vistas__cifra {
+  min-width: 1.5rem;
+  padding: 0 var(--espacio-1);
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-xs);
+  line-height: 1.375rem;
+  text-align: center;
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-hundida);
+}
+
+.vistas__opcion[aria-current="page"] .vistas__cifra {
+  color: var(--color-sobre-primario);
+  background: var(--tono);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.casos__rapidos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3) var(--espacio-4);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+}
+
+/* El origen como selector de cuatro opciones. */
+.selector {
+  display: inline-flex;
+  gap: var(--espacio-1);
+  padding: var(--espacio-1);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie-hundida);
+}
+
+.selector__opcion {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 var(--espacio-3);
+  border-radius: var(--radio-pequeno);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-secundario);
+  text-decoration: none;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar), color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.selector__opcion:hover {
+  color: var(--color-marino);
+}
+
+.selector__opcion[aria-current="true"] {
+  color: var(--color-marino);
+  font-weight: var(--peso-semi);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.atajos__opcion {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde-control);
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: var(--color-marino);
+  text-decoration: none;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar), border-color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.atajos__opcion:hover {
+  background: var(--color-tenue);
+}
+
+.atajos__opcion[aria-current="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-tenue);
+  color: var(--color-primario);
+}
+
+/* «Más filtros»: las fechas, el tipo, el estado y el sereno, en un panel que se abre bajo el botón. */
+.filtros__mas {
+  position: relative;
+  margin-left: auto;
+}
+
+.filtros__abrir {
   list-style: none;
   cursor: pointer;
 }
 
-.filtros__resumen::-webkit-details-marker {
+.filtros__abrir::-webkit-details-marker {
   display: none;
-}
-
-.filtros__abrir {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--espacio-2);
-  font-weight: var(--peso-medio);
-  color: var(--color-primario);
 }
 
 .filtros__abrir .icono {
@@ -40,25 +200,53 @@
   height: 1rem;
 }
 
-.filtros__panel[open] .filtros__resumen {
-  border-bottom: 1px solid var(--color-borde);
+.filtros__mas[open] .filtros__abrir {
+  background: var(--color-tenue);
 }
 
-.filtros__panel > .filtros__campos {
+.filtros__campos {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + var(--espacio-2));
+  right: 0;
+  width: min(30rem, calc(100vw - var(--espacio-8)));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-4);
   padding: var(--espacio-5);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-3);
+}
+
+.filtros__campos .campo {
+  margin: 0;
 }
 
 .filtros__acciones {
+  grid-column: 1 / -1;
   justify-content: flex-end;
-  padding: 0 var(--espacio-5) var(--espacio-5);
+  padding: 0;
 }
 
-.filtros__activos {
+.casos__resumen {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--espacio-2) var(--espacio-3);
-  padding: var(--espacio-3) var(--espacio-5);
+  padding: var(--espacio-3) var(--espacio-4);
+}
+
+.casos__total {
+  margin: 0 0 0 auto;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.casos__total b {
+  font-size: var(--texto-md);
+  color: var(--color-marino);
 }
 
 .filtros__chips {
@@ -68,14 +256,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.filtros__sin-filtros {
-  font-size: var(--texto-sm);
-}
-
-.filtros__activos [data-limpiar] {
-  margin-left: auto;
 }
 
 .filtro-activo {
@@ -111,53 +291,109 @@
   }
 }
 
-/* ── Tabla ─────────────────────────────────────────────── */
+/* ── Tabla: agrupada por día ───────────────────────────── */
+.casos__tabla .tabla {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 .casos__tabla .tabla thead th {
   white-space: nowrap;
+  padding-block: var(--espacio-2);
+  font-size: var(--texto-xs);
+  border-top: 0;
 }
 
-.casos__tabla .tabla abbr {
-  text-decoration: none;
-  cursor: help;
+.casos__tabla .tabla tbody th,
+.casos__tabla .tabla tbody td {
+  padding: var(--espacio-2) var(--espacio-3);
+  vertical-align: middle;
 }
 
-.casos__tabla tbody tr {
+.casos__tabla .tabla thead th:first-child,
+.casos__tabla .tabla tbody tr:not(.casos__dia) > :first-child {
+  padding-left: var(--espacio-4);
+}
+
+.casos__tabla .tabla {
+  table-layout: auto;
+}
+
+.casos__tabla .tabla thead th:nth-child(1) { width: 4.75rem; }
+.casos__tabla .tabla thead th:nth-child(2) { width: 9.5rem; }
+.casos__tabla .tabla thead th:nth-child(5) { width: 9rem; }
+
+.casos__tabla .tabla tbody th[scope="row"] {
+  font-weight: var(--peso-normal);
+}
+
+.casos__dia th {
+  padding: var(--espacio-2) var(--espacio-4);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.01em;
+  color: var(--color-marino);
+  background: var(--color-superficie-hundida);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.casos__tabla tbody:first-of-type .casos__dia th {
+  border-top: 0;
+}
+
+.casos__tabla tbody tr[data-caso] {
   cursor: pointer;
-  transition: background-color var(--duracion-rapida) ease;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .casos__tabla tbody tr:hover {
+  .casos__tabla tbody tr[data-caso]:hover {
     background: var(--color-tenue);
   }
 }
 
-.casos__fecha {
-  display: grid;
-  line-height: 1.3;
-  font-weight: var(--peso-normal);
-  font-size: var(--texto-xs);
-  color: var(--color-texto-secundario);
+.casos__tabla tbody tr[data-caso].casos__fila--elegida {
+  background: var(--color-tenue);
+  box-shadow: inset 0 0 0 var(--grosor-borde) var(--color-primario);
+}
+
+/* La hora es el botón que elige el caso: se dibuja como texto. */
+.casos__ver {
+  padding: var(--espacio-1) 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.casos__hora {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto);
   white-space: nowrap;
 }
 
-.casos__fecha b {
-  font-size: var(--texto-sm);
-  font-weight: var(--peso-medio);
-  color: var(--color-texto);
+/* Una celda no puede ser una rejilla (rompería la tabla): el contenido apilado va en un contenedor propio. */
+.casos__apilado {
+  display: grid;
+  justify-items: start;
+  gap: var(--espacio-1);
 }
 
 .casos__origen {
   display: inline-flex;
   align-items: center;
   gap: var(--espacio-1);
-  font-size: var(--texto-sm);
-  font-weight: var(--peso-medio);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-semi);
   white-space: nowrap;
 }
 
 .casos__origen .icono,
-.casos__tabla .etiqueta-urgente .icono {
+.casos__tabla .etiqueta-urgente .icono,
+.vista .etiqueta-urgente .icono {
   width: 1rem;
   height: 1rem;
 }
@@ -165,8 +401,29 @@
 .casos__origen--reporte { color: var(--color-reporte); }
 .casos__origen--acompanamiento { color: var(--color-acompanamiento); }
 
-.casos__tabla .etiqueta-urgente {
+.casos__tabla .etiqueta-urgente,
+.vista .etiqueta-urgente {
   font-size: var(--texto-xs);
+}
+
+.casos__tipo .casos__apilado {
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.casos__tipo b {
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+}
+
+.casos__tipo b.texto-secundario {
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+.casos__tipo span {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
 }
 
 .casos__personas {
@@ -179,18 +436,63 @@
   color: var(--color-texto-secundario);
 }
 
-.tabla__numero {
+.casos__tiempo {
   text-align: right;
+  white-space: nowrap;
+}
+
+.casos__tabla .tabla thead th.tabla__numero {
+  text-align: right;
+}
+
+.casos__tiempo-linea {
+  display: grid;
+  line-height: 1.3;
+}
+
+.casos__tiempo-linea + .casos__tiempo-linea {
+  margin-top: var(--espacio-1);
+}
+
+.casos__tiempo-linea b {
+  font-weight: var(--peso-semi);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
-.casos__acciones {
-  white-space: nowrap;
+.casos__tiempo-linea b.texto-secundario {
+  font-weight: var(--peso-normal);
 }
 
-.casos__acciones a + a {
-  margin-left: var(--espacio-3);
+.casos__tiempo-linea small {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.casos__ir {
+  width: 2.5rem;
+  padding-right: var(--espacio-3) !important;
+}
+
+.casos__ir a {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radio-pildora);
+  color: var(--color-texto-secundario);
+}
+
+.casos__ir .icono {
+  width: 1.125rem;
+  height: 1.125rem;
+  transform: scaleX(-1); /* el icono «izquierda», mirado a la derecha */
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .casos__ir a:hover {
+    color: var(--color-primario);
+    background: var(--color-tenue-fuerte);
+  }
 }
 
 .casos__vacio {
@@ -203,10 +505,234 @@
   color: var(--color-texto-secundario);
 }
 
+.paginacion {
+  justify-content: space-between;
+}
+
+.paginacion__enlaces {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+/* ── Panel de la derecha: el resumen del caso elegido ──── */
+.casos__vista {
+  display: grid;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-dialogo);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.vista-vacia {
+  display: grid;
+  justify-items: center;
+  gap: var(--espacio-2);
+  padding: var(--espacio-12) var(--espacio-6);
+  text-align: center;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.vista-vacia .icono {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.vista-vacia p {
+  margin: 0;
+  max-width: 20rem;
+}
+
+.vista-vacia__titulo {
+  font-size: var(--texto-md);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+}
+
+.vista {
+  display: grid;
+  gap: var(--espacio-5);
+  padding: var(--espacio-5);
+  animation: vista-entra var(--duracion-base) var(--curva-salida) both;
+}
+
+@keyframes vista-entra {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+.casos__vista[aria-busy="true"] .vista {
+  opacity: 0.55;
+  transition: opacity var(--duracion-rapida) var(--curva-estandar);
+}
+
+.vista__cabecera {
+  display: grid;
+  gap: var(--espacio-2);
+}
+
+.vista__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.vista__titulo {
+  margin: 0;
+  font-size: var(--texto-xl);
+  line-height: var(--interlineado-titulo);
+  color: var(--color-marino);
+}
+
+.vista__titulo.texto-secundario {
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+.vista__sub {
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+/* Datos en una lista dividida: la etiqueta a la izquierda y el valor a la derecha, sin tarjetas. */
+.vista__datos {
+  display: grid;
+  margin: 0;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+}
+
+.vista__datos > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+  padding: var(--espacio-2) var(--espacio-4);
+  font-size: var(--texto-sm);
+}
+
+.vista__datos > div + div {
+  border-top: var(--grosor-borde) solid var(--color-borde);
+}
+
+.vista__datos dt {
+  color: var(--color-texto-secundario);
+}
+
+.vista__datos dd {
+  margin: 0;
+  text-align: right;
+  font-weight: var(--peso-medio);
+}
+
+.vista__resultado {
+  margin: 0;
+}
+
+.vista__seccion {
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+.vista__seccion > .campo__ayuda {
+  margin: 0;
+}
+
+.vista__subtitulo {
+  margin: 0;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+}
+
+.vista__linea {
+  display: grid;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vista__linea li {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: var(--espacio-3);
+  font-size: var(--texto-sm);
+}
+
+.vista__linea time {
+  display: grid;
+  line-height: 1.3;
+  font-weight: var(--peso-semi);
+  color: var(--color-texto);
+}
+
+.vista__linea time small,
+.vista__actuacion small {
+  display: block;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+.vista__actuacion {
+  line-height: 1.35;
+}
+
+.vista__acciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+}
+
+.vista__acciones .boton {
+  justify-content: center;
+}
+
 /* ── Pantallas estrechas: cada caso es una tarjeta ─────────
    Se conserva la tabla en el HTML (semántica y pruebas) y solo cambia cómo se dibuja: cada fila pasa a ser
-   una rejilla con el origen, el estado y la hora arriba, y los datos debajo con su etiqueta. */
+   una rejilla con el origen, el estado y la hora arriba y los datos debajo. */
 @media (max-width: 47.5rem) {
+  .casos__rapidos {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selector {
+    display: flex;
+  }
+
+  .selector__opcion {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .filtros__mas {
+    margin-left: 0;
+  }
+
+  .filtros__abrir {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filtros__campos {
+    position: static;
+    width: auto;
+    margin-top: var(--espacio-3);
+    grid-template-columns: minmax(0, 1fr);
+    box-shadow: none;
+  }
+
+  .casos__total {
+    margin-left: 0;
+  }
+
   .casos__tabla {
     overflow: visible;
     border: 0;
@@ -215,13 +741,9 @@
   }
 
   .casos__tabla .tabla,
-  .casos__tabla .tabla tbody {
+  .casos__tabla .tabla tbody,
+  .casos__tabla .tabla tr.casos__dia {
     display: block;
-  }
-
-  .casos__tabla .tabla caption {
-    display: block;
-    padding: 0 0 var(--espacio-3);
   }
 
   /* Los encabezados de columna se leen como etiquetas dentro de cada tarjeta. */
@@ -237,21 +759,28 @@
   .casos__tabla .tabla tbody {
     display: grid;
     gap: var(--espacio-3);
+    margin-bottom: var(--espacio-4);
   }
 
-  .casos__tabla .tabla tbody tr {
+  .casos__dia th {
+    display: block;
+    padding: var(--espacio-1) 0;
+    background: transparent;
+    border: 0;
+    font-size: var(--texto-sm);
+  }
+
+  .casos__tabla .tabla tbody tr[data-caso] {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: 1fr auto;
     grid-template-areas:
-      "origen estado fecha"
-      "tipo tipo tipo"
-      "personas personas personas"
-      "ubicacion ubicacion ubicacion"
-      "decision decision decision"
-      "atencion atencion atencion"
-      "acciones acciones acciones";
+      "caso hora"
+      "tipo tipo"
+      "personas personas"
+      "tiempo tiempo"
+      "ir ir";
     align-items: center;
-    gap: var(--espacio-2) var(--espacio-2);
+    gap: var(--espacio-2);
     padding: var(--espacio-4);
     border: var(--grosor-borde) solid var(--color-borde);
     border-radius: var(--radio-superficie);
@@ -259,35 +788,28 @@
     box-shadow: var(--sombra-1);
   }
 
-  .casos__tabla .tabla tbody th,
-  .casos__tabla .tabla tbody td {
+  .casos__tabla .tabla tbody tr[data-caso] > th,
+  .casos__tabla .tabla tbody tr[data-caso] > td {
     display: block;
     padding: 0;
     border: 0;
   }
 
-  .casos__tabla tbody > tr > :nth-child(1) { grid-area: fecha; justify-self: end; text-align: right; }
-  .casos__tabla tbody > tr > :nth-child(2) { grid-area: origen; }
-  .casos__tabla tbody > tr > :nth-child(3) { grid-area: estado; }
-  .casos__tabla tbody > tr > :nth-child(4) { grid-area: tipo; font-size: var(--texto-md); font-weight: var(--peso-medio); }
-  .casos__tabla tbody > tr > :nth-child(5) { grid-area: personas; }
-  .casos__tabla tbody > tr > :nth-child(6) { grid-area: ubicacion; }
-  .casos__tabla tbody > tr > :nth-child(7) { grid-area: decision; }
-  .casos__tabla tbody > tr > :nth-child(8) { grid-area: atencion; }
-  .casos__tabla tbody > tr > :nth-child(9) {
-    grid-area: acciones;
-    display: flex;
-    gap: var(--espacio-4);
-    padding-top: var(--espacio-2);
+  .casos__tabla tbody tr[data-caso] > :nth-child(1) { grid-area: hora; justify-self: end; }
+  .casos__tabla tbody tr[data-caso] > :nth-child(2) { grid-area: caso; }
+  .casos__caso .casos__apilado { grid-auto-flow: column; justify-content: start; align-items: center; gap: var(--espacio-2); }
+  .casos__tabla tbody tr[data-caso] > :nth-child(3) { grid-area: tipo; font-size: var(--texto-md); }
+  .casos__tabla tbody tr[data-caso] > :nth-child(4) { grid-area: personas; }
+  .casos__tabla tbody tr[data-caso] > :nth-child(5) { grid-area: tiempo; text-align: left; display: flex; flex-wrap: wrap; gap: var(--espacio-1) var(--espacio-4); }
+  .casos__tabla tbody tr[data-caso] > :nth-child(6) {
+    grid-area: ir;
+    width: auto;
+    padding: var(--espacio-2) 0 0 !important;
     border-top: var(--grosor-borde) solid var(--color-borde);
   }
 
-  .casos__tabla tbody > tr > :nth-child(4).texto-secundario {
-    font-weight: var(--peso-normal);
-  }
-
-  .casos__fecha {
-    justify-items: end;
+  .casos__tiempo-linea + .casos__tiempo-linea {
+    margin-top: 0;
   }
 
   .casos__personas {
@@ -301,36 +823,38 @@
     content: "· ";
   }
 
-  /* Etiquetas de los datos que no se explican solos. */
-  .casos__tabla tbody > tr > :nth-child(6)::before,
-  .casos__tabla tbody > tr > :nth-child(7)::before,
-  .casos__tabla tbody > tr > :nth-child(8)::before {
-    display: inline-block;
-    min-width: 8.5rem;
-    font-size: var(--texto-xs);
-    font-weight: var(--peso-normal);
-    color: var(--color-texto-secundario);
+  .casos__ir a {
+    width: auto;
+    height: 2.25rem;
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--espacio-2);
+    font-size: var(--texto-sm);
+    color: var(--color-primario);
   }
 
-  .casos__tabla tbody > tr > :nth-child(6)::before { content: "Ubicación"; }
-  .casos__tabla tbody > tr > :nth-child(7)::before { content: "Hasta la decisión"; }
-  .casos__tabla tbody > tr > :nth-child(8)::before { content: "Hasta la atención"; }
-
-  .casos__tabla .tabla__numero {
-    text-align: left;
+  .casos__ir a::before {
+    content: "Abrir el caso";
+    order: -1;
   }
 
-  .casos__acciones a + a {
-    margin-left: 0;
+  .casos__ir .icono {
+    order: 1;
   }
 
-  .casos__acciones a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.25rem;
+  .casos__ir a .visualmente-oculto {
+    /* el texto accesible sigue siendo el nombre completo; «Abrir el caso» es solo la ayuda visual */
+    position: absolute;
   }
 
-  .filtros__activos [data-limpiar] {
-    margin-left: 0;
+  .paginacion {
+    justify-content: center;
+  }
+}
+
+/* Por debajo de 1200 px no hay panel: la fila abre el caso. (Al final del archivo para ganar a su regla de presentación.) */
+@media (max-width: 74.99rem) {
+  .casos__vista {
+    display: none;
   }
 }

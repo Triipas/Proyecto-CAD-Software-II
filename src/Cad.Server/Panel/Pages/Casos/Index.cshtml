@@ -5,87 +5,124 @@
 @using Tiempos = Cad.Server.Modulos.Consultas.TiemposCaso
 @{
     ViewData["Title"] = "Casos";
+    // Rediseño del 05/11/2026: una lista que se lee de arriba abajo (vistas con cifra, filtros rápidos, casos agrupados por día) y, desde
+    // 1200 px, un panel a la derecha con el resumen del caso elegido. Por debajo de ese ancho, la fila abre el caso como antes.
+    ViewData["ClasePagina"] = "pagina--casos";
     var inv = CultureInfo.InvariantCulture;
+    var es = CultureInfo.GetCultureInfo("es-PE");
     var r = Model.Resultado;
     var activos = Model.FiltrosActivos;
-    // Rediseño CAD v2 (fase 3): los filtros se pliegan y se abren solos si hay que corregir algo.
+    var seleccion = Model.Seleccion;
+    // Los filtros que no están en la barra (fechas, tipo, estado y sereno) se abren solos si hay que corregir algo.
     var abrirFiltros = Model.Errores.Count > 0;
+    var masFiltros = activos.Count;
 }
 @section Estilos {
+    <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/casos.css" asp-append-version="true" />
 }
 <div class="pagina__encabezado">
     <div>
         <h1 class="titulo">Casos</h1>
-        <p class="texto-secundario">SOS y reportes, los más recientes primero. Los filtros se combinan.</p>
+        <p class="texto-secundario">Busca y revisa lo que ya pasó: SOS y reportes, los más recientes primero.</p>
     </div>
 </div>
 
+<div class="casos" data-lista-casos>
+<div class="casos__lista">
 @* HU26-CA01 — filtros combinables. Formulario GET: la búsqueda queda en la dirección. *@
-<form method="get" action="/panel/casos" class="superficie formulario filtros" aria-labelledby="titulo-filtros" data-filtros novalidate>
+<form method="get" action="/panel/casos" class="superficie casos__barra" aria-labelledby="titulo-filtros" data-filtros novalidate>
     <h2 id="titulo-filtros" class="visualmente-oculto">Filtros</h2>
-    <details class="filtros__panel" open="@abrirFiltros" data-panel-filtros>
-        <summary class="filtros__resumen">
-            <span class="filtros__abrir"><partial name="_Icono" model="@("filtro")" />Filtros@(activos.Count > 0 ? $" · {activos.Count}" : "")</span>
-        </summary>
-        <div class="filtros__campos">
-            @{
-                async Task Selector(string id, string etiqueta, string? valor, IEnumerable<(string Valor, string Texto)> opciones, string vacia, string? ayuda = null)
+    @if (!string.IsNullOrEmpty(Model.Origen)) { <input type="hidden" name="origen" value="@Model.Origen" /> }
+    @if (!string.IsNullOrEmpty(Model.Grupo)) { <input type="hidden" name="grupo" value="@Model.Grupo" /> }
+
+    <nav class="vistas" aria-label="Vistas de la lista">
+        @foreach (var vista in Model.Pestanas)
+        {
+            <a class="vistas__opcion" href="@vista.Enlace" aria-current="@(vista.Activa ? "page" : null)" data-vista="@(vista.Codigo.Length == 0 ? "todos" : vista.Codigo)">
+                @vista.Texto
+                @if (vista.Casos is { } n)
                 {
-                    var error = Model.ErrorDe(id);
-                    var describe = string.Join(' ', new[] { ayuda is null ? null : $"{id}-ayuda", error is null ? null : $"{id}-error" }.OfType<string>());
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="@id">@etiqueta</label>
-                        <select class="campo__control campo__control--seleccion" id="@id" name="@id"
-                                aria-invalid="@(error is null ? null : "true")" aria-describedby="@(describe.Length == 0 ? null : describe)">
-                            <option value="">@vacia</option>
-                            @foreach (var (v, t) in opciones)
-                            {
-                                <option value="@v" selected="@(valor == v)">@t</option>
-                            }
-                        </select>
-                        @if (ayuda is not null)
-                        {
-                            <p id="@id-ayuda" class="campo__ayuda">@ayuda</p>
-                        }
-                        @if (error is not null)
-                        {
-                            <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-                        }
-                    </div>
-                    await Task.CompletedTask;
+                    <span class="vistas__cifra num">@n.ToString("N0", es)</span>
                 }
-                async Task CampoFecha(string id, string etiqueta, string? valor)
-                {
-                    var error = Model.ErrorDe(id);
-                    <div class="campo">
-                        <label class="campo__etiqueta" for="@id">@etiqueta</label>
-                        <input class="campo__control" type="date" id="@id" name="@id" value="@valor"
-                               aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda")" />
-                        <p id="@id-ayuda" class="campo__ayuda">Fecha de registro del caso.</p>
-                        @if (error is not null)
-                        {
-                            <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-                        }
-                    </div>
-                    await Task.CompletedTask;
-                }
+            </a>
+        }
+    </nav>
+
+    <div class="casos__rapidos">
+        <nav class="selector" aria-label="Origen">
+            @foreach (var o in Model.OpcionesOrigen)
+            {
+                <a class="selector__opcion" href="@o.Enlace" aria-current="@(o.Activa ? "true" : null)">@o.Texto</a>
             }
-            @{ await CampoFecha("desde", "Desde", Model.Desde); }
-            @{ await CampoFecha("hasta", "Hasta", Model.Hasta); }
-            @{ await Selector("origen", "Origen", Model.Origen, [("Sos", "SOS"), ("Reporte", "Reporte"), ("Acompanamiento", "Acompañamiento")], "Todos"); }
-            @{ await Selector("tipo", "Tipo de incidencia", Model.Tipo,
-                   Model.Categorias.Select(c => (c.Id.ToString(), c.Nombre)).Append((Cad.Server.Panel.Pages.Casos.IndexModel.ValorSinTipo, Cad.Server.Modulos.Consultas.CasoEncontrado.TipoPorDeterminar)), "Todos",
-                   "En los casos cerrados, la tipificación final."); }
-            @{ await Selector("estado", "Estado", Model.Estado,
-                   Cad.Server.Panel.Pages.Casos.IndexModel.EstadosFiltrables.Select(e => (e.ToString(), Cad.Server.Panel.Pages.Casos.IndexModel.TextoEstadoFiltro(e))), "Todos"); }
-            @{ await Selector("sereno", "Sereno asignado", Model.Sereno, Model.Serenos.Select(s => (s.Id.ToString(), s.Nombre)), "Todos"); }
+        </nav>
+        <div class="atajos" role="group" aria-label="Periodo">
+            @foreach (var p in Model.PeriodosRapidos)
+            {
+                <a class="atajos__opcion" href="@p.Enlace" aria-current="@(p.Activa ? "true" : null)">@p.Texto</a>
+            }
         </div>
-        <div class="acciones filtros__acciones">
-            <button type="submit" class="boton boton--principal">Buscar</button>
-        </div>
-    </details>
-    <div class="filtros__activos">
+        <details class="filtros__mas" open="@abrirFiltros" data-panel-filtros>
+            <summary class="boton boton--secundario boton--compacto filtros__abrir"><partial name="_Icono" model="@("filtro")" />Más filtros@(masFiltros > 0 ? $" · {masFiltros}" : "")</summary>
+            <div class="filtros__campos">
+                @{
+                    async Task Selector(string id, string etiqueta, string? valor, IEnumerable<(string Valor, string Texto)> opciones, string vacia, string? ayuda = null)
+                    {
+                        var error = Model.ErrorDe(id);
+                        var describe = string.Join(' ', new[] { ayuda is null ? null : $"{id}-ayuda", error is null ? null : $"{id}-error" }.OfType<string>());
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                            <select class="campo__control campo__control--seleccion" id="@id" name="@id"
+                                    aria-invalid="@(error is null ? null : "true")" aria-describedby="@(describe.Length == 0 ? null : describe)">
+                                <option value="">@vacia</option>
+                                @foreach (var (v, t) in opciones)
+                                {
+                                    <option value="@v" selected="@(valor == v)">@t</option>
+                                }
+                            </select>
+                            @if (ayuda is not null)
+                            {
+                                <p id="@id-ayuda" class="campo__ayuda">@ayuda</p>
+                            }
+                            @if (error is not null)
+                            {
+                                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                            }
+                        </div>
+                        await Task.CompletedTask;
+                    }
+                    async Task CampoFecha(string id, string etiqueta, string? valor)
+                    {
+                        var error = Model.ErrorDe(id);
+                        <div class="campo">
+                            <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                            <input class="campo__control" type="date" id="@id" name="@id" value="@valor"
+                                   aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? $"{id}-ayuda" : $"{id}-error {id}-ayuda")" />
+                            <p id="@id-ayuda" class="campo__ayuda">Fecha de registro del caso.</p>
+                            @if (error is not null)
+                            {
+                                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                            }
+                        </div>
+                        await Task.CompletedTask;
+                    }
+                }
+                @{ await CampoFecha("desde", "Desde", Model.Desde); }
+                @{ await CampoFecha("hasta", "Hasta", Model.Hasta); }
+                @{ await Selector("tipo", "Tipo de incidencia", Model.Tipo,
+                       Model.Categorias.Select(c => (c.Id.ToString(), c.Nombre)).Append((Cad.Server.Panel.Pages.Casos.IndexModel.ValorSinTipo, Cad.Server.Modulos.Consultas.CasoEncontrado.TipoPorDeterminar)), "Todos",
+                       "En los casos cerrados, la tipificación final."); }
+                @{ await Selector("estado", "Estado", Model.Estado,
+                       Cad.Server.Panel.Pages.Casos.IndexModel.EstadosFiltrables.Select(e => (e.ToString(), Cad.Server.Panel.Pages.Casos.IndexModel.TextoEstadoFiltro(e))), "Todos"); }
+                @{ await Selector("sereno", "Sereno asignado", Model.Sereno, Model.Serenos.Select(s => (s.Id.ToString(), s.Nombre)), "Todos"); }
+                <div class="acciones filtros__acciones">
+                    <button type="submit" class="boton boton--principal">Buscar</button>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div class="casos__resumen">
         @if (activos.Count > 0)
         {
             <ul class="filtros__chips" aria-label="Filtros aplicados">
@@ -98,14 +135,23 @@
                 }
             </ul>
         }
-        else
-        {
-            <p class="texto-secundario filtros__sin-filtros">Sin filtros: se muestran los más recientes, de @Cad.Server.Modulos.Consultas.ConsultarCasos.TamanoPagina en @Cad.Server.Modulos.Consultas.ConsultarCasos.TamanoPagina.</p>
-        }
         @* HU26-CA03: limpiar retira todos los filtros (solo tiene sentido si hay alguno). *@
         @if (Model.HayFiltros)
         {
-            <a class="boton boton--secundario" href="/panel/casos" data-limpiar>Limpiar filtros</a>
+            <a class="boton boton--secundario boton--compacto" href="/panel/casos" data-limpiar>Limpiar filtros</a>
+        }
+        @if (seleccion is not null)
+        {
+            <p class="casos__total num" data-resumen-casos aria-live="polite">
+                <b>@seleccion.Total.ToString("N0", es)</b> @(seleccion.Total == 1 ? "caso" : "casos")
+                · @seleccion.Sos.ToString("N0", es) SOS
+                · @seleccion.Reportes.ToString("N0", es) @(seleccion.Reportes == 1 ? "reporte" : "reportes")
+                @if (seleccion.Acompanamientos > 0)
+                {
+                    <text>· @seleccion.Acompanamientos.ToString("N0", es) de acompañamiento</text>
+                }
+                · @seleccion.EnCurso.ToString("N0", es) en curso
+            </p>
         }
     </div>
 </form>
@@ -117,6 +163,14 @@
         <div>
             <p class="aviso__titulo">Revisa los filtros</p>
             <p class="aviso__texto">Corrige los datos marcados para buscar.</p>
+            @* Los criterios que no tienen campo propio en la barra (el origen y la vista) se explican aquí. *@
+            @foreach (var clave in new[] { "origen", "grupo" })
+            {
+                @if (Model.ErrorDe(clave) is { } mensaje)
+                {
+                    <p class="aviso__texto">@mensaje</p>
+                }
+            }
         </div>
     </div>
 }
@@ -133,74 +187,125 @@ else
 {
     <div class="tabla-contenedor casos__tabla" tabindex="0" role="region" aria-labelledby="leyenda-casos">
         <table class="tabla" data-casos data-total="@r.Total">
-            <caption id="leyenda-casos">@r.Total @(r.Total == 1 ? "caso" : "casos")@(Model.HayFiltros ? " con los filtros aplicados" : "") · página @r.Pagina de @r.Paginas</caption>
+            <caption id="leyenda-casos" class="visualmente-oculto">@r.Total @(r.Total == 1 ? "caso" : "casos")@(Model.HayFiltros ? " con los filtros aplicados" : "") · página @r.Pagina de @r.Paginas</caption>
             <thead>
                 <tr>
-                    <th scope="col">Registrado</th>
-                    <th scope="col">Origen</th>
-                    <th scope="col">Estado</th>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Ciudadano y sereno</th>
-                    <th scope="col">Ubicación</th>
+                    <th scope="col">Hora</th>
+                    <th scope="col">Caso</th>
+                    <th scope="col">Tipo y zona</th>
+                    <th scope="col">Ciudadano · sereno</th>
                     @* HU28 (DP18): tiempos por caso, desde el registro. *@
-                    <th scope="col" class="tabla__numero"><abbr title="Desde el registro hasta la decisión de la revisión (solo reportes)">Hasta la decisión</abbr></th>
-                    <th scope="col" class="tabla__numero"><abbr title="Desde el registro hasta el inicio de la atención; en un SOS es el tiempo de respuesta">Hasta la atención</abbr></th>
-                    <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+                    <th scope="col" class="tabla__numero">Tiempo</th>
+                    <th scope="col"><span class="visualmente-oculto">Abrir</span></th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach (var caso in r.Casos)
-                {
-                    var local = TimeZoneInfo.ConvertTime(caso.RegistradoEn, Model.ZonaHoraria);
-                    <tr data-caso="@caso.Id">
-                        <th scope="row"><time class="casos__fecha" datetime="@caso.RegistradoEn.ToString("O", inv)"><b>@local.ToString("HH:mm", inv)</b>@local.ToString("dd/MM/yyyy", inv)</time></th>
-                        <td>
-                            @switch (caso.Origen)
-                            {
-                                case OrigenCaso.Sos:
-                                    <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@caso.TextoOrigen</span>
-                                    break;
-                                case OrigenCaso.Reporte:
-                                    <span class="casos__origen casos__origen--reporte"><partial name="_Icono" model="@("documento")" />@caso.TextoOrigen</span>
-                                    break;
-                                default:
-                                    <span class="casos__origen casos__origen--acompanamiento"><partial name="_Icono" model="@("ruta")" />@caso.TextoOrigen</span>
-                                    break;
-                            }
-                        </td>
-                        <td data-estado><partial name="_ChipEstado" model="@((caso.Estado, caso.Origen != OrigenCaso.Reporte))" /></td>
-                        @* HU26-CA02 *@
-                        <td class="@(caso.Tipo is null ? "texto-secundario" : null)" data-tipo>@caso.TextoTipo</td>
-                        <td><span class="casos__personas">@caso.Ciudadano<small>@(caso.Sereno ?? "Sin sereno")</small></span></td>
-                        @* HU26-CA05: sin coordenadas inventadas. *@
-                        <td data-ubicacion>@(caso.ConUbicacion ? (caso.Origen switch { OrigenCaso.Sos => "Del dispositivo", OrigenCaso.Reporte => "Lugar del hecho", _ => "Última posición del acompañamiento" }) : "Sin ubicación")</td>
-                        <td data-tiempo-decision class="tabla__numero@(Tiempos.SinValor(caso.Tiempos.HastaDecision) ? " texto-secundario" : "")">@caso.Tiempos.HastaDecision</td>
-                        <td data-tiempo-atencion class="tabla__numero@(Tiempos.SinValor(caso.Tiempos.HastaInicioAtencion) ? " texto-secundario" : "")">@caso.Tiempos.HastaInicioAtencion</td>
-                        <td class="casos__acciones">
-                            <a href="@Cad.Server.Panel.Pages.Casos.IndexModel.Detalle(caso)" data-abrir-caso>Detalle<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
-                            <a href="/panel/casos/@caso.Id/historial">Historial<span class="visualmente-oculto"> del caso de @caso.Ciudadano</span></a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
+            @* Un grupo por día: la fecha se dice una vez y cada fila lleva solo su hora. *@
+            @foreach (var dia in r.Casos.GroupBy(c => Model.EtiquetaDia(c.RegistradoEn)))
+            {
+                <tbody class="casos__grupo">
+                    <tr class="casos__dia"><th scope="rowgroup" colspan="6">@dia.Key</th></tr>
+                    @foreach (var caso in dia)
+                    {
+                        var local = TimeZoneInfo.ConvertTime(caso.RegistradoEn, Model.ZonaHoraria);
+                        var zona = Model.ZonaDe(caso);
+                        var t = caso.Tiempos;
+                        <tr data-caso="@caso.Id">
+                            <th scope="row">
+                                @* El botón elige el caso para el panel de la derecha (desde 1200 px); en pantallas estrechas, la fila abre el caso. *@
+                                <button type="button" class="casos__ver" data-ver-caso aria-pressed="false">
+                                    <time class="casos__hora" datetime="@caso.RegistradoEn.ToString("O", inv)" title="@local.ToString("dd/MM/yyyy HH:mm:ss", inv)">@local.ToString("HH:mm", inv)</time>
+                                    <span class="visualmente-oculto"> Ver el resumen del caso de @caso.Ciudadano</span>
+                                </button>
+                            </th>
+                            <td class="casos__caso"><div class="casos__apilado">
+                                @switch (caso.Origen)
+                                {
+                                    case OrigenCaso.Sos:
+                                        <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@caso.TextoOrigen</span>
+                                        break;
+                                    case OrigenCaso.Reporte:
+                                        <span class="casos__origen casos__origen--reporte"><partial name="_Icono" model="@("documento")" />@caso.TextoOrigen</span>
+                                        break;
+                                    default:
+                                        <span class="casos__origen casos__origen--acompanamiento"><partial name="_Icono" model="@("ruta")" />@caso.TextoOrigen</span>
+                                        break;
+                                }
+                                <span data-estado><partial name="_ChipEstado" model="@((caso.Estado, caso.Origen != OrigenCaso.Reporte))" /></span>
+                            </div></td>
+                            @* HU26-CA02: el tipo; CA05: la zona, sin coordenadas inventadas (el título dice de dónde viene el punto). *@
+                            <td class="casos__tipo"><div class="casos__apilado">
+                                <b class="@(caso.Tipo is null ? "texto-secundario" : null)" data-tipo>@caso.TextoTipo</b>
+                                @if (zona is not null)
+                                {
+                                    <span data-ubicacion title="@(caso.Origen switch { OrigenCaso.Sos => "Del dispositivo", OrigenCaso.Reporte => "Lugar del hecho", _ => "Última posición del acompañamiento" })">@zona</span>
+                                }
+                                else
+                                {
+                                    <span class="texto-secundario" data-ubicacion>Sin ubicación</span>
+                                }
+                            </div></td>
+                            <td><span class="casos__personas">@caso.Ciudadano<small>@(caso.Sereno ?? "Sin sereno")</small></span></td>
+                            @* Un solo tiempo por caso: el de respuesta en un SOS; en un reporte, a la decisión y a la atención, si corresponden. *@
+                            <td class="casos__tiempo">
+                                @if (t.EsSos)
+                                {
+                                    <span class="casos__tiempo-linea"><b data-tiempo-atencion class="@(Tiempos.SinValor(t.HastaInicioAtencion) ? "texto-secundario" : null)">@t.HastaInicioAtencion</b><small>a la atención</small></span>
+                                }
+                                else
+                                {
+                                    @if (t.HastaDecision != Tiempos.NoCorresponde)
+                                    {
+                                        <span class="casos__tiempo-linea"><b data-tiempo-decision class="@(Tiempos.SinValor(t.HastaDecision) ? "texto-secundario" : null)">@t.HastaDecision</b><small>a la decisión</small></span>
+                                    }
+                                    @if (t.HastaAtencion != Tiempos.NoCorresponde)
+                                    {
+                                        <span class="casos__tiempo-linea"><b data-tiempo-atencion class="@(Tiempos.SinValor(t.HastaAtencion) ? "texto-secundario" : null)">@t.HastaAtencion</b><small>a la atención</small></span>
+                                    }
+                                }
+                            </td>
+                            <td class="casos__ir">
+                                <a href="@Cad.Server.Panel.Pages.Casos.IndexModel.Detalle(caso)" data-abrir-caso><partial name="_Icono" model="@("izquierda")" /><span class="visualmente-oculto">Abrir el caso de @caso.Ciudadano</span></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            }
         </table>
     </div>
-    @if (r.Paginas > 1)
-    {
-        <nav class="paginacion" aria-label="Páginas de resultados">
-            @if (r.Pagina > 1)
-            {
-                <a class="boton boton--secundario" href="@Model.RutaPagina(r.Pagina - 1)" rel="prev">Anterior</a>
-            }
-            <span class="texto-secundario">Página @r.Pagina de @r.Paginas</span>
-            @if (r.Pagina < r.Paginas)
-            {
-                <a class="boton boton--secundario" href="@Model.RutaPagina(r.Pagina + 1)" rel="next">Siguiente</a>
-            }
-        </nav>
-    }
+    <nav class="paginacion" aria-label="Páginas de resultados">
+        @{
+            var primero = (r.Pagina - 1) * r.TamanoPagina + 1;
+            var ultimo = primero + r.Casos.Count - 1;
+        }
+        <span class="texto-secundario num">Mostrando @primero.ToString("N0", es) a @ultimo.ToString("N0", es) de @r.Total.ToString("N0", es)</span>
+        @if (r.Paginas > 1)
+        {
+            <span class="paginacion__enlaces">
+                @if (r.Pagina > 1)
+                {
+                    <a class="boton boton--secundario" href="@Model.RutaPagina(r.Pagina - 1)" rel="prev">Anterior</a>
+                }
+                <span class="texto-secundario">Página @r.Pagina de @r.Paginas</span>
+                @if (r.Pagina < r.Paginas)
+                {
+                    <a class="boton boton--secundario" href="@Model.RutaPagina(r.Pagina + 1)" rel="next">Siguiente</a>
+                }
+            </span>
+        }
+    </nav>
 }
+</div>
+
+@* El resumen del caso elegido (desde 1200 px): llega del servidor al elegir una fila (?handler=Vista&id=…). *@
+<aside class="casos__vista" data-vista-previa aria-label="Resumen del caso" aria-live="polite">
+    <div class="vista-vacia" data-vista-vacia>
+        <partial name="_Icono" model="@("lupa")" />
+        <p class="vista-vacia__titulo">Elige un caso</p>
+        <p>Verás aquí su resumen, sus últimas actuaciones y los accesos al detalle y al historial.</p>
+    </div>
+</aside>
+</div>
 
 @section Scripts {
-    <script src="~/js/casos.js" asp-append-version="true"></script>
+    <script src="~/js/casos-vista.js" asp-append-version="true"></script>
 }

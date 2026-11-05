@@ -1,0 +1,87 @@
+@model Cad.Server.Panel.Pages.Casos.IndexModel
+@using System.Globalization
+@using Cad.Server.Modulos.Casos.Dominio
+@using Tiempos = Cad.Server.Modulos.Consultas.TiemposCaso
+@* Rediseño del 05/11/2026 — el resumen de un caso para el panel de la derecha de «Casos»: lo esencial y sus últimas actuaciones, con el
+   acceso al detalle y al historial completo. Solo operadores (la página lo exige). De las actuaciones no se muestra el detalle: las
+   notas internas se leen en el historial. *@
+@{
+    var (caso, historial) = Model.Vista!;
+    var inv = CultureInfo.InvariantCulture;
+    var local = TimeZoneInfo.ConvertTime(caso.RegistradoEn, Model.ZonaHoraria);
+    var zona = Model.ZonaDe(caso);
+    var t = caso.Tiempos;
+    var ultimas = historial.Entradas.OrderByDescending(e => e.En).Take(4).ToList();
+    var fuente = caso.Origen switch { OrigenCaso.Sos => "Ubicación del dispositivo", OrigenCaso.Reporte => "Lugar del hecho", _ => "Última posición del acompañamiento" };
+}
+<div class="vista" data-vista-caso="@caso.Id">
+    <header class="vista__cabecera">
+        <div class="vista__etiquetas">
+            @switch (caso.Origen)
+            {
+                case OrigenCaso.Sos:
+                    <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />@caso.TextoOrigen</span>
+                    break;
+                case OrigenCaso.Reporte:
+                    <span class="casos__origen casos__origen--reporte"><partial name="_Icono" model="@("documento")" />@caso.TextoOrigen</span>
+                    break;
+                default:
+                    <span class="casos__origen casos__origen--acompanamiento"><partial name="_Icono" model="@("ruta")" />@caso.TextoOrigen</span>
+                    break;
+            }
+            <partial name="_ChipEstado" model="@((caso.Estado, caso.Origen != OrigenCaso.Reporte))" />
+        </div>
+        <h2 class="vista__titulo @(caso.Tipo is null ? "texto-secundario" : null)">@caso.TextoTipo</h2>
+        <p class="vista__sub">Registrado el @local.ToString("dd/MM/yyyy", inv) a las @local.ToString("HH:mm", inv)</p>
+    </header>
+
+    <dl class="vista__datos">
+        <div><dt>Ciudadano</dt><dd>@caso.Ciudadano</dd></div>
+        <div><dt>Sereno</dt><dd class="@(caso.Sereno is null ? "texto-secundario" : null)">@(caso.Sereno ?? "Sin sereno")</dd></div>
+        <div><dt>@(zona is null ? "Ubicación" : fuente)</dt><dd class="@(zona is null ? "texto-secundario" : null)">@(zona ?? "Sin ubicación")</dd></div>
+        @if (t.EsSos)
+        {
+            <div><dt>Hasta la atención</dt><dd class="num@(Tiempos.SinValor(t.HastaInicioAtencion) ? " texto-secundario" : "")">@t.HastaInicioAtencion</dd></div>
+        }
+        else
+        {
+            <div><dt>Hasta la decisión</dt><dd class="num@(Tiempos.SinValor(t.HastaDecision) ? " texto-secundario" : "")">@t.HastaDecision</dd></div>
+            <div><dt>Hasta la atención</dt><dd class="num@(Tiempos.SinValor(t.HastaAtencion) ? " texto-secundario" : "")">@t.HastaAtencion</dd></div>
+        }
+    </dl>
+
+    @* HU27-CA02: un caso finalizado queda identificado con su resultado. *@
+    @if (historial.Resultado is { } resultado)
+    {
+        <div class="aviso aviso--exito vista__resultado">
+            <partial name="_Icono" model="@("exito")" />
+            <div>
+                <p class="aviso__titulo">@resultado.Estado el @TimeZoneInfo.ConvertTime(resultado.En, Model.ZonaHoraria).ToString("dd/MM/yyyy HH:mm", inv)</p>
+                <p class="aviso__texto">@resultado.Descripcion</p>
+            </div>
+        </div>
+    }
+
+    <section class="vista__seccion" aria-labelledby="vista-actuaciones">
+        <h3 id="vista-actuaciones" class="vista__subtitulo">Últimas actuaciones</h3>
+        <ol class="vista__linea">
+            @foreach (var e in ultimas)
+            {
+                var momento = TimeZoneInfo.ConvertTime(e.En, Model.ZonaHoraria);
+                <li>
+                    <time datetime="@e.En.ToString("O", inv)" class="num">@momento.ToString("HH:mm", inv)<small>@momento.ToString("dd/MM", inv)</small></time>
+                    <span class="vista__actuacion">@e.Actuacion<small>@e.Responsable</small></span>
+                </li>
+            }
+        </ol>
+        @if (historial.Entradas.Count > ultimas.Count)
+        {
+            <p class="campo__ayuda">Y @(historial.Entradas.Count - ultimas.Count) @(historial.Entradas.Count - ultimas.Count == 1 ? "actuación anterior" : "actuaciones anteriores") en el historial.</p>
+        }
+    </section>
+
+    <div class="vista__acciones">
+        <a class="boton boton--principal" href="@Cad.Server.Panel.Pages.Casos.IndexModel.Detalle(caso)" data-abrir-caso>Abrir caso</a>
+        <a class="boton boton--secundario" href="/panel/casos/@caso.Id/historial">Historial completo</a>
+    </div>
+</div>
