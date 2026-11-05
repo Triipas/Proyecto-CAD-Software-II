@@ -4,7 +4,11 @@
 //
 //   CAD_URL=https://<tu-servicio>.onrender.com CAD_SERENOS="sereno1@...:clave;sereno2@...:clave" node herramientas/demo/mover-serenos.mjs
 //
+// Con CAD_INICIOS=<archivo JSON> [{ correo, latitud, longitud }] cada sereno parte de su posición (la que deja el cargador del
+// dataset con --serenos-en-servicio) en lugar de un punto al azar cerca del centro.
+//
 // Ctrl+C lo detiene (los serenos quedan operativos en su última posición).
+import { readFileSync } from 'node:fs';
 import { ahora, alrededor, configuracion, crearApi, desplazar, distancia, esperar } from './comun.mjs';
 
 const { url, serenos } = await configuracion({ pedirSerenos: true });
@@ -17,12 +21,16 @@ const velocidad = Number(process.env.CAD_VELOCIDAD ?? 7); // metros por segundo 
 const avanzar = process.env.CAD_AVANZAR === '1';
 const centro = process.env.CAD_CENTRO ? (([la, lo]) => ({ latitud: Number(la), longitud: Number(lo) }))(process.env.CAD_CENTRO.split(',')) : null;
 const { api, token } = crearApi(url);
+const inicios = new Map((process.env.CAD_INICIOS ? JSON.parse(readFileSync(process.env.CAD_INICIOS, 'utf8')) : [])
+  .filter((s) => s.latitud != null && s.longitud != null)
+  .map((s) => [s.correo.toLowerCase(), { latitud: s.latitud, longitud: s.longitud }]));
 
 const moviles = [];
 for (const s of serenos) {
   const t = await token(s.correo, s.clave);
   await api('/api/sereno/estado', { metodo: 'PUT', token: t, cuerpo: { operativo: true, ubicacionAutorizada: true } });
-  moviles.push({ correo: s.correo, token: t, punto: null, base: null, destino: null });
+  const inicio = inicios.get(s.correo.toLowerCase()) ?? null;
+  moviles.push({ correo: s.correo, token: t, punto: inicio, base: inicio, destino: null });
 }
 console.log(`${moviles.length} serenos en marcha contra ${url} (cada ${intervalo / 1000} s, ${velocidad} m/s). Ctrl+C para detener.`);
 
@@ -42,6 +50,11 @@ for (;;) {
         // Se conserva el paso que ya dio este guion (el despacho puede tardar un instante en reflejarlo).
         const previo = m.caso && despacho && m.caso.id === despacho.casoId ? m.caso.estado : null;
         m.caso = despacho && lugar ? { id: despacho.casoId, estado: previo === 'En atención' ? previo : despacho.estado, punto: { latitud: lugar.latitud, longitud: lugar.longitud } } : null;
+        // Al arrancar, un sereno que aún no llega a su caso y ya está encima de él sale desde un poco más lejos: se ve el trayecto.
+        if (vuelta === 0 && m.caso && m.caso.estado !== 'En atención' && distancia(m.punto, m.caso.punto) < 300) {
+          const angulo = Math.random() * 2 * Math.PI;
+          m.punto = desplazar(m.caso.punto, 900 * Math.cos(angulo), 900 * Math.sin(angulo));
+        }
         if (m.caso && avanzar && m.caso.estado === 'Asignada') {
           await api(`/api/sereno/casos/${m.caso.id}/desplazamiento`, { token: m.token, metodo: 'POST' }); // si falla, se reintenta luego
           m.caso.estado = 'En camino';
@@ -51,23 +64,24 @@ for (;;) {
       const objetivo = m.caso?.punto ?? (m.destino ??= alrededor(m.base, 600));
       const falta = distancia(m.punto, objetivo);
       const paso = velocidad * (intervalo / 1000);
-      if (falta <= paso) {
+      const llego = falta <= paso;
+      if (llego) {
         m.punto = objetivo;
-        if (m.caso) {
-          if (avanzar && m.caso.estado === 'En camino') {
-            // Sin .catch: si el servidor no la registra, el error llega al manejador de abajo y se reintenta en la próxima vuelta.
-            await api(`/api/sereno/casos/${m.caso.id}/atencion`, { token: m.token, metodo: 'POST' });
-            m.caso.estado = 'En atención';
-            console.log(`  ${m.correo}: llegó e inició la atención`);
-          }
-        } else m.destino = null; // patrulla: otro punto
+        if (!m.caso) m.destino = null; // patrulla: otro punto
       } else {
         const f = paso / falta;
         const norte = (objetivo.latitud - m.punto.latitud) * 111_320 * f;
         const este = (objetivo.longitud - m.punto.longitud) * 111_320 * Math.cos((m.punto.latitud * Math.PI) / 180) * f;
         m.punto = desplazar(m.punto, norte, este);
       }
+      // La posición va primero: el servidor comprueba con ella que el sereno está en el lugar al iniciar la atención.
       await api('/api/sereno/posiciones', { token: m.token, cuerpo: { ...m.punto, precisionMetros: 6, obtenidaEn: ahora() } });
+      if (llego && m.caso && avanzar && m.caso.estado === 'En camino') {
+        // Sin .catch: si el servidor no la registra, el error llega al manejador de abajo y se reintenta en la próxima vuelta.
+        await api(`/api/sereno/casos/${m.caso.id}/atencion`, { token: m.token, metodo: 'POST' });
+        m.caso.estado = 'En atención';
+        console.log(`  ${m.correo}: llegó e inició la atención`);
+      }
     } catch (error) {
       console.log(`  ${m.correo}: ${error.message}`);
     }

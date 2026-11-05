@@ -1,4 +1,4 @@
-"""Dataset simulado de 4000 casos en José Luis Bustamante y Rivero (Arequipa) para la demostración del Sistema Integrado CAD.
+"""Dataset simulado de 5000 casos en José Luis Bustamante y Rivero (Arequipa) para la demostración del Sistema Integrado CAD.
 
 Todos los datos son ficticios, pero sus proporciones salen de fuentes reales (ver README.md): la victimización por tipo de
 delito del INEI (ENAPRES), la mezcla de intervenciones de un serenazgo municipal, la población del distrito (censo 2017) y
@@ -29,7 +29,7 @@ LIMA = timezone(timedelta(hours=-5))
 FIN = datetime(2026, 11, 30, 20, 0, tzinfo=LIMA)
 DIAS = 91  # 13 semanas: alcanza para «7 días», «30 días», el periodo anterior y las cohortes semanales.
 INICIO = FIN - timedelta(days=DIAS)
-TOTAL_CASOS = 4000  # unos 44 por día: el orden de las intervenciones de un serenazgo de un distrito parecido (README)
+TOTAL_CASOS = 5000  # unos 55 por día: el orden de las intervenciones de un serenazgo de un distrito parecido (README)
 
 # ───────────────────────────── Catálogos del sistema (mismos códigos que Cad.Contratos) ─────────────────────────────
 CATEGORIAS = {
@@ -817,24 +817,40 @@ for c in ciudadanos:
         actividad[c["id"]].add(dia.date())
 
 # ───────────────────────────── Casos en curso al cargar ─────────────────────────────
-# Para la presentación: casos abiertos de los últimos minutos en cada etapa, sobre el dataset base (que no cambia: llevan su
-# propia semilla). Junto con los pocos que ya quedan abiertos en el periodo, al cargar hay 15 SOS y 40 reportes sin cerrar. Pocos con sereno,
-# para que en la central queden serenos disponibles a los que asignar en vivo.
+# Para la presentación, la bandeja abre con exactamente 5 SOS y 20 reportes sin cerrar, todos de los últimos minutos y en
+# distintas etapas. Los pocos casos del periodo que quedarían abiertos al final se quitan: así lo abierto es solo esta lista.
+# Llevan su propia semilla. Pocos con sereno (6 de los 12 de turno), para que en la central queden serenos disponibles a los
+# que asignar en vivo.
 # (origen, etapa, cuántos, minutos en esa etapa al terminar el periodo)
 EN_CURSO_AL_CARGAR = [
-    ("Sos", "SinAbrir", 3, (0.3, 2.5)),       # recién llegado: nadie lo abrió todavía
-    ("Sos", "EnContacto", 3, (0.3, 1.5)),     # abierto, la central intenta comunicarse
-    ("Sos", "Clasificado", 6, (1, 9)),        # clasificado, espera sereno
-    ("Reporte", "Recibido", 12, (3, 55)),     # nadie lo revisó todavía
-    ("Reporte", "EnRevision", 6, (1, 6)),
-    ("Reporte", "Pendiente", 14, (4, 35)),    # admitido, espera sereno
-    ("Reporte", "PendienteCentral", 5, (2, 25)),  # registrado por la central (llamada, radio…), espera sereno
+    ("Sos", "SinAbrir", 1, (0.3, 2)),         # recién llegado: nadie lo abrió todavía
+    ("Sos", "EnContacto", 1, (0.5, 1.5)),     # abierto, la central intenta comunicarse
+    ("Sos", "Clasificado", 1, (1, 5)),        # clasificado, espera sereno
+    ("Sos", "EnCamino", 1, (2, 5)),           # el sereno va en camino
+    ("Sos", "EnAtencion", 1, (4, 12)),        # el sereno ya está en el lugar
+    ("Reporte", "Recibido", 6, (3, 50)),      # nadie lo revisó todavía
+    ("Reporte", "EnRevision", 3, (1, 6)),
+    ("Reporte", "Pendiente", 5, (4, 35)),     # admitido, espera sereno
+    ("Reporte", "PendienteCentral", 2, (2, 25)),  # registrado por la central (llamada, radio…), espera sereno
+    ("Reporte", "Asignada", 1, (1, 3)),       # asignado, el sereno aún no sale
+    ("Reporte", "EnCamino", 1, (2, 8)),
+    ("Reporte", "EnAtencion", 2, (5, 20)),
 ]
 # El evento con el que el caso entra en la etapa: el historial termina ahí.
 ENTRA_CON = {"SinAbrir": "SosEmitido", "EnContacto": "IntentoContactoRegistrado", "Clasificado": "CasoClasificado",
              "Recibido": "ReporteRegistrado", "EnRevision": "RevisionIniciada", "Pendiente": "ReporteAdmitido",
-             "PendienteCentral": "ReporteAdmitido", "Asignada": "CasoAsignado", "EnCamino": "DesplazamientoConfirmado"}
-CON_SERENO = ("Asignada", "EnCamino")
+             "PendienteCentral": "ReporteAdmitido", "Asignada": "CasoAsignado", "EnCamino": "DesplazamientoConfirmado",
+             "EnAtencion": "AtencionIniciada"}
+CON_SERENO = ("Asignada", "EnCamino", "EnAtencion")
+
+# Los casos del periodo que quedarían abiertos se quitan (y su sereno queda libre desde su caso anterior). Los urgentes de un
+# acompañamiento se conservan: su aviso los nombra.
+CERRADOS = ("Cerrada", "Descartada", "Derivada", "Cancelada")
+quitados = [c for c in casos if c["estado"] not in CERRADOS and c["origen"] != "Acompanamiento"]
+casos = [c for c in casos if c not in quitados]
+for s in {c["_sereno"] for c in quitados if c.get("_sereno")}:
+    ocupado_hasta[s] = max((e["en"] for c in casos if c.get("_sereno") == s for e in c["eventos"] if e["tipo"] == "CasoCerrado"),
+                           default=INICIO - timedelta(days=1))
 # Cuánto antes del evento empieza el caso, más o menos: para que se genere cerca de su hora y con los serenos de ese turno.
 ANTICIPO = {"Sos": 4, "Reporte": 25}
 
@@ -897,7 +913,7 @@ def en_curso(origen, etapa, edad):
 
 
 de_turno_al_final = {s["id"] for k in range(1, 5) for s in en_turno(FIN - timedelta(minutes=1), k)}
-con_caso_abierto = {c["ciudadano"] for c in casos if c["estado"] not in ("Cerrada", "Descartada", "Derivada", "Cancelada")}
+con_caso_abierto = {c["ciudadano"] for c in casos if c["estado"] not in CERRADOS}
 nuevos = [en_curso(origen, etapa, rng.uniform(*edades)) for origen, etapa, cuantos, edades in EN_CURSO_AL_CARGAR for _ in range(cuantos)]
 for caso in nuevos:
     recortar(caso)

@@ -86,6 +86,7 @@ try
     Console.WriteLine("Guardando las posiciones de los serenos…");
     var patrullaje = new Patrullaje(datos, carpeta);
     long posiciones = 0;
+    var ultimaPosicion = new Dictionary<Guid, (double Lat, double Lon)>();
     await using (var copia = await conexionAbierta.BeginBinaryImportAsync(
         """COPY "PosicionesSereno" ("Id", "SerenoId", "Latitud", "Longitud", "PrecisionMetros", "ObtenidaEn", "RecibidaEn") FROM STDIN (FORMAT BINARY)"""))
     {
@@ -102,6 +103,7 @@ try
                 await copia.WriteAsync(p.Precision, NpgsqlDbType.Double);
                 await copia.WriteAsync(p.En.UtcDateTime, NpgsqlDbType.TimestampTz);
                 await copia.WriteAsync(p.En.AddSeconds(1).UtcDateTime, NpgsqlDbType.TimestampTz);
+                ultimaPosicion[id] = (p.Lat, p.Lon);
                 posiciones++;
             }
         }
@@ -123,6 +125,23 @@ try
 
     await transaccion.CommitAsync();
     credenciales.Guardar(rutaCredenciales, construccion.ListaDeCuentas());
+
+    // Para mover-serenos.mjs: los serenos que quedan en servicio al terminar la carga y su última posición (sin claves).
+    if (Opcion("serenos-en-servicio") is { Length: > 0 } rutaServicio)
+    {
+        var enServicio = construccion.Serenos
+            .Where(s => turnos.GetValueOrDefault(s.Datos.Id)?.LastOrDefault() is { } t && t.Inicio <= fin && t.Fin > fin)
+            .Select(s => new
+            {
+                correo = s.Datos.Correo,
+                sector = s.Datos.Sector,
+                latitud = ultimaPosicion.TryGetValue(s.Id, out var u) ? u.Lat : (double?)null,
+                longitud = ultimaPosicion.TryGetValue(s.Id, out var v) ? v.Lon : (double?)null,
+            })
+            .ToList();
+        await File.WriteAllTextAsync(rutaServicio, System.Text.Json.JsonSerializer.Serialize(enServicio));
+        Console.WriteLine($"  Serenos en servicio: {enServicio.Count} (lista en {rutaServicio})");
+    }
 
     var porEstado = await db.Casos.AsNoTracking().GroupBy(c => c.Estado).Select(g => new { g.Key, Total = g.Count() }).ToListAsync();
     Console.WriteLine();

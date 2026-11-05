@@ -22,6 +22,7 @@ dotnet run --project herramientas/dataset-jlbyr/cargador -c Release -- --conexio
 | `--confirmar <host>` | Obligatoria si la base de datos no es local: repite el host para confirmar que se vaciará esa base. |
 | `--fin <fecha y hora>` | Dónde termina el periodo (ISO 8601). Por omisión, ahora. No puede estar en el futuro. |
 | `--credenciales <archivo>` | Dónde guardar las credenciales. Por omisión, `~/.cad/cargador-credenciales.txt`. |
+| `--serenos-en-servicio <archivo>` | Escribe en un JSON los serenos que quedan en servicio al terminar y su última posición (sin claves), para que `herramientas/demo/mover-serenos.mjs` los mueva desde ahí. |
 | `--solo-vaciar` | Solo vacía la base de datos (conserva el administrador). |
 | `--dataset <carpeta>` | La carpeta del dataset, si no la encuentra sola. |
 
@@ -53,7 +54,7 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
 
 ## Cuándo cargar
 
-El periodo termina en el momento de la carga, y los datos «envejecen»: los 55 casos abiertos llevan de 1 a 60 minutos al cargar,
+El periodo termina en el momento de la carga, y los datos «envejecen»: los 25 casos abiertos llevan de 1 a 50 minutos al cargar,
 y cada minuto que pasa se suma a su espera. Para una presentación, conviene **cargar justo antes de empezar** (5 a 15 minutos
 antes): no hace falta vaciar nada a mano, el cargador vacía y vuelve a cargar todo. Cada carga tarda unos 30 s en local y
 unos minutos contra Neon; las horas parten del inicio de la carga.

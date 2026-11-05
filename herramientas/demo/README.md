@@ -1,5 +1,25 @@
 # Demostración de la central
 
+## Datos frescos para la presentación (una sola orden)
+
+`presentacion.mjs` carga el [dataset de J. L. Bustamante y Rivero](../dataset-jlbyr/README.md) con el periodo terminando ahora
+(unos 5000 casos para el dashboard, la analítica, el mapa de concentración y la proyección; al cargar quedan 5 SOS y 20 reportes
+abiertos en distintas etapas) y después deja a los serenos en servicio moviéndose desde su última posición, con «En camino» y
+«En atención» automáticos, hasta Ctrl+C. Vacía la base de datos antes de cargar (conserva el administrador). Necesita .NET y Node 20+.
+
+```powershell
+# Render (Neon): repite el host de Neon para confirmar que se vacía esa base
+node herramientas/demo/presentacion.mjs --url https://<servicio>.onrender.com --conexion ~/.cad/neon.env --confirmar <host-de-neon>
+# Local: la base de los user-secrets del servidor y el servidor en http://localhost:5220
+node herramientas/demo/presentacion.mjs
+```
+
+`--solo-cargar` no mueve a los serenos; `--solo-mover` vuelve a moverlos sin recargar (usa la lista de la última carga,
+`~/.cad/serenos-en-servicio.json`). La contraseña del personal sale de `~/.cad/cargador-credenciales.txt` y no se muestra.
+Conviene lanzarlo 5 a 15 minutos antes de presentar: los casos abiertos envejecen desde la carga.
+
+## Guiones sueltos
+
 Dos guiones de Node 20+ (sin dependencias) que usan solo la API de la app y los formularios del panel, así que sirven igual en local y en Render.
 
 - `sembrar.mjs`: 20 reportes en varios estados (recibidos, en revisión, admitidos, asignado, en camino, derivado y descartado) y 5 SOS (3 recién llegados, 1 clasificado y 1 asignado), alrededor del centro del mapa. Deja al menos un sereno disponible para mostrar el más cercano.
