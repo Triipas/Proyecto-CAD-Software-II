@@ -73,7 +73,7 @@
   // ¿Hay algo escrito o elegido que se perdería al recargar?
   const formularioAMedias = () =>
     // En el panel de la central (panel-caso.js) los formularios quedan en sus pestañas y en el pie, dentro de .consola.
-    [...document.querySelectorAll(".consola__trabajo form, .pagina--en-panel .consola form")].some((formulario) =>
+    [...document.querySelectorAll(".consola__trabajo form, .consola__expediente form, .pagina--en-panel .consola form")].some((formulario) =>
       [...formulario.elements].some((campo) => {
         if (campo.type === "hidden" || campo.type === "submit" || campo.disabled) return false;
         if (campo.type === "radio" || campo.type === "checkbox") return campo.checked !== campo.defaultChecked;
