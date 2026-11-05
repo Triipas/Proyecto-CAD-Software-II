@@ -100,6 +100,7 @@ public class ClasificacionTests(FabricaCad fabrica)
 
         var detalle = await operador.GetStringAsync(Detalle(casoId)); // primero: el mensaje se muestra una sola vez
         Assert.Contains("SOS clasificado.", detalle);
+        Assert.Contains("Ahora asígnalo a un sereno disponible.", detalle); // sin sereno, el aviso dice qué sigue
         Assert.Contains("<dd data-tipo>Robo o hurto</dd>", detalle);
         Assert.Contains("<dd>Prueba Operador</dd>", detalle);
         Assert.DoesNotContain("Clasificar el SOS", detalle); // ya no se ofrece el formulario
@@ -140,6 +141,10 @@ public class ClasificacionTests(FabricaCad fabrica)
         Assert.Equal(Violencia, caso.CategoriaId);
         Assert.Equal(EstadoCaso.Asignada, caso.Estado);
         Assert.True(await fabrica.ConBaseDatosAsync(db => db.Asignaciones.AnyAsync(a => a.CasoId == casoId && a.Vigente)));
+        // El aviso no pide otro sereno a un caso ya despachado («Despachar ahora»).
+        var detalle = await operador.GetStringAsync(Detalle(casoId));
+        Assert.Contains("El caso ya tiene sereno asignado.", detalle);
+        Assert.DoesNotContain("Ahora asígnalo a un sereno disponible.", detalle);
     }
 
     [Theory]
