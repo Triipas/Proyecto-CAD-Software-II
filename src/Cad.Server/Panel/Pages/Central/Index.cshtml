@@ -43,7 +43,22 @@
                 <span data-texto>Conectando al tiempo real…</span>
             </p>
         </div>
+        @* Pestañas de la bandeja (05/11/2026): SOS, reportes (por revisar y por asignar) y en curso. La elegida decide también qué
+           casos se ven en el mapa (los serenos siempre); central.js la recuerda y avisa en «SOS» si llega uno mientras se mira
+           otra. Sin JS se ven las tres secciones seguidas, como antes. *@
+        <div class="bandeja__pestanas" role="tablist" aria-label="Qué casos ver" data-pestanas hidden>
+            <button type="button" class="bandeja__pestana bandeja__pestana--sos" role="tab" id="pestana-sos" aria-controls="grupo-sos" aria-selected="true" data-pestana="sos">
+                SOS <span class="bandeja__pestana-cifra" data-cifra-pestana="sos">@Model.Pendientes.Count</span>
+            </button>
+            <button type="button" class="bandeja__pestana bandeja__pestana--reportes" role="tab" id="pestana-reportes" aria-controls="grupo-reportes" aria-selected="false" tabindex="-1" data-pestana="reportes">
+                Reportes <span class="bandeja__pestana-cifra" data-cifra-pestana="reportes">@(Model.PorRevisar.Reportes.Count + Model.ReportesAdmitidos.Count)</span>
+            </button>
+            <button type="button" class="bandeja__pestana bandeja__pestana--en-curso" role="tab" id="pestana-en-curso" aria-controls="grupo-en-curso" aria-selected="false" tabindex="-1" data-pestana="en-curso">
+                En curso <span class="bandeja__pestana-cifra" data-cifra-pestana="en-curso">@Model.Asignados.Count</span>
+            </button>
+        </div>
         <div class="bandeja__cuerpo" id="cuerpo-cola">
+            <div class="bandeja__pestana-panel" id="grupo-sos" role="tabpanel" aria-labelledby="pestana-sos" data-grupo-pestana="sos">
             <section class="central__urgente bandeja__grupo" aria-labelledby="titulo-urgente" data-avisos-sonoros="0"
                      data-medicion="@(Model.MedicionActiva ? "true" : "false")" tabindex="-1">
                 <h3 id="titulo-urgente" class="central__titulo">
@@ -59,7 +74,9 @@
                 </div>
                 <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
             </section>
+            </div>
 
+            <div class="bandeja__pestana-panel" id="grupo-reportes" role="tabpanel" aria-labelledby="pestana-reportes" data-grupo-pestana="reportes">
             @* HU14 en la central (05/11/2026): los reportes recibidos y en revisión, con el modo de la admisión automática (HU45). *@
             <section class="central__revisar bandeja__grupo" aria-labelledby="titulo-revisar">
                 <h3 id="titulo-revisar" class="central__titulo">
@@ -80,7 +97,9 @@
                     <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
                 </div>
             </section>
+            </div>
 
+            <div class="bandeja__pestana-panel" id="grupo-en-curso" role="tabpanel" aria-labelledby="pestana-en-curso" data-grupo-pestana="en-curso">
             @* Los casos que ya tienen sereno siguen a la vista, tras los pendientes: al elegir uno, el mapa va a él y dibuja solo
                entonces el recorrido de su sereno. *@
             <section class="central__asignados bandeja__grupo" aria-labelledby="titulo-asignados">
@@ -91,6 +110,7 @@
                     <partial name="_ListaAsignados" model="@Model.ListaDeAsignados" />
                 </div>
             </section>
+            </div>
         </div>
     </section>
 

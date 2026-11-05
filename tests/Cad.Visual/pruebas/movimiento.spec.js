@@ -39,6 +39,7 @@ test.describe('Central: movimiento', () => {
   test('lo que llega entra, lo que se va se desvanece sin quedar como caso', async ({ page }, info) => {
     test.skip(info.project.name !== 'escritorio-1366', 'basta con un ancho');
     await abrirCentral(page);
+    await page.getByRole('tab', { name: /^Reportes/ }).click(); // los reportes admitidos, en su pestaña (05/11/2026)
     const quitado = await page.evaluate(() => {
       const reporte = document.querySelector('[data-region-reportes] [data-sos]');
       reporte.remove();

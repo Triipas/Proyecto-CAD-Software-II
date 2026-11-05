@@ -104,6 +104,8 @@ test.describe('Central: interacción', () => {
     const titulos = await page.locator('.bandeja__grupo .central__titulo').allTextContents();
     expect(titulos.map((t) => t.replace(/\s*\d+\s*$/, '').trim())).toEqual(
       ['Atención urgente · SOS', 'Por revisar · reportes', 'Por asignar · reportes', 'En curso · con sereno']);
+    // 05/11/2026: los reportes (por revisar y por asignar) están en su pestaña.
+    await page.getByRole('tab', { name: /^Reportes/ }).click();
     const revisar = page.locator('[data-region-revisar] [data-revisar]');
     await expect(revisar).toHaveCount(2);
     await expect(page.locator('[data-region-revisar] [data-estado="Recibido"]').getByRole('button', { name: /^Revisar/ })).toBeVisible();
@@ -181,6 +183,9 @@ test.describe('Central: interacción', () => {
     await expect(asignados).toHaveCount(2);
     await expect(page.locator('[data-contador-asignados]')).toHaveText('2');
     await expect(page.locator('path.linea-vinculo')).toHaveCount(0);
+    // 05/11/2026: los casos con sereno están en la pestaña «En curso», que muestra la cifra de la lista.
+    await page.getByRole('tab', { name: /^En curso/ }).click();
+    await expect(page.locator('[data-cifra-pestana="en-curso"]')).toHaveText('2');
 
     // Elegir el SOS asignado: su recorrido (y solo el suyo), con la tarjeta marcada.
     const botonSos = page.locator(`#asignado-${sos} [data-seleccionar-asignado]`);
@@ -195,11 +200,13 @@ test.describe('Central: interacción', () => {
     await expect(page.locator('path.linea-vinculo--reporte').first()).toBeAttached();
     await expect(page.locator('path.linea-vinculo--sos')).toHaveCount(0);
 
-    // Elegir un caso pendiente suelta al asignado: ninguna ruta.
+    // Pasar a los pendientes («SOS») suelta al asignado: ninguna ruta, y se puede elegir un SOS.
     await botonSos.click();
     await expect(page.locator('path.linea-vinculo--sos').first()).toBeAttached();
-    await page.locator('.central__urgente [data-seleccionar-sos]').first().click();
+    await page.getByRole('tab', { name: /^SOS/ }).click();
     await expect(botonSos).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('path.linea-vinculo')).toHaveCount(0);
+    await page.locator('.central__urgente [data-seleccionar-sos]').first().click();
     await expect(page.locator('path.linea-vinculo')).toHaveCount(0);
   });
 

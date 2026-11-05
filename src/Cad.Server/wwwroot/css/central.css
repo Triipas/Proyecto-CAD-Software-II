@@ -1533,6 +1533,141 @@
   color: var(--color-marino);
 }
 
+/* Pestañas de la bandeja (05/11/2026): SOS, Reportes y En curso. La elegida se marca con la raya del color de su tipo y el
+   texto en negrita (nunca solo color); la cifra dice cuántos hay. Una pestaña con algo nuevo lleva un punto hasta que se abre. */
+.bandeja__pestanas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 var(--espacio-3) var(--espacio-2) var(--espacio-4);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.bandeja__pestanas[hidden] {
+  display: none;
+}
+
+.bandeja__pestana {
+  --tono-pestana: var(--color-primario);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-2);
+  min-height: 2.75rem;
+  margin-bottom: -1px;
+  padding: var(--espacio-2) var(--espacio-1);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--color-texto-secundario);
+  font: inherit;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.bandeja__pestana--sos { --tono-pestana: var(--color-urgente); }
+.bandeja__pestana--reportes { --tono-pestana: var(--color-reporte); }
+.bandeja__pestana--en-curso { --tono-pestana: var(--color-progreso); }
+
+.bandeja__pestana[aria-selected="true"] {
+  border-bottom-color: var(--tono-pestana);
+  color: var(--color-marino);
+  font-weight: 700;
+}
+
+.bandeja__pestana:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: -2px;
+  border-radius: var(--radio-pequeno);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bandeja__pestana:hover:not([aria-selected="true"]) {
+    color: var(--color-texto);
+    border-bottom-color: var(--color-borde-fuerte);
+  }
+}
+
+.bandeja__pestana-cifra {
+  min-width: 1.5rem;
+  padding: 0 var(--espacio-1);
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-xs);
+  line-height: 1.375rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-texto-secundario);
+  background: var(--color-superficie-hundida);
+}
+
+.bandeja__pestana[aria-selected="true"] .bandeja__pestana-cifra {
+  color: var(--color-sobre-primario);
+  background: var(--tono-pestana);
+}
+
+/* Algo nuevo en una pestaña que no se mira: un punto de su color. */
+.bandeja__pestana--aviso::after {
+  content: "";
+  position: absolute;
+  top: var(--espacio-1);
+  right: var(--espacio-2);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--tono-pestana);
+  animation: pulso-pestana 1.6s ease-in-out infinite;
+}
+
+@keyframes pulso-pestana {
+  50% { transform: scale(1.5); opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bandeja__pestana--aviso::after { animation: none; }
+}
+
+/* Cada grupo ocupa la bandeja solo; sin JS se ven todos seguidos. */
+.bandeja__pestana-panel {
+  display: grid;
+  align-content: start;
+  gap: var(--espacio-5);
+}
+
+.bandeja__pestana-panel[hidden] {
+  display: none;
+}
+
+/* Con pestañas, el título de «SOS» y el de «En curso» repetirían el de su pestaña: quedan para el lector de pantalla. «Reportes»
+   conserva los suyos («Por revisar», «Por asignar»), que separan sus dos listas. */
+.central[data-pestana] :is(#titulo-urgente, #titulo-asignados) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* El mapa muestra solo los casos de la pestaña elegida (los serenos, siempre). «SOS»: los SOS sin sereno. «Reportes»: los
+   por revisar y los admitidos sin sereno. «En curso»: los casos con sereno, sus líneas y el marcador «en el lugar». */
+.central[data-pestana="sos"] .leaflet-pane .marcador-reporte,
+.central[data-pestana="sos"] .leaflet-pane .marcador-caso--en-curso,
+.central[data-pestana="sos"] .leaflet-pane .sonar-llegada--reporte,
+.central[data-pestana="reportes"] .leaflet-pane .marcador-sos,
+.central[data-pestana="reportes"] .leaflet-pane .marcador-reporte.marcador-caso--en-curso:not(.marcador-caso--revision),
+.central[data-pestana="reportes"] .leaflet-pane .sonar-llegada:not(.sonar-llegada--reporte),
+.central[data-pestana="en-curso"] .leaflet-pane .marcador-sos:not(.marcador-caso--en-curso),
+.central[data-pestana="en-curso"] .leaflet-pane .marcador-reporte:not(.marcador-caso--en-curso),
+.central[data-pestana="en-curso"] .leaflet-pane .marcador-caso--revision,
+.central[data-pestana="en-curso"] .leaflet-pane .sonar-llegada,
+.central:is([data-pestana="sos"], [data-pestana="reportes"]) .leaflet-pane .linea-vinculo,
+.central:is([data-pestana="sos"], [data-pestana="reportes"]) .leaflet-pane .conjunto__etiqueta {
+  display: none;
+}
+
 .bandeja__cuerpo {
   display: grid;
   align-content: start;
