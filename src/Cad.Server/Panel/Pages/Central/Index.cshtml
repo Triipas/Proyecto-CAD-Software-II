@@ -72,7 +72,6 @@
                 <div data-region-lista>
                     <partial name="_ListaSos" model="@Model.Lista" />
                 </div>
-                <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
             </section>
             </div>
 
@@ -112,6 +111,9 @@
             </section>
             </div>
         </div>
+        @* Anuncio de un SOS nuevo o cancelado para el lector de pantalla: fuera de las pestañas, para que se oiga aunque «SOS» no
+           sea la pestaña que se mira (sus paneles ocultos salen del árbol de accesibilidad). *@
+        <p class="visualmente-oculto" aria-live="assertive" data-anuncio></p>
     </section>
 
     <div class="central__mapa">

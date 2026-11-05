@@ -933,6 +933,8 @@
     try { localStorage.setItem(CLAVE_PESTANA, nombre); } catch { /* sin almacenamiento: vale para esta visita */ }
     if (!cambia) return;
     cuerpoCola.scrollTop = 0;
+    // El globo de un caso que la nueva pestaña oculta tampoco queda a la vista (con su enlace).
+    mapa.closePopup();
     // Lo elegido en otra pestaña ya no se ve en el mapa: se suelta (el panel del caso, si está abierto, sigue).
     if (soltar) soltarTodo();
   }

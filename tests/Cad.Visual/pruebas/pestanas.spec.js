@@ -70,8 +70,18 @@ test.describe('Central: pestañas de la bandeja', () => {
     await expect(page.locator('.leaflet-marker-pane .marcador-sereno').first()).toBeVisible();
     await page.screenshot({ path: info.outputPath('pestana-reportes.png') });
 
+    // El globo de un reporte abierto en el mapa se cierra al pasar a otra pestaña (su marcador deja de verse).
+    await page.evaluate(() => {
+      const caso = document.querySelector('[data-caso-mapa][data-estado="En revisión"]');
+      window.cadCentral.mapa.setView([Number(caso.dataset.lat), Number(caso.dataset.lon)], 16, { animate: false });
+    });
+    await page.locator('.leaflet-marker-pane .marcador-caso--revision').first().click();
+    await expect(page.locator('.leaflet-popup')).toHaveCount(1);
+
     // En curso, con el teclado (flecha a la derecha): solo casos con sereno.
+    await pestana('Reportes').focus();
     await pestana('Reportes').press('ArrowRight');
+    await expect(page.locator('.leaflet-popup')).toHaveCount(0);
     await expect(pestana('En curso')).toHaveAttribute('aria-selected', 'true');
     await expect(pestana('En curso')).toBeFocused();
     await expect(page.locator('.central__asignados')).toBeVisible();
@@ -114,5 +124,9 @@ test.describe('Central: pestañas de la bandeja', () => {
     await enviarSos(ciudadano, cerca(-0.014, 0.012));
     await expect(pestana('SOS')).toHaveClass(/bandeja__pestana--aviso/, { timeout: 10_000 });
     await expect(pestana('Reportes')).toHaveAttribute('aria-selected', 'true');
+    // El lector de pantalla lo oye igual: el anuncio no está dentro de una pestaña oculta.
+    const anuncio = page.locator('[data-anuncio]');
+    await expect(anuncio).toHaveText(/^Nuevo SOS de Tania Ficticia/);
+    expect(await anuncio.evaluate((el) => el.closest('[hidden]') === null)).toBe(true);
   });
 });
