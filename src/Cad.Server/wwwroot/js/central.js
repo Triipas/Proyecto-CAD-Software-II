@@ -877,6 +877,37 @@
     boton.addEventListener("click", () => fijarCapa(boton.dataset.capa, boton.getAttribute("aria-pressed") !== "true"));
   }
 
+  // ---------- Clave del mapa (05/11/2026): cada icono y cada línea, tal como se ven ----------
+  // Las muestras salen de marcadores.js, las mismas piezas que los marcadores del mapa: si cambia un icono, cambia su clave.
+  const muestras = {
+    sos: cadMarcadores.SIRENA,
+    reporte: cadMarcadores.DOCUMENTO,
+    sereno: cadMarcadores.escudo(true),
+    "sereno-ocupado": cadMarcadores.escudo(false),
+    "en-el-lugar": `<span class="marcador-sos marcador-caso--en-curso leyenda-icono__caso">${cadMarcadores.SIRENA}</span>`
+      + `<span class="marcador-sereno leyenda-icono__sereno">${cadMarcadores.escudo(true)}</span>`,
+  };
+  for (const el of document.querySelectorAll("[data-muestra]")) el.innerHTML = muestras[el.dataset.muestra] ?? "";
+
+  const abrirClave = document.querySelector("[data-abrir-clave]");
+  const clave = document.querySelector("[data-clave-mapa]");
+  function mostrarClave(abierta, { devolverFoco = false } = {}) {
+    clave.hidden = !abierta;
+    abrirClave.setAttribute("aria-expanded", String(abierta));
+    if (!abierta && devolverFoco) abrirClave.focus();
+  }
+  abrirClave?.addEventListener("click", () => mostrarClave(clave.hidden));
+  clave?.querySelector("[data-cerrar-clave]").addEventListener("click", () => mostrarClave(false, { devolverFoco: true }));
+  // Esc la cierra si el foco está en ella o en su botón; un clic en el mapa también (la clave no tapa nada que se use a la vez).
+  for (const el of [clave, abrirClave]) {
+    el?.addEventListener("keydown", (evento) => {
+      if (evento.key !== "Escape" || clave.hidden) return;
+      evento.preventDefault();
+      mostrarClave(false, { devolverFoco: true });
+    });
+  }
+  mapa.on("click", () => { if (clave && !clave.hidden) mostrarClave(false); });
+
   // HU19-CA03: se vuelve a pedir el fragmento al servidor (fuente de verdad); se conserva la selección.
   async function refrescarSerenos() {
     const respuesta = await fetch("/panel/central?handler=Serenos", { headers: { Accept: "text/html" }, credentials: "same-origin" });
