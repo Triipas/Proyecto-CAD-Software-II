@@ -99,34 +99,34 @@ test.describe('Central: interacción', () => {
 
     const capa = (nombre) => page.locator(`[data-capa="${nombre}"]`);
     const filtro = (nombre) => page.locator(`[data-filtro-cola="${nombre}"]`);
-    // Qué marcadores se ven (por estilo: la semilla no los deja dentro del encuadre).
+    // Qué marcadores del mapa se ven (por estilo: la semilla no los deja dentro del encuadre; la leyenda usa las mismas clases).
     const vistos = (selector) => page.evaluate((s) => [...document.querySelectorAll(s)].map((e) => getComputedStyle(e).display !== 'none'), selector);
 
     // Con todo, se ve todo.
-    expect(await vistos('.marcador-sos')).toContain(true);
-    expect(await vistos('.marcador-reporte')).toContain(true);
+    expect(await vistos('#mapa .marcador-sos')).toContain(true);
+    expect(await vistos('#mapa .marcador-reporte')).toContain(true);
 
     // «SOS»: ningún reporte en el mapa (ni el pendiente ni el que está en curso), y su chip lo dice.
     await filtro('sos').click();
     await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'false');
     await expect(capa('sos')).toHaveAttribute('aria-pressed', 'true');
-    const reportes = await vistos('.marcador-reporte');
+    const reportes = await vistos('#mapa .marcador-reporte');
     expect(reportes.length).toBeGreaterThan(0);
     expect(reportes).not.toContain(true);
-    expect(await vistos('.marcador-sos')).toContain(true);
+    expect(await vistos('#mapa .marcador-sos')).toContain(true);
 
     // «Reportes»: ningún SOS.
     await filtro('reportes').click();
     await expect(capa('sos')).toHaveAttribute('aria-pressed', 'false');
     await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'true');
-    expect(await vistos('.marcador-sos')).not.toContain(true);
-    expect(await vistos('.marcador-reporte')).toContain(true);
+    expect(await vistos('#mapa .marcador-sos')).not.toContain(true);
+    expect(await vistos('#mapa .marcador-reporte')).toContain(true);
 
     // «Todo» los devuelve.
     await filtro('todo').click();
     await expect(capa('sos')).toHaveAttribute('aria-pressed', 'true');
     await expect(capa('reporte')).toHaveAttribute('aria-pressed', 'true');
-    expect(await vistos('.marcador-reporte')).toContain(true);
+    expect(await vistos('#mapa .marcador-reporte')).toContain(true);
 
     // El caso elegido que queda fuera del filtro se suelta: la barra de asignación se cierra.
     const barra = page.locator('[data-asignar-rapido]');
@@ -212,6 +212,46 @@ test.describe('Central: interacción', () => {
     const capaSos = page.locator('[data-capa="sos"]');
     await capaSos.click();
     await expect(capaSos).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.locator('.marcador-sos').first()).toBeHidden();
+    await expect(page.locator('#mapa .marcador-sos').first()).toBeHidden();
+  });
+
+  // 05/11/2026: la leyenda lleva el icono de cada capa y una clave con cada marcador y cada línea del mapa.
+  test('la clave del mapa explica cada icono y se cierra con Esc', async ({ page }, info) => {
+    test.skip(info.project.name === 'escritorio-1920', 'basta con escritorio y móvil');
+    await prepararPagina(page);
+    await abrir(page, '/panel/central');
+    await expect(page.getByText('Conectado en tiempo real')).toBeVisible({ timeout: 15_000 });
+
+    // Cada capa lleva su icono real (el de marcadores.js), no un cuadrado de color.
+    await expect(page.locator('[data-capa] .leyenda-icono svg')).toHaveCount(3);
+
+    const boton = page.getByRole('button', { name: 'Qué significa cada icono' });
+    await expect(boton).toHaveAttribute('aria-expanded', 'false');
+    await boton.click();
+    const clave = page.getByRole('region', { name: 'Qué significa cada icono' });
+    await expect(clave).toBeVisible();
+    await expect(boton).toHaveAttribute('aria-expanded', 'true');
+    for (const texto of ['SOS por asignar', 'SOS en curso', 'Reporte admitido', 'Reporte por revisar', 'Reporte en curso',
+      'Disponible', 'No disponible', 'En el lugar', 'Sereno sugerido', 'Recorrido', 'Anillos'])
+      await expect(clave.getByText(texto, { exact: true })).toBeVisible();
+    // Las muestras son los mismos marcadores: el reporte por revisar lleva el borde discontinuo.
+    expect(await clave.locator('.marcador-caso--revision').evaluate((el) => getComputedStyle(el).borderTopStyle)).toBe('dashed');
+    await expect(clave.locator('.leyenda-icono svg')).toHaveCount(9);
+    const caja = await clave.boundingBox();
+    expect(caja.y).toBeGreaterThanOrEqual(0); // no se sale de la pantalla por arriba
+
+    // Ocultar una capa esconde sus marcadores del mapa, no sus muestras de la clave.
+    await page.locator('[data-capa="sos"]').click();
+    await expect(clave.locator('.marcador-sos').first()).toBeVisible();
+    await page.locator('[data-capa="sos"]').click();
+
+    await clave.getByRole('button', { name: 'Cerrar la clave del mapa' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(clave).toBeHidden();
+    await expect(boton).toBeFocused();
+    await expect(boton).toHaveAttribute('aria-expanded', 'false');
+    // A 390 px la página no se desplaza de lado (antes «Salir» se salía de la barra).
+    if (info.project.name === 'movil-390')
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });
 });

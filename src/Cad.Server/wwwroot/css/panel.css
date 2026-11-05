@@ -673,17 +673,55 @@ a.boton {
   background: var(--color-urgente);
 }
 
-/* Con las secciones a la vista (más de 1100 px) caben dos indicadores; con el menú plegado vuelve el de serenos libres.
-   Los serenos libres ya se ven en su panel y los acompañamientos tienen sección propia. */
-@media (max-width: 87.5rem) and (min-width: 68.8125rem) {
+/* Con las secciones a la vista (más de 1100 px), la barra no cabía entera hasta los 1720 px: «Salir» quedaba fuera de la
+   pantalla (48 px a 1366, 270 a 1440) y la página se desplazaba de lado (medido el 05/11/2026). Por debajo de 1720 px caben dos
+   indicadores y la sesión se queda con las iniciales (el nombre y el rol siguen para el lector de pantalla); por debajo de
+   1280 px, solo el de SOS. Con el menú plegado vuelve el de serenos disponibles. Los serenos ya se ven en su panel y los
+   acompañamientos tienen sección propia. */
+@media (max-width: 107.4375rem) and (min-width: 68.8125rem) {
   .barra__indicadores .indicador:nth-child(n + 3) {
     display: none;
+  }
+
+  .barra__indicadores + .barra__sesion .barra__persona {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 79.9375rem) and (min-width: 68.8125rem) {
+  .barra__indicadores .indicador:nth-child(n + 2) {
+    display: none;
+  }
+
+  .barra:has(.barra__indicadores) {
+    gap: var(--espacio-2);
+    padding: 0 var(--espacio-3);
+  }
+
+  .barra__indicadores + .barra__sesion {
+    gap: var(--espacio-2);
+    padding-left: var(--espacio-3);
   }
 }
 
 @media (max-width: 68.75rem) {
   .barra__indicadores .indicador:nth-child(4) {
     display: none;
+  }
+
+  /* Con el menú plegado vuelven tres indicadores: la sesión también se queda con las iniciales. */
+  .barra__indicadores + .barra__sesion .barra__persona {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -694,6 +732,32 @@ a.boton {
 
   /* El indicador de SOS cabe a 390 px a cambio de las iniciales: el nombre sigue en el menú de la sesión. */
   .barra__indicadores + .barra__sesion .barra__avatar {
+    display: none;
+  }
+
+  /* 05/11/2026: «Salir» se salía 37 px de la pantalla a 390 px (la página entera se desplazaba de lado): con indicadores,
+     la barra junta sus piezas. */
+  .barra:has(.barra__indicadores) {
+    gap: var(--espacio-2);
+    padding: 0 var(--espacio-3);
+  }
+
+  .barra__indicadores + .barra__sesion {
+    gap: var(--espacio-2);
+    padding-left: var(--espacio-2);
+  }
+}
+
+/* Entre el menú plegado y el móvil (761–832 px) caben dos indicadores, no tres. */
+@media (max-width: 52rem) and (min-width: 47.5625rem) {
+  .barra__indicadores .indicador:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* En los teléfonos más estrechos (360 px) la marca se queda con el escudo. */
+@media (max-width: 24rem) {
+  .barra:has(.barra__indicadores) .barra__nombre {
     display: none;
   }
 }

@@ -149,12 +149,49 @@
         </div>
     </section>
 
-    @* Leyenda del mapa: cada capa se puede ocultar. Relleno = sin asignar; borde = en curso. *@
+    @* Leyenda del mapa: cada capa se puede ocultar, con el icono que la representa en el mapa. 05/11/2026: la frase «relleno /
+       borde» no bastaba para leer los iconos; «Qué significa cada icono» abre la clave con cada marcador y cada línea tal como
+       se ven (central.js dibuja las muestras con marcadores.js, las mismas que el mapa). *@
     <div class="leyenda-mapa" role="group" aria-label="Capas del mapa">
-        <button type="button" aria-pressed="true" data-capa="sos"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--sos"></i>SOS</button>
-        <button type="button" aria-pressed="true" data-capa="reporte"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--reporte"></i>Reportes</button>
-        <button type="button" aria-pressed="true" data-capa="sereno"><i class="leyenda-mapa__muestra leyenda-mapa__muestra--sereno"></i>Serenos</button>
-        <span>Color lleno: sin asignar · Solo borde: en curso</span>
+        <button type="button" aria-pressed="true" data-capa="sos"><i class="leyenda-icono marcador-sos" data-muestra="sos" aria-hidden="true"></i>SOS</button>
+        <button type="button" aria-pressed="true" data-capa="reporte"><i class="leyenda-icono marcador-reporte" data-muestra="reporte" aria-hidden="true"></i>Reportes</button>
+        <button type="button" aria-pressed="true" data-capa="sereno"><i class="leyenda-icono leyenda-icono--sereno marcador-sereno" data-muestra="sereno" aria-hidden="true"></i>Serenos</button>
+        <button type="button" class="leyenda-mapa__clave" aria-expanded="false" aria-controls="clave-mapa" data-abrir-clave>
+            <partial name="_Icono" model="@("informacion")" />Qué significa cada icono
+        </button>
+        <section class="clave-mapa" id="clave-mapa" aria-labelledby="titulo-clave-mapa" hidden data-clave-mapa>
+            <div class="clave-mapa__cabecera">
+                <h2 class="clave-mapa__titulo" id="titulo-clave-mapa">Qué significa cada icono</h2>
+                <button type="button" class="clave-mapa__cerrar" aria-label="Cerrar la clave del mapa" data-cerrar-clave>×</button>
+            </div>
+            <div class="clave-mapa__grupos">
+                <div>
+                    <h3 class="clave-mapa__grupo">Casos</h3>
+                    <p class="clave-mapa__nota">La forma dice qué es: cuadrado, SOS; círculo, reporte. El relleno dice en qué va.</p>
+                    <ul class="clave-mapa__lista">
+                        <li><i class="leyenda-icono marcador-sos" data-muestra="sos" aria-hidden="true"></i><span><b>SOS por asignar</b> Color lleno: espera a un sereno.</span></li>
+                        <li><i class="leyenda-icono marcador-sos marcador-caso--en-curso" data-muestra="sos" aria-hidden="true"></i><span><b>SOS en curso</b> Blanco con borde: ya tiene sereno.</span></li>
+                        <li><i class="leyenda-icono marcador-reporte" data-muestra="reporte" aria-hidden="true"></i><span><b>Reporte admitido</b> Color lleno: espera a un sereno.</span></li>
+                        <li><i class="leyenda-icono marcador-reporte marcador-caso--en-curso marcador-caso--revision" data-muestra="reporte" aria-hidden="true"></i><span><b>Reporte por revisar</b> Borde discontinuo: recibido o en revisión.</span></li>
+                        <li><i class="leyenda-icono marcador-reporte marcador-caso--en-curso" data-muestra="reporte" aria-hidden="true"></i><span><b>Reporte en curso</b> Blanco con borde: ya tiene sereno.</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="clave-mapa__grupo">Serenos</h3>
+                    <ul class="clave-mapa__lista">
+                        <li><i class="leyenda-icono leyenda-icono--sereno marcador-sereno" data-muestra="sereno" aria-hidden="true"></i><span><b>Disponible</b> Operativo y sin caso: se le puede asignar.</span></li>
+                        <li><i class="leyenda-icono leyenda-icono--sereno marcador-sereno marcador-sereno--no-disponible" data-muestra="sereno-ocupado" aria-hidden="true"></i><span><b>No disponible</b> Con un caso o fuera de servicio.</span></li>
+                        <li><i class="leyenda-icono leyenda-icono--conjunto" data-muestra="en-el-lugar" aria-hidden="true"></i><span><b>En el lugar</b> El escudo sobre el caso: su sereno ya llegó.</span></li>
+                    </ul>
+                    <h3 class="clave-mapa__grupo">Líneas y anillos</h3>
+                    <ul class="clave-mapa__lista">
+                        <li><i class="leyenda-linea leyenda-linea--despacho" aria-hidden="true"></i><span><b>Sereno sugerido</b> Del caso elegido al disponible más cercano, con la distancia en línea recta.</span></li>
+                        <li><i class="leyenda-linea leyenda-linea--recorrido" aria-hidden="true"></i><span><b>Recorrido</b> Por las calles, del sereno asignado hasta su caso.</span></li>
+                        <li><i class="leyenda-icono leyenda-icono--sonar" aria-hidden="true"><span></span></i><span><b>Anillos</b> El último caso que llegó; se apagan al abrirlo.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
     </div>
 
     @* Asignación rápida: al elegir un caso aparece aquí el sereno disponible más cercano (un clic) y un buscador por nombre
