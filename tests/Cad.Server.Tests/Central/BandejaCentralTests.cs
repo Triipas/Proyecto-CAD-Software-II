@@ -83,13 +83,13 @@ public partial class BandejaCentralTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task LaCabecera_DiceCuantosSerenosHayDisponiblesDeLosOperativos_YAbreSuPanel()
+    public async Task LaCabecera_DiceCuantosSerenosEstanActivosDeLosRegistrados_YAbreSuPanel()
     {
         var (operador, _) = await OperadorAsync();
 
         var pagina = await operador.GetStringAsync(Central);
 
-        Assert.Matches(new Regex("data-abrir-serenos>\\s*<b data-valor>\\d+</b> <span data-etiqueta>de \\d+ serenos? disponibles?</span>"), pagina);
+        Assert.Matches(new Regex("data-abrir-serenos>\\s*<b data-valor>\\d+</b> <span data-etiqueta>de \\d+ serenos? activos?</span>"), pagina);
         Assert.Contains("id=\"panel-serenos\" aria-labelledby=\"titulo-serenos\" data-panel hidden", pagina);
         Assert.DoesNotContain("data-filtro-cola", pagina);
     }

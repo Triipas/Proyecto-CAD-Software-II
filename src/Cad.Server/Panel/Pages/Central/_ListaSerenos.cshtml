@@ -6,7 +6,7 @@
     var disponibles = Model.Serenos.Count(s => s.Disponible);
 }
 @* HU19 — fragmento de serenos. Lo genera el servidor en la carga inicial y al resincronizar (HU19-CA03). *@
-<div data-lista-serenos data-operativos="@operativos" data-disponibles="@disponibles">
+<div data-lista-serenos data-operativos="@operativos" data-disponibles="@disponibles" data-registrados="@Model.Serenos.Count">
     @if (Model.Serenos.Count == 0)
     {
         <p class="texto-secundario">No hay cuentas de sereno activas.</p>

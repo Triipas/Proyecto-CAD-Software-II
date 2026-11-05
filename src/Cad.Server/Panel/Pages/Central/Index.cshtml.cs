@@ -68,6 +68,8 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public int PorAsignar => Pendientes.Count + ReportesAdmitidos.Count;
     public int SerenosLibres => Serenos.Count(s => s.Disponible);
     public int SerenosOperativos => Serenos.Count(s => s.Operativo);
+    // 05/11/2026: la cifra de la cabecera y del mapa dice cuántos serenos están activos (operativos) de los registrados.
+    public int SerenosRegistrados => Serenos.Count;
 
     // HU25-CA05: fragmento de los casos en curso del mapa, que el panel pide al resincronizar.
     public async Task<IActionResult> OnGetCasosMapaAsync(CancellationToken ct) =>

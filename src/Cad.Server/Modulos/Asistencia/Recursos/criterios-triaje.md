@@ -1,6 +1,6 @@
 # Criterios de triaje de reportes
 
-Versión 2026-11-borrador. Borrador para que el Product Owner y los operadores lo aprueben (S6-T01). Lo leen por igual los operadores y el asistente: cambiar un criterio es cambiar este documento.
+Versión 2026-11. Criterios aprobados por el Product Owner y los operadores (S6-T01). Lo leen por igual los operadores y el asistente: cambiar un criterio es cambiar este documento.
 
 ## 1. Alcance
 
@@ -30,7 +30,7 @@ Se descarta un texto de prueba o sin sentido, uno que solo insulta, uno imposibl
 
 ## 5. Duplicados
 
-Dos reportes describen el mismo hecho si coinciden en lugar (a menos de 150 m), hora (a menos de 2 h) y en lo que pasó, aunque estén redactados distinto o con otra categoría. El segundo se descarta con el motivo «Duplicado del reporte …, ya admitido». (Propuesta pendiente del PO: el ciudadano lo verá como «Descartado».)
+Dos reportes describen el mismo hecho si coinciden en lugar (a menos de 150 m), hora (a menos de 2 h) y en lo que pasó, aunque estén redactados distinto o con otra categoría. El segundo se descarta con el motivo «Duplicado del reporte …, ya admitido», y el ciudadano lo ve como «Descartado».
 
 ## 6. Urgencia
 

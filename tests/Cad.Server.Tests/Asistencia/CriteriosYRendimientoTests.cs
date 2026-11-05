@@ -20,7 +20,7 @@ public class CriteriosTriajeTests
     [Fact]
     public void ElDocumentoEstaIncrustadoConSuVersion()
     {
-        Assert.Equal("2026-11-borrador", CriteriosTriaje.Version);
+        Assert.Equal("2026-11", CriteriosTriaje.Version);
         Assert.Contains("## 3. Derivar", CriteriosTriaje.Texto);
     }
 
@@ -57,7 +57,7 @@ public sealed class CriteriosYRendimientoTests(FabricaCad fabrica) : IAsyncLifet
 
         var html = WebUtility.HtmlDecode(await navegador.GetStringAsync("/panel/criterios-triaje"));
 
-        Assert.Contains("data-version=\"2026-11-borrador\"", html);
+        Assert.Contains("data-version=\"2026-11\"", html);
         Assert.Contains("<h2 class=\"criterios__titulo\">3. Derivar</h2>", html);
         Assert.Contains("Incendio o humo: Bomberos (116).", html);
     }

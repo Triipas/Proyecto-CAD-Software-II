@@ -132,7 +132,7 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Equal((CategoriaIncidencia.RoboOHurto.Id, DecisionSugerida.Admitir, NivelConfianza.Alta, "modelo-de-prueba"),
             (sugerencia.CategoriaSugeridaId, sugerencia.Decision, sugerencia.Confianza, sugerencia.Modelo));
         Assert.Equal("2026-11-c", sugerencia.VersionPrompt);
-        Assert.Equal("2026-11-borrador", sugerencia.VersionCriterios);
+        Assert.Equal("2026-11", sugerencia.VersionCriterios);
         // El aviso llega dos veces: por el registro y por la sugerencia.
         Assert.True(await CentralDePrueba.EsperarAsync(() => central.AvisosCasos.Count(c => c == id) >= 2), "La central no recibió el aviso de la sugerencia.");
         // Plan, 10: al asistente no le llega el teléfono.

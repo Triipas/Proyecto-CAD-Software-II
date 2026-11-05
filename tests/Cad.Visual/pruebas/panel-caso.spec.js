@@ -70,6 +70,17 @@ test.describe('Central: panel del caso', () => {
     // El aviso de «el caso cambió mientras escribías» sigue en la página del panel.
     await expect(marco.locator('[data-caso-cambio]')).toHaveCount(1);
 
+    // Sin minimapa en el panel: el mapa de la central ya muestra el caso (el expediente completo lo conserva).
+    await expect(marco.locator('.mapa--detalle')).toBeHidden();
+
+    // Con el panel abierto, elegir otro caso en la bandeja (su tarjeta) lo carga en el panel; volver al reporte también.
+    const { ids } = leerSemilla();
+    await page.locator(`#sos-${ids.sosPendiente} [data-seleccionar-sos]`).first().click();
+    await expect(marco.locator(`.consola__barra[data-caso="${ids.sosPendiente}"]`)).toBeAttached({ timeout: 10_000 });
+    await page.locator(`#revisar-${id} [data-seleccionar-revisar]`).click();
+    await expect(marco.locator(`.consola__barra[data-caso="${id}"]`)).toBeAttached({ timeout: 10_000 });
+    await expect(marco.locator('.panel-caso__pie')).toContainText('Decide qué hacer con el reporte');
+
     // La ficha del ciudadano, en su pestaña.
     await marco.getByRole('tab', { name: 'Ciudadano' }).click();
     await expect(marco.locator('#panel-ciudadano')).toContainText('Elsa Ficticia');
