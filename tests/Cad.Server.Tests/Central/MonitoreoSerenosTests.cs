@@ -62,6 +62,8 @@ public class MonitoreoSerenosTests(FabricaCad fabrica)
         Assert.Contains("data-lon=\"-77.0345\"", elemento);
         Assert.Contains("Última ubicación a las", elemento);
         Assert.Matches("data-hora=\"\\d{2}:\\d{2}:\\d{2}\"", elemento);
+        Assert.Matches("data-edad-s=\"\\d+\"", elemento); // 06/11/2026: la edad de la posición, que central.js sigue contando
+        Assert.Contains("data-sereno-metros", elemento); // y la distancia, que central.js completa
         // En el mismo mapa que los SOS: la página de la central incluye la sección y el mapa.
         var pagina = await operador.GetStringAsync("/panel/central");
         Assert.Contains("data-region-serenos", pagina);
@@ -81,8 +83,8 @@ public class MonitoreoSerenosTests(FabricaCad fabrica)
         Assert.Contains("data-disponible=\"true\"", Elemento(html, operativo.Id));
         var elementoInactivo = Elemento(html, inactivo.Id);
         Assert.Contains("data-disponible=\"false\"", elementoInactivo);
-        Assert.Contains("No operativo", elementoInactivo);
-        Assert.Contains("No disponible", elementoInactivo);
+        Assert.Contains("Fuera de servicio", elementoInactivo); // 06/11/2026: antes «No operativo»; la ubicación no se comparte
+        Assert.Contains("No comparte ubicación", elementoInactivo);
     }
 
     [Fact]

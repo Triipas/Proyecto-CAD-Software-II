@@ -102,7 +102,11 @@ public class AtencionTests(FabricaCad fabrica)
         var detalle = await operador.GetStringAsync($"/panel/central/sos/{casoId}");
         Assert.Contains("SOS En camino", detalle);
         Assert.Contains("data-avances", detalle);
-        Assert.Contains("data-estado-caso=\"En camino\"", await operador.GetStringAsync("/panel/central?handler=Serenos"));
+        var serenos = await operador.GetStringAsync("/panel/central?handler=Serenos");
+        Assert.Contains("data-estado-caso=\"En camino\"", serenos);
+        // 06/11/2026: la fila del sereno dice de qué tipo es su caso (SOS) y lo muestra como chip de estado.
+        Assert.Contains("class=\"etiqueta-urgente\"", serenos);
+        Assert.Contains("chip chip--progreso", serenos);
     }
 
     [Fact]

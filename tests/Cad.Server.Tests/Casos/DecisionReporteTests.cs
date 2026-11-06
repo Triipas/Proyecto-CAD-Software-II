@@ -223,7 +223,9 @@ public class DecisionReporteTests(FabricaCad fabrica)
         Assert.Equal("Hecho ficticio", despacho.DescripcionReporte);
         Assert.DoesNotContain("Prueba Ciudadano", json);
         // En la lista de serenos de la central, «Ver el caso» lleva al detalle del reporte.
-        Assert.Contains($"href=\"/panel/reportes/{id}\"", await operador.GetStringAsync("/panel/central?handler=Serenos"));
+        var serenos = await operador.GetStringAsync("/panel/central?handler=Serenos");
+        Assert.Contains($"href=\"/panel/reportes/{id}\"", serenos);
+        Assert.Contains("class=\"etiqueta-reporte\"", serenos); // la fila dice que su caso es un reporte
     }
 
     [Fact]

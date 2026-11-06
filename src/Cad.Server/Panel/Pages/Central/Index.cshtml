@@ -167,8 +167,20 @@
                     <span class="visualmente-oculto">Cerrar la lista de serenos</span>
                 </button>
             </div>
-            <div class="panel-flotante__cuerpo" id="cuerpo-serenos">
-                <p class="central__ayuda">Disponible: operativo y sin caso asignado. Elige un sereno para verlo en el mapa.</p>
+            @* 06/11/2026: lo que no se desplaza (resumen, buscador y contexto del caso elegido) queda fijo sobre la lista. El resumen cuenta
+               a los serenos por lo que importa al asignar y cada cifra filtra la lista (central.js las mantiene al día). *@
+            <div class="serenos-cabecera">
+                <div class="serenos-resumen" role="group" aria-label="Serenos por situación: elige una para ver solo esos" data-resumen-serenos>
+                    <button type="button" class="serenos-resumen__celda" aria-pressed="false" data-filtro-grupo="disponibles" title="Disponible: operativo y sin caso asignado">
+                        <b data-cifra="disponibles">@Model.SerenosLibres</b><span>Disponibles</span>
+                    </button>
+                    <button type="button" class="serenos-resumen__celda" aria-pressed="false" data-filtro-grupo="con-caso">
+                        <b data-cifra="con-caso">@Model.SerenosConCaso</b><span>Con caso</span>
+                    </button>
+                    <button type="button" class="serenos-resumen__celda" aria-pressed="false" data-filtro-grupo="fuera">
+                        <b data-cifra="fuera">@Model.SerenosFuera</b><span>Fuera de servicio</span>
+                    </button>
+                </div>
                 @* Filtro por nombre: la lista crece y buscar a ojo no escala. central.js lo reaplica al resincronizar. *@
                 <div class="serenos-filtro">
                     <div class="campo-busqueda">
@@ -178,6 +190,13 @@
                     </div>
                     <p class="texto-secundario" role="status" data-sin-coincidencias hidden>Ningún sereno se llama así.</p>
                 </div>
+                @* Con un caso elegido, los disponibles se ordenan por cercanía a él (central.js). *@
+                <p class="serenos-contexto" data-serenos-contexto hidden>
+                    <partial name="_Icono" model="@("ruta")" />
+                    <span data-texto></span>
+                </p>
+            </div>
+            <div class="panel-flotante__cuerpo" id="cuerpo-serenos">
                 <div data-region-serenos>
                     <partial name="_ListaSerenos" model="@Model.ListaDeSerenos" />
                 </div>

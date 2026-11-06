@@ -16,7 +16,7 @@ test.describe('Central: interacción', () => {
     // Elegir el SOS pendiente: aparece la distancia al sereno disponible más cercano.
     await page.locator('.central__urgente [data-seleccionar-sos]').first().click();
     await expect(page.locator('.etiqueta-despacho')).toHaveText(/\d+ (m|km)/);
-    await expect(page.locator('.sereno--sugerido [data-distancia]')).toContainText('Más cercano al caso elegido');
+    await expect(page.locator('.sereno--sugerido [data-distancia]')).toContainText('Más cercano al SOS elegido');
 
     // Abrir la confirmación desde la barra de asignación rápida: es un diálogo modal con el foco dentro.
     const asignar = page.locator('[data-ar-sugerido]');

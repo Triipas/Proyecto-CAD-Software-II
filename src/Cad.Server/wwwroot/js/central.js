@@ -385,21 +385,73 @@
     if (marcador?.isPopupOpen()) marcador.getPopup().update();
   }
 
-  function calcularDespacho() {
+  // Panel de serenos (06/11/2026): con un caso elegido, los disponibles muestran su distancia a él y se ordenan por cercanía; el
+  // más cercano lleva el tinte y dice por qué es el primero. Sin caso elegido vuelven al orden del servidor (por nombre). No se
+  // inserta ningún nodo en el fragmento del servidor: los textos van en elementos que él ya trae y se reponen tras resincronizar.
+  const contextoSerenos = document.querySelector("[data-serenos-contexto]");
+  let ordenPendiente = false;
+
+  function fijarTexto(elemento, texto) {
+    if (elemento && elemento.textContent !== texto) elemento.textContent = texto;
+  }
+
+  // Ordena las filas de una lista sin que se muevan bajo el cursor: si está sobre la lista, el orden espera a que salga.
+  function ordenarFilas(lista, filas, animar) {
+    if (!lista || filas.every((fila, i) => fila === lista.children[i])) return;
+    if (regionSerenos.matches(":hover")) {
+      ordenPendiente = true;
+      return;
+    }
+    const animando = animar && !panelSerenos.hidden && cadMovimiento.duracion("base") > 0;
+    const antes = animando ? new Map(filas.map((fila) => [fila, fila.getBoundingClientRect().top])) : null;
+    const enfocado = lista.contains(document.activeElement) ? document.activeElement : null;
+    for (const fila of filas) lista.appendChild(fila);
+    if (enfocado && document.activeElement !== enfocado) enfocado.focus({ preventScroll: true });
+    if (!antes) return;
+    for (const fila of filas) {
+      const dy = antes.get(fila) - fila.getBoundingClientRect().top;
+      if (Math.abs(dy) > 0.5)
+        fila.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: cadMovimiento.duracion("base"), easing: cadMovimiento.curva("movimiento") });
+    }
+  }
+
+  function calcularDespacho({ animar = true } = {}) {
     lineaDespacho?.remove();
     lineaDespacho = null;
     sugerencia = null;
     for (const el of regionSerenos.querySelectorAll(".sereno--sugerido")) el.classList.remove("sereno--sugerido");
-    for (const el of regionSerenos.querySelectorAll("[data-distancia]")) el.remove();
+    const libres = [...regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]')];
     const caso = sosSeleccionado && document.getElementById(`sos-${sosSeleccionado}`);
-    if (!caso?.dataset.lat) return;
-    const origen = L.latLng(Number(caso.dataset.lat), Number(caso.dataset.lon));
+    const origen = caso?.dataset.lat ? L.latLng(Number(caso.dataset.lat), Number(caso.dataset.lon)) : null;
+    const medidas = new Map();
     let cercano = null;
-    for (const s of regionSerenos.querySelectorAll('[data-sereno][data-disponible="true"]')) {
-      if (!s.dataset.lat) continue;
-      const destino = L.latLng(Number(s.dataset.lat), Number(s.dataset.lon));
-      const metros = origen.distanceTo(destino);
-      if (!cercano || metros < cercano.metros) cercano = { s, destino, metros };
+    if (origen) {
+      for (const s of libres) {
+        if (!s.dataset.lat) continue;
+        const destino = L.latLng(Number(s.dataset.lat), Number(s.dataset.lon));
+        const metros = origen.distanceTo(destino);
+        medidas.set(s, metros);
+        if (!cercano || metros < cercano.metros) cercano = { s, destino, metros };
+      }
+    }
+    const tipo = caso?.dataset.origen === "Reporte" ? "reporte" : "SOS";
+    for (const s of libres) {
+      fijarTexto(s.querySelector("[data-sereno-metros]"), medidas.has(s) ? distancia(medidas.get(s)) : "");
+      const motivo = s.querySelector("[data-distancia]");
+      if (!motivo) continue;
+      const esElMasCercano = cercano?.s === s;
+      motivo.hidden = !esElMasCercano;
+      fijarTexto(motivo, esElMasCercano ? `Más cercano al ${tipo} elegido` : "");
+    }
+    // Por cercanía (los que no tienen ubicación, al final) o, sin caso elegido, en el orden del servidor.
+    const lejos = Number.POSITIVE_INFINITY;
+    const filas = [...libres].sort((a, b) => (medidas.get(a) ?? lejos) - (medidas.get(b) ?? lejos) || Number(a.dataset.orden) - Number(b.dataset.orden));
+    ordenarFilas(regionSerenos.querySelector('[data-grupo-serenos="disponibles"] .lista-serenos'), filas, animar);
+    const columna = regionSerenos.querySelector('[data-columna="disponibles"]');
+    if (columna) columna.hidden = medidas.size === 0;
+    if (contextoSerenos) {
+      contextoSerenos.hidden = medidas.size === 0;
+      if (medidas.size) fijarTexto(contextoSerenos.querySelector("[data-texto]"), `Ordenados por cercanía al ${tipo} de ${caso.dataset.ciudadano}`);
     }
     if (!cercano) return;
     const texto = distancia(cercano.metros);
@@ -408,8 +460,6 @@
       .bindTooltip(texto, { permanent: true, direction: "center", className: "etiqueta-despacho" })
       .addTo(mapa);
     cercano.s.classList.add("sereno--sugerido");
-    cercano.s.querySelector(".sereno__cabecera")?.insertAdjacentHTML("afterend",
-      `<p class="sereno__distancia" data-distancia>Más cercano al caso elegido · ${texto}</p>`);
   }
 
   // HU25-CA01/CA02/CA03: un marcador por caso en curso, distinto por origen (color) y por estado (con borde; reporte en
@@ -510,6 +560,7 @@
     const vinculados = vinculos();
     dibujarCasosEnCurso(vinculados);
     dibujarSerenos(vinculados);
+    rotularConCaso(vinculados);
     if (abierto.length) enMapa().find((m) => m.claves?.some((c) => abierto.includes(c)))?.openPopup();
     dibujarRecorridos(vinculados);
   }
@@ -662,6 +713,8 @@
     if (desdeMapa) mostrarSerenos(true);
     const item = marcarSereno(id);
     if (item) {
+      // Un filtro de la franja de resumen que lo esconde se quita: el sereno elegido en el mapa tiene que verse en la lista.
+      if (desdeMapa && !item.offsetParent) fijarSolo("");
       if (desdeMapa) {
         item.scrollIntoView({ block: "nearest" });
         item.focus();
@@ -676,6 +729,49 @@
     const boton = evento.target.closest("[data-ver-sereno]");
     if (boton) seleccionarSereno(boton.closest("[data-sereno]").dataset.sereno);
   });
+
+  // Con caso: la distancia a su propio caso (o «En el lugar», como el mapa) a la derecha de cada fila.
+  function rotularConCaso(vinculados = vinculos()) {
+    let alguna = false;
+    for (const item of regionSerenos.querySelectorAll('[data-grupo-serenos="con-caso"] [data-sereno]')) {
+      const vinculo = item.dataset.caso ? vinculados.get(item.dataset.caso) : null;
+      const texto = vinculo?.sereno === item ? (vinculo.enElLugar ? "En el lugar" : distancia(vinculo.metros)) : "";
+      fijarTexto(item.querySelector("[data-sereno-metros]"), texto);
+      if (texto) alguna = true;
+    }
+    const columna = regionSerenos.querySelector('[data-columna="con-caso"]');
+    if (columna) columna.hidden = !alguna;
+  }
+
+  // Un sereno bajo el cursor (o con el foco) se señala en el mapa con un anillo fino, sin mover el mapa. Solo con puntero fino.
+  let serenoSenalado = null;
+  function senalarSereno(id) {
+    if (serenoSenalado === id) return;
+    marcadoresSerenos.get(serenoSenalado)?.getElement()?.classList.remove("marcador--sobre");
+    serenoSenalado = id;
+    reponerSenal();
+  }
+  function reponerSenal() {
+    if (serenoSenalado) marcadoresSerenos.get(serenoSenalado)?.getElement()?.classList.add("marcador--sobre");
+  }
+  const punteroFino = matchMedia("(hover: hover) and (pointer: fine)");
+  regionSerenos.addEventListener("mouseover", (evento) => {
+    if (!punteroFino.matches) return;
+    const item = evento.target.closest("[data-sereno]");
+    senalarSereno(item?.dataset.lat ? item.dataset.sereno : null);
+  });
+  regionSerenos.addEventListener("mouseleave", () => {
+    senalarSereno(null);
+    // El orden por cercanía que esperaba a que el cursor saliera.
+    if (!ordenPendiente) return;
+    ordenPendiente = false;
+    calcularDespacho();
+  });
+  regionSerenos.addEventListener("focusin", (evento) => {
+    const boton = evento.target.closest("[data-ver-sereno]");
+    if (boton) senalarSereno(boton.closest("[data-sereno]").dataset.sereno);
+  });
+  regionSerenos.addEventListener("focusout", () => senalarSereno(null));
 
   // ---------- HU20: asignar el SOS seleccionado a un sereno disponible ----------
   // El operador elige al sereno en la barra de asignación rápida (el más cercano o el que busca); aquí solo se pide
@@ -836,8 +932,70 @@
       if (coincide) visibles++;
     }
     sinCoincidencias.hidden = !consulta || visibles > 0 || items.length === 0;
+    // Buscando por nombre se ven todos los grupos con coincidencias (también «Fuera de servicio», que está plegado) y no queda
+    // un título de grupo sin filas.
+    panelSerenos.classList.toggle("serenos--buscando", Boolean(consulta));
+    for (const grupo of regionSerenos.querySelectorAll("[data-grupo-serenos]"))
+      grupo.classList.toggle("serenos__grupo--vacio", Boolean(consulta) && !grupo.querySelector("[data-sereno]:not(.sereno--oculto)"));
+    // Lo que el servidor rehace y solo sabe el navegador: el grupo plegado y el filtro de la franja de resumen.
+    sincronizarPlegado();
+    if (panelSerenos.dataset.solo && !regionSerenos.querySelector(`[data-grupo-serenos="${panelSerenos.dataset.solo}"]`)) fijarSolo("");
   }
   filtroSerenos.addEventListener("input", aplicarFiltroSerenos);
+
+  // «Fuera de servicio» va plegado; los otros dos grupos se ven siempre. Cada operador lo abre cuando lo necesita.
+  function sincronizarPlegado() {
+    const abierto = panelSerenos.classList.contains("serenos--fuera-abierto") || panelSerenos.classList.contains("serenos--buscando");
+    regionSerenos.querySelector("[data-plegar-grupo]")?.setAttribute("aria-expanded", String(abierto));
+  }
+  regionSerenos.addEventListener("click", (evento) => {
+    if (!evento.target.closest("[data-plegar-grupo]")) return;
+    panelSerenos.classList.toggle("serenos--fuera-abierto");
+    sincronizarPlegado();
+  });
+
+  // La franja de resumen filtra: una cifra deja solo ese grupo; volver a pulsarla los devuelve todos.
+  const resumenSerenos = document.querySelector("[data-resumen-serenos]");
+  function fijarSolo(grupo) {
+    if (grupo) panelSerenos.dataset.solo = grupo;
+    else delete panelSerenos.dataset.solo;
+    for (const celda of resumenSerenos.querySelectorAll("[data-filtro-grupo]"))
+      celda.setAttribute("aria-pressed", String(celda.dataset.filtroGrupo === grupo));
+    if (grupo === "fuera") panelSerenos.classList.add("serenos--fuera-abierto");
+    sincronizarPlegado();
+  }
+  resumenSerenos.addEventListener("click", (evento) => {
+    const celda = evento.target.closest("[data-filtro-grupo]");
+    if (!celda) return;
+    const grupo = celda.dataset.filtroGrupo;
+    // Una situación sin serenos no deja la lista en blanco.
+    if (panelSerenos.dataset.solo !== grupo && !regionSerenos.querySelector(`[data-grupo-serenos="${grupo}"]`)) return;
+    fijarSolo(panelSerenos.dataset.solo === grupo ? "" : grupo);
+  });
+
+  // La edad de la última posición («hace 18 s») sigue contando sola entre resincronizaciones. Parte de la edad que dice el
+  // servidor (no del reloj del navegador, que puede estar desfasado) y se marca en ámbar pasado el umbral que él mismo indica.
+  let origenEdades = new WeakMap();
+  const textoEdad = (s) => (s < 60 ? `hace ${Math.floor(s)} s` : s < 3600 ? `hace ${Math.floor(s / 60)} min` : `hace ${Math.floor(s / 3600)} h`);
+  function contarEdades() {
+    const umbral = Number(regionSerenos.querySelector("[data-lista-serenos]")?.dataset.umbralAntigua) || 120;
+    const ahora = performance.now();
+    for (const el of regionSerenos.querySelectorAll("[data-edad-s]")) {
+      const base = Number(el.dataset.edadS);
+      let origen = origenEdades.get(el);
+      if (!origen || origen.base !== base) origenEdades.set(el, origen = { base, desde: ahora });
+      const segundos = base + (ahora - origen.desde) / 1000;
+      fijarTexto(el.querySelector("[data-edad-texto]"), textoEdad(segundos));
+      el.classList.toggle("sereno__edad--antigua", segundos >= umbral);
+      el.querySelector(".sereno__edad-alerta")?.toggleAttribute("hidden", segundos < umbral);
+    }
+  }
+  // Con el servidor recién resincronizado, la cuenta parte de cero otra vez.
+  function reiniciarEdades() {
+    origenEdades = new WeakMap();
+    contarEdades();
+  }
+  setInterval(() => { if (!panelSerenos.hidden) contarEdades(); }, 5000);
 
   function abrirConfirmacion(itemSereno) {
     const sos = document.getElementById(`sos-${sosSeleccionado}`);
@@ -880,6 +1038,7 @@
   const CLAVE_SERENOS = "cad-central-serenos";
   function mostrarSerenos(abierto, { devolverFoco = null, recordar = true } = {}) {
     panelSerenos.hidden = !abierto;
+    if (abierto) contarEdades();
     for (const boton of document.querySelectorAll("[data-abrir-serenos]")) boton.setAttribute("aria-expanded", String(abierto));
     if (recordar) { try { localStorage.setItem(CLAVE_SERENOS, abierto ? "abierto" : "cerrado"); } catch { /* sin almacenamiento */ } }
     devolverFoco?.focus();
@@ -1031,10 +1190,14 @@
         if (seleccionado) marcarSereno(seleccionado);
         aplicarFiltroSerenos();
         actualizarAsignacion();
-        calcularDespacho();
+        // Sin animar el orden aquí: actualizarRegion ya desliza lo que cambia de sitio al resincronizar.
+        calcularDespacho({ animar: false });
+        rotularConCaso();
+        reiniciarEdades();
       },
     });
     dibujarEnCurso();
+    reponerSenal();
     if (seleccionado) resaltar(marcadoresSerenos, seleccionado);
     dibujarDespacho();
     actualizarIndicadores();
@@ -1062,6 +1225,10 @@
     fijarIndicador("serenos-libres", operativos, `de ${registrados} ${registrados === 1 ? "sereno activo" : "serenos activos"}`);
     cadMovimiento.fijarCifra(document.querySelector("[data-serenos-activos]"), operativos);
     cadMovimiento.fijarCifra(document.querySelector("[data-serenos-registrados]"), registrados);
+    // La franja de resumen del panel de serenos: disponibles, con caso y fuera de servicio.
+    for (const [grupo, dato] of [["disponibles", "disponibles"], ["con-caso", "conCaso"], ["fuera", "fuera"]]) {
+      if (lista) cadMovimiento.fijarCifra(document.querySelector(`[data-cifra="${grupo}"]`), Number(lista.dataset[dato]) || 0);
+    }
   }
 
   // ---------- Aviso visual y sonoro ----------
