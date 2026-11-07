@@ -34,8 +34,8 @@
 
         <Label Text="Fecha de nacimiento" Style="{StaticResource Etiqueta}" Margin="0,6,0,0" />
         <Border Style="{StaticResource MarcoCampo}">
-            <Entry Text="{Binding FechaNacimiento}" Keyboard="Numeric" MaxLength="10" Placeholder="dd/mm/aaaa"
-                   SemanticProperties.Description="Fecha de nacimiento, día barra mes barra año" />
+            <Entry Text="{Binding FechaNacimiento}" Keyboard="Numeric" MaxLength="10" Placeholder="dd mm aaaa"
+                   SemanticProperties.Description="Fecha de nacimiento: día, mes y año, por ejemplo 17 05 1990" />
         </Border>
         <Label Text="{Binding ErrorFechaNacimiento}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFechaNacimiento}" />
 

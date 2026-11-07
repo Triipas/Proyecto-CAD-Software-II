@@ -218,6 +218,36 @@ public class PerfilTests
         Assert.Equal("Revisa los datos marcados.", vistaModelo.Mensaje);
     }
 
+    // El teclado numérico de Android no trae «/» (revisión del PR #137): la fecha se acepta solo con dígitos o con otro separador.
+    [Theory]
+    [InlineData("17051990")]
+    [InlineData("17/05/1990")]
+    [InlineData("17-05-1990")]
+    [InlineData("17.05.1990")]
+    [InlineData(" 17 5 1990 ")]
+    public void LeerFecha_SinBarrasOConOtrosSeparadores_SeEntiende(string escrita) =>
+        Assert.Equal(new DateOnly(1990, 5, 17), FormularioDatosCiudadano.LeerFecha(escrita));
+
+    [Theory]
+    [InlineData("1990-05-17")]
+    [InlineData("1705199")]
+    [InlineData("31021990")]
+    public void LeerFecha_Ambigua_OImposible_NoSeAcepta(string escrita) =>
+        Assert.Null(FormularioDatosCiudadano.LeerFecha(escrita));
+
+    [Fact]
+    public async Task MisDatos_FechaSoloConDigitos_SeEnvia()
+    {
+        api.Perfil = PerfilCompleto();
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
+        await vistaModelo.CargarAsync();
+        vistaModelo.FechaNacimiento = "02031985";
+
+        await vistaModelo.Guardar.EjecutarAsync();
+
+        Assert.Equal(new DateOnly(1985, 3, 2), Assert.Single(api.PerfilesEnviados).FechaNacimiento);
+    }
+
     private PerfilCiudadanoVista PerfilCompleto() => api.Perfil with
     {
         TipoDocumento = "DNI", NumeroDocumento = "12345678", FechaNacimiento = new DateOnly(1990, 5, 17),

@@ -86,7 +86,7 @@ public abstract class FormularioDatosCiudadano : VistaModeloBase
         var fechaMalEscrita = false;
         if (FechaNacimiento.Trim().Length > 0)
         {
-            if (DateOnly.TryParseExact(FechaNacimiento.Trim(), ["dd/MM/yyyy", "d/M/yyyy"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            if (LeerFecha(FechaNacimiento) is { } fecha)
                 nacimiento = fecha;
             else
                 fechaMalEscrita = true;
@@ -98,12 +98,27 @@ public abstract class FormularioDatosCiudadano : VistaModeloBase
 
         ValidacionDatosCiudadano.Validar(encontrados, datos, hoy, celularPropio);
         if (fechaMalEscrita)
-            encontrados["fechaNacimiento"] = ["Escribe la fecha como día/mes/año, por ejemplo 17/05/1990."];
+            encontrados["fechaNacimiento"] = ["Escribe la fecha como día, mes y año, por ejemplo 17/05/1990 o 17051990."];
         MostrarErrores(encontrados);
         if (encontrados.Count == 0)
             return datos;
         (TipoMensaje, Mensaje) = ("error", "Revisa los datos marcados.");
         return null;
+    }
+
+    // El teclado numérico de Android no trae «/»: se acepta la fecha solo con dígitos (17051990) o con cualquier separador
+    // (17/05/1990, 17-05-1990, 17.05.1990, 17 05 1990).
+    public static DateOnly? LeerFecha(string texto)
+    {
+        var partes = System.Text.RegularExpressions.Regex.Split(texto.Trim(), @"\D+").Where(p => p.Length > 0).ToArray();
+        var normalizada = partes switch
+        {
+            [var solo] when solo.Length == 8 => $"{solo[..2]}/{solo[2..4]}/{solo[4..]}",
+            [var d, var m, var a] => $"{d}/{m}/{a}",
+            _ => null,
+        };
+        return normalizada is not null && DateOnly.TryParseExact(normalizada, ["dd/MM/yyyy", "d/M/yyyy"], CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var fecha) ? fecha : null;
     }
 
     protected static DateOnly Hoy(TimeProvider reloj) => DateOnly.FromDateTime(reloj.GetLocalNow().DateTime);
