@@ -157,7 +157,7 @@ public class RetiroReporteTests(FabricaCad fabrica)
         await operador.IngresarAlPanelAsync(cuenta.Correo, cuenta.Clave);
 
         var detalle = await operador.GetStringAsync($"/panel/reportes/{id}");
-        var bandeja = await operador.GetStringAsync("/panel/reportes");
+        var bandeja = await operador.GetStringAsync("/panel/central?handler=PorRevisar");
         var historial = await operador.GetStringAsync($"/panel/casos/{id}/historial");
 
         Assert.Contains("data-retirado", detalle);

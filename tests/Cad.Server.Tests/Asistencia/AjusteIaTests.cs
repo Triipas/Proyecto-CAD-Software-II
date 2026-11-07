@@ -56,7 +56,7 @@ public sealed class AjusteIaTests(FabricaCad fabrica) : IAsyncLifetime
     private static async Task<HttpResponseMessage> PausarAsync(HttpClient navegador) =>
         await navegador.PostAsync("/panel/reportes?handler=Pausar", new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, "/panel/reportes"),
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(navegador, "/panel/central"),
         }));
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class AjusteIaTests(FabricaCad fabrica) : IAsyncLifetime
         try
         {
             var (operador, cuenta) = await ConSesionAsync(Roles.Operador);
-            Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/reportes"));
+            Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/central"));
             Assert.Equal(HttpStatusCode.Redirect, (await PausarAsync(operador)).StatusCode);
             var (administrador, _) = await ConSesionAsync(Roles.Administrador);
 
@@ -89,7 +89,7 @@ public sealed class AjusteIaTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Equal(ModoAdmision.Apagada, (await AjusteAsync()).Modo);
         var (operador, _) = await ConSesionAsync(Roles.Operador);
 
-        Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/reportes"));
+        Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/central"));
         Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/central"));
     }
 
@@ -136,7 +136,7 @@ public sealed class AjusteIaTests(FabricaCad fabrica) : IAsyncLifetime
         await CambiarAsync(administrador, "Activa", "Prueba de la demostración");
         var (operador, cuenta) = await ConSesionAsync(Roles.Operador);
 
-        var reportes = WebUtility.HtmlDecode(await operador.GetStringAsync("/panel/reportes"));
+        var reportes = WebUtility.HtmlDecode(await operador.GetStringAsync("/panel/central"));
         Assert.Contains("data-admision-automatica=\"Activa\"", reportes);
         Assert.Contains("Admisión automática: «Activa»", reportes);
         Assert.Contains("data-pausar-admision", reportes);
@@ -148,7 +148,7 @@ public sealed class AjusteIaTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Equal(ModoAdmision.Apagada, (await AjusteAsync()).Modo);
         var pausa = Assert.Single(await CambiosDeAsync(cuenta.Id));
         Assert.Equal((ModoAdmision.Activa, ModoAdmision.Apagada, CambiarAjusteIa.MotivoPausaOperador), (pausa.ModoAnterior, pausa.ModoNuevo, pausa.Motivo));
-        Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/reportes"));
+        Assert.DoesNotContain("data-admision-automatica", await operador.GetStringAsync("/panel/central"));
 
         // Pausar otra vez no registra un segundo cambio; y el operador no puede reactivarla (la página del administrador lo rechaza).
         await PausarAsync(operador);

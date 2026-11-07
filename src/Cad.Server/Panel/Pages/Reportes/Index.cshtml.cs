@@ -1,40 +1,23 @@
 using Cad.Server.Compartido;
-using Cad.Server.Modulos.Asistencia;
 using Cad.Server.Modulos.Asistencia.Aplicacion;
-using Cad.Server.Modulos.Consultas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Cad.Server.Panel.Pages.Reportes;
 
-// E5 — página «Reportes»: reportes recibidos y en revisión (HU14). Solo operadores.
-// HU44: la categoría que sugiere el asistente, cuando difiere de la vigente. HU45 (S6-T15): aviso del modo de la admisión
-// automática y su pausa.
+// 06/11/2026: «Reportes» ya no es una sección del panel. Los reportes por revisar y por asignar están en la pestaña «Reportes» de
+// la bandeja de la central (con «Nuevo reporte» y los criterios de triaje); esta ruta redirige allí y conserva la pausa de la
+// admisión automática (HU45), que el aviso de la central envía aquí. Solo operadores.
 [Authorize(Policy = Politicas.OperadorAutorizado)]
-public class IndexModel(ConsultarReportes consultar, ConsultarAsistencia consultarAsistencia, IConfiguration configuracion) : PageModel
+public class IndexModel : PageModel
 {
-    public IReadOnlyList<ReporteEnBandeja> Reportes { get; private set; } = [];
-    public IReadOnlyDictionary<Guid, string> CategoriasSugeridas { get; private set; } = new Dictionary<Guid, string>();
-    public AjusteIaVista Ajuste { get; private set; } = null!;
-    // S6-T16: cuándo se admitirá solo cada reporte que espera el retraso.
-    public IReadOnlyDictionary<Guid, DateTimeOffset> Programadas { get; private set; } = new Dictionary<Guid, DateTimeOffset>();
+    public IActionResult OnGet() => Redirect("/panel/central?pestana=reportes");
 
     [TempData]
     public string? Mensaje { get; set; }
 
-    public TimeZoneInfo ZonaHoraria =>
-        TimeZoneInfo.FindSystemTimeZoneById(configuracion["Panel:ZonaHoraria"] ?? "America/Lima");
-
-    public async Task OnGetAsync(CancellationToken ct)
-    {
-        Reportes = await consultar.EjecutarAsync(ct);
-        CategoriasSugeridas = await consultarAsistencia.CategoriasDistintasAsync(Reportes.Select(r => r.Id).ToList(), ct);
-        Ajuste = await consultarAsistencia.AjusteAsync(ct);
-        Programadas = await consultarAsistencia.ProgramadasAsync(Reportes.Select(r => r.Id).ToList(), ct);
-    }
-
-    // HU45 (7.2): el operador solo puede pausar la admisión automática (pasa a «Apagada»). Vuelve a donde estaba (Reportes o Central).
+    // HU45 (7.2): el operador solo puede pausar la admisión automática (pasa a «Apagada»). Vuelve a la central.
     public async Task<IActionResult> OnPostPausarAsync([FromServices] CambiarAjusteIa cambiar, CancellationToken ct)
     {
         Mensaje = await cambiar.PausarAsync(User.IdUsuario(), ct) is ResultadoAjusteIa.Cambiado
@@ -43,6 +26,6 @@ public class IndexModel(ConsultarReportes consultar, ConsultarAsistencia consult
         var origen = Request.Headers.Referer.ToString();
         return Uri.TryCreate(origen, UriKind.Absolute, out var url) && url.AbsolutePath == "/panel/central"
             ? Redirect("/panel/central")
-            : RedirectToPage();
+            : Redirect("/panel/central?pestana=reportes");
     }
 }

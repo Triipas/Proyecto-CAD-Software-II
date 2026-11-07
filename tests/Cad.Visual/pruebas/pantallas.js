@@ -12,7 +12,8 @@ export const pantallas = [
   { nombre: 'sos-pendiente', rol: 'operador', ruta: (ids) => `/panel/central/sos/${ids.sosPendiente}` },
   { nombre: 'sos-cerrado', rol: 'operador', ruta: (ids) => `/panel/central/sos/${ids.sosCerrado}` },
   { nombre: 'historial-sos', rol: 'operador', ruta: (ids) => `/panel/casos/${ids.sosCerrado}/historial` },
-  { nombre: 'reportes', rol: 'operador', ruta: () => '/panel/reportes' },
+  // 06/11/2026: la antigua sección «Reportes» es la pestaña «Reportes» de la central.
+  { nombre: 'reportes', rol: 'operador', ruta: () => '/panel/central?pestana=reportes', tiempoReal: true },
   { nombre: 'reporte-recibido', rol: 'operador', ruta: (ids) => `/panel/reportes/${ids.reporteRecibido}` },
   { nombre: 'reporte-en-revision', rol: 'operador', ruta: (ids) => `/panel/reportes/${ids.reporteEnRevision}` },
   { nombre: 'reporte-admitido', rol: 'operador', ruta: (ids) => `/panel/reportes/${ids.reporteAdmitido}` },

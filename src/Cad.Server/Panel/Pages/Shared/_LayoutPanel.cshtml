@@ -9,7 +9,7 @@
     // Navegación orientativa por rol: los permisos los decide siempre el servidor (HU03).
     var enlaces = rol switch
     {
-        Roles.Operador => new[] { ("/panel/central", "Central"), ("/panel/reportes", "Reportes"), ("/panel/casos", "Casos"), ("/panel/mapa-concentracion", "Mapa de concentración"), ("/panel/acompanamientos", "Acompañamientos"), ("/panel/analitica", "Analítica") },
+        Roles.Operador => new[] { ("/panel/central", "Central"), ("/panel/casos", "Casos"), ("/panel/mapa-concentracion", "Mapa de concentración"), ("/panel/acompanamientos", "Acompañamientos"), ("/panel/analitica", "Analítica") },
         Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales"), ("/panel/admin/ia", "Asistencia con IA") },
         _ => Array.Empty<(string, string)>(),
     };
@@ -52,7 +52,7 @@
                 <ul class="barra__secciones">
                     @foreach (var (href, texto) in enlaces)
                     {
-                        <li><a class="barra__seccion" href="@href" aria-current="@(ruta.StartsWith(href) ? "page" : null)">@texto</a></li>
+                        <li><a class="barra__seccion" href="@href" aria-current="@(ruta.StartsWith(href) || (href == "/panel/central" && (ruta.StartsWith("/panel/reportes") || ruta.StartsWith("/panel/criterios-triaje"))) ? "page" : null)">@texto</a></li>
                     }
                 </ul>
             </nav>

@@ -2447,3 +2447,69 @@
     display: grid;
   }
 }
+
+/* ── Pestaña «Reportes» de la bandeja (06/11/2026) ──────────
+   «Nuevo reporte» (secundario: el azul es de «Decidir» en cada tarjeta) y el enlace a los criterios de triaje, arriba. Los dos
+   abren en el panel del caso. */
+.central .bandeja__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-3);
+}
+
+.central .bandeja__enlace {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  text-underline-offset: 0.2em;
+}
+
+.central .bandeja__hecho time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Situaciones plegables de la pestaña «Reportes» (06/11/2026) ──
+   El título es un botón de 44 px con su cifra a la vista; plegado, el cuerpo se oculta (sigue en el DOM: la bandeja lo
+   resincroniza igual). El chevron apunta a la derecha plegado y hacia abajo abierto, como el de «Fuera de servicio». */
+.central .bandeja__plegar {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  width: 100%;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-control);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.central .bandeja__plegar .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-texto-secundario);
+  transform: rotate(180deg);
+  transition: transform var(--duracion-rapida) var(--curva-estandar);
+}
+
+.central .bandeja__plegar[aria-expanded="true"] .icono {
+  transform: rotate(-90deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .central .bandeja__plegar:hover .icono {
+    color: var(--color-texto);
+  }
+}
+
+.central .bandeja__cuerpo-seccion {
+  display: grid;
+  gap: var(--espacio-2);
+}

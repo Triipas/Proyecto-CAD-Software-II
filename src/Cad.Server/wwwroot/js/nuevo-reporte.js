@@ -44,3 +44,10 @@
   // Tras un envío con errores, el punto elegido se conserva.
   if (latitud.value && longitud.value) marcar(L.latLng(Number(latitud.value), Number(longitud.value)), true);
 })();
+
+// 06/11/2026: en el panel de la central, «Cancelar» cierra el panel en vez de ir a otra página.
+document.querySelector("[data-cerrar-panel-pagina]")?.addEventListener("click", (evento) => {
+  if (document.body.dataset.enPanel !== "true" || window.parent === window) return;
+  evento.preventDefault();
+  window.parent.postMessage({ tipo: "cad-panel-cerrar" }, location.origin);
+});

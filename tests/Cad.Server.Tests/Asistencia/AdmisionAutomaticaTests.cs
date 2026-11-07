@@ -168,7 +168,7 @@ public sealed class AdmisionAutomaticaTests(FabricaCad fabrica) : IAsyncLifetime
         var operador = await OperadorAsync();
 
         // Mientras corre el retraso, la lista y el detalle lo avisan.
-        Assert.Contains("data-admision-programada", await operador.GetStringAsync("/panel/reportes"));
+        Assert.Contains("data-admision-programada", await operador.GetStringAsync("/panel/central"));
         Assert.Contains("El sistema lo admitirá solo a las", WebUtility.HtmlDecode(await operador.GetStringAsync($"/panel/reportes/{id}")));
 
         var cuenta = await fabrica.CrearAsync(Roles.Operador);
@@ -316,7 +316,7 @@ public sealed class AdmisionAutomaticaTests(FabricaCad fabrica) : IAsyncLifetime
         var cambio = await fabrica.ConBaseDatosAsync(db => db.CambiosAjusteIa.AsNoTracking().OrderByDescending(c => c.En).FirstAsync());
         Assert.Equal((ModoAdmision.Activa, ModoAdmision.Sombra, UsuarioSistema.Id), (cambio.ModoAnterior, cambio.ModoNuevo, cambio.ActorId));
         Assert.StartsWith("Freno automático:", cambio.Motivo);
-        var reportes = WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/reportes"));
+        var reportes = WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/central"));
         Assert.Contains("Pasó sola a «Sombra». Freno automático:", reportes);
     }
 }

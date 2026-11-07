@@ -4,6 +4,9 @@
 @{
     ViewData["Title"] = "Nuevo reporte";
     ViewData["TituloResumenErrores"] = "No se pudo registrar el reporte";
+    // 06/11/2026: el formulario se abre en el panel del caso de la central (Panel/ModoPanel.cs), sin salir del mapa.
+    ViewData[Cad.Server.Panel.ModoPanel.ClaveVista] = true;
+    var enPanel = Cad.Server.Panel.ModoPanel.Activo(HttpContext.Request);
     var r = Model.Reporte;
     var errorUbicacion = Model.ErrorDe("ubicacion") ?? Model.ErrorDe("ubicacion.referencia");
 }
@@ -12,7 +15,11 @@
     <link rel="stylesheet" href="~/css/reportes.css" asp-append-version="true" />
 }
 
-<p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
+<div class="panel-formulario">
+@if (!enPanel)
+{
+    <p><a class="enlace-volver" href="/panel/central?pestana=reportes">← Central</a></p>
+}
 
 <div class="pagina__encabezado">
     <div>
@@ -103,10 +110,11 @@
     </section>
 
     <div class="acciones">
-        <a class="boton boton--secundario" href="/panel/reportes">Cancelar</a>
+        <a class="boton boton--secundario" href="/panel/central?pestana=reportes" data-cerrar-panel-pagina>Cancelar</a>
         <button type="submit" class="boton boton--principal" data-texto-carga="Registrando…">Registrar el reporte</button>
     </div>
 </form>
+</div>
 
 @section Scripts {
     <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
