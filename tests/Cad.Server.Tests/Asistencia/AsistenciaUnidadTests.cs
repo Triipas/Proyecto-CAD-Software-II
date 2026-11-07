@@ -41,8 +41,49 @@ public class AnonimizadorTests
 
     [Theory]
     [InlineData("En la cuadra 3 de Av. Ejército 512, a las 15:30")]
-    [InlineData("Eran 2 en moto, placa ABC-123")]
+    [InlineData("Eran 2 en moto y se fueron hacia el parque")]
+    [InlineData("mi vecino del 3 escuchó gritos")] // sin un nombre propio después
+    [InlineData("Soy de Arequipa y pasaba por ahí")]
     public void ConservaDireccionesHorasYNumerosCortos(string texto) => Assert.Equal(texto, Anonimizador.Limpiar(texto));
+
+    // ADR-10, «Anonimización: ley y estándares»: las placas identifican al propietario; el asistente no las necesita.
+    [Theory]
+    [InlineData("Eran 2 en moto, placa ABC-123", "Eran 2 en moto, placa [placa]")]
+    [InlineData("una camioneta a1b234 blanca", "una camioneta [placa] blanca")]
+    public void QuitaPlacas(string texto, string esperado) => Assert.Equal(esperado, Anonimizador.Limpiar(texto));
+
+    [Theory]
+    [InlineData("Me llamo Rosa Ficticia y vi el robo", "Me llamo [nombre] y vi el robo")]
+    [InlineData("el señor Juan Pérez Quispe gritaba", "el señor [nombre] gritaba")]
+    [InlineData("mi vecina Marta salió a ayudar", "mi vecina [nombre] salió a ayudar")]
+    [InlineData("la Sra. Lucía cerró la tienda", "la Sra. [nombre] cerró la tienda")]
+    public void QuitaNombresPresentadosComoTales(string texto, string esperado) => Assert.Equal(esperado, Anonimizador.Limpiar(texto));
+
+    [Fact]
+    public void QuitaLosNombresConocidosDeQuienReporta_AunqueNoSePresenten()
+    {
+        var limpio = Anonimizador.Limpiar("rosa y su prima vieron a dos hombres frente a lo de Quispe; avisen a Marta",
+            ["Rosa", "Ficticia Quispe", "Marta Ficticia", null]);
+
+        Assert.Equal("[nombre] y su prima vieron a dos hombres frente a lo de [nombre]; avisen a [nombre]", limpio);
+    }
+
+    // Revisión del PR #139: un tercero que comparte una parte del nombre con quien reporta no deja escapar el resto.
+    [Fact]
+    public void UnNombrePresentado_QueCompartePalabraConUnNombreConocido_SeQuitaEntero() =>
+        Assert.Equal("mi vecina [nombre] salió", Anonimizador.Limpiar("mi vecina Rosa García salió", ["Rosa Quispe"]));
+
+    // Revisión del PR #139: los nombres con guion o apóstrofo no se descartan.
+    [Theory]
+    [InlineData("avisen a Pérez-García", "Pérez-García", "avisen a [nombre]")]
+    [InlineData("lo vio d'angelo desde la tienda", "Luis D'Angelo", "lo vio d'[nombre] desde la tienda")]
+    [InlineData("el señor Pérez-García gritaba", null, "el señor [nombre] gritaba")]
+    public void NombresConGuionOApostrofo_SeQuitan(string texto, string? conocido, string esperado) =>
+        Assert.Equal(esperado, Anonimizador.Limpiar(texto, [conocido]));
+
+    [Fact]
+    public void LasPalabrasCortasDeUnNombre_NoSeQuitan() =>
+        Assert.Equal("la casa de la esquina", Anonimizador.Limpiar("la casa de la esquina", ["María de la Cruz"]));
 }
 
 // HU44-CA05 y HU45-CA04/CA08 (plan, 5.5): la respuesta se valida antes de guardarla.

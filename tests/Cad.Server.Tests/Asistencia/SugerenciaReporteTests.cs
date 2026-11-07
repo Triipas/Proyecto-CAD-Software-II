@@ -141,6 +141,21 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Contains("[dato]", recibida.Descripcion);
     }
 
+    // ADR-10, «Anonimización: ley y estándares»: tampoco el nombre de quien reporta (aunque lo escriba sin presentarse) ni una placa.
+    [Fact]
+    public async Task AlAsistente_NoLeLleganElNombreDeQuienReportaNiLasPlacas()
+    {
+        falso.Responder = (_, _) => Task.FromResult<ResultadoAsistente?>(Sugerir(CategoriaIncidencia.RoboOHurto.Id));
+
+        // Las cuentas de prueba se llaman «Prueba Ciudadano».
+        var (id, _) = await RegistrarAsync("Prueba aquí: dos sujetos en la moto de placa ABC-123 me quitaron la mochila",
+            CategoriaIncidencia.Otros.Id);
+
+        await EsperarSugerenciaAsync(id);
+        var recibida = falso.Recibidas.Single(e => e.CasoId == id);
+        Assert.Equal("[nombre] aquí: dos sujetos en la moto de placa [placa] me quitaron la mochila", recibida.Descripcion);
+    }
+
     [Fact]
     public async Task HU44_CA02_ConSugerenciaDistinta_UsarEstaCategoriaSoloEnRevisionYRegistraLaCorreccionComoHoy()
     {
