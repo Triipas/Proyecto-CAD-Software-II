@@ -69,6 +69,8 @@ public class IndexModel(ConsultarSosPendientes consultar, ConsultarSerenos consu
     public int PorAsignar => Pendientes.Count + ReportesAdmitidos.Count;
     public int SerenosLibres => Serenos.Count(s => s.Disponible);
     public int SerenosOperativos => Serenos.Count(s => s.Operativo);
+    public int SerenosConCaso => Serenos.Count(s => !s.Disponible && s.ConAsignacion);
+    public int SerenosFuera => Serenos.Count(s => !s.Disponible && !s.ConAsignacion);
     // 05/11/2026: la cifra de la cabecera y del mapa dice cuántos serenos están activos (operativos) de los registrados.
     public int SerenosRegistrados { get; private set; }
 
@@ -137,4 +139,8 @@ public sealed record ListaPorRevisar(IReadOnlyList<ReporteEnBandeja> Reportes, I
     IReadOnlyDictionary<Guid, DateTimeOffset> Programadas, TimeZoneInfo ZonaHoraria);
 
 // Registrados: todos los serenos del sistema, también los de cuenta desactivada (la lista solo trae las activas).
-public sealed record ListaSerenos(IReadOnlyList<SerenoMonitoreo> Serenos, TimeZoneInfo ZonaHoraria, int Registrados);
+public sealed record ListaSerenos(IReadOnlyList<SerenoMonitoreo> Serenos, TimeZoneInfo ZonaHoraria, int Registrados)
+{
+    // 06/11/2026: pasado este tiempo sin una posición nueva, la edad de la ubicación de un sereno se marca en ámbar (con icono).
+    public const int UmbralPosicionAntiguaSegundos = 120;
+}

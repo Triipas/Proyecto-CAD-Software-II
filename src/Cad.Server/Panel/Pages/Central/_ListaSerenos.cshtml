@@ -4,17 +4,34 @@
     var inv = CultureInfo.InvariantCulture;
     var operativos = Model.Serenos.Count(s => s.Operativo);
     var disponibles = Model.Serenos.Count(s => s.Disponible);
+    var conCaso = Model.Serenos.Count(s => !s.Disponible && s.ConAsignacion);
+    var fuera = Model.Serenos.Count(s => !s.Disponible && !s.ConAsignacion);
+    var ahora = DateTimeOffset.UtcNow;
 }
-@* HU19 — fragmento de serenos. Lo genera el servidor en la carga inicial y al resincronizar (HU19-CA03). *@
-<div data-lista-serenos data-operativos="@operativos" data-disponibles="@disponibles" data-registrados="@Model.Registrados">
+@functions {
+    // Las dos primeras iniciales del nombre, para el escudo (el mismo del marcador del mapa).
+    static string Iniciales(string nombre) =>
+        string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+}
+@* HU19 — fragmento de serenos. Lo genera el servidor en la carga inicial y al resincronizar (HU19-CA03).
+   06/11/2026: tablero en filas (escudo, estado, edad de la posición y distancia) en vez de tarjetas iguales; central.js pone la
+   distancia (al caso elegido en «Disponibles», a su propio caso en «Con caso») y cuenta la edad de la posición. *@
+<div data-lista-serenos data-operativos="@operativos" data-disponibles="@disponibles" data-con-caso="@conCaso" data-fuera="@fuera"
+     data-registrados="@Model.Registrados" data-umbral-antigua="@ListaSerenos.UmbralPosicionAntiguaSegundos">
     @if (Model.Serenos.Count == 0)
     {
         <p class="texto-secundario">No hay cuentas de sereno activas.</p>
     }
     else
     {
-        <p class="texto-secundario" data-suave>@operativos operativo@(operativos == 1 ? "" : "s") · @disponibles disponible@(disponibles == 1 ? "" : "s")</p>
-        @* 05/11/2026: agrupados por lo que importa al asignar: disponibles, con caso y fuera de servicio (cada tarjeta, igual). *@
+        if (disponibles == 0)
+        {
+            <p class="serenos__sin-libres" role="status" data-sin-disponibles>
+                <partial name="_Icono" model="@("advertencia")" />
+                <span>@(operativos == 0 ? "Ningún sereno está operativo." : "Ningún sereno disponible: todos los operativos tienen un caso.")</span>
+            </p>
+        }
+        @* Agrupados por lo que importa al asignar: disponibles, con caso y fuera de servicio (este, plegado). *@
         @foreach (var (titulo, grupo, clave) in new[]
         {
             ("Disponibles", Model.Serenos.Where(s => s.Disponible).ToList(), "disponibles"),
@@ -23,62 +40,133 @@
         })
         {
             if (grupo.Count == 0) continue;
-            <section class="serenos__grupo" data-grupo-serenos="@clave" aria-label="@titulo">
-                <h3 class="serenos__grupo-titulo">@titulo <span>@grupo.Count</span></h3>
-                <ul class="lista-serenos">
-                    @foreach (var sereno in grupo)
+            <section class="serenos__grupo serenos__grupo--@clave" data-grupo-serenos="@clave" aria-label="@titulo">
+                <h3 class="serenos__grupo-titulo">
+                    @if (clave == "fuera")
                     {
-                <li class="sereno @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
-                    data-sereno="@sereno.Id" data-nombre="@sereno.Nombre"
-                    data-disponible="@(sereno.Disponible ? "true" : "false")"
-                    data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)" data-caso="@sereno.CasoAsignadoId"
-                    data-hora="@(sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "")" data-clave="@sereno.Id">
-                    <div class="sereno__cabecera">
-                        @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is not null)
-                        {
-                            @* 29/10/2026: como en las tarjetas de SOS y reportes, la tarjeta entera es el botón (el del nombre, extendido a
-                               toda la tarjeta): lleva el mapa al sereno. Sin ubicación no hay a dónde llevarlo y el nombre es solo texto. *@
-                            <button type="button" class="sereno__nombre sereno__seleccionar" data-ver-sereno aria-pressed="false">@sereno.Nombre<span class="visualmente-oculto">: ver su ubicación en el mapa</span></button>
-                        }
-                        else
-                        {
-                            <span class="sereno__nombre">@sereno.Nombre</span>
-                        }
-                        <span class="estado @(sereno.Operativo ? "estado--activa" : "estado--inactiva")" data-suave>
-                            <partial name="_Icono" model="@(sereno.Operativo ? "exito" : "informacion")" />@(sereno.Operativo ? "Operativo" : "No operativo")
-                        </span>
-                        <span class="sereno__disponibilidad" data-suave>@(sereno.Disponible ? "Disponible" : sereno.ConAsignacion ? "No disponible · con asignación vigente" : "No disponible")</span>
-                    </div>
-                    @if (!sereno.Operativo && sereno.ConAsignacion)
-                    {
-                        @* 24/10/2026 (DP16-b): se desactivó con un caso en curso; el caso sigue a su nombre. *@
-                        <p class="sereno__alerta" data-desactivado-con-caso>
-                            <partial name="_Icono" model="@("advertencia")" />
-                            <span>Se desactivó con el caso en curso: no se ve su ubicación y el caso sigue a su nombre.</span>
-                        </p>
-                    }
-                    @if (sereno.CasoAsignadoId is { } casoAsignado)
-                    {
-                        @* HU23-CA03: el estado del caso asignado se refleja en la central. *@
-                        <p class="sereno__caso" data-estado-caso="@sereno.EstadoCasoAsignado" data-suave>
-                            Caso @sereno.EstadoCasoAsignado · <a href="@(sereno.CasoAsignadoEsReporte ? $"/panel/reportes/{casoAsignado}" : $"/panel/central/sos/{casoAsignado}")">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
-                        </p>
-                    }
-                    @if (sereno.UbicacionDisponible && sereno.UltimaPosicionEn is { } recibida)
-                    {
-                        <p class="sereno__ubicacion">
-                            <partial name="_Icono" model="@("reloj")" />
-                            <span>Última ubicación a las @TimeZoneInfo.ConvertTime(recibida, Model.ZonaHoraria).ToString("HH:mm:ss", inv) · ± @sereno.PrecisionMetros?.ToString("0", inv) m</span>
-                        </p>
+                        <button type="button" class="serenos__plegar" aria-expanded="false" aria-controls="lista-serenos-fuera" data-plegar-grupo>
+                            <partial name="_Icono" model="@("izquierda")" />@titulo <span>@grupo.Count</span>
+                        </button>
                     }
                     else
                     {
-                        @* HU19-CA04: sin posiciones recibidas (o sin compartirlas por no estar operativo) no hay
-                           marcador ni coordenadas inventadas. *@
-                        <p class="sos__ubicacion sos__ubicacion--no">
-                            <partial name="_Icono" model="@("advertencia")" />
-                            <span>Ubicación no disponible</span>
-                        </p>
+                        @titulo <span>@grupo.Count</span>
+                    }
+                    @if (clave == "disponibles")
+                    {
+                        <small class="serenos__columna" data-columna="disponibles" hidden>distancia al caso elegido</small>
+                    }
+                    else if (clave == "con-caso")
+                    {
+                        <small class="serenos__columna" data-columna="con-caso" hidden>distancia a su caso</small>
+                    }
+                </h3>
+                <ul class="lista-serenos" @(clave == "fuera" ? "id=lista-serenos-fuera" : "")>
+                    @foreach (var (sereno, orden) in grupo.Select((s, i) => (s, i)))
+                    {
+                        var conUbicacion = sereno.UbicacionDisponible && sereno.UltimaPosicionEn is not null;
+                        var hora = sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "";
+                        // Edad de la posición (reloj del servidor): también para quien tiene un caso asignado.
+                        var segundos = conUbicacion ? Math.Max(0, (ahora - sereno.UltimaPosicionEn!.Value).TotalSeconds) : 0;
+                        var antigua = conUbicacion && segundos >= ListaSerenos.UmbralPosicionAntiguaSegundos;
+                <li class="sereno sereno--@clave @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
+                    data-sereno="@sereno.Id" data-nombre="@sereno.Nombre" data-orden="@orden"
+                    data-disponible="@(sereno.Disponible ? "true" : "false")"
+                    data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)" data-caso="@sereno.CasoAsignadoId"
+                    data-hora="@hora" data-clave="@sereno.Id">
+                    <span class="sereno__escudo" aria-hidden="true">
+                        <svg viewBox="0 0 32 36" focusable="false"><path d="M16 2 30 8v9c0 9-6 15-14 17C8 32 2 26 2 17V8z" /><text x="16" y="21" text-anchor="middle">@Iniciales(sereno.Nombre)</text></svg>
+                    </span>
+                    <div class="sereno__cuerpo">
+                        <div class="sereno__cabecera">
+                            @if (conUbicacion)
+                            {
+                                @* 29/10/2026: como en las tarjetas de SOS y reportes, la fila entera es el botón (el del nombre, extendido a
+                                   toda la fila): lleva el mapa al sereno. Sin ubicación no hay a dónde llevarlo y el nombre es solo texto. *@
+                                <button type="button" class="sereno__nombre sereno__seleccionar" data-ver-sereno aria-pressed="false">@sereno.Nombre<span class="visualmente-oculto">: ver su ubicación en el mapa</span></button>
+                            }
+                            else
+                            {
+                                <span class="sereno__nombre">@sereno.Nombre</span>
+                            }
+                        </div>
+                        @if (sereno.Disponible)
+                        {
+                            <p class="sereno__estado" data-suave>
+                                <span class="estado estado--activa"><partial name="_Icono" model="@("exito")" /><span class="visualmente-oculto">Operativo. </span>Disponible</span>
+                                @if (conUbicacion)
+                                {
+                                    <partial name="_EdadPosicion" model="@((segundos, hora, sereno.PrecisionMetros, antigua))" />
+                                }
+                                else
+                                {
+                                    @* HU19-CA04: sin posiciones recibidas no hay marcador ni coordenadas inventadas. *@
+                                    <span class="sereno__sin-ubicacion"><partial name="_Icono" model="@("informacion")" />Ubicación no disponible</span>
+                                }
+                            </p>
+                            <p class="sereno__sugerido" data-distancia hidden></p>
+                        }
+                        else if (sereno.ConAsignacion)
+                        {
+                            if (!sereno.Operativo)
+                            {
+                                @* 24/10/2026 (DP16-b): se desactivó con un caso en curso; el caso sigue a su nombre. *@
+                                <p class="sereno__alerta" data-desactivado-con-caso>
+                                    <partial name="_Icono" model="@("advertencia")" />
+                                    <span>Se desactivó con el caso en curso: sin ubicación, el caso sigue a su nombre.</span>
+                                </p>
+                            }
+                            if (sereno.CasoAsignadoId is not null)
+                            {
+                                @* HU23-CA03: el estado del caso asignado se refleja en la central. 06/11/2026: con el tipo del caso (SOS o reporte). *@
+                                <p class="sereno__caso" data-estado-caso="@sereno.EstadoCasoAsignado" data-suave>
+                                    <span class="visualmente-oculto">Caso: </span>
+                                    @if (sereno.CasoAsignadoEsReporte)
+                                    {
+                                        <span class="etiqueta-reporte">Reporte</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="etiqueta-urgente"><partial name="_Icono" model="@("urgente")" />SOS</span>
+                                    }
+                                    @if (sereno.EstadoCasoAsignado is { } estadoCaso)
+                                    {
+                                        <partial name="_ChipEstado" model="@((estadoCaso, false))" />
+                                    }
+                                </p>
+                            }
+                            if (sereno.Operativo)
+                            {
+                                @* La edad de su posición: la distancia o «En el lugar» no dicen si esa posición sigue al día. *@
+                                <p class="sereno__estado sereno__estado--posicion" data-suave>
+                                    @if (conUbicacion)
+                                    {
+                                        <partial name="_EdadPosicion" model="@((segundos, hora, sereno.PrecisionMetros, antigua))" />
+                                    }
+                                    else
+                                    {
+                                        <span class="sereno__sin-ubicacion"><partial name="_Icono" model="@("informacion")" />Ubicación no disponible</span>
+                                    }
+                                </p>
+                            }
+                        }
+                        else
+                        {
+                            @* Estar fuera de servicio es lo normal: sin aviso ámbar; la ubicación se comparte solo mientras está operativo (HU18). *@
+                            <p class="sereno__estado sereno__estado--fuera">
+                                <span class="estado estado--inactiva"><partial name="_Icono" model="@("informacion")" /><span class="visualmente-oculto">Fuera de servicio. </span>No comparte ubicación</span>
+                            </p>
+                        }
+                    </div>
+                    @if (sereno.Disponible || sereno.CasoAsignadoId is not null)
+                    {
+                        <div class="sereno__lateral">
+                            <span class="sereno__metros" data-sereno-metros data-suave></span>
+                            @if (sereno.CasoAsignadoId is { } casoAsignado)
+                            {
+                                <a class="sereno__ver" href="@(sereno.CasoAsignadoEsReporte ? $"/panel/reportes/{casoAsignado}" : $"/panel/central/sos/{casoAsignado}")">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
+                            }
+                        </div>
                     }
                 </li>
                     }
