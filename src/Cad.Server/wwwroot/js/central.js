@@ -722,6 +722,8 @@
   function seleccionarSereno(id, { desdeMapa = false } = {}) {
     if (desdeMapa) mostrarSerenos(true);
     const item = marcarSereno(id);
+    // 07/11/2026: con el panel del caso abierto, pasa al caso del sereno elegido.
+    mostrarCasoDeSereno(item);
     // 06/11/2026: la pestaña de la bandeja pasa a la del caso que atiende el sereno (un SOS en curso, «En curso»), para ver a la
     // vez a quien se eligió y su caso. El globo que acaba de abrir el marcador se conserva.
     if (item?.dataset.caso) {
@@ -1295,6 +1297,7 @@
       animar: true,
       despues: () => {
         if (seleccionado) marcarSereno(seleccionado);
+        seguirSerenoEnPanel();
         aplicarFiltroSerenos();
         actualizarAsignacion();
         // Sin animar el orden aquí: actualizarRegion ya desliza lo que cambia de sitio al resincronizar.
@@ -1687,11 +1690,34 @@
     const href = detalleDe(id);
     if (!href) return;
     casoEnPanel = id;
+    serenoEnPanel = null;
     marcoCaso.src = href;
   }
 
-  function abrirPanel(href, { cargar = true } = {}) {
+  // 07/11/2026: el panel del caso sigue al sereno elegido en «Serenos». Si se abrió desde un sereno («Ver el caso») o se eligió
+  // un sereno con el panel abierto, muestra el caso de ese sereno, y si a ese sereno le cambia el caso (una reasignación), el
+  // panel pasa al nuevo. Abrir otro caso por otro camino deja de seguirlo.
+  let serenoEnPanel = null;
+  function casoDeSereno(item) {
+    const enlace = item?.querySelector(".sereno__ver");
+    return enlace && item.dataset.caso ? { id: item.dataset.caso, href: enlace.getAttribute("href") } : null;
+  }
+  function mostrarCasoDeSereno(item) {
+    if (!panelCaso || panelCaso.hidden) return;
+    const caso = casoDeSereno(item);
+    if (!caso) return;
+    serenoEnPanel = item.dataset.sereno;
+    if (caso.id === casoEnPanel) return;
+    casoEnPanel = caso.id;
+    marcoCaso.src = caso.href;
+  }
+  function seguirSerenoEnPanel() {
+    if (serenoEnPanel) mostrarCasoDeSereno(document.getElementById(`sereno-${serenoEnPanel}`));
+  }
+
+  function abrirPanel(href, { cargar = true, sereno = null } = {}) {
     origenPanel = document.activeElement;
+    serenoEnPanel = sereno;
     casoEnPanel = idDeRuta(href);
     if (cargar) marcoCaso.src = href;
     panelCaso.hidden = false;
@@ -1707,6 +1733,7 @@
     central.classList.remove("central--con-panel");
     marcoCaso.removeAttribute("src");
     casoEnPanel = null;
+    serenoEnPanel = null;
     soltarTodo();
     if (devolverFoco) origenPanel?.isConnected ? origenPanel.focus() : document.getElementById("titulo-cola")?.focus();
   }
@@ -1723,7 +1750,13 @@
     if (!enlace || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.button !== 0) return;
     evento.preventDefault();
     mapa.closePopup();
-    abrirPanel(enlace.getAttribute("href"));
+    // «Ver el caso» de un sereno: el panel abre su caso y el sereno queda elegido en la lista y en el mapa.
+    const sereno = enlace.closest("[data-sereno]")?.dataset.sereno ?? null;
+    abrirPanel(enlace.getAttribute("href"), { sereno });
+    if (sereno) {
+      marcarSereno(sereno);
+      resaltar(marcadoresSerenos, sereno);
+    }
   });
   // «Revisar» envía su formulario al marco: la revisión se inicia y el reporte se abre en el panel.
   document.addEventListener("submit", (evento) => {

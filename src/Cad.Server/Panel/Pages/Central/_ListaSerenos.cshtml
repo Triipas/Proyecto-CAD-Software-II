@@ -164,7 +164,8 @@
                             <span class="sereno__metros" data-sereno-metros data-suave></span>
                             @if (sereno.CasoAsignadoId is { } casoAsignado)
                             {
-                                <a class="sereno__ver" href="@(sereno.CasoAsignadoEsReporte ? $"/panel/reportes/{casoAsignado}" : $"/panel/central/sos/{casoAsignado}")">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
+                                @* 07/11/2026: abre el caso en el panel derecho de la central (sin JavaScript, su página). *@
+                                <a class="sereno__ver" data-abrir-panel href="@(sereno.CasoAsignadoEsReporte ? $"/panel/reportes/{casoAsignado}" : $"/panel/central/sos/{casoAsignado}")">Ver el caso<span class="visualmente-oculto"> asignado a @sereno.Nombre</span></a>
                             }
                         </div>
                     }
