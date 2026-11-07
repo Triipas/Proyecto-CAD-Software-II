@@ -1685,13 +1685,39 @@
       ?? (document.getElementById(`revisar-${id}`) ? `/panel/reportes/${id}` : null);
   }
 
+  // 07/11/2026: lo que la central pide al marco se comprueba al terminar de cargar. La página del caso se recarga sola cuando
+  // cambia su caso (consola.js) y esa recarga puede ganarle a la carga pedida: el panel se quedaba en el caso anterior y había
+  // que volver a pedirlo. Ahora, si al cargar el marco no muestra el caso pedido, se pide otra vez (una sola, por si la página
+  // pedida redirige a otra, p. ej., al terminar la sesión). Mientras tanto, los avisos del caso anterior no cambian el pedido.
+  let pedidoPanel = null, reintentosPanel = 0;
+  function casoMostrado() {
+    try { return idDeRuta(marcoCaso.contentWindow?.location.pathname); } catch { return null; }
+  }
+  function cargarEnPanel(id, href) {
+    casoEnPanel = id;
+    pedidoPanel = href;
+    reintentosPanel = 0;
+    marcoCaso.src = href;
+  }
+  // Ya está (o está llegando) el caso que se quiere: no hace falta pedirlo.
+  const yaEnPanel = (id) => id === casoEnPanel && (pedidoPanel !== null || casoMostrado() === id);
+  marcoCaso.addEventListener("load", () => {
+    if (!pedidoPanel || panelCaso.hidden) return;
+    const mostrado = casoMostrado();
+    if (casoEnPanel && mostrado && mostrado !== casoEnPanel && reintentosPanel < 1) {
+      reintentosPanel += 1;
+      marcoCaso.src = pedidoPanel;
+      return;
+    }
+    pedidoPanel = null;
+  });
+
   function seguirEnPanel(id) {
-    if (!panelCaso || panelCaso.hidden || !id || id === casoEnPanel) return;
+    if (!panelCaso || panelCaso.hidden || !id || yaEnPanel(id)) return;
     const href = detalleDe(id);
     if (!href) return;
-    casoEnPanel = id;
     serenoEnPanel = null;
-    marcoCaso.src = href;
+    cargarEnPanel(id, href);
   }
 
   // 07/11/2026: el panel del caso sigue al sereno elegido en «Serenos». Si se abrió desde un sereno («Ver el caso») o se eligió
@@ -1707,9 +1733,8 @@
     const caso = casoDeSereno(item);
     if (!caso) return;
     serenoEnPanel = item.dataset.sereno;
-    if (caso.id === casoEnPanel) return;
-    casoEnPanel = caso.id;
-    marcoCaso.src = caso.href;
+    if (yaEnPanel(caso.id)) return;
+    cargarEnPanel(caso.id, caso.href);
   }
   function seguirSerenoEnPanel() {
     if (serenoEnPanel) mostrarCasoDeSereno(document.getElementById(`sereno-${serenoEnPanel}`));
@@ -1718,8 +1743,8 @@
   function abrirPanel(href, { cargar = true, sereno = null } = {}) {
     origenPanel = document.activeElement;
     serenoEnPanel = sereno;
-    casoEnPanel = idDeRuta(href);
-    if (cargar) marcoCaso.src = href;
+    if (cargar) cargarEnPanel(idDeRuta(href), href);
+    else { casoEnPanel = idDeRuta(href); pedidoPanel = null; }
     panelCaso.hidden = false;
     central.classList.add("central--con-panel");
     // El caso se marca en el mapa (de la cola, con su sereno sugerido; en curso o por revisar, con su marcador).
@@ -1734,6 +1759,7 @@
     marcoCaso.removeAttribute("src");
     casoEnPanel = null;
     serenoEnPanel = null;
+    pedidoPanel = null;
     soltarTodo();
     if (devolverFoco) origenPanel?.isConnected ? origenPanel.focus() : document.getElementById("titulo-cola")?.focus();
   }
@@ -1780,7 +1806,8 @@
     tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";
     // Un caso que el panel acaba de registrar («Nuevo reporte»: antes no había caso en el panel) se lleva a la vista en el mapa.
     const recienRegistrado = Boolean(id) && !casoEnPanel;
-    if (id) casoEnPanel = id;
+    // Mientras llega un caso pedido, el aviso de otra página (el caso anterior que se recargó) no cambia lo que se quiere ver.
+    if (id && (!pedidoPanel || id === casoEnPanel)) casoEnPanel = id;
     // Lo que se hizo en el panel cambia la bandeja: se rehace desde el servidor.
     if (mensaje) { await refrescar(); await refrescarSerenos(); }
     if (recienRegistrado && mensaje && document.getElementById(`sos-${id}`)) seleccionar(id, { conSereno: true });
