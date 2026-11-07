@@ -1356,8 +1356,8 @@
   }
 
   // Sonidos de 07/11/2026. Se comparan los casos en curso (el mapa) con los de la consulta anterior: la primera no suena.
-  // Si en una misma consulta cambian varios, suena el que más pide una acción del operador. Un reporte sin ubicación del
-  // hecho no está en el mapa y no suena aquí (se ve en «Reportes»).
+  // Si en una misma consulta cambian varios, suena el de la etapa más avanzada. El reporte nuevo por revisar suena donde se
+  // actualiza su lista (refrescar), porque un reporte sin ubicación del hecho no está en el mapa.
   const documento = (html) => new DOMParser().parseFromString(html, "text/html");
   let casosPrevios = null;
   function avisarCambiosDeCasos(html) {
@@ -1370,13 +1370,12 @@
     const sonidos = new Set();
     for (const [id, caso] of actuales) {
       const antes = previos.get(id);
-      if (!antes && caso.origen === "Reporte" && caso.estado === "Recibido") sonidos.add("reporte-por-revisar");
-      else if (antes && antes.estado !== caso.estado) {
+      if (antes && antes.estado !== caso.estado) {
         if (caso.estado === "En atención") sonidos.add("atencion-iniciada");
         else if (caso.estado === "En camino") sonidos.add("sereno-en-camino");
       }
     }
-    const sonido = ["reporte-por-revisar", "atencion-iniciada", "sereno-en-camino"].find((s) => sonidos.has(s));
+    const sonido = ["atencion-iniciada", "sereno-en-camino"].find((s) => sonidos.has(s));
     if (sonido) CadSonidos.reproducir(sonido);
   }
 
@@ -1439,6 +1438,7 @@
         const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionRevisar, await revisar.text(), { animar: true, despues: () => marcarAsignado(casoConRuta) });
         // El reporte que llega a revisar entra con el mismo anillo que un reporte admitido (y el sonar en el mapa).
         if (cargado) {
+          if (llegados.length) CadSonidos.reproducir("reporte-por-revisar");
           for (const id of llegados) {
             const tarjeta = document.getElementById(`revisar-${id}`);
             tarjeta?.classList.add("sos--llegada");
