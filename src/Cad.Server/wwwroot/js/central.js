@@ -279,12 +279,12 @@
     else volarA(marcador, { clase: claseLlegada(id) });
   }
 
-  function deseleccionar() {
+  function deseleccionar({ cerrarGlobo = true } = {}) {
     sosSeleccionado = null;
     for (const item of document.querySelectorAll(".sos--seleccionado")) item.classList.remove("sos--seleccionado");
     for (const boton of document.querySelectorAll("[data-seleccionar-sos][aria-pressed=true]")) boton.setAttribute("aria-pressed", "false");
     resaltar(marcadores, null);
-    mapa.closePopup();
+    if (cerrarGlobo) mapa.closePopup();
     actualizarAsignacion();
     dibujarDespacho();
   }
@@ -724,7 +724,16 @@
     const item = marcarSereno(id);
     // 06/11/2026: la pestaña de la bandeja pasa a la del caso que atiende el sereno (un SOS en curso, «En curso»), para ver a la
     // vez a quien se eligió y su caso. El globo que acaba de abrir el marcador se conserva.
-    if (item?.dataset.caso) irAPestanaDe(item.dataset.caso, { cerrarGlobo: false });
+    if (item?.dataset.caso) {
+      // Si la pestaña cambia, el caso que se tenía elegido (con su barra de asignación y su línea de despacho) queda fuera de lo que
+      // se verá: se suelta, sin tocar al sereno elegido ni su globo.
+      const destino = pestanaDe(item.dataset.caso);
+      if (destino && destino !== pestana) {
+        if (sosSeleccionado) deseleccionar({ cerrarGlobo: false });
+        soltarAsignado();
+      }
+      irAPestanaDe(item.dataset.caso, { cerrarGlobo: false });
+    }
     if (item) {
       // Un filtro de la franja de resumen que lo esconde se quita: el sereno elegido en el mapa tiene que verse en la lista.
       if (desdeMapa && !item.offsetParent) fijarSolo("");
