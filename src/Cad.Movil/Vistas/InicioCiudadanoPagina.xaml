@@ -99,6 +99,22 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- Registro único: una cuenta anterior sin documento, nacimiento o contacto de emergencia lo completa en «Mis datos».
+                     Es solo un aviso: el SOS sigue disponible igual. -->
+                <Grid IsVisible="{Binding DatosIncompletos}">
+                    <Border Style="{StaticResource Flotante}" Padding="12,10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <v:Icono Nombre="asignado" Color="{StaticResource ColorPrimario}" Tamano="20" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="Completa tus datos: la central los necesita para atenderte." FontSize="14"
+                                   FontFamily="PublicSansSemiBold" TextColor="{StaticResource ColorMarino}" VerticalOptions="Center" />
+                            <v:Icono Grid.Column="2" Nombre="derecha" Color="{StaticResource ColorTextoTerciario}" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                    <Button BackgroundColor="Transparent" BorderWidth="0" v:Movimiento.Tarjeta="True" Command="{Binding CompletarDatos}"
+                            SemanticProperties.Description="Completa tus datos: la central los necesita para atenderte"
+                            SemanticProperties.Hint="Abre Mis datos" />
+                </Grid>
+
                 <!-- HU07/HU08: resultado del SOS, junto a lo demás que está en curso. Confirmado, se puede quitar deslizándolo; si hay
                      que reintentar o volver a ingresar, no. -->
                 <v:Descartable Nombre="sos" Clave="{Binding TextoSos}" Permitido="{Binding AvisoSosDescartable}">

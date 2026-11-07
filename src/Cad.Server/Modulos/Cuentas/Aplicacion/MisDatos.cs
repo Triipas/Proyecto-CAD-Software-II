@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Cad.Contratos.Cuentas;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Cad.Server.Persistencia;
@@ -23,8 +22,8 @@ public abstract record ResultadoCambioPin
     public sealed record PinBloqueado : ResultadoCambioPin;
 }
 
-// ADR-08, fase D — «Mis datos» del ciudadano (todo opcional salvo nombres y apellidos) y cambio de PIN.
-public sealed partial class MisDatosCiudadano(
+// ADR-08, fase D — «Mis datos» del ciudadano (las reglas del registro único: solo la dirección es opcional) y cambio de PIN.
+public sealed class MisDatosCiudadano(
     CadDbContext db,
     UserManager<Usuario> usuarios,
     IPasswordHasher<Usuario> hasher,
@@ -44,20 +43,10 @@ public sealed partial class MisDatosCiudadano(
     {
         var usuario = (await usuarios.FindByIdAsync(usuarioId.ToString()))!;
         var errores = new Dictionary<string, string[]>();
-        ReglasCuenta.ValidarNombres(errores, "nombres", "Los nombres", s.Nombres);
-        ReglasCuenta.ValidarNombres(errores, "apellidos", "Los apellidos", s.Apellidos);
-
-        var (tipo, numero) = ValidarDocumento(errores, s.TipoDocumento, s.NumeroDocumento);
-        var nacimiento = ValidarNacimiento(errores, s.FechaNacimiento);
-        var direccion = Limpiar(s.Direccion);
-        if (direccion?.Length > DatosCiudadano.MaximoDireccion)
-            errores["direccion"] = [$"La dirección no puede superar {DatosCiudadano.MaximoDireccion} caracteres."];
-        var (contactoNombre, parentesco, contactoTelefono) = ValidarContacto(errores, s, usuario.PhoneNumber);
-        if (errores.Count > 0)
+        if (ValidacionDatosCiudadano.Validar(errores, s.Datos, Hoy(reloj, configuracion), usuario.PhoneNumber) is not { } d)
             return new ResultadoMisDatos.Invalido(errores);
 
-        if (numero is not null && await db.PerfilesCiudadano.AnyAsync(
-                p => p.UsuarioId != usuarioId && p.TipoDocumento == tipo && p.NumeroDocumento == numero, ct))
+        if (await DocumentoUsadoAsync(db, d, usuarioId, ct))
             return new ResultadoMisDatos.DocumentoDuplicado();
 
         var perfil = await db.PerfilesCiudadano.SingleOrDefaultAsync(p => p.UsuarioId == usuarioId, ct);
@@ -66,9 +55,9 @@ public sealed partial class MisDatosCiudadano(
             perfil = PerfilCiudadano.Nuevo(usuarioId);
             db.PerfilesCiudadano.Add(perfil);
         }
-        perfil.Actualizar(tipo, numero, nacimiento, direccion, contactoNombre, parentesco, contactoTelefono, reloj.GetUtcNow());
-        usuario.Nombres = s.Nombres.Trim();
-        usuario.Apellidos = s.Apellidos.Trim();
+        Aplicar(perfil, d, reloj.GetUtcNow());
+        usuario.Nombres = d.Nombres;
+        usuario.Apellidos = d.Apellidos;
 
         try
         {
@@ -83,6 +72,23 @@ public sealed partial class MisDatosCiudadano(
         }
         return new ResultadoMisDatos.Correcto(Vista(usuario, perfil));
     }
+
+    public const string MensajeDocumentoDuplicado = "Ese documento ya está registrado en otra cuenta.";
+
+    // La fecha de hoy en la zona horaria del panel (Lima), para validar la fecha de nacimiento.
+    internal static DateOnly Hoy(TimeProvider reloj, IConfiguration configuracion)
+    {
+        var zona = TimeZoneInfo.FindSystemTimeZoneById(configuracion["Panel:ZonaHoraria"] ?? "America/Lima");
+        return DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), zona).DateTime);
+    }
+
+    internal static Task<bool> DocumentoUsadoAsync(CadDbContext db, DatosCiudadanoValidos d, Guid? usuarioId, CancellationToken ct) =>
+        db.PerfilesCiudadano.AnyAsync(p => p.UsuarioId != usuarioId && p.TipoDocumento == d.TipoDocumento
+            && p.NumeroDocumento == d.NumeroDocumento, ct);
+
+    internal static void Aplicar(PerfilCiudadano perfil, DatosCiudadanoValidos d, DateTimeOffset ahora) =>
+        perfil.Actualizar(d.TipoDocumento, d.NumeroDocumento, d.FechaNacimiento, d.Direccion, d.ContactoNombre, d.ContactoParentesco,
+            d.ContactoTelefono, ahora);
 
     public async Task<ResultadoCambioPin> CambiarPinAsync(Guid usuarioId, SolicitudCambioPin s)
     {
@@ -123,78 +129,4 @@ public sealed partial class MisDatosCiudadano(
         p?.ContactoNombre, p?.ContactoParentesco, p?.ContactoTelefono,
         u.TerminosVersion, u.TerminosAceptadosEn, u.PinHash is not null);
 
-    private static string? Limpiar(string? valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
-
-    // DNI: 8 dígitos. Carné de extranjería: 9 a 12 caracteres alfanuméricos. Pasaporte: 6 a 12.
-    private static (string? Tipo, string? Numero) ValidarDocumento(Dictionary<string, string[]> errores, string? tipoEscrito, string? numeroEscrito)
-    {
-        var tipo = Limpiar(tipoEscrito);
-        var numero = Limpiar(numeroEscrito)?.Replace(" ", "").ToUpperInvariant();
-        if (tipo is null && numero is null)
-            return (null, null);
-        if (tipo is null || !DatosCiudadano.TiposDocumento.Contains(tipo))
-        {
-            errores["tipoDocumento"] = ["Elige el tipo de documento."];
-            return (null, null);
-        }
-        if (numero is null)
-        {
-            errores["numeroDocumento"] = ["Escribe el número de documento o quita el tipo."];
-            return (null, null);
-        }
-        var valido = tipo switch
-        {
-            DatosCiudadano.Dni => Dni().IsMatch(numero),
-            DatosCiudadano.CarneExtranjeria => Alfanumerico().IsMatch(numero) && numero.Length is >= 9 and <= 12,
-            _ => Alfanumerico().IsMatch(numero) && numero.Length is >= 6 and <= 12,
-        };
-        if (!valido)
-            errores["numeroDocumento"] = [tipo switch
-            {
-                DatosCiudadano.Dni => "El DNI tiene 8 dígitos.",
-                DatosCiudadano.CarneExtranjeria => "El carné de extranjería tiene de 9 a 12 letras o números.",
-                _ => "El pasaporte tiene de 6 a 12 letras o números.",
-            }];
-        return (tipo, numero);
-    }
-
-    // Solo se comprueba que sea una fecha posible; la edad mínima para registrarse sigue pendiente del PO (DP-C2).
-    private DateOnly? ValidarNacimiento(Dictionary<string, string[]> errores, DateOnly? fecha)
-    {
-        if (fecha is not { } f)
-            return null;
-        var zona = TimeZoneInfo.FindSystemTimeZoneById(configuracion["Panel:ZonaHoraria"] ?? "America/Lima");
-        var hoy = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), zona).DateTime);
-        if (f >= hoy || f < hoy.AddYears(-120))
-            errores["fechaNacimiento"] = ["Escribe una fecha de nacimiento válida."];
-        return f;
-    }
-
-    private static (string? Nombre, string? Parentesco, string? Telefono) ValidarContacto(
-        Dictionary<string, string[]> errores, SolicitudPerfilCiudadano s, string? celularPropio)
-    {
-        var nombre = Limpiar(s.ContactoNombre);
-        var parentesco = Limpiar(s.ContactoParentesco);
-        var telefono = Limpiar(s.ContactoTelefono) is { } t ? ReglasCuenta.NormalizarCelular(t) : null;
-        if (nombre is null && parentesco is null && telefono is null)
-            return (null, null, null);
-
-        if (nombre is null)
-            errores["contactoNombre"] = ["Escribe el nombre de tu contacto o deja vacíos todos sus datos."];
-        else if (nombre.Length > DatosCiudadano.MaximoNombreContacto)
-            errores["contactoNombre"] = [$"El nombre no puede superar {DatosCiudadano.MaximoNombreContacto} caracteres."];
-        if (parentesco is null || !DatosCiudadano.Parentescos.Contains(parentesco))
-            errores["contactoParentesco"] = ["Elige tu relación con el contacto."];
-        if (telefono is null || !ReglasCuenta.EsCelularValido(telefono))
-            errores["contactoTelefono"] = [ReglasCuenta.MensajeCelular];
-        else if (telefono == celularPropio)
-            errores["contactoTelefono"] = ["El contacto de emergencia debe tener un número distinto del tuyo."];
-        return (nombre, parentesco, telefono);
-    }
-
-    [GeneratedRegex(@"^\d{8}$")]
-    private static partial Regex Dni();
-
-    [GeneratedRegex(@"^[A-Z0-9]+$")]
-    private static partial Regex Alfanumerico();
 }

@@ -23,7 +23,7 @@ public class PerfilTests
     // ----- Perfil -----
 
     [Fact]
-    public async Task Perfil_MuestraNombreCelularVerificadoYCuantosDatosFaltan()
+    public async Task Perfil_MuestraNombreCelularVerificadoYQueFaltanDatos()
     {
         api.Perfil = api.Perfil with { NumeroDocumento = "12345678", TipoDocumento = "DNI" };
         var vistaModelo = new PerfilVistaModelo(api, sesiones, navegacion, flujo);
@@ -32,7 +32,8 @@ public class PerfilTests
 
         Assert.Equal(("RF", "Rosa Ficticia Quispe", "+51 987 654 321"), (vistaModelo.Iniciales, vistaModelo.Nombre, vistaModelo.Celular));
         Assert.True(vistaModelo.CelularVerificado);
-        Assert.Equal("Completa tus datos (1 de 4)", vistaModelo.TextoDatos);
+        Assert.Equal("Faltan datos", vistaModelo.TextoDatos);
+        Assert.True(vistaModelo.DatosIncompletos);
         Assert.True(vistaModelo.TienePin);
     }
 
@@ -140,22 +141,23 @@ public class PerfilTests
     // ----- Mis datos -----
 
     [Fact]
-    public async Task MisDatos_CargaLosDatosYLosOpcionalesVacios()
+    public async Task MisDatos_CuentaAnteriorSinTodosLosDatos_CargaLoQueHayYPideCompletar()
     {
         api.Perfil = api.Perfil with { TipoDocumento = "CE", NumeroDocumento = "000123456", FechaNacimiento = new DateOnly(1990, 5, 17) };
-        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion);
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
 
         await vistaModelo.CargarAsync();
 
         Assert.Equal(("Carné de extranjería", "000123456", "17/05/1990"), (vistaModelo.TipoDocumento, vistaModelo.NumeroDocumento, vistaModelo.FechaNacimiento));
-        Assert.Equal(MisDatosVistaModelo.SinContacto, vistaModelo.ContactoParentesco);
+        Assert.Equal(FormularioDatosCiudadano.SinElegir, vistaModelo.ContactoParentesco);
         Assert.Equal("+51 987 654 321", vistaModelo.Celular);
+        Assert.Equal(("advertencia", MisDatosVistaModelo.AvisoIncompletos), (vistaModelo.TipoMensaje, vistaModelo.Mensaje));
     }
 
     [Fact]
     public async Task MisDatos_Guardar_EnviaLosCodigosYQuitaLosVacios()
     {
-        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion);
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
         await vistaModelo.CargarAsync();
         vistaModelo.TipoDocumento = "DNI";
         vistaModelo.NumeroDocumento = " 12345678 ";
@@ -173,23 +175,24 @@ public class PerfilTests
     }
 
     [Fact]
-    public async Task MisDatos_SinDocumento_NoEnviaElNumero()
+    public async Task MisDatos_SinLosDatosObligatorios_NoSeEnvia()
     {
-        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion);
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
         await vistaModelo.CargarAsync();
         vistaModelo.NumeroDocumento = "12345678";
 
         await vistaModelo.Guardar.EjecutarAsync();
 
-        var enviado = Assert.Single(api.PerfilesEnviados);
-        Assert.Null(enviado.TipoDocumento);
-        Assert.Null(enviado.NumeroDocumento);
+        Assert.Equal("Elige el tipo de documento.", vistaModelo.ErrorDocumento);
+        Assert.True(vistaModelo.HayErrorFechaNacimiento);
+        Assert.True(vistaModelo.HayErrorContacto);
+        Assert.Empty(api.PerfilesEnviados);
     }
 
     [Fact]
     public async Task MisDatos_FechaMalEscrita_SeAvisaSinEnviar()
     {
-        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion);
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
         await vistaModelo.CargarAsync();
         vistaModelo.FechaNacimiento = "1990-05-17";
 
@@ -204,7 +207,8 @@ public class PerfilTests
     {
         api.RespuestaActualizarPerfil = new ResultadoApi<PerfilCiudadanoVista>.Rechazado(400, "Revisa los datos marcados.",
             new Dictionary<string, string[]> { ["numeroDocumento"] = ["El DNI tiene 8 dígitos."], ["contactoTelefono"] = ["Escribe un celular peruano de 9 dígitos que empiece por 9."] });
-        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion);
+        api.Perfil = PerfilCompleto();
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
         await vistaModelo.CargarAsync();
 
         await vistaModelo.Guardar.EjecutarAsync();
@@ -214,7 +218,77 @@ public class PerfilTests
         Assert.Equal("Revisa los datos marcados.", vistaModelo.Mensaje);
     }
 
+    // El teclado numérico de Android no trae «/» (revisión del PR #137): la fecha se acepta solo con dígitos o con otro separador.
+    [Theory]
+    [InlineData("17051990")]
+    [InlineData("17/05/1990")]
+    [InlineData("17-05-1990")]
+    [InlineData("17.05.1990")]
+    [InlineData(" 17 5 1990 ")]
+    public void LeerFecha_SinBarrasOConOtrosSeparadores_SeEntiende(string escrita) =>
+        Assert.Equal(new DateOnly(1990, 5, 17), FormularioDatosCiudadano.LeerFecha(escrita));
+
+    [Theory]
+    [InlineData("1990-05-17")]
+    [InlineData("1705199")]
+    [InlineData("31021990")]
+    public void LeerFecha_Ambigua_OImposible_NoSeAcepta(string escrita) =>
+        Assert.Null(FormularioDatosCiudadano.LeerFecha(escrita));
+
+    [Fact]
+    public async Task MisDatos_FechaSoloConDigitos_SeEnvia()
+    {
+        api.Perfil = PerfilCompleto();
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
+        await vistaModelo.CargarAsync();
+        vistaModelo.FechaNacimiento = "02031985";
+
+        await vistaModelo.Guardar.EjecutarAsync();
+
+        Assert.Equal(new DateOnly(1985, 3, 2), Assert.Single(api.PerfilesEnviados).FechaNacimiento);
+    }
+
+    private PerfilCiudadanoVista PerfilCompleto() => api.Perfil with
+    {
+        TipoDocumento = "DNI", NumeroDocumento = "12345678", FechaNacimiento = new DateOnly(1990, 5, 17),
+        ContactoNombre = "Marta Ficticia", ContactoParentesco = "Madre", ContactoTelefono = "911222333",
+    };
+
+    [Fact]
+    public async Task MisDatos_DatosCompletos_NoMuestraElAviso()
+    {
+        api.Perfil = PerfilCompleto();
+        var vistaModelo = new MisDatosVistaModelo(api, sesiones, navegacion, reloj);
+
+        await vistaModelo.CargarAsync();
+
+        Assert.False(vistaModelo.HayMensaje);
+    }
+
     // ----- Inicio rediseñado -----
+
+    [Fact]
+    public async Task Inicio_CuentaAnteriorSinTodosLosDatos_AvisaYLlevaAMisDatos()
+    {
+        var inicio = Inicio(new UbicacionFalsa());
+
+        await inicio.AlAparecerAsync();
+        Assert.True(inicio.DatosIncompletos);
+        await inicio.CompletarDatos.EjecutarAsync();
+
+        Assert.Equal([Rutas.MisDatos], navegacion.Rutas);
+    }
+
+    [Fact]
+    public async Task Inicio_DatosCompletos_NoAvisa()
+    {
+        api.Perfil = PerfilCompleto();
+        var inicio = Inicio(new UbicacionFalsa());
+
+        await inicio.AlAparecerAsync();
+
+        Assert.False(inicio.DatosIncompletos);
+    }
 
     private InicioCiudadanoVistaModelo Inicio(UbicacionFalsa ubicacion) =>
         new(new EmisorSos(api, ubicacion, sesiones, reloj), new PreparacionUbicacion(ubicacion), sesiones, navegacion, () => { }, api: api);

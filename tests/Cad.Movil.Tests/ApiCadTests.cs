@@ -117,7 +117,8 @@ public class ApiCadTests
             """{"title":"Revisa los datos del formulario.","status":400,"errors":{"Correo":["Ya existe una cuenta con este correo."]}}"""));
 
         var resultado = await api.RegistrarConCelularAsync(
-            new SolicitudRegistroCelular("token-ficticio", "Ana", "Pérez", "482915", true), CancellationToken.None);
+            new SolicitudRegistroCelular("token-ficticio", "Ana", "Pérez", "482915", true, "DNI", "12345678", new DateOnly(1990, 5, 17), null,
+                "Marta Ficticia", "Madre", "911222333"), CancellationToken.None);
 
         var rechazo = Assert.IsType<ResultadoApi<RespuestaIngresoCelular>.Rechazado>(resultado);
         Assert.Equal(400, rechazo.Estado);

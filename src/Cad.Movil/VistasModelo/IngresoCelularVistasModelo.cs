@@ -52,8 +52,10 @@ public sealed class FlujoIngresoCelular(IApiCad api, IAlmacenSesion sesiones, IA
     public string? TokenVerificacion { get; set; }
     public bool CuentaExiste { get; set; }
     public bool PuedeRegistrarDeNuevo { get; set; }
-    public string Nombres { get; set; } = "";
-    public string Apellidos { get; set; } = "";
+    // Registro único: lo escrito en «Crea tu cuenta», que se envía junto con el PIN.
+    public DatosCiudadanoEscritos? DatosRegistro { get; set; }
+    // Errores del servidor sobre esos datos: «Crea tu cuenta» los marca al volver a aparecer.
+    public IReadOnlyDictionary<string, string[]>? ErroresRegistro { get; set; }
     public DateTimeOffset ReenviarDesde { get; private set; }
     public string? CodigoDePrueba { get; private set; }
     // Mensaje que la pantalla siguiente debe mostrar al aparecer (p. ej., «este teléfono ya no está vinculado»).
@@ -66,7 +68,8 @@ public sealed class FlujoIngresoCelular(IApiCad api, IAlmacenSesion sesiones, IA
         ModoPin = ModoPin.Ingresar;
         Llave = TokenVerificacion = CodigoDePrueba = AvisoPendiente = null;
         CuentaExiste = PuedeRegistrarDeNuevo = false;
-        Nombres = Apellidos = "";
+        DatosRegistro = null;
+        ErroresRegistro = null;
         ReenviarDesde = DateTimeOffset.MinValue;
     }
 
@@ -99,7 +102,8 @@ public sealed class FlujoIngresoCelular(IApiCad api, IAlmacenSesion sesiones, IA
         if (respuesta.LlaveDispositivo is { } llave)
             await dispositivos.GuardarAsync(new DispositivoVinculado(Celular, llave));
         TokenVerificacion = null;
-        Nombres = Apellidos = "";
+        DatosRegistro = null;
+        ErroresRegistro = null;
         await navegacion.IrAAsync(Rutas.Ciudadano);
     }
 
@@ -278,56 +282,65 @@ public sealed class CodigoVistaModelo : VistaModeloBase
     }
 }
 
-// Paso 3 (número nuevo): solo nombres y apellidos; el celular ya está verificado.
-public sealed class CrearCuentaVistaModelo : VistaModeloBase
+// Paso 3 (número nuevo): el formulario único de registro (06/11/2026). Nombres, apellidos, documento, fecha de nacimiento y
+// contacto de emergencia son obligatorios; la dirección es opcional. El celular ya está verificado y no se vuelve a pedir.
+public sealed class CrearCuentaVistaModelo : FormularioDatosCiudadano
 {
     public const string TextoTerminos =
         "CAD Móvil es un MVP académico con datos simulados; no es un canal oficial de emergencias. " +
-        "Usamos tu nombre, tu celular y la ubicación que compartes al pedir ayuda solo para atender tus casos: " +
-        "la central y el sereno asignado los ven mientras te atienden. Tu número se envía a un proveedor de SMS solo para mandarte " +
-        "el código de verificación. No usamos tus datos para publicidad.";
+        "Usamos tus datos (nombre, documento, fecha de nacimiento, celular, contacto de emergencia y dirección) y la ubicación que " +
+        "compartes al pedir ayuda solo para atender tus casos: la central y el sereno asignado los ven mientras te atienden. " +
+        "Tu número se envía a un proveedor de SMS solo para mandarte el código de verificación. No usamos tus datos para publicidad.";
 
     private readonly FlujoIngresoCelular flujo;
     private readonly INavegacion navegacion;
-    private string nombres = "", apellidos = "", errorNombres = "", errorApellidos = "", errorTerminos = "";
+    private readonly TimeProvider reloj;
+    private string errorTerminos = "";
     private bool aceptaTerminos, mostrarTerminos;
 
-    public CrearCuentaVistaModelo(FlujoIngresoCelular flujo, INavegacion navegacion)
+    public CrearCuentaVistaModelo(FlujoIngresoCelular flujo, INavegacion navegacion, TimeProvider? reloj = null)
     {
         (this.flujo, this.navegacion) = (flujo, navegacion);
+        this.reloj = reloj ?? TimeProvider.System;
         Continuar = new ComandoAsincrono(ContinuarAsync);
         AlternarTerminos = new ComandoAsincrono(() => { MostrarTerminos = !MostrarTerminos; return Task.CompletedTask; });
-        nombres = flujo.Nombres;
-        apellidos = flujo.Apellidos;
+        if (flujo.DatosRegistro is { } datos)
+        {
+            Cargar(datos);
+            aceptaTerminos = true;
+        }
     }
 
     public string Celular => FormatoCelular.Mostrar(flujo.Celular);
-    public string Nombres { get => nombres; set => Asignar(ref nombres, value); }
-    public string Apellidos { get => apellidos; set => Asignar(ref apellidos, value); }
     public bool AceptaTerminos { get => aceptaTerminos; set { if (Asignar(ref aceptaTerminos, value) && value) ErrorTerminos = ""; } }
     public bool MostrarTerminos { get => mostrarTerminos; private set => Asignar(ref mostrarTerminos, value); }
     public string Terminos => TextoTerminos;
 
-    public string ErrorNombres { get => errorNombres; private set { Asignar(ref errorNombres, value); Notificar(nameof(HayErrorNombres)); } }
-    public string ErrorApellidos { get => errorApellidos; private set { Asignar(ref errorApellidos, value); Notificar(nameof(HayErrorApellidos)); } }
     public string ErrorTerminos { get => errorTerminos; private set { Asignar(ref errorTerminos, value); Notificar(nameof(HayErrorTerminos)); } }
-    public bool HayErrorNombres => ErrorNombres.Length > 0;
-    public bool HayErrorApellidos => ErrorApellidos.Length > 0;
     public bool HayErrorTerminos => ErrorTerminos.Length > 0;
 
     public ComandoAsincrono Continuar { get; }
     public ComandoAsincrono AlternarTerminos { get; }
 
+    // Al volver del PIN porque el servidor rechazó algún dato (p. ej., un documento ya registrado): se marca en su campo.
+    public void Preparar()
+    {
+        if (flujo.ErroresRegistro is not { } errores)
+            return;
+        flujo.ErroresRegistro = null;
+        MostrarErrores(errores);
+        (TipoMensaje, Mensaje) = ("error", "Revisa los datos marcados.");
+    }
+
     private async Task ContinuarAsync()
     {
-        ErrorNombres = Nombres.Trim().Length == 0 ? "Escribe tus nombres." : Nombres.Trim().Length > 100 ? "Máximo 100 caracteres." : "";
-        ErrorApellidos = Apellidos.Trim().Length == 0 ? "Escribe tus apellidos." : Apellidos.Trim().Length > 100 ? "Máximo 100 caracteres." : "";
+        Mensaje = "";
+        var datos = Validar(Hoy(reloj), flujo.Celular);
         ErrorTerminos = AceptaTerminos ? "" : "Para crear tu cuenta debes aceptar los términos.";
-        if (ErrorNombres.Length > 0 || ErrorApellidos.Length > 0 || ErrorTerminos.Length > 0)
+        if (datos is null || ErrorTerminos.Length > 0)
             return;
 
-        flujo.Nombres = Nombres.Trim();
-        flujo.Apellidos = Apellidos.Trim();
+        flujo.DatosRegistro = datos;
         flujo.ModoPin = ModoPin.Crear;
         await navegacion.IrAAsync(Rutas.Pin);
     }
@@ -453,10 +466,17 @@ public sealed class PinVistaModelo : VistaModeloBase
         }
 
         var resultado = Modo == ModoPin.Crear
-            ? await api.RegistrarConCelularAsync(new SolicitudRegistroCelular(flujo.TokenVerificacion ?? "", flujo.Nombres, flujo.Apellidos, pin, true), CancellationToken.None)
+            ? await api.RegistrarConCelularAsync(Solicitud(flujo, pin), CancellationToken.None)
             : await api.RestablecerPinAsync(new SolicitudRestablecerPin(flujo.TokenVerificacion ?? "", pin), CancellationToken.None);
         primero = "";
         await AtenderAsync(resultado, alRechazoDeDatos: () => CambiarPaso(confirmar: false));
+    }
+
+    private static SolicitudRegistroCelular Solicitud(FlujoIngresoCelular flujo, string pin)
+    {
+        var d = flujo.DatosRegistro ?? new DatosCiudadanoEscritos(null, null, null, null, null, null, null, null, null);
+        return new SolicitudRegistroCelular(flujo.TokenVerificacion ?? "", d.Nombres ?? "", d.Apellidos ?? "", pin, true,
+            d.TipoDocumento, d.NumeroDocumento, d.FechaNacimiento, d.Direccion, d.ContactoNombre, d.ContactoParentesco, d.ContactoTelefono);
     }
 
     private async Task IngresarAsync(string pin)
@@ -486,6 +506,13 @@ public sealed class PinVistaModelo : VistaModeloBase
                 if (await flujo.EnviarCodigoAsync() is { } error) { Mensaje = error; return; }
                 flujo.AvisoPendiente = rechazo.Mensaje;
                 await navegacion.IrAAsync($"../{Rutas.Codigo}");
+                break;
+            case ResultadoApi<RespuestaIngresoCelular>.Rechazado { Estado: 400 } rechazo
+                when Modo == ModoPin.Crear && rechazo.Errores.Keys.Any(FormularioDatosCiudadano.Campos.Contains):
+                // Un dato del formulario (p. ej., un documento ya registrado): se corrige en «Crea tu cuenta».
+                flujo.ErroresRegistro = rechazo.Errores;
+                CambiarPaso(confirmar: false);
+                await navegacion.IrAAsync("..");
                 break;
             case ResultadoApi<RespuestaIngresoCelular>.Rechazado { Estado: 400 } rechazo:
                 Mensaje = rechazo.Errores.Values.FirstOrDefault()?.FirstOrDefault() ?? rechazo.Mensaje;

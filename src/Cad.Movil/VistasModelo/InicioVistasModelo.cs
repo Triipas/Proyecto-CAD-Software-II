@@ -46,6 +46,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         VerMisCasos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisCasos));
         VerNotificaciones = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.Notificaciones));
         VerCasoActivo = new ComandoAsincrono(() => casoActivo is { } c ? navegacion.IrAAsync($"{Rutas.MiCaso}?id={c.Id}") : Task.CompletedTask);
+        CompletarDatos = new ComandoAsincrono(() => navegacion.IrAAsync(Rutas.MisDatos));
         Centrar = new ComandoAsincrono(CentrarAsync);
         emisor.Cambio += _ => ActualizarSos();
         if (acompanamiento is not null)
@@ -85,6 +86,11 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
 
     // ----- Rediseño del inicio (ADR-08): mapa, «Centrar» y franja del caso en curso -----
     public ComandoAsincrono VerCasoActivo { get; }
+    public ComandoAsincrono CompletarDatos { get; }
+
+    // Registro único: una cuenta anterior a él puede no tener los datos obligatorios. Se avisa, sin bloquear el SOS.
+    private bool datosIncompletos;
+    public bool DatosIncompletos { get => datosIncompletos; private set => Asignar(ref datosIncompletos, value); }
     public ComandoAsincrono Centrar { get; }
 
     // La posición solo se dibuja en el mapa del propio teléfono; nunca se envía (HU06-CA04).
@@ -123,6 +129,7 @@ public sealed class InicioCiudadanoVistaModelo : VistaModeloBase
         {
             nombre = perfil.Valor.Nombres.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
             Iniciales = $"{perfil.Valor.Nombres.Trim().FirstOrDefault()}{perfil.Valor.Apellidos.Trim().FirstOrDefault()}".ToUpperInvariant();
+            DatosIncompletos = !perfil.Valor.DatosCompletos;
             Notificar(nameof(Saludo));
             Notificar(nameof(Iniciales));
         }
