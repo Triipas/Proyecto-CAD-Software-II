@@ -68,6 +68,19 @@ public class AnonimizadorTests
         Assert.Equal("[nombre] y su prima vieron a dos hombres frente a lo de [nombre]; avisen a [nombre]", limpio);
     }
 
+    // Revisión del PR #139: un tercero que comparte una parte del nombre con quien reporta no deja escapar el resto.
+    [Fact]
+    public void UnNombrePresentado_QueCompartePalabraConUnNombreConocido_SeQuitaEntero() =>
+        Assert.Equal("mi vecina [nombre] salió", Anonimizador.Limpiar("mi vecina Rosa García salió", ["Rosa Quispe"]));
+
+    // Revisión del PR #139: los nombres con guion o apóstrofo no se descartan.
+    [Theory]
+    [InlineData("avisen a Pérez-García", "Pérez-García", "avisen a [nombre]")]
+    [InlineData("lo vio d'angelo desde la tienda", "Luis D'Angelo", "lo vio d'[nombre] desde la tienda")]
+    [InlineData("el señor Pérez-García gritaba", null, "el señor [nombre] gritaba")]
+    public void NombresConGuionOApostrofo_SeQuitan(string texto, string? conocido, string esperado) =>
+        Assert.Equal(esperado, Anonimizador.Limpiar(texto, [conocido]));
+
     [Fact]
     public void LasPalabrasCortasDeUnNombre_NoSeQuitan() =>
         Assert.Equal("la casa de la esquina", Anonimizador.Limpiar("la casa de la esquina", ["María de la Cruz"]));

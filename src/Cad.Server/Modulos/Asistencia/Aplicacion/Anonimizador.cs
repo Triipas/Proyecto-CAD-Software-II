@@ -27,18 +27,21 @@ public static partial class Anonimizador
         texto = Telefono().Replace(texto, Reemplazo);
         texto = NumeroLargo().Replace(texto, Reemplazo);
         texto = Placa().Replace(texto, ReemplazoPlaca);
-        texto = QuitarNombresConocidos(texto, nombresConocidos);
+        // Primero el nombre presentado completo: si antes se tapara una parte que coincide con un nombre conocido («mi vecina Rosa
+        // García» con «Rosa» conocida), el resto («García») ya no se reconocería como nombre.
         texto = NombrePresentado().Replace(texto, m => m.Groups["antes"].Value + ReemplazoNombre);
+        texto = QuitarNombresConocidos(texto, nombresConocidos);
         return NombresSeguidos().Replace(texto, ReemplazoNombre);
     }
 
-    // Cada palabra de un nombre conocido (de 3 o más letras: «de», «la» o «del» no identifican), como palabra completa.
+    // Cada palabra de un nombre conocido (de 3 o más letras: «de», «la» o «del» no identifican), como palabra completa. Los
+    // nombres compuestos con guion o apóstrofo («Pérez-García», «D'Angelo») se parten en sus palabras: ninguna se pierde.
     private static string QuitarNombresConocidos(string texto, IEnumerable<string?> nombres)
     {
         var palabras = nombres
             .Where(n => !string.IsNullOrWhiteSpace(n))
-            .SelectMany(n => n!.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            .Where(p => p.Length >= 3 && p.All(char.IsLetter))
+            .SelectMany(n => PalabrasDeNombre().Split(n!))
+            .Where(p => p.Length >= 3)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderByDescending(p => p.Length)
             .ToList();
@@ -48,6 +51,10 @@ public static partial class Anonimizador
         return Regex.Replace(texto, patron, ReemplazoNombre, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
             TimeSpan.FromSeconds(1));
     }
+
+    // Separa un nombre en sus palabras: todo lo que no es letra (espacios, guiones, apóstrofos, puntos).
+    [GeneratedRegex(@"[^\p{L}]+")]
+    private static partial Regex PalabrasDeNombre();
 
     [GeneratedRegex(@"[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.\p{L}{2,}")]
     private static partial Regex Correo();
@@ -66,10 +73,10 @@ public static partial class Anonimizador
 
     // Un nombre propio (una a tres palabras con mayúscula inicial) justo después de algo que lo presenta como nombre de persona.
     // Solo la presentación ignora mayúsculas; el nombre tiene que empezar con mayúscula («mi vecino del 3» no se toca).
-    [GeneratedRegex(@"(?<antes>(?<![\p{L}])(?i:me llamo|mi nombre es|se llama|se llamaba|soy|señor|señora|señorita|sr\.|sra\.|srta\.|don|doña|vecino|vecina|hijo|hija|hermano|hermana|esposo|esposa|sobrino|sobrina|nieto|nieta|primo|prima)\s+)\p{Lu}\p{Ll}+(?:\s+\p{Lu}\p{Ll}+){0,2}")]
+    [GeneratedRegex(@"(?<antes>(?<![\p{L}])(?i:me llamo|mi nombre es|se llama|se llamaba|soy|señor|señora|señorita|sr\.|sra\.|srta\.|don|doña|vecino|vecina|hijo|hija|hermano|hermana|esposo|esposa|sobrino|sobrina|nieto|nieta|primo|prima)\s+)\p{Lu}\p{Ll}+(?:[-'’]\p{L}+)?(?:\s+\p{Lu}\p{Ll}+(?:[-'’]\p{L}+)?){0,2}")]
     private static partial Regex NombrePresentado();
 
-    // Dos o más «[nombre]» seguidos (nombre y apellido) quedan en uno solo.
-    [GeneratedRegex(@"\[nombre\](?:\s+\[nombre\])+")]
+    // Dos o más «[nombre]» seguidos (nombre y apellido, o las dos partes de «Pérez-García») quedan en uno solo.
+    [GeneratedRegex(@"\[nombre\](?:[\s'’-]+\[nombre\])+")]
     private static partial Regex NombresSeguidos();
 }
