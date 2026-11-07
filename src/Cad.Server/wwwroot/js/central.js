@@ -1053,6 +1053,57 @@
     else if (!evento.shiftKey && document.activeElement === ultimo) { evento.preventDefault(); primero.focus(); }
   });
 
+  // 07/11/2026: la asignación rápida se envía sin recargar la central. Al recargar, el navegador no dejaba sonar «caso
+  // asignado» (la página nueva aún no tenía un clic) y el operador perdía lo que tenía a la vista. El servidor responde igual
+  // que siempre (PRG a la central con el aviso): de esa respuesta se toma el resultado; si no trae ninguno (p. ej., terminó la
+  // sesión), se va a esa página como antes.
+  const textoBoton = confirmacion.querySelector("button[type=submit]").textContent;
+  confirmacion.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    if (confirmacion.dataset.enviando === "true") return;
+    confirmacion.dataset.enviando = "true";
+    const boton = confirmacion.querySelector("button[type=submit]");
+    confirmacion.setAttribute("aria-busy", "true");
+    boton.setAttribute("aria-disabled", "true");
+    boton.textContent = boton.dataset.textoCarga;
+    const terminar = () => {
+      delete confirmacion.dataset.enviando;
+      confirmacion.removeAttribute("aria-busy");
+      boton.removeAttribute("aria-disabled");
+      boton.textContent = textoBoton;
+    };
+    let respuesta;
+    try {
+      respuesta = await fetch(confirmacion.action, {
+        method: "POST", body: new FormData(confirmacion), credentials: "same-origin", headers: { Accept: "text/html" },
+      });
+    } catch {
+      terminar();
+      CadSonidos.reproducir("error");
+      avisarBreve("No se pudo asignar el caso: no hay conexión con el servidor. Reinténtalo.");
+      return;
+    }
+    const pagina = documento(await respuesta.text());
+    const exito = pagina.querySelector(".central__aviso.aviso--exito");
+    const error = pagina.querySelector(".central__aviso.aviso--error");
+    if (!exito && !error) { window.location.assign(respuesta.url); return; }
+    terminar();
+    confirmacion.hidden = true;
+    const texto = (aviso) => [...aviso.querySelectorAll(".aviso__titulo, .aviso__texto")].map((p) => p.textContent.trim()).filter(Boolean).join(" ");
+    if (exito) {
+      CadSonidos.reproducir("caso-asignado");
+      if (sosSeleccionado) deseleccionar();
+      avisarBreve(texto(exito));
+      document.getElementById("titulo-cola")?.focus();
+    } else {
+      CadSonidos.reproducir("error");
+      avisarBreve(texto(error));
+      origenDialogo?.focus?.();
+    }
+    await refrescar();
+    await refrescarSerenos();
+  });
+
   // ---------- Panel de serenos y capas del mapa ----------
   // 05/11/2026: el panel de serenos se abre encima del mapa cuando se pide (su cifra en la cabecera o en el mapa, o un sereno
   // tocado en el mapa) y lo tapa sin moverlo ni reencuadrarlo. Cada operador lo encuentra como lo dejó (solo en su navegador).
