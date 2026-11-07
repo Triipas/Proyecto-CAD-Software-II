@@ -117,7 +117,7 @@ export async function sembrar(navegador, secretos) {
 
   const categoriasSereno = await api('/api/sereno/categorias', { metodo: 'GET', token: sara });
   await api(`/api/sereno/casos/${sosCerrado.id}/desplazamiento`, { token: sara });
-  // Llega al lugar: la atención se inicia a menos de 150 m del punto del caso.
+  // Llega al lugar: la atención se inicia a menos de 50 m del punto del caso (~40 m).
   await api('/api/sereno/posiciones', { token: sara, cuerpo: { ...cerca(0.0003, 0.0002), precisionMetros: 6, obtenidaEn: ahora() } });
   await api(`/api/sereno/casos/${sosCerrado.id}/atencion`, { token: sara });
   await api(`/api/sereno/casos/${sosCerrado.id}/cierre`, {

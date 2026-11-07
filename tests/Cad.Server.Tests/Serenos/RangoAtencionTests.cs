@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Tests.Serenos;
 
-// Rango de atención (decisión del 24/10/2026): el sereno inicia la atención dentro de 150 m del punto del caso (más la
-// imprecisión de ambos); fuera, con un motivo, que queda registrado y lo ve la central. Puntos ficticios en Arequipa.
+// Rango de atención (decisión del 24/10/2026, radio del 06/11/2026): el sereno inicia la atención dentro de 50 m del punto del
+// caso (más la imprecisión de ambos, hasta 150 m); fuera, con un motivo, que queda registrado y lo ve la central. Puntos ficticios en Arequipa.
 [Collection(ColeccionServidor.Nombre)]
 public class RangoAtencionTests(FabricaCad fabrica)
 {
@@ -75,14 +75,14 @@ public class RangoAtencionTests(FabricaCad fabrica)
     {
         var sereno = await SerenoAsync();
         var (casoId, _) = await EnCaminoAsync(sereno);
-        await EnviarPosicionAsync(sereno, LatCaso - 0.0005, LonCaso); // ~55 m al sur
+        await EnviarPosicionAsync(sereno, LatCaso - 0.0003, LonCaso); // ~33 m al sur
 
         Assert.Equal(HttpStatusCode.OK, (await IniciarAsync(sereno, casoId)).StatusCode); // sin cuerpo: usa la última posición
 
         var inicio = await InicioAsync(casoId);
         Assert.True(inicio.DentroDelRango);
-        Assert.InRange(inicio.DistanciaMetros!.Value, 45, 65);
-        Assert.Equal(150, inicio.RadioMetros);
+        Assert.InRange(inicio.DistanciaMetros!.Value, 28, 40);
+        Assert.Equal(50, inicio.RadioMetros);
         Assert.Null(inicio.Motivo);
         Assert.Equal(EstadoCaso.EnAtencion, await EstadoAsync(casoId));
     }
@@ -99,10 +99,22 @@ public class RangoAtencionTests(FabricaCad fabrica)
         using var problema = JsonDocument.Parse(await respuesta.Content.ReadAsStringAsync());
         var rango = problema.RootElement.GetProperty("errors").GetProperty(RangoAtencion.ErrorFueraDeRango);
         Assert.InRange(double.Parse(rango[0].GetString()!, System.Globalization.CultureInfo.InvariantCulture), 1050, 1200);
-        Assert.Equal("150", rango[1].GetString());
+        Assert.Equal("50", rango[1].GetString());
         Assert.Contains("Indica por qué", problema.RootElement.GetProperty("title").GetString());
         Assert.Equal(EstadoCaso.EnCamino, await EstadoAsync(casoId));
         Assert.False(await fabrica.ConBaseDatosAsync(db => db.IniciosAtencion.AnyAsync(i => i.CasoId == casoId)));
+    }
+
+    [Fact]
+    public async Task A80Metros_ConBuenGps_YaEstaFueraDelRango()
+    {
+        var sereno = await SerenoAsync();
+        var (casoId, _) = await EnCaminoAsync(sereno);
+
+        var respuesta = await IniciarAsync(sereno, casoId, new SolicitudInicioAtencion(Posicion(LatCaso - 0.00072, LonCaso))); // ~80 m
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, respuesta.StatusCode);
+        Assert.Equal(EstadoCaso.EnCamino, await EstadoAsync(casoId));
     }
 
     [Fact]
@@ -185,7 +197,7 @@ public class RangoAtencionTests(FabricaCad fabrica)
     {
         var sereno = await SerenoAsync();
         var (casoId, _) = await EnCaminoAsync(sereno);
-        await EnviarPosicionAsync(sereno, LatCaso - 0.0005, LonCaso);
+        await EnviarPosicionAsync(sereno, LatCaso - 0.0003, LonCaso);
         var ruta = $"/api/sereno/casos/{casoId}/atencion";
 
         // JSON con otro Content-Type: se lee igual.
