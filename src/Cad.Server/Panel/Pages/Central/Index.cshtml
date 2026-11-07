@@ -82,24 +82,34 @@
                 <a class="boton boton--secundario" href="/panel/reportes/nuevo" data-abrir-panel><partial name="_Icono" model="@("documento")" />Nuevo reporte</a>
                 <a class="bandeja__enlace" href="/panel/criterios-triaje" data-abrir-panel>Criterios de triaje</a>
             </div>
-            @* HU14 en la central (05/11/2026): los reportes recibidos y en revisión, con el modo de la admisión automática (HU45). *@
+            @* HU14 en la central (05/11/2026): los reportes recibidos y en revisión, con el modo de la admisión automática (HU45).
+               06/11/2026: cada situación de la pestaña se pliega desde su título (con su cifra a la vista) para llegar a un caso de la
+               otra sin recorrer la primera; central.js recuerda cuál dejó plegada cada operador. Sin JavaScript se ven abiertas. *@
             <section class="central__revisar bandeja__grupo" aria-labelledby="titulo-revisar">
                 <h3 id="titulo-revisar" class="central__titulo">
-                    Por revisar · reportes <span class="central__contador central__contador--revisar" data-contador-revisar>@Model.PorRevisar.Reportes.Count</span>
+                    <button type="button" class="bandeja__plegar" aria-expanded="true" aria-controls="cuerpo-revisar" data-plegar-seccion="revisar">
+                        <partial name="_Icono" model="@("izquierda")" />Por revisar · reportes <span class="central__contador central__contador--revisar" data-contador-revisar>@Model.PorRevisar.Reportes.Count</span>
+                    </button>
                 </h3>
-                <partial name="_AdmisionAutomatica" model="admision" />
-                <div data-region-revisar>
-                    <partial name="_ListaPorRevisar" model="@Model.PorRevisar" />
+                <div class="bandeja__cuerpo-seccion" id="cuerpo-revisar" data-cuerpo-seccion="revisar">
+                    <partial name="_AdmisionAutomatica" model="admision" />
+                    <div data-region-revisar>
+                        <partial name="_ListaPorRevisar" model="@Model.PorRevisar" />
+                    </div>
                 </div>
             </section>
 
             @* HU15-CA02 y HU20-CA07 — reportes admitidos, separados de los SOS (no son urgentes) y asignables igual. *@
             <section class="central__reportes bandeja__grupo" aria-labelledby="titulo-reportes">
                 <h3 id="titulo-reportes" class="central__titulo">
-                    Por asignar · reportes <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
+                    <button type="button" class="bandeja__plegar" aria-expanded="true" aria-controls="cuerpo-reportes" data-plegar-seccion="reportes">
+                        <partial name="_Icono" model="@("izquierda")" />Por asignar · reportes <span class="central__contador central__contador--reportes" data-contador-reportes>@Model.ReportesAdmitidos.Count</span>
+                    </button>
                 </h3>
-                <div data-region-reportes>
-                    <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
+                <div class="bandeja__cuerpo-seccion" id="cuerpo-reportes" data-cuerpo-seccion="reportes">
+                    <div data-region-reportes>
+                        <partial name="_ListaReportes" model="@Model.ListaDeReportes" />
+                    </div>
                 </div>
             </section>
             </div>
