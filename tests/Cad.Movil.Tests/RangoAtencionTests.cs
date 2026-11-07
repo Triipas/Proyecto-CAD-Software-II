@@ -39,6 +39,16 @@ public class RangoAtencionTests
         return vm;
     }
 
+    // Radio revisado (06/11/2026): 50 m de base (precisión de ubicación de emergencia de la FCC), que crece con la imprecisión
+    // informada del caso y del sereno hasta un tope de 150 m.
+    [Theory]
+    [InlineData(null, null, 50)]
+    [InlineData(10.0, 8.0, 50)]
+    [InlineData(40.0, 30.0, 70)]
+    [InlineData(120.0, 90.0, 150)]
+    public void Radio_Base50m_CreceConLaImprecisionHastaElTope(double? precisionCaso, double? precisionSereno, double esperado) =>
+        Assert.Equal(esperado, RangoAtencion.Radio(precisionCaso, precisionSereno));
+
     [Fact]
     public async Task DentroDelRango_SeAvisaLlegaste_YSeIniciaConLaPosicion()
     {
@@ -63,7 +73,7 @@ public class RangoAtencionTests
         Assert.False(vm.MostrarLlegaste);
 
         // Se acerca: el turno envía la nueva posición y la pantalla se actualiza.
-        ubicacion.Posicion = () => new UbicacionSos(LatCaso, LonCaso + 0.0005, 8, Inicio);
+        ubicacion.Posicion = () => new UbicacionSos(LatCaso, LonCaso + 0.0003, 8, Inicio); // ~32 m
         await vm.Alternar.EjecutarAsync(); // con un caso en curso, pide confirmación…
         await vm.ConfirmarDesactivacion.EjecutarAsync(); // …y se desactiva
         await vm.Alternar.EjecutarAsync(); // vuelve a activar y lee la posición
@@ -88,7 +98,7 @@ public class RangoAtencionTests
         Assert.Empty(api.InicioSolicitudes); // todavía no se envía nada
         Assert.True(vm.MostrarMotivoInicio);
         Assert.False(vm.MostrarBotonIniciar);
-        Assert.StartsWith("Estás a 1,1 km del punto del caso (el rango es de 150 m).", vm.TextoFueraDeRango);
+        Assert.StartsWith("Estás a 1,1 km del punto del caso (el rango es de 50 m).", vm.TextoFueraDeRango);
         Assert.DoesNotContain(vm.OpcionesMotivo, o => o.Clave == MotivosInicioFueraDeRango.SinPosicion); // tiene posición
 
         await vm.ConfirmarInicioFueraDeRango.EjecutarAsync();
@@ -113,8 +123,8 @@ public class RangoAtencionTests
     {
         var vm = await SerenoEnAsync(LatCaso - 0.0004, LonCaso); // la app lo ve dentro
         api.RespuestaAvance = _ => new ResultadoApi<DespachoSereno?>.Rechazado(422,
-            "Estás a 600 m del punto del caso (el rango es de 150 m). Indica por qué inicias la atención aquí.",
-            new Dictionary<string, string[]> { [RangoAtencion.ErrorFueraDeRango] = ["600", "150"] });
+            "Estás a 600 m del punto del caso (el rango es de 50 m). Indica por qué inicias la atención aquí.",
+            new Dictionary<string, string[]> { [RangoAtencion.ErrorFueraDeRango] = ["600", "50"] });
 
         await vm.IniciarAtencion.EjecutarAsync();
 
