@@ -582,6 +582,11 @@
   margin-right: var(--espacio-1);
 }
 
+/* Sin «Disponible» delante, la edad de quien tiene un caso no lleva el punto separador. */
+.central .sereno__estado--posicion .sereno__edad::before {
+  content: none;
+}
+
 /* La última posición pasó del umbral (ListaSerenos.UmbralPosicionAntiguaSegundos): ámbar, con icono y la edad en texto. */
 .central .sereno__edad--antigua {
   font-weight: var(--peso-medio);

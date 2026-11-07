@@ -415,6 +415,16 @@
     }
   }
 
+  // Devuelve a los disponibles el orden que tenían a la vista (los que llegan nuevos, al final).
+  function conservarOrden(ids) {
+    const lista = regionSerenos.querySelector('[data-grupo-serenos="disponibles"] .lista-serenos');
+    if (!lista) return;
+    const puesto = (fila) => { const i = ids.indexOf(fila.dataset.sereno); return i < 0 ? ids.length : i; };
+    const enfocado = lista.contains(document.activeElement) ? document.activeElement : null;
+    for (const fila of [...lista.children].sort((a, b) => puesto(a) - puesto(b))) lista.appendChild(fila);
+    if (enfocado && document.activeElement !== enfocado) enfocado.focus({ preventScroll: true });
+  }
+
   function calcularDespacho({ animar = true } = {}) {
     lineaDespacho?.remove();
     lineaDespacho = null;
@@ -1182,6 +1192,9 @@
     const respuesta = await fetch("/panel/central?handler=Serenos", { headers: { Accept: "text/html" }, credentials: "same-origin" });
     if (respuesta.redirected || !respuesta.ok) return false;
     const seleccionado = regionSerenos.querySelector(".sereno--seleccionado")?.dataset.sereno;
+    // El orden por cercanía de los disponibles: el parche devuelve el orden del servidor (por nombre) y, con el cursor sobre la lista,
+    // no se reordena hasta que salga; mientras tanto se conserva el que el operador tenía a la vista.
+    const ordenVisto = [...regionSerenos.querySelectorAll('[data-grupo-serenos="disponibles"] [data-sereno]')].map((fila) => fila.dataset.sereno);
     // Lo que solo sabe el navegador (elegido, sugerido, «Asignar» a la vista) se repone antes de medir: así la tarjeta no
     // cambia de alto por un instante ni parece moverse.
     cadMovimiento.actualizarRegion(regionSerenos, await respuesta.text(), {
@@ -1192,6 +1205,7 @@
         actualizarAsignacion();
         // Sin animar el orden aquí: actualizarRegion ya desliza lo que cambia de sitio al resincronizar.
         calcularDespacho({ animar: false });
+        if (ordenPendiente && regionSerenos.matches(":hover")) conservarOrden(ordenVisto);
         rotularConCaso();
         reiniciarEdades();
       },

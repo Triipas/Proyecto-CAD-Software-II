@@ -1,0 +1,14 @@
+@model (double Segundos, string Hora, double? Precision, bool Antigua)
+@using System.Globalization
+@functions {
+    // «hace 18 s», «hace 4 min»: lo que central.js sigue contando hasta la próxima resincronización.
+    static string Edad(double segundos) => segundos < 60 ? $"hace {(int)segundos} s" : segundos < 3600 ? $"hace {(int)(segundos / 60)} min" : $"hace {(int)(segundos / 3600)} h";
+}
+@{
+    var precision = Model.Precision?.ToString("0", CultureInfo.InvariantCulture);
+}
+@* Edad de la última posición de un sereno con ubicación (disponible o con caso). Para el lector de pantalla, la hora exacta (no
+   «hace N s», que cambia sola); a la vista, la edad, en ámbar con icono pasado el umbral (central.js la mantiene). *@
+<span class="visualmente-oculto">Última ubicación a las @Model.Hora, precisión de @precision metros.</span>
+<span class="sereno__edad@(Model.Antigua ? " sereno__edad--antigua" : "")" data-edad-s="@((int)Model.Segundos)" aria-hidden="true"
+      title="Última ubicación a las @Model.Hora · ± @precision m"><span class="sereno__edad-alerta" @(Model.Antigua ? "" : "hidden")><partial name="_Icono" model="@("advertencia")" /></span><span data-edad-texto>@Edad(Model.Segundos)</span></span>

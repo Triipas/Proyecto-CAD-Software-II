@@ -12,9 +12,6 @@
     // Las dos primeras iniciales del nombre, para el escudo (el mismo del marcador del mapa).
     static string Iniciales(string nombre) =>
         string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
-
-    // «hace 18 s», «hace 4 min»: lo que central.js sigue contando hasta la próxima resincronización.
-    static string Edad(double segundos) => segundos < 60 ? $"hace {(int)segundos} s" : segundos < 3600 ? $"hace {(int)(segundos / 60)} min" : $"hace {(int)(segundos / 3600)} h";
 }
 @* HU19 — fragmento de serenos. Lo genera el servidor en la carga inicial y al resincronizar (HU19-CA03).
    06/11/2026: tablero en filas (escudo, estado, edad de la posición y distancia) en vez de tarjetas iguales; central.js pone la
@@ -69,6 +66,9 @@
                     {
                         var conUbicacion = sereno.UbicacionDisponible && sereno.UltimaPosicionEn is not null;
                         var hora = sereno.UltimaPosicionEn is { } h ? TimeZoneInfo.ConvertTime(h, Model.ZonaHoraria).ToString("HH:mm:ss", inv) : "";
+                        // Edad de la posición (reloj del servidor): también para quien tiene un caso asignado.
+                        var segundos = conUbicacion ? Math.Max(0, (ahora - sereno.UltimaPosicionEn!.Value).TotalSeconds) : 0;
+                        var antigua = conUbicacion && segundos >= ListaSerenos.UmbralPosicionAntiguaSegundos;
                 <li class="sereno sereno--@clave @(sereno.Disponible ? "sereno--disponible" : "")" id="sereno-@sereno.Id" tabindex="-1"
                     data-sereno="@sereno.Id" data-nombre="@sereno.Nombre" data-orden="@orden"
                     data-disponible="@(sereno.Disponible ? "true" : "false")"
@@ -94,14 +94,9 @@
                         {
                             <p class="sereno__estado" data-suave>
                                 <span class="estado estado--activa"><partial name="_Icono" model="@("exito")" /><span class="visualmente-oculto">Operativo. </span>Disponible</span>
-                                @if (conUbicacion && sereno.UltimaPosicionEn is { } recibida)
+                                @if (conUbicacion)
                                 {
-                                    var segundos = Math.Max(0, (ahora - recibida).TotalSeconds);
-                                    var antigua = segundos >= ListaSerenos.UmbralPosicionAntiguaSegundos;
-                                    @* Para el lector de pantalla, la hora exacta (no «hace N s», que cambia sola); a la vista, la edad. *@
-                                    <span class="visualmente-oculto">Última ubicación a las @hora, precisión de @sereno.PrecisionMetros?.ToString("0", inv) metros.</span>
-                                    <span class="sereno__edad@(antigua ? " sereno__edad--antigua" : "")" data-edad-s="@((int)segundos)" aria-hidden="true"
-                                          title="Última ubicación a las @hora · ± @sereno.PrecisionMetros?.ToString("0", inv) m"><span class="sereno__edad-alerta" @(antigua ? "" : "hidden")><partial name="_Icono" model="@("advertencia")" /></span><span data-edad-texto>@Edad(segundos)</span></span>
+                                    <partial name="_EdadPosicion" model="@((segundos, hora, sereno.PrecisionMetros, antigua))" />
                                 }
                                 else
                                 {
@@ -140,9 +135,19 @@
                                     }
                                 </p>
                             }
-                            if (sereno.Operativo && !conUbicacion)
+                            if (sereno.Operativo)
                             {
-                                <p class="sereno__estado"><span class="sereno__sin-ubicacion"><partial name="_Icono" model="@("informacion")" />Ubicación no disponible</span></p>
+                                @* La edad de su posición: la distancia o «En el lugar» no dicen si esa posición sigue al día. *@
+                                <p class="sereno__estado sereno__estado--posicion" data-suave>
+                                    @if (conUbicacion)
+                                    {
+                                        <partial name="_EdadPosicion" model="@((segundos, hora, sereno.PrecisionMetros, antigua))" />
+                                    }
+                                    else
+                                    {
+                                        <span class="sereno__sin-ubicacion"><partial name="_Icono" model="@("informacion")" />Ubicación no disponible</span>
+                                    }
+                                </p>
                             }
                         }
                         else
