@@ -722,6 +722,9 @@
   function seleccionarSereno(id, { desdeMapa = false } = {}) {
     if (desdeMapa) mostrarSerenos(true);
     const item = marcarSereno(id);
+    // 06/11/2026: la pestaña de la bandeja pasa a la del caso que atiende el sereno (un SOS en curso, «En curso»), para ver a la
+    // vez a quien se eligió y su caso. El globo que acaba de abrir el marcador se conserva.
+    if (item?.dataset.caso) irAPestanaDe(item.dataset.caso, { cerrarGlobo: false });
     if (item) {
       // Un filtro de la franja de resumen que lo esconde se quita: el sereno elegido en el mapa tiene que verse en la lista.
       if (desdeMapa && !item.offsetParent) fijarSolo("");
@@ -1086,7 +1089,7 @@
     if (!enMapa) return null;
     return enMapa.dataset.estado === "Recibido" || enMapa.dataset.estado === "En revisión" ? "reportes" : "en-curso";
   }
-  function elegirPestana(nombre, { enfocar = false, soltar = true } = {}) {
+  function elegirPestana(nombre, { enfocar = false, soltar = true, cerrarGlobo = true } = {}) {
     if (!pestanas.length || !pestanas.some((b) => b.dataset.pestana === nombre)) return;
     const cambia = nombre !== pestana;
     pestana = nombre;
@@ -1103,15 +1106,15 @@
     if (!cambia) return;
     cuerpoCola.scrollTop = 0;
     // El globo de un caso que la nueva pestaña oculta tampoco queda a la vista (con su enlace).
-    mapa.closePopup();
+    if (cerrarGlobo) mapa.closePopup();
     // Lo elegido en otra pestaña ya no se ve en el mapa: se suelta (el panel del caso, si está abierto, sigue).
     if (soltar) soltarTodo();
   }
   // Elegir un caso de otra pestaña (desde el panel, un enlace o el código) lleva a su pestaña, sin soltarlo; si está en una
   // situación plegada, la abre.
-  function irAPestanaDe(id) {
+  function irAPestanaDe(id, { cerrarGlobo = true } = {}) {
     const suya = pestanaDe(id);
-    if (suya && suya !== pestana) elegirPestana(suya, { soltar: false });
+    if (suya && suya !== pestana) elegirPestana(suya, { soltar: false, cerrarGlobo });
     const plegada = document.querySelector(`[data-cuerpo-seccion][hidden]:has([data-sos="${CSS.escape(id)}"], [data-revisar="${CSS.escape(id)}"])`);
     if (plegada) plegarSeccion(plegada.dataset.cuerpoSeccion, false);
   }
