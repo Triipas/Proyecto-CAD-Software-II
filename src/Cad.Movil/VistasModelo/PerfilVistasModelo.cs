@@ -38,10 +38,10 @@ public sealed class PerfilVistaModelo : VistaModeloBase
     public bool CelularVerificado => perfil?.CelularVerificado == true;
     public bool TienePin => perfil?.TienePin == true;
 
-    public string TextoDatos => perfil is null ? "" : perfil.DatosCompletados == PerfilCiudadanoVista.DatosOpcionales
+    public string TextoDatos => perfil is null ? "" : perfil.DatosCompletos
         ? "Datos completos"
-        : $"Completa tus datos ({perfil.DatosCompletados} de {PerfilCiudadanoVista.DatosOpcionales})";
-    public bool DatosIncompletos => perfil is not null && perfil.DatosCompletados < PerfilCiudadanoVista.DatosOpcionales;
+        : "Faltan datos";
+    public bool DatosIncompletos => perfil is not null && !perfil.DatosCompletos;
 
     public string TextoTerminos => perfil?.TerminosAceptadosEn is { } en
         ? $"Aceptaste los términos (versión {perfil.TerminosVersion}) el {en.ToLocalTime():dd/MM/yyyy}."
@@ -116,62 +116,27 @@ public sealed class PerfilVistaModelo : VistaModeloBase
     }
 }
 
-// ADR-08, fase D — «Mis datos»: nombres y apellidos obligatorios; documento, nacimiento, dirección y contacto opcionales.
-public sealed class MisDatosVistaModelo : VistaModeloBase
+// ADR-08, fase D — «Mis datos», con el formulario y las reglas del registro único (solo la dirección es opcional). Las cuentas
+// creadas antes del registro único llegan aquí para completar lo que falta.
+public sealed class MisDatosVistaModelo : FormularioDatosCiudadano
 {
-    public const string SinDocumento = "Sin documento";
-    public const string SinContacto = "Elegir";
+    public const string AvisoIncompletos =
+        "Completa tu documento, tu fecha de nacimiento y tu contacto de emergencia: la central los necesita para atenderte.";
 
     private readonly IApiCad api;
     private readonly IAlmacenSesion sesiones;
     private readonly INavegacion navegacion;
-    private string nombres = "", apellidos = "", celular = "", numeroDocumento = "", fechaNacimiento = "", direccion = "",
-        contactoNombre = "", contactoTelefono = "", mensaje = "", tipoMensaje = "error";
-    private string tipoDocumento = SinDocumento, contactoParentesco = SinContacto;
-    private IReadOnlyDictionary<string, string[]> errores = new Dictionary<string, string[]>();
+    private readonly TimeProvider reloj;
+    private string celular = "", celularNumero = "";
 
-    public MisDatosVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion)
+    public MisDatosVistaModelo(IApiCad api, IAlmacenSesion sesiones, INavegacion navegacion, TimeProvider? reloj = null)
     {
         (this.api, this.sesiones, this.navegacion) = (api, sesiones, navegacion);
+        this.reloj = reloj ?? TimeProvider.System;
         Guardar = new ComandoAsincrono(GuardarAsync);
     }
 
-    public IReadOnlyList<string> TiposDocumento { get; } =
-        [SinDocumento, .. DatosCiudadano.TiposDocumento.Select(DatosCiudadano.NombreTipo)];
-    public IReadOnlyList<string> Parentescos { get; } = [SinContacto, .. DatosCiudadano.Parentescos];
-
-    public string Nombres { get => nombres; set => Asignar(ref nombres, value); }
-    public string Apellidos { get => apellidos; set => Asignar(ref apellidos, value); }
     public string Celular { get => celular; private set => Asignar(ref celular, value); }
-    public string TipoDocumento
-    {
-        get => tipoDocumento;
-        set { if (Asignar(ref tipoDocumento, value ?? SinDocumento)) Notificar(nameof(ConDocumento)); }
-    }
-    public bool ConDocumento => TipoDocumento != SinDocumento;
-    public string NumeroDocumento { get => numeroDocumento; set => Asignar(ref numeroDocumento, value); }
-    public string FechaNacimiento { get => fechaNacimiento; set => Asignar(ref fechaNacimiento, value); }
-    public string Direccion { get => direccion; set => Asignar(ref direccion, value); }
-    public string ContactoNombre { get => contactoNombre; set => Asignar(ref contactoNombre, value); }
-    public string ContactoParentesco { get => contactoParentesco; set => Asignar(ref contactoParentesco, value ?? SinContacto); }
-    public string ContactoTelefono { get => contactoTelefono; set => Asignar(ref contactoTelefono, value); }
-
-    public string Mensaje { get => mensaje; private set { Asignar(ref mensaje, value); Notificar(nameof(HayMensaje)); } }
-    public string TipoMensaje { get => tipoMensaje; private set => Asignar(ref tipoMensaje, value); }
-    public bool HayMensaje => Mensaje.Length > 0;
-
-    public string ErrorNombres => Error("nombres");
-    public string ErrorApellidos => Error("apellidos");
-    public string ErrorDocumento => Error("tipoDocumento") is { Length: > 0 } e ? e : Error("numeroDocumento");
-    public string ErrorFechaNacimiento => Error("fechaNacimiento");
-    public string ErrorDireccion => Error("direccion");
-    public string ErrorContacto => new[] { "contactoNombre", "contactoParentesco", "contactoTelefono" }.Select(Error).FirstOrDefault(e => e.Length > 0) ?? "";
-    public bool HayErrorNombres => ErrorNombres.Length > 0;
-    public bool HayErrorApellidos => ErrorApellidos.Length > 0;
-    public bool HayErrorDocumento => ErrorDocumento.Length > 0;
-    public bool HayErrorFechaNacimiento => ErrorFechaNacimiento.Length > 0;
-    public bool HayErrorDireccion => ErrorDireccion.Length > 0;
-    public bool HayErrorContacto => ErrorContacto.Length > 0;
 
     public ComandoAsincrono Guardar { get; }
 
@@ -182,16 +147,11 @@ public sealed class MisDatosVistaModelo : VistaModeloBase
         switch (await api.ConsultarPerfilAsync(sesion.Token, CancellationToken.None))
         {
             case ResultadoApi<PerfilCiudadanoVista>.Correcto { Valor: var p }:
-                Nombres = p.Nombres;
-                Apellidos = p.Apellidos;
+                Cargar(p);
+                celularNumero = p.Celular;
                 Celular = p.Celular.Length == 9 ? $"+51 {FormatoCelular.Mostrar(p.Celular)}" : p.Celular;
-                TipoDocumento = p.TipoDocumento is { } t ? DatosCiudadano.NombreTipo(t) : SinDocumento;
-                NumeroDocumento = p.NumeroDocumento ?? "";
-                FechaNacimiento = p.FechaNacimiento?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "";
-                Direccion = p.Direccion ?? "";
-                ContactoNombre = p.ContactoNombre ?? "";
-                ContactoParentesco = p.ContactoParentesco ?? SinContacto;
-                ContactoTelefono = p.ContactoTelefono ?? "";
+                if (!p.DatosCompletos)
+                    (TipoMensaje, Mensaje) = ("advertencia", AvisoIncompletos);
                 break;
             case ResultadoApi<PerfilCiudadanoVista>.Rechazado { Estado: 401 }:
                 sesiones.Cerrar();
@@ -206,21 +166,10 @@ public sealed class MisDatosVistaModelo : VistaModeloBase
     private async Task GuardarAsync()
     {
         Mensaje = "";
-        DateOnly? nacimiento = null;
-        if (FechaNacimiento.Trim().Length > 0)
-        {
-            if (!DateOnly.TryParseExact(FechaNacimiento.Trim(), ["dd/MM/yyyy", "d/M/yyyy"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
-            {
-                MostrarErrores(new Dictionary<string, string[]> { ["fechaNacimiento"] = ["Escribe la fecha como día/mes/año, por ejemplo 17/05/1990."] });
-                (TipoMensaje, Mensaje) = ("error", "Revisa los datos marcados.");
-                return;
-            }
-            nacimiento = fecha;
-        }
-
-        var tipo = DatosCiudadano.TiposDocumento.FirstOrDefault(t => DatosCiudadano.NombreTipo(t) == TipoDocumento);
-        var solicitud = new SolicitudPerfilCiudadano(Nombres, Apellidos, tipo, tipo is null ? null : Vacio(NumeroDocumento), nacimiento,
-            Vacio(Direccion), Vacio(ContactoNombre), ContactoParentesco == SinContacto ? null : ContactoParentesco, Vacio(ContactoTelefono));
+        if (Validar(Hoy(reloj), celularNumero.Length > 0 ? celularNumero : null) is not { } d)
+            return;
+        var solicitud = new SolicitudPerfilCiudadano(d.Nombres ?? "", d.Apellidos ?? "", d.TipoDocumento, d.NumeroDocumento, d.FechaNacimiento,
+            d.Direccion, d.ContactoNombre, d.ContactoParentesco, d.ContactoTelefono);
 
         if (await sesiones.LeerAsync() is not { } sesion)
         {
@@ -244,21 +193,6 @@ public sealed class MisDatosVistaModelo : VistaModeloBase
             case ResultadoApi<PerfilCiudadanoVista>.SinRespuesta sinRespuesta:
                 (TipoMensaje, Mensaje) = ("error", sinRespuesta.Motivo);
                 break;
-        }
-    }
-
-    private static string? Vacio(string valor) => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
-
-    private string Error(string campo) => errores.TryGetValue(campo, out var m) && m.Length > 0 ? m[0] : "";
-
-    private void MostrarErrores(IReadOnlyDictionary<string, string[]> nuevos)
-    {
-        errores = nuevos;
-        foreach (var p in new[] { nameof(ErrorNombres), nameof(ErrorApellidos), nameof(ErrorDocumento), nameof(ErrorFechaNacimiento),
-                     nameof(ErrorDireccion), nameof(ErrorContacto) })
-        {
-            Notificar(p);
-            Notificar("Hay" + p);
         }
     }
 }

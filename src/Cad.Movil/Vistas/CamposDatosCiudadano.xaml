@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Registro único (06/11/2026): los campos del ciudadano, iguales en «Crea tu cuenta» y en «Mis datos». Toma el contexto de la
+     página (un FormularioDatosCiudadano). Solo la dirección es opcional. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Cad.Movil.VistasModelo"
+             x:Class="Cad.Movil.Vistas.CamposDatosCiudadano"
+             x:DataType="vm:FormularioDatosCiudadano">
+    <VerticalStackLayout Spacing="10">
+        <Label Text="Nombres" Style="{StaticResource Etiqueta}" />
+        <Border Style="{StaticResource MarcoCampo}">
+            <Entry x:Name="CampoNombres" Text="{Binding Nombres}" MaxLength="100" IsTextPredictionEnabled="False" SemanticProperties.Description="Nombres" />
+        </Border>
+        <Label Text="{Binding ErrorNombres}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorNombres}" />
+
+        <Label Text="Apellidos" Style="{StaticResource Etiqueta}" />
+        <Border Style="{StaticResource MarcoCampo}">
+            <Entry Text="{Binding Apellidos}" MaxLength="100" IsTextPredictionEnabled="False" SemanticProperties.Description="Apellidos" />
+        </Border>
+        <Label Text="{Binding ErrorApellidos}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorApellidos}" />
+
+        <Label Text="Documento de identidad" Style="{StaticResource Etiqueta}" Margin="0,6,0,0" />
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+            <Border Style="{StaticResource MarcoCampo}">
+                <Picker ItemsSource="{Binding TiposDocumento}" SelectedItem="{Binding TipoDocumento}" Title="Tipo"
+                        SemanticProperties.Description="Tipo de documento" />
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource MarcoCampo}">
+                <Entry Text="{Binding NumeroDocumento}" MaxLength="12" Placeholder="Número" IsTextPredictionEnabled="False"
+                       SemanticProperties.Description="Número de documento" />
+            </Border>
+        </Grid>
+        <Label Text="{Binding ErrorDocumento}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorDocumento}" />
+
+        <Label Text="Fecha de nacimiento" Style="{StaticResource Etiqueta}" Margin="0,6,0,0" />
+        <Border Style="{StaticResource MarcoCampo}">
+            <Entry Text="{Binding FechaNacimiento}" Keyboard="Numeric" MaxLength="10" Placeholder="dd/mm/aaaa"
+                   SemanticProperties.Description="Fecha de nacimiento, día barra mes barra año" />
+        </Border>
+        <Label Text="{Binding ErrorFechaNacimiento}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFechaNacimiento}" />
+
+        <Label Text="Dirección (opcional)" Style="{StaticResource Etiqueta}" Margin="0,6,0,0" />
+        <Border Style="{StaticResource MarcoCampo}">
+            <Entry Text="{Binding Direccion}" MaxLength="200" Placeholder="Calle, número y distrito" SemanticProperties.Description="Dirección, opcional" />
+        </Border>
+        <Label Text="Sirve de referencia si el GPS falla y dices que estás en tu casa." Style="{StaticResource TextoSecundario}" FontSize="13" />
+        <Label Text="{Binding ErrorDireccion}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorDireccion}" />
+
+        <Label Text="Contacto de emergencia" Style="{StaticResource TituloSeccion}" Margin="0,14,0,0" SemanticProperties.HeadingLevel="Level2" />
+        <Label Text="La central lo llamará si no logra comunicarse contigo durante un SOS o un acompañamiento."
+               Style="{StaticResource TextoSecundario}" FontSize="13" />
+        <Label Text="Nombre" Style="{StaticResource Etiqueta}" />
+        <Border Style="{StaticResource MarcoCampo}">
+            <Entry Text="{Binding ContactoNombre}" MaxLength="100" IsTextPredictionEnabled="False" SemanticProperties.Description="Nombre del contacto de emergencia" />
+        </Border>
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="6">
+            <Label Text="Relación" Style="{StaticResource Etiqueta}" />
+            <Label Grid.Column="1" Text="Celular" Style="{StaticResource Etiqueta}" />
+            <Border Grid.Row="1" Style="{StaticResource MarcoCampo}">
+                <Picker ItemsSource="{Binding Parentescos}" SelectedItem="{Binding ContactoParentesco}" Title="Relación"
+                        SemanticProperties.Description="Relación con tu contacto" />
+            </Border>
+            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource MarcoCampo}">
+                <Entry Text="{Binding ContactoTelefono}" Keyboard="Telephone" MaxLength="15" Placeholder="9…"
+                       SemanticProperties.Description="Celular del contacto de emergencia" />
+            </Border>
+        </Grid>
+        <Label Text="{Binding ErrorContacto}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorContacto}" />
+    </VerticalStackLayout>
+</ContentView>

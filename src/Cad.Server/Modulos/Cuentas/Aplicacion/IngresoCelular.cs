@@ -160,17 +160,18 @@ public sealed class IngresoCelular(
     IPasswordHasher<Usuario> hasher,
     CodigosCelular codigos,
     IOptions<OpcionesCuentasCiudadano> cuentas,
-    TimeProvider reloj)
+    TimeProvider reloj,
+    IConfiguration configuracion)
 {
     public async Task<ResultadoIngresoCelular> RegistrarAsync(SolicitudRegistroCelular s, CancellationToken ct)
     {
+        // Registro único: todos los datos que la central necesita se piden aquí, una sola vez.
         var errores = new Dictionary<string, string[]>();
-        ReglasCuenta.ValidarNombres(errores, "nombres", "Los nombres", s.Nombres);
-        ReglasCuenta.ValidarNombres(errores, "apellidos", "Los apellidos", s.Apellidos);
+        var datos = ValidacionDatosCiudadano.Validar(errores, s.Datos, MisDatosCiudadano.Hoy(reloj, configuracion), celularPropio: null);
         ReglasCuenta.ValidarPin(errores, "pin", s.Pin);
         if (!s.AceptaTerminos)
             errores["aceptaTerminos"] = ["Para crear tu cuenta debes aceptar los términos y la política de privacidad."];
-        if (errores.Count > 0)
+        if (datos is null || errores.Count > 0)
             return new ResultadoIngresoCelular.Invalido(errores);
 
         var verificacion = await codigos.BuscarTokenAsync(s.TokenVerificacion, ct);
@@ -188,6 +189,11 @@ public sealed class IngresoCelular(
                     return new ResultadoIngresoCelular.Duplicado();
                 await LiberarNumeroAsync(anterior, ct);
             }
+            // El contacto de emergencia no puede ser el mismo celular que se está registrando.
+            if (ValidacionDatosCiudadano.NormalizarCelular(datos.ContactoTelefono) == celular)
+                return Invalido("contactoTelefono", "El contacto de emergencia debe tener un número distinto del tuyo.");
+            if (await MisDatosCiudadano.DocumentoUsadoAsync(db, datos, null, ct))
+                return Invalido("numeroDocumento", MisDatosCiudadano.MensajeDocumentoDuplicado);
 
             var usuario = new Usuario
             {
@@ -195,8 +201,8 @@ public sealed class IngresoCelular(
                 UserName = celular,
                 PhoneNumber = celular,
                 PhoneNumberConfirmed = true,
-                Nombres = s.Nombres.Trim(),
-                Apellidos = s.Apellidos.Trim(),
+                Nombres = datos.Nombres,
+                Apellidos = datos.Apellidos,
                 Activo = true,
                 CreadoEn = ahora,
                 TerminosVersion = cuentas.Value.VersionTerminos,
@@ -213,6 +219,10 @@ public sealed class IngresoCelular(
             if (!asignacion.Succeeded)
                 throw new InvalidOperationException("No se pudo asignar el rol Ciudadano a la cuenta nueva.");
 
+            var perfil = PerfilCiudadano.Nuevo(usuario.Id);
+            MisDatosCiudadano.Aplicar(perfil, datos, ahora);
+            db.PerfilesCiudadano.Add(perfil);
+
             var llave = await VincularAsync(usuario.Id, ahora, ct);
             verificacion.UsarToken(ahora);
             await db.SaveChangesAsync(ct);
@@ -224,6 +234,9 @@ public sealed class IngresoCelular(
             return new ResultadoIngresoCelular.Duplicado();
         }
     }
+
+    private static ResultadoIngresoCelular Invalido(string campo, string mensaje) =>
+        new ResultadoIngresoCelular.Invalido(new Dictionary<string, string[]> { [campo] = [mensaje] });
 
     public async Task<ResultadoIngresoCelular> IngresarAsync(SolicitudIngresoCelular s, CancellationToken ct)
     {

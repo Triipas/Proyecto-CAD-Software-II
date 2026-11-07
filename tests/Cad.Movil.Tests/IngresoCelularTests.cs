@@ -187,20 +187,81 @@ public class IngresoCelularTests
         Assert.Empty(navegacion.Rutas);
     }
 
+    // Registro único: un solo formulario con todos los datos; solo la dirección es opcional.
+    private CrearCuentaVistaModelo FormularioCompleto() => new(flujo, navegacion, reloj)
+    {
+        Nombres = " Rosa ", Apellidos = "Ficticia Quispe", TipoDocumento = "DNI", NumeroDocumento = " 12345678 ",
+        FechaNacimiento = "17/05/1990", ContactoNombre = "Marta Ficticia", ContactoParentesco = "Madre", ContactoTelefono = "911 222 333",
+        AceptaTerminos = true,
+    };
+
     [Fact]
-    public async Task CrearCuenta_ConDatos_GuardaElNombreYVaACrearElPin()
+    public async Task CrearCuenta_ConTodosLosDatos_LosGuardaYVaACrearElPin()
     {
         flujo.Reiniciar(Celular);
-        var vistaModelo = new CrearCuentaVistaModelo(flujo, navegacion) { Nombres = " Rosa ", Apellidos = "Ficticia Quispe", AceptaTerminos = true };
+        var vistaModelo = FormularioCompleto();
         Assert.Equal("987 654 321", vistaModelo.Celular);
 
         await vistaModelo.Continuar.EjecutarAsync();
 
         Assert.Equal([Rutas.Pin], navegacion.Rutas);
-        Assert.Equal(("Rosa", "Ficticia Quispe", ModoPin.Crear), (flujo.Nombres, flujo.Apellidos, flujo.ModoPin));
+        Assert.Equal(ModoPin.Crear, flujo.ModoPin);
+        Assert.Equal(new DatosCiudadanoEscritos("Rosa", "Ficticia Quispe", "DNI", "12345678", new DateOnly(1990, 5, 17), null,
+            "Marta Ficticia", "Madre", "911 222 333"), flujo.DatosRegistro);
+    }
+
+    [Fact]
+    public async Task CrearCuenta_SinDocumentoNacimientoNiContacto_NoAvanza()
+    {
+        flujo.Reiniciar(Celular);
+        var vistaModelo = new CrearCuentaVistaModelo(flujo, navegacion, reloj) { Nombres = "Rosa", Apellidos = "Ficticia", AceptaTerminos = true };
+
+        await vistaModelo.Continuar.EjecutarAsync();
+
+        Assert.Equal("Elige el tipo de documento.", vistaModelo.ErrorDocumento);
+        Assert.Equal("Escribe tu fecha de nacimiento.", vistaModelo.ErrorFechaNacimiento);
+        Assert.True(vistaModelo.HayErrorContacto);
+        Assert.False(vistaModelo.HayErrorDireccion); // la dirección es opcional
+        Assert.Equal("Revisa los datos marcados.", vistaModelo.Mensaje);
+        Assert.Empty(navegacion.Rutas);
+    }
+
+    [Fact]
+    public async Task CrearCuenta_ContactoConElMismoCelular_SeRechaza()
+    {
+        flujo.Reiniciar(Celular);
+        var vistaModelo = FormularioCompleto();
+        vistaModelo.ContactoTelefono = "+51 987 654 321";
+
+        await vistaModelo.Continuar.EjecutarAsync();
+
+        Assert.Equal("El contacto de emergencia debe tener un número distinto del tuyo.", vistaModelo.ErrorContacto);
+        Assert.Empty(navegacion.Rutas);
+    }
+
+    [Fact]
+    public async Task CrearCuenta_DocumentoRechazadoPorElServidor_VuelveAlFormularioConElErrorEnSuCampo()
+    {
+        api.RespuestasIngresoCelular.Enqueue(new ResultadoApi<RespuestaIngresoCelular>.Rechazado(400, "Revisa los datos.",
+            new Dictionary<string, string[]> { ["numeroDocumento"] = ["Ese documento ya está registrado en otra cuenta."] }));
+        var pin = PantallaPin(ModoPin.Crear);
+
+        await EscribirPinAsync(pin, "482915");
+        await EscribirPinAsync(pin, "482915");
+
+        Assert.Equal([".."], navegacion.Rutas);
+        var formulario = new CrearCuentaVistaModelo(flujo, navegacion, reloj);
+        formulario.Preparar();
+        Assert.Equal("Ese documento ya está registrado en otra cuenta.", formulario.ErrorDocumento);
+        Assert.Equal("Rosa", formulario.Nombres); // lo escrito se conserva
+        Assert.True(formulario.AceptaTerminos);
+        Assert.Null(sesiones.Sesion);
     }
 
     // ----- PIN -----
+
+    private static readonly DatosCiudadanoEscritos DatosRosa = new("Rosa", "Ficticia", "DNI", "12345678", new DateOnly(1990, 5, 17), null,
+        "Marta Ficticia", "Madre", "911222333");
 
     private PinVistaModelo PantallaPin(ModoPin modo, string? token = "token-verificacion", string? llave = null)
     {
@@ -208,8 +269,7 @@ public class IngresoCelularTests
         flujo.ModoPin = modo;
         flujo.TokenVerificacion = token;
         flujo.Llave = llave;
-        flujo.Nombres = "Rosa";
-        flujo.Apellidos = "Ficticia";
+        flujo.DatosRegistro = DatosRosa;
         return new PinVistaModelo(flujo, api, navegacion);
     }
 
@@ -249,7 +309,8 @@ public class IngresoCelularTests
         await EscribirPinAsync(vistaModelo, "482915");
         await EscribirPinAsync(vistaModelo, "482915");
 
-        Assert.Equal(new SolicitudRegistroCelular("token-verificacion", "Rosa", "Ficticia", "482915", true), Assert.Single(api.RegistrosCelular));
+        Assert.Equal(new SolicitudRegistroCelular("token-verificacion", "Rosa", "Ficticia", "482915", true, "DNI", "12345678",
+            new DateOnly(1990, 5, 17), null, "Marta Ficticia", "Madre", "911222333"), Assert.Single(api.RegistrosCelular));
         Assert.Equal("token-ciudadano", sesiones.Sesion!.Token);
         Assert.Equal(new DispositivoVinculado(Celular, "llave-ficticia"), dispositivos.Dispositivo);
         Assert.Equal([Rutas.Ciudadano], navegacion.Rutas);

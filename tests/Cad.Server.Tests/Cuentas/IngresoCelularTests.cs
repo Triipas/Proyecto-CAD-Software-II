@@ -50,7 +50,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
     {
         var verificacion = await VerificarNumeroAsync(cliente, celular);
         var registro = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia Quispe", pin, AceptaTerminos: true));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia Quispe", pin, aceptaTerminos: true));
         Assert.Equal(HttpStatusCode.Created, registro.StatusCode);
         return await LeerAsync<RespuestaIngresoCelular>(registro);
     }
@@ -76,7 +76,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
         Assert.False(verificacion.PuedeRegistrarDeNuevo);
 
         var registro = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, " Rosa ", "Ficticia Quispe", Pin, AceptaTerminos: true));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, " Rosa ", "Ficticia Quispe", Pin, aceptaTerminos: true));
         Assert.Equal(HttpStatusCode.Created, registro.StatusCode);
         var sesion = await LeerAsync<RespuestaIngresoCelular>(registro);
 
@@ -92,6 +92,11 @@ public class IngresoCelularTests(FabricaCad fabrica)
         Assert.True(cuenta.PhoneNumberConfirmed);
         Assert.Equal("Rosa", cuenta.Nombres);
         Assert.NotNull(cuenta.TerminosAceptadosEn);
+        // Registro único: el perfil queda creado con todos los datos del formulario.
+        var perfil = await fabrica.ConBaseDatosAsync(db => db.PerfilesCiudadano.SingleAsync(p => p.UsuarioId == cuenta.Id));
+        Assert.Equal((DatosCiudadano.Dni, new DateOnly(1990, 5, 17)), (perfil.TipoDocumento, perfil.FechaNacimiento));
+        Assert.Equal(("Marta Ficticia", "Madre", "911222333"), (perfil.ContactoNombre, perfil.ContactoParentesco, perfil.ContactoTelefono));
+        Assert.Null(perfil.Direccion); // opcional
         Assert.False(string.IsNullOrEmpty(cuenta.TerminosVersion));
         Assert.DoesNotContain(Pin, cuenta.PinHash);
     }
@@ -147,7 +152,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
     {
         var cliente = fabrica.CreateClient();
         var verificacion = await VerificarNumeroAsync(cliente, NumeroNuevo());
-        var solicitud = new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true);
+        var solicitud = RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true);
         Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/auth/celular/registro", solicitud)).StatusCode);
 
         var repetido = await cliente.PostAsJsonAsync("/api/auth/celular/registro", solicitud);
@@ -167,14 +172,65 @@ public class IngresoCelularTests(FabricaCad fabrica)
         var verificacion = await VerificarNumeroAsync(cliente, NumeroNuevo());
 
         var respuesta = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia", pin, true));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", pin, true));
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains("pin", (await LeerAsync<ValidationProblemDetails>(respuesta)).Errors.Keys);
 
         // Con un PIN válido, el mismo token aún sirve.
         var corregido = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true));
         Assert.Equal(HttpStatusCode.Created, corregido.StatusCode);
+    }
+
+    [Fact]
+    public async Task Registro_SinDocumentoNacimientoNiContacto_SeRechazaSinGastarElToken()
+    {
+        var cliente = fabrica.CreateClient();
+        var verificacion = await VerificarNumeroAsync(cliente, NumeroNuevo());
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
+            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true, null, null, null, null, null, null, null));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var errores = (await LeerAsync<ValidationProblemDetails>(respuesta)).Errors.Keys;
+        Assert.Superset(new HashSet<string> { "tipoDocumento", "fechaNacimiento", "contactoNombre", "contactoParentesco", "contactoTelefono" },
+            errores.ToHashSet());
+        Assert.DoesNotContain("direccion", errores);
+        var corregido = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true));
+        Assert.Equal(HttpStatusCode.Created, corregido.StatusCode);
+    }
+
+    [Fact]
+    public async Task Registro_DocumentoDeOtraCuenta_SeRechazaEnSuCampo()
+    {
+        var cliente = fabrica.CreateClient();
+        var dni = RegistroDePrueba.DniNuevo();
+        var primera = await VerificarNumeroAsync(cliente, NumeroNuevo());
+        Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/auth/celular/registro",
+            RegistroDePrueba.Solicitud(primera.TokenVerificacion, "Rosa", "Ficticia", Pin, true, dni))).StatusCode);
+        var segunda = await VerificarNumeroAsync(cliente, NumeroNuevo());
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
+            RegistroDePrueba.Solicitud(segunda.TokenVerificacion, "Otra", "Persona", Pin, true, dni));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Equal(["Ese documento ya está registrado en otra cuenta."],
+            (await LeerAsync<ValidationProblemDetails>(respuesta)).Errors["numeroDocumento"]);
+    }
+
+    [Fact]
+    public async Task Registro_ContactoConElMismoCelular_SeRechaza()
+    {
+        var cliente = fabrica.CreateClient();
+        var celular = NumeroNuevo();
+        var verificacion = await VerificarNumeroAsync(cliente, celular);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true) with { ContactoTelefono = celular });
+
+        Assert.Equal(["El contacto de emergencia debe tener un número distinto del tuyo."],
+            (await LeerAsync<ValidationProblemDetails>(respuesta)).Errors["contactoTelefono"]);
     }
 
     [Fact]
@@ -184,7 +240,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
         var verificacion = await VerificarNumeroAsync(cliente, NumeroNuevo());
 
         var respuesta = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, AceptaTerminos: false));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, aceptaTerminos: false));
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains("aceptaTerminos", (await LeerAsync<ValidationProblemDetails>(respuesta)).Errors.Keys);
@@ -203,7 +259,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
         Assert.False(verificacion.PuedeRegistrarDeNuevo);
 
         var repetido = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Otra", "Persona", Pin, true));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Otra", "Persona", Pin, true));
         Assert.Equal(HttpStatusCode.Conflict, repetido.StatusCode);
     }
 
@@ -219,7 +275,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
         var verificacion = await VerificarNumeroAsync(cliente, celular);
         Assert.True(verificacion.PuedeRegistrarDeNuevo);
         var segunda = await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Nueva", "Cuenta", "730591", true));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Nueva", "Cuenta", "730591", true));
 
         Assert.Equal(HttpStatusCode.Created, segunda.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, await ConsultarPerfilAsync(cliente, primera.Token));
@@ -405,7 +461,7 @@ public class IngresoCelularTests(FabricaCad fabrica)
         var enviado = await LeerAsync<RespuestaCodigoCelular>(await PedirCodigoAsync(cliente, celular));
         var verificacion = await LeerAsync<RespuestaVerificacionCelular>(await VerificarAsync(cliente, celular, enviado.CodigoDePrueba!));
         var registro = await LeerAsync<RespuestaIngresoCelular>(await cliente.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true)));
+            RegistroDePrueba.Solicitud(verificacion.TokenVerificacion, "Rosa", "Ficticia", Pin, true)));
         await IngresarAsync(cliente, celular, "000999", registro.LlaveDispositivo);
 
         foreach (var dato in new[] { celular, enviado.CodigoDePrueba!, Pin, verificacion.TokenVerificacion, registro.LlaveDispositivo!, registro.Token })

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cad.Server.Tests.Cuentas;
 
-// ADR-08, fase D — «Mis datos» del ciudadano (datos opcionales), cambio de PIN y ficha del ciudadano en el panel.
+// ADR-08, fase D — «Mis datos» del ciudadano (con las reglas del registro único), cambio de PIN y ficha del ciudadano en el panel.
 // Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class MisDatosTests(FabricaCad fabrica)
@@ -30,7 +30,7 @@ public class MisDatosTests(FabricaCad fabrica)
         var verificacion = await (await anonimo.PostAsJsonAsync("/api/auth/celular/verificar",
             new SolicitudVerificacionCelular(celular, codigo!.CodigoDePrueba!))).Content.ReadFromJsonAsync<RespuestaVerificacionCelular>();
         var sesion = await (await anonimo.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion!.TokenVerificacion, "Rosa", "Ficticia Quispe", Pin, true)))
+            RegistroDePrueba.Solicitud(verificacion!.TokenVerificacion, "Rosa", "Ficticia Quispe", Pin, true)))
             .Content.ReadFromJsonAsync<RespuestaIngresoCelular>();
         var cliente = fabrica.CreateClient();
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sesion!.Token);
@@ -41,22 +41,33 @@ public class MisDatosTests(FabricaCad fabrica)
         new DateOnly(1990, 5, 17), "Jr. Ficticio 123, Cercado de Lima", "Marta Ficticia", "Madre", "911222333");
 
     [Fact]
-    public async Task Perfil_RecienRegistrado_SoloTieneNombreYCelularVerificado()
+    public async Task Perfil_RecienRegistrado_TieneTodosLosDatosDelFormulario()
     {
         var c = await CrearCiudadanoAsync();
 
         var perfil = await c.Cliente.GetFromJsonAsync<PerfilCiudadanoVista>("/api/cuentas/yo/perfil");
 
         Assert.Equal(("Rosa", "Ficticia Quispe", c.Celular, true), (perfil!.Nombres, perfil.Apellidos, perfil.Celular, perfil.CelularVerificado));
-        Assert.Null(perfil.NumeroDocumento);
-        Assert.Null(perfil.ContactoTelefono);
-        Assert.Equal(0, perfil.DatosCompletados);
+        Assert.NotNull(perfil.NumeroDocumento);
+        Assert.Equal("911222333", perfil.ContactoTelefono);
+        Assert.True(perfil.DatosCompletos);
         Assert.True(perfil.TienePin);
         Assert.NotNull(perfil.TerminosAceptadosEn);
     }
 
     [Fact]
-    public async Task Perfil_ConTodosLosDatosOpcionales_SeGuardaYSeVuelveALeer()
+    public async Task Perfil_CuentaAnteriorAlRegistroUnico_NoTieneLosDatosCompletos()
+    {
+        var cuenta = await fabrica.CrearAsync(Roles.Ciudadano);
+        var cliente = await fabrica.CrearClienteAppAsync(cuenta);
+
+        var perfil = await cliente.GetFromJsonAsync<PerfilCiudadanoVista>("/api/cuentas/yo/perfil");
+
+        Assert.False(perfil!.DatosCompletos);
+    }
+
+    [Fact]
+    public async Task Perfil_ConTodosLosDatos_SeGuardaYSeVuelveALeer()
     {
         var c = await CrearCiudadanoAsync();
         var dni = DniNuevo();
@@ -67,11 +78,12 @@ public class MisDatosTests(FabricaCad fabrica)
         var perfil = await c.Cliente.GetFromJsonAsync<PerfilCiudadanoVista>("/api/cuentas/yo/perfil");
         Assert.Equal((DatosCiudadano.Dni, dni, new DateOnly(1990, 5, 17)), (perfil!.TipoDocumento, perfil.NumeroDocumento, perfil.FechaNacimiento));
         Assert.Equal(("Marta Ficticia", "Madre", "911222333"), (perfil.ContactoNombre, perfil.ContactoParentesco, perfil.ContactoTelefono));
-        Assert.Equal(4, perfil.DatosCompletados);
+        Assert.Equal("Jr. Ficticio 123, Cercado de Lima", perfil.Direccion);
+        Assert.True(perfil.DatosCompletos);
     }
 
     [Fact]
-    public async Task Perfil_DatosOpcionalesVacios_SeBorran()
+    public async Task Perfil_DatosObligatoriosVacios_NoSeBorran()
     {
         var c = await CrearCiudadanoAsync();
         await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", Completo(DniNuevo()));
@@ -79,10 +91,21 @@ public class MisDatosTests(FabricaCad fabrica)
         var respuesta = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil",
             new SolicitudPerfilCiudadano("Rosa", "Ficticia", "", " ", null, "", null, null, null));
 
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var perfil = await c.Cliente.GetFromJsonAsync<PerfilCiudadanoVista>("/api/cuentas/yo/perfil");
+        Assert.True(perfil!.DatosCompletos);
+    }
+
+    [Fact]
+    public async Task Perfil_DireccionVacia_SeBorra()
+    {
+        var c = await CrearCiudadanoAsync();
+        await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", Completo(DniNuevo()));
+
+        var respuesta = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", Completo(DniNuevo()) with { Direccion = " " });
+
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
-        var perfil = await respuesta.Content.ReadFromJsonAsync<PerfilCiudadanoVista>();
-        Assert.Equal(0, perfil!.DatosCompletados);
-        Assert.Null(perfil.TipoDocumento);
+        Assert.Null((await respuesta.Content.ReadFromJsonAsync<PerfilCiudadanoVista>())!.Direccion);
     }
 
     [Theory]
@@ -97,7 +120,7 @@ public class MisDatosTests(FabricaCad fabrica)
         var c = await CrearCiudadanoAsync();
 
         var respuesta = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil",
-            new SolicitudPerfilCiudadano("Rosa", "Ficticia", tipo, numero, null, null, null, null, null));
+            Completo(DniNuevo()) with { TipoDocumento = tipo, NumeroDocumento = numero });
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains(campo, (await respuesta.Content.ReadFromJsonAsync<ValidationProblemDetails>())!.Errors.Keys);
@@ -108,10 +131,8 @@ public class MisDatosTests(FabricaCad fabrica)
     {
         var c = await CrearCiudadanoAsync();
 
-        var incompleto = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil",
-            new SolicitudPerfilCiudadano("Rosa", "Ficticia", null, null, null, null, "Marta", null, "911222333"));
-        var propio = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil",
-            new SolicitudPerfilCiudadano("Rosa", "Ficticia", null, null, null, null, "Marta", "Madre", c.Celular));
+        var incompleto = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", Completo(DniNuevo()) with { ContactoParentesco = null });
+        var propio = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", Completo(DniNuevo()) with { ContactoTelefono = c.Celular });
 
         Assert.Contains("contactoParentesco", (await incompleto.Content.ReadFromJsonAsync<ValidationProblemDetails>())!.Errors.Keys);
         Assert.Equal(["El contacto de emergencia debe tener un número distinto del tuyo."],
@@ -124,13 +145,13 @@ public class MisDatosTests(FabricaCad fabrica)
         var c = await CrearCiudadanoAsync();
 
         var respuesta = await c.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil",
-            new SolicitudPerfilCiudadano("Rosa", "Ficticia", null, null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)), null, null, null, null));
+            Completo(DniNuevo()) with { FechaNacimiento = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)) });
 
         Assert.Contains("fechaNacimiento", (await respuesta.Content.ReadFromJsonAsync<ValidationProblemDetails>())!.Errors.Keys);
     }
 
     [Fact]
-    public async Task Perfil_DocumentoDeOtraCuenta_SeRechazaConConflicto()
+    public async Task Perfil_DocumentoDeOtraCuenta_SeRechazaEnSuCampo()
     {
         var dni = DniNuevo();
         var primera = await CrearCiudadanoAsync();
@@ -139,7 +160,9 @@ public class MisDatosTests(FabricaCad fabrica)
 
         var respuesta = await segunda.Cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", Completo(dni) with { ContactoTelefono = "922333444" });
 
-        Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Equal(["Ese documento ya está registrado en otra cuenta."],
+            (await respuesta.Content.ReadFromJsonAsync<ValidationProblemDetails>())!.Errors["numeroDocumento"]);
     }
 
     [Fact]
@@ -234,10 +257,10 @@ public class MisDatosTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task Panel_SinDatosOpcionales_LosIndicaComoNoRegistrados()
+    public async Task Panel_CuentaAnteriorSinDatos_LosIndicaComoNoRegistrados()
     {
-        var c = await CrearCiudadanoAsync();
-        var sos = await (await c.Cliente.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), DateTimeOffset.UtcNow, null)))
+        var cliente = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Ciudadano));
+        var sos = await (await cliente.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), DateTimeOffset.UtcNow, null)))
             .Content.ReadFromJsonAsync<RespuestaSos>();
         var operador = await fabrica.CrearAsync(Roles.Operador);
         var navegador = fabrica.CrearNavegador();
@@ -251,7 +274,7 @@ public class MisDatosTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task Registros_NoContienenLosDatosOpcionales()
+    public async Task Registros_NoContienenLosDatosDelCiudadano()
     {
         var c = await CrearCiudadanoAsync();
         var dni = DniNuevo();

@@ -1,7 +1,8 @@
 namespace Cad.Contratos.Cuentas;
 
-// ADR-08, fase D — «Mis datos» del ciudadano. Al registrarse solo se piden nombres y apellidos (y el celular verificado);
-// documento, fecha de nacimiento, dirección y contacto de emergencia son opcionales y se completan después.
+// ADR-08, fase D — «Mis datos» del ciudadano. Desde el registro único (06/11/2026) el documento, la fecha de nacimiento y el
+// contacto de emergencia se piden al crear la cuenta; la dirección sigue siendo opcional. Las cuentas anteriores los completan
+// al entrar (DatosCompletos = false).
 
 public sealed record PerfilCiudadanoVista(
     string Nombres,
@@ -20,14 +21,11 @@ public sealed record PerfilCiudadanoVista(
     // Las cuentas creadas antes de ADR-08 entran con correo y contraseña y no tienen PIN.
     bool TienePin)
 {
-    // Datos opcionales completados (documento, nacimiento, dirección, contacto de emergencia).
-    public int DatosCompletados =>
-        (NumeroDocumento is null ? 0 : 1) + (FechaNacimiento is null ? 0 : 1) + (Direccion is null ? 0 : 1) + (ContactoTelefono is null ? 0 : 1);
-
-    public const int DatosOpcionales = 4;
+    // Tiene todos los datos obligatorios del registro único (la dirección es opcional).
+    public bool DatosCompletos => NumeroDocumento is not null && FechaNacimiento is not null && ContactoTelefono is not null;
 }
 
-// Todos los campos opcionales pueden ir vacíos; el documento y el contacto se guardan completos o no se guardan.
+// Mismas reglas que el registro: solo la dirección puede ir vacía.
 public sealed record SolicitudPerfilCiudadano(
     string Nombres,
     string Apellidos,
@@ -37,7 +35,11 @@ public sealed record SolicitudPerfilCiudadano(
     string? Direccion,
     string? ContactoNombre,
     string? ContactoParentesco,
-    string? ContactoTelefono);
+    string? ContactoTelefono)
+{
+    public DatosCiudadanoEscritos Datos => new(Nombres, Apellidos, TipoDocumento, NumeroDocumento, FechaNacimiento, Direccion,
+        ContactoNombre, ContactoParentesco, ContactoTelefono);
+}
 
 public sealed record SolicitudCambioPin(string PinActual, string PinNuevo);
 

@@ -25,7 +25,7 @@ public class LlamarCiudadanoTests(FabricaCad fabrica)
         var verificacion = await (await anonimo.PostAsJsonAsync("/api/auth/celular/verificar",
             new SolicitudVerificacionCelular(celular, codigo!.CodigoDePrueba!))).Content.ReadFromJsonAsync<RespuestaVerificacionCelular>();
         var sesion = await (await anonimo.PostAsJsonAsync("/api/auth/celular/registro",
-            new SolicitudRegistroCelular(verificacion!.TokenVerificacion, "Rosa", "Ficticia Quispe", Pin, true)))
+            RegistroDePrueba.Solicitud(verificacion!.TokenVerificacion, "Rosa", "Ficticia Quispe", Pin, true)))
             .Content.ReadFromJsonAsync<RespuestaIngresoCelular>();
         var cliente = fabrica.CreateClient();
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sesion!.Token);
@@ -55,15 +55,13 @@ public class LlamarCiudadanoTests(FabricaCad fabrica)
         Assert.Contains($"Llamar a Rosa <span class=\"num\">{celular[..3]} {celular[3..6]} {celular[6..]}</span>", html);
         Assert.True(boton < html.IndexOf("Resultado del intento", StringComparison.Ordinal), "El botón debe ir antes del resultado del intento.");
         Assert.Contains("data-llamada-estado hidden", html);
-        Assert.DoesNotContain("data-llamar=\"contacto\"", html); // sin contacto de emergencia registrado
     }
 
     [Fact]
-    public async Task ConContactoDeEmergencia_TambienSePuedeLlamarlo()
+    public async Task ElContactoDeEmergenciaDelRegistro_TambienSePuedeLlamar()
     {
+        // Registro único: el contacto de emergencia se pide al crear la cuenta.
         var (_, cliente) = await CiudadanoAsync();
-        await cliente.PutAsJsonAsync("/api/cuentas/yo/perfil", new SolicitudPerfilCiudadano("Rosa", "Ficticia Quispe", null, null,
-            null, null, "Marta Ficticia", "Madre", "911222333"));
 
         var html = System.Net.WebUtility.HtmlDecode(await DetalleDelSosAsync(cliente));
 

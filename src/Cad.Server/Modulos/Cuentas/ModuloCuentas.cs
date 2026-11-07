@@ -121,8 +121,9 @@ public static class ModuloCuentas
             {
                 ResultadoMisDatos.Correcto c => Results.Ok(c.Perfil),
                 ResultadoMisDatos.Invalido i => Results.ValidationProblem(i.Errores, title: "Revisa los datos marcados."),
-                _ => Results.Problem(statusCode: StatusCodes.Status409Conflict,
-                    title: "Ese documento ya está registrado en otra cuenta."),
+                // Como en el registro: el error va en su campo para que la app lo marque junto al documento.
+                _ => Results.ValidationProblem(new Dictionary<string, string[]> { ["numeroDocumento"] = [MisDatosCiudadano.MensajeDocumentoDuplicado] },
+                    title: "Revisa los datos marcados."),
             })
             .RequireAuthorization(Politicas.Ciudadano);
 

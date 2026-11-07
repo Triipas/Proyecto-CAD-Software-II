@@ -40,7 +40,7 @@ public class MatrizAutorizacionTests(FabricaCad fabrica)
         new("POST", "/api/auth/celular/pin", "HU02", Acceso.Publico),
         // ADR-08, fase D — «Mis datos» y cambio de PIN: solo la propia cuenta de ciudadano. Con cuerpo vacío el ciudadano llega
         // al caso de uso (400); el resto es rechazado antes.
-        new("GET", "/api/cuentas/yo/perfil", "HU01", Acceso.SoloRol, Roles.Ciudadano, Contenido: "\"datosCompletados\""),
+        new("GET", "/api/cuentas/yo/perfil", "HU01", Acceso.SoloRol, Roles.Ciudadano, Contenido: "\"datosCompletos\""),
         new("PUT", "/api/cuentas/yo/perfil", "HU01", Acceso.SoloRol, Roles.Ciudadano),
         new("POST", "/api/cuentas/yo/pin", "HU02", Acceso.SoloRol, Roles.Ciudadano),
         // Con cuerpo vacío el ciudadano llega al caso de uso (400 por falta de IdSolicitud); el resto es rechazado antes.

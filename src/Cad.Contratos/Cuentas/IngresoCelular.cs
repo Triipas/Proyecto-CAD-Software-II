@@ -12,7 +12,24 @@ public sealed record SolicitudVerificacionCelular(string Celular, string Codigo)
 // PuedeRegistrarDeNuevo: solo en desarrollo (DP25), un número con cuenta se puede volver a registrar.
 public sealed record RespuestaVerificacionCelular(string TokenVerificacion, bool CuentaExiste, bool PuedeRegistrarDeNuevo);
 
-public sealed record SolicitudRegistroCelular(string TokenVerificacion, string Nombres, string Apellidos, string Pin, bool AceptaTerminos);
+// Registro único (06/11/2026): un solo formulario con todos los datos que la central necesita (ver ValidacionDatosCiudadano).
+public sealed record SolicitudRegistroCelular(
+    string TokenVerificacion,
+    string Nombres,
+    string Apellidos,
+    string Pin,
+    bool AceptaTerminos,
+    string? TipoDocumento,
+    string? NumeroDocumento,
+    DateOnly? FechaNacimiento,
+    string? Direccion,
+    string? ContactoNombre,
+    string? ContactoParentesco,
+    string? ContactoTelefono)
+{
+    public DatosCiudadanoEscritos Datos => new(Nombres, Apellidos, TipoDocumento, NumeroDocumento, FechaNacimiento, Direccion,
+        ContactoNombre, ContactoParentesco, ContactoTelefono);
+}
 
 // Desde el teléfono vinculado basta la llave del dispositivo; desde otro teléfono hace falta un token de verificación.
 public sealed record SolicitudIngresoCelular(string Celular, string Pin, string? LlaveDispositivo, string? TokenVerificacion);
