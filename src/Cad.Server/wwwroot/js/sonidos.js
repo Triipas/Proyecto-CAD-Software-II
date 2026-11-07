@@ -44,7 +44,14 @@
   function siguiente() {
     sonando = null;
     const nombre = espera.shift();
-    if (nombre) tocar(nombre);
+    if (nombre && activos) tocar(nombre); // silenciados mientras esperaban: no suenan
+  }
+  // Al silenciar se calla lo que suena y se descarta lo que esperaba.
+  function callar() {
+    espera.length = 0;
+    const a = sonando;
+    sonando = null;
+    a?.pause();
   }
   function tocar(nombre) {
     const a = audio(nombre);
@@ -75,6 +82,7 @@
   function activar(valor) {
     activos = valor;
     guardar(valor);
+    if (!valor) callar();
     mostrar();
     if (valor) for (const nombre of NOMBRES) audio(nombre).load();
   }
