@@ -483,6 +483,7 @@ public sealed class CanalFalso : ICanalSereno
     public event Action? DespachoAsignado;
     public event Action? Reconectado;
     public event Action? DespachoActualizado;
+    public event Action? ConexionPerdida;
     public bool Conecta { get; set; } = true;
     public bool Conectado => Conecta;
     public int Conexiones;
@@ -492,6 +493,7 @@ public sealed class CanalFalso : ICanalSereno
     public void Avisar() => DespachoAsignado?.Invoke();
     public void Reconectar() => Reconectado?.Invoke();
     public void Actualizar() => DespachoActualizado?.Invoke();
+    public void Perder() => ConexionPerdida?.Invoke();
 }
 
 // HU21 (ADR-07): notificaciones push del dispositivo, controladas por la prueba.

@@ -722,6 +722,8 @@
   function seleccionarSereno(id, { desdeMapa = false } = {}) {
     if (desdeMapa) mostrarSerenos(true);
     const item = marcarSereno(id);
+    // 07/11/2026: con el panel del caso abierto, pasa al caso del sereno elegido.
+    mostrarCasoDeSereno(item);
     // 06/11/2026: la pestaña de la bandeja pasa a la del caso que atiende el sereno (un SOS en curso, «En curso»), para ver a la
     // vez a quien se eligió y su caso. El globo que acaba de abrir el marcador se conserva.
     if (item?.dataset.caso) {
@@ -1053,6 +1055,56 @@
     else if (!evento.shiftKey && document.activeElement === ultimo) { evento.preventDefault(); primero.focus(); }
   });
 
+  // 07/11/2026: la asignación rápida se envía sin recargar la central. Al recargar, el navegador no dejaba sonar «caso
+  // asignado» (la página nueva aún no tenía un clic) y el operador perdía lo que tenía a la vista. El servidor responde igual
+  // que siempre (PRG a la central con el aviso): de esa respuesta se toma el resultado; si no trae ninguno (p. ej., terminó la
+  // sesión), se va a esa página como antes.
+  const textoBoton = confirmacion.querySelector("button[type=submit]").textContent;
+  confirmacion.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    if (confirmacion.dataset.enviando === "true") return;
+    confirmacion.dataset.enviando = "true";
+    const boton = confirmacion.querySelector("button[type=submit]");
+    confirmacion.setAttribute("aria-busy", "true");
+    boton.setAttribute("aria-disabled", "true");
+    boton.textContent = boton.dataset.textoCarga;
+    const terminar = () => {
+      delete confirmacion.dataset.enviando;
+      confirmacion.removeAttribute("aria-busy");
+      boton.removeAttribute("aria-disabled");
+      boton.textContent = textoBoton;
+    };
+    let respuesta;
+    try {
+      respuesta = await fetch(confirmacion.action, {
+        method: "POST", body: new FormData(confirmacion), credentials: "same-origin", headers: { Accept: "text/html" },
+      });
+    } catch {
+      terminar();
+      CadSonidos.reproducir("error");
+      avisarBreve("No se pudo asignar el caso: no hay conexión con el servidor. Reinténtalo.");
+      return;
+    }
+    const pagina = documento(await respuesta.text());
+    const exito = pagina.querySelector(".central__aviso.aviso--exito");
+    const error = pagina.querySelector(".central__aviso.aviso--error");
+    if (!exito && !error) { window.location.assign(respuesta.url); return; }
+    terminar();
+    confirmacion.hidden = true;
+    const texto = (aviso) => [...aviso.querySelectorAll(".aviso__titulo, .aviso__texto")].map((p) => p.textContent.trim()).filter(Boolean).join(" ");
+    if (exito) {
+      CadSonidos.reproducir("caso-asignado");
+      avisarBreve(texto(exito));
+      document.getElementById("titulo-cola")?.focus();
+    } else {
+      CadSonidos.reproducir("error");
+      avisarBreve(texto(error));
+      origenDialogo?.focus?.();
+    }
+    await refrescar();
+    await refrescarSerenos();
+  });
+
   // ---------- Panel de serenos y capas del mapa ----------
   // 05/11/2026: el panel de serenos se abre encima del mapa cuando se pide (su cifra en la cabecera o en el mapa, o un sereno
   // tocado en el mapa) y lo tapa sin moverlo ni reencuadrarlo. Cada operador lo encuentra como lo dejó (solo en su navegador).
@@ -1238,10 +1290,13 @@
     const ordenVisto = [...regionSerenos.querySelectorAll('[data-grupo-serenos="disponibles"] [data-sereno]')].map((fila) => fila.dataset.sereno);
     // Lo que solo sabe el navegador (elegido, sugerido, «Asignar» a la vista) se repone antes de medir: así la tarjeta no
     // cambia de alto por un instante ni parece moverse.
-    cadMovimiento.actualizarRegion(regionSerenos, await respuesta.text(), {
+    const html = await respuesta.text();
+    avisarSerenoLibre(html);
+    cadMovimiento.actualizarRegion(regionSerenos, html, {
       animar: true,
       despues: () => {
         if (seleccionado) marcarSereno(seleccionado);
+        seguirSerenoEnPanel();
         aplicarFiltroSerenos();
         actualizarAsignacion();
         // Sin animar el orden aquí: actualizarRegion ya desliza lo que cambia de sitio al resincronizar.
@@ -1353,6 +1408,42 @@
     if (hayNuevo) CadSonidos.reproducir("reporte-admitido");
   }
 
+  // Sonidos de 07/11/2026. Se comparan los casos en curso (el mapa) con los de la consulta anterior: la primera no suena.
+  // Si en una misma consulta cambian varios, suena el de la etapa más avanzada. El reporte nuevo por revisar suena donde se
+  // actualiza su lista (refrescar), porque un reporte sin ubicación del hecho no está en el mapa.
+  const documento = (html) => new DOMParser().parseFromString(html, "text/html");
+  let casosPrevios = null;
+  function avisarCambiosDeCasos(html) {
+    const actuales = new Map();
+    for (const caso of documento(html).querySelectorAll("[data-caso-mapa]"))
+      actuales.set(caso.dataset.casoMapa, { origen: caso.dataset.origen, estado: caso.dataset.estado });
+    const previos = casosPrevios;
+    casosPrevios = actuales;
+    if (!previos) return;
+    const sonidos = new Set();
+    for (const [id, caso] of actuales) {
+      const antes = previos.get(id);
+      if (antes && antes.estado !== caso.estado) {
+        if (caso.estado === "En atención") sonidos.add("atencion-iniciada");
+        else if (caso.estado === "En camino") sonidos.add("sereno-en-camino");
+      }
+    }
+    const sonido = ["atencion-iniciada", "sereno-en-camino"].find((s) => sonidos.has(s));
+    if (sonido) CadSonidos.reproducir(sonido);
+  }
+
+  // Un sereno que queda disponible cuando hay SOS o reportes sin asignar: la central puede asignarle uno ya.
+  let librePrevios = null;
+  function avisarSerenoLibre(html) {
+    const libres = new Set([...documento(html).querySelectorAll('[data-sereno][data-disponible="true"]')].map((el) => el.dataset.sereno));
+    const previos = librePrevios;
+    librePrevios = libres;
+    if (!previos) return;
+    const pendientes = (Number(region.querySelector("[data-lista-sos]")?.dataset.total) || 0)
+      + (Number(regionReportes?.querySelector("[data-lista-reportes]")?.dataset.total) || 0);
+    if (pendientes > 0 && [...libres].some((id) => !previos.has(id))) CadSonidos.reproducir("sereno-disponible-con-pendientes");
+  }
+
   function marcarComoVisto() {
     sinVer = 0;
     document.title = tituloBase;
@@ -1363,6 +1454,10 @@
   let cargado = false;
   async function refrescar() {
     let reporteLlegado = null;
+    // 07/11/2026: el caso con el que está el operador (elegido en la bandeja, en curso o abierto en el panel). Si al rehacer la
+    // bandeja pasó a otra pestaña (p. ej., al asignarlo pasa a «En curso»), la pestaña lo sigue y el caso queda elegido allí.
+    const seguido = sosSeleccionado ?? casoConRuta ?? (panelAbierto() ? casoEnPanel : null);
+    const pestanaSeguido = pestanaDe(seguido);
     const respuesta = await fetch("/panel/central?handler=Lista", { headers: { Accept: "text/html" }, credentials: "same-origin" });
     if (respuesta.redirected || !respuesta.ok) {
       estadoConexion("desconectado", "La sesión terminó o no hay acceso. Vuelve a ingresar para recibir SOS.");
@@ -1400,6 +1495,7 @@
         const { nuevos: llegados } = cadMovimiento.actualizarRegion(regionRevisar, await revisar.text(), { animar: true, despues: () => marcarAsignado(casoConRuta) });
         // El reporte que llega a revisar entra con el mismo anillo que un reporte admitido (y el sonar en el mapa).
         if (cargado) {
+          if (llegados.length) CadSonidos.reproducir("reporte-por-revisar");
           for (const id of llegados) {
             const tarjeta = document.getElementById(`revisar-${id}`);
             tarjeta?.classList.add("sos--llegada");
@@ -1417,7 +1513,9 @@
     if (regionCasosMapa) {
       const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
       if (enCurso.ok && !enCurso.redirected) {
-        const { nuevos: entrantes } = cadMovimiento.actualizarRegion(regionCasosMapa, await enCurso.text());
+        const html = await enCurso.text();
+        avisarCambiosDeCasos(html);
+        const { nuevos: entrantes } = cadMovimiento.actualizarRegion(regionCasosMapa, html);
         // El reporte por revisar que llega desde la app también es un caso llegado: se enfoca y lleva el sonar como un SOS.
         // Solo cuenta el que aparece en Recibido o En revisión (no el SOS que pasa a en curso al asignarlo).
         const porRevisar = entrantes.filter((clave) => {
@@ -1441,15 +1539,48 @@
     // Si se mira otra pestaña, no se lleva el mapa a un caso que no se ve: la pestaña «Reportes» lo avisa.
     if (reporteLlegado && pestana === "reportes") destacarUltimo(reporteLlegado, { reporte: true });
     else if (reporteLlegado) avisarPestana("reportes");
+    seguirCasoDePestana(seguido, pestanaSeguido);
     cargado = true;
     return true;
   }
 
+  // El caso seguido cambió de pestaña: se pasa a la suya sin soltarlo y se vuelve a elegir allí (en la cola con su sereno sugerido;
+  // en curso o por revisar, con su recorrido o su marcador). Si ya no está en ninguna (cerrado, derivado…), no se mueve nada.
+  function seguirCasoDePestana(id, antes) {
+    const ahora = pestanaDe(id);
+    if (!id || !antes || !ahora || ahora === antes) return;
+    // Otra resincronización a la par ya lo siguió.
+    if (ahora === pestana && (casoConRuta === id || sosSeleccionado === id)) return;
+    elegirPestana(ahora, { soltar: false, cerrarGlobo: false });
+    if (document.getElementById(`sos-${id}`)) seleccionar(id, { conSereno: true });
+    else seleccionarAsignado(id);
+  }
+
   // ---------- Conexión en tiempo real ----------
+  // Sonidos de 07/11/2026: suena una vez al perder la conexión y otra al recuperarla (no al conectar por primera vez).
+  // La pérdida solo suena si dura (2,5 s): al recargar o salir de la página la conexión se cierra y eso no es un corte, y un
+  // parpadeo corto no merece aviso. La recuperación suena solo si la pérdida sonó, así nunca suenan pegadas.
+  const ESPERA_CORTE = 2500;
+  let estuvoConectado = false, corteSonado = false, temporizadorCorte = null, cerrandoPagina = false;
+  window.addEventListener("pagehide", () => { cerrandoPagina = true; clearTimeout(temporizadorCorte); temporizadorCorte = null; });
+  window.addEventListener("pageshow", () => { cerrandoPagina = false; });
   function estadoConexion(estado, texto) {
     indicador.className = `conexion conexion--${estado}`;
     indicador.dataset.estado = estado;
     indicador.querySelector("[data-texto]").textContent = texto;
+    if (estado === "conectado") {
+      estuvoConectado = true;
+      clearTimeout(temporizadorCorte);
+      temporizadorCorte = null;
+      if (corteSonado) { corteSonado = false; CadSonidos.reproducir("conexion-recuperada"); }
+    } else if (estuvoConectado && !corteSonado && !temporizadorCorte && (estado === "reconectando" || estado === "desconectado")) {
+      temporizadorCorte = setTimeout(() => {
+        temporizadorCorte = null;
+        if (cerrandoPagina || indicador.dataset.estado === "conectado") return;
+        corteSonado = true;
+        CadSonidos.reproducir("conexion-perdida");
+      }, ESPERA_CORTE);
+    }
   }
 
   const conexion = new signalR.HubConnectionBuilder()
@@ -1570,18 +1701,66 @@
       ?? (document.getElementById(`revisar-${id}`) ? `/panel/reportes/${id}` : null);
   }
 
-  function seguirEnPanel(id) {
-    if (!panelCaso || panelCaso.hidden || !id || id === casoEnPanel) return;
-    const href = detalleDe(id);
-    if (!href) return;
+  // 07/11/2026: lo que la central pide al marco se comprueba al terminar de cargar. La página del caso se recarga sola cuando
+  // cambia su caso (consola.js) y esa recarga puede ganarle a la carga pedida: el panel se quedaba en el caso anterior y había
+  // que volver a pedirlo. Ahora, si al cargar el marco no muestra el caso pedido, se pide otra vez (una sola, por si la página
+  // pedida redirige a otra, p. ej., al terminar la sesión). Mientras tanto, los avisos del caso anterior no cambian el pedido.
+  let pedidoPanel = null, reintentosPanel = 0;
+  function casoMostrado() {
+    try { return idDeRuta(marcoCaso.contentWindow?.location.pathname); } catch { return null; }
+  }
+  function cargarEnPanel(id, href) {
     casoEnPanel = id;
+    pedidoPanel = href;
+    reintentosPanel = 0;
     marcoCaso.src = href;
   }
+  // Ya está (o está llegando) el caso que se quiere: no hace falta pedirlo.
+  const yaEnPanel = (id) => id === casoEnPanel && (pedidoPanel !== null || casoMostrado() === id);
+  marcoCaso.addEventListener("load", () => {
+    if (!pedidoPanel || panelCaso.hidden) return;
+    const mostrado = casoMostrado();
+    if (casoEnPanel && mostrado && mostrado !== casoEnPanel && reintentosPanel < 1) {
+      reintentosPanel += 1;
+      marcoCaso.src = pedidoPanel;
+      return;
+    }
+    pedidoPanel = null;
+  });
 
-  function abrirPanel(href, { cargar = true } = {}) {
+  function seguirEnPanel(id) {
+    if (!panelCaso || panelCaso.hidden || !id || yaEnPanel(id)) return;
+    const href = detalleDe(id);
+    if (!href) return;
+    serenoEnPanel = null;
+    cargarEnPanel(id, href);
+  }
+
+  // 07/11/2026: el panel del caso sigue al sereno elegido en «Serenos». Si se abrió desde un sereno («Ver el caso») o se eligió
+  // un sereno con el panel abierto, muestra el caso de ese sereno, y si a ese sereno le cambia el caso (una reasignación), el
+  // panel pasa al nuevo. Abrir otro caso por otro camino deja de seguirlo.
+  let serenoEnPanel = null;
+  function casoDeSereno(item) {
+    const enlace = item?.querySelector(".sereno__ver");
+    return enlace && item.dataset.caso ? { id: item.dataset.caso, href: enlace.getAttribute("href") } : null;
+  }
+  function mostrarCasoDeSereno(item) {
+    if (!panelCaso || panelCaso.hidden) return;
+    const caso = casoDeSereno(item);
+    if (!caso) return;
+    serenoEnPanel = item.dataset.sereno;
+    if (yaEnPanel(caso.id)) return;
+    cargarEnPanel(caso.id, caso.href);
+  }
+  function seguirSerenoEnPanel() {
+    if (serenoEnPanel) mostrarCasoDeSereno(document.getElementById(`sereno-${serenoEnPanel}`));
+  }
+
+  function abrirPanel(href, { cargar = true, sereno = null } = {}) {
     origenPanel = document.activeElement;
-    casoEnPanel = idDeRuta(href);
-    if (cargar) marcoCaso.src = href;
+    serenoEnPanel = sereno;
+    if (cargar) cargarEnPanel(idDeRuta(href), href);
+    else { casoEnPanel = idDeRuta(href); pedidoPanel = null; }
     panelCaso.hidden = false;
     central.classList.add("central--con-panel");
     // El caso se marca en el mapa (de la cola, con su sereno sugerido; en curso o por revisar, con su marcador).
@@ -1589,13 +1768,16 @@
     else if (casoEnPanel && (marcadoresEnCurso.has(casoEnPanel) || document.getElementById(`asignado-${casoEnPanel}`))) seleccionarAsignado(casoEnPanel);
   }
 
-  function cerrarPanel({ devolverFoco = true } = {}) {
+  function cerrarPanel({ devolverFoco = true, soltar = true } = {}) {
     if (panelCaso.hidden) return;
     panelCaso.hidden = true;
     central.classList.remove("central--con-panel");
     marcoCaso.removeAttribute("src");
     casoEnPanel = null;
-    soltarTodo();
+    serenoEnPanel = null;
+    pedidoPanel = null;
+    // Tras un paso hecho en el panel (asignar…), el caso sigue elegido en su nueva pestaña.
+    if (soltar) soltarTodo();
     if (devolverFoco) origenPanel?.isConnected ? origenPanel.focus() : document.getElementById("titulo-cola")?.focus();
   }
 
@@ -1611,7 +1793,13 @@
     if (!enlace || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.button !== 0) return;
     evento.preventDefault();
     mapa.closePopup();
-    abrirPanel(enlace.getAttribute("href"));
+    // «Ver el caso» de un sereno: el panel abre su caso y el sereno queda elegido en la lista y en el mapa.
+    const sereno = enlace.closest("[data-sereno]")?.dataset.sereno ?? null;
+    abrirPanel(enlace.getAttribute("href"), { sereno });
+    if (sereno) {
+      marcarSereno(sereno);
+      resaltar(marcadoresSerenos, sereno);
+    }
   });
   // «Revisar» envía su formulario al marco: la revisión se inicia y el reporte se abre en el panel.
   document.addEventListener("submit", (evento) => {
@@ -1635,12 +1823,13 @@
     tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";
     // Un caso que el panel acaba de registrar («Nuevo reporte»: antes no había caso en el panel) se lleva a la vista en el mapa.
     const recienRegistrado = Boolean(id) && !casoEnPanel;
-    if (id) casoEnPanel = id;
+    // Mientras llega un caso pedido, el aviso de otra página (el caso anterior que se recargó) no cambia lo que se quiere ver.
+    if (id && (!pedidoPanel || id === casoEnPanel)) casoEnPanel = id;
     // Lo que se hizo en el panel cambia la bandeja: se rehace desde el servidor.
     if (mensaje) { await refrescar(); await refrescarSerenos(); }
     if (recienRegistrado && mensaje && document.getElementById(`sos-${id}`)) seleccionar(id, { conSereno: true });
     if (mensaje && !ESTADOS_PENDIENTES.has(estado)) {
-      cerrarPanel({ devolverFoco: false });
+      cerrarPanel({ devolverFoco: false, soltar: false });
       avisarBreve(mensaje);
       document.getElementById("titulo-cola")?.focus();
     }

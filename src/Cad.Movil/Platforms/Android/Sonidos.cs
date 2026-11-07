@@ -22,8 +22,15 @@ public sealed class ReproductorSonidosAndroid : IReproductorSonidos
             var recursos = global::Android.App.Application.Context.Assets!;
             foreach (var sonido in Enum.GetValues<Sonido>())
             {
-                using var archivo = recursos.OpenFd($"sonidos/{Archivo(sonido)}.wav");
-                cargados[sonido] = sonidos.Load(archivo, 1);
+                try
+                {
+                    using var archivo = recursos.OpenFd($"sonidos/{Archivo(sonido)}");
+                    cargados[sonido] = sonidos.Load(archivo, 1);
+                }
+                catch (Exception)
+                {
+                    // Un sonido que no carga no deja sin los demás: ese solo queda en silencio.
+                }
             }
         }
         catch (Exception)
@@ -40,9 +47,13 @@ public sealed class ReproductorSonidosAndroid : IReproductorSonidos
 
     private static string Archivo(Sonido sonido) => sonido switch
     {
-        Sonido.NuevoDespacho => "nuevo-despacho",
-        Sonido.Llegaste => "llegaste",
-        Sonido.SosRegistrado => "sos-registrado",
-        _ => "error",
+        Sonido.NuevoDespacho => "nuevo-despacho.wav",
+        Sonido.Llegaste => "llegaste.wav",
+        Sonido.SosRegistrado => "sos-registrado.wav",
+        Sonido.DespachoModificado => "despacho-modificado.mp3",
+        Sonido.ConexionPerdida => "conexion-perdida.mp3",
+        Sonido.ConexionRecuperada => "conexion-recuperada.mp3",
+        Sonido.OperacionConfirmada => "operacion-confirmada.mp3",
+        _ => "error.wav",
     };
 }

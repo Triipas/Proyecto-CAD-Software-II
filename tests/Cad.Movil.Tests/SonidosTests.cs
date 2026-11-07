@@ -43,7 +43,7 @@ public class SonidosTests
     }
 
     [Fact]
-    public async Task UnAvanceRechazado_SuenaElError_YUnoAplicado_NoSuena()
+    public async Task UnAvanceRechazado_SuenaElError_YUnoAplicado_SuenaComoOperacionConfirmada()
     {
         var asignado = Despacho();
         api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(asignado);
@@ -56,7 +56,47 @@ public class SonidosTests
 
         api.RespuestaAvance = _ => new ResultadoApi<DespachoSereno?>.Correcto(asignado with { Estado = DespachoSereno.EstadoEnCamino });
         Assert.True(await despacho.ConfirmarDesplazamientoAsync());
-        Assert.Equal([Sonido.Error], sonidos.Reproducidos);
+        Assert.Equal([Sonido.Error, Sonido.OperacionConfirmada], sonidos.Reproducidos);
+    }
+
+    [Fact]
+    public async Task UnDespachoQueLaCentralCambiaORetira_SuenaComoModificado_YUnoIgual_NoSuena()
+    {
+        var asignado = Despacho();
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(asignado);
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+
+        canal.Actualizar(); // la central avisó, pero el despacho es el mismo
+        await Task.Delay(100);
+        Assert.Empty(sonidos.Reproducidos);
+
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(asignado with { Estado = DespachoSereno.EstadoEnCamino });
+        canal.Actualizar();
+        await Esperar(() => sonidos.Reproducidos.Count == 1, "suena el despacho modificado");
+
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(null);
+        canal.Actualizar();
+        await Esperar(() => sonidos.Reproducidos.Count == 2, "suena el despacho retirado");
+        Assert.Equal([Sonido.DespachoModificado, Sonido.DespachoModificado], sonidos.Reproducidos);
+    }
+
+    [Fact]
+    public async Task LaConexionPerdidaYRecuperada_SuenanUnaVezCadaUna_YLaPantallaLoDice()
+    {
+        var despacho = Servicio();
+        await despacho.IniciarAsync();
+        Assert.False(despacho.CanalPerdido);
+
+        canal.Perder();
+        canal.Perder(); // un segundo aviso del mismo corte no repite el sonido
+        Assert.True(despacho.CanalPerdido);
+        Assert.Equal([Sonido.ConexionPerdida], sonidos.Reproducidos);
+
+        canal.Reconectar();
+        await Esperar(() => sonidos.Reproducidos.Count == 2, "suena la conexión recuperada");
+        Assert.False(despacho.CanalPerdido);
+        Assert.Equal([Sonido.ConexionPerdida, Sonido.ConexionRecuperada], sonidos.Reproducidos);
     }
 
     [Fact]

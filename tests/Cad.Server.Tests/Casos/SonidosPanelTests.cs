@@ -37,6 +37,35 @@ public class SonidosPanelTests(FabricaCad fabrica)
         Assert.DoesNotContain($"data-sonido=\"{SonidoPanel.CasoAsignado}\"", await operador.GetStringAsync(ruta)); // al recargar no vuelve a sonar
     }
 
+    // 07/11/2026: la asignación rápida de la central se envía sin recargar (central.js) y lee el resultado de la página a la
+    // que vuelve: el aviso de éxito de la central (.central__aviso.aviso--exito) o el de error. Si cambia, deja de sonar.
+    [Fact]
+    public async Task LaAsignacionRapida_VuelveALaCentral_ConElAvisoQueLeeElPanel()
+    {
+        var operadorCuenta = await fabrica.CrearAsync(Roles.Operador);
+        var operador = fabrica.CrearNavegador();
+        await operador.IngresarAlPanelAsync(operadorCuenta.Correo, operadorCuenta.Clave);
+        var sereno = await fabrica.CrearAsync(Roles.Sereno);
+        var app = await fabrica.CrearClienteAppAsync(sereno);
+        Assert.Equal(HttpStatusCode.OK, (await app.PutAsJsonAsync("/api/sereno/estado", new SolicitudCambioEstadoOperativo(true, true))).StatusCode);
+        var ciudadano = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Ciudadano));
+        var sos = await (await ciudadano.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), DateTimeOffset.UtcNow, null)))
+            .Content.ReadFromJsonAsync<RespuestaSos>();
+
+        var respuesta = await operador.PostAsync($"/panel/central/sos/{sos!.Id}?handler=Asignar", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Asignacion.SerenoId"] = sereno.Id.ToString(), ["Asignacion.IdSolicitud"] = Guid.NewGuid().ToString(), ["Asignacion.Volver"] = "central",
+            ["__RequestVerificationToken"] = await CuentasDePrueba.ObtenerTokenAntifalsificacionAsync(operador, "/panel/central"),
+        }));
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Equal("/panel/central", respuesta.Headers.Location!.OriginalString.Split('?')[0]);
+
+        var central = await operador.GetStringAsync("/panel/central");
+        Assert.Contains("class=\"aviso aviso--exito central__aviso\"", central);
+        Assert.Contains("SOS asignado.", central);
+        Assert.DoesNotContain("aviso--exito central__aviso", await operador.GetStringAsync("/panel/central")); // se consume
+    }
+
     [Fact]
     public async Task ElBotonDelAltavoz_EstaEnLaBarraDelOperador_ActivadoPorDefecto_YNoEnLaDelAdministrador()
     {
@@ -60,6 +89,13 @@ public class SonidosPanelTests(FabricaCad fabrica)
     [InlineData("/sonidos/caso-asignado.wav")]
     [InlineData("/sonidos/aviso-acompanamiento.wav")]
     [InlineData("/sonidos/error.wav")]
+    [InlineData("/sonidos/reporte-por-revisar.mp3")]
+    [InlineData("/sonidos/sereno-en-camino.mp3")]
+    [InlineData("/sonidos/atencion-iniciada.mp3")]
+    [InlineData("/sonidos/sereno-disponible-con-pendientes.mp3")]
+    [InlineData("/sonidos/conexion-perdida.mp3")]
+    [InlineData("/sonidos/conexion-recuperada.mp3")]
+    [InlineData("/sonidos/operacion-confirmada.mp3")]
     [InlineData("/js/sonidos.js")]
     public async Task LosArchivosDeSonido_SeSirven(string ruta)
     {
