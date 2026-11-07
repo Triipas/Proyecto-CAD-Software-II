@@ -2447,3 +2447,25 @@
     display: grid;
   }
 }
+
+/* ── Pestaña «Reportes» de la bandeja (06/11/2026) ──────────
+   «Nuevo reporte» (secundario: el azul es de «Decidir» en cada tarjeta) y el enlace a los criterios de triaje, arriba. Los dos
+   abren en el panel del caso. */
+.central .bandeja__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-3);
+}
+
+.central .bandeja__enlace {
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-primario);
+  text-underline-offset: 0.2em;
+}
+
+.central .bandeja__hecho time {
+  font-variant-numeric: tabular-nums;
+}

@@ -252,12 +252,14 @@ public sealed class SugerenciaReporteTests(FabricaCad fabrica) : IAsyncLifetime
         await EsperarSugerenciaAsync(distinta);
         await EsperarSugerenciaAsync(igual);
 
-        var html = WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/reportes"));
+        var html = WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/central?handler=PorRevisar"));
 
+        // La tarjeta del reporte en la bandeja: hasta la siguiente (o el final del fragmento).
         string Fila(Guid id)
         {
-            var inicio = html.IndexOf($"data-reporte=\"{id}\"", StringComparison.Ordinal);
-            return html[inicio..html.IndexOf("</tr>", inicio, StringComparison.Ordinal)];
+            var inicio = html.IndexOf($"data-revisar=\"{id}\"", StringComparison.Ordinal);
+            var fin = html.IndexOf("data-revisar=\"", inicio + 1, StringComparison.Ordinal);
+            return fin < 0 ? html[inicio..] : html[inicio..fin];
         }
         Assert.Contains("Sugerida: Robo o hurto", Fila(distinta));
         Assert.DoesNotContain("data-categoria-sugerida", Fila(igual));

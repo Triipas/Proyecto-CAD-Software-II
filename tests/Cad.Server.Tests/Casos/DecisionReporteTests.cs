@@ -472,7 +472,7 @@ public class DecisionReporteTests(FabricaCad fabrica)
 
         await DecidirAsync(operador, id, "Admision", "Corresponde");
 
-        Assert.DoesNotContain($"data-reporte=\"{id}\"", await operador.GetStringAsync("/panel/reportes"));
+        Assert.DoesNotContain($"data-revisar=\"{id}\"", await operador.GetStringAsync("/panel/central?handler=PorRevisar"));
     }
 
     // ----- Autorización y registros -----

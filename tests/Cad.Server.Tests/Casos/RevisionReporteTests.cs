@@ -321,13 +321,17 @@ public class RevisionReporteTests(FabricaCad fabrica)
         var sos = (await (await app.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), DateTimeOffset.UtcNow, null)))
             .Content.ReadFromJsonAsync<RespuestaSos>())!.Id;
 
-        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync("/panel/reportes"));
+        var html = System.Net.WebUtility.HtmlDecode(await operador.GetStringAsync("/panel/central?handler=PorRevisar"));
 
-        Assert.Contains($"data-reporte=\"{recibido}\"", html);
-        Assert.Contains($"data-reporte=\"{enRevision}\"", html);
+        Assert.Contains($"data-revisar=\"{recibido}\"", html);
+        Assert.Contains($"data-revisar=\"{enRevision}\"", html);
         Assert.DoesNotContain(sos.ToString(), html);
         Assert.Contains("En revisión", html);
-        Assert.Contains("href=\"/panel/reportes\"", html); // enlace en la navegación del operador
+        // 06/11/2026: «Reportes» ya no es una sección de la barra; «Nuevo reporte» y los criterios están en la central.
+        var central = await operador.GetStringAsync("/panel/central");
+        Assert.DoesNotContain("href=\"/panel/reportes\"", central);
+        Assert.Contains("href=\"/panel/reportes/nuevo\"", central);
+        Assert.Contains("href=\"/panel/criterios-triaje\"", central);
     }
 
     [Fact]

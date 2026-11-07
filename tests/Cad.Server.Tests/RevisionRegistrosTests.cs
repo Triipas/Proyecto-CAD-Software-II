@@ -205,7 +205,7 @@ public partial class RevisionRegistrosTests(FabricaCad fabrica)
         var ingreso = await panel.IngresarAlPanelAsync(operador.Correo, operador.Clave);
         sensibles["contraseñas"].Add(operador.Clave);
         sensibles["tokens y cookies"].Add(ValorCookie(ingreso));
-        Assert.Contains(reportes[0].ToString(), await panel.GetStringAsync("/panel/reportes"));
+        Assert.Contains(reportes[0].ToString(), await panel.GetStringAsync("/panel/central"));
         foreach (var id in reportes)
         {
             Assert.Contains(descripciones[reportes.IndexOf(id)], System.Net.WebUtility.HtmlDecode(await panel.GetStringAsync($"/panel/reportes/{id}")));

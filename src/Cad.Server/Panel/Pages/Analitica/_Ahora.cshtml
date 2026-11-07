@@ -141,7 +141,7 @@
                 <li class="fila-a"><span class="tarjeta-a__nota">SOS sin abrir</span><span>Nadie abrió todavía su detalle</span>
                     <span class="fila-a__cifra @(foto.SosSinAbrir > 0 ? "fila-a__cifra--aviso" : "")">@(foto.SosSinAbrir > 0 ? $"▲ {foto.SosSinAbrir}" : "✓ 0")</span></li>
                 <li class="fila-a"><span class="tarjeta-a__nota">Reportes</span><span>@Formato.Plural(foto.ReportesPorRevisar, "por revisar", "por revisar") · el más antiguo @Formato.Minutos(foto.ReporteMasAntiguoMinutos)</span>
-                    <a class="fila-a__cifra" href="/panel/reportes">Ver</a></li>
+                    <a class="fila-a__cifra" href="/panel/central?pestana=reportes">Ver</a></li>
             </ul>
         </section>
     </div>

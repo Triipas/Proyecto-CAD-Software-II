@@ -76,6 +76,12 @@
             </div>
 
             <div class="bandeja__pestana-panel" id="grupo-reportes" role="tabpanel" aria-labelledby="pestana-reportes" data-grupo-pestana="reportes">
+            @* 06/11/2026: registrar un hecho que llegó por otra vía (llamada, radio, en persona) y consultar los criterios de triaje,
+               en el panel del caso, sin salir del mapa. Antes eran la página «Reportes», que repetía esta lista. *@
+            <div class="bandeja__acciones">
+                <a class="boton boton--secundario" href="/panel/reportes/nuevo" data-abrir-panel><partial name="_Icono" model="@("documento")" />Nuevo reporte</a>
+                <a class="bandeja__enlace" href="/panel/criterios-triaje" data-abrir-panel>Criterios de triaje</a>
+            </div>
             @* HU14 en la central (05/11/2026): los reportes recibidos y en revisión, con el modo de la admisión automática (HU45). *@
             <section class="central__revisar bandeja__grupo" aria-labelledby="titulo-revisar">
                 <h3 id="titulo-revisar" class="central__titulo">

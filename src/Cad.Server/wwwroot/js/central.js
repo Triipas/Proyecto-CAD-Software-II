@@ -461,7 +461,7 @@
     if (columna) columna.hidden = medidas.size === 0;
     if (contextoSerenos) {
       contextoSerenos.hidden = medidas.size === 0;
-      if (medidas.size) fijarTexto(contextoSerenos.querySelector("[data-texto]"), `Ordenados por cercanía al ${tipo} de ${caso.dataset.ciudadano}`);
+      if (medidas.size) fijarTexto(contextoSerenos.querySelector("[data-texto]"), `Ordenados por cercanía al ${tipo} ${/^registrado por/i.test(caso.dataset.ciudadano) ? caso.dataset.ciudadano.toLowerCase() : `de ${caso.dataset.ciudadano}`}`);
     }
     if (!cercano) return;
     const texto = distancia(cercano.metros);
@@ -1142,6 +1142,12 @@
     for (const enlace of document.querySelectorAll("[data-ir-sos]")) enlace.addEventListener("click", () => elegirPestana("sos"));
     let guardada = null;
     try { guardada = localStorage.getItem(CLAVE_PESTANA); } catch { /* sin almacenamiento */ }
+    // «/panel/central?pestana=reportes» (la antigua sección «Reportes», «Volver» desde un reporte): abre esa pestaña.
+    const pedida = new URLSearchParams(location.search).get("pestana");
+    if (pedida && pestanas.some((b) => b.dataset.pestana === pedida)) {
+      guardada = pedida;
+      history.replaceState(null, "", location.pathname);
+    }
     elegirPestana(guardada ?? "sos", { soltar: false });
     if (central.dataset.pestana !== (guardada ?? "sos")) elegirPestana("sos", { soltar: false });
     contarPestanas();
@@ -1592,9 +1598,12 @@
     if (evento.data?.tipo !== "cad-panel-caso") return;
     const { id, estado, mensaje, titulo } = evento.data;
     tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";
+    // Un caso que el panel acaba de registrar («Nuevo reporte»: antes no había caso en el panel) se lleva a la vista en el mapa.
+    const recienRegistrado = Boolean(id) && !casoEnPanel;
     if (id) casoEnPanel = id;
     // Lo que se hizo en el panel cambia la bandeja: se rehace desde el servidor.
     if (mensaje) { await refrescar(); await refrescarSerenos(); }
+    if (recienRegistrado && mensaje && document.getElementById(`sos-${id}`)) seleccionar(id, { conSereno: true });
     if (mensaje && !ESTADOS_PENDIENTES.has(estado)) {
       cerrarPanel({ devolverFoco: false });
       avisarBreve(mensaje);

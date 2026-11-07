@@ -3,11 +3,18 @@
 @{
     ViewData["Title"] = "Criterios de triaje";
     ViewData["ClasePagina"] = "pagina--estrecha";
+    // 06/11/2026: también se abre en el panel de la central, para consultarlos sin salir del mapa.
+    ViewData[Cad.Server.Panel.ModoPanel.ClaveVista] = true;
+    var enPanel = Cad.Server.Panel.ModoPanel.Activo(HttpContext.Request);
 }
 @section Estilos {
     <link rel="stylesheet" href="~/css/sugerencia.css" asp-append-version="true" />
 }
-<p><a class="enlace-volver" href="/panel/reportes">← Reportes</a></p>
+<div class="panel-formulario">
+@if (!enPanel)
+{
+    <p><a class="enlace-volver" href="/panel/central?pestana=reportes">← Central</a></p>
+}
 <div class="pagina__encabezado">
     <div>
         <h1 class="titulo">Criterios de triaje</h1>
@@ -18,3 +25,4 @@
     <p class="sugerencia__rotulo">Versión @Model.Version</p>
     @Model.Contenido
 </article>
+</div>
