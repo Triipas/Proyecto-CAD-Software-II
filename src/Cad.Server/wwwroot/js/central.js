@@ -1238,7 +1238,9 @@
     const ordenVisto = [...regionSerenos.querySelectorAll('[data-grupo-serenos="disponibles"] [data-sereno]')].map((fila) => fila.dataset.sereno);
     // Lo que solo sabe el navegador (elegido, sugerido, «Asignar» a la vista) se repone antes de medir: así la tarjeta no
     // cambia de alto por un instante ni parece moverse.
-    cadMovimiento.actualizarRegion(regionSerenos, await respuesta.text(), {
+    const html = await respuesta.text();
+    avisarSerenoLibre(html);
+    cadMovimiento.actualizarRegion(regionSerenos, html, {
       animar: true,
       despues: () => {
         if (seleccionado) marcarSereno(seleccionado);
@@ -1353,6 +1355,43 @@
     if (hayNuevo) CadSonidos.reproducir("reporte-admitido");
   }
 
+  // Sonidos de 07/11/2026. Se comparan los casos en curso (el mapa) con los de la consulta anterior: la primera no suena.
+  // Si en una misma consulta cambian varios, suena el que más pide una acción del operador. Un reporte sin ubicación del
+  // hecho no está en el mapa y no suena aquí (se ve en «Reportes»).
+  const documento = (html) => new DOMParser().parseFromString(html, "text/html");
+  let casosPrevios = null;
+  function avisarCambiosDeCasos(html) {
+    const actuales = new Map();
+    for (const caso of documento(html).querySelectorAll("[data-caso-mapa]"))
+      actuales.set(caso.dataset.casoMapa, { origen: caso.dataset.origen, estado: caso.dataset.estado });
+    const previos = casosPrevios;
+    casosPrevios = actuales;
+    if (!previos) return;
+    const sonidos = new Set();
+    for (const [id, caso] of actuales) {
+      const antes = previos.get(id);
+      if (!antes && caso.origen === "Reporte" && caso.estado === "Recibido") sonidos.add("reporte-por-revisar");
+      else if (antes && antes.estado !== caso.estado) {
+        if (caso.estado === "En atención") sonidos.add("atencion-iniciada");
+        else if (caso.estado === "En camino") sonidos.add("sereno-en-camino");
+      }
+    }
+    const sonido = ["reporte-por-revisar", "atencion-iniciada", "sereno-en-camino"].find((s) => sonidos.has(s));
+    if (sonido) CadSonidos.reproducir(sonido);
+  }
+
+  // Un sereno que queda disponible cuando hay SOS o reportes sin asignar: la central puede asignarle uno ya.
+  let librePrevios = null;
+  function avisarSerenoLibre(html) {
+    const libres = new Set([...documento(html).querySelectorAll('[data-sereno][data-disponible="true"]')].map((el) => el.dataset.sereno));
+    const previos = librePrevios;
+    librePrevios = libres;
+    if (!previos) return;
+    const pendientes = (Number(region.querySelector("[data-lista-sos]")?.dataset.total) || 0)
+      + (Number(regionReportes?.querySelector("[data-lista-reportes]")?.dataset.total) || 0);
+    if (pendientes > 0 && [...libres].some((id) => !previos.has(id))) CadSonidos.reproducir("sereno-disponible-con-pendientes");
+  }
+
   function marcarComoVisto() {
     sinVer = 0;
     document.title = tituloBase;
@@ -1417,7 +1456,9 @@
     if (regionCasosMapa) {
       const enCurso = await fetch("/panel/central?handler=CasosMapa", { headers: { Accept: "text/html" }, credentials: "same-origin" });
       if (enCurso.ok && !enCurso.redirected) {
-        const { nuevos: entrantes } = cadMovimiento.actualizarRegion(regionCasosMapa, await enCurso.text());
+        const html = await enCurso.text();
+        avisarCambiosDeCasos(html);
+        const { nuevos: entrantes } = cadMovimiento.actualizarRegion(regionCasosMapa, html);
         // El reporte por revisar que llega desde la app también es un caso llegado: se enfoca y lleva el sonar como un SOS.
         // Solo cuenta el que aparece en Recibido o En revisión (no el SOS que pasa a en curso al asignarlo).
         const porRevisar = entrantes.filter((clave) => {
@@ -1446,10 +1487,19 @@
   }
 
   // ---------- Conexión en tiempo real ----------
+  // Sonidos de 07/11/2026: suena una vez al perder la conexión y otra al recuperarla (no al conectar por primera vez).
+  let estuvoConectado = false, enCorte = false;
   function estadoConexion(estado, texto) {
     indicador.className = `conexion conexion--${estado}`;
     indicador.dataset.estado = estado;
     indicador.querySelector("[data-texto]").textContent = texto;
+    if (estado === "conectado") {
+      estuvoConectado = true;
+      if (enCorte) { enCorte = false; CadSonidos.reproducir("conexion-recuperada"); }
+    } else if (estuvoConectado && !enCorte && (estado === "reconectando" || estado === "desconectado")) {
+      enCorte = true;
+      CadSonidos.reproducir("conexion-perdida");
+    }
   }
 
   const conexion = new signalR.HubConnectionBuilder()

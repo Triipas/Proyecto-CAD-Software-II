@@ -170,5 +170,7 @@ public sealed class RegistradorReporte(IApiCad api, IAlmacenSesion sesiones, Tim
         Cambio?.Invoke(estado);
         if (estado is EstadoReporte.Rechazado or EstadoReporte.NoConfirmado)
             sonidos?.Reproducir(Sonido.Error); // 24/10/2026: el aviso en pantalla dice qué pasó
+        else if (estado is EstadoReporte.Registrado)
+            sonidos?.Reproducir(Sonido.OperacionConfirmada); // 07/11/2026: el reporte llegó a la central
     }
 }

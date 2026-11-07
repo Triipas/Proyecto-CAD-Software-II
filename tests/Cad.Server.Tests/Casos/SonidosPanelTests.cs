@@ -60,6 +60,13 @@ public class SonidosPanelTests(FabricaCad fabrica)
     [InlineData("/sonidos/caso-asignado.wav")]
     [InlineData("/sonidos/aviso-acompanamiento.wav")]
     [InlineData("/sonidos/error.wav")]
+    [InlineData("/sonidos/reporte-por-revisar.mp3")]
+    [InlineData("/sonidos/sereno-en-camino.mp3")]
+    [InlineData("/sonidos/atencion-iniciada.mp3")]
+    [InlineData("/sonidos/sereno-disponible-con-pendientes.mp3")]
+    [InlineData("/sonidos/conexion-perdida.mp3")]
+    [InlineData("/sonidos/conexion-recuperada.mp3")]
+    [InlineData("/sonidos/operacion-confirmada.mp3")]
     [InlineData("/js/sonidos.js")]
     public async Task LosArchivosDeSonido_SeSirven(string ruta)
     {

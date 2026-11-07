@@ -2,7 +2,13 @@
 // preferencia queda en este navegador. Cada aviso sonoro tiene siempre su aviso visual.
 (() => {
   const CLAVE = "cad.avisosSonoros";
-  const NOMBRES = ["sos-nuevo", "reporte-admitido", "caso-asignado", "aviso-acompanamiento", "error"];
+  // Los de 07/11/2026 son mp3; los anteriores, wav.
+  const EXTENSIONES = {
+    "sos-nuevo": "wav", "reporte-admitido": "wav", "caso-asignado": "wav", "aviso-acompanamiento": "wav", "error": "wav",
+    "reporte-por-revisar": "mp3", "sereno-en-camino": "mp3", "atencion-iniciada": "mp3", "sereno-disponible-con-pendientes": "mp3",
+    "conexion-perdida": "mp3", "conexion-recuperada": "mp3", "operacion-confirmada": "mp3",
+  };
+  const NOMBRES = Object.keys(EXTENSIONES);
   const boton = document.querySelector("[data-alternar-sonido]");
   const audios = new Map();
   let activos = leer();
@@ -17,7 +23,7 @@
   function audio(nombre) {
     let a = audios.get(nombre);
     if (!a) {
-      a = new Audio(`/sonidos/${nombre}.wav`);
+      a = new Audio(`/sonidos/${nombre}.${EXTENSIONES[nombre] ?? "wav"}`);
       a.preload = "auto";
       audios.set(nombre, a);
     }
@@ -65,7 +71,11 @@
   mostrar();
   window.CadSonidos = { reproducir, activar, get activos() { return activos; } };
 
-  // El resultado de la acción anterior suena una vez: el que dejó el servidor o, si la página trae un error, el de error.
-  const pendiente = document.body.dataset.sonido || (document.querySelector(".aviso--error[data-enfocar]") ? "error" : "");
+  // El resultado de la acción anterior suena una vez: el que dejó el servidor o, si la página trae un error, el de error o,
+  // si trae la confirmación de una operación, el de operación confirmada (solo con el botón de avisos sonoros: el del
+  // operador; el administrador no tiene cómo silenciarlo).
+  const pendiente = document.body.dataset.sonido
+    || (document.querySelector(".aviso--error[data-enfocar]") ? "error" : "")
+    || (boton && document.querySelector(".aviso--exito[data-enfocar]") ? "operacion-confirmada" : "");
   if (pendiente) reproducir(pendiente);
 })();

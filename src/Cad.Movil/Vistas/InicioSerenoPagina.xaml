@@ -128,6 +128,8 @@
                             <v:Aviso Emergente="True" Tipo="exito" Texto="{Binding CierreReciente}" Mostrar="{Binding HayCierreReciente}" />
                         </v:Descartable>
                         <v:Aviso Emergente="True" Tipo="informacion" Texto="{Binding DespachoRetirado}" Mostrar="{Binding HayDespachoRetirado}" />
+                        <v:Aviso Tipo="advertencia" Texto="Sin conexión en tiempo real. Si te asignan un caso, el aviso puede demorar: se muestra al volver la conexión."
+                                 IsVisible="{Binding CanalPerdido}" />
                         <HorizontalStackLayout Spacing="10" IsVisible="{Binding SinDespacho}">
                             <v:Icono Nombre="bandeja" Color="{StaticResource ColorTextoSecundario}" VerticalOptions="Center" />
                             <Label Text="No tienes un despacho asignado." Style="{StaticResource TextoSecundario}" VerticalOptions="Center" />

@@ -14,6 +14,9 @@ public interface ICanalSereno
     // HU23-CA02: otro responsable (un operador) cambió el estado del despacho.
     event Action? DespachoActualizado;
 
+    // 07/11/2026: el canal se cayó y está reconectando (el aviso de «Reconectado» llega cuando vuelve).
+    event Action? ConexionPerdida;
+
     // Si el canal está conectado en este momento (no reconectando ni caído): su aviso llegará y sonará en la app.
     bool Conectado { get; }
 
@@ -39,6 +42,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     // Llegó un aviso de despacho mientras la pantalla estaba abierta.
     public bool AvisoNuevo { get; private set; }
     public bool CanalConectado { get; private set; }
+    // 07/11/2026: el canal se cayó tras estar conectado: la pantalla avisa que el aviso de un despacho puede demorar.
+    public bool CanalPerdido { get; private set; }
 
     // HU24: catálogo para la tipificación final (DP07), errores del último intento de cierre y aviso del cierre.
     public IReadOnlyList<CategoriaCatalogo> Categorias { get; private set; } = [];
@@ -56,10 +61,12 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         {
             canal.DespachoAsignado += AlRecibirAviso;
             canal.Reconectado += AlReconectar;
-            canal.DespachoActualizado += AlReconectar;
+            canal.DespachoActualizado += AlActualizarDespacho;
+            canal.ConexionPerdida += AlPerderConexion;
             suscrito = true;
         }
         AvisoNuevo = false;
+        CanalPerdido = false;
         CanalConectado = await canal.ConectarAsync(ct);
         await ActualizarAsync(ct);
     }
@@ -159,6 +166,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         }
         if (rechazado)
             sonidos?.Reproducir(Sonido.Error);
+        else if (aplicado)
+            sonidos?.Reproducir(Sonido.OperacionConfirmada);
         if (recargar)
         {
             var motivo = Error;
@@ -233,6 +242,8 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         }
         if (rechazado)
             sonidos?.Reproducir(Sonido.Error);
+        else if (cerrado)
+            sonidos?.Reproducir(Sonido.OperacionConfirmada);
         if (recargar)
         {
             var motivo = Error;
@@ -259,11 +270,12 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
         {
             canal.DespachoAsignado -= AlRecibirAviso;
             canal.Reconectado -= AlReconectar;
-            canal.DespachoActualizado -= AlReconectar;
+            canal.DespachoActualizado -= AlActualizarDespacho;
+            canal.ConexionPerdida -= AlPerderConexion;
             suscrito = false;
         }
         await canal.DesconectarAsync();
-        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CierreReciente, Retirado, FueraDeRango) = (null, false, null, false, false, null, null, null);
+        (Actual, Consultado, Error, AvisoNuevo, CanalConectado, CanalPerdido, CierreReciente, Retirado, FueraDeRango) = (null, false, null, false, false, false, null, null, null);
         ErroresCierre = new Dictionary<string, string[]>();
         Cambio?.Invoke();
     }
@@ -279,7 +291,35 @@ public sealed class ServicioDespacho(IApiCad api, IAlmacenSesion sesiones, ICana
     private async void AlReconectar()
     {
         CanalConectado = true;
+        if (CanalPerdido)
+        {
+            CanalPerdido = false;
+            sonidos?.Reproducir(Sonido.ConexionRecuperada);
+        }
         await ActualizarSinExcepcionesAsync();
+    }
+
+    private void AlPerderConexion()
+    {
+        if (CanalPerdido)
+            return;
+        CanalConectado = false;
+        CanalPerdido = true;
+        sonidos?.Reproducir(Sonido.ConexionPerdida);
+        Cambio?.Invoke();
+    }
+
+    // HU23-CA02: un operador cambió el estado del despacho, o la central lo retiró o lo reasignó. Si el que tenía el sereno
+    // cambió de estado o desapareció, suena el aviso de despacho modificado (el cambio ya se ve en pantalla).
+    private async void AlActualizarDespacho()
+    {
+        CanalConectado = true;
+        var antes = Actual;
+        var retiradoAntes = Retirado;
+        await ActualizarSinExcepcionesAsync();
+        var cambio = antes is not null && (Actual is null || Actual.CasoId != antes.CasoId || Actual.Estado != antes.Estado);
+        if (cambio || (Retirado is not null && Retirado != retiradoAntes))
+            sonidos?.Reproducir(Sonido.DespachoModificado);
     }
 
     // Los avisos llegan desde el canal (async void): un fallo no debe cerrar la app.
