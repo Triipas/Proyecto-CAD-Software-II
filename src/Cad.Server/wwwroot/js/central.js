@@ -1094,7 +1094,6 @@
     const texto = (aviso) => [...aviso.querySelectorAll(".aviso__titulo, .aviso__texto")].map((p) => p.textContent.trim()).filter(Boolean).join(" ");
     if (exito) {
       CadSonidos.reproducir("caso-asignado");
-      if (sosSeleccionado) deseleccionar();
       avisarBreve(texto(exito));
       document.getElementById("titulo-cola")?.focus();
     } else {
@@ -1455,6 +1454,10 @@
   let cargado = false;
   async function refrescar() {
     let reporteLlegado = null;
+    // 07/11/2026: el caso con el que está el operador (elegido en la bandeja, en curso o abierto en el panel). Si al rehacer la
+    // bandeja pasó a otra pestaña (p. ej., al asignarlo pasa a «En curso»), la pestaña lo sigue y el caso queda elegido allí.
+    const seguido = sosSeleccionado ?? casoConRuta ?? (panelAbierto() ? casoEnPanel : null);
+    const pestanaSeguido = pestanaDe(seguido);
     const respuesta = await fetch("/panel/central?handler=Lista", { headers: { Accept: "text/html" }, credentials: "same-origin" });
     if (respuesta.redirected || !respuesta.ok) {
       estadoConexion("desconectado", "La sesión terminó o no hay acceso. Vuelve a ingresar para recibir SOS.");
@@ -1536,8 +1539,21 @@
     // Si se mira otra pestaña, no se lleva el mapa a un caso que no se ve: la pestaña «Reportes» lo avisa.
     if (reporteLlegado && pestana === "reportes") destacarUltimo(reporteLlegado, { reporte: true });
     else if (reporteLlegado) avisarPestana("reportes");
+    seguirCasoDePestana(seguido, pestanaSeguido);
     cargado = true;
     return true;
+  }
+
+  // El caso seguido cambió de pestaña: se pasa a la suya sin soltarlo y se vuelve a elegir allí (en la cola con su sereno sugerido;
+  // en curso o por revisar, con su recorrido o su marcador). Si ya no está en ninguna (cerrado, derivado…), no se mueve nada.
+  function seguirCasoDePestana(id, antes) {
+    const ahora = pestanaDe(id);
+    if (!id || !antes || !ahora || ahora === antes) return;
+    // Otra resincronización a la par ya lo siguió.
+    if (ahora === pestana && (casoConRuta === id || sosSeleccionado === id)) return;
+    elegirPestana(ahora, { soltar: false, cerrarGlobo: false });
+    if (document.getElementById(`sos-${id}`)) seleccionar(id, { conSereno: true });
+    else seleccionarAsignado(id);
   }
 
   // ---------- Conexión en tiempo real ----------
@@ -1752,7 +1768,7 @@
     else if (casoEnPanel && (marcadoresEnCurso.has(casoEnPanel) || document.getElementById(`asignado-${casoEnPanel}`))) seleccionarAsignado(casoEnPanel);
   }
 
-  function cerrarPanel({ devolverFoco = true } = {}) {
+  function cerrarPanel({ devolverFoco = true, soltar = true } = {}) {
     if (panelCaso.hidden) return;
     panelCaso.hidden = true;
     central.classList.remove("central--con-panel");
@@ -1760,7 +1776,8 @@
     casoEnPanel = null;
     serenoEnPanel = null;
     pedidoPanel = null;
-    soltarTodo();
+    // Tras un paso hecho en el panel (asignar…), el caso sigue elegido en su nueva pestaña.
+    if (soltar) soltarTodo();
     if (devolverFoco) origenPanel?.isConnected ? origenPanel.focus() : document.getElementById("titulo-cola")?.focus();
   }
 
@@ -1812,7 +1829,7 @@
     if (mensaje) { await refrescar(); await refrescarSerenos(); }
     if (recienRegistrado && mensaje && document.getElementById(`sos-${id}`)) seleccionar(id, { conSereno: true });
     if (mensaje && !ESTADOS_PENDIENTES.has(estado)) {
-      cerrarPanel({ devolverFoco: false });
+      cerrarPanel({ devolverFoco: false, soltar: false });
       avisarBreve(mensaje);
       document.getElementById("titulo-cola")?.focus();
     }
