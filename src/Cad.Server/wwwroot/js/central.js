@@ -1488,17 +1488,28 @@
 
   // ---------- Conexión en tiempo real ----------
   // Sonidos de 07/11/2026: suena una vez al perder la conexión y otra al recuperarla (no al conectar por primera vez).
-  let estuvoConectado = false, enCorte = false;
+  // La pérdida solo suena si dura (2,5 s): al recargar o salir de la página la conexión se cierra y eso no es un corte, y un
+  // parpadeo corto no merece aviso. La recuperación suena solo si la pérdida sonó, así nunca suenan pegadas.
+  const ESPERA_CORTE = 2500;
+  let estuvoConectado = false, corteSonado = false, temporizadorCorte = null, cerrandoPagina = false;
+  window.addEventListener("pagehide", () => { cerrandoPagina = true; clearTimeout(temporizadorCorte); temporizadorCorte = null; });
+  window.addEventListener("pageshow", () => { cerrandoPagina = false; });
   function estadoConexion(estado, texto) {
     indicador.className = `conexion conexion--${estado}`;
     indicador.dataset.estado = estado;
     indicador.querySelector("[data-texto]").textContent = texto;
     if (estado === "conectado") {
       estuvoConectado = true;
-      if (enCorte) { enCorte = false; CadSonidos.reproducir("conexion-recuperada"); }
-    } else if (estuvoConectado && !enCorte && (estado === "reconectando" || estado === "desconectado")) {
-      enCorte = true;
-      CadSonidos.reproducir("conexion-perdida");
+      clearTimeout(temporizadorCorte);
+      temporizadorCorte = null;
+      if (corteSonado) { corteSonado = false; CadSonidos.reproducir("conexion-recuperada"); }
+    } else if (estuvoConectado && !corteSonado && !temporizadorCorte && (estado === "reconectando" || estado === "desconectado")) {
+      temporizadorCorte = setTimeout(() => {
+        temporizadorCorte = null;
+        if (cerrandoPagina || indicador.dataset.estado === "conectado") return;
+        corteSonado = true;
+        CadSonidos.reproducir("conexion-perdida");
+      }, ESPERA_CORTE);
     }
   }
 
