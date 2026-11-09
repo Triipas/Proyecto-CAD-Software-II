@@ -95,7 +95,7 @@
             {
                 if (motivos.Count == 0) { continue; }
                 <p class="tarjeta-a__nota tarjeta-a__nota--bloque">@titulo</p>
-                <ul class="motivos-a">
+                <ul class="motivos-a @(motivos == e.MotivosBajas ? "motivos-a--bajas" : "motivos-a--altas")">
                     @foreach (var x in motivos.OrderByDescending(x => x.Veces))
                     {
                         <li class="motivo-a" data-motivo="@x.Codigo">@x.Texto <b>@x.Veces</b></li>

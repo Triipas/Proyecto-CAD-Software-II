@@ -3607,3 +3607,101 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
     grid-template-areas: "cabecera" "radial" "lectura" "detalle" "boton";
   }
 }
+
+/* ── Más color en las demás preguntas (11/11/2026) ─────────────────────────────────────────────────────────────────────────
+   Las tarjetas de evidencia eran blancas con barras de un solo azul plano. Se suma color sin cambiar la información ni las
+   reglas: rojo solo para SOS, el estado sigue con icono y texto, nada de franjas laterales ni texto con degradado. El color sale
+   de la misma rampa celeste → azul → índigo de los mapas, así «más oscuro = más» se sigue leyendo igual. «Comparación por
+   bloques» queda como está (tiene su propio color por bloque). */
+
+/* Un brillo celeste muy suave detrás del área de trabajo, más fuerte arriba, donde está la respuesta. */
+.analitica:not([data-analitica="bloques"]) .analitica__trabajo {
+  background: radial-gradient(70rem 26rem at 72% -8rem, rgb(92 200 255 / 0.16), transparent 70%);
+}
+
+/* Tarjetas de evidencia: el cielo de la marca se asoma en lo alto de cada una y el título lleva su marca de color. */
+.analitica:not([data-analitica="bloques"]) .tarjeta-a:not(.respuesta, .vacio-a) {
+  background: linear-gradient(180deg, rgb(224 242 254 / 0.7) 0, rgb(224 242 254 / 0) 5.5rem), var(--color-superficie);
+  border-color: rgb(165 220 251 / 0.55);
+}
+
+.analitica:not([data-analitica="bloques"]) .tarjeta-a:not(.respuesta) .tarjeta-a__cabecera h3::before {
+  content: "";
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-right: var(--espacio-2);
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--rampa-3), var(--rampa-6) 70%, var(--rampa-7));
+  vertical-align: 0.06em;
+}
+
+/* Barras: del celeste al índigo en lugar de un azul plano (las leyendas llevan la misma muestra). */
+.analitica :is(.pista-b__barra, .prioridad-a__mitad, .barra100__a, .medidor-a:not(.medidor-a--alerta) i,
+  .leyenda-a__prio-mitad, .leyenda-a__lleno--azul) {
+  background-image: linear-gradient(90deg, var(--rampa-4), var(--rampa-6) 65%, var(--rampa-7));
+}
+
+.analitica :is(.prioridad-a__nueve, .leyenda-a__prio-nueve, .barra100__b) {
+  background-image: linear-gradient(90deg, var(--rampa-2), var(--rampa-4));
+}
+
+/* Columnas (las notas, las horas del día): crecen desde una base más oscura. */
+.analitica .notas-a__barra:not(.notas-a__barra--baja) {
+  background-image: linear-gradient(0deg, var(--rampa-7), var(--rampa-5) 55%, var(--rampa-4));
+}
+
+.analitica .notas-a__barra--baja,
+.analitica .leyenda-a__baja {
+  background-image: linear-gradient(0deg, var(--tono-bajo), var(--tono-bajo-claro));
+}
+
+.analitica .horas-a__casos--franja {
+  background-image: linear-gradient(0deg, var(--rampa-7), var(--rampa-5));
+}
+
+/* Cifras clave de las tarjetas, en el azul de acción (6,7:1 sobre blanco). */
+.analitica :is(.cifras-a dd, .equipo-a dd, .fila100__valor b, .barra100__leyenda b, .notas-a__cifra, .categoria-a__valor b) {
+  color: var(--color-primario);
+}
+
+/* Motivos de la calificación: los de las notas bajas en tierra, los de las altas en azul (el título de cada grupo lo dice). */
+.analitica .motivos-a--bajas .motivo-a {
+  background: rgb(164 98 63 / 0.08);
+  border-color: rgb(164 98 63 / 0.35);
+}
+
+.analitica .motivos-a--bajas .motivo-a b { color: var(--tono-bajo); }
+
+.analitica .motivos-a--altas .motivo-a {
+  background: var(--azul-100);
+  border-color: var(--azul-200);
+}
+
+.analitica .motivos-a--altas .motivo-a b { color: var(--color-primario); }
+
+/* Tablas: la cabecera en el cielo de la marca. */
+.analitica .tarjeta-a table:not(.visualmente-oculto) thead th {
+  background: rgb(224 242 254 / 0.75);
+  color: var(--color-marino);
+}
+
+/* «Rendimiento de los serenos»: las iniciales en tonos de la marca (variedad, no significado) y las filas con alguna señal
+   apenas teñidas de ámbar, además de su ▲ y su texto. */
+.analitica tr:nth-child(4n + 1) .sereno-fila-a__inicial { background: var(--azul-100); color: var(--azul-800); }
+.analitica tr:nth-child(4n + 2) .sereno-fila-a__inicial { background: #E0F2FE; color: #075985; }
+.analitica tr:nth-child(4n + 3) .sereno-fila-a__inicial { background: #E0E7FF; color: #3730A3; }
+.analitica tr:nth-child(4n + 4) .sereno-fila-a__inicial { background: #CCFBF1; color: #115E59; }
+
+.analitica tr[data-senales]:not([data-senales="0"]) > :is(td, th) {
+  background: rgb(255 248 235 / 0.6);
+}
+
+/* La cifra sobre una columna de notas bajas lleva el tono de su columna. */
+.analitica .notas-a__columna:has(.notas-a__barra--baja) .notas-a__cifra { color: var(--tono-bajo); }
+
+/* «Salud del sistema»: cada paso de la cadena (app, servidor, central, operador, app del sereno) en el cielo de la marca. */
+.analitica .cadena-a__nodo {
+  background: linear-gradient(180deg, var(--azul-100), var(--color-superficie));
+  border-color: var(--azul-200);
+}
