@@ -16,14 +16,15 @@
   /* El blanco de la columna de preguntas llega hasta el final aunque la página sea más alta que la pantalla. */
   background: linear-gradient(90deg, var(--color-superficie) 18.25rem, var(--color-borde) 18.25rem 18.3125rem, transparent 18.3125rem);
 
-  /* Rampa secuencial (un solo tono, de claro a oscuro) y tonos de las partes. */
-  --rampa-1: #E6EEFD;
-  --rampa-2: #BFD2F8;
-  --rampa-3: #9DB9F4;
-  --rampa-4: #7FA3EF;
-  --rampa-5: #3F6FE0;
+  /* Rampa secuencial de varios tonos, de claro a oscuro: celeste (el acento de la marca) → azul de acción → índigo. Sigue
+     ordenada por luminosidad, así que «más oscuro = más» se lee igual; el texto marino se lee sobre 1 a 4 y el blanco sobre 5 a 7. */
+  --rampa-1: #E0F2FE;
+  --rampa-2: #A5DCFB;
+  --rampa-3: #5FB8F4;
+  --rampa-4: #3B8EEA;
+  --rampa-5: #2563EB;
   --rampa-6: #1D4ED8;
-  --rampa-7: #16348F;
+  --rampa-7: #312E81;
   --tono-bajo: #A4623F;          /* notas bajas: tierra, nunca rojo (el rojo es del SOS) */
   --tono-bajo-claro: #C08A6C;
   --tono-gris: #8291A7;
@@ -2521,5 +2522,176 @@ a.fila-a__cifra {
   .sereno-fila-a__nombre,
   .como-se-mide-a summary::before {
     transition: none;
+  }
+}
+
+/* ── Presentación (09/11/2026): más color y movimiento al cargar ─────────────────────────────────────────────────────────
+   Lo que se lee primero lleva color propio: la respuesta, una franja y sus cifras en degradado; la columna, iconos teñidos; cada
+   tarjeta, una marca junto al título. Al cargar la página, las tarjetas suben en cascada, las barras crecen desde su base, los
+   puntos asoman y (analitica.js) los marcadores de la regla se deslizan desde 0 mientras las cifras cuentan hasta su valor.
+   Solo al cargar: «Estado de la central» en vivo cambia sin repetir la entrada. Con movimiento reducido no se anima nada, como
+   en el resto del panel. Las animaciones usan opacity, translate, scale y clip-path: nada que mueva la maquetación. */
+.analitica {
+  --acento-1: #0369A1;             /* 5.94:1 sobre blanco */
+  --acento-2: var(--azul-700);     /* 6.70:1 */
+  --acento-3: #4338CA;             /* 7.92:1 */
+  --degradado-acento: linear-gradient(90deg, var(--acento-1), var(--acento-2) 55%, var(--acento-3));
+  --entrada-paso: 70ms;            /* entre una tarjeta y la siguiente */
+  --entrada-graficos: 180ms;       /* las barras empiezan cuando su tarjeta ya está subiendo */
+}
+
+/* Un brillo frío detrás de la respuesta. */
+.analitica__trabajo {
+  background:
+    radial-gradient(60rem 24rem at 92% -8rem, rgb(92 200 255 / 0.20), transparent 70%),
+    radial-gradient(46rem 22rem at 6% -9rem, rgb(67 56 202 / 0.12), transparent 70%);
+}
+
+/* La respuesta: franja de acento arriba, fondo con un toque de azul y cifras en degradado. */
+.tarjeta-a.respuesta {
+  position: relative;
+  border-color: var(--azul-200);
+  background:
+    radial-gradient(120% 160% at 100% 0%, var(--azul-100) 0%, rgb(230 238 253 / 0) 55%),
+    var(--color-superficie);
+  box-shadow: var(--sombra-2);
+}
+
+.tarjeta-a.respuesta::before,
+.flotante-a::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  height: 4px;
+  border-radius: var(--radio-superficie) var(--radio-superficie) 0 0;
+  background: var(--degradado-acento);
+  pointer-events: none;
+}
+
+.respuesta__titular em {
+  background: var(--degradado-acento);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Alto contraste de Windows: el texto recortado al fondo desaparecería. */
+@media (forced-colors: active) {
+  .respuesta__titular em {
+    background: none;
+    color: CanvasText;
+  }
+}
+
+/* Cada tarjeta, una marca de acento junto a su título. */
+.tarjeta-a h3::before {
+  content: "";
+  display: inline-block;
+  width: 0.25rem;
+  height: 0.95em;
+  margin-right: 0.5rem;
+  border-radius: var(--radio-pildora);
+  background: linear-gradient(180deg, var(--acento-1), var(--acento-3));
+  vertical-align: -0.12em;
+}
+
+/* La columna de preguntas: iconos teñidos; la pregunta abierta, con su icono en degradado y una raya a la izquierda. */
+.pregunta__icono {
+  background: var(--azul-100);
+  color: var(--acento-2);
+  transition: background-color var(--duracion-rapida) ease;
+}
+
+.pregunta:hover .pregunta__icono {
+  background: var(--azul-200);
+}
+
+.pregunta[aria-current="page"] {
+  background: linear-gradient(90deg, var(--azul-100), rgb(230 238 253 / 0.35));
+  box-shadow: inset 3px 0 0 var(--acento-2);
+}
+
+.pregunta[aria-current="page"] .pregunta__icono {
+  background: linear-gradient(135deg, var(--acento-1), var(--acento-3));
+  box-shadow: 0 6px 14px -4px rgb(29 78 216 / 0.5);
+}
+
+/* ── Entrada en cascada ── */
+/* El retraso se hereda: cada bloque del área de trabajo suma un paso, y dentro de una rejilla cada tarjeta otro. Las barras y los
+   puntos de una tarjeta empiezan con ella. --i lo pone analitica.js en filas y columnas para que crezcan una tras otra. */
+.analitica__trabajo > :nth-child(2) { --retraso: calc(var(--entrada-paso) * 1); }
+.analitica__trabajo > :nth-child(3) { --retraso: calc(var(--entrada-paso) * 2); }
+.analitica__trabajo > :nth-child(4) { --retraso: calc(var(--entrada-paso) * 3); }
+.analitica__trabajo > :nth-child(n + 5) { --retraso: calc(var(--entrada-paso) * 4); }
+
+:is(.rejilla-a, .region-ahora, .cobertura-a, .cobertura-a__lado, .sereno-a__zonas) > :nth-child(2) { --retraso-propio: calc(var(--entrada-paso) * 1); }
+:is(.rejilla-a, .region-ahora, .cobertura-a, .cobertura-a__lado, .sereno-a__zonas) > :nth-child(3) { --retraso-propio: calc(var(--entrada-paso) * 2); }
+:is(.rejilla-a, .region-ahora, .cobertura-a, .cobertura-a__lado, .sereno-a__zonas) > :nth-child(n + 4) { --retraso-propio: calc(var(--entrada-paso) * 3); }
+
+@keyframes analitica-entrar {
+  from { opacity: 0; translate: 0 0.875rem; }
+}
+
+@keyframes analitica-revelar-x {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+@keyframes analitica-revelar-y {
+  from { clip-path: inset(100% 0 0 0); }
+}
+
+@keyframes analitica-asomar {
+  from { opacity: 0; scale: 0.6; }
+}
+
+@keyframes analitica-aparecer {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Bloques: suben y aparecen, uno tras otro. */
+  .analitica__trabajo :is(.tarjeta-a, .filtros-analitica, .aviso) {
+    animation: analitica-entrar var(--duracion-lenta) var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms));
+  }
+
+  .flotante-a {
+    animation: analitica-entrar var(--duracion-lenta) var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + 220ms);
+  }
+
+  /* La franja de la respuesta se traza de izquierda a derecha. */
+  .tarjeta-a.respuesta::before,
+  .flotante-a::before {
+    animation: analitica-revelar-x 900ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + 120ms);
+  }
+
+  /* Barras horizontales: crecen desde su base (la izquierda). */
+  .analitica :is(.barra100, .serenos-a, .etapas-a__barra, .pista-a__esperado, .pista-b__barra, .pista-b__referencia,
+    .prioridad-a__mitad, .prioridad-a__nueve, .tramo-a__barra, .fila100__pista > i, .regla__banda) {
+    animation: analitica-revelar-x 800ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + var(--i, 0) * 45ms);
+  }
+
+  /* Columnas: crecen desde abajo, una tras otra (las horas del día, las notas). */
+  .analitica :is(.notas-a__barra, .horas-a__casos, .horas-a__serenos) {
+    animation: analitica-revelar-y 700ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + var(--i, 0) * 22ms);
+  }
+
+  /* Puntos y marcas sobre las barras: asoman cuando la barra ya creció. scale (no transform) compone con su centrado. */
+  .analitica :is(.pista-a__caso, .comparar-a__valor, .comparar-a__equipo, .alza-a__ahora, .alza-a__antes, .pista-b__todas,
+    .prioridad-a__objetivo, .regla__punto) {
+    animation: analitica-asomar 450ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + 200ms + var(--i, 0) * 45ms);
+  }
+
+  /* Mapas y referencias: aparecen sin moverse (Leaflet coloca sus marcadores con transform: solo cambia la opacidad). */
+  .analitica :is(.zona-celda, .zona-a, .punto-a, .sereno-a, .regla__anterior, .regla__anterior-texto, .regla__objetivo) {
+    animation: analitica-aparecer 600ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + 300ms);
   }
 }

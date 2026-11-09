@@ -5,6 +5,132 @@
   for (const control of document.querySelectorAll("[data-enviar-al-cambiar]"))
     control.addEventListener("change", () => control.form.requestSubmit());
 
+  // ---------- Presentación al cargar ----------
+  // Las tarjetas, las barras y los puntos entran con CSS (analitica.css, «Presentación»). Aquí: el orden de filas y columnas (--i)
+  // para que crezcan una tras otra, los marcadores de la regla que se deslizan desde 0 y las cifras que cuentan hasta su valor.
+  // Solo al cargar la página («Ahora» en vivo cambia sin repetirlo). Con movimiento reducido, nada: las cifras quedan como llegan.
+  const CIFRAS = [
+    ".pregunta__dato", ".respuesta__titular em", ".cifras-a dd", ".equipo-a dd", ".carril-a__numero", ".fila-a__cifra", ".senal-a__valor",
+    ".prioridad-a__valor b", ".notas-a__cifra", ".tramo-a__valor", ".fila100__valor", ".categoria-a__valor", ".cadena-a__valor",
+    ".barra100__leyenda b", ".etapas-a b", ".regla__valor", ".grupo100__titulo .tarjeta-a__nota", ".serenos-a + .leyenda-a li",
+  ].join(", ");
+  // Un número suelto: no el de un nombre de zona («K16») ni el de «p90». El que sigue a «de» es el total o la escala («16 de 36»,
+  // «3,9 de 5»): queda fijo y solo cuenta el primero.
+  const NUMERO = /(?<![\p{L}\d])(?<!\bde\s)\d+(?:[.,]\d+)?(?![\p{L}\d])/gu;
+  const FILAS = [
+    ".categoria-a", ".prioridad-a", ".fila100", ".senal-a", ".alza-a", ".carril-a", ".cadena-a__tramo", ".fila-a", "tbody > tr",
+    ".notas-a__columna", ".horas-a__casos", ".horas-a__serenos",
+  ];
+  const DURACION_CIFRAS = 1000;
+  const retrasos = new Map(); // el retraso de entrada de cada tarjeta, leído una vez
+  presentar();
+
+  function presentar() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    ordenar();
+    deslizarReglas();
+    contarCifras();
+  }
+
+  // El retraso con que entra el bloque de un elemento (su tarjeta), para que lo de dentro empiece con ella.
+  function retrasoDe(elemento) {
+    const bloque = elemento.closest(".flotante-a, .tarjeta-a");
+    if (!bloque) return 0;
+    if (!retrasos.has(bloque)) {
+      const valor = getComputedStyle(bloque).animationDelay.split(",")[0].trim();
+      retrasos.set(bloque, valor.endsWith("ms") ? parseFloat(valor) : (parseFloat(valor) || 0) * 1000);
+    }
+    return retrasos.get(bloque);
+  }
+
+  // Filas y columnas de un mismo gráfico: --i es su orden entre hermanas (hasta 12, para que la cascada no se alargue).
+  function ordenar() {
+    for (const selector of FILAS) {
+      const vistas = new Map();
+      for (const el of document.querySelectorAll(`.analitica__trabajo ${selector}`)) {
+        const n = vistas.get(el.parentElement) ?? 0;
+        vistas.set(el.parentElement, n + 1);
+        el.style.setProperty("--i", Math.min(n, 12));
+      }
+    }
+  }
+
+  // La regla del servicio: cada marcador (línea, punto y rótulo) sale de 0 y se desliza hasta su valor mientras el rótulo cuenta.
+  // Los rótulos aparecen a mitad de camino: al salir, todos los marcadores están juntos en 0 y sus textos se pisarían.
+  function deslizarReglas() {
+    const curva = window.cadMovimiento?.curva("salida") ?? "cubic-bezier(0.16, 1, 0.3, 1)";
+    for (const regla of document.querySelectorAll("svg.regla")) {
+      const retraso = retrasoDe(regla) + 240;
+      let x = 0;
+      for (const el of regla.querySelectorAll(".regla__linea, .regla__marcador, .regla__valor, .regla__sub")) {
+        if (el.matches(".regla__linea")) x = parseFloat(el.getAttribute("x1")) || 0;
+        if (x <= 0) continue;
+        el.animate([{ transform: `translateX(${-x}px)` }, { transform: "none" }], { duration: DURACION_CIFRAS, delay: retraso, easing: curva, fill: "backwards" });
+        if (el.matches(".regla__valor, .regla__sub"))
+          el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, delay: retraso + 260, easing: curva, fill: "backwards" });
+      }
+    }
+  }
+
+  // Las cifras cuentan desde 0 con la misma curva que el resto (salida exponencial). Se cuentan los números de los nodos de texto,
+  // conservando sus decimales, su coma y sus ceros a la izquierda («1 h 05 min»); mientras cuenta, el número ocupa el ancho del final
+  // (espacios de cifra), para que el titular no se reacomode.
+  function contarCifras() {
+    const tareas = [];
+    for (const el of document.querySelectorAll(CIFRAS)) {
+      const partes = [];
+      const caminante = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let nodo = caminante.nextNode(); nodo; nodo = caminante.nextNode()) {
+        const numeros = [...nodo.nodeValue.matchAll(NUMERO)].map(leerNumero);
+        if (numeros.length) partes.push({ nodo, texto: nodo.nodeValue, numeros, pintado: null, hecha: false });
+      }
+      if (partes.length) tareas.push({ partes, inicio: retrasoDe(el) + 160 });
+    }
+    if (tareas.length === 0) return;
+    for (const tarea of tareas) pintar(tarea, 0);
+    const origen = performance.now();
+    requestAnimationFrame(function paso(ahora) {
+      let quedan = false;
+      for (const tarea of tareas) {
+        const avance = Math.min(1, Math.max(0, (ahora - origen - tarea.inicio) / DURACION_CIFRAS));
+        pintar(tarea, avance === 1 ? 1 : 1 - Math.pow(2, -10 * avance));
+        if (avance < 1) quedan = true;
+      }
+      if (quedan) requestAnimationFrame(paso);
+    });
+  }
+
+  function leerNumero(coincidencia) {
+    const texto = coincidencia[0];
+    const [entero, decimales = ""] = texto.split(/[.,]/);
+    return {
+      desde: coincidencia.index, largo: texto.length, valor: parseFloat(texto.replace(",", ".")), decimales: decimales.length,
+      separador: texto.includes(",") ? "," : ".", ancho: entero.length, ceros: entero.length > 1 && entero.startsWith("0"),
+    };
+  }
+
+  // Escribe cada número a una fracción de su valor; en 1, el texto exacto que llegó del servidor. Si otro cambió el texto mientras
+  // tanto (la actualización en vivo), manda ese texto y la cuenta de ese nodo se abandona.
+  function pintar(tarea, fraccion) {
+    for (const parte of tarea.partes) {
+      if (parte.hecha) continue;
+      if (parte.pintado !== null && parte.nodo.nodeValue !== parte.pintado) { parte.hecha = true; continue; }
+      let texto = parte.texto;
+      if (fraccion < 1) {
+        for (const n of [...parte.numeros].reverse()) {
+          const valor = n.valor * fraccion;
+          const [entero, decimales] = (n.decimales ? valor.toFixed(n.decimales) : String(Math.round(valor))).split(".");
+          const cifra = entero.padStart(n.ancho, n.ceros ? "0" : " ") + (decimales ? n.separador + decimales : "");
+          texto = texto.slice(0, n.desde) + cifra + texto.slice(n.desde + n.largo);
+        }
+      } else {
+        parte.hecha = true;
+      }
+      parte.nodo.nodeValue = texto;
+      parte.pintado = texto;
+    }
+  }
+
   // ---------- Mapas de zonas ----------
   const contenedor = document.getElementById("mapa-zonas");
   if (contenedor && typeof L !== "undefined") dibujarMapa(contenedor);
