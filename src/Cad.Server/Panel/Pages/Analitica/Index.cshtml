@@ -13,6 +13,10 @@
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/analitica.css" asp-append-version="true" />
+    @if (Model.Actual.Clave == "tiempo")
+    {
+        <link rel="stylesheet" href="~/css/analitica-tiempo.css" asp-append-version="true" />
+    }
 }
 <div class="analitica" data-analitica="@Model.Actual.Clave">
     @* La columna de preguntas: cada una con su dato del periodo y su estado (icono y texto, nunca solo color). *@
@@ -150,4 +154,8 @@
         <script src="~/js/analitica-bloques.js" asp-append-version="true"></script>
     }
     <script src="~/js/analitica.js" asp-append-version="true"></script>
+    @if (Model.Actual.Clave == "tiempo")
+    {
+        <script src="~/js/analitica-tiempo.js" asp-append-version="true"></script>
+    }
 }

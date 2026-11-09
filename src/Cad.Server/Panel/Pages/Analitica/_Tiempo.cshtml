@@ -26,6 +26,13 @@
     // los demás; se dibuja en el borde con su tiempo real («→ 4 h 36 min»).
     var tope = n < minimo ? v.Respuestas.DefaultIfEmpty(0).Max() : p90 ?? 0;
     var maximo = Math.Ceiling(Math.Min(new[] { tope, objetivo * 2.0, anterior?.RespuestaP90 ?? 0, sumaTramos }.Max(), objetivo * 4.0) / 5) * 5 + 5;
+    // El histograma: una columna por minuto hasta el borde de la escala; el periodo anterior, como línea detrás (si tiene casos
+    // suficientes). Las dos formas comparten el alto máximo para compararse en la misma escala.
+    var columnas = (int)maximo;
+    var conteos = Distribucion.Contar(v.Respuestas, columnas);
+    var conteosAntes = v.RespuestasAnteriores.Count >= minimo ? Distribucion.Contar(v.RespuestasAnteriores, columnas) : null;
+    var techo = Math.Max(1, Math.Max(conteos.Max(), conteosAntes?.Max() ?? 0)) * 1.08;
+    double X(double? minutos) => Math.Min(minutos ?? 0, columnas) / columnas * 100;
 
     string F(double x) => x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
     var prioridades = v.Grupos.Where(g => g.Origen == ConsultarTiemposPorEtapa.Sos && g.Prioridad is not null)
@@ -50,7 +57,7 @@
 else
 {
     var dentro = v.Respuestas.Count(r => r <= objetivo);
-    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-tiempo" data-respuesta="tiempo" data-casos="@n">
+    <section class="tarjeta-a respuesta@(n >= minimo ? " tiempo-b" : "")" aria-labelledby="respuesta-tiempo" data-respuesta="tiempo" data-casos="@n">
         <div class="respuesta__cabecera">
             @if (n < minimo)
             {
@@ -59,13 +66,14 @@ else
             }
             else
             {
-                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>.</h2>
+                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>; @Formato.Porcentaje(dentro * 100.0 / n, 0) dentro del objetivo.</h2>
                 <p class="respuesta__lectura">
-                    Se mide desde que el ciudadano emite el SOS hasta que el sereno empieza a atenderlo. En @m.TextoPeriodo se midieron @Formato.Plural(n, "SOS", "SOS").
+                    Se mide desde que el ciudadano emite el SOS hasta que el sereno empieza a atenderlo. En @m.TextoPeriodo se midieron @Formato.Plural(n, "SOS", "SOS"):
+                    cada columna son los que se atendieron en ese minuto, en verde los que entraron en el objetivo provisional y en ocre los que no.
                     @if (anterior?.RespuestaP50 is { } antes)
                     {
                         var dif = p50!.Value - antes;
-                        <text>Frente a @m.TextoAnterior (triángulos grises: la mitad se atendió en @Formato.Minutos(antes)), @(Math.Abs(dif) < 1 ? "casi igual" : dif < 0 ? $"ahora {Formato.Minutos(-dif)} más rápido" : $"ahora {Formato.Minutos(dif)} más lento").</text>
+                        <text>Frente a @m.TextoAnterior (línea punteada: la mitad se atendió en @Formato.Minutos(antes)), @(Math.Abs(dif) < 1 ? "casi igual" : dif < 0 ? $"ahora {Formato.Minutos(-dif)} más rápido" : $"ahora {Formato.Minutos(dif)} más lento").</text>
                     }
                 </p>
             }
@@ -84,44 +92,76 @@ else
             }
             else
             {
-                var anteriores = new List<(double, string)>();
-                if (anterior?.RespuestaP50 is { } a50) anteriores.Add((a50, $"antes {Formato.Minutos(a50)}"));
-                if (anterior?.RespuestaP90 is { } a90) anteriores.Add((a90, $"antes {Formato.Minutos(a90)}"));
-                @(new Regla
-                {
-                    Maximo = maximo, Unidad = " min", Paso = maximo > 40 ? 10 : 5,
-                    Banda = (0, objetivo, $"Objetivo provisional ≤ {objetivo} min"),
-                    Marcas = [(p50!.Value, true, Formato.Minutos(p50), "mitad atendida"), (p90!.Value, false, Formato.Minutos(p90), "9 de 10 atendidos")],
-                    Anteriores = anteriores,
-                }.Dibujar($"Tiempo de respuesta: la mitad de los SOS se atendió en {Formato.Minutos(p50)} y 9 de cada 10 en {Formato.Minutos(p90)} o menos; objetivo provisional {objetivo} minutos"))
-                <ul class="leyenda-a">
-                    <li><i class="leyenda-a__lleno"></i>Hasta aquí se atendió la mitad (mediana)</li>
-                    <li><i class="leyenda-a__hueco"></i>Hasta aquí, 9 de cada 10 (p90)</li>
-                    <li><i class="leyenda-a__banda"></i>Objetivo provisional: aún no lo fija el servicio</li>
-                    @if (anteriores.Count > 0) { <li><i class="leyenda-a__anterior"></i>@(char.ToUpperInvariant(m.TextoAnterior[0]) + m.TextoAnterior[1..])</li> }
-                </ul>
-                @if (tramos.Count > 0)
-                {
-                    <div class="etapas-a" data-etapas>
-                        <p class="etapas-a__titulo">Tiempo por etapa
-                            @if (masLargo.Item1 is { } nombreLargo && sumaTramos > 0 && masLargo.Item2 / sumaTramos >= 0.4)
+                <div class="distribucion-a" data-distribucion>
+                    <div class="distribucion-a__grafico" role="img" aria-label="Cuántos SOS se atendieron en cada minuto: la mitad en @Formato.Minutos(p50), 9 de cada 10 en @Formato.Minutos(p90) o menos; @dentro de @n dentro del objetivo provisional de @objetivo minutos.">
+                        <div class="distribucion-a__objetivo" style="width:@F(X(objetivo))%"><span>Objetivo provisional ≤ @objetivo min</span></div>
+                        <ol class="distribucion-a__columnas" aria-hidden="true">
+                            @for (var i = 0; i < columnas; i++)
                             {
-                                <span class="tarjeta-a__nota">«@nombreLargo» se lleva @Formato.Porcentaje(masLargo.Item2 / sumaTramos * 100, 0) del recorrido</span>
-                            }
-                        </p>
-                        <ol class="etapas-a__barra" aria-hidden="true">
-                            @foreach (var (nombre, minutos, color) in tramos)
-                            {
-                                <li style="flex:@F(Math.Max(minutos, 0.2)) 1 0;background:@color"></li>
+                                var clase = i == columnas - 1 ? " distribucion-a__columna--borde" : i >= objetivo ? " distribucion-a__columna--fuera" : "";
+                                <li class="distribucion-a__columna@(clase)" style="--i:@Math.Min(i, 45)">
+                                    <i style="height:@F(conteos[i] / techo * 100)%"></i>
+                                    <span class="distribucion-a__globo"><b>@Distribucion.Rango(i, columnas)</b> · @Formato.Plural(conteos[i], "SOS", "SOS")</span>
+                                </li>
                             }
                         </ol>
-                        <ul class="etapas-a__lista">
+                        @if (conteosAntes is not null)
+                        {
+                            <svg class="distribucion-a__anterior" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="@Distribucion.Escalonada(conteosAntes, techo)" /></svg>
+                        }
+                        <span class="distribucion-a__marca@(X(p50) > 78 ? " distribucion-a__marca--izq" : "")" style="left:@F(X(p50))%"><span><b>@Formato.Minutos(p50)</b> · la mitad</span></span>
+                        <span class="distribucion-a__marca distribucion-a__marca--p90@(X(p90) > 78 ? " distribucion-a__marca--izq" : "")" style="left:@F(X(p90))%"><span><b>@Formato.Minutos(p90)@(p90 > columnas ? " o más" : "")</b> · 9 de 10</span></span>
+                    </div>
+                    <div class="distribucion-a__eje" aria-hidden="true">
+                        @for (var x = 0; x < columnas; x += 5)
+                        {
+                            <span style="left:@F(X(x))%">@(x == 0 ? "0 min" : x.ToString())</span>
+                        }
+                    </div>
+                    <ul class="leyenda-a leyenda-distribucion">
+                        <li><i class="leyenda-distribucion__dentro"></i>Atendidos dentro del objetivo</li>
+                        <li><i class="leyenda-distribucion__fuera"></i>Atendidos después</li>
+                        <li><i class="leyenda-distribucion__borde"></i>Más de @(columnas - 1) min</li>
+                        <li><i class="leyenda-distribucion__mitad"></i>La mitad (mediana) · punteada: 9 de cada 10 (p90)</li>
+                        @if (conteosAntes is not null) { <li><i class="leyenda-distribucion__anterior"></i>@(char.ToUpperInvariant(m.TextoAnterior[0]) + m.TextoAnterior[1..])</li> }
+                    </ul>
+                    <table class="visualmente-oculto">
+                        <caption>SOS atendidos por tiempo de respuesta</caption>
+                        <thead><tr><th>Tiempo hasta la atención</th><th>SOS</th></tr></thead>
+                        <tbody>
+                            @for (var x = 0; x < columnas; x += 5)
+                            {
+                                var hasta = Math.Min(x + 5, columnas);
+                                <tr><td>@(hasta == columnas ? $"más de {x} min" : $"{x} a {hasta} min")</td><td>@conteos[x..hasta].Sum()</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (tramos.Count > 0)
+                {
+                    <div class="carrera-a" data-carrera>
+                        <div class="carrera-a__cabecera">
+                            <h3 class="carrera-a__titulo">La carrera de un SOS típico</h3>
+                            @if (masLargo.Item1 is { } nombreLargo && sumaTramos > 0 && masLargo.Item2 / sumaTramos >= 0.4)
+                            {
+                                <span class="carrera-a__nota">«@nombreLargo» se lleva @Formato.Porcentaje(masLargo.Item2 / sumaTramos * 100, 0) del recorrido</span>
+                            }
+                            <span class="carrera-a__reloj" data-reloj aria-hidden="true">@Formato.Minutos(sumaTramos)</span>
+                        </div>
+                        <div class="carrera-a__pista" aria-hidden="true">
                             @foreach (var (nombre, minutos, color) in tramos)
                             {
-                                <li><i style="background:@color"></i><span>@nombre</span><b>@Formato.Minutos(minutos)</b></li>
+                                <span class="carrera-a__tramo" style="flex:@F(Math.Max(minutos, 0.2)) 1 0;--color:@color" data-minutos="@F(minutos)"><i></i></span>
                             }
-                        </ul>
-                        <p class="tarjeta-a__nota">Tiempo típico de cada etapa de un SOS (su mediana). No suman exactamente el total de arriba.</p>
+                            <span class="carrera-a__ficha" data-ficha><partial name="_Icono" model="@("urgente")" /></span>
+                        </div>
+                        <ol class="carrera-a__etapas">
+                            @foreach (var (nombre, minutos, color) in tramos)
+                            {
+                                <li data-tramo><i style="background:@color"></i>@nombre <b>@Formato.Minutos(minutos)</b></li>
+                            }
+                        </ol>
+                        <p class="carrera-a__pie">Tiempo típico de cada etapa de un SOS (su mediana), a velocidad rápida. No suman exactamente el total de arriba.</p>
                     </div>
                 }
             }
@@ -173,32 +213,35 @@ else
                     }
                 </p>
                 <ul class="leyenda-a leyenda-a--compacta">
-                    <li><i class="leyenda-a__prio-mitad"></i>Hasta que se atiende la mitad</li>
-                    <li><i class="leyenda-a__prio-nueve"></i>Hasta 9 de cada 10</li>
-                    <li><i class="leyenda-a__banda"></i>Objetivo (@objetivo min)</li>
+                    <li><i class="leyenda-prioridad__dentro"></i>Dentro del objetivo (@objetivo min)</li>
+                    <li><i class="leyenda-prioridad__fuera"></i>Después</li>
+                    <li><i class="leyenda-prioridad__mitad"></i>La mitad</li>
                 </ul>
-                <ul class="prioridades-a">
+                <ul class="prioridades-b">
                     @foreach (var (codigo, etapa) in prioridades)
                     {
-                        var escala = Math.Max(maximo, (etapa.P90Minutos ?? 0) + 5);
-                        double P(double? x) => Math.Min(100, (x ?? 0) / escala * 100);
                         var nombre = codigo == ConsultarTiemposPorEtapa.SinRegistrar ? "Sin registrar" : codigo;
-                        <li class="prioridad-a" data-prioridad="@codigo">
-                            <span class="prioridad-a__nombre">@nombre <span class="tarjeta-a__nota">· @etapa.Casos</span></span>
-                            @if (etapa.Casos >= minimo && etapa.P50Minutos is not null)
-                            {
-                                <span class="prioridad-a__pista" role="img" aria-label="@nombre: la mitad se atendió en @Formato.Minutos(etapa.P50Minutos) y 9 de cada 10 en @Formato.Minutos(etapa.P90Minutos) o menos">
-                                    <span class="prioridad-a__nueve" style="width:@F(P(etapa.P90Minutos))%"></span>
-                                    <span class="prioridad-a__mitad" style="width:@F(P(etapa.P50Minutos))%"></span>
-                                    <span class="prioridad-a__objetivo" style="left:@F(P(objetivo))%"></span>
-                                </span>
-                                <span class="prioridad-a__valor"><span><b>@Formato.Minutos(etapa.P50Minutos)</b> la mitad</span><span><b>@Formato.Minutos(etapa.P90Minutos)</b> 9 de 10</span></span>
-                            }
-                            else
-                            {
-                                <span class="prioridad-a__pista prioridad-a__pista--vacia" aria-hidden="true"></span>
-                                <span class="prioridad-a__valor"><span>@(etapa.Casos == 0 ? "sin atendidos" : $"pocos casos (mín. {minimo})")</span></span>
-                            }
+                        var propios = Distribucion.Contar(v.PorPrioridad.GetValueOrDefault(codigo) ?? [], columnas);
+                        var alto = Math.Max(1, propios.Max());
+                        var medible = etapa.Casos >= minimo && etapa.P50Minutos is not null;
+                        <li class="prioridad-b" data-prioridad="@codigo">
+                            <span class="prioridad-b__nombre"><b>@nombre</b> <span class="tarjeta-a__nota">· @etapa.Casos</span>
+                                @if (medible)
+                                {
+                                    <span class="prioridad-b__valor"><b>@Formato.Minutos(etapa.P50Minutos)</b> la mitad · <b>@Formato.Minutos(etapa.P90Minutos)</b> 9 de 10</span>
+                                }
+                                else
+                                {
+                                    <span class="prioridad-b__valor">@(etapa.Casos == 0 ? "sin atendidos" : $"pocos casos (mín. {minimo})")</span>
+                                }
+                            </span>
+                            <span class="prioridad-b__mini" role="img" aria-label="@nombre: @(medible ? $"la mitad se atendió en {Formato.Minutos(etapa.P50Minutos)} y 9 de cada 10 en {Formato.Minutos(etapa.P90Minutos)} o menos" : Formato.Plural(etapa.Casos, "SOS atendido", "SOS atendidos"))">
+                                @for (var i = 0; i < columnas; i++)
+                                {
+                                    <i class="@(i >= objetivo ? "fuera" : "")" style="height:@F(propios[i] * 100.0 / alto)%;--i:@Math.Min(i, 45)"></i>
+                                }
+                                @if (medible) { <span class="prioridad-b__mitad" style="left:@F(X(etapa.P50Minutos))%"></span> }
+                            </span>
                         </li>
                     }
                 </ul>

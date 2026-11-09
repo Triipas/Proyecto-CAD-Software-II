@@ -1,0 +1,374 @@
+/* «Tiempos de respuesta» como distribución (14/11/2026) — se carga solo en esa pregunta, después de analitica.css.
+   Toda la respuesta es el tablero nocturno: el titular, el histograma de todos los SOS del periodo (una columna por minuto, en
+   verde los que entraron en el objetivo provisional y en ocre los que no; la línea punteada es el periodo anterior) y «la carrera
+   de un SOS típico», con una ficha que recorre la mediana de cada etapa (analitica-tiempo.js). El ocre queda siempre a la derecha
+   de la raya del objetivo: la posición también dice cuál es cuál, no solo el color. */
+
+.tarjeta-a.respuesta.tiempo-b {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background:
+    radial-gradient(60% 70% at 20% 100%, rgb(0 128 90 / 0.22), transparent 70%),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+}
+
+.tarjeta-a.respuesta.tiempo-b > .respuesta__cabecera:first-child {
+  margin-bottom: 0;
+  background: radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.30) 0%, transparent 62%);
+}
+
+.tiempo-b .respuesta__visual { margin-top: 0; padding-bottom: var(--espacio-2); }
+
+/* ── El histograma ── */
+.distribucion-a { margin-top: var(--espacio-2); }
+
+.distribucion-a__grafico {
+  position: relative;
+  height: 15rem;
+  margin-top: 4.5rem;   /* arriba, un renglón por rótulo: el objetivo, la mitad y el p90 */
+}
+
+.distribucion-a__objetivo {
+  position: absolute;
+  left: 0;
+  top: -4rem;
+  bottom: 0;
+  border-radius: var(--radio-control) var(--radio-control) 0 0;
+  background: rgb(69 227 164 / 0.08);
+  border-right: 2px dashed rgb(69 227 164 / 0.7);
+}
+
+.distribucion-a__objetivo span {
+  position: absolute;
+  left: var(--espacio-3);
+  top: var(--espacio-2);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-acento);
+  white-space: nowrap;
+}
+
+.distribucion-a__columnas {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.distribucion-a__columna {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.distribucion-a__columna > i {
+  display: block;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(0deg, #1DAE7A, var(--color-acento));
+  transition: opacity var(--duracion-rapida) ease;
+}
+
+.distribucion-a__columna--fuera > i {
+  background: linear-gradient(0deg, #B7791F, var(--color-advertencia-sobre-marino));
+}
+
+.distribucion-a__columna--borde > i {
+  background: repeating-linear-gradient(135deg, var(--color-advertencia-sobre-marino) 0 4px, #B7791F 4px 8px);
+}
+
+/* Al pasar el cursor: la columna se destaca y su globo dice cuántos SOS hubo en ese minuto (la tabla para lector va aparte). */
+.distribucion-a__globo {
+  position: absolute;
+  top: -2.5rem;
+  left: 50%;
+  z-index: 3;
+  padding: var(--espacio-1) var(--espacio-2);
+  border-radius: var(--radio-pequeno);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font-size: var(--texto-xs);
+  white-space: nowrap;
+  box-shadow: var(--sombra-3);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--duracion-rapida) ease, transform var(--duracion-rapida) ease, visibility 0s linear var(--duracion-rapida);
+}
+
+.distribucion-a__globo b { color: var(--color-marino); }
+.distribucion-a__columna:nth-child(-n + 3) .distribucion-a__globo { left: 0; transform: translate(0, 4px); }
+.distribucion-a__columna:nth-last-child(-n + 3) .distribucion-a__globo { left: auto; right: 0; transform: translate(0, 4px); }
+
+@media (hover: hover) and (pointer: fine) {
+  .distribucion-a__columnas:hover .distribucion-a__columna:not(:hover) > i { opacity: 0.5; }
+
+  .distribucion-a__columna:hover .distribucion-a__globo {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition-delay: 0s;
+  }
+
+  .distribucion-a__columna:nth-child(-n + 3):hover .distribucion-a__globo,
+  .distribucion-a__columna:nth-last-child(-n + 3):hover .distribucion-a__globo { transform: none; }
+}
+
+.distribucion-a__anterior {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.distribucion-a__anterior path {
+  fill: none;
+  stroke: #B9C6D8;               /* 9.6:1 sobre marino-900 */
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.distribucion-a__marca {
+  position: absolute;
+  top: -4rem;
+  bottom: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+.distribucion-a__marca::before {
+  content: "";
+  position: absolute;
+  top: 2.65rem;
+  bottom: 0;
+  left: -1px;
+  border-left: 2px solid #FFFFFF;
+}
+
+.distribucion-a__marca span {
+  position: absolute;
+  top: 1.3rem;
+  left: var(--espacio-2);
+  white-space: nowrap;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino);
+}
+
+.distribucion-a__marca b { font-size: var(--texto-sm); color: #FFFFFF; }
+
+/* El p90 va un renglón más abajo: si cae cerca de la mediana, los dos rótulos no se pisan. */
+.distribucion-a__marca--p90::before { top: 3.9rem; border-left: 2px dashed var(--color-texto-sobre-marino); }
+.distribucion-a__marca--p90 span { top: 2.55rem; }
+.distribucion-a__marca--izq span { left: auto; right: var(--espacio-2); }
+
+.distribucion-a__eje {
+  position: relative;
+  height: 1.5rem;
+  border-top: 1px solid rgb(213 224 240 / 0.25);
+}
+
+.distribucion-a__eje span {
+  position: absolute;
+  top: 0.3rem;
+  transform: translateX(-50%);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.distribucion-a__eje span:first-child { transform: none; }
+
+.leyenda-distribucion { color: var(--color-texto-sobre-marino); }
+.leyenda-distribucion__dentro { background: var(--color-acento); }
+.leyenda-distribucion__fuera { background: var(--color-advertencia-sobre-marino); }
+.leyenda-distribucion__borde { background: repeating-linear-gradient(135deg, var(--color-advertencia-sobre-marino) 0 3px, #B7791F 3px 6px); }
+.leyenda-distribucion__mitad { width: 1rem !important; height: 0 !important; border-top: 2px solid #FFFFFF; border-radius: 0 !important; }
+.leyenda-distribucion__anterior { width: 1rem !important; height: 0 !important; border-top: 2px dashed #B9C6D8; border-radius: 0 !important; }
+
+/* ── La carrera de un SOS típico ── */
+.carrera-a {
+  margin-top: var(--espacio-5);
+  padding: var(--espacio-4) var(--espacio-5);
+  border-radius: var(--radio-superficie);
+  background: rgb(6 17 39 / 0.45);
+  border: 1px solid var(--color-borde-sobre-marino);
+}
+
+.carrera-a__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--espacio-1) var(--espacio-3);
+}
+
+.tiempo-b .carrera-a__titulo { margin: 0; font-size: var(--texto-md); font-weight: var(--peso-medio); color: #FFFFFF; }
+.carrera-a__nota { font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+.carrera-a__reloj {
+  margin-left: auto;
+  font-size: var(--texto-2xl);
+  font-weight: var(--peso-fuerte);
+  line-height: 1;
+  color: var(--color-acento);
+  font-variant-numeric: tabular-nums;
+}
+
+.carrera-a__pista {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  height: 1rem;
+  margin: var(--espacio-6) 0.875rem var(--espacio-4);
+}
+
+.carrera-a__tramo {
+  position: relative;
+  height: 100%;
+  border-radius: 8px;
+  background: rgb(213 224 240 / 0.10);
+  overflow: hidden;
+}
+
+.carrera-a__tramo i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  background: var(--color);
+}
+
+.carrera-a__ficha {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: -0.875rem 0 0 -0.875rem;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: var(--color-urgente);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 4px rgb(69 227 164 / 0.35), 0 4px 10px rgb(0 0 0 / 0.35);
+}
+
+.carrera-a__ficha svg { width: 1rem; height: 1rem; }
+
+.carrera-a__etapas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-1) var(--espacio-5);
+}
+
+.carrera-a__etapas li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+  transition: color var(--duracion-rapida) ease;
+}
+
+.carrera-a__etapas li i { width: 0.75rem; height: 0.75rem; border-radius: 3px; }
+.carrera-a__etapas li b { color: var(--color-texto-sobre-marino); }
+.carrera-a__etapas li.activa { color: #FFFFFF; }
+.carrera-a__etapas li.activa b { color: var(--color-acento); }
+
+.carrera-a__pie {
+  margin: var(--espacio-2) 0 0;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+/* ── Por prioridad: la misma distribución en pequeño, en la misma escala ── */
+.prioridades-b {
+  list-style: none;
+  margin: var(--espacio-2) 0 0;
+  padding: 0;
+}
+
+.prioridad-b {
+  display: grid;
+  grid-template-columns: 14.5rem minmax(0, 1fr);
+  align-items: end;
+  gap: var(--espacio-1) var(--espacio-4);
+  padding: var(--espacio-3) 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.prioridad-b__nombre { display: grid; gap: 2px; font-size: var(--texto-sm); }
+.prioridad-b__nombre > b { color: var(--color-marino); }
+.prioridad-b__valor { font-size: var(--texto-xs); color: var(--color-texto-secundario); }
+.prioridad-b__valor b { color: var(--color-primario); }
+
+.prioridad-b__mini {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 2.75rem;
+}
+
+.prioridad-b__mini > i { flex: 1; border-radius: 2px 2px 0 0; background: var(--rampa-4); }
+.prioridad-b__mini > i.fuera { background: var(--color-advertencia); }
+
+.prioridad-b__mitad {
+  position: absolute;
+  top: -4px;
+  bottom: 0;
+  border-left: 2px solid var(--color-marino);
+}
+
+.leyenda-prioridad__dentro { background: var(--rampa-4); }
+.leyenda-prioridad__fuera { background: var(--color-advertencia); }
+.leyenda-prioridad__mitad { width: 2px !important; height: 0.875rem !important; border-radius: 0 !important; background: var(--color-marino); }
+
+@media (max-width: 40rem) {
+  .prioridad-b { grid-template-columns: 1fr; }
+  .distribucion-a__columnas { gap: 1px; }
+}
+
+/* ── Entrada (una vez, al abrir) ──
+   Las columnas suben de izquierda a derecha como una ola; cuando terminan caen las marcas de la mitad y del p90 y aparece la forma
+   del periodo anterior. Los pequeños múltiplos de prioridad crecen igual, más cortos. La carrera la mueve analitica-tiempo.js. */
+@keyframes tiempo-caer {
+  from { opacity: 0; translate: 0 -10px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .distribucion-a__columna > i,
+  .prioridad-b__mini > i {
+    animation: analitica-revelar-y 700ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + var(--i, 0) * 18ms);
+  }
+
+  .prioridad-b__mini > i { animation-duration: 500ms; }
+
+  .distribucion-a__objetivo {
+    animation: analitica-aparecer 600ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + 200ms);
+  }
+
+  .distribucion-a__marca {
+    animation: tiempo-caer 500ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--entrada-graficos) + 950ms);
+  }
+
+  .distribucion-a__marca--p90 { animation-delay: calc(var(--retraso, 0ms) + var(--entrada-graficos) + 1100ms); }
+
+  .distribucion-a__anterior {
+    animation: analitica-aparecer 700ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--entrada-graficos) + 1200ms);
+  }
+}

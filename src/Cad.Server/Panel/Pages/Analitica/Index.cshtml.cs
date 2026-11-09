@@ -215,8 +215,11 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         return new VistaAhora(foto, casos);
     }
 
+    // Respuestas: cada SOS atendido del periodo (en minutos, ordenados), con el filtro de prioridad. RespuestasAnteriores: lo mismo en
+    // el periodo anterior, para dibujar su forma detrás del histograma. PorPrioridad: las del periodo de cada prioridad, sin filtro.
     public sealed record VistaTiempo(IReadOnlyList<GrupoTiempos> Grupos, RespuestaPorZona Zonas, TiemposZona TotalAnterior,
-        IReadOnlyList<double> Respuestas, CasosAtascados Casos, string? Prioridad);
+        IReadOnlyList<double> Respuestas, CasosAtascados Casos, string? Prioridad,
+        IReadOnlyList<double> RespuestasAnteriores, IReadOnlyDictionary<string, IReadOnlyList<double>> PorPrioridad);
 
     private async Task<VistaTiempo> TiempoAsync(CancellationToken ct)
     {
@@ -227,12 +230,19 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         Prioridad = prioridad;
         // Cada respuesta del periodo: con pocos casos se dibuja cada una en lugar de medianas. Sin cancelados ni descartados,
         // como el mapa por zona y la comparación con el periodo anterior (ConsultarRespuestaPorZona).
-        var marcas = await ConsultarTiemposPorEtapa.MarcasAsync(HttpContext.RequestServices.GetRequiredService<Persistencia.CadDbContext>(), Rango, ct);
-        var respuestas = marcas
-            .Where(m => Modulos.Casos.Dominio.OrigenesCaso.SeAtiendeComoSos(m.Origen) && m.Atencion is not null && (prioridad is null || m.Prioridad == prioridad)
-                && !ConsultarRespuestaPorZona.Excluidos.Contains(m.Estado))
-            .Select(m => (m.Atencion!.Value - m.Registro).TotalMinutes).Order().ToList();
-        return new VistaTiempo(grupos, zonas, anterior.Total, respuestas, await S<ConsultarCasosAtascados>().EjecutarAsync(ct), prioridad);
+        var db = HttpContext.RequestServices.GetRequiredService<Persistencia.CadDbContext>();
+        static List<(string Prioridad, double Minutos)> Atendidos(IEnumerable<ConsultarTiemposPorEtapa.Marcas> marcas) => marcas
+            .Where(m => Modulos.Casos.Dominio.OrigenesCaso.SeAtiendeComoSos(m.Origen) && m.Atencion is not null && !ConsultarRespuestaPorZona.Excluidos.Contains(m.Estado))
+            .Select(m => (m.Prioridad ?? ConsultarTiemposPorEtapa.SinRegistrar, (m.Atencion!.Value - m.Registro).TotalMinutes))
+            .ToList();
+        var actuales = Atendidos(await ConsultarTiemposPorEtapa.MarcasAsync(db, Rango, ct));
+        var previas = Atendidos(await ConsultarTiemposPorEtapa.MarcasAsync(db, Anterior, ct));
+        List<double> Filtrar(List<(string Prioridad, double Minutos)> lista) =>
+            lista.Where(a => prioridad is null || a.Prioridad == prioridad).Select(a => a.Minutos).Order().ToList();
+        var porPrioridad = actuales.GroupBy(a => a.Prioridad)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<double>)g.Select(a => a.Minutos).Order().ToList());
+        return new VistaTiempo(grupos, zonas, anterior.Total, Filtrar(actuales), await S<ConsultarCasosAtascados>().EjecutarAsync(ct), prioridad,
+            Filtrar(previas), porPrioridad);
     }
 
     public sealed record VistaFalsos(IndiceFalsos Actual, IndiceFalsos Anterior, EmbudoReportes Embudo, ReportesAnalitica Reportes);

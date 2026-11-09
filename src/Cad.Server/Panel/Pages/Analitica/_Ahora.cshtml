@@ -50,14 +50,14 @@
                         <circle class="radar-a__anillo radar-a__anillo--esperado" r="@(Radar.N(Radar.Centro + Radar.Paso))" />
                         <circle class="radar-a__anillo" r="@(Radar.N(Radar.Centro + 2 * Radar.Paso))" />
                         <circle class="radar-a__anillo radar-a__anillo--borde" r="@(Radar.N(Radar.Borde))" />
-                        <path class="radar-a__grupo radar-a__grupo--sos" d="@(Radar.Arco(Radar.Borde + 8, sos[0].Desde, sos[^1].Hasta))" />
-                        <path class="radar-a__grupo radar-a__grupo--reporte" d="@(Radar.Arco(Radar.Borde + 8, reportes[0].Desde, reportes[^1].Hasta))" />
+                        <path class="radar-a__grupo radar-a__grupo--sos" d="@(Radar.Arco(Radar.Borde + 8, sos[0].Desde + 2, sos[^1].Hasta - 2))" />
+                        <path class="radar-a__grupo radar-a__grupo--reporte" d="@(Radar.Arco(Radar.Borde + 8, reportes[0].Desde + 2, reportes[^1].Hasta - 2))" />
                         @foreach (var x in etapas)
                         {
                             <path class="radar-a__sector" data-etapa="@x.Etapa.Clave" d="@Radar.Cuna(Radar.Centro, Radar.Borde, x.Etapa.Desde, x.Etapa.Hasta)" />
                         }
-                        <text class="radar-a__nombre-grupo radar-a__nombre-grupo--sos" x="0" y="-250" text-anchor="middle">SOS</text>
-                        <text class="radar-a__nombre-grupo radar-a__nombre-grupo--reporte" x="0" y="248" text-anchor="middle">REPORTES</text>
+                        <text class="radar-a__nombre-grupo radar-a__nombre-grupo--sos" x="0" y="-262" text-anchor="middle">SOS</text>
+                        <text class="radar-a__nombre-grupo radar-a__nombre-grupo--reporte" x="0" y="268" text-anchor="middle">REPORTES</text>
                     </g>
                     <path class="radar-a__barrido" d="@(Radar.Cuna(Radar.Centro, Radar.Borde, Radar.Inicio - 34, Radar.Inicio))" />
                     <circle class="radar-a__centro-fondo" r="@(Radar.N(Radar.Centro - 2))" />
@@ -74,10 +74,7 @@
                     {
                         var clases = "radar-a__caso" + (marca.Tarde ? " radar-a__caso--tarde" : "") + (marca.Grupo ? " radar-a__caso--grupo" : "") + (marca.X > 0 ? " radar-a__caso--der" : "");
                         <span class="@clases" data-clave="@marca.Clave" data-etapa="@x.Etapa.Clave" tabindex="0"
-                              style="left:@Radar.Porcentaje(marca.X);top:@Radar.Porcentaje(marca.Y);--llegada:@(Radar.Llegada(marca.Grados))ms">@(marca.Grupo ? marca.Casos.Count.ToString() : "")@if (marca.Lejos)
-                            {
-                                <span class="radar-a__lejos" style="@Radar.EstiloLejos(marca.Grados)" aria-hidden="true">@(marca.Grupo ? "hasta " : "")@Formato.Minutos(marca.MasLargo)</span>
-                            }<span class="radar-a__globo" role="tooltip">
+                              style="left:@Radar.Porcentaje(marca.X);top:@Radar.Porcentaje(marca.Y);--llegada:@(Radar.Llegada(marca.Grados))ms">@(marca.Grupo ? marca.Casos.Count.ToString() : "")<span class="radar-a__globo" role="tooltip">
                                 <b>@x.Etapa.Nombre: @(marca.Grupo ? Formato.Plural(marca.Casos.Count, "caso", "casos") : Formato.Minutos(marca.Casos[0].Minutos) + " en la etapa")</b>
                                 @if (marca.Grupo)
                                 {
@@ -146,7 +143,7 @@
                 <li><i class="leyenda-radar__esperado"></i>Dentro de lo esperado</li>
                 <li><i class="leyenda-radar__anillos"></i>2× y 3× lo esperado</li>
             </ul>
-            <p class="radar-a__nota">El tiempo esperado no es un promedio de casos anteriores: es el máximo que la central tolera que un caso lleve en esa etapa. Son valores provisionales, hasta que se fijen los tiempos objetivo del servicio. Los minutos se cuentan desde que el caso entró en la etapa. Más allá de 3 veces lo esperado, el caso queda en el borde con su tiempo escrito.</p>
+            <p class="radar-a__nota">El tiempo esperado no es un promedio de casos anteriores: es el máximo que la central tolera que un caso lleve en esa etapa. Son valores provisionales, hasta que se fijen los tiempos objetivo del servicio. Los minutos se cuentan desde que el caso entró en la etapa. Más allá de 3 veces lo esperado, el caso queda en el borde: su tiempo está en el globo de la marca y en la lista («el más largo»).</p>
         </div>
     </section>
 
