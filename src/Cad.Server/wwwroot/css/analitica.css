@@ -2924,7 +2924,7 @@ button.segmentado__opcion[aria-pressed="true"] {
 
 .tarjetas-b {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr)); /* una sola tarjeta no se estira a todo el ancho */
   gap: var(--espacio-4);
 }
 

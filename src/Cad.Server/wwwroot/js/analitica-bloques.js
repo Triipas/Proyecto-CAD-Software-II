@@ -23,6 +23,7 @@
   const GRIS = "#7487A2";
   const MAX_ZONAS_RADIAL = 6;
   const MAX_ZONAS_REPARTO = 4;
+  const ZONA_PARA_ESCALA = 20; // casos desde los que una zona fija la escala de los radiales de zona
   const TONOS_ZONA = [1, 0.72, 0.5, 0.32];
   const R = 138; // radio de los radiales en un recuadro de 560 × 460: deja lugar a los lados para las etiquetas
   const NS = "http://www.w3.org/2000/svg";
@@ -124,7 +125,7 @@
 
   // Sin medida: un punto en el centro, para que la forma crezca desde ahí al aparecer.
   const forma = (medida, escala) =>
-    cerrada(medida ? medida.map((v, i) => punto(i, R * (0.12 + (0.88 * v) / (escala[i] || 1)))) : EJES.map((_, i) => punto(i, 0.1)));
+    cerrada(medida ? medida.map((v, i) => punto(i, R * (0.12 + 0.88 * Math.min(1, v / (escala[i] || 1))))) : EJES.map((_, i) => punto(i, 0.1)));
   const medir = (v) => (estado.escala === "perfil" ? perfil(v) : v.slice(0, N));
   const escribirMedida = (n) => (estado.escala === "perfil" ? pct(n) : String(Math.round(n)));
 
@@ -231,7 +232,10 @@
     pintarSegmentado($('[data-control="escala"]'), "escala", [["perfil", "Perfil (%)"], ["cantidad", "Cantidad"]]);
     $("[data-nota-escala]").textContent = (estado.escala === "perfil"
       ? "Perfil: qué parte de sus casos es cada tipo, para comparar formas aunque un lugar tenga muchos más casos."
-      : "Cantidad: el número de casos de cada tipo.") + " Los radiales de un mismo panel comparten la escala de cada eje.";
+      : "Cantidad: el número de casos de cada tipo.")
+      + (b && z
+        ? ` Cada eje usa la escala de todas las zonas del bloque, así una zona se ve igual sola o junto a otras.${estado.escala === "perfil" ? " La línea punteada es el perfil de todo el bloque." : ""}`
+        : " Los radiales de un mismo panel comparten la escala de cada eje.");
     contenedorTarjetas.hidden = !verTarjetas;
     panel.querySelector("[data-grande]").hidden = verTarjetas;
     const masZonas = panel.querySelector("[data-mas-zonas]");
@@ -262,7 +266,13 @@
       });
     }
     const medidas = items.map((x) => medir(x.casos));
-    const escala = escalaDe(medidas);
+    // Escala de cada eje. Con zonas, la de todas las zonas del bloque, no solo la de las elegidas: con una zona sola su máximo sería
+    // ella misma y todos los ejes llegarían al borde (un círculo), y la forma cambiaría según qué otras zonas se elijan. Las zonas
+    // con pocos casos no fijan la escala (un 100 % de cinco casos achicaría a todas las demás); si la pasan, llegan al borde.
+    const deEscala = b ? b.zonas.filter((z) => z.casos[TOTAL] >= ZONA_PARA_ESCALA) : [];
+    const escala = b ? escalaDe((deEscala.length ? deEscala : b.zonas).map((z) => medir(z.casos))) : escalaDe(medidas);
+    // En perfil, cada zona lleva de referencia el perfil de todo su bloque (punteado).
+    const referencia = b && estado.escala === "perfil" ? medir(b.casos) : null;
     const vigentes = new Set(items.map((x) => x.clave));
     for (const [clave, t] of tarjetas) if (!vigentes.has(clave)) { t.raiz.remove(); tarjetas.delete(clave); }
     const nuevas = [];
@@ -278,8 +288,8 @@
       boton.dataset.accion = x.accion;
       boton.dataset.valor = x.valor;
       contenedorTarjetas.append(raiz); // en el orden de la lista
-      if (t.nueva) { nuevas.push(() => pintarRadial(t.radial, [{ medida: medidas[j], color: x.color }], null, escala, describir(x.nombre, x.casos))); t.nueva = false; }
-      else pintarRadial(t.radial, [{ medida: medidas[j], color: x.color }], null, escala, describir(x.nombre, x.casos));
+      const pintar = () => pintarRadial(t.radial, [{ medida: medidas[j], color: x.color }], referencia, escala, describir(x.nombre, x.casos));
+      if (t.nueva) { nuevas.push(pintar); t.nueva = false; } else pintar();
     });
     // Las tarjetas nuevas parten del centro: se lee el diseño una vez para que la transición tenga desde dónde salir.
     if (nuevas.length) { void contenedorTarjetas.offsetHeight; nuevas.forEach((f) => f()); }
@@ -300,7 +310,10 @@
     }
     const medidas = series.map((s) => (s.v ? medir(s.v) : null));
     const medidaReferencia = referencia ? medir(referencia) : null;
-    const escala = escalaDe([...medidas, medidaReferencia]);
+    // Con una sola forma y sin referencia (un bloque en cantidad, o un solo bloque marcado al comparar), su máximo sería ella misma y
+    // saldría un círculo: la escala es la de los tres bloques.
+    const unaSola = medidas.filter(Boolean).length === 1 && !medidaReferencia;
+    const escala = unaSola ? escalaDe(bloques.map((x) => medir(x.casos))) : escalaDe([...medidas, medidaReferencia]);
     pintarRadial(grande, series.map((s, j) => (s.v ? { medida: medidas[j], color: s.color } : null)), medidaReferencia, escala,
       series.filter((s) => s.v).map((s) => describir(s.nombre, s.v)).join("; "));
     $("[data-nota-grande]").textContent = `${estado.escala === "perfil" ? "En % de sus casos" : "En número de casos"} · cada eje con su escala`;
