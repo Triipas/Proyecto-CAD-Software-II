@@ -1255,6 +1255,56 @@
   border-radius: 0.875rem;
 }
 
+/* El vehículo conserva su escala y rumbo al llegar; el caso pasa a ser su distintivo en la esquina. */
+.marcador-conjunto--vehiculo .conjunto__sereno {
+  inset: 0;
+  width: 56px;
+  height: 56px;
+}
+
+.marcador-conjunto--vehiculo .conjunto__caso {
+  z-index: 1;
+  top: 29px;
+  left: 39px;
+  width: 25px;
+  height: 25px;
+}
+
+.marcador-conjunto--vehiculo .conjunto__caso > .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.marcador-conjunto--vehiculo .camioneta__estado {
+  display: none;
+}
+
+.marcador-conjunto--vehiculo.marcador--elegido::after,
+.marcador-conjunto--vehiculo.marcador--sobre::after {
+  inset: 0 -9px 0 0;
+}
+
+.leyenda-icono--sereno.marcador-sereno--vehiculo {
+  width: 36px;
+  height: 36px;
+}
+
+.leyenda-icono--sereno .camioneta__estado {
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.leyenda-icono--conjunto .leyenda-icono__sereno {
+  width: 30px;
+  height: 30px;
+}
+
+.leyenda-icono--conjunto .camioneta__estado {
+  display: none;
+}
+
 /* ── Marcadores: la forma, el icono y el estado los define panel.css (comunes con los mapas de detalle) ── */
 /* Pulso del SOS pendiente sin abrir: la única animación persistente de la central. */
 .marcador-sos--pulso::before {

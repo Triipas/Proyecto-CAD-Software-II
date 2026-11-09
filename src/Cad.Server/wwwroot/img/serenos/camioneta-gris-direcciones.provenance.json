@@ -1,0 +1,29 @@
+{
+  "asset": "camioneta-gris-direcciones.png",
+  "created": "2026-11-09",
+  "tool": "image_gen.imagegen (integrado)",
+  "useCase": "precise-object-edit",
+  "sourceArtifact": "exec-c42512f3-eaf9-4495-bfb2-482cd4e253db.png",
+  "referenceArtifact": "exec-f8a31b96-2ee9-4e9b-a13d-bae830047dad.png",
+  "state": "Sereno no disponible: con caso o fuera de servicio",
+  "transparent": true,
+  "pixels": {
+    "width": 1774,
+    "height": 887
+  },
+  "atlas": {
+    "columns": 4,
+    "rows": 2,
+    "headings": [
+      "N",
+      "NE",
+      "E",
+      "SE",
+      "S",
+      "SO",
+      "O",
+      "NO"
+    ]
+  },
+  "prompt": "Use case: precise-object-edit. Create an EXACT neutral-gray color variant of the supplied corrected blue pickup sprite atlas for the unavailable/assigned state of a dispatch map. EDIT THE EXISTING IMAGE, do not generate different vehicles. Keep the exact original 2:1 transparent canvas, four equal columns by two equal rows, eight vehicle positions, bounds, scale, padding, all silhouettes, wheels, cabin geometry, windows, open cargo beds, ground shadows, and eight directions unchanged. Top row N, NE, E, SE; bottom row S, SW, W, NW. Change ONLY colors: blue bodywork becomes matte neutral medium gray (#929CAA approx), upper lit roof/body surfaces light neutral gray (#A9B1BC approx), shaded body panels darker graphite gray; dark windows and tires stay dark charcoal gray; cyan roof lightbars become pale silver gray (#D0D7DE approx), retaining readable light-bar shape against the gray roof. No blue tint, no bright colors, no purple, no black bodywork. The same compact rounded 3D style, clean solid materials, no photographic texture, no highlights or added details. VERY IMPORTANT: keep the cyan/silver lightbars in their currently CORRECT TRANSVERSE orientation, crossing the WIDTH of the cab, perpendicular to the vehicle's forward-backward direction, parallel to the top of its rear cab window. In the NE sprite top row column 2 the bar slopes upper-left to lower-right; in the NW sprite bottom row column 4 the bar slopes lower-left to upper-right. Preserve these corrections exactly. Every sprite must align with its matching blue original so switching status does not shift or resize the vehicle. No text, symbols, borders, visible grids, backgrounds, checkerboard or extra objects. Preserve true transparency and output only the complete gray atlas."
+}

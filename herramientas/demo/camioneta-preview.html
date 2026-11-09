@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prueba local · camioneta verde</title>
+  <link rel="preload" as="image" href="/img/serenos/camioneta-verde-direcciones.png">
+  <link rel="preload" as="image" href="/img/serenos/camioneta-gris-direcciones.png">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/lib/leaflet/leaflet.css">
+  <style>
+    body { margin: 0; background: var(--color-fondo); color: var(--color-texto); font-family: var(--fuente); }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; background: var(--color-marino); color: white; }
+    h1 { margin: 0; font-size: 18px; } header p { margin: 4px 0 0; color: var(--color-texto-sobre-marino); font-size: 13px; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: calc(100dvh - 83px); }
+    #mapa { min-height: 520px; height: 100%; border-radius: 0; }
+    #mapa .leaflet-tile-pane { filter: var(--mapa-filtro-teselas); }
+    aside { padding: 24px; background: var(--color-superficie); }
+    h2 { margin: 0 0 16px; font-size: 18px; }
+    .nota { font-size: 13px; color: var(--color-texto-secundario); line-height: 1.6; }
+    .controles { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0; }
+    .direcciones { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .direccion { position: relative; display: grid; place-items: center; padding: 2px 0 8px; border: 1px solid var(--color-borde); border-radius: 8px; background: var(--color-superficie); color: var(--color-texto); cursor: pointer; font: inherit; font-size: 13px; }
+    .direccion:hover { background: var(--color-superficie-hundida); }
+    .direccion[aria-pressed="true"] { border: 2px solid var(--color-primario); background: var(--color-superficie-hundida); padding: 1px 0 7px; }
+    button:focus-visible { outline: 3px solid var(--color-foco); outline-offset: 2px; }
+    .miniatura { position: relative; display: block; width: 56px; height: 56px; }
+    .miniatura .camioneta__estado { display: none; }
+    .escudo { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-borde); }
+    .escudo svg { flex: none; width: 30px; height: 34px; } .escudo p { margin: 0; }
+    #estado { min-height: 24px; font-variant-numeric: tabular-nums; }
+    @media(max-width: 760px) { header { padding: 16px; } main { grid-template-columns: 1fr; } #mapa { height: 50dvh; min-height: 300px; } aside { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <header><div><h1>Prueba local · camioneta verde</h1><p>MVP académico · posiciones y recorrido simulados</p></div></header>
+  <main>
+    <div id="mapa" aria-label="Mapa de prueba de la camioneta"></div>
+    <aside aria-label="Controles de la prueba">
+      <h2>Opción A · compacta</h2>
+      <p class="nota">La camioneta cambia de vista según avanza: verde cuando está disponible y gris cuando tiene un caso o está fuera de servicio. Puedes pausar el recorrido o elegir una dirección.</p>
+      <div class="controles">
+        <button class="boton boton--principal" id="pausa" type="button">Pausar recorrido</button>
+        <button class="boton boton--secundario" id="disponibilidad" type="button" aria-pressed="true">Disponible</button>
+        <button class="boton boton--secundario" id="recorrido" type="button" aria-pressed="false">Mostrar recorrido</button>
+      </div>
+      <p class="nota">Sereno sin caso asignado: el rumbo se calcula con las posiciones GPS simuladas, aunque no haya una ruta en el mapa.</p>
+      <p id="estado" role="status">Dirección: SE · en movimiento</p>
+      <div class="direcciones" aria-label="Ocho orientaciones"></div>
+      <div class="escudo" id="escudo"><p class="nota">El panel del sistema conserva su icono de sereno.</p></div>
+      <p class="nota">Esta vista usa los mismos sprites, estilos y cálculo de rumbo que el mapa del sistema. No modifica datos.</p>
+    </aside>
+  </main>
+  <script src="/lib/leaflet/leaflet.js"></script>
+  <script src="/js/marcadores.js"></script>
+  <script src="/js/movimiento.js"></script>
+  <script>
+    const nombres = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+    const ruta = [[-16.4312,-71.5300],[-16.4312,-71.5290],[-16.4319,-71.5283],[-16.4329,-71.5283],[-16.4336,-71.5290],[-16.4336,-71.5300],[-16.4329,-71.5307],[-16.4319,-71.5307],[-16.4312,-71.5300]];
+    L.Control.Attribution.prototype.options.prefix = false;
+    const mapa = L.map('mapa', { zoomControl: false }).fitBounds(ruta, { padding: [65, 65], maxZoom: 18 });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
+    L.control.zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(mapa);
+    const recorrido = L.layerGroup([
+      L.polyline(ruta, { color: '#FFFFFF', weight: 8, interactive: false }),
+      L.polyline(ruta, { color: '#1D3B78', weight: 3, opacity: 0.75, interactive: false }),
+    ]);
+    const marcador = L.marker(ruta[0], { icon: L.divIcon(cadMarcadores.sereno(true)), title: 'Camioneta de serenazgo · prueba local', keyboard: true }).addTo(mapa);
+    marcador.bindPopup('Camioneta verde · posiciones simuladas');
+    let orientacion = cadMarcadores.orientarSereno(null, ruta[0]);
+    let disponible = true, pausado = false, paso = 0;
+    const pausa = document.querySelector('#pausa');
+    const estado = document.querySelector('#estado');
+    function actualizar() {
+      cadMarcadores.actualizarSereno(marcador, disponible, orientacion);
+      document.querySelectorAll('.miniatura .camioneta').forEach((el) => el.classList.toggle('camioneta--no-disponible', !disponible));
+      estado.textContent = `Dirección: ${nombres[orientacion.direccion]} · ${pausado ? 'en pausa' : 'en movimiento'}`;
+      pausa.textContent = pausado ? 'Reanudar recorrido' : 'Pausar recorrido';
+      document.querySelectorAll('[data-vista]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.vista) === orientacion.direccion)));
+    }
+    for (let i = 0; i < 8; i++) {
+      const boton = document.createElement('button');
+      boton.type = 'button'; boton.className = 'direccion'; boton.dataset.vista = i;
+      boton.setAttribute('aria-label', `Ver orientación ${nombres[i]}`);
+      boton.innerHTML = `<span class="miniatura">${cadMarcadores.camioneta(true, i*45)}</span>${nombres[i]}`;
+      boton.addEventListener('click', () => { pausado = true; orientacion = { ...orientacion, direccion: i, rumbo: i*45 }; actualizar(); });
+      document.querySelector('.direcciones').append(boton);
+    }
+    document.querySelector('#escudo').insertAdjacentHTML('afterbegin', cadMarcadores.escudo(true));
+    pausa.addEventListener('click', () => { pausado = !pausado; actualizar(); });
+    document.querySelector('#recorrido').addEventListener('click', (e) => {
+      const visible = mapa.hasLayer(recorrido);
+      if (visible) mapa.removeLayer(recorrido); else recorrido.addTo(mapa);
+      e.currentTarget.setAttribute('aria-pressed', String(!visible));
+      e.currentTarget.textContent = visible ? 'Mostrar recorrido' : 'Ocultar recorrido';
+    });
+    document.querySelector('#disponibilidad').addEventListener('click', (e) => {
+      disponible = !disponible; e.currentTarget.textContent = disponible ? 'Disponible' : 'No disponible';
+      e.currentTarget.setAttribute('aria-pressed', String(disponible)); actualizar();
+    });
+    setInterval(() => {
+      if (pausado || document.hidden) return;
+      paso = (paso + 1) % 48;
+      const tramo = Math.floor(paso / 6), fraccion = (paso % 6) / 6;
+      const punto = ruta[tramo].map((v, i) => v + (ruta[tramo + 1][i] - v) * fraccion);
+      orientacion = cadMarcadores.orientarSereno(orientacion, punto);
+      actualizar(); cadMovimiento.deslizarMarcador(marcador, punto);
+    }, 850);
+    actualizar();
+  </script>
+</body>
+</html>
