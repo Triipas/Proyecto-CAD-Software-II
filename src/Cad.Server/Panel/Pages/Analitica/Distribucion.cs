@@ -5,15 +5,17 @@ namespace Cad.Server.Panel.Pages.Analitica;
 
 // «Tiempos de respuesta» como distribución (14/11/2026): cada columna son los SOS que se atendieron en ese minuto, desde que el
 // ciudadano emite el SOS hasta que el sereno empieza a atenderlo. Muestra todos los SOS y no solo dos cifras: se ve la cola de los
-// que tardaron mucho. La última columna junta los que llegaron al borde de la escala («34 min o más»).
+// que tardaron mucho. La última columna junta los que pasan el borde de la escala («más de 34 min»).
 public static class Distribucion
 {
-    // Cuántos SOS cayeron en cada minuto, de 0 a columnas - 1; la última junta todo lo que llega a ella o la pasa.
+    // Cuántos SOS cayeron en cada minuto. La columna i va de más de i hasta i + 1 minutos inclusive (la 0, desde 0): así el objetivo
+    // «≤ 15 min», que cuenta los 15 min justos como dentro, son exactamente las columnas 0 a 14, y la columna 15 ya es «pasado».
+    // La última junta todo lo que la pasa.
     public static int[] Contar(IEnumerable<double> minutos, int columnas)
     {
         var conteos = new int[Math.Max(1, columnas)];
         foreach (var m in minutos)
-            conteos[Math.Clamp((int)Math.Floor(Math.Max(0, m)), 0, conteos.Length - 1)]++;
+            conteos[Math.Clamp(m <= 0 ? 0 : (int)Math.Ceiling(m) - 1, 0, conteos.Length - 1)]++;
         return conteos;
     }
 
@@ -32,7 +34,7 @@ public static class Distribucion
     }
 
     public static string Rango(int columna, int columnas) =>
-        columna == columnas - 1 ? $"{columna} min o más" : $"{columna} a {columna + 1} min";
+        columna == columnas - 1 ? $"más de {columna} min" : $"{columna} a {columna + 1} min";
 
     public static string N(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 }

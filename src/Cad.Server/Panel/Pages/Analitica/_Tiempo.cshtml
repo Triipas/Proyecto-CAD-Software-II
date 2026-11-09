@@ -107,7 +107,7 @@ else
                         </ol>
                         @if (conteosAntes is not null)
                         {
-                            <svg class="distribucion-a__anterior" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="@Distribucion.Escalonada(conteosAntes, techo)" /></svg>
+                            <svg class="distribucion-a__anterior" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="@Distribucion.Escalonada(conteosAntes, techo)" /></svg>
                         }
                         <span class="distribucion-a__marca@(X(p50) > 78 ? " distribucion-a__marca--izq" : "")" style="left:@F(X(p50))%"><span><b>@Formato.Minutos(p50)</b> · la mitad</span></span>
                         <span class="distribucion-a__marca distribucion-a__marca--p90@(X(p90) > 78 ? " distribucion-a__marca--izq" : "")" style="left:@F(X(p90))%"><span><b>@Formato.Minutos(p90)@(p90 > columnas ? " o más" : "")</b> · 9 de 10</span></span>
@@ -121,7 +121,7 @@ else
                     <ul class="leyenda-a leyenda-distribucion">
                         <li><i class="leyenda-distribucion__dentro"></i>Atendidos dentro del objetivo</li>
                         <li><i class="leyenda-distribucion__fuera"></i>Atendidos después</li>
-                        <li><i class="leyenda-distribucion__borde"></i>@(columnas - 1) min o más</li>
+                        <li><i class="leyenda-distribucion__borde"></i>Más de @(columnas - 1) min</li>
                         <li><i class="leyenda-distribucion__mitad"></i>La mitad (mediana) · punteada: 9 de cada 10 (p90)</li>
                         @if (conteosAntes is not null) { <li><i class="leyenda-distribucion__anterior"></i>@(char.ToUpperInvariant(m.TextoAnterior[0]) + m.TextoAnterior[1..])</li> }
                     </ul>
@@ -132,7 +132,7 @@ else
                             @for (var x = 0; x < columnas; x += 5)
                             {
                                 var hasta = Math.Min(x + 5, columnas);
-                                <tr><td>@(hasta == columnas ? $"{x} min o más" : $"{x} a {hasta} min")</td><td>@conteos[x..hasta].Sum()</td></tr>
+                                <tr><td>@(hasta == columnas ? $"más de {x} min" : $"{x} a {hasta} min")</td><td>@conteos[x..hasta].Sum()</td></tr>
                             }
                         </tbody>
                     </table>

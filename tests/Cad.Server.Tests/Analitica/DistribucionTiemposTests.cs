@@ -9,14 +9,26 @@ public class DistribucionTiemposTests
     [Fact]
     public void Contar_UnaColumnaPorMinutoYLaUltimaJuntaElBorde()
     {
-        var conteos = Distribucion.Contar([0.2, 0.9, 3, 3.99, 4, 9.5, 240], 10);
+        // La columna i va de más de i a i + 1 inclusive: 3 cae en la 2; 3,99 y 4, en la 3.
+        var conteos = Distribucion.Contar([0, 0.2, 0.9, 3, 3.99, 4, 9.5, 240], 10);
 
         Assert.Equal(10, conteos.Length);
-        Assert.Equal(2, conteos[0]);
+        Assert.Equal(3, conteos[0]);
+        Assert.Equal(1, conteos[2]);
         Assert.Equal(2, conteos[3]);
-        Assert.Equal(1, conteos[4]);
         Assert.Equal(2, conteos[9]); // 9,5 y el SOS de 4 horas
-        Assert.Equal(7, conteos.Sum());
+        Assert.Equal(8, conteos.Sum());
+    }
+
+    [Fact]
+    public void Contar_ElObjetivoJustoCaeDentro()
+    {
+        // Un SOS atendido en 15 min justos cuenta como dentro del objetivo («≤ 15 min»), igual que en el titular: va en la
+        // columna 14, la última verde; uno de 15 min y un segundo ya va en la 15, la primera ocre.
+        var conteos = Distribucion.Contar([15, 15 + 1 / 60.0], 35);
+
+        Assert.Equal(1, conteos[14]);
+        Assert.Equal(1, conteos[15]);
     }
 
     [Fact]
@@ -31,7 +43,7 @@ public class DistribucionTiemposTests
 
     [Theory]
     [InlineData(3, 35, "3 a 4 min")]
-    [InlineData(34, 35, "34 min o más")]
+    [InlineData(34, 35, "más de 34 min")]
     public void Rango_NombraElMinutoYElBorde(int columna, int columnas, string texto) =>
         Assert.Equal(texto, Distribucion.Rango(columna, columnas));
 }
