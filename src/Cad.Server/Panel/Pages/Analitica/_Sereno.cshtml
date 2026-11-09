@@ -68,7 +68,7 @@ else
     </section>
 
     <section class="tarjeta-a" aria-labelledby="titulo-llegada">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-llegada">¿Cuánto tarda en llegar?</h3><span class="tarjeta-a__nota">de la asignación al inicio de la atención</span></div>
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-llegada">Tiempo de llegada</h3><span class="tarjeta-a__nota">de la asignación al inicio de la atención</span></div>
         @if (s.Llegadas.Count == 0)
         {
             <p class="tarjeta-a__vacia">No inició ninguna atención en el periodo: no hay llegadas que medir.</p>
@@ -126,7 +126,7 @@ else
 
     <div class="sereno-a__zonas">
         <section class="tarjeta-a" aria-labelledby="titulo-zonas-sereno">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas-sereno">¿Por dónde patrulla?</h3><span class="tarjeta-a__nota">horas por zona, según sus posiciones en turno</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas-sereno">Zonas de patrullaje</h3><span class="tarjeta-a__nota">horas por zona, según sus posiciones en turno</span></div>
             @if (zonas.Count == 0)
             {
                 <p class="tarjeta-a__vacia">No envió posiciones ni atendió casos con ubicación en el periodo.</p>
@@ -174,7 +174,7 @@ else
 
     <div class="rejilla-a rejilla-a--tres">
         <section class="tarjeta-a" aria-labelledby="titulo-notas-sereno">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-notas-sereno">¿Qué opina el ciudadano?</h3><span class="tarjeta-a__nota">de los casos que cerró</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-notas-sereno">Valoración ciudadana</h3><span class="tarjeta-a__nota">de los casos que cerró</span></div>
             @if (s.Evaluaciones == 0)
             {
                 <p class="tarjeta-a__vacia">Nadie evaluó sus casos en el periodo.@(s.CasosCerrados > 0 ? $" Cerró {Formato.Plural(s.CasosCerrados, "caso", "casos")}; evaluar es voluntario." : "")</p>
@@ -215,7 +215,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-resultados-sereno">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-resultados-sereno">¿Cómo terminan sus casos?</h3><span class="tarjeta-a__nota">@Formato.Plural(s.CasosCerrados, "cerrado", "cerrados")</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-resultados-sereno">Resultado de sus casos</h3><span class="tarjeta-a__nota">@Formato.Plural(s.CasosCerrados, "cerrado", "cerrados")</span></div>
             @if (resultados.Count == 0)
             {
                 <p class="tarjeta-a__vacia">No cerró casos en el periodo.</p>
@@ -227,7 +227,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-fiabilidad">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-fiabilidad">¿Se le quitan casos?</h3><span class="tarjeta-a__nota">y dónde inicia la atención</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-fiabilidad">Reasignaciones</h3><span class="tarjeta-a__nota">y dónde inicia la atención</span></div>
             <dl class="cifras-a" data-fiabilidad>
                 <div><dt>Casos que la central le quitó</dt><dd>@(senales.Any(x => x.Clave == "retiros") ? "▲ " : "")@s.Retirados<small> de @s.CasosAsignados</small></dd></div>
                 <div><dt>… porque no respondía</dt><dd>@s.RetiradosPorNoResponder</dd></div>
@@ -240,7 +240,7 @@ else
     </div>
 
     <section class="tarjeta-a" aria-labelledby="titulo-horas-sereno">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-horas-sereno">¿A qué hora atiende?</h3><span class="tarjeta-a__nota">casos que inició por hora del día</span></div>
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-horas-sereno">Atención por hora del día</h3><span class="tarjeta-a__nota">casos que inició</span></div>
         @if (s.CasosAtendidos == 0)
         {
             <p class="tarjeta-a__vacia">Sin atenciones en el periodo.</p>

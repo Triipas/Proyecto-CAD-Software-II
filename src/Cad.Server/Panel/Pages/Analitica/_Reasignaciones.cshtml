@@ -66,7 +66,7 @@ else
 
     <div class="rejilla-a rejilla-a--tres">
         <section class="tarjeta-a" aria-labelledby="titulo-motivos">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-motivos">¿Por qué se reasigna?</h3><span class="tarjeta-a__nota">@Formato.Plural(r.Reasignaciones, "reasignación", "reasignaciones")</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-motivos">Motivos de reasignación</h3><span class="tarjeta-a__nota">@Formato.Plural(r.Reasignaciones, "reasignación", "reasignaciones")</span></div>
             @if (r.Reasignaciones == 0)
             {
                 <p class="tarjeta-a__vacia">No hubo reasignaciones en el periodo.</p>
@@ -78,7 +78,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-espera">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-espera">¿Cuánto tardó en cambiar?</h3><span class="tarjeta-a__nota">con el primer sereno</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-espera">Tiempo hasta la reasignación</h3><span class="tarjeta-a__nota">con el primer sereno</span></div>
             @if (r.Esperas == 0)
             {
                 <p class="tarjeta-a__vacia">Sin reasignaciones en el periodo: no hay tiempo que medir.</p>
@@ -96,7 +96,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-serenos-reasigna">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos-reasigna">¿A cuántos serenos?</h3><span class="tarjeta-a__nota">sin nombres</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos-reasigna">Concentración por sereno</h3><span class="tarjeta-a__nota">sin nombres</span></div>
             <dl class="cifras-a" data-concentracion>
                 <div><dt>Serenos con casos asignados</dt><dd>@r.SerenosConAsignacion</dd></div>
                 <div><dt>Serenos a quienes se les quitó un caso</dt><dd>@r.SerenosConRetiros</dd></div>

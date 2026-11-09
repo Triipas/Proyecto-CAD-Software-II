@@ -79,7 +79,7 @@
         limites.push([s.lat, s.lon]);
       }
     } else if (escala === "frecuencia") {
-      // «¿Cómo rinde cada sereno?»: cuánto de su turno pasó en cada zona (más oscuro = más tiempo) y los casos que atendió ahí. Las
+      // «Rendimiento de los serenos»: cuánto de su turno pasó en cada zona (más oscuro = más tiempo) y los casos que atendió ahí. Las
       // zonas de un sereno son vecinas: solo las 6 donde más está llevan etiqueta (todas juntas se pisan); las demás, su globo.
       const zonas = leer("[data-zonas]");
       const maximo = Math.max(1, ...zonas.map((z) => z.valor));

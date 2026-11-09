@@ -62,7 +62,7 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
 
         Assert.Contains("data-evaluados=\"0\"", html);
         Assert.Contains("Nadie evaluó la atención", html);
-        Assert.Contains("¿Vuelven a usar la app?", html);
+        Assert.Contains("Uso recurrente de la app", html);
     }
 
     [Fact]

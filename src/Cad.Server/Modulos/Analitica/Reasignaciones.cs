@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cad.Server.Modulos.Analitica;
 
-// «¿Se reasigna mucho?» (29/10/2026): con qué frecuencia la central le quita un caso a un sereno para darlo a otro, y por qué. Una
+// «Reasignaciones» (29/10/2026): con qué frecuencia la central le quita un caso a un sereno para darlo a otro, y por qué. Una
 // reasignación solo se hace mientras el sereno aún no llega («Asignada» o «En camino»), así que cada una es tiempo que el
 // ciudadano esperó de más. Se mide sobre lo que ya guardan Asignaciones y Reasignaciones; no guarda nada.
 //

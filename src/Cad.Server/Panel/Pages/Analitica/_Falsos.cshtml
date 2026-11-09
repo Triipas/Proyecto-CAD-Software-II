@@ -92,7 +92,7 @@ else
 
     <div class="rejilla-a rejilla-a--tres">
         <section class="tarjeta-a" aria-labelledby="titulo-terminan">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-terminan">¿En qué terminan los reportes?</h3><span class="tarjeta-a__nota">@Formato.Plural(v.Embudo.Recibidos, "registrado", "registrados")</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-terminan">Resultado de los reportes</h3><span class="tarjeta-a__nota">@Formato.Plural(v.Embudo.Recibidos, "registrado", "registrados")</span></div>
             @if (v.Embudo.Recibidos == 0)
             {
                 <p class="tarjeta-a__vacia">No se registraron reportes en el periodo.</p>
@@ -115,7 +115,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-sos-falsos">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-sos-falsos">¿Y cuántos SOS no eran una emergencia?</h3><span class="tarjeta-a__nota">@Formato.Plural(indice.Sos, "recibido", "recibidos")</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-sos-falsos">SOS que no eran una emergencia</h3><span class="tarjeta-a__nota">@Formato.Plural(indice.Sos, "recibido", "recibidos")</span></div>
             @if (indice.Sos == 0)
             {
                 <p class="tarjeta-a__vacia">No entraron SOS en el periodo.</p>
@@ -133,7 +133,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-fotos">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-fotos">¿Las fotos ayudan?</h3><span class="tarjeta-a__nota">reportes de la app</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-fotos">Reportes con y sin fotos</h3><span class="tarjeta-a__nota">reportes de la app</span></div>
             @if (v.Reportes.ConFotos.Decididos + v.Reportes.SinFotos.Decididos == 0)
             {
                 <p class="tarjeta-a__vacia">Sin reportes decididos en el periodo para comparar.</p>

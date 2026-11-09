@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Cad.Server.Tests.Analitica;
 
-// «¿Se reasigna mucho?» (29/10/2026): cuántos casos asignados se reasignaron, por qué, cuánto los tuvo el primer sereno y a
+// «Reasignaciones» (29/10/2026): cuántos casos asignados se reasignaron, por qué, cuánto los tuvo el primer sereno y a
 // cuántos serenos se les quitó (sin nombres). Fechas propias de marzo de 2010, 2011 y 2012. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class ReasignacionesTests(FabricaCad fabrica)
@@ -142,7 +142,7 @@ public class ReasignacionesTests(FabricaCad fabrica)
 
         Assert.Contains("Se reasignó el <em>50 %</em> de los casos asignados (2 de 4), por encima de la referencia de 10 %.", html);
         Assert.Contains("data-senal=\"reasignados\" data-bien=\"false\"", html);
-        Assert.Contains("¿Por qué se reasigna?", html);
+        Assert.Contains("Motivos de reasignación", html);
         Assert.Contains("El sereno no responde", html);
         Assert.Contains("Retirados por desactivar la cuenta", html);
         // La columna de preguntas la incluye, con su dato del periodo, y el nombre de ningún sereno aparece.

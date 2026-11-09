@@ -103,7 +103,7 @@ else
                 @if (tramos.Count > 0)
                 {
                     <div class="etapas-a" data-etapas>
-                        <p class="etapas-a__titulo">¿En qué etapa se va el tiempo?
+                        <p class="etapas-a__titulo">Tiempo por etapa
                             @if (masLargo.Item1 is { } nombreLargo && sumaTramos > 0 && masLargo.Item2 / sumaTramos >= 0.4)
                             {
                                 <span class="tarjeta-a__nota">«@nombreLargo» se lleva @Formato.Porcentaje(masLargo.Item2 / sumaTramos * 100, 0) del recorrido</span>
@@ -130,7 +130,7 @@ else
 
     <div class="rejilla-a rejilla-a--dos">
         <section class="tarjeta-a" aria-labelledby="titulo-zonas">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas">¿Dónde tardamos más?</h3><span class="tarjeta-a__nota">p90 de respuesta por zona · 3 o más casos</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-zonas">Tiempo de respuesta por zona</h3><span class="tarjeta-a__nota">p90 · 3 o más casos</span></div>
             @if (v.Zonas.Zonas.Count == 0)
             {
                 <p class="tarjeta-a__vacia">Ninguna zona llega a 3 casos en el periodo. Para cuidar la privacidad, una zona con menos casos no se muestra sola.</p>
@@ -148,7 +148,7 @@ else
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-prioridad">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-prioridad">¿Llegamos antes a lo grave?</h3><span class="tarjeta-a__nota">tiempo hasta atender el SOS, por prioridad</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-prioridad">Tiempo de atención por prioridad</h3><span class="tarjeta-a__nota">tiempo hasta atender el SOS</span></div>
             @if (prioridades.Count == 0)
             {
                 <p class="tarjeta-a__vacia">Aún no hay SOS con prioridad en el periodo (se registra al clasificar, desde el 27/10/2026).</p>
@@ -203,7 +203,7 @@ else
                     }
                 </ul>
             }
-            <div class="tarjeta-a__cabecera tarjeta-a__cabecera--separada"><h3>Atascados ahora</h3><span class="tarjeta-a__nota">más tiempo del esperado en su etapa</span></div>
+            <div class="tarjeta-a__cabecera tarjeta-a__cabecera--separada"><h3>SOS sobre el tiempo esperado</h3><span class="tarjeta-a__nota">más tiempo del esperado en su etapa</span></div>
             @if (atascados.Count == 0)
             {
                 <p class="tarjeta-a__vacia">Ningún SOS lleva más de lo esperado en su etapa.</p>

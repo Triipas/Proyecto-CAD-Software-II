@@ -1,7 +1,7 @@
 # Cargador del dataset
 
 Vacía una base de datos del sistema y carga el [dataset de J. L. Bustamante y Rivero](../README.md), con las fechas desplazadas
-para que el periodo de 13 semanas **termine en el momento de la carga**. Así «hoy», «7 días» y «¿Cómo está la central ahora?»
+para que el periodo de 13 semanas **termine en el momento de la carga**. Así «hoy», «7 días» y «Estado de la central»
 muestran datos.
 
 Todo ocurre en una sola transacción: si algo falla, la base de datos queda como estaba.
@@ -47,7 +47,7 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
 4. **Genera lo que el dataset no guarda:**
    - **El estado operativo de cada sereno:** entra en servicio al empezar su turno y sale al terminarlo.
    - **Una posición cada 5 minutos durante el turno:** patrulla las vías de su sector y, mientras atiende un caso, va hacia el punto
-     y se queda ahí. Es la base de «¿Dónde falta cobertura?».
+     y se queda ahí. Es la base de «Cobertura por zona».
    - **Los envíos push del despacho:** el 95 % llega.
    - **Las fotos de los reportes:** imágenes de muestra (`fotos/`).
    - **Los días de uso de la app.**

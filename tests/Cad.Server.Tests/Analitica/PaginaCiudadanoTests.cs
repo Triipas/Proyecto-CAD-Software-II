@@ -6,7 +6,7 @@ using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests.Analitica;
 
-// «¿Qué opina el ciudadano?»: la página explica la relación entre la nota y la espera, y reparte los canales de los reportes en
+// «Valoración ciudadana»: la página explica la relación entre la nota y la espera, y reparte los canales de los reportes en
 // filas con su nombre y su cifra. Fechas propias de 2015. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class PaginaCiudadanoTests(FabricaCad fabrica)

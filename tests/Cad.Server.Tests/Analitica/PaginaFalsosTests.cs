@@ -6,7 +6,7 @@ using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests.Analitica;
 
-// «¿Cuánto de lo que entra es falso?»: la página dice qué cuenta como falso, muestra cada categoría con sus falsos «x de y» y reparte
+// «Reportes y SOS falsos»: la página dice qué cuenta como falso, muestra cada categoría con sus falsos «x de y» y reparte
 // cómo terminan los reportes y los SOS en filas con su nombre y su cifra. Fechas propias de 2019. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class PaginaFalsosTests(FabricaCad fabrica)

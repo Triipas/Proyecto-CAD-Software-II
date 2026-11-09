@@ -5,7 +5,7 @@ using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests.Analitica;
 
-// «¿Dónde falta cobertura?»: el mapa con su leyenda (más o menos cubierta, sin colores solos), la hora de más presión escrita y la
+// «Cobertura por zona»: el mapa con su leyenda (más o menos cubierta, sin colores solos), la hora de más presión escrita y la
 // lista de zonas con el tiempo sin sereno cerca. Fechas propias de 2018. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class PaginaCoberturaTests(FabricaCad fabrica)
@@ -34,7 +34,7 @@ public class PaginaCoberturaTests(FabricaCad fabrica)
         Assert.Contains("data-escala=\"cobertura\"", html);
         Assert.Contains("Más cubierta", html);
         Assert.Contains("Menos de la mitad del tiempo cubierta", html);
-        Assert.Contains("¿Los turnos acompañan a la demanda?", html);
+        Assert.Contains("Turnos y demanda", html);
         Assert.Contains("La hora de más presión es de", html);
         Assert.Contains("Cada gráfico tiene su propia escala", html);
         Assert.Contains("Tiempo sin sereno cerca", html);

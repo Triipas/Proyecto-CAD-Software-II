@@ -5,7 +5,7 @@ using Cad.Server.Tests.Infraestructura;
 
 namespace Cad.Server.Tests.Analitica;
 
-// «¿Funciona el sistema?»: cuenta cada señal fuera de lo aceptable una sola vez, rotula lo que mide cada paso de la cadena y
+// «Salud del sistema»: cuenta cada señal fuera de lo aceptable una sola vez, rotula lo que mide cada paso de la cadena y
 // explica la leyenda de las señales. Fechas propias de 2014. Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class PaginaSistemaTests(FabricaCad fabrica)

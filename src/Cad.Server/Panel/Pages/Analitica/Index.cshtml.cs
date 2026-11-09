@@ -21,7 +21,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     [BindProperty(SupportsGet = true)] public string? Desde { get; set; }
     [BindProperty(SupportsGet = true)] public string? Hasta { get; set; }
     [BindProperty(SupportsGet = true)] public string? Prioridad { get; set; }
-    // «¿Cómo rinde cada sereno?»: el sereno elegido; sin él, la lista de todos.
+    // «Rendimiento de los serenos»: el sereno elegido; sin él, la lista de todos.
     [BindProperty(SupportsGet = true)] public Guid? Sereno { get; set; }
 
     public Preguntas.Definicion Actual { get; private set; } = Preguntas.Todas[1];

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Cad.Server.Modulos.Analitica;
 
-// «¿Cómo rinde cada sereno?» (03/11/2026): la única pregunta de la analítica que nombra a una persona. El resto sigue agregado; esta
+// «Rendimiento de los serenos» (03/11/2026): la única pregunta de la analítica que nombra a una persona. El resto sigue agregado; esta
 // la pidió el usuario para que la supervisión vea a cada sereno: cuánto trabaja, qué tan rápido llega, qué opina el ciudadano de su
 // atención, cuántos casos se le quitan y por dónde patrulla. No lleva datos del ciudadano: ni nombres ni comentarios.
 //

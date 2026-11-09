@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Cad.Server.Tests.Analitica;
 
-// «¿Cómo rinde cada sereno?» (03/11/2026): llegada, calificación, inicios fuera de rango, casos quitados, turno y zonas de cada
+// «Rendimiento de los serenos» (03/11/2026): llegada, calificación, inicios fuera de rango, casos quitados, turno y zonas de cada
 // sereno, comparados con el equipo. Fechas propias de marzo de 2007 y 2008 (cada prueba en su año: la base se comparte). Datos ficticios.
 [Collection(ColeccionServidor.Nombre)]
 public class RendimientoSerenosTests(FabricaCad fabrica)

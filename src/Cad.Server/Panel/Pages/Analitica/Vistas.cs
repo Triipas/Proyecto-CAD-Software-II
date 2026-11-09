@@ -47,18 +47,18 @@ public static class Preguntas
     // Iconos de trazo de 24×24, como _Icono.
     public static readonly IReadOnlyList<Definicion> Todas =
     [
-        new("ahora", "¿Cómo está la central ahora?", "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4l3 2\"/>"),
-        new("tiempo", "¿Llegamos a tiempo?", "<path d=\"M4 17h16M4 17V7m4 10v-4m4 4V9m4 8v-6\"/>"),
-        new("falsos", "¿Cuánto de lo que entra es falso?", "<path d=\"M12 3 21 19H3z\"/><path d=\"M12 10v4m0 3v.01\"/>"),
-        new("cobertura", "¿Dónde falta cobertura?", "<path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>"),
-        new("reasigna", "¿Se reasigna mucho?", "<path d=\"M4 8h13m-3-3 3 3-3 3\"/><path d=\"M20 16H7m3-3-3 3 3 3\"/>"),
-        new("serenos", "¿Cómo rinde cada sereno?", "<path d=\"M12 3 19 6v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z\"/><path d=\"m9 12 2 2 4-4\"/>"),
-        new("repite", "¿Qué se repite?", "<path d=\"M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3\"/><path d=\"M18 3v4h-4M6 21v-4h4\"/>"),
-        new("ciudadano", "¿Qué opina el ciudadano?", "<circle cx=\"12\" cy=\"8\" r=\"3.5\"/><path d=\"M5 20c1-4 4-6 7-6s6 2 7 6\"/>"),
-        new("sistema", "¿Funciona el sistema?", "<rect x=\"4\" y=\"5\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M9 20h6M12 16v4\"/>"),
+        new("ahora", "Estado de la central", "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4l3 2\"/>"),
+        new("tiempo", "Tiempos de respuesta", "<path d=\"M4 17h16M4 17V7m4 10v-4m4 4V9m4 8v-6\"/>"),
+        new("falsos", "Reportes y SOS falsos", "<path d=\"M12 3 21 19H3z\"/><path d=\"M12 10v4m0 3v.01\"/>"),
+        new("cobertura", "Cobertura por zona", "<path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>"),
+        new("reasigna", "Reasignaciones", "<path d=\"M4 8h13m-3-3 3 3-3 3\"/><path d=\"M20 16H7m3-3-3 3 3 3\"/>"),
+        new("serenos", "Rendimiento de los serenos", "<path d=\"M12 3 19 6v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z\"/><path d=\"m9 12 2 2 4-4\"/>"),
+        new("repite", "Incidencias recurrentes", "<path d=\"M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3\"/><path d=\"M18 3v4h-4M6 21v-4h4\"/>"),
+        new("ciudadano", "Valoración ciudadana", "<circle cx=\"12\" cy=\"8\" r=\"3.5\"/><path d=\"M5 20c1-4 4-6 7-6s6 2 7 6\"/>"),
+        new("sistema", "Salud del sistema", "<rect x=\"4\" y=\"5\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M9 20h6M12 16v4\"/>"),
     ];
 
-    // Sin pregunta en la dirección: «¿Llegamos a tiempo?», la pregunta central de un servicio de respuesta.
+    // Sin vista en la dirección: «Tiempos de respuesta», la vista central de un servicio de respuesta.
     public static Definicion? Buscar(string? clave) => string.IsNullOrEmpty(clave) ? Todas[1] : Todas.FirstOrDefault(p => p.Clave == clave);
 
     public static HtmlString Icono(Definicion d) =>
@@ -257,7 +257,7 @@ public static class Ciudadano
     }
 }
 
-// Las señales de «¿Funciona el sistema?», cada una con su límite aceptable (provisional: lo fija el PO).
+// Las señales de «Salud del sistema», cada una con su límite aceptable (provisional: lo fija el PO).
 public static class Sistema
 {
     public sealed record Senal(string Nombre, string Ayuda, double? Valor, double Limite, double Maximo, bool MayorEsMejor)
@@ -291,7 +291,7 @@ public static class Sistema
     }
 }
 
-// «¿Cómo rinde cada sereno?»: lo que conviene mirar de un sereno frente al equipo. Cada señal pide casos suficientes (con dos casos
+// «Rendimiento de los serenos»: lo que conviene mirar de un sereno frente al equipo. Cada señal pide casos suficientes (con dos casos
 // un sereno no es «lento») y va con su texto: nunca solo color.
 public static class Rendimiento
 {

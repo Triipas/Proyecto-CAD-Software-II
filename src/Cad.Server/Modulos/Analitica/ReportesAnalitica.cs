@@ -10,7 +10,7 @@ namespace Cad.Server.Modulos.Analitica;
 // hace días después dice que la app no se usa en el momento. Una hora del hecho posterior al registro cuenta como cero.
 public sealed record DemoraCategoria(string Categoria, int Reportes, double? HorasP50, double? HorasP90, double PorcentajeEnLaPrimeraHora);
 
-// Bloque C, propuesta 12 — ¿las fotos ayudan? Reportes decididos en el periodo (sin los que registró la central, que entran ya
+// Bloque C, propuesta 12 — «Reportes con y sin fotos». Reportes decididos en el periodo (sin los que registró la central, que entran ya
 // admitidos), con y sin fotos: cuántos se admitieron, derivaron o descartaron, y cuántos descartes fueron por falsos (HU17 con
 // el motivo del catálogo, desde el 27/10/2026).
 public sealed record DecisionesSegunFotos(int Decididos, int Admitidos, int Derivados, int Descartados, int DescartadosPorFalsos)
