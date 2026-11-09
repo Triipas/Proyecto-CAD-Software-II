@@ -3573,7 +3573,7 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
 .radar-a__centro b { font-size: var(--texto-2xl); font-weight: var(--peso-fuerte); color: #FFFFFF; letter-spacing: -0.02em; }
 .radar-a__centro span { margin-top: 2px; font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
 
-/* Foco en una etapa: lo demás se atenúa (analitica-ahora.js marca la etapa con .es-foco). */
+/* Foco en una etapa: lo demás se atenúa (analitica.js marca la etapa con .es-foco). */
 .radar-a__radar[data-foco] :is(.radar-a__caso, .radar-a__rotulo):not(.es-foco) { opacity: 0.2; }
 
 /* La lista de etapas, a la derecha del radar (debajo en pantallas angostas). */
@@ -3773,7 +3773,80 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
 .leyenda-turno__libre { background: var(--color-tenue); box-shadow: inset 0 0 0 1.5px var(--rampa-2); }
 .leyenda-turno__ocupado { background: var(--marino-700); }
 
-/* La entrada (una vez, al abrir la pestaña; analitica-ahora.js pone .radar-a--entrando y lo quita al terminar): el radar se abre
+/* Varios casos casi encima: una marca más grande con su cantidad (Radar.Marcas). Cada marca se enfoca con el teclado y su globo da
+   el tiempo de cada caso; el globo se abre hacia el centro del radar para no salirse por el costado. */
+.radar-a__caso {
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  font-weight: var(--peso-fuerte);
+  line-height: 1;
+  color: var(--marino-900);
+  cursor: default;
+}
+
+.radar-a__caso--grupo {
+  width: 1.375rem;
+  height: 1.375rem;
+  margin: -0.6875rem 0 0 -0.6875rem;
+}
+
+.radar-a__caso--tarde.radar-a__caso--grupo { color: var(--color-advertencia-sobre-marino); }
+
+.radar-a__caso:hover,
+.radar-a__caso:focus-visible { z-index: 6; }
+
+.radar-a__caso:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco-sobre-marino);
+  outline-offset: 3px;
+}
+
+.radar-a__globo {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  gap: var(--espacio-1);
+  min-width: 9.5rem;
+  padding: var(--espacio-2) var(--espacio-3);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  box-shadow: var(--sombra-3);
+  color: var(--color-texto);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  line-height: 1.35;
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-1.25rem, 4px);
+  transition: opacity var(--duracion-rapida) ease, transform var(--duracion-rapida) ease, visibility 0s linear var(--duracion-rapida);
+}
+
+.radar-a__caso--der .radar-a__globo { left: auto; right: 50%; transform: translate(1.25rem, 4px); }
+
+.radar-a__caso:hover .radar-a__globo,
+.radar-a__caso:focus-visible .radar-a__globo {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-1.25rem, 0);
+  transition-delay: 0s;
+}
+
+.radar-a__caso--der:hover .radar-a__globo,
+.radar-a__caso--der:focus-visible .radar-a__globo { transform: translate(1.25rem, 0); }
+
+.radar-a__globo b { font-size: var(--texto-sm); font-weight: var(--peso-fuerte); color: var(--color-marino); }
+.radar-a__globo-lista { display: grid; gap: 1px; color: var(--color-texto-secundario); }
+.radar-a__globo .tarde { color: var(--color-advertencia); font-weight: var(--peso-medio); }
+.radar-a__globo .bien { color: var(--color-exito); font-weight: var(--peso-medio); }
+.radar-a__globo .mas { color: var(--color-texto-terciario); }
+
+/* La entrada (una vez, al abrir la pestaña; analitica.js pone .radar-a--entrando y lo quita al terminar): el radar se abre
    desde el centro, un haz menta da una vuelta y cada caso aparece con un destello cuando el haz pasa por su etapa. En vivo no se
    repite: los puntos que siguen se deslizan a su sitio nuevo (movimiento.js) y el que entra aparece con dos ondas. */
 @keyframes radar-abrir {

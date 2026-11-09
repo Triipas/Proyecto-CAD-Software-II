@@ -8,7 +8,7 @@ namespace Cad.Server.Panel.Pages.Analitica;
 // resto) y cada caso abierto es un punto: el ángulo dice su etapa y la distancia al centro, cuántas veces lleva su tiempo
 // esperado. Todas las porciones comparten esa medida, así el anillo verde (de 0 a 1×) cae en el mismo lugar para todas aunque una
 // etapa tolere 3 min y otra 60; más allá de 3×, el caso queda en el borde con su tiempo escrito. Se dibuja en el servidor (SVG y
-// puntos con posición en %): se lee sin JavaScript, y analitica-ahora.js solo suma el barrido de entrada, el foco y el vivo.
+// puntos con posición en %): se lee sin JavaScript, y analitica.js solo suma el barrido de entrada, el foco y el vivo.
 public static class Radar
 {
     public const double Alcance = 3;          // el borde: 3 veces lo esperado
@@ -106,6 +106,48 @@ public static class Radar
             .OrderBy(c => c.EnEtapaDesde).ThenBy(c => c.CasoId).ToList();
         return lista.Select((c, i) => new Caso(c.CasoId, c.Minutos, c.UmbralMinutos, c.VecesElUmbral,
             etapa.Desde + (etapa.Hasta - etapa.Desde) * (i + 1) / (lista.Count + 1))).ToList();
+    }
+
+    // Una marca del radar: un caso o, si quedaron casi encima, varios juntos con su cantidad (como los carriles de antes). Una etapa
+    // atascada amontona sus casos en el borde (todos valen «3× o más»): ahí se juntan con más margen, porque además llevan su tiempo
+    // escrito y los rótulos se pisarían. La clave es la del caso más antiguo de la marca, para que en vivo se deslice en lugar de
+    // rehacerse.
+    public sealed record Marca(IReadOnlyList<Caso> Casos, double X, double Y, double Grados)
+    {
+        public string Clave => $"caso-{Casos[0].Id}";
+        public bool Grupo => Casos.Count > 1;
+        public bool Tarde => Casos.Any(c => c.Tarde);
+        public bool Lejos => Casos.Any(c => c.Lejos);
+        public double MasLargo => Casos.Max(c => c.Minutos);
+        public int Esperado => Casos[0].Esperado;
+    }
+
+    // Separación mínima entre centros, en unidades del viewBox: una marca mide 14 px y el radar, a lo sumo 544 px de ancho
+    // (640 unidades), así que 18 unidades son unos 15 px. En el borde, 46 unidades: el ancho de su tiempo escrito.
+    public const double Separacion = 18, SeparacionEnElBorde = 46;
+
+    public static IReadOnlyList<Marca> Marcas(IReadOnlyList<Caso> casos)
+    {
+        var grupos = new List<List<Caso>>();
+        foreach (var caso in casos)
+        {
+            var (x, y) = caso.Posicion;
+            var junto = grupos.FirstOrDefault(g =>
+            {
+                var (gx, gy) = Centro_(g);
+                var minimo = caso.Lejos && g.Any(c => c.Lejos) ? SeparacionEnElBorde : Separacion;
+                return Math.Sqrt((gx - x) * (gx - x) + (gy - y) * (gy - y)) < minimo;
+            });
+            if (junto is null) grupos.Add([caso]);
+            else junto.Add(caso);
+        }
+        return grupos.Select(g =>
+        {
+            var (x, y) = Centro_(g);
+            return new Marca(g, x, y, g.Average(c => c.Grados));
+        }).ToList();
+
+        static (double X, double Y) Centro_(List<Caso> g) => (g.Average(c => c.Posicion.X), g.Average(c => c.Posicion.Y));
     }
 
     // El rótulo va afuera del borde, alineado según el lado del círculo para no pisarlo.

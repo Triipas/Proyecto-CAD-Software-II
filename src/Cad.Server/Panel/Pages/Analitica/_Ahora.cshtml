@@ -42,7 +42,7 @@
         </div>
 
         <div class="radar-a__cuerpo">
-            <div class="radar-a__radar" data-radar role="img" aria-label="Radar de los @Formato.Plural(abiertos.Count, "caso abierto", "casos abiertos") por etapa: @(atascados == 0 ? "ninguno pasó" : $"{atascados} pasaron") el tiempo esperado.">
+            <div class="radar-a__radar" data-radar role="group" aria-label="Radar de los @Formato.Plural(abiertos.Count, "caso abierto", "casos abiertos") por etapa: @(atascados == 0 ? "ninguno pasó" : $"{atascados} pasaron") el tiempo esperado.">
                 <svg viewBox="-320 -320 640 640" aria-hidden="true" focusable="false">
                     <g class="radar-a__fondo">
                         <path class="radar-a__cunas" d="@(string.Concat(etapas.Select(x => Radar.Cuna(Radar.Centro, Radar.Borde, x.Etapa.Desde, x.Etapa.Hasta))))" />
@@ -69,14 +69,29 @@
                 <span class="radar-a__centro"><b data-suave>@abiertos.Count</b><span>@(abiertos.Count == 1 ? "abierto" : "abiertos")</span></span>
                 @foreach (var x in etapas)
                 {
-                    foreach (var c in x.Casos)
+                    @* Los casos casi encima se juntan en una marca con su cantidad; el globo (al pasar el cursor o enfocarla) da cada tiempo. *@
+                    foreach (var marca in Radar.Marcas(x.Casos))
                     {
-                        var (px, py) = c.Posicion;
-                        <span class="radar-a__caso@(c.Tarde ? " radar-a__caso--tarde" : "")" data-clave="caso-@c.Id" data-etapa="@x.Etapa.Clave"
-                              style="left:@Radar.Porcentaje(px);top:@Radar.Porcentaje(py);--llegada:@(Radar.Llegada(c.Grados))ms">@if (c.Lejos)
+                        var clases = "radar-a__caso" + (marca.Tarde ? " radar-a__caso--tarde" : "") + (marca.Grupo ? " radar-a__caso--grupo" : "") + (marca.X > 0 ? " radar-a__caso--der" : "");
+                        <span class="@clases" data-clave="@marca.Clave" data-etapa="@x.Etapa.Clave" tabindex="0"
+                              style="left:@Radar.Porcentaje(marca.X);top:@Radar.Porcentaje(marca.Y);--llegada:@(Radar.Llegada(marca.Grados))ms">@(marca.Grupo ? marca.Casos.Count.ToString() : "")@if (marca.Lejos)
                             {
-                                <span class="radar-a__lejos" style="@Radar.EstiloLejos(c.Grados)">@Formato.Minutos(c.Minutos)</span>
-                            }</span>
+                                <span class="radar-a__lejos" style="@Radar.EstiloLejos(marca.Grados)" aria-hidden="true">@(marca.Grupo ? "hasta " : "")@Formato.Minutos(marca.MasLargo)</span>
+                            }<span class="radar-a__globo" role="tooltip">
+                                <b>@x.Etapa.Nombre: @(marca.Grupo ? Formato.Plural(marca.Casos.Count, "caso", "casos") : Formato.Minutos(marca.Casos[0].Minutos) + " en la etapa")</b>
+                                @if (marca.Grupo)
+                                {
+                                    <span class="radar-a__globo-lista">
+                                        @foreach (var c in marca.Casos.OrderByDescending(c => c.Minutos).Take(5))
+                                        {
+                                            <span class="@(c.Tarde ? "tarde" : "")">@Formato.Minutos(c.Minutos)</span>
+                                        }
+                                        @if (marca.Casos.Count > 5) { <span class="mas">y @(marca.Casos.Count - 5) más</span> }
+                                    </span>
+                                }
+                                @{ var pasados = marca.Casos.Count(c => c.Tarde); }
+                                <span class="@(marca.Tarde ? "tarde" : "bien")">@(pasados == 0 ? "✓ A tiempo" : !marca.Grupo ? "▲ Ya pasó lo esperado" : pasados == 1 ? "▲ 1 pasó lo esperado" : $"▲ {pasados} pasaron lo esperado") (hasta @Formato.Minutos(marca.Esperado))</span>
+                            </span></span>
                     }
                 }
             </div>

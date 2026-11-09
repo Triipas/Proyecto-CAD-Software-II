@@ -54,6 +54,44 @@ public class RadarAhoraTests
     }
 
     [Fact]
+    public void Marcas_DiezSosAtascadosEnElBorde_SeJuntanSinPisarse()
+    {
+        // El caso que se reportó en la revisión: diez SOS pendientes con más de 3× lo esperado quedan todos en el borde.
+        var etapa = Radar.De(EstadoCaso.Pendiente, reporte: false)!;
+        var ahora = DateTimeOffset.UtcNow;
+        var abiertos = Enumerable.Range(0, 10)
+            .Select(i => new CasoAtascado(Guid.NewGuid(), OrigenCaso.Sos, EstadoCaso.Pendiente, ahora.AddMinutes(-(20 + i)), 20 + i, 3))
+            .ToList();
+
+        var marcas = Radar.Marcas(Radar.Casos(etapa, abiertos));
+
+        Assert.Equal(10, marcas.Sum(m => m.Casos.Count));
+        Assert.True(marcas.Count <= 3);
+        Assert.All(marcas, m => Assert.True(m.Lejos && m.Tarde));
+        for (var i = 0; i < marcas.Count; i++)
+            for (var j = i + 1; j < marcas.Count; j++)
+                Assert.True(Math.Sqrt(Math.Pow(marcas[i].X - marcas[j].X, 2) + Math.Pow(marcas[i].Y - marcas[j].Y, 2)) >= Radar.Separacion);
+    }
+
+    [Fact]
+    public void Marcas_CasosSeparados_QuedanCadaUnoEnSuMarca()
+    {
+        var etapa = Radar.De(EstadoCaso.Recibido, reporte: true)!;
+        var ahora = DateTimeOffset.UtcNow;
+        var abiertos = new[]
+        {
+            new CasoAtascado(Guid.NewGuid(), OrigenCaso.Reporte, EstadoCaso.Recibido, ahora.AddMinutes(-2), 2, 15),
+            new CasoAtascado(Guid.NewGuid(), OrigenCaso.Reporte, EstadoCaso.Recibido, ahora.AddMinutes(-30), 30, 15),
+        };
+
+        var marcas = Radar.Marcas(Radar.Casos(etapa, abiertos));
+
+        Assert.Equal(2, marcas.Count);
+        Assert.All(marcas, m => Assert.False(m.Grupo));
+        Assert.Equal($"caso-{abiertos[1].CasoId}", marcas[0].Clave); // el más antiguo primero
+    }
+
+    [Fact]
     public void Llegada_EsCuandoPasaElHaz()
     {
         Assert.Equal(0, Radar.Llegada(Radar.Inicio));
