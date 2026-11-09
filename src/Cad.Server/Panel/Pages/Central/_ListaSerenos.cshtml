@@ -73,6 +73,7 @@
                     data-sereno="@sereno.Id" data-nombre="@sereno.Nombre" data-orden="@orden"
                     data-disponible="@(sereno.Disponible ? "true" : "false")"
                     data-lat="@sereno.Latitud?.ToString(inv)" data-lon="@sereno.Longitud?.ToString(inv)" data-caso="@sereno.CasoAsignadoId"
+                    data-precision="@sereno.PrecisionMetros?.ToString(inv)" data-posicion-en="@sereno.UltimaPosicionEn?.ToString("O", inv)"
                     data-hora="@hora" data-clave="@sereno.Id">
                     <span class="sereno__escudo" aria-hidden="true">
                         <svg viewBox="0 0 32 36" focusable="false"><path d="M16 2 30 8v9c0 9-6 15-14 17C8 32 2 26 2 17V8z" /><text x="16" y="21" text-anchor="middle">@Iniciales(sereno.Nombre)</text></svg>

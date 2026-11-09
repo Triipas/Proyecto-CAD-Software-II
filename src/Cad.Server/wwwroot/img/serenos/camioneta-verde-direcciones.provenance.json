@@ -1,0 +1,31 @@
+{
+  "asset": "camioneta-verde-direcciones.png",
+  "created": "2026-11-09",
+  "tool": "image_gen.imagegen (integrado)",
+  "useCase": "precise-object-edit",
+  "sourceArtifact": "exec-d2ef742f-5680-4a5f-a378-dee0c58ad428.png",
+  "previousSourceArtifact": "exec-49a8fd9f-f2e1-4023-8391-ae6de3c9186a.png",
+  "refinement": {"tool":"image_gen.imagegen (integrado)","referenceArtifact":"exec-49a8fd9f-f2e1-4023-8391-ae6de3c9186a.png","change":"Verde más claro por petición del usuario, conservando modelo, posiciones y sirenas.","prompt":"Use case: precise-object-edit. EDIT this exact production sprite atlas with a color-only adjustment: make the green bodywork of all EIGHT pickup trucks noticeably LIGHTER. Current body green is too dark forest green. Use a clear soft medium-light grass green, approximately #65BE7B for the main lit body, #91D69E for the brightest roof/hood surfaces, and #3C9859 for shaded body panels. It must remain visibly green, with enough simple shading to read as 3D, neither dark forest green nor neon/lime/yellow/teal. Keep the same matte solid-colored simplified 3D appearance. Preserve EXACTLY the 1774x887 transparent canvas, four columns by two rows, eight sprite positions, scale, padding, truck silhouettes, geometry, cabin, open beds, wheels, dark windows, cyan lightbars and contact shadows. ONLY recolor the already green body panels to lighter green. No other changes. Keep lightbars transverse across cabin width with their current corrected perspective, particularly NE and NW rear three-quarter views. Preserve heading order N, NE, E, SE / S, SW, W, NW. Do not redesign the truck, move objects, change lighting direction, add textures, labels, badges, visible grids or backgrounds. Preserve true transparent alpha, no baked checkerboard. Output only the complete recolored lighter-green atlas, identical layout and proportions."},
+  "referenceArtifact": "exec-f8a31b96-2ee9-4e9b-a13d-bae830047dad.png",
+  "change": "Carrocería verde para serenazgo por petición del usuario. Conserva las ocho perspectivas y las sirenas transversales corregidas; no cambia el atlas gris.",
+  "transparent": true,
+  "pixels": {
+    "width": 1774,
+    "height": 887
+  },
+  "atlas": {
+    "columns": 4,
+    "rows": 2,
+    "headings": [
+      "N",
+      "NE",
+      "E",
+      "SE",
+      "S",
+      "SO",
+      "O",
+      "NO"
+    ]
+  },
+  "prompt": "Use case: precise-object-edit. EDIT the supplied corrected production sprite atlas by recoloring ONLY the blue bodywork of all EIGHT identical compact pickup trucks to municipal SERENAZGO GREEN. Preserve the exact original transparent 1774x887 pixel canvas (2:1 aspect), 4 columns by 2 rows, all sprite positions, padding, scale, outlines, silhouettes, cabin and open cargo bed geometry, wheels, windows, mirrors, lightbar shapes and ground shadows. The same simple rounded matte 3D icon style, no real textures. Body color: clear medium forest/emerald GREEN around #1D8A51, lighter solid green highlights around #42A86B and darker forest-green shaded panels around #145537. The green must be distinctly green, not teal, cyan, olive, lime, neon or blue. Apply to roof, hood, doors, fenders, bumpers, tailgate and inside pickup bed side panels; retain coherent original shading and volume. Keep the windows and tires dark and the small cyan emergency roof lightbars unchanged. Lightbars must preserve their corrected TRANSVERSE orientation crossing the WIDTH of the cab in every perspective. Especially NE top row column 2 has bar long edge sloping upper-left to lower-right; NW bottom row column 4 has bar long edge sloping lower-left to upper-right. Keep these exact orientations. Do not rotate or move any truck or any lightbar. Keep all eight existing headings in this order: first row N, NE, E, SE; second row S, SW, W, NW. Every green sprite must align exactly with the supplied blue original and the existing gray version so switching availability never shifts the vehicle. Do not redesign, change proportions, add lettering, badges, police markings, patterns, white panels, orange parts, realistic textures, extra details, frames, labels or visible grid. Preserve genuine transparent alpha background and tiny contact shadows. No checkerboard baked in. Output only the complete GREEN recolored atlas with the same 2:1 layout."
+}

@@ -1,0 +1,31 @@
+{
+  "asset": "camioneta-azul-direcciones.png",
+  "created": "2026-11-09",
+  "tool": "image_gen.imagegen (integrado)",
+  "useCase": "stylized-concept",
+  "approvedDirection": "Opción A · Camioneta compacta, tonos azules sólidos y volumen 3D sin texturas realistas",
+  "sourceArtifact": "exec-f8a31b96-2ee9-4e9b-a13d-bae830047dad.png",
+  "originalSourceArtifact": "exec-96f330ad-31ea-4be6-8d3f-85380f4313f6.png",
+  "correction": {"created":"2026-11-09","tool":"image_gen.imagegen (integrado)","sourceArtifact":"exec-f8a31b96-2ee9-4e9b-a13d-bae830047dad.png","referenceArtifact":"exec-96f330ad-31ea-4be6-8d3f-85380f4313f6.png","change":"Sirena transversal al ancho de la cabina en las vistas NE y NO.","prompt":"Use case: precise-object-edit. EDIT the supplied production sprite atlas, do not redesign it. Keep its original 2:1 canvas, transparent alpha background, four equal columns by two equal rows, identical vehicle positions, scale, padding, silhouette, eight headings, every blue body panel, wheels, windows, cargo beds and shadows unchanged. Exactly eight blue compact pickup sprites. Heading order: top row N, NE, E, SE; bottom row S, SW, W, NW. ONLY correction: the small cyan emergency lightbar must lie TRANSVERSELY across the cabin roof, from the driver's side to the passenger's side, perpendicular to the vehicle's forward-backward axis, parallel to the top edge of the rear cab window. In particular the LAST sprite, bottom row column 4, the rear three-quarter truck pointing upper-left, incorrectly has a longitudinal lightbar: rotate ONLY its cyan lightbar 90 degrees IN THE PLANE OF THE ROOF so that it spans the width of the cab. Its long edge in image space should slope from lower-left to upper-right, like the top edge of its rear cab window; NOT from upper-left to lower-right. The second sprite, top row column 2, rear three-quarter truck facing upper-right, has the same problem: turn its bar across the cabin as well; its long edge should slope from upper-left to lower-right. The lightbars of all other six sprites are already correct, retain them exactly. All lightbars are small identical cyan rectangular 3D blocks attached to the roof, seen in correct perspective. Do not rotate the truck, do not move any sprite, do not change any other pixels or add any object. No text, labels, borders, grid lines, backdrop, checkerboard or photographic texture. Preserve true transparency; no checkerboard baked in. Output the complete corrected atlas only, same proportions and layout as the original."},
+  "referenceArtifact": "exec-b9b91d65-925d-46cf-9e7d-05d257780b61.png (columna A)",
+  "transparent": true,
+  "pixels": {
+    "width": 1774,
+    "height": 887
+  },
+  "atlas": {
+    "columns": 4,
+    "rows": 2,
+    "headings": [
+      "N",
+      "NE",
+      "E",
+      "SE",
+      "S",
+      "SO",
+      "O",
+      "NO"
+    ]
+  },
+  "prompt": "Use case: stylized-concept. Asset type: production transparent 8-direction game sprite atlas for a Leaflet municipal dispatch map. Reference image: the selected design is ONLY column A 'Camioneta compacta' in the supplied board. Match that exact blue double-cab pickup with rounded corners, open rear cargo bed, chunky dark navy tires and navy windows, solid institutional blue body #1D4ED8, one small solid cyan roof lightbar. Preserve simplified 3D geometry, matte solid blue shading, no realistic textures, no chrome, no white body, no logos or letters. Generate the ACTUAL SPRITES, NOT a proposal board. REQUIRED OUTPUT SIZE 2048x1024 pixels, transparent alpha background. Exactly 4 columns by 2 rows, each cell 512x512 pixels, exactly one identical pickup in each cell. Each truck at identical scale and visually centered in its cell, occupies 360px maximum in either dimension, entire vehicle with plenty of transparent padding; soft very small contact shadow only. CAMERA FIXED: orthographic high view 60 degrees above the ground; camera looks from the south; north is top of image; truck turns only on ground plane; redraw the actual corresponding front/side/rear surfaces, DO NOT simply rotate a flat picture. Precisely follow the headings below, measured by the direction the FRONT HOOD points in screen space. First row, left to right: 1 NORTH (hood/front points straight UP, tailgate/rear toward viewer), 2 NORTHEAST (hood/front points UPPER RIGHT, rear and left side visible), 3 EAST (hood/front points RIGHT, LEFT SIDE visible), 4 SOUTHEAST (hood/front points LOWER RIGHT, FRONT grille and left side visible). Second row, left to right: 5 SOUTH (hood/front points straight DOWN toward viewer, FRONT grille visible), 6 SOUTHWEST (hood/front points LOWER LEFT, FRONT grille and right side visible), 7 WEST (hood/front points LEFT, RIGHT SIDE visible), 8 NORTHWEST (hood/front points UPPER LEFT, rear and right side visible). This exact atlas order is essential. Same blue pickup model, same wheel size, same proportions, same elevated orthographic camera and same fixed upper-left lighting in every cell. Use consistently centered ground contact. NO text, NO borders or grid, NO checkerboard baked in, NO background, NO map, NO arrows. Exactly EIGHT vehicles, eight directions, 4x2 grid."
+}

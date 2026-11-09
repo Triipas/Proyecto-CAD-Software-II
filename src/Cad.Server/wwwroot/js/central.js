@@ -33,7 +33,7 @@
   const nuevos = new Set();
   const reducido = matchMedia("(prefers-reduced-motion: reduce)");
   // Los marcadores (forma, icono y ancla) los define marcadores.js, comunes con los mapas de detalle.
-  const { SIRENA, DOCUMENTO, escudo } = window.cadMarcadores;
+  const { SIRENA, DOCUMENTO } = window.cadMarcadores;
 
   // ---------- Mapa base mínimo (Leaflet + OpenStreetMap) ----------
   // El zoom va abajo a la derecha: arriba a la izquierda lo taparía la cola de trabajo.
@@ -626,23 +626,24 @@
     dibujarRecorridos(vinculos());
   }
 
-  // Un solo marcador: el del caso, con el escudo del sereno encima y la etiqueta «En el lugar».
+  // Un solo marcador: la camioneta, el distintivo del caso y la etiqueta «En el lugar».
   const fichaEnElLugar = (v) => ficha({
     tipo: v.caso.dataset.origen === "Reporte" ? "reporte" : "sos", etiqueta: v.caso.dataset.origen, estado: v.caso.dataset.estado, titulo: v.caso.dataset.ciudadano,
-    datos: [["Sereno", `${v.sereno.dataset.nombre} · en el lugar`], ["Posición", `a ${Math.round(v.metros)} m del caso · ${v.sereno.dataset.hora}`]],
+    datos: [["Sereno", `${v.sereno.dataset.nombre} · en el lugar`], ["Posición", `a ${Math.round(v.metros)} m del caso · ${v.sereno.dataset.hora}`],
+      ["Orientación", cadMarcadores.textoOrientacion(orientacionesSerenos.get(v.sereno.dataset.sereno))]],
     acciones: accion(v.caso.dataset.detalle, "Abrir el caso", false),
   });
 
-  function marcadorEnElLugar(v) {
+  function marcadorEnElLugar(v, rumbo) {
     const reporte = v.caso.dataset.origen === "Reporte";
     const disponible = v.sereno.dataset.disponible === "true";
     const texto = `${v.caso.dataset.origen} · ${v.caso.dataset.estado} · sereno ${v.sereno.dataset.nombre} en el lugar`;
     return L.marker(v.puntoCaso, {
       icon: L.divIcon({
-        className: `marcador-conjunto marcador-conjunto--${reporte ? "reporte" : "sos"}`,
+        className: `marcador-conjunto marcador-conjunto--vehiculo marcador-conjunto--${reporte ? "reporte" : "sos"}`,
         html: `<span class="conjunto__caso ${reporte ? "marcador-reporte" : "marcador-sos"} marcador-caso--en-curso">${reporte ? DOCUMENTO : SIRENA}</span>`
-          + `<span class="conjunto__sereno marcador-sereno">${escudo(disponible)}</span><span class="conjunto__etiqueta">En el lugar</span>`,
-        iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -24],
+          + `<span class="conjunto__sereno marcador-sereno marcador-sereno--vehiculo">${cadMarcadores.camioneta(disponible, rumbo)}</span><span class="conjunto__etiqueta">En el lugar</span>`,
+        iconSize: [56, 56], iconAnchor: [28, 32], popupAnchor: [0, -28],
       }),
       title: texto,
       alt: texto,
@@ -653,11 +654,13 @@
 
   const fichaSereno = (item, disponible) => ficha({
     tipo: "sereno", etiqueta: "Sereno", estado: disponible ? "Disponible" : "No disponible", titulo: item.dataset.nombre,
-    datos: [["Ubicación", `Última a las ${item.dataset.hora}`]],
+    datos: [["Ubicación", `Última a las ${item.dataset.hora}`], ["Orientación", cadMarcadores.textoOrientacion(orientacionesSerenos.get(item.dataset.sereno))]],
   });
 
-  // Un sereno que sigue igual (mismo caso en el lugar, o misma disponibilidad) conserva su marcador y se desliza a su nueva
-  // posición; si cambió de forma, el marcador se rehace.
+  const orientacionesSerenos = new Map();
+
+  // El rumbo se conserva aunque el sereno cambie de disponibilidad o llegue al caso. Las posiciones observadas, incluso
+  // mientras está cerca del caso, son las que orientan la camioneta; el punto del caso solo ancla el marcador conjunto.
   function dibujarSerenos(vinculados) {
     const enElLugar = new Map([...vinculados.values()].filter((v) => v.enElLugar).map((v) => [v.sereno.dataset.sereno, v]));
     const vigentes = new Set();
@@ -665,29 +668,44 @@
       if (!item.dataset.lat) continue; // HU19-CA04: sin ubicación no hay marcador
       const id = item.dataset.sereno;
       const disponible = item.dataset.disponible === "true";
+      const punto = [Number(item.dataset.lat), Number(item.dataset.lon)];
+      if (!punto.every(Number.isFinite)) continue;
+      const orientacion = cadMarcadores.orientarSereno(orientacionesSerenos.get(id), punto, {
+        precisionMetros: item.dataset.precision ? Number(item.dataset.precision) : undefined,
+        recibidaEn: item.dataset.posicionEn,
+      });
+      if (!orientacion) continue;
+      orientacionesSerenos.set(id, orientacion);
       const v = enElLugar.get(id);
-      const forma = v ? `conjunto:${v.caso.dataset.casoMapa}:${disponible}` : `sereno:${disponible}`;
+      const forma = v ? `conjunto:${v.caso.dataset.casoMapa}` : "sereno";
       const existente = marcadoresSerenos.get(id);
       vigentes.add(id);
       if (existente?.forma === forma) {
-        deslizar(existente, v ? v.puntoCaso : [Number(item.dataset.lat), Number(item.dataset.lon)]);
+        cadMarcadores.actualizarSereno(existente, disponible, orientacion);
+        deslizar(existente, v ? v.puntoCaso : punto);
         existente.setPopupContent(v ? fichaEnElLugar(v) : fichaSereno(item, disponible));
+        const texto = v
+          ? `${v.caso.dataset.origen} · ${v.caso.dataset.estado} · sereno ${item.dataset.nombre} en el lugar`
+          : `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
+        existente.options.title = texto;
+        existente.getElement()?.setAttribute("title", texto);
         continue;
       }
       existente?.remove();
       if (v) {
-        const conjunto = marcadorEnElLugar(v).on("click", () => {
+        const conjunto = marcadorEnElLugar(v, orientacion.direccion * 45).on("click", () => {
           seleccionarSereno(id, { desdeMapa: true });
           seleccionarAsignado(v.caso.dataset.casoMapa, { desdeMapa: true });
         }).addTo(mapa);
         conjunto.claves = [`sereno:${id}`, `caso:${v.caso.dataset.casoMapa}`];
         conjunto.forma = forma;
+        cadMarcadores.actualizarSereno(conjunto, disponible, orientacion);
         marcadoresSerenos.set(id, conjunto);
         continue;
       }
       const texto = `Sereno ${item.dataset.nombre}, ${disponible ? "disponible" : "no disponible"}`;
-      const marcador = L.marker([Number(item.dataset.lat), Number(item.dataset.lon)], {
-        icon: L.divIcon(cadMarcadores.sereno(disponible)),
+      const marcador = L.marker(punto, {
+        icon: L.divIcon(cadMarcadores.sereno(disponible, orientacion.direccion * 45)),
         title: texto,
         alt: texto,
         keyboard: true,
@@ -697,12 +715,14 @@
         .addTo(mapa);
       marcador.claves = [`sereno:${id}`];
       marcador.forma = forma;
+      cadMarcadores.actualizarSereno(marcador, disponible, orientacion);
       marcadoresSerenos.set(id, marcador);
       entrar(marcador);
     }
     for (const [id, marcador] of marcadoresSerenos) {
       if (vigentes.has(id)) continue;
       marcadoresSerenos.delete(id);
+      orientacionesSerenos.delete(id);
       retirar(marcador);
     }
   }
@@ -1254,10 +1274,10 @@
   const muestras = {
     sos: cadMarcadores.SIRENA,
     reporte: cadMarcadores.DOCUMENTO,
-    sereno: cadMarcadores.escudo(true),
-    "sereno-ocupado": cadMarcadores.escudo(false),
+    sereno: cadMarcadores.camioneta(true),
+    "sereno-ocupado": cadMarcadores.camioneta(false),
     "en-el-lugar": `<span class="marcador-sos marcador-caso--en-curso leyenda-icono__caso">${cadMarcadores.SIRENA}</span>`
-      + `<span class="marcador-sereno leyenda-icono__sereno">${cadMarcadores.escudo(true)}</span>`,
+      + `<span class="marcador-sereno marcador-sereno--vehiculo leyenda-icono__sereno">${cadMarcadores.camioneta(false)}</span>`,
   };
   for (const el of document.querySelectorAll("[data-muestra]")) el.innerHTML = muestras[el.dataset.muestra] ?? "";
 

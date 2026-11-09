@@ -1782,6 +1782,65 @@ a.boton {
   height: 100%;
 }
 
+/* Camioneta: atlas verde disponible y gris no disponible, con las mismas ocho vistas 3D y anclas. */
+.marcador-sereno--vehiculo {
+  filter: none;
+}
+
+.camioneta {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.camioneta__sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-image: url("../img/serenos/camioneta-verde-direcciones.png");
+  background-size: 400% 200%;
+  background-position: var(--camioneta-x) var(--camioneta-y);
+  background-repeat: no-repeat;
+}
+
+.camioneta--no-disponible .camioneta__sprite {
+  background-image: url("../img/serenos/camioneta-gris-direcciones.png");
+}
+
+.camioneta__estado {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-superficie);
+  border-radius: 50%;
+  background: var(--mapa-sereno);
+  color: var(--color-superficie);
+  box-shadow: 0 1px 2px rgb(13 27 51 / 0.2);
+}
+
+.camioneta--no-disponible .camioneta__estado {
+  border-radius: 0;
+  background: var(--color-texto-secundario);
+}
+
+.camioneta__ocupada,
+.camioneta--no-disponible .camioneta__libre {
+  display: none;
+}
+
+.camioneta--no-disponible .camioneta__ocupada {
+  display: block;
+}
+
+.leaflet-marker-icon.marcador-sereno.marcador-sereno--vehiculo.marcador--elegido::after,
+.leaflet-marker-icon.marcador-sereno.marcador-sereno--vehiculo.marcador--sobre::after {
+  inset: 2px;
+}
+
 .marcador-sos:focus-visible,
 .marcador-reporte:focus-visible,
 .marcador-sereno:focus-visible {

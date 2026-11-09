@@ -1,6 +1,6 @@
 // HU10/HU14 — mapa de solo lectura con el lugar del hecho de un reporte (Leaflet + OpenStreetMap).
 // También lo usa el detalle de SOS (data-clase-marcador y data-titulo) para la ubicación del dispositivo.
-// 05/11/2026: con los serenos (_SerenosMinimapa): sus escudos, el recorrido por calles del que tiene asignado el caso y una
+// 05/11/2026: con los serenos (_SerenosMinimapa): sus marcadores, el recorrido por calles del que tiene asignado el caso y una
 // línea recta, con su distancia, hasta el sereno elegido para asignar o reasignar (el sugerido, hasta que se elige otro).
 (() => {
   const contenedor = document.getElementById("mapa-hecho");
@@ -34,7 +34,7 @@
     const texto = `${s.dataset.nombre} · ${estado} · a ${s.dataset.distancia}${s.dataset.hora ? ` · ubicación de las ${s.dataset.hora}` : ""}`;
     const lugar = L.latLng(Number(s.dataset.lat), Number(s.dataset.lon));
     const marcador = L.marker(lugar, {
-      icon: L.divIcon(cadMarcadores.sereno(disponible || asignado)),
+      icon: L.divIcon(cadMarcadores.sereno(disponible)),
       title: texto,
       alt: texto,
       keyboard: false,
@@ -53,6 +53,12 @@
       L.polyline(puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9 }).addTo(mapa);
       L.polyline(puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9 }).addTo(mapa);
       recorrido = puntos.map((p) => L.latLng(p));
+      // En un minimapa estático, el primer tramo de la ruta permite orientar al asignado sin inventar un rumbo al destino.
+      const siguiente = recorrido.find((p) => asignado.punto.distanceTo(p) >= 4);
+      if (siguiente) {
+        const inicial = cadMarcadores.orientarSereno(null, asignado.punto);
+        cadMarcadores.actualizarSereno(asignado.marcador, asignado.datos.disponible === "true", cadMarcadores.orientarSereno(inicial, siguiente));
+      }
     } else {
       L.polyline([asignado.punto, punto], { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9" }).addTo(mapa);
     }

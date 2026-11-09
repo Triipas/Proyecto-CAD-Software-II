@@ -7,6 +7,8 @@
     ViewData["ClasePagina"] = "pagina--central";
 }
 @section Estilos {
+    <link rel="preload" as="image" href="~/img/serenos/camioneta-verde-direcciones.png" asp-append-version="true" />
+    <link rel="preload" as="image" href="~/img/serenos/camioneta-gris-direcciones.png" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/central.css" asp-append-version="true" />
 }
@@ -246,9 +248,9 @@
                 <div>
                     <h3 class="clave-mapa__grupo">Serenos</h3>
                     <ul class="clave-mapa__lista">
-                        <li><i class="leyenda-icono leyenda-icono--sereno marcador-sereno" data-muestra="sereno" aria-hidden="true"></i><span><b>Disponible</b> Operativo y sin caso: se le puede asignar.</span></li>
-                        <li><i class="leyenda-icono leyenda-icono--sereno marcador-sereno marcador-sereno--no-disponible" data-muestra="sereno-ocupado" aria-hidden="true"></i><span><b>No disponible</b> Con un caso o fuera de servicio.</span></li>
-                        <li><i class="leyenda-icono leyenda-icono--conjunto" data-muestra="en-el-lugar" aria-hidden="true"></i><span><b>En el lugar</b> El escudo sobre el caso: su sereno ya llegó.</span></li>
+                        <li><i class="leyenda-icono leyenda-icono--sereno marcador-sereno marcador-sereno--vehiculo" data-muestra="sereno" aria-hidden="true"></i><span><b>Disponible</b> Camioneta con visto: operativo y sin caso.</span></li>
+                        <li><i class="leyenda-icono leyenda-icono--sereno marcador-sereno marcador-sereno--vehiculo marcador-sereno--no-disponible" data-muestra="sereno-ocupado" aria-hidden="true"></i><span><b>No disponible</b> Camioneta con guion: con un caso o fuera de servicio.</span></li>
+                        <li><i class="leyenda-icono leyenda-icono--conjunto" data-muestra="en-el-lugar" aria-hidden="true"></i><span><b>En el lugar</b> La camioneta junto al caso: su sereno ya llegó.</span></li>
                     </ul>
                     <h3 class="clave-mapa__grupo">Líneas y anillos</h3>
                     <ul class="clave-mapa__lista">

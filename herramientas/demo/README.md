@@ -1,5 +1,13 @@
 # Demostración de la central
 
+## Prueba local de la camioneta verde
+
+`node herramientas/demo/probar-camioneta.mjs` abre una vista en `http://localhost:5251` con el sprite del sistema sobre el
+mapa: recorrido simulado, pausa, ocho direcciones y cambio de disponibilidad. No necesita cuentas ni modifica la base de
+datos. Usa los mismos `marcadores.js`, `movimiento.js`, estilos y atlas que la central. Ctrl+C cierra la vista de prueba.
+La vista inicia sin ruta dibujada: el patrullaje se orienta con las posiciones GPS simuladas. «Mostrar recorrido» permite
+comparar el mismo movimiento con su trazo visible; no cambia el cálculo del rumbo.
+
 ## Datos frescos para la presentación (una sola orden)
 
 `presentacion.mjs` carga el [dataset de J. L. Bustamante y Rivero](../dataset-jlbyr/README.md) con el periodo terminando ahora
