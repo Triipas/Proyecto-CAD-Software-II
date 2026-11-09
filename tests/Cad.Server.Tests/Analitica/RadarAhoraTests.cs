@@ -17,12 +17,13 @@ public class RadarAhoraTests
         Assert.Equal(radio, Radar.Radio(veces), 3);
 
     [Fact]
-    public void Etapas_SonDiezSinSolaparseYLosSosVanArriba()
+    public void Etapas_CompletanElCirculoSinSolaparseYLosSosVanArriba()
     {
         Assert.Equal(10, Radar.Etapas.Count);
         for (var i = 1; i < Radar.Etapas.Count; i++)
-            Assert.True(Radar.Etapas[i].Desde > Radar.Etapas[i - 1].Hasta);
-        Assert.True(Radar.Etapas[^1].Hasta - Radar.Etapas[0].Desde < 360);
+            Assert.Equal(Radar.Etapas[i - 1].Hasta, Radar.Etapas[i].Desde, 6); // sin huecos ni solapes
+        Assert.Equal(360, Radar.Etapas[^1].Hasta - Radar.Etapas[0].Desde, 6);
+        Assert.All(Radar.Etapas, e => Assert.Equal(36, e.Hasta - e.Desde, 6));
 
         var sos = Radar.Etapas.Where(e => !e.Reporte).ToList();
         Assert.Equal(4, sos.Count);
@@ -56,7 +57,8 @@ public class RadarAhoraTests
     [Fact]
     public void Marcas_DiezSosAtascadosEnElBorde_SeJuntanSinPisarse()
     {
-        // El caso que se reportó en la revisión: diez SOS pendientes con más de 3× lo esperado quedan todos en el borde.
+        // El caso que se reportó en la revisión: diez SOS pendientes con más de 3× lo esperado quedan todos en el borde y se juntan en
+        // pocas marcas que no se pisan.
         var etapa = Radar.De(EstadoCaso.Pendiente, reporte: false)!;
         var ahora = DateTimeOffset.UtcNow;
         var abiertos = Enumerable.Range(0, 10)
@@ -66,7 +68,7 @@ public class RadarAhoraTests
         var marcas = Radar.Marcas(Radar.Casos(etapa, abiertos));
 
         Assert.Equal(10, marcas.Sum(m => m.Casos.Count));
-        Assert.True(marcas.Count <= 3);
+        Assert.True(marcas.Count <= 4);
         Assert.All(marcas, m => Assert.True(m.Lejos && m.Tarde));
         for (var i = 0; i < marcas.Count; i++)
             for (var j = i + 1; j < marcas.Count; j++)

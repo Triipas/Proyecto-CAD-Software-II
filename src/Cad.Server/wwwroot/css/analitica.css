@@ -3534,16 +3534,6 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
   box-shadow: 0 0 0 3px rgb(245 181 68 / 0.18);
 }
 
-.radar-a__lejos {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)));
-  font-size: var(--texto-xs);
-  font-weight: var(--peso-fuerte);
-  color: var(--color-advertencia-sobre-marino);
-  white-space: nowrap;
-}
 
 .radar-a__rotulo {
   position: absolute;

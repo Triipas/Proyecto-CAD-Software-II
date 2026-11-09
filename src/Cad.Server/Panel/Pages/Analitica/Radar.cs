@@ -12,15 +12,16 @@ namespace Cad.Server.Panel.Pages.Analitica;
 public static class Radar
 {
     public const double Alcance = 3;          // el borde: 3 veces lo esperado
-    public const double Centro = 48;          // radio del centro (0×), donde va el total
-    public const double Paso = 52;            // cuánto se aleja un caso por cada vez lo esperado
+    public const double Centro = 56;          // radio del centro (0×), donde va el total: cabe «abiertos» también en pantallas angostas
+    public const double Paso = 49;            // cuánto se aleja un caso por cada vez lo esperado
     public const double Borde = Centro + Alcance * Paso;
     public const double Lado = 640;           // viewBox de -320 a 320
     public const int DuracionBarrido = 1700;  // ms: lo que tarda el haz en dar la vuelta (radar-a.css)
 
-    // Los SOS ocupan 120° arriba (30° por etapa) y los reportes el resto; un respiro entre grupos y entre porciones.
-    public const double Inicio = -150;
-    private const double AnchoSos = 30, Hueco = 10, Respiro = 1.5;
+    // El círculo completo, sin huecos: diez porciones de 36°, los SOS arriba (centrados en las 12) y los reportes en el resto. Lo
+    // que separa una porción de otra es su borde; los dos grupos se distinguen por su arco (rojo los SOS, violeta los reportes).
+    public const double Inicio = -90 - 2 * Ancho;
+    public const double Ancho = 36;
 
     public sealed record Etapa(string Clave, bool Reporte, EstadoCaso Estado, string Nombre, string Corto, double Desde, double Hasta)
     {
@@ -44,17 +45,7 @@ public static class Radar
             ("reporte-en-camino", true, EstadoCaso.EnCamino, "En camino", "En camino"),
             ("reporte-en-atencion", true, EstadoCaso.EnAtencion, "En atención", "En atención"),
         };
-        var anchoReporte = (360 - 4 * AnchoSos - 2 * Hueco) / 6;
-        var etapas = new List<Etapa>();
-        var a = Inicio;
-        foreach (var d in definicion)
-        {
-            if (d.Reporte && etapas.All(e => !e.Reporte)) a += Hueco;
-            var ancho = d.Reporte ? anchoReporte : AnchoSos;
-            etapas.Add(new Etapa(d.Clave, d.Reporte, d.Estado, d.Nombre, d.Corto, a + Respiro, a + ancho - Respiro));
-            a += ancho;
-        }
-        return etapas;
+        return definicion.Select((d, i) => new Etapa(d.Clave, d.Reporte, d.Estado, d.Nombre, d.Corto, Inicio + i * Ancho, Inicio + (i + 1) * Ancho)).ToList();
     }
 
     public static Etapa? De(EstadoCaso estado, bool reporte) => Etapas.FirstOrDefault(e => e.Estado == estado && e.Reporte == reporte);
@@ -109,9 +100,9 @@ public static class Radar
     }
 
     // Una marca del radar: un caso o, si quedaron casi encima, varios juntos con su cantidad (como los carriles de antes). Una etapa
-    // atascada amontona sus casos en el borde (todos valen «3× o más»): ahí se juntan con más margen, porque además llevan su tiempo
-    // escrito y los rótulos se pisarían. La clave es la del caso más antiguo de la marca, para que en vivo se deslice en lugar de
-    // rehacerse.
+    // atascada amontona sus casos en el borde (todos valen «3× o más»): ahí se juntan con más margen. Su tiempo no se escribe en el
+    // radar (los textos se pisaban): está en el globo de la marca y en la lista («el más largo»). La clave es la del caso más antiguo
+    // de la marca, para que en vivo se deslice en lugar de rehacerse.
     public sealed record Marca(IReadOnlyList<Caso> Casos, double X, double Y, double Grados)
     {
         public string Clave => $"caso-{Casos[0].Id}";
@@ -123,8 +114,8 @@ public static class Radar
     }
 
     // Separación mínima entre centros, en unidades del viewBox: una marca mide 14 px y el radar, a lo sumo 544 px de ancho
-    // (640 unidades), así que 18 unidades son unos 15 px. En el borde, 46 unidades: el ancho de su tiempo escrito.
-    public const double Separacion = 18, SeparacionEnElBorde = 46;
+    // (640 unidades), así que 18 unidades son unos 15 px. En el borde, 30: las marcas de grupo son más grandes.
+    public const double Separacion = 18, SeparacionEnElBorde = 30;
 
     public static IReadOnlyList<Marca> Marcas(IReadOnlyList<Caso> casos)
     {
@@ -150,22 +141,17 @@ public static class Radar
         static (double X, double Y) Centro_(List<Caso> g) => (g.Average(c => c.Posicion.X), g.Average(c => c.Posicion.Y));
     }
 
-    // El rótulo va afuera del borde, alineado según el lado del círculo para no pisarlo.
+    // El rótulo va afuera del borde, con aire para que una marca de grupo en el borde no lo tape, y alineado según el lado del
+    // círculo para no pisarlo.
     public static string EstiloRotulo(Etapa etapa)
     {
-        var (x, y) = Punto(Borde + 18, etapa.Medio);
+        var (x, y) = Punto(Borde + 30, etapa.Medio);
         var coseno = Math.Cos(etapa.Medio * Math.PI / 180);
         // Solo el rótulo casi vertical va centrado; los de arriba a cada lado se abren hacia afuera para no tocarse.
         var ancla = coseno > 0.15 ? "translate(0,-50%)" : coseno < -0.15 ? "translate(-100%,-50%)" : y < 0 ? "translate(-50%,-100%)" : "translate(-50%,0)";
         return $"left:{Porcentaje(x)};top:{Porcentaje(y)};transform:{ancla}";
     }
 
-    // El tiempo de un caso que quedó en el borde se escribe hacia adentro, junto al punto: afuera pisaría el rótulo de la etapa.
-    public static string EstiloLejos(double grados)
-    {
-        var (x, y) = Punto(30, grados);
-        return $"--dx:{N(-x)}px;--dy:{N(-y)}px";
-    }
 
     public static string N(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 }
