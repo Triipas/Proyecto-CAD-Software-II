@@ -2924,7 +2924,6 @@ button.segmentado__opcion[aria-pressed="true"] {
 
 .tarjetas-b {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr)); /* una sola tarjeta no se estira a todo el ancho */
   gap: var(--espacio-4);
 }
 
@@ -3457,4 +3456,154 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
   }
 
   .tarjeta-radial-b { animation: analitica-entrar var(--duracion-lenta) var(--curva-salida) backwards; }
+}
+
+/* Paso 2 desplegable y columnas según cuántos radiales haya (11/11/2026). */
+.filtros-b__zonas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+  min-width: 0;
+}
+
+.filtros-b__zonas .filtros-b__opciones[hidden] {
+  display: none;
+}
+
+.desplegable-b {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: 2.125rem;
+  max-width: 100%;
+  padding: 0 var(--espacio-3);
+  border: 1px solid var(--color-borde-control);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-marino);
+  font: inherit;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  cursor: pointer;
+  transition: border-color var(--duracion-rapida) ease, background-color var(--duracion-rapida) ease;
+}
+
+.desplegable-b:hover:not(:disabled) { border-color: var(--color-primario); }
+.desplegable-b:focus-visible { outline: 2px solid var(--color-foco); outline-offset: 2px; }
+.desplegable-b[aria-expanded="true"] { border-color: var(--color-primario); background: var(--color-tenue); }
+
+.desplegable-b:disabled {
+  cursor: default;
+  color: var(--color-texto-terciario);
+  background: var(--color-superficie-hundida);
+  border-color: transparent;
+}
+
+.desplegable-b__texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desplegable-b__cuenta {
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
+}
+
+.desplegable-b__flecha {
+  flex: none;
+  transition: transform var(--duracion-rapida) ease;
+}
+
+.desplegable-b[aria-expanded="true"] .desplegable-b__flecha { transform: rotate(180deg); }
+
+/* Tantas columnas como radiales: tres bloques llenan el ancho; dos, la mitad cada uno. */
+.tarjetas-b,
+.tarjetas-b[data-cantidad="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tarjetas-b[data-cantidad="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tarjetas-b[data-cantidad="1"] { grid-template-columns: minmax(0, 1fr); }
+
+.tarjeta-radial-b__detalle:empty { display: none; }
+
+/* Una zona sola: el radial más grande a la izquierda y, a la derecha, su lectura y sus tipos de caso más frecuentes. */
+.tarjetas-b[data-cantidad="1"] .tarjeta-radial-b {
+  display: grid;
+  grid-template-columns: minmax(0, 34rem) minmax(16rem, 1fr);
+  grid-template-rows: auto auto auto 1fr;
+  grid-template-areas:
+    "cabecera cabecera"
+    "radial lectura"
+    "radial detalle"
+    "radial boton";
+  column-gap: var(--espacio-6);
+  row-gap: var(--espacio-3);
+  padding: var(--espacio-4) var(--espacio-5);
+}
+
+.tarjetas-b[data-cantidad="1"] .tarjeta-radial-b__cabecera { grid-area: cabecera; }
+.tarjetas-b[data-cantidad="1"] .radial-b { grid-area: radial; align-self: center; }
+.tarjetas-b[data-cantidad="1"] .tarjeta-radial-b__lectura { grid-area: lectura; font-size: var(--texto-md); line-height: 1.5; padding-top: var(--espacio-4); }
+.tarjetas-b[data-cantidad="1"] .tarjeta-radial-b__detalle { grid-area: detalle; }
+.tarjetas-b[data-cantidad="1"] .boton-noche-b { grid-area: boton; align-self: start; }
+.tarjetas-b[data-cantidad="1"] .radial-b__etiqueta { font-size: var(--texto-xs); }
+
+.tarjeta-radial-b__detalle h5 {
+  margin: 0 0 var(--espacio-2);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  letter-spacing: var(--tracking-etiqueta);
+  text-transform: uppercase;
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.tarjeta-radial-b__detalle table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--texto-xs);
+}
+
+.tarjeta-radial-b__detalle th,
+.tarjeta-radial-b__detalle td {
+  padding: var(--espacio-2) 0;
+  border-bottom: 1px solid var(--color-borde-sobre-marino);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tarjeta-radial-b__detalle th[scope="row"],
+.tarjeta-radial-b__detalle thead th:first-child {
+  text-align: left;
+  white-space: normal;
+  font-weight: var(--peso-medio);
+  color: #FFFFFF;
+  padding-right: var(--espacio-3);
+}
+
+.tarjeta-radial-b__detalle thead th {
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-sobre-marino-secundario);
+  padding-left: var(--espacio-3);
+}
+
+.tarjeta-radial-b__detalle td {
+  padding-left: var(--espacio-3);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.tarjeta-radial-b__detalle td b { color: var(--color-acento); font-weight: var(--peso-fuerte); }
+
+@media (max-width: 75rem) {
+  .tarjetas-b[data-cantidad="3"],
+  .tarjetas-b:not([data-cantidad]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tarjetas-b[data-cantidad="1"] .tarjeta-radial-b { grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.9fr); }
+}
+
+@media (max-width: 48rem) {
+  .tarjetas-b[data-cantidad] { grid-template-columns: minmax(0, 1fr); }
+  .tarjetas-b[data-cantidad="1"] .tarjeta-radial-b {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "cabecera" "radial" "lectura" "detalle" "boton";
+  }
 }

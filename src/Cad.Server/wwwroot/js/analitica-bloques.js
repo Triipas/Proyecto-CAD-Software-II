@@ -54,6 +54,7 @@
     vista: q.get("vista") === "comparar" ? "comparar" : "bloques",
     escala: q.get("escala") === "cantidad" ? "cantidad" : "perfil",
     comparar: bloques.map((b) => b.clave),
+    zonasAbiertas: false,
     mes: null,
   };
   if (estado.bloque !== "todos")
@@ -74,13 +75,17 @@
   const titular = $("[data-titular]");
   const filaBloque = $('[data-fila="bloque"]');
   const filaZonas = $('[data-fila="zonas"]');
-  const contenedorZonas = $("[data-fila-zonas]");
+  const abrirZonas = $("[data-abrir-zonas]");
   const filaIndicador = $('[data-fila="indicador"]');
   const panel = $("[data-panel-perfil]");
 
   // ---------- Acciones (un solo oyente para todos los botones de la sección) ----------
   const acciones = {
-    bloque: (v) => { estado.bloque = estado.bloque === v && v !== "todos" ? "todos" : v; estado.zonas = []; },
+    // Al cambiar de bloque la lista de zonas se pliega: la fila mide lo mismo con cualquier bloque.
+    bloque: (v) => { estado.bloque = estado.bloque === v && v !== "todos" ? "todos" : v; estado.zonas = []; estado.zonasAbiertas = false; },
+    // «Ver sus zonas →» de la tarjeta de un bloque: lo elige y abre su lista de zonas.
+    "ver-zonas": (v) => { estado.bloque = v; estado.zonas = []; estado.zonasAbiertas = true; },
+    "abrir-zonas": () => { estado.zonasAbiertas = !estado.zonasAbiertas; },
     zona: (v) => { estado.zonas = estado.zonas.includes(v) ? estado.zonas.filter((z) => z !== v) : [...estado.zonas, v]; },
     "todas-las-zonas": () => { estado.zonas = []; },
     indicador: (v) => { estado.indicador = v; },
@@ -213,7 +218,7 @@
     const raiz = document.createElement("article");
     raiz.className = "tarjeta-radial-b";
     raiz.innerHTML = `<header class="tarjeta-radial-b__cabecera"><span class="muestra-b"></span><h4></h4><span class="tarjeta-radial-b__cifra"></span></header>
-      <p class="tarjeta-radial-b__lectura"></p><button type="button" class="boton-noche-b"></button>`;
+      <p class="tarjeta-radial-b__lectura"></p><div class="tarjeta-radial-b__detalle"></div><button type="button" class="boton-noche-b"></button>`;
     const radial = crearRadial();
     raiz.querySelector("header").after(radial.raiz);
     const t = { raiz, radial, nueva: true };
@@ -252,16 +257,25 @@
       items = bloques.map((x) => ({
         clave: `b:${x.clave}`, nombre: `Bloque ${x.nombre}`, casos: x.casos, color: x.color.oscuro,
         lectura: `Pesa más que en los otros bloques: ${masFrecuente(perfil(x.casos).map((p, i) => p - promedio[i]))}.`,
-        boton: "Ver sus zonas →", accion: "bloque", valor: x.clave,
+        boton: "Ver sus zonas →", accion: "ver-zonas", valor: x.clave,
       }));
     } else {
       const base = perfil(b.casos);
       items = estado.zonas.slice(0, MAX_ZONAS_RADIAL).map((nombre) => {
         const zona = zonas.get(nombre);
+        // Con una sola zona, la tarjeta tiene lugar para el detalle: sus cinco tipos de caso más frecuentes, con el % de la zona
+        // y el del bloque al lado (la misma comparación que la línea punteada, en cifras).
+        const propio = perfil(zona.casos);
+        const filas = EJES.map((x, i) => ({ x, zona: propio[i], bloque: base[i], casos: zona.casos[i] }))
+          .sort((a, c) => c.zona - a.zona).slice(0, 5);
+        const detalle = `<h5>Sus tipos de caso más frecuentes</h5>
+          <table><thead><tr><th scope="col">Tipo</th><th scope="col">Casos</th><th scope="col">% de la zona</th><th scope="col">% del bloque</th></tr></thead><tbody>
+          ${filas.map((f) => `<tr><th scope="row">${e(f.x.nombre)}</th><td>${f.casos}</td><td><b>${pct(f.zona)}</b></td><td>${pct(f.bloque)}</td></tr>`).join("")}
+          </tbody></table>`;
         return {
           clave: `z:${nombre}`, nombre: `Zona ${nombre}`, casos: zona.casos, color: b.color.oscuro,
-          lectura: `Frente a todo el bloque, pesa más ${masFrecuente(perfil(zona.casos).map((p, i) => p - base[i]))}.`,
-          boton: "Quitar del filtro", accion: "zona", valor: nombre,
+          lectura: `Frente a todo el bloque, pesa más ${masFrecuente(propio.map((p, i) => p - base[i]))}.`,
+          boton: "Quitar del filtro", accion: "zona", valor: nombre, detalle,
         };
       });
     }
@@ -273,6 +287,8 @@
     const escala = b ? escalaDe((deEscala.length ? deEscala : b.zonas).map((z) => medir(z.casos))) : escalaDe(medidas);
     // En perfil, cada zona lleva de referencia el perfil de todo su bloque (punteado).
     const referencia = b && estado.escala === "perfil" ? medir(b.casos) : null;
+    // Tantas columnas como radiales (hasta 3): tres bloques llenan el ancho y una zona sola usa el lugar para su detalle.
+    contenedorTarjetas.dataset.cantidad = String(Math.min(items.length, 3));
     const vigentes = new Set(items.map((x) => x.clave));
     for (const [clave, t] of tarjetas) if (!vigentes.has(clave)) { t.raiz.remove(); tarjetas.delete(clave); }
     const nuevas = [];
@@ -283,6 +299,7 @@
       raiz.querySelector("h4").textContent = x.nombre;
       raiz.querySelector(".tarjeta-radial-b__cifra").textContent = `${valor(x.casos)} · ${k() < 0 ? "todos" : EJES[k()].corto.toLowerCase()}`;
       raiz.querySelector(".tarjeta-radial-b__lectura").textContent = x.lectura;
+      raiz.querySelector(".tarjeta-radial-b__detalle").innerHTML = items.length === 1 ? (x.detalle ?? "") : "";
       const boton = raiz.querySelector("button");
       boton.textContent = x.boton;
       boton.dataset.accion = x.accion;
@@ -350,8 +367,17 @@
     filaBloque.innerHTML = chip(estado.bloque === "todos", "Todos", "bloque", "todos")
       + bloques.map((b) => chip(estado.bloque === b.clave, b.nombre, "bloque", b.clave, { color: b.color.claro })).join("");
     const b = elegido();
-    contenedorZonas.hidden = !b;
-    if (b) {
+    // Paso 2: siempre a la vista (la fila mide lo mismo con o sin bloque), con la lista de zonas plegada en un desplegable. Cerrado,
+    // dice qué zonas están elegidas.
+    const abierta = !!b && estado.zonasAbiertas;
+    const elegidas = conZonas() ? `${estado.zonas.length === 1 ? "Zona" : "Zonas"} ${estado.zonas.join(", ")}` : "Todas las zonas";
+    abrirZonas.disabled = !b;
+    abrirZonas.setAttribute("aria-expanded", String(abierta));
+    abrirZonas.innerHTML = !b
+      ? '<span class="desplegable-b__texto">Elige primero un bloque</span>'
+      : `<span class="desplegable-b__texto">${e(elegidas)}</span><span class="desplegable-b__cuenta">${b.zonas.length} zonas del bloque</span><svg class="desplegable-b__flecha" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
+    filaZonas.hidden = !abierta;
+    if (abierta) {
       const reunidas = b.zonasReunidas > 0 ? `<span class="filtros-b__nota">${b.zonasReunidas} ${b.zonasReunidas === 1 ? "zona" : "zonas"} con menos de ${D.minimoZona} casos suman en el bloque, no solas</span>` : "";
       filaZonas.innerHTML = `<button type="button" class="chip-b" data-accion="todas-las-zonas" aria-pressed="${estado.zonas.length === 0}">Todas</button>`
         + b.zonas.map((z) => chip(estado.zonas.includes(z.nombre), z.nombre, "zona", z.nombre,

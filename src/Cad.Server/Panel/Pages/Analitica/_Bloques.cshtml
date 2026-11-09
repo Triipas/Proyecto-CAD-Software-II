@@ -26,9 +26,13 @@ else
                 <span class="filtros-b__etiqueta" id="filtro-bloque">1 · Bloque</span>
                 <div class="filtros-b__opciones" data-fila="bloque"></div>
             </div>
-            <div class="filtros-b__fila" role="group" aria-labelledby="filtro-zonas" data-fila-zonas hidden>
+            @* Paso 2: siempre a la vista; la lista de zonas se despliega desde el botón (y se pliega al cambiar de bloque). *@
+            <div class="filtros-b__fila" role="group" aria-labelledby="filtro-zonas">
                 <span class="filtros-b__etiqueta" id="filtro-zonas">2 · Zonas</span>
-                <div class="filtros-b__opciones" data-fila="zonas"></div>
+                <div class="filtros-b__zonas">
+                    <button type="button" class="desplegable-b" data-accion="abrir-zonas" data-abrir-zonas aria-expanded="false" aria-controls="lista-zonas" disabled><span class="desplegable-b__texto">Elige primero un bloque</span></button>
+                    <div class="filtros-b__opciones" id="lista-zonas" data-fila="zonas" hidden></div>
+                </div>
             </div>
             <div class="filtros-b__fila filtros-b__fila--indicador" role="group" aria-labelledby="filtro-indicador">
                 <span class="filtros-b__etiqueta" id="filtro-indicador">Indicador</span>
