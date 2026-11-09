@@ -100,7 +100,7 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
 
         Assert.Contains("data-casos=\"5\"", html);
         Assert.Contains("La mitad de los SOS se atendió en <em>10 min</em>", html);
-        Assert.Contains("9 de cada 10, en", html);
+        Assert.DoesNotContain("; 9 de cada 10, en", html); // el titular dice solo la mitad: el p90 queda en la regla
         Assert.Contains("hasta que el sereno empieza a atenderlo", html); // qué se mide
         Assert.Contains("Hasta aquí, 9 de cada 10 (p90)", html);
         Assert.Contains("class=\"regla\"", html);

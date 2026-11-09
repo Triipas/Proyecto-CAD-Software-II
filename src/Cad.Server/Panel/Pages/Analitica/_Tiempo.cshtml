@@ -59,7 +59,7 @@ else
             }
             else
             {
-                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>; 9 de cada 10, en @Formato.Minutos(p90) o menos.</h2>
+                <h2 class="respuesta__titular" id="respuesta-tiempo">La mitad de los SOS@(textoPrioridad) se atendió en <em>@Formato.Minutos(p50)</em>.</h2>
                 <p class="respuesta__lectura">
                     Se mide desde que el ciudadano emite el SOS hasta que el sereno empieza a atenderlo. En @m.TextoPeriodo se midieron @Formato.Plural(n, "SOS", "SOS").
                     @if (anterior?.RespuestaP50 is { } antes)
