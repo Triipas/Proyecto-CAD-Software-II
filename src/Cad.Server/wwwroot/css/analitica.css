@@ -596,271 +596,6 @@ table.visualmente-oculto {
   margin-top: var(--espacio-2);
 }
 
-/* ── «Ahora»: carriles por etapa ── */
-.carriles-a {
-  margin-top: var(--espacio-3);
-  display: grid;
-  gap: 0.125rem;
-}
-
-.carriles-a__grupo {
-  margin: var(--espacio-2) 0 0;
-  font-size: var(--texto-xs);
-  font-weight: var(--peso-medio);
-  color: var(--color-texto-secundario);
-}
-
-.carril-a {
-  display: grid;
-  grid-template-columns: 15rem 2.25rem minmax(0, 1fr) 10.5rem;
-  gap: var(--espacio-3);
-  align-items: center;
-  min-height: 3rem;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.carril-a--eje {
-  min-height: 0;
-  padding-bottom: var(--espacio-1);
-  font-size: var(--texto-xs);
-  font-weight: var(--peso-medio);
-  color: var(--color-texto-secundario);
-}
-
-.carril-a__nombre {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-  font-size: var(--texto-sm);
-}
-
-.carril-a--eje .carril-a__nombre { font-size: var(--texto-xs); }
-
-.carril-a__titulo {
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2);
-}
-
-.carril-a__esperado {
-  font-size: var(--texto-xs);
-  color: var(--color-texto-secundario);
-  font-variant-numeric: tabular-nums;
-}
-
-.carril-a__numero {
-  font-size: var(--texto-lg);
-  font-weight: var(--peso-fuerte);
-  color: var(--color-marino);
-  text-align: right;
-}
-
-.carril-a[data-casos="0"] .carril-a__numero {
-  color: var(--color-texto-terciario);
-  font-weight: var(--peso-normal);
-}
-
-.carril-a__detalle {
-  display: grid;
-  gap: 1px;
-  font-size: var(--texto-xs);
-  color: var(--color-texto-secundario);
-  font-variant-numeric: tabular-nums;
-}
-
-.carril-a__tarde { color: var(--color-advertencia); font-size: var(--texto-sm); }
-.carril-a__bien { color: var(--color-exito); font-size: var(--texto-sm); }
-.carril-a__nada { color: var(--color-texto-terciario); }
-
-/* Eje común sobre las pistas: veces lo esperado en la etapa. */
-.eje-a {
-  position: relative;
-  height: 1.125rem;
-  margin-inline: 0.875rem;
-}
-
-.eje-a__marca {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.eje-a__marca:first-child { transform: translateX(-0.375rem); }
-.eje-a__marca:last-child { transform: translateX(calc(-100% + 0.5rem)); }
-.eje-a__marca--esperado { color: var(--color-exito); font-weight: var(--peso-fuerte); }
-
-/* La pista de una etapa: la franja verde es lo esperado (siempre de 0 a 1×) y cada caso es un punto. */
-.pista-a {
-  position: relative;
-  height: 2.5rem;
-  margin-inline: 0.875rem;
-}
-
-.pista-a__esperado {
-  position: absolute;
-  left: 0;
-  top: 0.625rem;
-  height: 1.25rem;
-  border-radius: 3px;
-  background: var(--color-exito-fondo);
-}
-
-.pista-a__limite {
-  position: absolute;
-  top: 0.25rem;
-  bottom: 0.25rem;
-  border-left: 1.5px dashed var(--color-exito);
-}
-
-.pista-a__linea {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  border-top: 1px solid var(--color-borde-fuerte);
-}
-
-.pista-a__caso {
-  position: absolute;
-  top: 50%;
-  width: 0.875rem;
-  height: 0.875rem;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: var(--color-primario);
-  box-shadow: 0 0 0 2px var(--color-superficie);
-  display: grid;
-  place-items: center;
-  font-size: 0.6875rem;
-  font-weight: var(--peso-fuerte);
-  line-height: 1;
-  color: var(--color-superficie);
-  font-variant-numeric: tabular-nums;
-}
-
-.pista-a__caso--atascado {
-  background: var(--color-superficie);
-  border: 2.5px solid var(--color-advertencia);
-  color: var(--color-advertencia);
-}
-
-.pista-a__caso:focus-visible {
-  outline: 2px solid var(--color-primario);
-  outline-offset: 3px;
-}
-
-.pista-a__globo {
-  position: absolute;
-  bottom: calc(100% + 0.5rem);
-  left: 50%;
-  z-index: 5;
-  display: grid;
-  gap: var(--espacio-1);
-  min-width: 9.5rem;
-  padding: var(--espacio-2) var(--espacio-3);
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-control);
-  box-shadow: var(--sombra-2);
-  color: var(--color-texto);
-  font-size: var(--texto-xs);
-  font-weight: var(--peso-normal);
-  text-align: left;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translate(-50%, 4px);
-  transition: opacity var(--duracion-rapida, 120ms) ease, transform var(--duracion-rapida, 120ms) ease, visibility 0s linear 120ms;
-}
-
-.pista-a__caso--der .pista-a__globo { left: auto; right: -0.5rem; transform: translate(0, 4px); }
-
-.pista-a__caso:hover,
-.pista-a__caso:focus-visible { z-index: 6; }
-
-.pista-a__caso:hover .pista-a__globo,
-.pista-a__caso:focus-visible .pista-a__globo {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, 0);
-  transition-delay: 0s;
-}
-
-.pista-a__caso--der:hover .pista-a__globo,
-.pista-a__caso--der:focus-visible .pista-a__globo { transform: translate(0, 0); }
-
-.pista-a__globo b { font-size: var(--texto-sm); font-weight: var(--peso-fuerte); color: var(--color-marino); font-variant-numeric: tabular-nums; }
-.pista-a__globo ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 1px; font-variant-numeric: tabular-nums; }
-.pista-a__globo li { color: var(--color-texto-secundario); }
-.pista-a__globo li.tarde { color: var(--color-advertencia); font-weight: var(--peso-medio); }
-.pista-a__globo li.mas { color: var(--color-texto-terciario); }
-.pista-a__globo .tarde { color: var(--color-advertencia); font-weight: var(--peso-medio); }
-.pista-a__globo .bien { color: var(--color-exito); font-weight: var(--peso-medio); }
-
-@media (prefers-reduced-motion: reduce) {
-  .pista-a__globo { transition: none; }
-}
-
-.pista-a__caso--grupo {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.pista-a__caso--grupo.pista-a__caso--atascado { border-width: 2px; }
-
-.leyenda-a__grupo {
-  display: inline-grid;
-  place-items: center;
-  width: 1.125rem !important;
-  height: 1.125rem !important;
-  border-radius: 50% !important;
-  background: var(--color-primario);
-  color: var(--color-superficie);
-  font-size: 0.625rem;
-  font-style: normal;
-  font-weight: var(--peso-fuerte);
-}
-
-.carriles-a__nota {
-  margin: var(--espacio-2) 0 0;
-  max-width: 96ch;
-  font-size: var(--texto-xs);
-  line-height: 1.5;
-  color: var(--color-texto-secundario);
-}
-
-@media (max-width: 62rem) {
-  .carril-a {
-    grid-template-columns: minmax(0, 1fr) auto;
-    row-gap: var(--espacio-1);
-    padding-block: var(--espacio-2);
-  }
-
-  .carril-a .pista-a,
-  .carril-a .eje-a,
-  .carril-a .carril-a__detalle { grid-column: 1 / -1; }
-  .carril-a .carril-a__detalle { display: flex; flex-wrap: wrap; gap: var(--espacio-1) var(--espacio-2); }
-  .carril-a--eje { grid-template-columns: 1fr; }
-  .carril-a--eje .carril-a__nombre,
-  .carril-a--eje > span,
-  .carril-a--eje .carril-a__detalle { display: none; }
-}
-
-.serenos-a {
-  display: flex;
-  gap: 2px;
-  height: 1.25rem;
-  margin-top: var(--espacio-3);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.serenos-a__libres { background: var(--color-exito); }
-.serenos-a__ocupados { background: var(--tono-gris); }
-
 /* Filas tipo tablero (atascados, lo que viene, puntos) */
 .filas-a {
   list-style: none;
@@ -2728,7 +2463,7 @@ a.fila-a__cifra {
   }
 
   /* Barras horizontales: crecen desde su base (la izquierda). */
-  .analitica :is(.barra100, .serenos-a, .etapas-a__barra, .pista-a__esperado, .pista-b__barra, .pista-b__referencia,
+  .analitica :is(.barra100, .etapas-a__barra, .pista-b__barra, .pista-b__referencia,
     .prioridad-a__mitad, .prioridad-a__nueve, .tramo-a__barra, .fila100__pista > i, .regla__banda) {
     animation: analitica-revelar-x 800ms var(--curva-salida) backwards;
     animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + var(--i, 0) * 45ms);
@@ -2741,7 +2476,7 @@ a.fila-a__cifra {
   }
 
   /* Puntos y marcas sobre las barras: asoman cuando la barra ya creció. scale (no transform) compone con su centrado. */
-  .analitica :is(.pista-a__caso, .comparar-a__valor, .comparar-a__equipo, .alza-a__ahora, .alza-a__antes, .pista-b__todas,
+  .analitica :is(.comparar-a__valor, .comparar-a__equipo, .alza-a__ahora, .alza-a__antes, .pista-b__todas,
     .prioridad-a__objetivo, .regla__punto) {
     animation: analitica-asomar 450ms var(--curva-salida) backwards;
     animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + 200ms + var(--i, 0) * 45ms);
@@ -3705,4 +3440,475 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
 .analitica .cadena-a__nodo {
   background: linear-gradient(180deg, var(--color-tenue), var(--color-superficie));
   border-color: var(--rampa-2);
+}
+
+/* ── «Estado de la central»: el radar (13/11/2026) ─────────────────────────────────────────────────────────────────────────
+   Toda la respuesta es el tablero nocturno: el titular arriba, el radar y la lista de etapas debajo, sobre la misma superficie.
+   Cada porción es una etapa y la distancia al centro, las veces que un caso lleva su tiempo esperado (Radar.cs). El rojo solo
+   marca el arco de los SOS; el ocre (▲) y el menta (✓) marcan el estado, siempre con su texto en la lista. */
+.tarjeta-a.respuesta.radar-a {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background:
+    radial-gradient(42% 52% at 30% 58%, rgb(0 128 90 / 0.20), transparent 70%),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+}
+
+.tarjeta-a.respuesta.radar-a > .respuesta__cabecera:first-child {
+  margin-bottom: 0;
+  background: radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.30) 0%, transparent 62%);
+}
+
+.radar-a__cuerpo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-2) var(--espacio-8);
+}
+
+.radar-a__radar {
+  position: relative;
+  flex: 0 1 34rem;
+  width: 100%;
+  max-width: calc(100% - 6rem);   /* los rótulos salen del borde: les queda aire a los lados */
+  aspect-ratio: 1;
+  margin: var(--espacio-6) auto var(--espacio-4);
+}
+
+.radar-a__radar svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.radar-a__cunas { fill: rgb(213 224 240 / 0.035); stroke: rgb(213 224 240 / 0.12); stroke-width: 1; }
+.radar-a__esperado { fill: rgb(69 227 164 / 0.15); }
+.radar-a__anillo { fill: none; stroke: rgb(213 224 240 / 0.22); stroke-width: 1; stroke-dasharray: 2 6; }
+.radar-a__anillo--esperado { stroke: var(--color-acento); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.radar-a__anillo--borde { stroke-dasharray: none; }
+.radar-a__grupo { fill: none; stroke-width: 4; stroke-linecap: round; }
+.radar-a__grupo--sos { stroke: #F04438; }       /* el rojo del SOS, aclarado para leerse sobre marino */
+.radar-a__grupo--reporte { stroke: #A78BFA; }   /* el violeta de los reportes, aclarado igual */
+.radar-a__nombre-grupo { font-size: 13px; font-weight: var(--peso-fuerte); letter-spacing: 0.04em; }
+.radar-a__nombre-grupo--sos { fill: #FDA29B; }     /* 8.9:1 sobre marino-900 */
+.radar-a__nombre-grupo--reporte { fill: #C4B5FD; } /* 9.6:1 */
+.radar-a__centro-fondo { fill: var(--marino-700); stroke: rgb(213 224 240 / 0.25); stroke-width: 1; }
+
+/* La porción de la etapa elegida en la lista se ilumina; la transición solo es de color. */
+.radar-a__sector {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1.5;
+  transition: fill var(--duracion-rapida) ease, stroke var(--duracion-rapida) ease;
+}
+
+.radar-a__sector.es-foco { fill: rgb(69 227 164 / 0.10); stroke: rgb(69 227 164 / 0.6); }
+
+/* El haz de la entrada: invisible fuera de su vuelta. */
+.radar-a__barrido {
+  fill: rgb(69 227 164 / 0.22);
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+
+.radar-a__caso {
+  position: absolute;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: -0.4375rem 0 0 -0.4375rem;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--color-acento);
+  border: 2px solid var(--marino-900);
+  transition: background-color 300ms ease, border-color 300ms ease, opacity var(--duracion-rapida) ease;
+}
+
+.radar-a__caso--tarde {
+  background: var(--marino-900);
+  border: 3px solid var(--color-advertencia-sobre-marino);
+  box-shadow: 0 0 0 3px rgb(245 181 68 / 0.18);
+}
+
+.radar-a__lejos {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)));
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-advertencia-sobre-marino);
+  white-space: nowrap;
+}
+
+.radar-a__rotulo {
+  position: absolute;
+  white-space: nowrap;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto-sobre-marino);
+  line-height: 1.2;
+  pointer-events: none;
+  transition: opacity var(--duracion-rapida) ease;
+}
+
+.radar-a__rotulo b { color: #FFFFFF; font-size: var(--texto-sm); }
+
+.radar-a__centro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.radar-a__centro b { font-size: var(--texto-2xl); font-weight: var(--peso-fuerte); color: #FFFFFF; letter-spacing: -0.02em; }
+.radar-a__centro span { margin-top: 2px; font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+/* Foco en una etapa: lo demás se atenúa (analitica.js marca la etapa con .es-foco). */
+.radar-a__radar[data-foco] :is(.radar-a__caso, .radar-a__rotulo):not(.es-foco) { opacity: 0.2; }
+
+/* La lista de etapas, a la derecha del radar (debajo en pantallas angostas). */
+.radar-a__etapas {
+  flex: 1 1 20rem;
+  min-width: 0;
+  padding-bottom: var(--espacio-4);
+}
+
+.radar-a__grupo-lista {
+  margin: var(--espacio-3) 0 var(--espacio-1);
+  padding-inline: var(--espacio-3);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.etapas-radar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.etapa-radar {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  column-gap: var(--espacio-3);
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 1px solid transparent;
+  border-radius: var(--radio-control);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) ease, border-color var(--duracion-rapida) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .etapa-radar:hover { background: rgb(213 224 240 / 0.07); border-color: rgb(213 224 240 / 0.16); }
+}
+
+.etapa-radar[aria-pressed="true"] { background: rgb(69 227 164 / 0.10); border-color: rgb(69 227 164 / 0.45); }
+
+.etapa-radar:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco-sobre-marino);
+  outline-offset: 1px;
+}
+
+.etapa-radar__numero {
+  grid-row: 1 / 3;
+  font-size: var(--texto-xl);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  text-align: right;
+}
+
+.etapa-radar__numero--cero { color: #8A9DBB; font-weight: var(--peso-normal); }   /* 6.4:1 sobre marino-900 */
+
+.etapa-radar__nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-width: 0;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  color: #FFFFFF;
+}
+
+.etapa-radar__esperado {
+  grid-column: 2;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.etapa-radar__estado {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+  text-align: right;
+}
+
+.etapa-radar__tarde { color: var(--color-advertencia-sobre-marino); font-size: var(--texto-sm); }
+.etapa-radar__bien { color: var(--color-acento); font-size: var(--texto-sm); }
+.etapa-radar__nada { color: var(--color-texto-sobre-marino-secundario); }
+
+.radar-a__pie {
+  padding-top: var(--espacio-3);
+  border-top: 1px solid var(--color-borde-sobre-marino);
+}
+
+.leyenda-radar { margin-top: 0; color: var(--color-texto-sobre-marino); }
+.leyenda-radar__caso { background: var(--color-acento); border-radius: 50% !important; box-shadow: 0 0 0 2px var(--marino-900); }
+.leyenda-radar__tarde { box-sizing: border-box; border: 3px solid var(--color-advertencia-sobre-marino); border-radius: 50% !important; }
+.leyenda-radar__esperado { width: 1rem !important; background: rgb(69 227 164 / 0.3); }
+.leyenda-radar__anillos { width: 1rem !important; height: 0 !important; border-top: 2px dashed rgb(213 224 240 / 0.5); border-radius: 0 !important; }
+
+.radar-a__nota {
+  margin: var(--espacio-2) 0 0;
+  max-width: 96ch;
+  font-size: var(--texto-xs);
+  line-height: 1.5;
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+/* Debajo del radar: lo que pide atención y los serenos en turno. */
+.ahora-a__fila {
+  display: grid;
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--espacio-4);
+}
+
+.pide-a {
+  list-style: none;
+  margin: var(--espacio-2) 0 0;
+  padding: 0;
+}
+
+.pide-a__fila {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-3);
+  padding: var(--espacio-2) 0;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: var(--texto-sm);
+}
+
+.pide-a__texto small { display: block; font-size: var(--texto-xs); color: var(--color-texto-secundario); }
+.pide-a__veces { font-size: var(--texto-xs); font-weight: var(--peso-fuerte); color: var(--color-advertencia); white-space: nowrap; }
+
+.pide-a__abrir {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alto-control-compacto);
+  padding: 0 var(--espacio-3);
+  border-radius: var(--radio-control);
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medio);
+  text-decoration: none;
+  transition: background-color var(--duracion-instantanea) ease;
+}
+
+.pide-a__abrir:hover { background: var(--color-primario-hover); }
+.pide-a__abrir:focus-visible { outline: var(--grosor-foco) solid var(--color-foco); outline-offset: var(--separacion-foco); }
+
+.pide-a__mas,
+.pide-a__vacio {
+  margin: var(--espacio-3) 0 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.pide-a__bien { color: var(--color-exito); }
+
+@media (max-width: 40rem) {
+  .pide-a__fila { grid-template-columns: auto minmax(0, 1fr); }
+  .pide-a__veces { grid-column: 2; }
+  .pide-a__abrir { grid-column: 2; justify-self: start; }
+}
+
+.turno-a {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-3);
+}
+
+.turno-a__sereno {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radio-superficie);
+  background: var(--marino-700);
+  color: #FFFFFF;
+}
+
+.turno-a__sereno--libre {
+  background: var(--color-tenue);
+  color: var(--esmeralda-800);
+  box-shadow: inset 0 0 0 1.5px var(--rampa-2);
+}
+
+.leyenda-turno b { color: var(--color-texto); }
+.leyenda-turno__libre { background: var(--color-tenue); box-shadow: inset 0 0 0 1.5px var(--rampa-2); }
+.leyenda-turno__ocupado { background: var(--marino-700); }
+
+/* Varios casos casi encima: una marca más grande con su cantidad (Radar.Marcas). Cada marca se enfoca con el teclado y su globo da
+   el tiempo de cada caso; el globo se abre hacia el centro del radar para no salirse por el costado. */
+.radar-a__caso {
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  font-weight: var(--peso-fuerte);
+  line-height: 1;
+  color: var(--marino-900);
+  cursor: default;
+}
+
+.radar-a__caso--grupo {
+  width: 1.375rem;
+  height: 1.375rem;
+  margin: -0.6875rem 0 0 -0.6875rem;
+}
+
+.radar-a__caso--tarde.radar-a__caso--grupo { color: var(--color-advertencia-sobre-marino); }
+
+.radar-a__caso:hover,
+.radar-a__caso:focus-visible { z-index: 6; }
+
+.radar-a__caso:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco-sobre-marino);
+  outline-offset: 3px;
+}
+
+.radar-a__globo {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  gap: var(--espacio-1);
+  min-width: 9.5rem;
+  padding: var(--espacio-2) var(--espacio-3);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  box-shadow: var(--sombra-3);
+  color: var(--color-texto);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  line-height: 1.35;
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-1.25rem, 4px);
+  transition: opacity var(--duracion-rapida) ease, transform var(--duracion-rapida) ease, visibility 0s linear var(--duracion-rapida);
+}
+
+.radar-a__caso--der .radar-a__globo { left: auto; right: 50%; transform: translate(1.25rem, 4px); }
+
+.radar-a__caso:hover .radar-a__globo,
+.radar-a__caso:focus-visible .radar-a__globo {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-1.25rem, 0);
+  transition-delay: 0s;
+}
+
+.radar-a__caso--der:hover .radar-a__globo,
+.radar-a__caso--der:focus-visible .radar-a__globo { transform: translate(1.25rem, 0); }
+
+.radar-a__globo b { font-size: var(--texto-sm); font-weight: var(--peso-fuerte); color: var(--color-marino); }
+.radar-a__globo-lista { display: grid; gap: 1px; color: var(--color-texto-secundario); }
+.radar-a__globo .tarde { color: var(--color-advertencia); font-weight: var(--peso-medio); }
+.radar-a__globo .bien { color: var(--color-exito); font-weight: var(--peso-medio); }
+.radar-a__globo .mas { color: var(--color-texto-terciario); }
+
+/* La entrada (una vez, al abrir la pestaña; analitica.js pone .radar-a--entrando y lo quita al terminar): el radar se abre
+   desde el centro, un haz menta da una vuelta y cada caso aparece con un destello cuando el haz pasa por su etapa. En vivo no se
+   repite: los puntos que siguen se deslizan a su sitio nuevo (movimiento.js) y el que entra aparece con dos ondas. */
+@keyframes radar-abrir {
+  from { opacity: 0; transform: scale(0.82) rotate(-14deg); }
+}
+
+@keyframes radar-barrer {
+  0% { opacity: 1; transform: rotate(0deg); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(360deg); }
+}
+
+@keyframes radar-destello {
+  0% { opacity: 0; scale: 0.3; box-shadow: 0 0 0 0 rgb(69 227 164 / 0.9); }
+  60% { opacity: 1; scale: 1.25; box-shadow: 0 0 0 8px rgb(69 227 164 / 0); }
+}
+
+@keyframes radar-onda {
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(3.2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .radar-a--entrando .radar-a__fondo {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    animation: radar-abrir 700ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + 120ms);
+  }
+
+  .radar-a--entrando .radar-a__barrido {
+    animation: radar-barrer 1700ms linear forwards;
+    animation-delay: calc(var(--retraso, 0ms) + 420ms);
+  }
+
+  .radar-a--entrando .radar-a__caso {
+    animation: radar-destello 600ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + 420ms + var(--llegada, 0ms));
+  }
+
+  .radar-a--entrando :is(.radar-a__rotulo, .radar-a__centro) {
+    animation: analitica-aparecer 500ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + 480ms);
+  }
+
+  .radar-a--entrando ~ .radar-a__etapas .etapas-radar > li {
+    animation: analitica-entrar var(--duracion-lenta) var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + 360ms + var(--i, 0) * 45ms);
+  }
+
+  .turno-a__sereno {
+    animation: analitica-asomar 450ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + var(--entrada-graficos) + var(--i, 0) * 40ms);
+  }
+
+  .radar-a__caso--nuevo::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--color-acento);
+    pointer-events: none;
+    animation: radar-onda 1100ms var(--curva-salida) 2 both;
+  }
 }

@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Html;
 
 namespace Cad.Server.Panel.Pages.Analitica;
 
-// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las preguntas, los nombres de zona, la regla y los
-// carriles (dibujados en SVG desde el servidor: sin JavaScript para leer una respuesta) y las señales de la salud del sistema.
+// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las preguntas, los nombres de zona, la regla (dibujada
+// en SVG desde el servidor: sin JavaScript para leer una respuesta) y las señales de la salud del sistema. El radar de «Ahora»
+// está en Radar.cs.
 public static class Formato
 {
     private static readonly CultureInfo Peru = CultureInfo.GetCultureInfo("es-PE");
@@ -193,59 +194,6 @@ public sealed class Regla
                 s.Append($"<text class=\"regla__sub\" x=\"{N(desplazado)}\" y=\"{Eje + 44 + 10}\"{ancla}>{E(sub)}</text>");
         }
         return new HtmlString(s.Append("</svg>").ToString());
-    }
-}
-
-// Los carriles de «Ahora»: una pista por etapa con los casos abiertos como puntos. Todas las pistas comparten la misma medida, «veces
-// lo esperado en esa etapa»: la franja verde (de 0 a 1×) cae en el mismo lugar en cada fila y se ve de un vistazo qué tan pasado
-// va cada caso, aunque una etapa tolere 3 min y otra 60. Los minutos reales van en texto (a la izquierda lo esperado, a la derecha
-// lo atascado), nunca sobre la pista: ahí solo hay puntos, y los que quedan casi juntos se agrupan en uno con su cantidad.
-public static class Carriles
-{
-    // La pista llega hasta 3 veces lo esperado; un caso más lento se queda en el borde (su tiempo está en el texto).
-    public const double Alcance = 3;
-
-    // Separación mínima entre puntos, en % del ancho de la pista (unos 24 px en pantalla de escritorio); más cerca se agrupan.
-    private const double Cerca = 3.5;
-
-    private static string E(string texto) => WebUtility.HtmlEncode(texto);
-    private static string N(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
-
-    // Dónde cae un tiempo en la pista, de 0 a 100 %.
-    public static double Posicion(double minutos, int esperado) =>
-        esperado <= 0 ? 100 : Math.Min(minutos / esperado, Alcance) / Alcance * 100;
-
-    public static IHtmlContent Pista(IEnumerable<double> minutos, int esperado, string descripcion)
-    {
-        var s = new StringBuilder($"<div class=\"pista-a\" role=\"img\" aria-label=\"{E(descripcion)}\">");
-        var limite = N(Posicion(esperado, esperado));
-        s.Append($"<span class=\"pista-a__esperado\" style=\"width:{limite}%\"></span><span class=\"pista-a__linea\"></span><span class=\"pista-a__limite\" style=\"left:{limite}%\"></span>");
-        var grupos = new List<List<double>>();
-        foreach (var m in minutos.OrderBy(m => m))
-            if (grupos.Count > 0 && Posicion(m, esperado) - Posicion(grupos[^1][0], esperado) < Cerca) grupos[^1].Add(m);
-            else grupos.Add([m]);
-        foreach (var grupo in grupos)
-        {
-            var atascado = grupo.Any(m => m > esperado);
-            var lejos = grupo.Any(m => m > esperado * Alcance);
-            var x = N(grupo.Average(m => Posicion(m, esperado)));
-            var clases = $"pista-a__caso{(atascado ? " pista-a__caso--atascado" : "")}{(grupo.Count > 1 ? " pista-a__caso--grupo" : "")}{(lejos ? " pista-a__caso--lejos" : "")}";
-            var posicion = grupo.Average(m => Posicion(m, esperado));
-            // Globo propio (no el «title» del navegador): al pasar el cursor o enfocar el punto, con cada tiempo y si ya pasó lo esperado.
-            var globo = new StringBuilder("<span class=\"pista-a__globo\" role=\"tooltip\">");
-            globo.Append($"<b>{(grupo.Count == 1 ? E(Formato.Minutos(grupo[0])) + " en la etapa" : Formato.Plural(grupo.Count, "caso", "casos") + " en la etapa")}</b>");
-            if (grupo.Count > 1)
-            {
-                globo.Append("<ul>");
-                foreach (var m in grupo.OrderByDescending(m => m).Take(5))
-                    globo.Append($"<li{(m > esperado ? " class=\"tarde\"" : "")}>{E(Formato.Minutos(m))}</li>");
-                if (grupo.Count > 5) globo.Append($"<li class=\"mas\">y {grupo.Count - 5} más</li>");
-                globo.Append("</ul>");
-            }
-            globo.Append($"<span class=\"{(atascado ? "tarde" : "bien")}\">{(atascado ? "▲ Ya pasó lo esperado" : "✓ A tiempo")} (hasta {E(Formato.Minutos(esperado))})</span></span>");
-            s.Append($"<span class=\"{clases}{(posicion > 60 ? " pista-a__caso--der" : "")}\" style=\"left:{x}%\" tabindex=\"0\">{(grupo.Count > 1 ? grupo.Count.ToString(CultureInfo.InvariantCulture) : "")}{globo}</span>");
-        }
-        return new HtmlString(s.Append("</div>").ToString());
     }
 }
 

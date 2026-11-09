@@ -5,34 +5,29 @@
     var foto = v.Foto;
     var abiertos = v.Casos.Abiertos;
     var atascados = v.Casos.Atascados.Count;
-    // Un carril por etapa, en el orden del recorrido; las etapas sin casos también se ven (vacías), para leer el tablero entero.
-    var carriles = new (string Grupo, EstadoCaso Estado, bool Reporte, string Nombre)[]
-    {
-        ("sos", EstadoCaso.Pendiente, false, "Pendiente de despacho"),
-        ("sos", EstadoCaso.Asignada, false, "Asignado, sin salir"),
-        ("sos", EstadoCaso.EnCamino, false, "En camino"),
-        ("sos", EstadoCaso.EnAtencion, false, "En atención"),
-        ("reporte", EstadoCaso.Recibido, true, "Recibido, sin revisar"),
-        ("reporte", EstadoCaso.EnRevision, true, "En revisión"),
-        ("reporte", EstadoCaso.Pendiente, true, "Admitido, sin asignar"),
-        ("reporte", EstadoCaso.Asignada, true, "Asignado, sin salir"),
-        ("reporte", EstadoCaso.EnCamino, true, "En camino"),
-        ("reporte", EstadoCaso.EnAtencion, true, "En atención"),
-    };
+    // El tiempo esperado de cada etapa: el que trae un caso abierto o, si no hay ninguno, el de la configuración.
     var esperados = abiertos.GroupBy(a => (a.Estado, a.Origen == OrigenCaso.Reporte)).ToDictionary(g => g.Key, g => g.First().UmbralMinutos);
-    int Esperado(EstadoCaso estado, bool reporte) => esperados.TryGetValue((estado, reporte), out var u) ? u : estado switch
+    int Esperado(Radar.Etapa e) => esperados.TryGetValue((e.Estado, e.Reporte), out var u) ? u : e.Estado switch
     {
-        EstadoCaso.Pendiente => reporte ? m.Opciones.UmbralReporteAdmitidoMinutos : m.Opciones.UmbralSosPendienteMinutos,
+        EstadoCaso.Pendiente => e.Reporte ? m.Opciones.UmbralReporteAdmitidoMinutos : m.Opciones.UmbralSosPendienteMinutos,
         EstadoCaso.Asignada => m.Opciones.UmbralAsignadaMinutos,
         EstadoCaso.EnCamino => m.Opciones.UmbralEnCaminoMinutos,
         EstadoCaso.Recibido => m.Opciones.UmbralRecibidoMinutos,
         EstadoCaso.EnRevision => m.Opciones.UmbralEnRevisionMinutos,
         _ => m.Opciones.UmbralEnAtencionMinutos,
     };
+    var etapas = Radar.Etapas.Select(e => (Etapa: e, Esperado: Esperado(e), Casos: Radar.Casos(e, abiertos))).ToList();
     var hora = TimeZoneInfo.ConvertTime(foto.En, m.ZonaHoraria).ToString("HH:mm:ss");
+    var sos = Radar.Etapas.Where(e => !e.Reporte).ToList();
+    var reportes = Radar.Etapas.Where(e => e.Reporte).ToList();
+    // Lo que pide atención: primero los SOS y, dentro de cada grupo, el que más se pasó de lo esperado.
+    var pide = v.Casos.Atascados.OrderBy(a => a.Origen == OrigenCaso.Reporte).ThenByDescending(a => a.VecesElUmbral).ToList();
+    const int MaximoPide = 6;
+    var conCaso = Math.Max(0, foto.SerenosOperativos - foto.SerenosDisponibles);
+    string Veces(double x) => $"{Formato.Decimal(x, 1)}× lo esperado";
 }
 <div class="region-ahora" data-region-ahora data-actualizado="@hora">
-    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-ahora" data-respuesta="ahora">
+    <section class="tarjeta-a respuesta radar-a" aria-labelledby="respuesta-ahora" data-respuesta="ahora">
         <div class="respuesta__cabecera">
             @if (abiertos.Count == 0)
             {
@@ -42,91 +37,169 @@
             else
             {
                 <h2 class="respuesta__titular" id="respuesta-ahora">Hay <em>@Formato.Plural(abiertos.Count, "caso abierto", "casos abiertos")</em>@(atascados == 0 ? "; todos van a tiempo." : $"; {atascados} {(atascados == 1 ? "lleva" : "llevan")} más tiempo del esperado en su etapa.")</h2>
-                <p class="respuesta__lectura">Cada punto es un caso, puesto según cuánto lleva en su etapa. La franja verde llega hasta el tiempo esperado de esa etapa, que se lee bajo su nombre; un punto ámbar ya lo pasó.</p>
+                <p class="respuesta__lectura">Cada porción del radar es una etapa y cada punto, un caso: cuanto más lejos del centro, más tiempo lleva en su etapa. El anillo verde es el tiempo esperado; un punto con anillo ocre ya lo pasó. Pasa el cursor por una etapa de la lista para verla sola en el radar.</p>
             }
         </div>
-        <div class="carriles-a">
-            <div class="carril-a carril-a--eje" aria-hidden="true">
-                <span class="carril-a__nombre">Etapa y tiempo esperado</span>
-                <span></span>
-                <div class="eje-a">
-                    <span class="eje-a__marca" style="left:0">0</span>
-                    <span class="eje-a__marca eje-a__marca--esperado" style="left:@(Carriles.Posicion(1, 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">lo esperado</span>
-                    <span class="eje-a__marca" style="left:@(Carriles.Posicion(2, 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">2× lo esperado</span>
-                    <span class="eje-a__marca" style="left:100%">3× o más</span>
-                </div>
-                <span class="carril-a__detalle">Estado</span>
-            </div>
-            @foreach (var grupo in carriles.GroupBy(c => c.Grupo))
-            {
-                <p class="carriles-a__grupo">@(grupo.Key == "sos" ? "SOS y casos urgentes" : "Reportes")</p>
-                @foreach (var c in grupo)
+
+        <div class="radar-a__cuerpo">
+            <div class="radar-a__radar" data-radar role="group" aria-label="Radar de los @Formato.Plural(abiertos.Count, "caso abierto", "casos abiertos") por etapa: @(atascados == 0 ? "ninguno pasó" : $"{atascados} pasaron") el tiempo esperado.">
+                <svg viewBox="-320 -320 640 640" aria-hidden="true" focusable="false">
+                    <g class="radar-a__fondo">
+                        <path class="radar-a__cunas" d="@(string.Concat(etapas.Select(x => Radar.Cuna(Radar.Centro, Radar.Borde, x.Etapa.Desde, x.Etapa.Hasta))))" />
+                        <path class="radar-a__esperado" d="@(string.Concat(etapas.Select(x => Radar.Cuna(Radar.Centro, Radar.Centro + Radar.Paso, x.Etapa.Desde, x.Etapa.Hasta))))" />
+                        <circle class="radar-a__anillo radar-a__anillo--esperado" r="@(Radar.N(Radar.Centro + Radar.Paso))" />
+                        <circle class="radar-a__anillo" r="@(Radar.N(Radar.Centro + 2 * Radar.Paso))" />
+                        <circle class="radar-a__anillo radar-a__anillo--borde" r="@(Radar.N(Radar.Borde))" />
+                        <path class="radar-a__grupo radar-a__grupo--sos" d="@(Radar.Arco(Radar.Borde + 8, sos[0].Desde, sos[^1].Hasta))" />
+                        <path class="radar-a__grupo radar-a__grupo--reporte" d="@(Radar.Arco(Radar.Borde + 8, reportes[0].Desde, reportes[^1].Hasta))" />
+                        @foreach (var x in etapas)
+                        {
+                            <path class="radar-a__sector" data-etapa="@x.Etapa.Clave" d="@Radar.Cuna(Radar.Centro, Radar.Borde, x.Etapa.Desde, x.Etapa.Hasta)" />
+                        }
+                        <text class="radar-a__nombre-grupo radar-a__nombre-grupo--sos" x="0" y="-250" text-anchor="middle">SOS</text>
+                        <text class="radar-a__nombre-grupo radar-a__nombre-grupo--reporte" x="0" y="248" text-anchor="middle">REPORTES</text>
+                    </g>
+                    <path class="radar-a__barrido" d="@(Radar.Cuna(Radar.Centro, Radar.Borde, Radar.Inicio - 34, Radar.Inicio))" />
+                    <circle class="radar-a__centro-fondo" r="@(Radar.N(Radar.Centro - 2))" />
+                </svg>
+                @foreach (var x in etapas)
                 {
-                    var minutos = abiertos.Where(a => a.Estado == c.Estado && (a.Origen == OrigenCaso.Reporte) == c.Reporte).Select(a => a.Minutos).ToList();
-                    // Los reportes ya asignados solo aparecen si hay alguno: su carril vacío no dice nada.
-                    if (c.Reporte && c.Estado is EstadoCaso.Asignada or EstadoCaso.EnCamino or EstadoCaso.EnAtencion && minutos.Count == 0) { continue; }
-                    var esperado = Esperado(c.Estado, c.Reporte);
-                    var tarde = minutos.Count(x => x > esperado);
-                    var masLargo = minutos.Count == 0 ? (double?)null : minutos.Max();
-                    <div class="carril-a" data-etapa="@c.Estado" data-reporte="@c.Reporte.ToString().ToLowerInvariant()" data-casos="@minutos.Count" data-atascados="@tarde" data-esperado="@esperado">
-                        <span class="carril-a__nombre">
-                            <span class="carril-a__titulo">
-                                @if (c.Estado is EstadoCaso.Pendiente && !c.Reporte) { <span class="chip chip--urgente">SOS</span> }
-                                @if (c.Estado is EstadoCaso.Recibido) { <span class="chip chip--reporte">Reporte</span> }
-                                @c.Nombre
-                            </span>
-                            <span class="carril-a__esperado">esperado: hasta @Formato.Minutos(esperado)</span>
-                        </span>
-                        <span class="carril-a__numero">@minutos.Count</span>
-                        @Carriles.Pista(minutos, esperado, $"{c.Nombre}: {Formato.Plural(minutos.Count, "caso", "casos")}, {(tarde == 0 ? "ninguno" : tarde.ToString())} con más de {Formato.Minutos(esperado)} en la etapa")
-                        <span class="carril-a__detalle">
-                            @if (masLargo is not { } largo)
-                            {
-                                <span class="carril-a__nada">Sin casos</span>
-                            }
-                            else if (tarde > 0)
-                            {
-                                <strong class="carril-a__tarde">▲ @Formato.Plural(tarde, "sobre el tiempo esperado", "sobre el tiempo esperado")</strong>
-                                <span>el más largo, @Formato.Minutos(largo)</span>
-                            }
-                            else
-                            {
-                                <strong class="carril-a__bien">✓ A tiempo</strong>
-                                <span>el más largo, @Formato.Minutos(largo)</span>
-                            }
-                        </span>
-                    </div>
+                    <span class="radar-a__rotulo" data-etapa="@x.Etapa.Clave" style="@Radar.EstiloRotulo(x.Etapa)">@x.Etapa.Corto <b data-suave>@x.Casos.Count</b></span>
                 }
-            }
-            <ul class="leyenda-a">
-                <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Caso a tiempo</li>
-                <li><i class="leyenda-a__atascado"></i>Pasó el tiempo esperado</li>
-                <li><i class="leyenda-a__banda"></i>Tiempo esperado de la etapa</li>
-                <li><i class="leyenda-a__grupo">3</i>Varios casos casi juntos</li>
+                <span class="radar-a__centro"><b data-suave>@abiertos.Count</b><span>@(abiertos.Count == 1 ? "abierto" : "abiertos")</span></span>
+                @foreach (var x in etapas)
+                {
+                    @* Los casos casi encima se juntan en una marca con su cantidad; el globo (al pasar el cursor o enfocarla) da cada tiempo. *@
+                    foreach (var marca in Radar.Marcas(x.Casos))
+                    {
+                        var clases = "radar-a__caso" + (marca.Tarde ? " radar-a__caso--tarde" : "") + (marca.Grupo ? " radar-a__caso--grupo" : "") + (marca.X > 0 ? " radar-a__caso--der" : "");
+                        <span class="@clases" data-clave="@marca.Clave" data-etapa="@x.Etapa.Clave" tabindex="0"
+                              style="left:@Radar.Porcentaje(marca.X);top:@Radar.Porcentaje(marca.Y);--llegada:@(Radar.Llegada(marca.Grados))ms">@(marca.Grupo ? marca.Casos.Count.ToString() : "")@if (marca.Lejos)
+                            {
+                                <span class="radar-a__lejos" style="@Radar.EstiloLejos(marca.Grados)" aria-hidden="true">@(marca.Grupo ? "hasta " : "")@Formato.Minutos(marca.MasLargo)</span>
+                            }<span class="radar-a__globo" role="tooltip">
+                                <b>@x.Etapa.Nombre: @(marca.Grupo ? Formato.Plural(marca.Casos.Count, "caso", "casos") : Formato.Minutos(marca.Casos[0].Minutos) + " en la etapa")</b>
+                                @if (marca.Grupo)
+                                {
+                                    <span class="radar-a__globo-lista">
+                                        @foreach (var c in marca.Casos.OrderByDescending(c => c.Minutos).Take(5))
+                                        {
+                                            <span class="@(c.Tarde ? "tarde" : "")">@Formato.Minutos(c.Minutos)</span>
+                                        }
+                                        @if (marca.Casos.Count > 5) { <span class="mas">y @(marca.Casos.Count - 5) más</span> }
+                                    </span>
+                                }
+                                @{ var pasados = marca.Casos.Count(c => c.Tarde); }
+                                <span class="@(marca.Tarde ? "tarde" : "bien")">@(pasados == 0 ? "✓ A tiempo" : !marca.Grupo ? "▲ Ya pasó lo esperado" : pasados == 1 ? "▲ 1 pasó lo esperado" : $"▲ {pasados} pasaron lo esperado") (hasta @Formato.Minutos(marca.Esperado))</span>
+                            </span></span>
+                    }
+                }
+            </div>
+
+            <div class="radar-a__etapas">
+                @foreach (var (titulo, grupo) in new[] { ("SOS y casos urgentes", sos), ("Reportes", reportes) })
+                {
+                    <p class="radar-a__grupo-lista">@titulo</p>
+                    <ul class="etapas-radar">
+                        @foreach (var x in etapas.Where(x => grupo.Contains(x.Etapa)))
+                        {
+                            var tarde = x.Casos.Count(c => c.Tarde);
+                            var masLargo = x.Casos.Count == 0 ? (double?)null : x.Casos.Max(c => c.Minutos);
+                            <li data-clave="etapa-@x.Etapa.Clave">
+                                <button type="button" class="etapa-radar" data-etapa="@x.Etapa.Clave" data-estado="@x.Etapa.Estado" data-casos="@x.Casos.Count" data-atascados="@tarde" data-esperado="@x.Esperado" aria-pressed="false">
+                                    <span class="etapa-radar__numero@(x.Casos.Count == 0 ? " etapa-radar__numero--cero" : "")" data-suave>@x.Casos.Count</span>
+                                    <span class="etapa-radar__nombre">
+                                        @if (x.Etapa.Estado is EstadoCaso.Pendiente && !x.Etapa.Reporte) { <span class="chip chip--urgente">SOS</span> }
+                                        @if (x.Etapa.Estado is EstadoCaso.Recibido) { <span class="chip chip--reporte">Reporte</span> }
+                                        @x.Etapa.Nombre
+                                    </span>
+                                    <span class="etapa-radar__esperado">esperado: hasta @Formato.Minutos(x.Esperado)</span>
+                                    <span class="etapa-radar__estado" data-suave>
+                                        @if (masLargo is not { } largo)
+                                        {
+                                            <span class="etapa-radar__nada">Sin casos</span>
+                                        }
+                                        else if (tarde > 0)
+                                        {
+                                            <strong class="etapa-radar__tarde">▲ @tarde sobre lo esperado</strong>
+                                            <span>el más largo, @Formato.Minutos(largo)</span>
+                                        }
+                                        else
+                                        {
+                                            <strong class="etapa-radar__bien">✓ A tiempo</strong>
+                                            <span>el más largo, @Formato.Minutos(largo)</span>
+                                        }
+                                    </span>
+                                    <span class="visualmente-oculto">. Resaltar esta etapa en el radar.</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <div class="radar-a__pie">
+            <ul class="leyenda-a leyenda-radar">
+                <li><i class="leyenda-radar__caso"></i>Caso a tiempo</li>
+                <li><i class="leyenda-radar__tarde"></i>Pasó el tiempo esperado</li>
+                <li><i class="leyenda-radar__esperado"></i>Dentro de lo esperado</li>
+                <li><i class="leyenda-radar__anillos"></i>2× y 3× lo esperado</li>
             </ul>
-            <p class="carriles-a__nota">El tiempo esperado no es un promedio de casos anteriores: es el máximo que la central tolera que un caso lleve en esa etapa. Son valores provisionales, hasta que se fijen los tiempos objetivo del servicio. Los minutos se cuentan desde que el caso entró en la etapa. Todas las filas usan la misma medida, veces lo esperado, así que la franja verde siempre termina en el mismo lugar; los casos más allá de 3× quedan en el borde, con su tiempo escrito a la derecha.</p>
+            <p class="radar-a__nota">El tiempo esperado no es un promedio de casos anteriores: es el máximo que la central tolera que un caso lleve en esa etapa. Son valores provisionales, hasta que se fijen los tiempos objetivo del servicio. Los minutos se cuentan desde que el caso entró en la etapa. Más allá de 3 veces lo esperado, el caso queda en el borde con su tiempo escrito.</p>
         </div>
     </section>
 
-    <section class="tarjeta-a" aria-labelledby="titulo-serenos">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos">Serenos ahora</h3><span class="tarjeta-a__nota">El mapa de la central muestra dónde está cada uno.</span></div>
-        @{
-            var conCaso = Math.Max(0, foto.SerenosOperativos - foto.SerenosDisponibles);
-        }
-        @if (foto.SerenosOperativos == 0)
-        {
-            <p class="tarjeta-a__vacia">No hay serenos operativos en este momento.</p>
-        }
-        else
-        {
-            <div class="serenos-a" aria-hidden="true">
-                <span class="serenos-a__libres" style="flex:@foto.SerenosDisponibles"></span>
-                <span class="serenos-a__ocupados" style="flex:@conCaso"></span>
-            </div>
-            <ul class="leyenda-a leyenda-a--compacta">
-                <li><i class="leyenda-a__sereno-libre"></i>@Formato.Plural(foto.SerenosDisponibles, "disponible", "disponibles")</li>
-                <li><i class="leyenda-a__sereno-ocupado"></i>@conCaso con caso</li>
-            </ul>
-        }
-    </section>
+    <div class="ahora-a__fila">
+        <section class="tarjeta-a" aria-labelledby="titulo-pide">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-pide">Lo que pide atención ahora</h3><span class="tarjeta-a__nota">primero los SOS</span></div>
+            @if (pide.Count == 0)
+            {
+                <p class="pide-a__vacio"><strong class="pide-a__bien">✓ Ningún caso pasó su tiempo esperado.</strong></p>
+            }
+            else
+            {
+                <ul class="pide-a">
+                    @foreach (var a in pide.Take(MaximoPide))
+                    {
+                        var esReporte = a.Origen == OrigenCaso.Reporte;
+                        var etapa = Radar.De(a.Estado, esReporte);
+                        <li class="pide-a__fila" data-clave="pide-@a.CasoId">
+                            <span class="chip @(esReporte ? "chip--reporte" : "chip--urgente")">@(esReporte ? "Reporte" : "SOS")</span>
+                            <span class="pide-a__texto">@(etapa?.Nombre ?? EstadosCaso.Texto(a.Estado))<small>lleva @Formato.Minutos(a.Minutos) · esperado @Formato.Minutos(a.UmbralMinutos)</small></span>
+                            <span class="pide-a__veces">▲ @Veces(a.VecesElUmbral)</span>
+                            <a class="pide-a__abrir" href="@(esReporte ? $"/panel/reportes/{a.CasoId}" : $"/panel/central/sos/{a.CasoId}")">Abrir<span class="visualmente-oculto"> el @(esReporte ? "reporte" : "SOS")</span></a>
+                        </li>
+                    }
+                </ul>
+                @if (pide.Count > MaximoPide)
+                {
+                    <p class="pide-a__mas">y @Formato.Plural(pide.Count - MaximoPide, "caso más", "casos más") en el radar</p>
+                }
+            }
+        </section>
+
+        <section class="tarjeta-a" aria-labelledby="titulo-serenos">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos">Serenos en turno</h3><span class="tarjeta-a__nota">su ubicación está en la central</span></div>
+            @if (foto.SerenosOperativos == 0)
+            {
+                <p class="tarjeta-a__vacia">No hay serenos operativos en este momento.</p>
+            }
+            else
+            {
+                <div class="turno-a" role="img" aria-label="@Formato.Plural(foto.SerenosOperativos, "sereno en turno", "serenos en turno"): @Formato.Plural(foto.SerenosDisponibles, "disponible", "disponibles") y @conCaso con un caso.">
+                    @for (var i = 0; i < foto.SerenosOperativos; i++)
+                    {
+                        <span class="turno-a__sereno@(i < foto.SerenosDisponibles ? " turno-a__sereno--libre" : "")" style="--i:@Math.Min(i, 20)">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2.5 19.5 5.5v6c0 4.8-3.2 8.8-7.5 10-4.3-1.2-7.5-5.2-7.5-10v-6z" />@if (i < foto.SerenosDisponibles) {<path d="m8.75 12 2.25 2.25 4.25-4.5" />}</svg>
+                        </span>
+                    }
+                </div>
+                <ul class="leyenda-a leyenda-a--compacta leyenda-turno">
+                    <li><i class="leyenda-turno__libre"></i><b>@foto.SerenosDisponibles</b> @(foto.SerenosDisponibles == 1 ? "disponible" : "disponibles")</li>
+                    <li><i class="leyenda-turno__ocupado"></i><b>@conCaso</b> con un caso</li>
+                </ul>
+            }
+        </section>
+    </div>
 </div>

@@ -12,15 +12,15 @@
   // cúbica: arranca decidida y frena sin arrastrarse (la exponencial corría al principio y se quedaba quieta al final).
   // Solo al cargar la página («Ahora» en vivo cambia sin repetirlo). Con movimiento reducido, nada: las cifras quedan como llegan.
   const CIFRAS = [
-    ".pregunta__dato", ".cifras-a dd", ".equipo-a dd", ".carril-a__numero", ".fila-a__cifra", ".senal-a__valor",
+    ".pregunta__dato", ".cifras-a dd", ".equipo-a dd", ".etapa-radar__numero", ".radar-a__centro b", ".fila-a__cifra", ".senal-a__valor",
     ".prioridad-a__valor b", ".notas-a__cifra", ".tramo-a__valor", ".fila100__valor", ".categoria-a__valor", ".cadena-a__valor",
-    ".barra100__leyenda b", ".etapas-a b", ".regla__valor", ".grupo100__titulo .tarjeta-a__nota", ".serenos-a + .leyenda-a li",
+    ".barra100__leyenda b", ".etapas-a b", ".regla__valor", ".grupo100__titulo .tarjeta-a__nota", ".leyenda-turno b",
   ].join(", ");
   // Un número suelto: no el de un nombre de zona («K16») ni el de «p90». El que sigue a «de» es el total o la escala («16 de 36»,
   // «3,9 de 5»): queda fijo y solo cuenta el primero.
   const NUMERO = /(?<![\p{L}\d])(?<!\bde\s)\d+(?:[.,]\d+)?(?![\p{L}\d])/gu;
   const FILAS = [
-    ".categoria-a", ".prioridad-a", ".fila100", ".senal-a", ".alza-a", ".carril-a", ".cadena-a__tramo", ".fila-a", "tbody > tr",
+    ".categoria-a", ".prioridad-a", ".fila100", ".senal-a", ".alza-a", ".etapas-radar > li", ".cadena-a__tramo", ".fila-a", "tbody > tr",
     ".notas-a__columna", ".horas-a__casos", ".horas-a__serenos",
   ];
   const DURACION_CIFRAS = 1300;
@@ -379,6 +379,64 @@
     return `${h} h ${String(m).padStart(2, "0")} min`;
   }
 
+  // ---------- «Ahora»: el radar ----------
+  // La entrada (el haz que da una vuelta y descubre los casos) la hace el CSS mientras el radar tiene .radar-a--entrando; aquí se
+  // pone al cargar y se quita al terminar, para que en vivo no se repita. Al pasar el cursor o el foco por una etapa de la lista,
+  // su porción se ilumina y lo demás se atenúa; un clic la deja fija. La actualización en vivo rehace los atributos de la región:
+  // aplicar() vuelve a poner lo que solo sabe el navegador (el foco, la fijada, la entrada que sigue corriendo).
+  const radar = (() => {
+    const DURACION_ENTRADA = 3200;
+    let foco = null, fija = null, entrandoHasta = 0;
+    const nodo = () => document.querySelector("[data-radar]");
+
+    function aplicar() {
+      const r = nodo();
+      if (!r) return;
+      r.classList.toggle("radar-a--entrando", performance.now() < entrandoHasta);
+      const etapa = foco ?? fija;
+      if (etapa) r.dataset.foco = etapa;
+      else delete r.dataset.foco;
+      for (const el of r.querySelectorAll("[data-etapa]")) el.classList.toggle("es-foco", el.dataset.etapa === etapa);
+      for (const boton of document.querySelectorAll(".etapa-radar")) boton.setAttribute("aria-pressed", String(boton.dataset.etapa === fija));
+    }
+
+    function enfocar(etapa) {
+      if (foco === etapa) return;
+      foco = etapa;
+      aplicar();
+    }
+
+    const botonDe = (evento) => (evento.target instanceof Element ? evento.target.closest(".etapa-radar") : null);
+    document.addEventListener("mouseover", (e) => { const b = botonDe(e); if (b) enfocar(b.dataset.etapa); });
+    document.addEventListener("mouseout", (e) => { const b = botonDe(e); if (b && !b.contains(e.relatedTarget)) enfocar(null); });
+    document.addEventListener("focusin", (e) => { const b = botonDe(e); if (b) enfocar(b.dataset.etapa); });
+    document.addEventListener("focusout", (e) => { if (botonDe(e)) enfocar(null); });
+    document.addEventListener("click", (e) => {
+      const b = botonDe(e);
+      if (!b) return;
+      fija = fija === b.dataset.etapa ? null : b.dataset.etapa;
+      aplicar();
+    });
+
+    if (nodo() && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      entrandoHasta = performance.now() + DURACION_ENTRADA;
+      aplicar();
+      setTimeout(aplicar, DURACION_ENTRADA + 50);
+    }
+
+    // Un caso que acaba de entrar aparece con dos ondas (el CSS no las corre con movimiento reducido).
+    function marcarNuevos(claves) {
+      const r = nodo();
+      if (!r) return;
+      for (const clave of claves) {
+        if (!clave.startsWith("caso-")) continue;
+        r.querySelector(`[data-clave="${CSS.escape(clave)}"]`)?.classList.add("radar-a__caso--nuevo");
+      }
+    }
+
+    return { aplicar, marcarNuevos };
+  })();
+
   // ---------- «Ahora» en vivo ----------
   const vivo = document.querySelector("[data-vivo]");
   let region = document.querySelector("[data-region-ahora]");
@@ -404,7 +462,9 @@
       const pagina = new DOMParser().parseFromString(await respuesta.text(), "text/html");
       const nueva = pagina.querySelector("[data-region-ahora]");
       if (!nueva) return;
-      cadMovimiento.actualizarRegion(region, nueva.innerHTML, { animar: true });
+      // Los puntos del radar tienen data-clave: los que siguen se deslizan a su sitio nuevo (movimiento.js).
+      const { nuevos } = cadMovimiento.actualizarRegion(region, nueva.innerHTML, { animar: true, despues: radar.aplicar });
+      radar.marcarNuevos(nuevos);
       region.dataset.actualizado = nueva.dataset.actualizado;
       // El dato de cada pregunta en la columna también cambia («4 atascados»).
       for (const dato of pagina.querySelectorAll(".pregunta__dato")) {
