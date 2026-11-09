@@ -83,6 +83,7 @@ public static class ModuloAnalitica
         services.AddScoped<ConsultarEmbudoReportes>();
         services.AddScoped<ConsultarIndiceFalsos>();
         services.AddScoped<ConsultarAhora>();
+        services.AddScoped<ConsultarComparacionBloques>();
         services.AddMemoryCache();
         services.AddSingleton<CacheAnalitica>();
         return services;

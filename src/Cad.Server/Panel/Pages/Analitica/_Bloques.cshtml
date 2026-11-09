@@ -1,0 +1,101 @@
+@model (IndexModel M, IndexModel.VistaBloques V)
+@{
+    var (m, v) = Model;
+    var d = v.Datos;
+}
+@* «Comparación por bloques» (10/11/2026): el distrito en tres bloques y cada bloque en sus zonas. El filtro va en dos pasos, como
+   lo pidió el profesor («derramar» del bloque a sus zonas): primero el bloque y, al elegirlo, sus zonas. Los radiales, el reparto,
+   las fichas y la evolución de 12 meses siguen esa selección. La página llega con la respuesta para todos los bloques y los datos;
+   analitica-bloques.js dibuja los gráficos y aplica los filtros sin pedir otra página. *@
+@if (d.Total == 0)
+{
+    <partial name="_Vacio" model="@(new Vacio($"No hay casos en las zonas de los bloques en {m.TextoPeriodo}.",
+        "Sin casos no hay perfiles que comparar. Prueba con un periodo más largo.",
+        m.Periodo == "365" ? [] : [("Ver los últimos 12 meses", m.Enlace(periodo: "365"), true)]))" />
+}
+else
+{
+    var (antes, cifra, despues) = ComparacionVista.Titular(m, d);
+    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-bloques" data-respuesta="bloques">
+        <div class="respuesta__cabecera">
+            <h2 class="respuesta__titular" id="respuesta-bloques" data-titular aria-live="polite">@antes<em>@cifra</em>@despues</h2>
+            <p class="respuesta__lectura">Primero el bloque y, si quieres, sus zonas: los radiales, el reparto y la evolución muestran solo esa selección. El indicador marca qué tipo de caso miras. Cada bloque agrupa las zonas que atiende una unidad policial del distrito.</p>
+        </div>
+        <div class="filtros-b" data-filtros-bloques>
+            <div class="filtros-b__fila" role="group" aria-labelledby="filtro-bloque">
+                <span class="filtros-b__etiqueta" id="filtro-bloque">1 · Bloque</span>
+                <div class="filtros-b__opciones" data-fila="bloque"></div>
+            </div>
+            <div class="filtros-b__fila" role="group" aria-labelledby="filtro-zonas" data-fila-zonas hidden>
+                <span class="filtros-b__etiqueta" id="filtro-zonas">2 · Zonas</span>
+                <div class="filtros-b__opciones" data-fila="zonas"></div>
+            </div>
+            <div class="filtros-b__fila filtros-b__fila--indicador" role="group" aria-labelledby="filtro-indicador">
+                <span class="filtros-b__etiqueta" id="filtro-indicador">Indicador</span>
+                <div class="filtros-b__opciones" data-fila="indicador"></div>
+            </div>
+            <noscript><p class="tarjeta-a__nota">Los filtros y los gráficos de esta pregunta necesitan JavaScript.</p></noscript>
+        </div>
+        <script type="application/json" data-datos-bloques>@Html.Raw(ComparacionVista.Datos(m, d))</script>
+    </section>
+
+    <section class="tarjeta-a perfil-b" aria-labelledby="titulo-perfil" data-perfil>
+        <div class="perfil-b__cabecera">
+            <h3 id="titulo-perfil" data-titulo-perfil>El perfil de cada bloque</h3>
+            <div class="perfil-b__controles">
+                <div class="segmentado" role="group" aria-label="Cómo ver los radiales" data-control="vista"></div>
+                <div class="segmentado" role="group" aria-label="Escala de los radiales" data-control="escala"></div>
+            </div>
+        </div>
+        <div class="noche-b" data-panel-perfil></div>
+    </section>
+
+    <div class="rejilla-a rejilla-a--dos rejilla-b">
+        <section class="tarjeta-a reparto-b" aria-labelledby="titulo-reparto" data-reparto>
+            <h3 id="titulo-reparto" data-titulo-reparto>Cómo se reparte entre los bloques</h3>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque" data-ayuda-reparto></p>
+            <div class="reparto-b__grafico" data-grafico-reparto></div>
+            <ul class="reparto-b__lista" data-lista-reparto></ul>
+        </section>
+        <section class="tarjeta-a fichas-b" aria-labelledby="titulo-fichas">
+            <h3 id="titulo-fichas" data-titulo-fichas>Los tres bloques</h3>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque" data-ayuda-fichas></p>
+            <div class="fichas-b__lista" data-fichas></div>
+        </section>
+    </div>
+
+    <section class="tarjeta-a evolucion-b" aria-labelledby="titulo-evolucion" data-evolucion>
+        <div class="evolucion-b__cabecera">
+            <h3 id="titulo-evolucion" data-titulo-evolucion>Evolución en los últimos 12 meses</h3>
+            <ul class="evolucion-b__leyenda" data-leyenda-evolucion></ul>
+        </div>
+        <p class="tarjeta-a__nota tarjeta-a__nota--bloque" data-lectura-evolucion></p>
+        <div class="evolucion-b__grafico" data-grafico-evolucion></div>
+        <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Los 12 últimos meses completos hasta el fin del periodo elegido, sea cual sea su largo (el mes en curso no entra: a medias se vería como una caída). Las franjas marcan las temporadas: las fiestas de fin de año, el verano, Fiestas Patrias y el aniversario de Arequipa. Datos simulados.</p>
+    </section>
+
+    <details class="tarjeta-a como-se-mide-a" data-como-se-mide>
+        <summary><h3>Cómo se arman los bloques</h3><span class="tarjeta-a__nota">y qué cuenta cada cifra</span></summary>
+        <dl class="como-se-mide-a__lista">
+            @foreach (var b in d.Bloques)
+            {
+                <div>
+                    <dt>Bloque @b.Definicion.Nombre</dt>
+                    <dd>@b.Definicion.Unidad (@b.Definicion.Direccion). @Formato.Plural(b.Definicion.Zonas.Count, "zona", "zonas") de la cuadrícula.</dd>
+                </div>
+            }
+            <div>
+                <dt>De dónde salen</dt>
+                <dd>El Plan de Acción Distrital de Seguridad Ciudadana 2024-2027 trata por separado la jurisdicción de cada comisaría y lista sus cámaras con su dirección; con ellas se trazó la frontera entre las dos. El tercer bloque es la plataforma comercial que atiende el Puesto de Auxilio Rápido. Cada zona va entera al bloque de su centro: es una aproximación, los límites oficiales no se publican como datos.</dd>
+            </div>
+            <div>
+                <dt>Qué cuenta</dt>
+                <dd>Las incidencias registradas en el periodo (sin los casos cancelados por su titular ni los descartados por la central), en la zona del hecho. Los radiales usan las 12 categorías de seguridad ciudadana; «Otros» y los SOS sin clasificar cuentan en «Todos los casos», no en un eje.</dd>
+            </div>
+            <div>
+                <dt>Zonas con pocos casos</dt>
+                <dd>Una zona con menos de @Formato.Plural(m.Opciones.MinimoCasosPorZona, "caso", "casos") en el periodo no se muestra sola, para que no se reconozca un caso por su lugar: suma en su bloque y en el «resto del bloque».@(d.FueraDeLosBloques > 0 ? $" Fuera de las zonas de los bloques quedaron {Formato.Plural(d.FueraDeLosBloques, "caso", "casos")} del periodo, que no entran en la comparación." : "")</dd>
+            </div>
+        </dl>
+    </details>
+}

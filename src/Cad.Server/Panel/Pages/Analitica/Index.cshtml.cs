@@ -24,7 +24,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     // «Rendimiento de los serenos»: el sereno elegido; sin él, la lista de todos.
     [BindProperty(SupportsGet = true)] public Guid? Sereno { get; set; }
 
-    public Preguntas.Definicion Actual { get; private set; } = Preguntas.Todas[1];
+    public Preguntas.Definicion Actual { get; private set; } = Preguntas.Buscar(null)!;
     public PeriodoAnalitica Rango { get; private set; } = null!;
     public PeriodoAnalitica Anterior { get; private set; } = null!;
     public string TextoPeriodo { get; private set; } = "";
@@ -62,17 +62,25 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         return File(informe.ACsv(), "text/csv; charset=utf-8", $"informe-analitica-{desde}.csv");
     }
 
-    // Enlaces de la página: misma selección, otra pregunta u otro periodo.
-    public string Enlace(string? pregunta = null, string? periodo = null) =>
-        Url.Page("/Analitica/Index", new
+    // Enlaces de la página: misma selección, otra pregunta u otro periodo. Un periodo que la otra pregunta no ofrece (12 meses de
+    // «Comparación por bloques» en «Tiempos de respuesta») no viaja: esa pregunta abre con el suyo.
+    public string Enlace(string? pregunta = null, string? periodo = null)
+    {
+        var destino = pregunta ?? Actual.Clave;
+        var p = periodo ?? PeriodoPara(destino);
+        return Url.Page("/Analitica/Index", new
         {
-            pregunta = pregunta ?? Actual.Clave,
-            periodo = periodo ?? Periodo,
-            desde = (periodo ?? Periodo) == "rango" ? Desde : null,
-            hasta = (periodo ?? Periodo) == "rango" ? Hasta : null,
-            prioridad = (pregunta ?? Actual.Clave) == "tiempo" ? Prioridad : null,
-            sereno = (pregunta ?? Actual.Clave) == "serenos" ? Sereno : null,
+            pregunta = destino,
+            periodo = p,
+            desde = p == "rango" ? Desde : null,
+            hasta = p == "rango" ? Hasta : null,
+            prioridad = destino == "tiempo" ? Prioridad : null,
+            sereno = destino == "serenos" ? Sereno : null,
         })!;
+    }
+
+    private string? PeriodoPara(string pregunta) =>
+        Periodo == "rango" || PeriodosDe(pregunta).Any(p => p.Valor == Periodo) ? Periodo : null;
 
     // Un sereno (o, sin él, la lista de todos) en el mismo periodo.
     public string EnlaceSereno(Guid? sereno) =>
@@ -85,6 +93,18 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
             sereno,
         })!;
 
+    // Los periodos que ofrece la pregunta abierta. «Comparación por bloques» mira meses (la evolución es de 12): 30 días, 3 meses o
+    // 12 meses, y 12 meses de entrada; las demás, hoy, 7 o 30 días.
+    public IReadOnlyList<(string Valor, string Texto)> Periodos => PeriodosDe(Actual.Clave);
+
+    public static IReadOnlyList<(string Valor, string Texto)> PeriodosDe(string pregunta) => pregunta == "bloques"
+        ? [("30", "30 días"), ("90", "3 meses"), ("365", "12 meses")]
+        : [("hoy", "Hoy"), ("7", "7 días"), ("30", "30 días")];
+
+    // El periodo de los datos de la columna de preguntas: el mismo con que abre cada una (Enlace). Con 3 o 12 meses, las demás
+    // preguntas abren con sus 7 días; calcularlas sobre un año solo para la columna haría lenta la página (puntos críticos).
+    private PeriodoAnalitica RangoResumen { get; set; } = null!;
+
     public string EnlaceInforme() => Url.Page("/Analitica/Index", "Informe", new { periodo = Periodo, desde = Desde, hasta = Hasta })!;
 
     public string EnlaceConcentracion() =>
@@ -96,11 +116,15 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     {
         var ahora = TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), ZonaHoraria);
         var hoy = DateOnly.FromDateTime(ahora.DateTime);
-        Periodo = Periodo is "hoy" or "7" or "30" or "rango" ? Periodo : "7";
+        var porDefecto = Actual.Clave == "bloques" ? "365" : "7";
+        // Se acepta cualquier periodo conocido (el informe se pide sin pregunta); los botones muestran solo los de la pregunta.
+        Periodo = Periodo is "hoy" or "7" or "30" or "90" or "365" or "rango" ? Periodo : porDefecto;
         (DateOnly desde, DateOnly hasta) = Periodo switch
         {
             "hoy" => (hoy, hoy),
             "30" => (hoy.AddDays(-29), hoy),
+            "90" => (hoy.AddDays(-89), hoy),
+            "365" => (hoy.AddDays(-364), hoy),
             "rango" => (Leer(Desde) ?? hoy.AddDays(-6), Leer(Hasta) ?? hoy),
             _ => (hoy.AddDays(-6), hoy),
         };
@@ -120,15 +144,22 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         Rango = new PeriodoAnalitica(Inicio(desde), Inicio(hasta.AddDays(1)), ZonaHoraria);
         var dias = hasta.DayNumber - desde.DayNumber + 1;
         Anterior = new PeriodoAnalitica(Inicio(desde.AddDays(-dias)), Inicio(desde), ZonaHoraria);
+        RangoResumen = Periodo is "90" or "365" ? new PeriodoAnalitica(Inicio(hoy.AddDays(-6)), Inicio(hoy.AddDays(1)), ZonaHoraria) : Rango;
         var peru = CultureInfo.GetCultureInfo("es-PE");
         TextoPeriodo = Periodo switch
         {
             "hoy" => "el día de hoy",
             "7" => "los últimos 7 días",
             "30" => "los últimos 30 días",
+            "90" => "los últimos 3 meses",
+            "365" => "los últimos 12 meses",
             _ => desde == hasta ? $"el {desde.ToString("d 'de' MMMM", peru)}" : $"el periodo del {desde.ToString("d/MM", peru)} al {hasta.ToString("d/MM", peru)}",
         };
-        TextoAnterior = Periodo switch { "hoy" => "ayer", "7" => "la semana anterior", "30" => "los 30 días anteriores", _ => "el periodo anterior" };
+        TextoAnterior = Periodo switch
+        {
+            "hoy" => "ayer", "7" => "la semana anterior", "30" => "los 30 días anteriores", "90" => "los 3 meses anteriores",
+            "365" => "los 12 meses anteriores", _ => "el periodo anterior",
+        };
     }
 
     private static DateOnly? Leer(string? texto) =>
@@ -150,6 +181,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         {
             Vista = Actual.Clave switch
             {
+                "bloques" => await BloquesAsync(ct),
                 "ahora" => await AhoraAsync(ct),
                 "tiempo" => await TiempoAsync(ct),
                 "falsos" => await FalsosAsync(ct),
@@ -169,6 +201,11 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     }
 
     // ── Cada pregunta ─────────────────────────────────────────────────────────────────────────
+    public sealed record VistaBloques(ComparacionBloques Datos);
+
+    private async Task<VistaBloques> BloquesAsync(CancellationToken ct) =>
+        new(await cache.ObtenerAsync(Clave("bloques", Rango), () => S<ConsultarComparacionBloques>().EjecutarAsync(Rango, ct)));
+
     public sealed record VistaAhora(FotoAhora Foto, CasosAtascados Casos);
 
     private async Task<VistaAhora> AhoraAsync(CancellationToken ct)
@@ -269,6 +306,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
             }
         }
         var minimo = Opciones.MinimoParaPercentiles;
+        Resumenes["bloques"] = new Resumen($"{BloquesDistrito.Todos.Count} bloques · {BloquesDistrito.TotalZonas} zonas");
         await Intentar("ahora", async () =>
         {
             var atascados = (await S<ConsultarCasosAtascados>().EjecutarAsync(ct)).Atascados.Count;
@@ -276,24 +314,24 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         });
         await Intentar("tiempo", async () =>
         {
-            var total = (await cache.ObtenerAsync(Clave("respuesta", Rango), () => S<ConsultarRespuestaPorZona>().EjecutarAsync(Rango, false, ct))).Total;
+            var total = (await cache.ObtenerAsync(Clave("respuesta", RangoResumen), () => S<ConsultarRespuestaPorZona>().EjecutarAsync(RangoResumen, false, ct))).Total;
             return total.Atendidos == 0 ? new Resumen("Sin SOS atendidos")
                 : total.Atendidos < minimo ? new Resumen($"{total.Atendidos} SOS · pocos para medianas")
                 : new Resumen($"Mitad atendida · {Formato.Minutos(total.RespuestaP50)}");
         });
         await Intentar("falsos", async () =>
         {
-            var indice = await cache.ObtenerAsync(Clave("falsos", Rango), () => S<ConsultarIndiceFalsos>().EjecutarAsync(Rango, ct));
+            var indice = await cache.ObtenerAsync(Clave("falsos", RangoResumen), () => S<ConsultarIndiceFalsos>().EjecutarAsync(RangoResumen, ct));
             return indice.PorcentajeReportesFalsos is { } p ? new Resumen($"Reportes falsos · {Formato.Porcentaje(p)}") : new Resumen("Sin reportes decididos");
         });
-        Resumenes["cobertura"] = cache.SiExiste<Cobertura>(Clave("cobertura", Rango)) is { } cobertura
+        Resumenes["cobertura"] = cache.SiExiste<Cobertura>(Clave("cobertura", RangoResumen)) is { } cobertura
             ? cobertura.Zonas.Count(z => z.PorcentajeCubierto < 50) is var sinCubrir and > 0
                 ? new Resumen($"▲ {sinCubrir} {(sinCubrir == 1 ? "zona" : "zonas")} sin cubrir", "aviso")
                 : cobertura.Zonas.Count == 0 ? new Resumen("Sin zonas con 3+ casos") : new Resumen("✓ Zonas cubiertas", "bien")
             : new Resumen("Zonas, turnos y serenos");
         await Intentar("reasigna", async () =>
         {
-            var r = await cache.ObtenerAsync(Clave("reasigna", Rango), () => S<ConsultarReasignaciones>().EjecutarAsync(Rango, ct));
+            var r = await cache.ObtenerAsync(Clave("reasigna", RangoResumen), () => S<ConsultarReasignaciones>().EjecutarAsync(RangoResumen, ct));
             return r.PorcentajeReasignados is not { } p ? new Resumen("Sin casos asignados")
                 : r.CasosReasignados == 0 ? new Resumen("✓ Ninguno reasignado", "bien")
                 : p > Opciones.ReferenciaReasignadosPorcentaje ? new Resumen($"▲ {Formato.Porcentaje(p, 0)} reasignados", "aviso")
@@ -301,7 +339,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         });
         // Sin nombres en la columna (se ve desde todas las preguntas), y sin calcularla desde otra pregunta: lee las posiciones de
         // todos los serenos. Solo si ya está en la caché, como la cobertura.
-        Resumenes["serenos"] = cache.SiExiste<RendimientoEquipo>(Clave("serenos", Rango)) is { } equipo
+        Resumenes["serenos"] = cache.SiExiste<RendimientoEquipo>(Clave("serenos", RangoResumen)) is { } equipo
             ? equipo.Serenos.Count == 0 ? new Resumen("Sin serenos en el periodo")
                 : equipo.Serenos.Count(s => Rendimiento.Senales(s, equipo, Opciones).Count > 0) is var mirar and > 0
                     ? new Resumen($"▲ {mirar} {(mirar == 1 ? "sereno" : "serenos")} con señales", "aviso")
@@ -309,18 +347,18 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
             : new Resumen("Llegada, notas y zonas");
         await Intentar("repite", async () =>
         {
-            var puntos = (await cache.ObtenerAsync(Clave("puntos", Rango), () => S<ConsultarPuntosCriticos>().EjecutarAsync(Rango, ct))).Count;
+            var puntos = (await cache.ObtenerAsync(Clave("puntos", RangoResumen), () => S<ConsultarPuntosCriticos>().EjecutarAsync(RangoResumen, ct))).Count;
             return new Resumen(puntos == 0 ? "Sin puntos críticos" : $"{puntos} {(puntos == 1 ? "punto crítico" : "puntos críticos")}");
         });
         await Intentar("ciudadano", async () =>
         {
-            var e = await cache.ObtenerAsync(Clave("evaluaciones", Rango), () => S<ConsultarEvaluaciones>().EjecutarAsync(Rango, ct));
+            var e = await cache.ObtenerAsync(Clave("evaluaciones", RangoResumen), () => S<ConsultarEvaluaciones>().EjecutarAsync(RangoResumen, ct));
             return e.Evaluados == 0 ? new Resumen("Sin evaluaciones")
                 : new Resumen($"{Formato.Decimal(Ciudadano.Promedio(e))} de 5 · {Formato.Porcentaje(e.PorcentajeEvaluados, 0)} evalúa");
         });
         await Intentar("sistema", async () =>
         {
-            var salud = await cache.ObtenerAsync(Clave("salud", Rango), () => S<ConsultarSaludSistema>().EjecutarAsync(Rango, ct));
+            var salud = await cache.ObtenerAsync(Clave("salud", RangoResumen), () => S<ConsultarSaludSistema>().EjecutarAsync(RangoResumen, ct));
             var alertas = Sistema.Senales(salud).Count(s => !s.Bien);
             return alertas == 0 ? new Resumen("✓ Todo dentro de lo aceptable", "bien") : new Resumen($"▲ {alertas} fuera de lo aceptable", "aviso");
         });

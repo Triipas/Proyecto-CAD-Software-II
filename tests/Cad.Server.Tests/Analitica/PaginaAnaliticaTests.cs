@@ -126,11 +126,11 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task ColumnaDePreguntas_MarcaLaActualYEnlazaLasNueve()
+    public async Task ColumnaDePreguntas_MarcaLaActualYEnlazaLasDiez()
     {
         var html = await (await OperadorAsync()).GetStringAsync($"/panel/analitica/falsos?{Rango(1, 1, 7)}");
 
-        Assert.Equal(9, html.Split("class=\"pregunta\"").Length - 1);
+        Assert.Equal(10, html.Split("class=\"pregunta\"").Length - 1);
         Assert.Contains("aria-current=\"page\" data-pregunta=\"falsos\"", html);
         Assert.Contains("data-informe", html);
     }

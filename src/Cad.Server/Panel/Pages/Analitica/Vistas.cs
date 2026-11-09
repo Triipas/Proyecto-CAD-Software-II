@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Html;
 
 namespace Cad.Server.Panel.Pages.Analitica;
 
-// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las nueve preguntas, los nombres de zona, la regla y los
+// Piezas de presentación del dashboard (27/10/2026): formatos en es-PE, las preguntas, los nombres de zona, la regla y los
 // carriles (dibujados en SVG desde el servidor: sin JavaScript para leer una respuesta) y las señales de la salud del sistema.
 public static class Formato
 {
@@ -44,9 +44,10 @@ public static class Preguntas
 {
     public sealed record Definicion(string Clave, string Titulo, string Icono);
 
-    // Iconos de trazo de 24×24, como _Icono.
+    // Iconos de trazo de 24×24, como _Icono. «Comparación por bloques» (10/11/2026) va primero: es la vista del distrito entero.
     public static readonly IReadOnlyList<Definicion> Todas =
     [
+        new("bloques", "Comparación por bloques", "<path d=\"M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z\"/>"),
         new("ahora", "Estado de la central", "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4l3 2\"/>"),
         new("tiempo", "Tiempos de respuesta", "<path d=\"M4 17h16M4 17V7m4 10v-4m4 4V9m4 8v-6\"/>"),
         new("falsos", "Reportes y SOS falsos", "<path d=\"M12 3 21 19H3z\"/><path d=\"M12 10v4m0 3v.01\"/>"),
@@ -59,7 +60,7 @@ public static class Preguntas
     ];
 
     // Sin vista en la dirección: «Tiempos de respuesta», la vista central de un servicio de respuesta.
-    public static Definicion? Buscar(string? clave) => string.IsNullOrEmpty(clave) ? Todas[1] : Todas.FirstOrDefault(p => p.Clave == clave);
+    public static Definicion? Buscar(string? clave) => Todas.FirstOrDefault(p => p.Clave == (string.IsNullOrEmpty(clave) ? "tiempo" : clave));
 
     public static HtmlString Icono(Definicion d) =>
         new($"<svg class=\"icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\">{d.Icono}</svg>");
@@ -330,6 +331,39 @@ public static class Rendimiento
     // «Ana Pérez» → «AP», para el distintivo de la tabla.
     public static string Iniciales(string nombre) =>
         string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+}
+
+// «Comparación por bloques» (10/11/2026): los datos que dibuja analitica-bloques.js. Los filtros (bloque, zonas, indicador) se
+// aplican en el navegador sobre estos conteos: son pocos (3 bloques, unas 50 zonas, 12 ejes, 12 meses) y así cada cambio redibuja
+// los radiales sin pedir otra página. Las zonas con menos casos que el mínimo no van solas: cuentan en su bloque.
+public static class ComparacionVista
+{
+    private static readonly string[] MesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    private static readonly string[] MesesLargos = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    private static readonly System.Text.Json.JsonSerializerOptions Json = new(System.Text.Json.JsonSerializerDefaults.Web);
+
+    public static string Datos(IndexModel m, ComparacionBloques d) => System.Text.Json.JsonSerializer.Serialize(new
+    {
+        periodo = m.TextoPeriodo,
+        minimoZona = m.Opciones.MinimoCasosPorZona,
+        fuera = d.FueraDeLosBloques,
+        ejes = BloquesDistrito.Ejes.Select(e => new { e.Clave, e.Nombre, e.Corto }),
+        meses = d.Meses.Select(x => new { corto = MesesCortos[x.Month - 1], largo = $"{MesesLargos[x.Month - 1]} de {x.Year}", mes = x.Month, anio = x.Year }),
+        bloques = d.Bloques.Select(b => new
+        {
+            b.Definicion.Clave, b.Definicion.Nombre, b.Definicion.Unidad, b.Definicion.Direccion,
+            zonasDelBloque = b.Definicion.Zonas.Count, b.ZonasReunidas,
+            casos = b.Conteo.Casos, meses = b.Conteo.Meses,
+            zonas = b.Zonas.Select(z => new { nombre = m.Zonas.Nombre(z.Zona.Sur, z.Zona.Oeste).Replace("Zona ", ""), casos = z.Conteo.Casos, meses = z.Conteo.Meses }),
+        }),
+    }, Json);
+
+    // El titular sin JavaScript (y el que ve el lector antes de tocar un filtro): todos los bloques, robo o hurto.
+    public static (string Antes, string Cifra, string Despues) Titular(IndexModel m, ComparacionBloques d)
+    {
+        var mayor = d.Bloques.MaxBy(b => b.Conteo.Casos[0])!;
+        return ($"El bloque {mayor.Definicion.Nombre} reúne ", $"{Formato.Plural(mayor.Conteo.Casos[0], "caso", "casos")} de robo o hurto", $" en {m.TextoPeriodo}.");
+    }
 }
 
 // Una respuesta sin datos (estado vacío): qué falta, por qué y qué probar.

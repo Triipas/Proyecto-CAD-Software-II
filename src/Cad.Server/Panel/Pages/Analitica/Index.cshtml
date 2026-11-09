@@ -54,7 +54,7 @@
             @* Periodo: hoy, 7 días, 30 días o un rango. Enlaces y formularios GET: la selección queda en la dirección. *@
             <div class="filtros-analitica" data-filtros>
                 <div class="segmentado" role="group" aria-label="Periodo">
-                    @foreach (var (valor, texto) in new[] { ("hoy", "Hoy"), ("7", "7 días"), ("30", "30 días") })
+                    @foreach (var (valor, texto) in Model.Periodos)
                     {
                         <a class="segmentado__opcion" href="@Model.Enlace(periodo: valor)" aria-current="@(Model.Periodo == valor ? "true" : null)">@texto</a>
                     }
@@ -96,7 +96,14 @@
                         <noscript><button type="submit" class="boton boton--secundario boton--compacto">Ver</button></noscript>
                     </form>
                 }
-                <span class="filtros-analitica__periodo">Comparado con @Model.TextoAnterior</span>
+                @if (Model.Actual.Clave == "bloques")
+                {
+                    <span class="filtros-analitica__periodo">Datos simulados · @BloquesDistrito.Todos.Count bloques · @BloquesDistrito.TotalZonas zonas</span>
+                }
+                else
+                {
+                    <span class="filtros-analitica__periodo">Comparado con @Model.TextoAnterior</span>
+                }
             </div>
             @if (Model.ErrorPeriodo is { } errorPeriodo)
             {
@@ -112,6 +119,7 @@
         {
             switch (Model.Vista)
             {
+                case IndexModel.VistaBloques v: <partial name="_Bloques" model="(Model, v)" /> break;
                 case IndexModel.VistaAhora v: <partial name="_Ahora" model="(Model, v)" /> break;
                 case IndexModel.VistaTiempo v: <partial name="_Tiempo" model="(Model, v)" /> break;
                 case IndexModel.VistaFalsos v: <partial name="_Falsos" model="(Model, v)" /> break;
@@ -135,6 +143,11 @@
     @if (enVivo)
     {
         <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    }
+    @if (Model.Actual.Clave == "bloques")
+    {
+        @* Antes que analitica.js: el titular ya está armado según los filtros cuando sus cifras empiezan a rodar. *@
+        <script src="~/js/analitica-bloques.js" asp-append-version="true"></script>
     }
     <script src="~/js/analitica.js" asp-append-version="true"></script>
 }
