@@ -1,0 +1,90 @@
+{
+ "nota": "Las zonas son las celdas de la analítica (Zonas.Nombre). Fundamento de cada bloque en el README, «Bloques».",
+ "tamano_celda": 0.005,
+ "centro_mapa": [
+  -16.3988,
+  -71.5369
+ ],
+ "bloques": [
+  {
+   "clave": "bustamante",
+   "nombre": "Bloque Bustamante y Rivero",
+   "unidad": "Comisaría PNP José Luis Bustamante y Rivero",
+   "direccion": "Calle Cipreses s/n",
+   "zona": "centro y norte: residencial y universitario (Lambramani, Paseo de la Cultura)",
+   "zonas": [
+    "M13",
+    "N13",
+    "O13",
+    "K14",
+    "L14",
+    "M14",
+    "N14",
+    "O14",
+    "N15",
+    "O15",
+    "N16",
+    "O16",
+    "P16",
+    "I17",
+    "J17",
+    "K17",
+    "L17",
+    "M17",
+    "N17",
+    "I18",
+    "J18",
+    "L18",
+    "M18",
+    "M19"
+   ]
+  },
+  {
+   "clave": "avelino",
+   "nombre": "Bloque Avelino Cáceres",
+   "unidad": "Puesto de Auxilio Rápido de la Plataforma Andrés Avelino Cáceres",
+   "direccion": "Plataforma comercial Andrés Avelino Cáceres",
+   "zona": "oeste: el polo comercial (mercados, bancos, centros comerciales)",
+   "zonas": [
+    "J15",
+    "K15",
+    "L15",
+    "M15",
+    "I16",
+    "J16",
+    "K16",
+    "L16",
+    "M16"
+   ]
+  },
+  {
+   "clave": "simon",
+   "nombre": "Bloque Simón Bolívar",
+   "unidad": "Comisaría PNP Simón Bolívar",
+   "direccion": "Av. Caracas 629",
+   "zona": "sur y sureste: barrios residenciales, urbanizaciones en consolidación y tierras de cultivo",
+   "zonas": [
+    "O17",
+    "P17",
+    "Q17",
+    "N18",
+    "O18",
+    "P18",
+    "Q18",
+    "N19",
+    "O19",
+    "P19",
+    "Q19",
+    "R19",
+    "O20",
+    "P20",
+    "Q20",
+    "R20",
+    "O21",
+    "P21",
+    "Q21",
+    "R21"
+   ]
+  }
+ ]
+}

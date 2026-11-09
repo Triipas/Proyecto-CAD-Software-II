@@ -1,8 +1,8 @@
 # Cargador del dataset
 
 Vacía una base de datos del sistema y carga el [dataset de J. L. Bustamante y Rivero](../README.md), con las fechas desplazadas
-para que el periodo de 13 semanas **termine en el momento de la carga**. Así «hoy», «7 días» y «Estado de la central»
-muestran datos.
+para que el periodo de un año **termine en el momento de la carga**. Así «hoy», «7 días», «Estado de la central» y la evolución
+de los últimos 12 meses muestran datos.
 
 Todo ocurre en una sola transacción: si algo falla, la base de datos queda como estaba.
 
@@ -46,8 +46,9 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
    Si algún caso no termina en el estado que dice el dataset, no carga nada.
 4. **Genera lo que el dataset no guarda:**
    - **El estado operativo de cada sereno:** entra en servicio al empezar su turno y sale al terminarlo.
-   - **Una posición cada 5 minutos durante el turno:** patrulla las vías de su sector y, mientras atiende un caso, va hacia el punto
-     y se queda ahí. Es la base de «Cobertura por zona».
+   - **Una posición cada 5 minutos durante el turno, en los últimos 91 días:** patrulla las vías de su sector y, mientras atiende un
+     caso, va hacia el punto y se queda ahí. Es la base de «Cobertura por zona». Un año entero pasaría del millón de filas, y la
+     analítica solo mira los meses recientes.
    - **Los envíos push del despacho:** el 95 % llega.
    - **Las fotos de los reportes:** imágenes de muestra (`fotos/`).
    - **Los días de uso de la app.**
@@ -56,8 +57,8 @@ La base de datos debe tener todas las migraciones: si es nueva, arranca el servi
 
 El periodo termina en el momento de la carga, y los datos «envejecen»: los 25 casos abiertos llevan de 1 a 50 minutos al cargar,
 y cada minuto que pasa se suma a su espera. Para una presentación, conviene **cargar justo antes de empezar** (5 a 15 minutos
-antes): no hace falta vaciar nada a mano, el cargador vacía y vuelve a cargar todo. Cada carga tarda unos 30 s en local y
-unos minutos contra Neon; las horas parten del inicio de la carga.
+antes): no hace falta vaciar nada a mano, el cargador vacía y vuelve a cargar todo. Con el año de casos, cada carga tarda alrededor
+de un minuto en local (53 s el 10/11/2026) y bastante más contra Neon; las horas parten del inicio de la carga.
 
 Las horas del día se desplazan junto con el periodo. Si se carga a las 20:00, los picos quedan donde los puso el generador
 (robos a la salida del trabajo, alcohol y ruido de noche); a otra hora, se corren las mismas horas.

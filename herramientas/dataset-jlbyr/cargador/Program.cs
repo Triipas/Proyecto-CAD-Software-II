@@ -84,6 +84,9 @@ try
 
     var conexionAbierta = (NpgsqlConnection)db.Database.GetDbConnection();
     Console.WriteLine("Guardando las posiciones de los serenos…");
+    // Solo los últimos 91 días: es lo que mira la analítica (cobertura, zonas de cada sereno), y un año de posiciones cada 5 minutos
+    // pasaría del millón de filas. El estado operativo (arriba) sí cubre el año entero.
+    var desdePosiciones = fin.AddDays(-91);
     var patrullaje = new Patrullaje(datos, carpeta);
     long posiciones = 0;
     var ultimaPosicion = new Dictionary<Guid, (double Lat, double Lon)>();
@@ -93,7 +96,8 @@ try
         foreach (var (id, sereno) in construccion.Serenos)
         {
             var tramos = construccion.Tramos.GetValueOrDefault(id) ?? [];
-            foreach (var p in patrullaje.Posiciones(turnos.GetValueOrDefault(sereno.Id) ?? [], tramos, fin))
+            var turnosRecientes = (turnos.GetValueOrDefault(sereno.Id) ?? []).Where(t => t.Fin > desdePosiciones);
+            foreach (var p in patrullaje.Posiciones(turnosRecientes, tramos.Where(t => t.Hasta > desdePosiciones).ToList(), fin))
             {
                 await copia.StartRowAsync();
                 await copia.WriteAsync(Guid.CreateVersion7(p.En), NpgsqlDbType.Uuid);

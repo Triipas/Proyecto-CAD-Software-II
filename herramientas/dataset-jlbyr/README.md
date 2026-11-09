@@ -1,8 +1,8 @@
 # Dataset de demostración: José Luis Bustamante y Rivero (Arequipa)
 
-Unos cinco mil casos **simulados** para mostrar todo el sistema en la presentación: la central, el historial de cada caso, el mapa de
-concentración, la analítica (tiempos, falsos, cobertura, lo que se repite, el ciudadano y la salud del sistema) y los
-acompañamientos.
+Un año de casos **simulados** (unos veinte mil) para mostrar todo el sistema en la presentación: la central, el historial de cada
+caso, el mapa de concentración, la analítica (tiempos, falsos, cobertura, lo que se repite, el ciudadano, la salud del sistema, la
+evolución por mes y la comparación por bloques) y los acompañamientos.
 
 **Todos los datos son ficticios:** personas, teléfonos, documentos, descripciones y casos. Lo real es la base de las
 proporciones (de dónde salen se explica abajo) y la geografía del distrito, tomada de OpenStreetMap.
@@ -18,7 +18,8 @@ proporciones (de dónde salen se explica abajo) y la geografía del distrito, to
 | `fuentes/limite-jlbyr.geojson` | Límite administrativo del distrito (OSM, relación 1887802). |
 | `fuentes/lugares.json` | 656 lugares del distrito (OSM): 28 mercados, 65 paraderos, 71 colegios, 151 parques, bancos, grifos, locales nocturnos y 129 urbanizaciones. |
 | `fuentes/vias.json` | 597 vías con nombre y su trazado (OSM): avenidas principales y calles residenciales. |
-| `salida/casos.json` | Los casos (unos 5000 del periodo y los 25 que quedan en curso al cargar) con su historial completo, evento por evento. |
+| `salida/casos.json` | Los casos (unos 20 000 del año y los 25 que quedan en curso al cargar) con su historial completo, evento por evento, sin sangría. |
+| `salida/bloques.json` | Los tres bloques (unidad policial, dirección) con las zonas de la cuadrícula de Analítica que agrupa cada uno (ver «Bloques»). |
 | `salida/personas.json` | 1300 ciudadanos (con perfil y contacto de emergencia), 36 serenos y 6 operadores. |
 | `salida/acompanamientos.json` | 360 sesiones de acompañamiento con su recorrido (una posición cada 20 s), confirmaciones y avisos. |
 | `salida/turnos.json` | Qué sereno trabajó cada día, en qué turno y en qué sector (descanso rotativo de un día por semana). |
@@ -32,7 +33,7 @@ Para regenerar: `python generar.py` (desde esta carpeta).
 
 ## Cifras del dataset
 
-- **Volumen:** 5017 casos en 13 semanas (unos 55 por día, el orden de las intervenciones de un serenazgo de un distrito parecido), más los fines de semana y creciendo hacia el final, porque la app gana usuarios.
+- **Volumen:** 20 018 casos en 365 días (unos 55 por día, el orden de las intervenciones de un serenazgo de un distrito parecido), más los fines de semana, con la estacionalidad de cada tipo de caso (ver «Estacionalidad») y un crecimiento leve (3 %) porque la app gana usuarios. Los acompañamientos y las posiciones de los serenos solo ocupan los últimos 91 días: es lo que mira la analítica.
 - **Origen:** 70 % reportes (de ellos, 28 % registrados por la central: llamadas, presencial, redes, radio), 29 % SOS y 24 casos urgentes que salen de un acompañamiento.
 - **Categorías:** las 13 del sistema, con sus identificadores reales. Encabeza robo o hurto; siguen persona o vehículo sospechoso, alcohol en la vía pública y ruidos molestos.
 - **Tiempos de respuesta** (del registro al inicio de la atención):
@@ -69,6 +70,54 @@ Las cifras exactas están en [salida/RESUMEN.md](salida/RESUMEN.md).
 
 Surquillo (Lima) es la referencia más cercana con datos públicos y desglosados por tipo de intervención. No encontré cifras
 publicadas del serenazgo de J. L. Bustamante y Rivero. Su población (unos 90 mil habitantes) es parecida.
+
+## Bloques
+
+El distrito tiene tres unidades policiales, y cada bloque agrupa las zonas de la cuadrícula de Analítica (celdas de 0,005°, unos
+550 m, con los mismos nombres que la analítica: letra por columna de oeste a este, número por fila de norte a sur) que atiende una
+de ellas. La lista de zonas de cada bloque está en `salida/bloques.json`; cada caso lleva su bloque en `casos.json` y `casos.csv`.
+
+| Bloque | Unidad policial | Zonas | Qué es |
+|---|---|---:|---|
+| Bustamante y Rivero | Comisaría PNP José Luis Bustamante y Rivero (calle Cipreses s/n) | 24 | Centro y norte: residencial y universitario (Lambramani, Paseo de la Cultura, Hartley), más el suroeste (Villa del Mar, Tasahuayo). |
+| Avelino Cáceres | Puesto de Auxilio Rápido de la Plataforma Andrés Avelino Cáceres | 9 | El polo comercial del oeste, dentro de la jurisdicción de JLBYR: 22 de los 28 mercados, 17 bancos y 4 centros comerciales del distrito (OSM). |
+| Simón Bolívar | Comisaría PNP Simón Bolívar (Av. Caracas 629) | 20 | Sur y sureste: barrios residenciales, urbanizaciones en consolidación y tierras de cultivo. |
+
+De dónde sale:
+
+- **Las dos comisarías y sus jurisdicciones:** el [Plan de Acción Distrital de Seguridad Ciudadana 2024-2027](https://munibustamante.gob.pe/normas/1739539966.pdf)
+  de la municipalidad trata por separado la jurisdicción de cada comisaría (mapa del delito, mapa de riesgo, capacidad operativa) y
+  describe la de Simón Bolívar como «barrios residenciales» y «urbanizaciones que están en pleno proceso de consolidación», con
+  tierras de cultivo.
+- **La frontera entre las dos:** el mismo plan lista las 28 cámaras municipales con su dirección y su jurisdicción. Las de Simón
+  Bolívar quedan al sur de la Av. Túpac Amaru y al este de la Prolongación Dolores (Av. Caracas, Las Esmeraldas, La Breña, 3 de
+  Octubre, Amauta); las de JLBYR, al norte y al oeste (Lambramani, Paseo de la Cultura, Hartley con Pizarro, Túpac Amaru con Colón,
+  Villa del Mar, la cancha de Tasahuayo). Las direcciones se ubicaron con las vías de OpenStreetMap de `fuentes/`.
+- **El tercer bloque:** el Puesto de Auxilio Rápido de la Plataforma Andrés Avelino Cáceres, que recibió el monitoreo de cámaras
+  junto con las dos comisarías ([Diario Correo, 22/05/2024](https://www.munibustamante.gob.pe/archivos/1768421804.pdf)). Su
+  bloque son las celdas de la plataforma comercial, que concentran el robo y el hurto.
+
+Es una aproximación por celdas: una celda va entera al bloque de su centro. Los límites oficiales de cada jurisdicción están en
+los mapas del plan, que no se publican como datos.
+
+## Estacionalidad
+
+Cada tipo de caso tiene un peso por mes (`ESTACION` en `generar.py`), simulado a partir de lo que se sabe de Arequipa y del país:
+
+| Grupo | Casos | Patrón |
+|---|---|---|
+| Patrimonio | robo o hurto, sospechoso, extorsión, vandalismo | Baja en el verano (enero a marzo, −12 a −20 %), cuando parte de la ciudad sale a la costa; sube en julio, noviembre y sobre todo diciembre (+24 %: compras, gratificaciones). |
+| Tránsito | accidentes | Sube en julio (Fiestas Patrias, +18 %), agosto (aniversario de Arequipa, +26 %) y diciembre (+24 %); un poco en marzo, con el regreso a clases. |
+| Fiesta | alcohol, ruidos, peleas, acoso | Sube en febrero (carnavales, +16 %), julio, agosto y diciembre (+22 a +28 %). |
+| Hogar | violencia familiar | Sube en diciembre y enero (fiestas) y un poco en julio y agosto. |
+
+Lo que lo sostiene: el INEI registra más denuncias en el último trimestre del año ([boletín de seguridad ciudadana](https://m.inei.gob.pe/media/MenuRecursivo/boletines/boletin_estadisticas-de-la-criminalidad-seguridad-ciudadana-y-violencia.pdf));
+en Arequipa, las detenciones por conducir ebrio se concentran en feriados como Fiestas Patrias ([Diario Correo](https://diariocorreo.pe/edicion/arequipa/arequipa-han-detenido-a-2-mil-607-conductores-por-conducir-en-estado-de-ebriedad-noticia/));
+en la Navidad de 2012 las emergencias subieron 30 %, sobre todo por accidentes de tránsito ([El Búho](https://elbuho.pe/archivo/2012/12/25/emergencias-por-navidad-se-incrementan-en-arequipa/index.html)).
+No hay una serie mensual pública del distrito: los porcentajes son supuestos para la demostración, no mediciones.
+
+El periodo simulado va del 30/11/2025 al 30/11/2026 y el cargador lo desplaza para que termine al cargar: si se carga lejos de
+fines de noviembre, los meses del dataset quedan corridos frente al calendario real.
 
 ## Supuestos (lo que no tiene cifra pública)
 

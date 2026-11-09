@@ -1,4 +1,4 @@
-"""Dataset simulado de 5000 casos en José Luis Bustamante y Rivero (Arequipa) para la demostración del Sistema Integrado CAD.
+"""Dataset simulado de un año (unos 20 000 casos) en José Luis Bustamante y Rivero (Arequipa) para la demostración del Sistema Integrado CAD.
 
 Todos los datos son ficticios, pero sus proporciones salen de fuentes reales (ver README.md): la victimización por tipo de
 delito del INEI (ENAPRES), la mezcla de intervenciones de un serenazgo municipal, la población del distrito (censo 2017) y
@@ -8,7 +8,9 @@ Uso:  python generar.py            (escribe salida/; misma semilla, mismo result
 Solo usa la biblioteca estándar de Python 3.10+.
 """
 
+import bisect
 import csv
+import itertools
 import json
 import math
 import random
@@ -27,9 +29,12 @@ rng = random.Random(SEMILLA)
 LIMA = timezone(timedelta(hours=-5))
 # Fin del periodo simulado. Al cargar, todas las fechas se desplazan para que este momento coincida con «ahora» (README).
 FIN = datetime(2026, 11, 30, 20, 0, tzinfo=LIMA)
-DIAS = 91  # 13 semanas: alcanza para «7 días», «30 días», el periodo anterior y las cohortes semanales.
+DIAS = 365  # un año: la tendencia por mes y la estacionalidad; «7 días», «30 días» y las cohortes semanales siguen iguales.
+# Los acompañamientos (y las posiciones de los serenos, que genera el cargador) solo ocupan los últimos 3 meses: es lo que mira la
+# analítica, y un año de posiciones cada 5 minutos pasaría del millón de filas.
+DIAS_RECIENTES = 91
 INICIO = FIN - timedelta(days=DIAS)
-TOTAL_CASOS = 5000  # unos 55 por día: el orden de las intervenciones de un serenazgo de un distrito parecido (README)
+TOTAL_CASOS = 20000  # unos 55 por día: el orden de las intervenciones de un serenazgo de un distrito parecido (README)
 
 # ───────────────────────────── Catálogos del sistema (mismos códigos que Cad.Contratos) ─────────────────────────────
 CATEGORIAS = {
@@ -99,6 +104,24 @@ HORAS = {
     "otros": ([(12, 1.0), (18, 0.8)], 1.0),
 }
 
+# Estacionalidad por mes (enero primero): cuánto pesa cada mes frente a uno corriente. Es simulada; el patrón sigue lo que se sabe
+# de Arequipa y del país (README, «Estacionalidad»): en el verano (enero a marzo) parte de la ciudad sale a la costa y bajan los
+# delitos contra el patrimonio; en febrero, los carnavales suben el alcohol y las peleas; Fiestas Patrias (julio), el aniversario
+# de Arequipa (15 de agosto) y diciembre (compras, gratificaciones, Navidad y Año Nuevo) suben el alcohol, los accidentes y el
+# robo, y el INEI registra más denuncias en el último trimestre.
+ESTACION = {
+    "patrimonio": [0.82, 0.80, 0.88, 0.96, 1.00, 1.00, 1.06, 1.04, 1.00, 1.02, 1.06, 1.24],
+    "transito": [0.90, 0.96, 1.04, 0.98, 0.95, 0.97, 1.18, 1.26, 0.98, 0.97, 0.99, 1.24],
+    "fiesta": [0.94, 1.16, 0.90, 0.95, 0.95, 1.00, 1.22, 1.26, 1.00, 1.00, 1.00, 1.28],
+    "hogar": [1.06, 1.00, 0.95, 0.97, 0.97, 1.00, 1.08, 1.08, 0.98, 0.98, 1.00, 1.16],
+    "estable": [1.0] * 12,
+}
+GRUPO_ESTACION = {
+    "robo": "patrimonio", "sospechoso": "patrimonio", "extorsion": "patrimonio", "vandalismo": "patrimonio",
+    "accidente": "transito", "alcohol": "fiesta", "ruido": "fiesta", "pelea": "fiesta", "acoso": "fiesta",
+    "violencia": "hogar", "drogas": "estable", "riesgo": "estable", "otros": "estable",
+}
+
 # Personas. Población 2017 ajustada: 84 251 (INEI vía citypopulation.de); una app municipal nueva llega a una fracción.
 CIUDADANOS = 1300
 SERENOS = 36  # 12 por turno, 3 por sector; estimación (no hay cifra pública del distrito, ver README)
@@ -141,6 +164,61 @@ def metros(a, b):
 def sector_de(lat, lon):
     angulo = math.degrees(math.atan2(lat - CENTRO[0], lon - CENTRO[1]))
     return 1 if 45 <= angulo < 135 else 2 if -45 <= angulo < 45 else 3 if -135 <= angulo < -45 else 4
+
+
+# Bloques (10/11/2026): las tres unidades policiales del distrito (README, «Bloques»). Las comisarías de José Luis Bustamante y
+# Rivero y de Simón Bolívar tienen jurisdicciones separadas en el Plan de Acción Distrital de Seguridad Ciudadana 2024-2027, y el
+# Puesto de Auxilio Rápido de la Plataforma Andrés Avelino Cáceres atiende el polo comercial (Diario Correo, 22/05/2024). La
+# frontera sale de las 28 cámaras municipales del plan, cada una con su dirección y su jurisdicción: las de Simón Bolívar quedan
+# al sur de la Av. Túpac Amaru y al este de la Prolongación Dolores (Av. Caracas, Las Esmeraldas, La Breña, 3 de Octubre, Amauta);
+# las de JLBYR, al norte y al oeste (Lambramani, Paseo de la Cultura, Hartley, Villa del Mar, Tasahuayo). El bloque Avelino
+# Cáceres es la plataforma comercial, dentro de la jurisdicción de JLBYR: concentra 22 de los 28 mercados y 17 bancos (OSM).
+BLOQUES = {
+    "bustamante": {"nombre": "Bloque Bustamante y Rivero", "unidad": "Comisaría PNP José Luis Bustamante y Rivero",
+                   "direccion": "Calle Cipreses s/n", "zona": "centro y norte: residencial y universitario (Lambramani, Paseo de la Cultura)"},
+    "avelino": {"nombre": "Bloque Avelino Cáceres", "unidad": "Puesto de Auxilio Rápido de la Plataforma Andrés Avelino Cáceres",
+                "direccion": "Plataforma comercial Andrés Avelino Cáceres", "zona": "oeste: el polo comercial (mercados, bancos, centros comerciales)"},
+    "simon": {"nombre": "Bloque Simón Bolívar", "unidad": "Comisaría PNP Simón Bolívar", "direccion": "Av. Caracas 629",
+              "zona": "sur y sureste: barrios residenciales, urbanizaciones en consolidación y tierras de cultivo"},
+}
+# Centro del mapa del panel (Panel:Mapa en appsettings.json): la cuadrícula de Analítica nombra sus celdas desde aquí (K10).
+CENTRO_MAPA = (-16.3988, -71.5369)
+TAMANO_CELDA = 0.005  # el mismo de ConsultarConcentracion.TamanoCelda (unos 550 m)
+
+
+def lat_tupac_amaru(lon):
+    """Latitud de la Av. Túpac Amaru en esa longitud (de -71.5266 a -71.5122, según su trazado en OSM); hacia el este sigue recta."""
+    if lon >= -71.5122:
+        return -16.4296
+    if lon <= -71.5266:
+        return -16.4368
+    return -16.4368 + (lon + 71.5266) / (71.5266 - 71.5122) * (-16.4296 + 16.4368)
+
+
+def bloque_de(lat, lon):
+    if lat < lat_tupac_amaru(lon) and lon > -71.5240:
+        return "simon"
+    if -16.4310 <= lat <= -16.4180 and lon <= -71.5250:
+        return "avelino"
+    return "bustamante"
+
+
+def nombre_zona(fila, columna):
+    """El nombre que la analítica da a una celda (Zonas.Nombre): letra por columna de oeste a este y número por fila de norte a sur."""
+    fila_centro, columna_centro = math.floor(CENTRO_MAPA[0] / TAMANO_CELDA), math.floor(CENTRO_MAPA[1] / TAMANO_CELDA)
+    return f"{chr(ord('A') + max(0, min(25, columna - columna_centro + 10)))}{fila_centro - fila + 10}"
+
+
+def zonas_por_bloque():
+    """Cada celda que toca el distrito, en el bloque de su centro."""
+    lats, lons = [p[1] for p in ANILLO], [p[0] for p in ANILLO]
+    zonas = defaultdict(list)
+    for fila in range(math.floor(min(lats) / TAMANO_CELDA), math.floor(max(lats) / TAMANO_CELDA) + 1):
+        for columna in range(math.floor(min(lons) / TAMANO_CELDA), math.floor(max(lons) / TAMANO_CELDA) + 1):
+            muestras = [((fila + a) * TAMANO_CELDA, (columna + b) * TAMANO_CELDA) for a in (0.1, 0.5, 0.9) for b in (0.1, 0.5, 0.9)]
+            if any(dentro(la, lo) for la, lo in muestras):
+                zonas[bloque_de((fila + 0.5) * TAMANO_CELDA, (columna + 0.5) * TAMANO_CELDA)].append(nombre_zona(fila, columna))
+    return {clave: sorted(lista, key=lambda z: (int(z[1:]), z[0])) for clave, lista in zonas.items()}
 
 
 TIPOS_LUGAR = {
@@ -228,21 +306,36 @@ DIAS_SEMANA = [0.92, 0.9, 0.95, 1.0, 1.12, 1.22, 1.0]  # lunes a domingo
 FORZAR_MOMENTO = None  # para los casos de las últimas horas
 
 
-def momento(categoria):
-    """Fecha y hora del hecho: días con más peso el fin de semana y hacia el final del periodo (la app gana usuarios)."""
+_ACUMULADOS_DIA = {}
+
+
+def pesos_acumulados(categoria):
+    """Peso de cada día del periodo para una categoría, acumulado (se calcula una vez): más el fin de semana, el mes según su
+    estacionalidad y un poco más hacia el final (la app gana usuarios)."""
+    if categoria not in _ACUMULADOS_DIA:
+        _, fin_de_semana = HORAS[categoria]
+        estacion = ESTACION[GRUPO_ESTACION[categoria]]
+        pesos = []
+        for d in range(DIAS):
+            dia = INICIO + timedelta(days=d)
+            # El crecimiento es leve (3 % arriba y abajo): uno mayor taparía la estacionalidad, que es lo que se quiere mostrar.
+            peso = DIAS_SEMANA[dia.weekday()] * (0.97 + 0.06 * d / DIAS) * estacion[dia.month - 1]
+            if dia.weekday() in (4, 5):
+                peso *= fin_de_semana
+            elif dia.weekday() == 6:
+                peso *= 1 + (fin_de_semana - 1) / 2
+            pesos.append(peso)
+        _ACUMULADOS_DIA[categoria] = list(itertools.accumulate(pesos))
+    return _ACUMULADOS_DIA[categoria]
+
+
+def momento(categoria, recientes=False):
+    """Fecha y hora del hecho. Con recientes, solo en los últimos DIAS_RECIENTES días."""
     if FORZAR_MOMENTO is not None:
         return FORZAR_MOMENTO
-    picos, fin_de_semana = HORAS[categoria]
-    pesos_dia = []
-    for d in range(DIAS):
-        dia = INICIO + timedelta(days=d)
-        peso = DIAS_SEMANA[dia.weekday()] * (0.75 + 0.5 * d / DIAS)
-        if dia.weekday() in (4, 5):
-            peso *= fin_de_semana
-        elif dia.weekday() == 6:
-            peso *= 1 + (fin_de_semana - 1) / 2
-        pesos_dia.append(peso)
-    d = rng.choices(range(DIAS), weights=pesos_dia)[0]
+    acumulados = pesos_acumulados(categoria)
+    piso = acumulados[DIAS - DIAS_RECIENTES - 1] if recientes else 0.0
+    d = min(DIAS - 1, bisect.bisect_left(acumulados, rng.uniform(piso, acumulados[-1])))
     h = rng.choices(range(24), weights=PERFILES[categoria])[0]
     base = (INICIO + timedelta(days=d)).replace(hour=0, minute=0, second=0)
     return base + timedelta(hours=h, minutes=rng.uniform(0, 60))
@@ -538,6 +631,7 @@ def nuevo_caso(n, origen, categoria, registro, ciudadano, lat, lon, referencia, 
     return {"id": f"CASO-{n:04d}", "origen": origen, "categoria_inicial": CATEGORIAS[categoria][0],
             "ciudadano": ciudadano["id"] if ciudadano else None, "registrado_en": registro,
             "sector": sector_de(lat, lon) if lat else sector_de(*CENTRO),
+            "bloque": bloque_de(lat, lon) if lat else bloque_de(*CENTRO),
             "_registro": registro, "_categoria": categoria, "_operador": operador_de(registro), "_lugar": tipo_lugar,
             "_lat": lat, "_lon": lon, "_referencia": referencia}
 
@@ -708,8 +802,8 @@ FORZAR_MOMENTO = None
 # ───────────────────────────── Acompañamientos ─────────────────────────────
 sesiones = []
 for i in range(SESIONES_ACOMPANAMIENTO):
-    ciudadana = ciudadano_para(INICIO + timedelta(days=rng.uniform(0, DIAS)), rng.random() < 0.8)
-    dia = momento("acoso").replace(minute=0)
+    ciudadana = ciudadano_para(FIN - timedelta(days=rng.uniform(0, DIAS_RECIENTES)), rng.random() < 0.8)
+    dia = momento("acoso", recientes=True).replace(minute=0)
     inicio = dia + timedelta(minutes=rng.uniform(0, 59))
     if inicio < ciudadana["_registrado"]:
         inicio = ciudadana["_registrado"] + timedelta(hours=rng.uniform(2, 48))
@@ -952,27 +1046,35 @@ def limpio(valor):
     return valor
 
 
-def escribir(nombre, datos):
-    (SALIDA / nombre).write_text(json.dumps(limpio(datos), ensure_ascii=False, indent=1), encoding="utf-8")
+def escribir(nombre, datos, compacto=False):
+    texto = json.dumps(limpio(datos), ensure_ascii=False, separators=(",", ":")) if compacto else json.dumps(limpio(datos), ensure_ascii=False, indent=1)
+    (SALIDA / nombre).write_text(texto, encoding="utf-8")
 
 
 escribir("personas.json", {"ciudadanos": ciudadanos, "serenos": serenos, "operadores": operadores})
-escribir("casos.json", casos)
+escribir("casos.json", casos, compacto=True)  # un año de casos con su historial: sin sangría pesa la mitad (se revisa en casos.csv)
 escribir("acompanamientos.json", sesiones)
 escribir("turnos.json", turnos_trabajados)
 escribir("actividad.json", {k: sorted(d.isoformat() for d in v) for k, v in sorted(actividad.items())})
 escribir("meta.json", {"fin_del_periodo": FIN, "inicio_del_periodo": INICIO, "dias": DIAS, "semilla": SEMILLA,
                        "nota": "Datos ficticios. Al cargar, desplazar todas las fechas en (ahora - fin_del_periodo)."})
+ZONAS_POR_BLOQUE = zonas_por_bloque()
+escribir("bloques.json", {
+    "nota": "Las zonas son las celdas de la analítica (Zonas.Nombre). Fundamento de cada bloque en el README, «Bloques».",
+    "tamano_celda": TAMANO_CELDA, "centro_mapa": list(CENTRO_MAPA),
+    "bloques": [{"clave": clave, **datos, "zonas": ZONAS_POR_BLOQUE.get(clave, [])} for clave, datos in BLOQUES.items()],
+})
 
 with (SALIDA / "casos.csv").open("w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)
     w.writerow(["id", "origen", "categoria", "estado", "registrado_en", "hora", "dia_semana", "latitud", "longitud", "sector",
-                "lugar", "referencia", "prioridad", "sereno", "respuesta_min", "resultado", "puntuacion"])
+                "bloque", "lugar", "referencia", "prioridad", "sereno", "respuesta_min", "resultado", "puntuacion"])
     nombres_categoria = {v[0]: v[1] for v in CATEGORIAS.values()}
     for c in casos:
         cat = (c.get("clasificacion") or {}).get("categoria") or c["categoria_inicial"]
         w.writerow([c["id"], c["origen"], nombres_categoria[cat], c["estado"], iso(c["registrado_en"]), c["registrado_en"].hour,
-                    c["registrado_en"].strftime("%a"), round(c["_lat"], 6), round(c["_lon"], 6), c["sector"], c["_lugar"],
+                    c["registrado_en"].strftime("%a"), round(c["_lat"], 6), round(c["_lon"], 6), c["sector"],
+                    BLOQUES[c["bloque"]]["nombre"], c["_lugar"],
                     c["_referencia"], (c.get("clasificacion") or {}).get("prioridad"), c.get("_sereno"),
                     round(c["_respuesta"], 1) if c.get("_respuesta") and c["estado"] == "Cerrada" else None,
                     c.get("_resultado") if c["estado"] == "Cerrada" else None, (c.get("evaluacion") or {}).get("puntuacion")])
@@ -1042,6 +1144,18 @@ for k, v in Counter(c["_lugar"] for c in casos).most_common():
 lineas += ["", "## Sector de patrullaje", "", "| Sector | Casos |", "|---|---:|"]
 for k, v in sorted(Counter(c["sector"] for c in casos).items()):
     lineas.append(f"| Sector {k} | {v} |")
+lineas += ["", "## Bloque (unidad policial)", "", "| Bloque | Unidad | Zonas | Casos | Robo o hurto | Accidentes | Alcohol |", "|---|---|---:|---:|---:|---:|---:|"]
+for clave, datos in BLOQUES.items():
+    del_bloque = [c for c in casos if c["bloque"] == clave]
+    por = Counter(c["_categoria"] for c in del_bloque)
+    lineas.append(f"| {datos['nombre']} | {datos['unidad']} | {len(ZONAS_POR_BLOQUE.get(clave, []))} | {len(del_bloque)} | {por['robo']} | {por['accidente']} | {por['alcohol']} |")
+MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+lineas += ["", "## Por mes (fecha simulada; al cargar se desplaza)", "", "| Mes | Casos | Robo o hurto | Accidentes | Alcohol y ruidos |", "|---|---:|---:|---:|---:|"]
+por_mes = defaultdict(Counter)
+for c in casos:
+    por_mes[(c["registrado_en"].year, c["registrado_en"].month)][c["_categoria"]] += 1
+for (anio, mes), cnt in sorted(por_mes.items()):
+    lineas.append(f"| {MESES_ES[mes - 1]} {anio} | {sum(cnt.values())} | {cnt['robo']} | {cnt['accidente']} | {cnt['alcohol'] + cnt['ruido']} |")
 sin_punto = sum(1 for c in casos if (c.get("ubicacion") is None and c["origen"] != "Reporte") or (c["origen"] == "Reporte" and c["reporte"]["ubicacion"]["latitud"] is None))
 lineas += ["", f"Sin ubicación en el mapa: {sin_punto} casos (SOS sin GPS y reportes con solo una referencia en texto).", ""]
 (SALIDA / "RESUMEN.md").write_text("\n".join(lineas), encoding="utf-8")
