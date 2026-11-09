@@ -66,13 +66,16 @@ public class PaginaAnaliticaTests(FabricaCad fabrica)
     }
 
     [Fact]
-    public async Task Ahora_MuestraLosCarrilesYElIndicadorEnVivo()
+    public async Task Ahora_MuestraElRadarYElIndicadorEnVivo()
     {
         var html = await (await OperadorAsync()).GetStringAsync("/panel/analitica/ahora");
 
         Assert.Contains("data-region-ahora", html);
         Assert.Contains("data-vivo", html);
-        Assert.Contains("data-etapa=\"Pendiente\"", html);
+        Assert.Contains("data-radar", html);
+        Assert.Equal(10, html.Split("class=\"radar-a__sector\"").Length - 1); // una porción por etapa, aunque esté vacía
+        Assert.Contains("data-estado=\"Pendiente\"", html);
+        Assert.Contains("Lo que pide atención ahora", html);
         Assert.Contains("esperado: hasta 3 min", html); // cada etapa dice cuánto se espera de ella
         Assert.Contains("El tiempo esperado no es un promedio", html);
         Assert.DoesNotContain("data-filtros", html); // «Ahora» no tiene periodo
