@@ -6,11 +6,13 @@
     control.addEventListener("change", () => control.form.requestSubmit());
 
   // ---------- Presentación al cargar ----------
-  // Las tarjetas, las barras y los puntos entran con CSS (analitica.css, «Presentación»). Aquí: el orden de filas y columnas (--i)
-  // para que crezcan una tras otra, los marcadores de la regla que se deslizan desde 0 y las cifras que cuentan hasta su valor.
+  // Las tarjetas, las barras y los puntos entran con CSS (analitica.css, «Presentación»). Aquí: las cifras del titular, que ruedan
+  // dígito a dígito como un tablero de aeropuerto; el orden de filas y columnas (--i) para que crezcan una tras otra; los
+  // marcadores de la regla que se deslizan desde 0, y las demás cifras, que cuentan hasta su valor. Todo con la misma salida
+  // cúbica: arranca decidida y frena sin arrastrarse (la exponencial corría al principio y se quedaba quieta al final).
   // Solo al cargar la página («Ahora» en vivo cambia sin repetirlo). Con movimiento reducido, nada: las cifras quedan como llegan.
   const CIFRAS = [
-    ".pregunta__dato", ".respuesta__titular em", ".cifras-a dd", ".equipo-a dd", ".carril-a__numero", ".fila-a__cifra", ".senal-a__valor",
+    ".pregunta__dato", ".cifras-a dd", ".equipo-a dd", ".carril-a__numero", ".fila-a__cifra", ".senal-a__valor",
     ".prioridad-a__valor b", ".notas-a__cifra", ".tramo-a__valor", ".fila100__valor", ".categoria-a__valor", ".cadena-a__valor",
     ".barra100__leyenda b", ".etapas-a b", ".regla__valor", ".grupo100__titulo .tarjeta-a__nota", ".serenos-a + .leyenda-a li",
   ].join(", ");
@@ -21,15 +23,105 @@
     ".categoria-a", ".prioridad-a", ".fila100", ".senal-a", ".alza-a", ".carril-a", ".cadena-a__tramo", ".fila-a", "tbody > tr",
     ".notas-a__columna", ".horas-a__casos", ".horas-a__serenos",
   ];
-  const DURACION_CIFRAS = 1000;
+  const DURACION_CIFRAS = 1300;
+  const DURACION_TABLERO = 1600;
+  const CURVA_CUBICA = "cubic-bezier(0.33, 1, 0.68, 1)"; // la misma salida cúbica, para las animaciones del navegador
+  const suave = (t) => 1 - Math.pow(1 - t, 3);
   const retrasos = new Map(); // el retraso de entrada de cada tarjeta, leído una vez
   presentar();
 
   function presentar() {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     ordenar();
+    rodarTitulares();
     deslizarReglas();
     contarCifras();
+  }
+
+  // El titular de la respuesta es el tablero: cada número se arma con una cinta de dígitos por cifra (0 a 9 y otra vez 0) que
+  // gira hasta su valor. Las unidades ruedan seguido; cada cifra de más arriba avanza cuando la de abajo pasa de 9 a 0, como un
+  // cuentakilómetros. Mientras rueda, el lector de pantalla lee el número final; al terminar vuelve el texto tal como llegó.
+  function rodarTitulares() {
+    const tableros = [];
+    for (const em of document.querySelectorAll(".respuesta__titular em")) {
+      const numeros = [];
+      const nodos = [];
+      const caminante = document.createTreeWalker(em, NodeFilter.SHOW_TEXT);
+      for (let nodo = caminante.nextNode(); nodo; nodo = caminante.nextNode()) nodos.push(nodo);
+      for (const nodo of nodos) {
+        const texto = nodo.nodeValue;
+        const coincidencias = [...texto.matchAll(NUMERO)];
+        if (coincidencias.length === 0) continue;
+        const fragmento = document.createDocumentFragment();
+        let desde = 0;
+        for (const c of coincidencias) {
+          fragmento.append(texto.slice(desde, c.index), armarTablero(c[0], numeros));
+          desde = c.index + c[0].length;
+        }
+        fragmento.append(texto.slice(desde));
+        nodo.replaceWith(fragmento);
+      }
+      if (numeros.length) tableros.push({ em, numeros, inicio: retrasoDe(em) + 220, hecho: false });
+    }
+    if (tableros.length === 0) return;
+    for (const t of tableros) girar(t, 0);
+    const origen = performance.now();
+    requestAnimationFrame(function paso(ahora) {
+      let quedan = false;
+      for (const t of tableros) {
+        if (t.hecho) continue;
+        const avance = Math.min(1, Math.max(0, (ahora - origen - t.inicio) / DURACION_TABLERO));
+        if (avance < 1) { girar(t, suave(avance)); quedan = true; continue; }
+        // Fin: el texto de siempre, en un solo nodo, para que la actualización en vivo y las pruebas lo encuentren igual.
+        for (const n of t.numeros) n.caja.replaceWith(document.createTextNode(n.texto));
+        t.em.normalize();
+        t.hecho = true;
+      }
+      if (quedan) requestAnimationFrame(paso);
+    });
+  }
+
+  function armarTablero(texto, numeros) {
+    const caja = document.createElement("span");
+    const leido = document.createElement("span");
+    leido.className = "visualmente-oculto";
+    leido.textContent = texto;
+    const vista = document.createElement("span");
+    vista.className = "tablero__vista";
+    vista.setAttribute("aria-hidden", "true");
+    const entero = texto.split(/[.,]/)[0];
+    const columnas = [];
+    [...texto].forEach((caracter, i) => {
+      if (!/\d/.test(caracter)) { vista.append(caracter); return; }
+      const columna = document.createElement("span");
+      columna.className = "tablero__columna";
+      const cinta = document.createElement("span");
+      cinta.className = "tablero__cinta";
+      for (const digito of "01234567890") cinta.append(Object.assign(document.createElement("span"), { textContent: digito }));
+      columna.append(cinta);
+      vista.append(columna);
+      // Lugar de la cifra: 0 las unidades, 1 las decenas…; -1 la primera decimal.
+      columnas.push({ cinta, lugar: i < entero.length ? entero.length - 1 - i : entero.length - i });
+    });
+    caja.append(leido, vista);
+    numeros.push({ caja, texto, valor: parseFloat(texto.replace(",", ".")), columnas, minimo: Math.min(...columnas.map((c) => c.lugar)) });
+    return caja;
+  }
+
+  function girar(tablero, fraccion) {
+    for (const n of tablero.numeros) {
+      const v = n.valor * fraccion;
+      for (const { cinta, lugar } of n.columnas) {
+        let posicion;
+        if (lugar === n.minimo) {
+          posicion = (v / 10 ** lugar) % 10;
+        } else {
+          const debajo = (v / 10 ** (lugar - 1)) % 10;
+          posicion = (Math.floor(v / 10 ** lugar + 1e-9) % 10) + Math.max(0, debajo - 9);
+        }
+        cinta.style.transform = `translateY(${-posicion}lh)`;
+      }
+    }
   }
 
   // El retraso con que entra el bloque de un elemento (su tarjeta), para que lo de dentro empiece con ella.
@@ -58,7 +150,7 @@
   // La regla del servicio: cada marcador (línea, punto y rótulo) sale de 0 y se desliza hasta su valor mientras el rótulo cuenta.
   // Los rótulos aparecen a mitad de camino: al salir, todos los marcadores están juntos en 0 y sus textos se pisarían.
   function deslizarReglas() {
-    const curva = window.cadMovimiento?.curva("salida") ?? "cubic-bezier(0.16, 1, 0.3, 1)";
+    const curva = CURVA_CUBICA; // la misma que la cuenta del rótulo: el número y la posición avanzan juntos
     for (const regla of document.querySelectorAll("svg.regla")) {
       const retraso = retrasoDe(regla) + 240;
       let x = 0;
@@ -93,7 +185,7 @@
       let quedan = false;
       for (const tarea of tareas) {
         const avance = Math.min(1, Math.max(0, (ahora - origen - tarea.inicio) / DURACION_CIFRAS));
-        pintar(tarea, avance === 1 ? 1 : 1 - Math.pow(2, -10 * avance));
+        pintar(tarea, avance === 1 ? 1 : suave(avance));
         if (avance < 1) quedan = true;
       }
       if (quedan) requestAnimationFrame(paso);

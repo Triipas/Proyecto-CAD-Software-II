@@ -2525,82 +2525,144 @@ a.fila-a__cifra {
   }
 }
 
-/* ── Presentación (09/11/2026): más color y movimiento al cargar ─────────────────────────────────────────────────────────
-   Lo que se lee primero lleva color propio: la respuesta, una franja y sus cifras en degradado; la columna, iconos teñidos; cada
-   tarjeta, una marca junto al título. Al cargar la página, las tarjetas suben en cascada, las barras crecen desde su base, los
-   puntos asoman y (analitica.js) los marcadores de la regla se deslizan desde 0 mientras las cifras cuentan hasta su valor.
-   Solo al cargar: «Estado de la central» en vivo cambia sin repetir la entrada. Con movimiento reducido no se anima nada, como
-   en el resto del panel. Las animaciones usan opacity, translate, scale y clip-path: nada que mueva la maquetación. */
+/* ── Presentación: el tablero nocturno (09–10/11/2026) ────────────────────────────────────────────────────────────────────
+   La North Star del sistema es «el tablero de embarque»: la cabecera de cada respuesta es ese tablero, en marino de noche con la
+   cuadrícula de zonas en celeste tenue, el titular en blanco y sus cifras en celeste (el acento que solo vive sobre marino). Al
+   cargar, las cifras del titular ruedan dígito a dígito hasta su valor (analitica.js); es el único momento con autoría. Lo demás
+   acompaña sin competir: las tarjetas entran 8 px en cascada, las barras crecen desde su base, los puntos asoman, los marcadores
+   de la regla se deslizan desde 0 y las demás cifras cuentan. Solo al cargar: «Estado de la central» en vivo cambia sin repetirlo.
+   Con movimiento reducido no se anima nada, como en el resto del panel. Solo opacity, translate, scale, clip-path y transform. */
 .analitica {
-  --acento-1: #0369A1;             /* 5.94:1 sobre blanco */
-  --acento-2: var(--azul-700);     /* 6.70:1 */
-  --acento-3: #4338CA;             /* 7.92:1 */
-  --degradado-acento: linear-gradient(90deg, var(--acento-1), var(--acento-2) 55%, var(--acento-3));
   --entrada-paso: 70ms;            /* entre una tarjeta y la siguiente */
   --entrada-graficos: 180ms;       /* las barras empiezan cuando su tarjeta ya está subiendo */
 }
 
-/* Un brillo frío detrás de la respuesta. */
-.analitica__trabajo {
-  background:
-    radial-gradient(60rem 24rem at 92% -8rem, rgb(92 200 255 / 0.20), transparent 70%),
-    radial-gradient(46rem 22rem at 6% -9rem, rgb(67 56 202 / 0.12), transparent 70%);
+.analitica ::selection {
+  background: var(--azul-200);
+  color: var(--color-marino);
 }
 
-/* La respuesta: franja de acento arriba, fondo con un toque de azul y cifras en degradado. */
+.preguntas {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde-fuerte) transparent;
+}
+
+/* La cabecera de la respuesta (o la del sereno elegido, con su inicial) cubre la parte de arriba de la tarjeta, borde incluido. */
 .tarjeta-a.respuesta {
-  position: relative;
-  border-color: var(--azul-200);
-  background:
-    radial-gradient(120% 160% at 100% 0%, var(--azul-100) 0%, rgb(230 238 253 / 0) 55%),
-    var(--color-superficie);
   box-shadow: var(--sombra-2);
 }
 
-.tarjeta-a.respuesta::before,
-.flotante-a::before {
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: calc(-1 * var(--espacio-5) - 1px) calc(-1 * var(--espacio-6) - 1px) var(--espacio-5);
+  padding: var(--espacio-6) calc(var(--espacio-6) + 1px) var(--espacio-5);
+  border-radius: var(--radio-superficie) var(--radio-superficie) 0 0;
+  background:
+    radial-gradient(70% 150% at 100% 0%, rgb(29 78 216 / 0.42) 0%, transparent 62%),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+  color: var(--color-texto-sobre-marino);
+}
+
+/* La cuadrícula de zonas (las celdas de «K10»), más visible hacia la esquina donde no hay texto. */
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child::before {
   content: "";
   position: absolute;
-  top: -1px;
-  left: -1px;
-  right: -1px;
-  height: 4px;
-  border-radius: var(--radio-superficie) var(--radio-superficie) 0 0;
-  background: var(--degradado-acento);
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgb(92 200 255 / 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(92 200 255 / 0.11) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(75% 130% at 100% 0%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(75% 130% at 100% 0%, #000 0%, transparent 78%);
   pointer-events: none;
 }
 
-.respuesta__titular em {
-  background: var(--degradado-acento);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__titular,
+.flotante-a .respuesta__titular {
+  color: #FFFFFF;                  /* 16.2:1 sobre marino */
 }
 
-/* Alto contraste de Windows: el texto recortado al fondo desaparecería. */
-@media (forced-colors: active) {
-  .respuesta__titular em {
-    background: none;
-    color: CanvasText;
-  }
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__titular {
+  font-size: var(--texto-2xl);
 }
 
-/* Cada tarjeta, una marca de acento junto a su título. */
-.tarjeta-a h3::before {
-  content: "";
-  display: inline-block;
-  width: 0.25rem;
-  height: 0.95em;
-  margin-right: 0.5rem;
-  border-radius: var(--radio-pildora);
-  background: linear-gradient(180deg, var(--acento-1), var(--acento-3));
-  vertical-align: -0.12em;
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__titular em,
+.flotante-a .respuesta__titular em {
+  color: var(--color-acento);      /* celeste: 8.63:1 sobre marino-900, 7.2:1 sobre marino-800 */
 }
 
-/* La columna de preguntas: iconos teñidos; la pregunta abierta, con su icono en degradado y una raya a la izquierda. */
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__lectura,
+.flotante-a .respuesta__lectura {
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__lectura :is(b, strong),
+.flotante-a .respuesta__lectura :is(b, strong) {
+  color: var(--color-texto-sobre-marino);
+}
+
+.tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child ::selection,
+.flotante-a ::selection {
+  background: var(--color-acento);
+  color: var(--marino-950);
+}
+
+/* La respuesta que flota sobre el mapa es el mismo tablero, en pequeño. */
+.flotante-a {
+  background: linear-gradient(160deg, rgb(19 44 92 / 0.97) 0%, rgb(6 20 46 / 0.97) 100%);
+  border-color: var(--color-borde-sobre-marino);
+  box-shadow: var(--sombra-3);
+}
+
+.flotante-a__plegar {
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.flotante-a__plegar:hover {
+  background: var(--marino-700);
+  color: #FFFFFF;
+}
+
+.flotante-a__plegar:focus-visible {
+  outline-color: var(--color-foco-sobre-marino);
+}
+
+/* El tablero mientras rueda: una cinta de dígitos por cifra, del alto de una línea, que se desvanece arriba y abajo como las
+   paletas de un tablero real. Al terminar, analitica.js devuelve el texto tal como llegó. */
+.tablero__vista {
+  display: inline-flex;
+  vertical-align: top;
+  height: 1lh;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent 0, #000 20%, #000 80%, transparent 100%);
+  mask-image: linear-gradient(transparent 0, #000 20%, #000 80%, transparent 100%);
+}
+
+.tablero__columna {
+  display: block;
+  height: 1lh;
+}
+
+.tablero__cinta {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.tablero__cinta > span {
+  display: block;
+  height: 1lh;
+  text-align: center;
+}
+
+/* La columna de preguntas: iconos teñidos de azul; la abierta, con su icono en el marino del tablero y el glifo en celeste. */
 .pregunta__icono {
   background: var(--azul-100);
-  color: var(--acento-2);
+  color: var(--color-primario);
   transition: background-color var(--duracion-rapida) ease;
 }
 
@@ -2608,14 +2670,10 @@ a.fila-a__cifra {
   background: var(--azul-200);
 }
 
-.pregunta[aria-current="page"] {
-  background: linear-gradient(90deg, var(--azul-100), rgb(230 238 253 / 0.35));
-  box-shadow: inset 3px 0 0 var(--acento-2);
-}
-
 .pregunta[aria-current="page"] .pregunta__icono {
-  background: linear-gradient(135deg, var(--acento-1), var(--acento-3));
-  box-shadow: 0 6px 14px -4px rgb(29 78 216 / 0.5);
+  background: linear-gradient(160deg, var(--marino-700) 0%, var(--marino-950) 100%);
+  color: var(--color-acento);
+  box-shadow: var(--sombra-2);
 }
 
 /* ── Entrada en cascada ── */
@@ -2631,7 +2689,7 @@ a.fila-a__cifra {
 :is(.rejilla-a, .region-ahora, .cobertura-a, .cobertura-a__lado, .sereno-a__zonas) > :nth-child(n + 4) { --retraso-propio: calc(var(--entrada-paso) * 3); }
 
 @keyframes analitica-entrar {
-  from { opacity: 0; translate: 0 0.875rem; }
+  from { opacity: 0; translate: 0 8px; }   /* «lo nuevo entra 8 px desde abajo» (The Calm Operator Rule) */
 }
 
 @keyframes analitica-revelar-x {
@@ -2662,11 +2720,10 @@ a.fila-a__cifra {
     animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + 220ms);
   }
 
-  /* La franja de la respuesta se traza de izquierda a derecha. */
-  .tarjeta-a.respuesta::before,
-  .flotante-a::before {
-    animation: analitica-revelar-x 900ms var(--curva-salida) backwards;
-    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + 120ms);
+  /* La cuadrícula del tablero se enciende un instante después que su cabecera. */
+  .tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child::before {
+    animation: analitica-aparecer 900ms var(--curva-salida) backwards;
+    animation-delay: calc(var(--retraso, 0ms) + var(--retraso-propio, 0ms) + 160ms);
   }
 
   /* Barras horizontales: crecen desde su base (la izquierda). */
