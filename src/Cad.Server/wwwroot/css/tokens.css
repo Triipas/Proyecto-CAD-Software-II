@@ -103,7 +103,6 @@
   --color-advertencia-fondo: #FFF7E0;
   --color-advertencia-borde: #F1D68C;
   --color-advertencia-sobre-marino: #F5B544; /* el ocre aclarado para el tablero nocturno: 10.6:1 sobre marino-900 */
-  --color-advertencia-sobre-marino: #F5B544; /* el ocre aclarado para el tablero nocturno: 10.6:1 sobre marino-900 */
   --color-informacion: var(--azul-700); /* 7.06:1 */
   --color-informacion-fondo: var(--azul-100);
   --color-informacion-borde: var(--azul-200);
