@@ -169,15 +169,13 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
     }
 
     // ── Cada pregunta ─────────────────────────────────────────────────────────────────────────
-    public sealed record VistaAhora(FotoAhora Foto, CasosAtascados Casos, DemandaHora? EstaHora);
+    public sealed record VistaAhora(FotoAhora Foto, CasosAtascados Casos);
 
     private async Task<VistaAhora> AhoraAsync(CancellationToken ct)
     {
         var foto = await S<ConsultarAhora>().EjecutarAsync(ct);
         var casos = await S<ConsultarCasosAtascados>().EjecutarAsync(ct);
-        var local = TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), ZonaHoraria);
-        var demanda = await S<ConsultarDemandaEsperada>().EjecutarAsync(DateOnly.FromDateTime(local.DateTime), ZonaHoraria, ct);
-        return new VistaAhora(foto, casos, demanda.FirstOrDefault(d => d.Hora == local.Hour));
+        return new VistaAhora(foto, casos);
     }
 
     public sealed record VistaTiempo(IReadOnlyList<GrupoTiempos> Grupos, RespuestaPorZona Zonas, TiemposZona TotalAnterior,
