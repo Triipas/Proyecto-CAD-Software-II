@@ -374,7 +374,7 @@
   // ---------- Línea de despacho: del caso elegido al sereno disponible más cercano ----------
   // Ayuda a decidir; no asigna nada. La distancia es en línea recta.
   let lineaDespacho = null;
-  const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
+  const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#00805A";
   // El sereno sugerido para el caso elegido (el disponible más cercano), para el detalle del caso en el mapa.
   let sugerencia = null;
   function dibujarDespacho() {
@@ -596,9 +596,9 @@
         const trazo = { lineCap: "round", lineJoin: "round", interactive: false };
         lineasVinculo.push(
           L.polyline(recorrido.puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9, className: clase }).addTo(mapa),
-          L.polyline(recorrido.puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9, className: clase }).addTo(mapa));
+          L.polyline(recorrido.puntos, { ...trazo, color: "#0A1A3A", weight: 4, opacity: 0.9, className: clase }).addTo(mapa));
       } else {
-        lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: clase }).addTo(mapa));
+        lineasVinculo.push(L.polyline([v.puntoSereno, v.puntoCaso], { color: "#0A1A3A", weight: 4, opacity: 0.85, dashArray: "1 9", lineCap: "round", interactive: false, className: clase }).addTo(mapa));
       }
     }
     if (faltan) pedirRecorridos(vinculados);

@@ -244,7 +244,7 @@
 
     const estilo = getComputedStyle(contenedor.closest(".analitica"));
     const rampa = [1, 2, 3, 4, 5, 6, 7].map((i) => estilo.getPropertyValue(`--rampa-${i}`).trim());
-    const advertencia = getComputedStyle(document.documentElement).getPropertyValue("--color-advertencia").trim() || "#93370D";
+    const advertencia = getComputedStyle(document.documentElement).getPropertyValue("--color-advertencia").trim() || "#9A6700";
     const limites = [];
     const escala = contenedor.dataset.escala;
 

@@ -1,7 +1,7 @@
 /*
   Tokens de diseño v2 del Sistema Integrado CAD (rediseño, fase 1).
   Fuente única de valores: la app MAUI los replica con los mismos nombres en
-  Resources/Styles/Colors.xaml y Tokens.xaml.
+  Resources/Styles/Colors.xaml y Tokens.xaml (la paleta E del 12/11/2026 todavía no se pasó a la app).
 
   Contraste WCAG 2.2 verificado el 18/10/2026 (texto ≥ 4.5:1; bordes de controles,
   iconos y foco ≥ 3:1). Capas del mapa validadas para daltonismo (skill dataviz).
@@ -39,69 +39,80 @@
 }
 
 :root {
-  /* ── Primitivos: azul marino (estructura) ─────────────────────────────── */
-  --marino-950: #06142E;
-  --marino-900: #0B1F44;            /* blanco encima: 16.23:1 */
-  --marino-800: #132C5C;
-  --marino-700: #1D3B78;
+  /* Paleta E «Marino y esmeralda» (12/11/2026): el marino del sistema se queda con la estructura (barra, cabeceras) y el
+     esmeralda vivo con la acción, los datos y las cifras; la menta es el acento sobre marino. Contrastes medidos con el
+     validador de la skill dataviz. */
 
-  /* ── Primitivos: azul de acción ───────────────────────────────────────── */
-  --azul-700: #1D4ED8;              /* blanco encima: 6.70:1; como texto sobre blanco: 6.70:1 */
-  --azul-800: #1A3FB0;              /* blanco encima: 8.82:1 */
-  --azul-900: #16348F;              /* blanco encima: 10.93:1 */
-  --azul-200: #CFDDFB;
-  --azul-100: #E6EEFD;              /* azul-700 encima: 5.75:1 */
-  --celeste-400: #5CC8FF;           /* solo sobre marino: 8.63:1 sobre marino-900 */
+  /* ── Primitivos: azul marino (estructura) ─────────────────────────────── */
+  --marino-950: #061127;
+  --marino-900: #0A1A3A;            /* blanco encima: 17.19:1 */
+  --marino-800: #112A5E;
+  --marino-700: #16357A;            /* como texto sobre blanco: 11.51:1 */
+
+  /* ── Primitivos: esmeralda de acción ──────────────────────────────────── */
+  --esmeralda-700: #00805A;         /* blanco encima: 4.96:1; como texto: 4.96:1 sobre blanco, 4.62:1 sobre fondo */
+  --esmeralda-800: #046B49;         /* blanco encima: 6.55:1 */
+  --esmeralda-900: #034B34;         /* blanco encima: 10.19:1 */
+  --esmeralda-200: #D3F2E3;
+  --esmeralda-100: #EEFAF4;         /* esmeralda-700 encima: 4.63:1 */
+  --menta-400: #45E3A4;             /* solo sobre marino: 10.46:1 sobre marino-900; 7.00:1 sobre marino-700 */
+
+  /* ── Primitivos: azul (información y casos en curso) ──────────────────── */
+  --azul-700: #1D46B8;              /* 7.06:1 sobre azul-100 */
+  --azul-200: #BFD3F5;
+  --azul-100: #EAF1FE;
 
   /* ── Marca y acción ───────────────────────────────────────────────────── */
   --color-marino: var(--marino-900);
   --color-marino-elevado: var(--marino-800);
   --color-marino-hundido: var(--marino-950);
-  --color-primario: var(--azul-700);
-  --color-primario-hover: var(--azul-800);
-  --color-primario-activo: var(--azul-900);
+  --color-primario: var(--esmeralda-700);
+  --color-primario-hover: var(--esmeralda-800);
+  --color-primario-activo: var(--esmeralda-900);
   --color-sobre-primario: #FFFFFF;
-  --color-acento: var(--celeste-400);  /* indicadores sobre marino; nunca texto sobre claro */
-  --color-tenue: var(--azul-100);      /* selección, fila activa */
-  --color-tenue-fuerte: var(--azul-200);
+  --color-acento: var(--menta-400);    /* indicadores sobre marino; nunca texto sobre claro */
+  --color-tenue: var(--esmeralda-100); /* selección, fila activa */
+  --color-tenue-fuerte: var(--esmeralda-200); /* fondo de hover: el texto encima va en primario-hover (5.5:1) */
 
   /* ── Superficies y texto ──────────────────────────────────────────────── */
-  --color-fondo: #F3F6FB;
+  --color-fondo: #F5F7FA;
   --color-superficie: #FFFFFF;
-  --color-superficie-hundida: #EDF2F9; /* encabezados de tabla, pozos */
-  --color-texto: #0D1B33;               /* 15.3–17.2:1 sobre fondo, superficie y hundida */
-  --color-texto-secundario: #475A75;    /* 6.25–7.03:1 */
-  --color-texto-terciario: #5C6E88;     /* 4.80:1 sobre fondo; 5.20:1 sobre superficie */
-  --color-texto-sobre-marino: #D5E0F0;  /* 12.17:1 sobre marino-900; 10.21:1 sobre marino-800 */
-  --color-texto-sobre-marino-secundario: #9DB1D0; /* 7.45:1 / 6.25:1 */
+  --color-superficie-hundida: #E7EBF1; /* encabezados de tabla, pozos */
+  --color-texto: #0B1324;               /* 15.5–17.3:1 sobre fondo, superficie y hundida */
+  --color-texto-secundario: #46536A;    /* 6.49–7.23:1 */
+  --color-texto-terciario: #5A6880;     /* 5.25:1 sobre fondo; 5.64:1 sobre superficie */
+  --color-texto-sobre-marino: #D5E0F0;  /* 12.89:1 sobre marino-900; 10.38:1 sobre marino-800 */
+  --color-texto-sobre-marino-secundario: #9DB1D0; /* 7.88:1 / 6.35:1 */
 
   /* ── Bordes ───────────────────────────────────────────────────────────── */
-  --color-borde: #D9E2EE;            /* decorativo: separa superficies */
-  --color-borde-fuerte: #C3CFDF;     /* decorativo: separadores con más peso */
-  --color-borde-control: #7487A2;    /* campos: 3.66:1 sobre superficie; 3.38:1 sobre fondo */
+  --color-borde: #D2DAE5;            /* decorativo: separa superficies */
+  --color-borde-fuerte: #BCC7D6;     /* decorativo: separadores con más peso */
+  --color-borde-control: #6F7F97;    /* campos: 4.07:1 sobre superficie; 3.79:1 sobre fondo */
   --color-borde-sobre-marino: rgb(213 224 240 / 0.14);
 
   /* ── Foco ─────────────────────────────────────────────────────────────── */
-  --color-foco: var(--azul-700);           /* 6.70:1 sobre superficie */
-  --color-foco-sobre-marino: var(--celeste-400); /* 8.63:1 */
+  --color-foco: var(--esmeralda-700);      /* 4.96:1 sobre superficie */
+  --color-foco-sobre-marino: var(--menta-400); /* 10.46:1 */
 
   /* ── Estados: cada uno se acompaña siempre de icono y texto ───────────── */
   --color-error: #B42318;            /* 6.05:1 sobre su fondo */
   --color-error-fondo: #FEF3F2;
   --color-error-borde: #F4C7C3;
-  --color-advertencia: #93370D;      /* 7.12:1 */
-  --color-advertencia-fondo: #FFF8EB;
-  --color-advertencia-borde: #F5D9A8;
-  --color-informacion: #1D46B8;      /* 7.06:1 */
-  --color-informacion-fondo: #EAF1FE;
-  --color-informacion-borde: #BFD3F5;
+  /* Ocre, no ámbar rojizo: el anterior (#93370D) era casi el mismo color que el rojo del SOS con daltonismo (ΔE 1,0). */
+  --color-advertencia: #9A6700;      /* 4.55:1 sobre su fondo; 4.87:1 sobre blanco */
+  --color-advertencia-fondo: #FFF7E0;
+  --color-advertencia-borde: #F1D68C;
+  --color-informacion: var(--azul-700); /* 7.06:1 */
+  --color-informacion-fondo: var(--azul-100);
+  --color-informacion-borde: var(--azul-200);
   --color-exito: #05603A;            /* 7.26:1 */
   --color-exito-fondo: #ECFDF3;
   --color-exito-borde: #ABEFC6;
   --color-neutro: #3F4E63;           /* 7.53:1: cancelado, descartado, no operativo */
   --color-neutro-fondo: #EEF2F7;
   --color-neutro-borde: #D3DCE8;
-  --color-progreso: var(--azul-700);  /* asignado, en camino, en atención: 5.75:1 sobre su fondo */
+  /* En curso se queda en azul: si siguiera al color de acción se confundiría con el verde de «resuelto». */
+  --color-progreso: var(--azul-700);  /* asignado, en camino, en atención: 7.06:1 sobre su fondo */
   --color-progreso-fondo: var(--azul-100);
   --color-progreso-borde: var(--azul-200);
 
@@ -180,10 +191,10 @@
   --alto-barra: 3.75rem;           /* 60 px: barra superior del panel */
 
   /* ── Profundidad (sombras teñidas de marino, con desplazamiento y desenfoque) ── */
-  --sombra-1: 0 1px 2px rgb(11 31 68 / 0.06), 0 1px 1px rgb(11 31 68 / 0.04);
-  --sombra-2: 0 4px 12px -2px rgb(11 31 68 / 0.10), 0 2px 4px -2px rgb(11 31 68 / 0.06);
-  --sombra-3: 0 16px 40px -8px rgb(11 31 68 / 0.22), 0 6px 12px -6px rgb(11 31 68 / 0.12);
-  --velo-dialogo: rgb(6 20 46 / 0.55);
+  --sombra-1: 0 1px 2px rgb(10 26 58 / 0.06), 0 1px 1px rgb(10 26 58 / 0.04);
+  --sombra-2: 0 4px 12px -2px rgb(10 26 58 / 0.10), 0 2px 4px -2px rgb(10 26 58 / 0.06);
+  --sombra-3: 0 16px 40px -8px rgb(10 26 58 / 0.22), 0 6px 12px -6px rgb(10 26 58 / 0.12);
+  --velo-dialogo: rgb(6 17 39 / 0.55);
   /* Superficie blanca sobre fondo marino (pantalla de acceso): más desenfoque y más oscura. */
   --sombra-sobre-marino: 0 28px 64px -16px rgb(3 10 24 / 0.60), 0 10px 20px -10px rgb(3 10 24 / 0.45);
 

@@ -51,7 +51,7 @@
     const trazo = { lineCap: "round", lineJoin: "round", interactive: false, className: "linea-vinculo" };
     if (Array.isArray(puntos) && puntos.length > 1) {
       L.polyline(puntos, { ...trazo, color: "#FFFFFF", weight: 8, opacity: 0.9 }).addTo(mapa);
-      L.polyline(puntos, { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.9 }).addTo(mapa);
+      L.polyline(puntos, { ...trazo, color: "#0A1A3A", weight: 4, opacity: 0.9 }).addTo(mapa);
       recorrido = puntos.map((p) => L.latLng(p));
       // En un minimapa estático, el primer tramo de la ruta permite orientar al asignado sin inventar un rumbo al destino.
       const siguiente = recorrido.find((p) => asignado.punto.distanceTo(p) >= 4);
@@ -60,13 +60,13 @@
         cadMarcadores.actualizarSereno(asignado.marcador, asignado.datos.disponible === "true", cadMarcadores.orientarSereno(inicial, siguiente));
       }
     } else {
-      L.polyline([asignado.punto, punto], { ...trazo, color: "#0B1F44", weight: 4, opacity: 0.85, dashArray: "1 9" }).addTo(mapa);
+      L.polyline([asignado.punto, punto], { ...trazo, color: "#0A1A3A", weight: 4, opacity: 0.85, dashArray: "1 9" }).addTo(mapa);
     }
     recorrido.push(asignado.punto);
   }
 
   // ---------- Sereno elegido para asignar: línea recta con su distancia ----------
-  const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#1D4ED8";
+  const color = getComputedStyle(document.documentElement).getPropertyValue("--color-primario").trim() || "#00805A";
   let linea = null;
   let elegido = null;
 

@@ -490,7 +490,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .casos__ir a:hover {
-    color: var(--color-primario);
+    color: var(--color-primario-hover); /* 5.5:1 sobre el tinte fuerte */
     background: var(--color-tenue-fuerte);
   }
 }

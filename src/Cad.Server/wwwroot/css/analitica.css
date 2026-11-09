@@ -16,15 +16,15 @@
   /* El blanco de la columna de preguntas llega hasta el final aunque la página sea más alta que la pantalla. */
   background: linear-gradient(90deg, var(--color-superficie) 18.25rem, var(--color-borde) 18.25rem 18.3125rem, transparent 18.3125rem);
 
-  /* Rampa secuencial de varios tonos, de claro a oscuro: celeste (el acento de la marca) → azul de acción → índigo. Sigue
-     ordenada por luminosidad, así que «más oscuro = más» se lee igual; el texto marino se lee sobre 1 a 4 y el blanco sobre 5 a 7. */
-  --rampa-1: #E0F2FE;
-  --rampa-2: #A5DCFB;
-  --rampa-3: #5FB8F4;
-  --rampa-4: #3B8EEA;
-  --rampa-5: #2563EB;
-  --rampa-6: #1D4ED8;
-  --rampa-7: #312E81;
+  /* Rampa secuencial de un solo tono (esmeralda, el color de acción de la paleta E), de claro a oscuro. «Más oscuro = más»;
+     el texto oscuro se lee sobre 1 a 4 (≥ 6.5:1) y el blanco sobre 5 a 7 (≥ 4.9:1). */
+  --rampa-1: #DEF5EA;
+  --rampa-2: #A6E6C8;
+  --rampa-3: #5FCDA0;
+  --rampa-4: #1DAE7A;
+  --rampa-5: #037F58;
+  --rampa-6: #046B49;
+  --rampa-7: #034B34;
   --tono-bajo: #A4623F;          /* notas bajas: tierra, nunca rojo (el rojo es del SOS) */
   --tono-bajo-claro: #C08A6C;
   --tono-gris: #8291A7;
@@ -214,9 +214,10 @@
   color: var(--color-marino);
 }
 
+/* La opción elegida, llena con el color de acción (paleta E): blanco encima, 4.96:1. */
 .segmentado__opcion[aria-current="true"] {
-  background: var(--color-superficie);
-  color: var(--color-marino);
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
   box-shadow: var(--sombra-1);
 }
 
@@ -925,7 +926,7 @@ a.fila-a__cifra {
   height: 15.5rem;
   border-radius: 10px;
   overflow: hidden;
-  background: #E7ECF4;
+  background: var(--color-superficie-hundida);
 }
 
 .mapa-a:focus-visible {
@@ -2538,7 +2539,7 @@ a.fila-a__cifra {
 }
 
 .analitica ::selection {
-  background: var(--azul-200);
+  background: var(--color-tenue-fuerte);
   color: var(--color-marino);
 }
 
@@ -2560,7 +2561,7 @@ a.fila-a__cifra {
   padding: var(--espacio-6) calc(var(--espacio-6) + 1px) var(--espacio-5);
   border-radius: var(--radio-superficie) var(--radio-superficie) 0 0;
   background:
-    radial-gradient(70% 150% at 100% 0%, rgb(29 78 216 / 0.42) 0%, transparent 62%),
+    radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.34) 0%, transparent 62%),
     linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
   color: var(--color-texto-sobre-marino);
 }
@@ -2572,8 +2573,8 @@ a.fila-a__cifra {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgb(92 200 255 / 0.11) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(92 200 255 / 0.11) 1px, transparent 1px);
+    linear-gradient(rgb(69 227 164 / 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(69 227 164 / 0.10) 1px, transparent 1px);
   background-size: 2rem 2rem;
   background-position: -1px -1px;
   -webkit-mask-image: radial-gradient(75% 130% at 100% 0%, #000 0%, transparent 78%);
@@ -2592,7 +2593,7 @@ a.fila-a__cifra {
 
 .tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__titular em,
 .flotante-a .respuesta__titular em {
-  color: var(--color-acento);      /* celeste: 8.63:1 sobre marino-900, 7.2:1 sobre marino-800 */
+  color: var(--color-acento);      /* menta: 10.46:1 sobre marino-900, 8.42:1 sobre marino-800 */
 }
 
 .tarjeta-a.respuesta > :is(.respuesta__cabecera, .sereno-a__cabecera):first-child .respuesta__lectura,
@@ -2613,7 +2614,7 @@ a.fila-a__cifra {
 
 /* La respuesta que flota sobre el mapa es el mismo tablero, en pequeño. */
 .flotante-a {
-  background: linear-gradient(160deg, rgb(19 44 92 / 0.97) 0%, rgb(6 20 46 / 0.97) 100%);
+  background: linear-gradient(160deg, rgb(17 42 94 / 0.97) 0%, rgb(6 17 39 / 0.97) 100%);
   border-color: var(--color-borde-sobre-marino);
   box-shadow: var(--sombra-3);
 }
@@ -2659,15 +2660,15 @@ a.fila-a__cifra {
   text-align: center;
 }
 
-/* La columna de preguntas: iconos teñidos de azul; la abierta, con su icono en el marino del tablero y el glifo en celeste. */
+/* La columna de preguntas: iconos teñidos del color de acción; la abierta, con su icono en el marino del tablero y el glifo en menta. */
 .pregunta__icono {
-  background: var(--azul-100);
+  background: var(--color-tenue);
   color: var(--color-primario);
   transition: background-color var(--duracion-rapida) ease;
 }
 
 .pregunta:hover .pregunta__icono {
-  background: var(--azul-200);
+  background: var(--color-tenue-fuerte);
 }
 
 .pregunta[aria-current="page"] .pregunta__icono {
@@ -2859,8 +2860,8 @@ button.segmentado__opcion {
 }
 
 button.segmentado__opcion[aria-pressed="true"] {
-  background: var(--color-superficie);
-  color: var(--color-marino);
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
   box-shadow: var(--sombra-1);
 }
 
@@ -2903,8 +2904,8 @@ button.segmentado__opcion[aria-pressed="true"] {
   border-radius: var(--radio-superficie);
   color: var(--color-texto-sobre-marino);
   background-image:
-    linear-gradient(rgb(92 200 255 / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(92 200 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(rgb(69 227 164 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(69 227 164 / 0.06) 1px, transparent 1px),
     linear-gradient(165deg, var(--marino-800) 0%, var(--marino-900) 50%, var(--marino-950) 100%);
   background-size: 2rem 2rem, 2rem 2rem, auto;
 }
@@ -2939,7 +2940,7 @@ button.segmentado__opcion[aria-pressed="true"] {
   padding: var(--espacio-3);
   border: 1px solid var(--color-borde-sobre-marino);
   border-radius: var(--radio-superficie);
-  background: rgb(6 20 46 / 0.55);
+  background: rgb(6 17 39 / 0.55);
 }
 
 .tarjeta-radial-b__cabecera {
@@ -3611,18 +3612,18 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
 /* ── Más color en las demás preguntas (11/11/2026) ─────────────────────────────────────────────────────────────────────────
    Las tarjetas de evidencia eran blancas con barras de un solo azul plano. Se suma color sin cambiar la información ni las
    reglas: rojo solo para SOS, el estado sigue con icono y texto, nada de franjas laterales ni texto con degradado. El color sale
-   de la misma rampa celeste → azul → índigo de los mapas, así «más oscuro = más» se sigue leyendo igual. «Comparación por
-   bloques» queda como está (tiene su propio color por bloque). */
+   de la misma rampa esmeralda de los mapas (paleta E, 12/11/2026), así «más oscuro = más» se sigue leyendo igual.
+   «Comparación por bloques» queda como está (tiene su propio color por bloque). */
 
-/* Un brillo celeste muy suave detrás del área de trabajo, más fuerte arriba, donde está la respuesta. */
+/* Un brillo menta muy suave detrás del área de trabajo, más fuerte arriba, donde está la respuesta. */
 .analitica:not([data-analitica="bloques"]) .analitica__trabajo {
-  background: radial-gradient(70rem 26rem at 72% -8rem, rgb(92 200 255 / 0.16), transparent 70%);
+  background: radial-gradient(70rem 26rem at 72% -8rem, rgb(69 227 164 / 0.12), transparent 70%);
 }
 
-/* Tarjetas de evidencia: el cielo de la marca se asoma en lo alto de cada una y el título lleva su marca de color. */
+/* Tarjetas de evidencia: el tinte de la marca se asoma en lo alto de cada una y el título lleva su marca de color. */
 .analitica:not([data-analitica="bloques"]) .tarjeta-a:not(.respuesta, .vacio-a) {
-  background: linear-gradient(180deg, rgb(224 242 254 / 0.7) 0, rgb(224 242 254 / 0) 5.5rem), var(--color-superficie);
-  border-color: rgb(165 220 251 / 0.55);
+  background: linear-gradient(180deg, rgb(222 245 234 / 0.7) 0, rgb(222 245 234 / 0) 5.5rem), var(--color-superficie);
+  border-color: rgb(166 230 200 / 0.6);
 }
 
 .analitica:not([data-analitica="bloques"]) .tarjeta-a:not(.respuesta) .tarjeta-a__cabecera h3::before {
@@ -3636,7 +3637,7 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
   vertical-align: 0.06em;
 }
 
-/* Barras: del celeste al índigo en lugar de un azul plano (las leyendas llevan la misma muestra). */
+/* Barras: del esmeralda medio al profundo en lugar de un tono plano (las leyendas llevan la misma muestra). */
 .analitica :is(.pista-b__barra, .prioridad-a__mitad, .barra100__a, .medidor-a:not(.medidor-a--alerta) i,
   .leyenda-a__prio-mitad, .leyenda-a__lleno--azul) {
   background-image: linear-gradient(90deg, var(--rampa-4), var(--rampa-6) 65%, var(--rampa-7));
@@ -3660,12 +3661,12 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
   background-image: linear-gradient(0deg, var(--rampa-7), var(--rampa-5));
 }
 
-/* Cifras clave de las tarjetas, en el azul de acción (6,7:1 sobre blanco). */
+/* Cifras clave de las tarjetas, en el esmeralda de acción (4,96:1 sobre blanco). */
 .analitica :is(.cifras-a dd, .equipo-a dd, .fila100__valor b, .barra100__leyenda b, .notas-a__cifra, .categoria-a__valor b) {
   color: var(--color-primario);
 }
 
-/* Motivos de la calificación: los de las notas bajas en tierra, los de las altas en azul (el título de cada grupo lo dice). */
+/* Motivos de la calificación: los de las notas bajas en tierra, los de las altas en esmeralda (el título de cada grupo lo dice). */
 .analitica .motivos-a--bajas .motivo-a {
   background: rgb(164 98 63 / 0.08);
   border-color: rgb(164 98 63 / 0.35);
@@ -3674,34 +3675,34 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
 .analitica .motivos-a--bajas .motivo-a b { color: var(--tono-bajo); }
 
 .analitica .motivos-a--altas .motivo-a {
-  background: var(--azul-100);
-  border-color: var(--azul-200);
+  background: var(--color-tenue);
+  border-color: var(--rampa-2);
 }
 
 .analitica .motivos-a--altas .motivo-a b { color: var(--color-primario); }
 
-/* Tablas: la cabecera en el cielo de la marca. */
+/* Tablas: la cabecera en el tinte de la marca. */
 .analitica .tarjeta-a table:not(.visualmente-oculto) thead th {
-  background: rgb(224 242 254 / 0.75);
+  background: rgb(222 245 234 / 0.75);
   color: var(--color-marino);
 }
 
 /* «Rendimiento de los serenos»: las iniciales en tonos de la marca (variedad, no significado) y las filas con alguna señal
-   apenas teñidas de ámbar, además de su ▲ y su texto. */
-.analitica tr:nth-child(4n + 1) .sereno-fila-a__inicial { background: var(--azul-100); color: var(--azul-800); }
-.analitica tr:nth-child(4n + 2) .sereno-fila-a__inicial { background: #E0F2FE; color: #075985; }
-.analitica tr:nth-child(4n + 3) .sereno-fila-a__inicial { background: #E0E7FF; color: #3730A3; }
-.analitica tr:nth-child(4n + 4) .sereno-fila-a__inicial { background: #CCFBF1; color: #115E59; }
+   apenas teñidas de ocre, además de su ▲ y su texto. */
+.analitica tr:nth-child(4n + 1) .sereno-fila-a__inicial { background: var(--color-tenue); color: var(--esmeralda-800); }
+.analitica tr:nth-child(4n + 2) .sereno-fila-a__inicial { background: #E6ECF8; color: var(--marino-700); }
+.analitica tr:nth-child(4n + 3) .sereno-fila-a__inicial { background: #CCFBF1; color: #115E59; }
+.analitica tr:nth-child(4n + 4) .sereno-fila-a__inicial { background: var(--color-superficie-hundida); color: var(--color-texto-secundario); }
 
 .analitica tr[data-senales]:not([data-senales="0"]) > :is(td, th) {
-  background: rgb(255 248 235 / 0.6);
+  background: rgb(255 247 224 / 0.6);
 }
 
 /* La cifra sobre una columna de notas bajas lleva el tono de su columna. */
 .analitica .notas-a__columna:has(.notas-a__barra--baja) .notas-a__cifra { color: var(--tono-bajo); }
 
-/* «Salud del sistema»: cada paso de la cadena (app, servidor, central, operador, app del sereno) en el cielo de la marca. */
+/* «Salud del sistema»: cada paso de la cadena (app, servidor, central, operador, app del sereno) en el tinte de la marca. */
 .analitica .cadena-a__nodo {
-  background: linear-gradient(180deg, var(--azul-100), var(--color-superficie));
-  border-color: var(--azul-200);
+  background: linear-gradient(180deg, var(--color-tenue), var(--color-superficie));
+  border-color: var(--rampa-2);
 }

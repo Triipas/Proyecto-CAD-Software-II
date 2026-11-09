@@ -1052,7 +1052,7 @@
 }
 
 .leyenda-linea--recorrido {
-  border-top: 4px solid #0B1F44;
+  border-top: 4px solid var(--color-marino);
   box-shadow: 0 0 0 2px #FFFFFF;
   border-radius: 999px;
 }
