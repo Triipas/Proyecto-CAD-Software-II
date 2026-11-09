@@ -229,8 +229,8 @@ else
         <section class="tarjeta-a" aria-labelledby="titulo-fiabilidad">
             <div class="tarjeta-a__cabecera"><h3 id="titulo-fiabilidad">Reasignaciones</h3><span class="tarjeta-a__nota">y dónde inicia la atención</span></div>
             <dl class="cifras-a" data-fiabilidad>
-                <div><dt>Casos que la central le quitó</dt><dd>@(senales.Any(x => x.Clave == "retiros") ? "▲ " : "")@s.Retirados<small> de @s.CasosAsignados</small></dd></div>
-                <div><dt>… porque no respondía</dt><dd>@s.RetiradosPorNoResponder</dd></div>
+                <div><dt>Casos reasignados a otro sereno</dt><dd>@(senales.Any(x => x.Clave == "retiros") ? "▲ " : "")@s.Retirados<small> de @s.CasosAsignados</small></dd></div>
+                <div><dt>… por no responder</dt><dd>@s.RetiradosPorNoResponder</dd></div>
                 <div><dt>Inicios lejos del caso</dt><dd>@(senales.Any(x => x.Clave == "rango") ? "▲ " : "")@(s.PorcentajeFueraDeRango is { } f ? Formato.Porcentaje(f, 0) : "—")<small> @(s.IniciosConPunto > 0 ? $"{s.IniciosFueraDeRango} de {s.IniciosConPunto}" : "")</small></dd></div>
                 <div><dt>Distancia al iniciar (mediana)</dt><dd>@(s.DistanciaP50Metros is { } d ? $"{Formato.Decimal(d, 0)} m" : "—")</dd></div>
                 <div><dt>Inicios registrados por la central</dt><dd>@s.IniciosPorCentral<small> @(s.PorcentajePorCentral is { } pc ? Formato.Porcentaje(pc, 0) : "")</small></dd></div>

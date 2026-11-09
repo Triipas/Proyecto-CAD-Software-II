@@ -42,7 +42,7 @@ else
             {
                 <h2 class="respuesta__titular" id="respuesta-reasigna">Se reasignó el <em>@Formato.Porcentaje(porcentaje!.Value)</em> de los casos asignados (@r.CasosReasignados de @r.CasosAsignados)@(sobre ? $", por encima de la referencia de {Formato.Porcentaje(referencia, 0)}." : ".")</h2>
             }
-            <p class="respuesta__lectura">Una reasignación es cuando la central le quita un caso a un sereno que aún no llegó (asignado o en camino) y se lo da a otro: cada una es tiempo que el ciudadano esperó de más. Cada caso cuenta una vez, aunque se reasigne varias veces. Datos de @m.TextoPeriodo.</p>
+            <p class="respuesta__lectura">Una reasignación es cuando la central retira un caso a un sereno que aún no llegó (asignado o en camino) y lo asigna a otro: cada una suma tiempo de espera para el ciudadano. Cada caso cuenta una vez, aunque se reasigne varias veces. Datos de @m.TextoPeriodo.</p>
         </div>
         @if (senal is not null)
         {
@@ -99,15 +99,15 @@ else
             <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos-reasigna">Concentración por sereno</h3><span class="tarjeta-a__nota">sin nombres</span></div>
             <dl class="cifras-a" data-concentracion>
                 <div><dt>Serenos con casos asignados</dt><dd>@r.SerenosConAsignacion</dd></div>
-                <div><dt>Serenos a quienes se les quitó un caso</dt><dd>@r.SerenosConRetiros</dd></div>
+                <div><dt>Serenos con algún caso reasignado</dt><dd>@r.SerenosConRetiros</dd></div>
                 @if (r.Reasignaciones > 0)
                 {
-                    <div><dt>Casos quitados al que más perdió</dt><dd>@r.MaximoRetirosDeUnSereno de @r.Reasignaciones</dd></div>
+                    <div><dt>Máximo de casos reasignados de un solo sereno</dt><dd>@r.MaximoRetirosDeUnSereno de @r.Reasignaciones</dd></div>
                 }
                 <div><dt>Casos reasignados más de una vez</dt><dd>@r.CasosReasignadosVariasVeces</dd></div>
                 <div><dt>Retirados por desactivar la cuenta</dt><dd>@r.RetirosPorDesactivacion</dd></div>
             </dl>
-            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Si casi todos los casos quitados vienen de uno o dos serenos, el problema es de ellos (equipo, señal, turno); si se reparten, es del proceso. Quiénes son se ve en el historial de cada caso. Retirar por desactivar la cuenta no es una decisión de la central y no cuenta como reasignación.</p>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Si casi todas las reasignaciones corresponden a uno o dos serenos, conviene revisar su equipo, su señal o su turno; si se reparten entre varios, conviene revisar el proceso. Quiénes son se ve en el historial de cada caso. Retirar por desactivar la cuenta no es una decisión de la central y no cuenta como reasignación.</p>
         </section>
     </div>
 }

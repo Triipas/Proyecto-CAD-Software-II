@@ -52,7 +52,7 @@ else
                 }
                 else
                 {
-                    <p class="respuesta__lectura">Hubo al menos un sereno disponible y ubicado el @Formato.Porcentaje(c.PorcentajeConAlguno, 0) del tiempo@(brecha is null ? "." : $"; la peor franja es de {franja.Min()} a {franja.Max() + 1} h.")</p>
+                    <p class="respuesta__lectura">Hubo al menos un sereno disponible y ubicado el @Formato.Porcentaje(c.PorcentajeConAlguno, 0) del tiempo@(brecha is null ? "." : $"; la franja con menor cobertura es de {franja.Min()} a {franja.Max() + 1} h.")</p>
                 }
             </div>
             @if (c.Zonas.Count > 0)

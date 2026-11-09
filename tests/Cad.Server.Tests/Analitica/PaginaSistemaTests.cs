@@ -31,7 +31,7 @@ public class PaginaSistemaTests(FabricaCad fabrica)
 
         var html = WebUtility.HtmlDecode(await navegador.GetStringAsync("/panel/analitica/sistema?periodo=rango&desde=2014-03-01&hasta=2014-03-28"));
 
-        Assert.Contains("Hay que mirar <em>1 señal</em>: «SOS sin ubicación» está en 40 %", html);
+        Assert.Contains("<em>1 señal</em> fuera de lo aceptable: «SOS sin ubicación» está en 40 %", html);
         Assert.Contains("cadena-a__mide", html);
         Assert.Contains("el SOS se registra al llegar: no hay tiempo que medir", html);
         Assert.Contains("Franja aceptable (provisional", html);

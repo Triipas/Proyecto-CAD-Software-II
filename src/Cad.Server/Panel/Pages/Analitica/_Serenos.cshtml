@@ -31,7 +31,7 @@ else
             }
             else
             {
-                <h2 class="respuesta__titular" id="respuesta-serenos">Conviene mirar a <em>@Formato.Plural(mirar.Count, "sereno", "serenos")</em> de @e.Serenos.Count.</h2>
+                <h2 class="respuesta__titular" id="respuesta-serenos"><em>@(e.Serenos.Count == 1 ? "El único sereno" : $"{mirar.Count} de {e.Serenos.Count} serenos")</em> @(mirar.Count == 1 ? "tiene" : "tienen") alguna señal frente al equipo.</h2>
             }
             <p class="respuesta__lectura">@if (mirar.Count > 0) {<b data-resumen-senales>@(char.ToUpperInvariant(resumen[0]) + resumen[1..]).</b><text> </text>}El equipo tarda una mediana de <b>@Formato.Minutos(e.LlegadaP50)</b> en llegar desde que se le asigna un caso@(e.Calificacion is { } nota ? $" y el ciudadano califica su atención con {Formato.Decimal(nota)} de 5" : "")@(e.PorcentajeOcupado is { } ocupado ? $"; en turno, pasa el {Formato.Porcentaje(ocupado, 0)} del tiempo con un caso" : "").
                 Cada sereno se compara con el equipo en el mismo periodo, y solo cuando tiene casos suficientes (@minimo o más): con menos, un caso lento lo marcaría sin razón. Elige un sereno para ver sus zonas, sus tiempos y sus notas.</p>
@@ -46,7 +46,7 @@ else
     </section>
 
     <section class="tarjeta-a" aria-labelledby="titulo-tabla-serenos">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-tabla-serenos">Cada sereno frente al equipo</h3><span class="tarjeta-a__nota">@m.TextoPeriodo · primero los que conviene mirar</span></div>
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-tabla-serenos">Cada sereno frente al equipo</h3><span class="tarjeta-a__nota">@m.TextoPeriodo · primero los que tienen señales</span></div>
         <div class="tabla-a__desplazable">
             <table class="tabla-a tabla-a--serenos" data-tabla-serenos>
                 <caption class="visualmente-oculto">Rendimiento de cada sereno en @m.TextoPeriodo. La mediana de llegada del equipo es @Formato.Minutos(e.LlegadaP50).</caption>
@@ -58,7 +58,7 @@ else
                         <th scope="col" class="tabla-a__num">Calificación</th>
                         <th scope="col">Tiempo con caso</th>
                         <th scope="col">Zona donde más patrulla</th>
-                        <th scope="col">Para mirar</th>
+                        <th scope="col">Señales</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,7 +114,7 @@ else
                             <td>
                                 @if (senales.Count == 0)
                                 {
-                                    <span class="estado-a estado-a--bien">✓ Nada</span>
+                                    <span class="estado-a estado-a--bien">✓ Sin señales</span>
                                 }
                                 else
                                 {

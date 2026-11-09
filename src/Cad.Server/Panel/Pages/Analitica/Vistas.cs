@@ -300,7 +300,7 @@ public static class Rendimiento
 
     private static readonly Senal Lento = new("llegada", "Llega más lento que el equipo", "llega más lento que el equipo", "llegan más lento que el equipo");
     private static readonly Senal NotaBaja = new("calificacion", "Calificación por debajo del equipo", "tiene la calificación por debajo del equipo", "tienen la calificación por debajo del equipo");
-    private static readonly Senal Retiros = new("retiros", "Se le quitan casos", "pierde casos por reasignación", "pierden casos por reasignación");
+    private static readonly Senal Retiros = new("retiros", "Con casos reasignados", "tiene casos reasignados", "tienen casos reasignados");
     private static readonly Senal Lejos = new("rango", "Inicia la atención lejos del caso", "inicia la atención lejos del caso", "inician la atención lejos del caso");
 
     public static IReadOnlyList<Senal> Senales(RendimientoSereno s, RendimientoEquipo e, OpcionesAnalitica o)

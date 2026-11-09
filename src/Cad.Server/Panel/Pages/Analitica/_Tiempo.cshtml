@@ -163,9 +163,9 @@ else
                     @if (Medible(alta) && Medible(media))
                     {
                         var dif = media!.P50Minutos!.Value - alta!.P50Minutos!.Value;
-                        if (Math.Abs(dif) < 1) { <text><b>Casi igual:</b> a la mitad de los SOS de prioridad Alta y de prioridad Media se les atendió en unos @Formato.Minutos(alta.P50Minutos) o menos.</text> }
-                        else if (dif > 0) { <text><b>Sí:</b> a la mitad de los SOS de prioridad Alta se les atendió en @Formato.Minutos(alta.P50Minutos), @Formato.Minutos(dif) antes que a los de prioridad Media (@Formato.Minutos(media.P50Minutos)).</text> }
-                        else { <text><b>Todavía no:</b> a la mitad de los SOS de prioridad Alta se les atendió en @Formato.Minutos(alta.P50Minutos), @Formato.Minutos(-dif) después que a los de prioridad Media (@Formato.Minutos(media.P50Minutos)).</text> }
+                        if (Math.Abs(dif) < 1) { <text>A la mitad de los SOS de prioridad Alta y de prioridad Media se les atendió en unos @Formato.Minutos(alta.P50Minutos) o menos.</text> }
+                        else if (dif > 0) { <text>A la mitad de los SOS de prioridad Alta se les atendió en @Formato.Minutos(alta.P50Minutos), @Formato.Minutos(dif) antes que a los de prioridad Media (@Formato.Minutos(media.P50Minutos)).</text> }
+                        else { <text>A la mitad de los SOS de prioridad Alta se les atendió en @Formato.Minutos(alta.P50Minutos), @Formato.Minutos(-dif) después que a los de prioridad Media (@Formato.Minutos(media.P50Minutos)).</text> }
                     }
                     else
                     {

@@ -272,14 +272,14 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         await Intentar("ahora", async () =>
         {
             var atascados = (await S<ConsultarCasosAtascados>().EjecutarAsync(ct)).Atascados.Count;
-            return atascados > 0 ? new Resumen($"▲ {atascados} {(atascados == 1 ? "atascado" : "atascados")}", "aviso") : new Resumen("✓ Todo a tiempo", "bien");
+            return atascados > 0 ? new Resumen($"▲ {atascados} sobre el tiempo esperado", "aviso") : new Resumen("✓ Todo a tiempo", "bien");
         });
         await Intentar("tiempo", async () =>
         {
             var total = (await cache.ObtenerAsync(Clave("respuesta", Rango), () => S<ConsultarRespuestaPorZona>().EjecutarAsync(Rango, false, ct))).Total;
             return total.Atendidos == 0 ? new Resumen("Sin SOS atendidos")
                 : total.Atendidos < minimo ? new Resumen($"{total.Atendidos} SOS · pocos para medianas")
-                : new Resumen($"Respuesta p50 · {Formato.Minutos(total.RespuestaP50)}");
+                : new Resumen($"Mitad atendida · {Formato.Minutos(total.RespuestaP50)}");
         });
         await Intentar("falsos", async () =>
         {
@@ -304,7 +304,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         Resumenes["serenos"] = cache.SiExiste<RendimientoEquipo>(Clave("serenos", Rango)) is { } equipo
             ? equipo.Serenos.Count == 0 ? new Resumen("Sin serenos en el periodo")
                 : equipo.Serenos.Count(s => Rendimiento.Senales(s, equipo, Opciones).Count > 0) is var mirar and > 0
-                    ? new Resumen($"▲ {mirar} {(mirar == 1 ? "sereno" : "serenos")} para mirar", "aviso")
+                    ? new Resumen($"▲ {mirar} {(mirar == 1 ? "sereno" : "serenos")} con señales", "aviso")
                     : new Resumen("✓ Ninguno fuera de lo normal", "bien")
             : new Resumen("Llegada, notas y zonas");
         await Intentar("repite", async () =>
@@ -322,7 +322,7 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
         {
             var salud = await cache.ObtenerAsync(Clave("salud", Rango), () => S<ConsultarSaludSistema>().EjecutarAsync(Rango, ct));
             var alertas = Sistema.Senales(salud).Count(s => !s.Bien);
-            return alertas == 0 ? new Resumen("✓ Sin fallas", "bien") : new Resumen($"▲ {alertas} {(alertas == 1 ? "señal" : "señales")} que mirar", "aviso");
+            return alertas == 0 ? new Resumen("✓ Todo dentro de lo aceptable", "bien") : new Resumen($"▲ {alertas} fuera de lo aceptable", "aviso");
         });
     }
 }

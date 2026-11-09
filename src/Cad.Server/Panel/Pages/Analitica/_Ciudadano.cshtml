@@ -26,7 +26,7 @@
     else
     {
         <div class="respuesta__cabecera">
-            <h2 class="respuesta__titular" id="respuesta-ciudadano">Califican la atención con <em>@Formato.Decimal(promedio) de 5</em>@if (e.Evaluados < minimo) {<text>.</text>} else if (porDemora) {<text>;<br />las notas bajas vienen de la demora.</text>} else if (falloPrincipal is not null) {<text>; lo que más falla: «@falloPrincipal.Texto».</text>} else {<text>.</text>}</h2>
+            <h2 class="respuesta__titular" id="respuesta-ciudadano">Califican la atención con <em>@Formato.Decimal(promedio) de 5</em>@if (e.Evaluados < minimo) {<text>.</text>} else if (porDemora) {<text>;<br />las notas bajas se concentran en las esperas más largas.</text>} else if (falloPrincipal is not null) {<text>; el motivo más marcado en las notas bajas: «@falloPrincipal.Texto».</text>} else {<text>.</text>}</h2>
             <p class="respuesta__lectura">A la izquierda, cuántas evaluaciones recibió cada nota (@Formato.Porcentaje(e.PorcentajeEvaluados, 0) de los casos cerrados se evaluó). A la derecha, de quienes esperaron cada tiempo hasta que empezó la atención, cuántos calificaron con nota baja (1 a 3).</p>
         </div>
         <div class="ciudadano-a">
@@ -84,14 +84,14 @@
 
 <div class="rejilla-a rejilla-a--tres">
     <section class="tarjeta-a" aria-labelledby="titulo-motivos">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-motivos">Por qué califican así</h3><span class="tarjeta-a__nota">puede marcar varios</span></div>
+        <div class="tarjeta-a__cabecera"><h3 id="titulo-motivos">Motivos de la calificación</h3><span class="tarjeta-a__nota">puede marcar varios</span></div>
         @if (e.MotivosBajas.Count + e.MotivosAltas.Count == 0)
         {
             <p class="tarjeta-a__vacia">Sin motivos marcados en el periodo. Los motivos se registran desde el 27/10/2026.</p>
         }
         else
         {
-            @foreach (var (titulo, motivos) in new[] { ("Lo que falló (notas bajas)", e.MotivosBajas), ("Lo que estuvo bien (notas altas)", e.MotivosAltas) })
+            @foreach (var (titulo, motivos) in new[] { ("En las notas bajas", e.MotivosBajas), ("En las notas altas", e.MotivosAltas) })
             {
                 if (motivos.Count == 0) { continue; }
                 <p class="tarjeta-a__nota tarjeta-a__nota--bloque">@titulo</p>

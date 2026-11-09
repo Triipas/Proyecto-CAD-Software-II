@@ -40,9 +40,9 @@ else
             {
                 // El aviso push aparece en la cadena (último tramo) y en las señales: se cuenta una sola vez.
                 var malos = alertas.Count + tramos.Take(3).Count(t => t.Bien == false);
-                <h2 class="respuesta__titular" id="respuesta-sistema">Hay que mirar <em>@Formato.Plural(malos, "señal", "señales")</em>@(alertas.FirstOrDefault() is { } primera ? $": «{primera.Nombre}» está en {primera.Texto}." : ": la cadena del SOS tarda más de lo aceptable.")</h2>
+                <h2 class="respuesta__titular" id="respuesta-sistema"><em>@Formato.Plural(malos, "señal", "señales")</em> fuera de lo aceptable@(alertas.FirstOrDefault() is { } primera ? $": «{primera.Nombre}» está en {primera.Texto}." : ": la cadena del SOS tarda más de lo aceptable.")</h2>
             }
-            <p class="respuesta__lectura">El camino de un SOS, de la app del ciudadano a la del sereno, con lo que tarda o llega en cada paso (medianas de @m.TextoPeriodo). Verde: aceptable; ámbar con ▲: hay que mirarlo; gris: no se mide.</p>
+            <p class="respuesta__lectura">El camino de un SOS, de la app del ciudadano a la del sereno, con lo que tarda o llega en cada paso (medianas de @m.TextoPeriodo). Verde: aceptable; ámbar con ▲: fuera de lo aceptable; gris: no se mide.</p>
         </div>
         <ol class="cadena-a">
             @for (var i = 0; i < nodos.Length; i++)
@@ -82,7 +82,7 @@ else
         </ul>
         @foreach (var x in alertas)
         {
-            <p class="tarjeta-a__nota tarjeta-a__nota--bloque senal-a__nota">▲ Hay que mirarlo: «@x.Nombre» está en @x.Texto (@x.Ayuda).</p>
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque senal-a__nota">▲ Fuera de lo aceptable: «@x.Nombre» está en @x.Texto (@x.Ayuda).</p>
         }
         @if (s.PrecisionP50Metros is { } precision)
         {

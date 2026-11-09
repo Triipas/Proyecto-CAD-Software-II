@@ -9,7 +9,6 @@
     // Las 6 categorías con más reportes decididos, de mayor a menor porcentaje de falsos.
     var categorias = indice.PorCategoria.Where(c => c.Decididos > 0).OrderByDescending(c => c.Decididos).Take(6)
         .OrderByDescending(c => c.Porcentaje).ThenByDescending(c => c.Decididos).ToList();
-    var peor = indice.PorCategoria.Where(c => c.Decididos >= minimo && c.Falsos > 0).OrderByDescending(c => c.Porcentaje).FirstOrDefault();
     static string UnoDeCada(double porcentaje) => $"1 de cada {Math.Max(1, (int)Math.Round(100 / porcentaje))}";
     var maximo = Math.Max(25, Math.Ceiling(categorias.Select(c => c.Porcentaje).DefaultIfEmpty(0).Max() / 5) * 5);
     var paso = maximo > 40 ? 10 : 5;
@@ -36,7 +35,7 @@ else
             }
             else
             {
-                <h2 class="respuesta__titular" id="respuesta-falsos">@(sinRegistrar > 0 ? "Al menos " : "")@UnoDeCada(indice.PorcentajeReportesFalsos!.Value) reportes decididos era falso@(peor is not null && peor.Porcentaje > indice.PorcentajeReportesFalsos ? "" : ".")@if (peor is not null && peor.Porcentaje > indice.PorcentajeReportesFalsos) {<text>; en <em>@peor.Categoria.ToLowerInvariant()</em>, @UnoDeCada(peor.Porcentaje).</text>}</h2>
+                <h2 class="respuesta__titular" id="respuesta-falsos">@(sinRegistrar > 0 ? "Al menos " : "")@UnoDeCada(indice.PorcentajeReportesFalsos!.Value) reportes decididos era falso.</h2>
             }
             <p class="respuesta__lectura">Un reporte cuenta como falso cuando la central lo descartó como «falso o malintencionado». Se miden los reportes de la app que se decidieron en @m.TextoPeriodo (los que registra la propia central no entran); cada barra es una categoría y su largo, el porcentaje de sus reportes que resultó falso.</p>
         </div>

@@ -55,7 +55,7 @@
                     <span class="eje-a__marca" style="left:@(Carriles.Posicion(2, 1).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">2× lo esperado</span>
                     <span class="eje-a__marca" style="left:100%">3× o más</span>
                 </div>
-                <span class="carril-a__detalle">Atascados</span>
+                <span class="carril-a__detalle">Estado</span>
             </div>
             @foreach (var grupo in carriles.GroupBy(c => c.Grupo))
             {
@@ -86,7 +86,7 @@
                             }
                             else if (tarde > 0)
                             {
-                                <strong class="carril-a__tarde">▲ @Formato.Plural(tarde, "atascado", "atascados")</strong>
+                                <strong class="carril-a__tarde">▲ @Formato.Plural(tarde, "sobre el tiempo esperado", "sobre el tiempo esperado")</strong>
                                 <span>el más largo, @Formato.Minutos(largo)</span>
                             }
                             else
@@ -100,7 +100,7 @@
             }
             <ul class="leyenda-a">
                 <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Caso a tiempo</li>
-                <li><i class="leyenda-a__atascado"></i>Atascado: ya pasó el tiempo esperado</li>
+                <li><i class="leyenda-a__atascado"></i>Pasó el tiempo esperado</li>
                 <li><i class="leyenda-a__banda"></i>Tiempo esperado de la etapa</li>
                 <li><i class="leyenda-a__grupo">3</i>Varios casos casi juntos</li>
             </ul>

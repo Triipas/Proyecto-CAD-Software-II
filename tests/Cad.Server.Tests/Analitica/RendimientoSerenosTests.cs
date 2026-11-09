@@ -181,9 +181,9 @@ public class RendimientoSerenosTests(FabricaCad fabrica)
 
         var html = WebUtility.HtmlDecode(await navegador.GetStringAsync(Ruta(2007)));
 
-        Assert.Contains("Conviene mirar a <em>2 serenos</em> de 4.", html);
+        Assert.Contains("<em>2 de 4 serenos</em> tienen alguna señal frente al equipo.", html);
         Assert.Contains("1 tiene la calificación por debajo del equipo", html);
-        Assert.Contains("1 pierde casos por reasignación", html);
+        Assert.Contains("1 tiene casos reasignados", html);
         // El lento va primero (tres señales); la rápida, sin señales.
         Assert.True(html.IndexOf("Luis Lento Ficticio", StringComparison.Ordinal) < html.IndexOf("Ana Rápida Ficticia", StringComparison.Ordinal));
         Assert.Contains($"data-sereno=\"{e.Lento}\" data-senales=\"3\"", html);
@@ -191,7 +191,7 @@ public class RendimientoSerenosTests(FabricaCad fabrica)
         Assert.Contains("▲ Llega más lento que el equipo", html);
         Assert.Contains("Cómo se mide cada cifra", html);
         Assert.Contains("aria-current=\"page\" data-pregunta=\"serenos\"", html);
-        Assert.Contains("▲ 2 serenos para mirar", html);
+        Assert.Contains("▲ 2 serenos con señales", html);
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public class RendimientoSerenosTests(FabricaCad fabrica)
         Assert.Contains("Todos los serenos", detalle);
         // Con la lista calculada, otra pregunta muestra el dato de esta en su columna, sin ningún nombre.
         var otra = WebUtility.HtmlDecode(await navegador.GetStringAsync("/panel/analitica/reasigna?periodo=rango&desde=2006-03-01&hasta=2006-03-27"));
-        Assert.Contains("▲ 2 serenos para mirar", otra);
+        Assert.Contains("▲ 2 serenos con señales", otra);
         Assert.DoesNotContain("Lento Ficticio", otra);
     }
 
