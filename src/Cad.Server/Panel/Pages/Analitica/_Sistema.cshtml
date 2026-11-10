@@ -15,6 +15,20 @@
     };
     var nodos = new[] { ("App del ciudadano", "emite el SOS"), ("Servidor", "lo registra"), ("Central", "lo muestra"), ("Operador", "lo abre"), ("App del sereno", "recibe el despacho") };
     var sinDatos = s.Sos == 0 && s.PorcentajePushEnviadas is null && s.IniciosAtencion == 0;
+
+    // Las cuatro constantes vitales: los tres tramos medidos de la cadena y el GPS impreciso. Las demás señales van debajo.
+    var gps = senales[1];
+    var monitores = new (string Titulo, string Valor, string Unidad, string Que, string Limite, bool? Bien)[]
+    {
+        ("Llega a la central", s.PresentacionP50Segundos is { } pr ? Formato.Decimal(pr, pr < 10 ? 1 : 0) : "—", s.PresentacionP50Segundos is null ? "" : "s", "del registro a verse en la central abierta (mediana)", $"aceptable: {PresentacionAceptable} s o menos", tramos[1].Bien),
+        ("Lo abre un operador", s.AperturaP50Segundos is { } ap ? Formato.Decimal(ap, 0) : "—", s.AperturaP50Segundos is null ? "" : "s", "del registro a que un operador abre el detalle (mediana)", $"aceptable: {AperturaAceptable} s o menos", tramos[2].Bien),
+        ("Avisos al sereno", s.PorcentajePushEnviadas is { } pu ? Formato.Decimal(pu, 0) : "—", s.PorcentajePushEnviadas is null ? "" : "%", "de los avisos push llegan al servicio de notificaciones", "aceptable: más del 95 %", tramos[3].Bien),
+        ("GPS impreciso", gps.Valor is { } gv ? Formato.Decimal(gv, 0) : "—", gps.Valor is null ? "" : "%", "de los SOS llega con más de 100 m de margen", "aceptable: menos del 15 %", gps.Valor is null ? null : gps.Bien),
+    };
+    var otras = new[] { senales[0], senales[3], senales[4] };
+    string Pct(double x) => x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+    // Un latido: plano, un pico y plano otra vez. Es decoración (aria-hidden): las cifras están en el número grande.
+    const string Latido = "M 0 40 L 60 40 L 70 34 L 80 40 L 100 40 L 108 49 L 116 10 L 124 55 L 132 40 L 160 40 L 172 30 L 186 40 L 300 40";
 }
 @if (sinDatos)
 {
@@ -24,7 +38,7 @@
 }
 else
 {
-    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-sistema" data-respuesta="sistema" data-alertas="@alertas.Count">
+    <section class="tarjeta-a respuesta salud-b" aria-labelledby="respuesta-sistema" data-respuesta="sistema" data-alertas="@alertas.Count">
         <div class="respuesta__cabecera">
             @if (alertas.Count == 0 && tramos.All(t => t.Bien != false))
             {
@@ -42,51 +56,87 @@ else
                 var malos = alertas.Count + tramos.Take(3).Count(t => t.Bien == false);
                 <h2 class="respuesta__titular" id="respuesta-sistema"><em>@Formato.Plural(malos, "señal", "señales")</em> fuera de lo aceptable@(alertas.FirstOrDefault() is { } primera ? $": «{primera.Nombre}» está en {primera.Texto}." : ": la cadena del SOS tarda más de lo aceptable.")</h2>
             }
-            <p class="respuesta__lectura">El camino de un SOS, de la app del ciudadano a la del sereno, con lo que tarda o llega en cada paso (medianas de @m.TextoPeriodo). Verde: aceptable; ámbar con ▲: fuera de lo aceptable; gris: no se mide.</p>
+            <p class="respuesta__lectura">Las constantes vitales del sistema en @m.TextoPeriodo: lo que tarda un SOS en llegar a la central y en abrirse, cuántos avisos llegan al sereno y cuántos SOS llegan con un GPS impreciso. En verde, dentro de lo aceptable; en ámbar con ▲, fuera; en gris, sin datos.</p>
         </div>
-        <ol class="cadena-a">
-            @for (var i = 0; i < nodos.Length; i++)
-            {
-                <li class="cadena-a__nodo"><b>@nodos[i].Item1</b><span>@nodos[i].Item2</span></li>
-                @if (i < tramos.Length)
+        <div class="respuesta__visual">
+            <div class="monitores-b">
+                @for (var i = 0; i < monitores.Length; i++)
                 {
-                    var t = tramos[i];
-                    <li class="cadena-a__tramo @(t.Bien switch { true => "cadena-a__tramo--bien", false => "cadena-a__tramo--alerta", _ => "" })" title="@t.Ayuda" data-tramo="@i">
-                        <span class="cadena-a__flecha" aria-hidden="true"></span>
-                        <span class="cadena-a__valor">@(t.Bien == false ? "▲ " : "")@t.Texto</span>
-                        <span class="cadena-a__mide">@t.Mide</span>
-                        <span class="visualmente-oculto">@(t.Bien switch { true => "Dentro de lo aceptable", false => "Fuera de lo aceptable", _ => "" })</span>
-                    </li>
+                    var mo = monitores[i];
+                    var clase = mo.Bien switch { true => "", false => " monitor-b--alerta", _ => " monitor-b--sin" };
+                    <article class="monitor-b@(clase)" style="--i:@i" data-monitor="@mo.Titulo">
+                        <div class="monitor-b__cabeza">@mo.Titulo<span>@(mo.Bien switch { true => "bien", false => "▲ fuera", _ => "sin datos" })</span></div>
+                        <b class="monitor-b__valor">@mo.Valor<small>@mo.Unidad</small></b>
+                        <span class="monitor-b__que">@mo.Que</span>
+                        <span class="monitor-b__limite">@mo.Limite</span>
+                        @if (mo.Bien is not null)
+                        {
+                            <svg viewBox="0 0 300 64" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="monitor-b__latido" d="@Latido" pathLength="1" /></svg>
+                            <span class="monitor-b__barrido" aria-hidden="true"></span>
+                        }
+                    </article>
                 }
-            }
-        </ol>
+            </div>
+            <ol class="cadena-b" aria-label="La cadena de un SOS">
+                @for (var i = 0; i < nodos.Length; i++)
+                {
+                    <li class="cadena-b__nodo" title="@nodos[i].Item2">@nodos[i].Item1</li>
+                    @if (i < tramos.Length)
+                    {
+                        var t = tramos[i];
+                        <li class="cadena-b__tramo @(t.Bien switch { true => "cadena-b__tramo--bien", false => "cadena-b__tramo--alerta", _ => "" })" title="@t.Ayuda" data-tramo="@i">
+                            <span>@(t.Bien == false ? "▲ " : "")@t.Texto</span>
+                            <span class="visualmente-oculto">@t.Mide</span>
+                        </li>
+                    }
+                }
+            </ol>
+        </div>
     </section>
 
-    <section class="tarjeta-a tarjeta-a--llena" aria-labelledby="titulo-senales">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-senales">Señales de los datos</h3><span class="tarjeta-a__nota">cada fila: lo que se midió en @m.TextoPeriodo frente a lo aceptable</span></div>
-        <ul class="leyenda-a leyenda-a--compacta">
-            <li><i class="leyenda-a__lleno" style="background:var(--color-exito)"></i>Valor del periodo, dentro de lo aceptable</li>
-            <li><i class="leyenda-a__atascado leyenda-a__atascado--lleno"></i>▲ Fuera de lo aceptable</li>
-            <li><i class="leyenda-a__banda"></i>Franja aceptable (provisional; la línea punteada es el límite)</li>
-        </ul>
-        <ul class="senales-a">
-            @foreach (var x in senales)
+    <div class="rejilla-a rejilla-a--dos">
+        <section class="tarjeta-a" aria-labelledby="titulo-senales">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-senales">Las otras señales de los datos</h3><span class="tarjeta-a__nota">lo medido en @m.TextoPeriodo frente a lo aceptable</span></div>
+            <ul class="otras-b">
+                @foreach (var x in otras)
+                {
+                    <li class="@(x.Bien ? "" : "otras-b--alerta")" data-senal="@x.Nombre" data-bien="@x.Bien.ToString().ToLowerInvariant()">
+                        <span class="otras-b__nombre">@x.Nombre<small>@x.Ayuda</small></span>
+                        <b class="otras-b__valor">@(x.Valor is null ? "–" : x.Bien ? "✓ " : "▲ ")@x.Texto<span class="visualmente-oculto">@(x.Valor is null ? "" : x.Bien ? ", dentro de lo aceptable" : ", fuera de lo aceptable")</span></b>
+                        <span class="otras-b__regla" aria-hidden="true">
+                            @if (x.MayorEsMejor) { <span class="otras-b__banda" style="left:@Pct(x.Limite / x.Maximo * 100)%;right:0"></span> } else { <span class="otras-b__banda" style="left:0;width:@Pct(x.Limite / x.Maximo * 100)%"></span> }
+                            <span class="otras-b__limite" style="left:@Pct(x.Limite / x.Maximo * 100)%"></span>
+                            @if (x.Valor is { } valor) { <span class="otras-b__punto" style="left:@Pct(Math.Clamp(valor, 0, x.Maximo) / x.Maximo * 100)%"></span> }
+                        </span>
+                    </li>
+                }
+            </ul>
+            <ul class="leyenda-a leyenda-a--compacta">
+                <li><i class="leyenda-a__banda"></i>Franja aceptable (provisional; la línea punteada es el límite)</li>
+                <li><i class="leyenda-a__atascado leyenda-a__atascado--lleno"></i>▲ Fuera de lo aceptable</li>
+            </ul>
+            @foreach (var x in alertas.Where(a => otras.Contains(a)))
             {
-                <li class="senal-a @(x.Bien ? "" : "senal-a--alerta")" data-senal="@x.Nombre" data-bien="@x.Bien.ToString().ToLowerInvariant()">
-                    <span class="senal-a__estado" aria-hidden="true">@(x.Valor is null ? "–" : x.Bien ? "✓" : "▲")</span>
-                    <span><span class="senal-a__nombre">@x.Nombre</span><br /><span class="tarjeta-a__nota">@x.Ayuda</span></span>
-                    @Sistema.Regla(x)
-                    <b class="senal-a__valor">@x.Texto<span class="visualmente-oculto">@(x.Valor is null ? "" : x.Bien ? ", dentro de lo aceptable" : ", fuera de lo aceptable")</span></b>
-                </li>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque senal-a__nota">▲ Fuera de lo aceptable: «@x.Nombre» está en @x.Texto (@x.Ayuda).</p>
             }
-        </ul>
-        @foreach (var x in alertas)
-        {
-            <p class="tarjeta-a__nota tarjeta-a__nota--bloque senal-a__nota">▲ Fuera de lo aceptable: «@x.Nombre» está en @x.Texto (@x.Ayuda).</p>
-        }
-        @if (s.PrecisionP50Metros is { } precision)
-        {
-            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Precisión del GPS en los SOS: la mitad tiene un margen de error de @Formato.Decimal(precision, 0) m o menos y el 10 % peor, de más de @Formato.Decimal(s.PrecisionP90Metros ?? precision, 0) m.</p>
-        }
-    </section>
+        </section>
+        <section class="tarjeta-a" aria-labelledby="titulo-gps">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-gps">El margen del GPS, a escala</h3><span class="tarjeta-a__nota">de los SOS con ubicación</span></div>
+            @if (s.PrecisionP50Metros is { } precision)
+            {
+                var p90 = s.PrecisionP90Metros ?? precision;
+                <div class="gps-b" data-gps data-teselas="@m.UrlTeselas" data-p50="@Pct(precision)" data-p90="@Pct(p90)" role="img"
+                     aria-label="La mitad de los SOS tiene un margen de @Formato.Decimal(precision, 0) m o menos; el 10 % peor, de más de @Formato.Decimal(p90, 0) m"></div>
+                <ul class="leyenda-a leyenda-a--compacta">
+                    <li><i class="gps-b__muestra-p50"></i>La mitad: @Formato.Decimal(precision, 0) m o menos</li>
+                    <li><i class="gps-b__muestra-p90"></i>El 10 % peor: más de @Formato.Decimal(p90, 0) m</li>
+                </ul>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Los círculos tienen el radio real del margen, dibujados en el centro del distrito: así se ve cuántas cuadras puede abarcar un SOS impreciso. @Formato.Porcentaje(s.PorcentajePrecisionBaja, 0) de los SOS llega con más de 100 m.</p>
+            }
+            else
+            {
+                <p class="tarjeta-a__vacia">Ningún SOS del periodo trajo la precisión de su GPS.</p>
+            }
+        </section>
+    </div>
 }

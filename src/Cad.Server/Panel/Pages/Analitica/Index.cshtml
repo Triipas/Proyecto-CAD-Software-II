@@ -4,8 +4,8 @@
     ViewData["Title"] = $"Analítica · {Model.Actual.Titulo}";
     ViewData["ClasePagina"] = "pagina--analitica";
     var enVivo = Model.Actual.Clave == "ahora";
-    // El detalle de un sereno lleva el mapa de las zonas por donde patrulla.
-    var conMapa = Model.Actual.Clave is "tiempo" or "cobertura" or "repite" || (Model.Actual.Clave == "serenos" && Model.Sereno is not null);
+    // El detalle de un sereno lleva el mapa de las zonas por donde patrulla; la salud del sistema, el margen del GPS a escala.
+    var conMapa = Model.Actual.Clave is "tiempo" or "cobertura" or "repite" or "sistema" || (Model.Actual.Clave == "serenos" && Model.Sereno is not null);
 }
 @section Estilos {
     @if (conMapa)
@@ -13,6 +13,10 @@
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/analitica.css" asp-append-version="true" />
+    @if (Model.Actual.Clave == "sistema")
+    {
+        <link rel="stylesheet" href="~/css/analitica-sistema.css" asp-append-version="true" />
+    }
     @if (Model.Actual.Clave == "ciudadano")
     {
         <link rel="stylesheet" href="~/css/analitica-ciudadano.css" asp-append-version="true" />
@@ -178,6 +182,10 @@
         <script src="~/js/analitica-bloques.js" asp-append-version="true"></script>
     }
     <script src="~/js/analitica.js" asp-append-version="true"></script>
+    @if (Model.Actual.Clave == "sistema")
+    {
+        <script src="~/js/analitica-sistema.js" asp-append-version="true"></script>
+    }
     @if (Model.Actual.Clave == "repite")
     {
         <script src="~/js/analitica-repite.js" asp-append-version="true"></script>
