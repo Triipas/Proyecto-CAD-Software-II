@@ -20,6 +20,10 @@ public class DetalleModel(ConsultarDetalleReporte consultar, RevisarReporte revi
     Modulos.Asistencia.ConsultarAsistencia consultarAsistencia, Modulos.Asistencia.Aplicacion.BuscarDuplicados buscarDuplicados,
     Microsoft.Extensions.Options.IOptions<Modulos.Asistencia.OpcionesIa> opcionesIa, IConfiguration configuracion) : PageModel
 {
+    // Panel del caso (10/11/2026): la zona del plano del lugar del hecho, con el mismo nombre que el mapa de concentración.
+    public string? NombreZona => Reporte.ConPunto && Reporte.LatitudHecho is { } la && Reporte.LongitudHecho is { } lo
+        ? new Cad.Server.Panel.Pages.Analitica.Zonas(configuracion).Nombre(la, lo) : null;
+
     // HU44 y HU45 (S6-T12, S6-T13): sugerencia del asistente y candidatos a duplicado, mientras el reporte espera la decisión.
     public VistaSugerencia? Sugerencia { get; private set; }
 

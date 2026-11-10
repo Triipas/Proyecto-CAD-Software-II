@@ -408,3 +408,406 @@ body[data-en-panel="true"] {
   background: transparent;
   box-shadow: none;
 }
+
+/* ══ Panel del caso, rediseño del 10/11/2026 ═══════════════════════════════════════════════════════════════════════════
+   Cabecera con el tinte del tipo (rojo suave para un SOS, violeta para un reporte) y el paso a paso en una barra de segmentos;
+   «Caso» empieza por lo esencial; la acción del paso, con el sereno sugerido a un toque, y el resto, tras «Más acciones». */
+
+/* Cabecera con tinte. */
+.pagina--en-panel .consola__barra {
+  background: var(--color-urgente-fondo);
+  border-bottom-color: var(--color-urgente-borde);
+}
+
+.pagina--en-panel .consola__barra[data-origen-estado^="Reporte"] {
+  background: color-mix(in srgb, var(--mapa-reporte) 7%, var(--color-superficie));
+  border-bottom-color: color-mix(in srgb, var(--mapa-reporte) 24%, var(--color-superficie));
+}
+
+/* Paso a paso: la lista queda para el lector de pantalla; la barra es solo visual. */
+.panel-caso__progreso-lista {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.panel-caso__paso {
+  display: grid;
+  gap: var(--espacio-1);
+  padding: var(--espacio-1) var(--espacio-4) var(--espacio-3);
+}
+
+.panel-caso__segmentos {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 3px;
+}
+
+.panel-caso__segmentos > i {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-marino) 14%, transparent);
+}
+
+.panel-caso__segmentos > .panel-caso__segmento--hecho {
+  background: var(--color-primario);
+}
+
+.panel-caso__segmentos > .panel-caso__segmento--actual {
+  background: var(--color-primario);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primario) 28%, transparent);
+}
+
+.panel-caso__paso-texto {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.panel-caso__paso-texto b {
+  font-weight: var(--peso-semi);
+  color: var(--color-primario-hover);
+}
+
+/* Ficha clave: lo esencial, primero. */
+.pagina--en-panel .ficha-clave {
+  display: grid;
+  gap: var(--espacio-3);
+  padding-top: var(--espacio-4);
+}
+
+.ficha-clave__rotulo {
+  margin: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.ficha-clave__prioridad {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4);
+  border: var(--grosor-borde) solid var(--color-neutro-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-neutro-fondo);
+}
+
+.ficha-clave__prioridad p {
+  margin: 0;
+}
+
+.ficha-clave__prioridad .icono {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--color-neutro);
+}
+
+.ficha-clave__prioridad[data-nivel="Alta"] {
+  border-color: var(--color-urgente-borde);
+  background: var(--color-urgente-fondo);
+}
+
+.ficha-clave__prioridad[data-nivel="Alta"] .icono,
+.ficha-clave__prioridad[data-nivel="Alta"] .ficha-clave__rotulo {
+  color: var(--color-urgente-activo);
+}
+
+.ficha-clave__prioridad[data-nivel="Media"] {
+  border-color: var(--color-advertencia-borde);
+  background: var(--color-advertencia-fondo);
+}
+
+.ficha-clave__prioridad[data-nivel="Media"] .icono,
+.ficha-clave__prioridad[data-nivel="Media"] .ficha-clave__rotulo {
+  color: var(--color-advertencia);
+}
+
+.ficha-clave__texto {
+  font-size: var(--texto-base);
+  color: var(--color-texto);
+}
+
+.ficha-clave__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-2);
+  margin: 0;
+}
+
+.ficha-clave__datos > div {
+  padding: var(--espacio-2) var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+}
+
+.ficha-clave__datos > div:only-child {
+  grid-column: 1 / -1;
+}
+
+.ficha-clave__datos dt {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.ficha-clave__datos dd {
+  margin: 0;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-marino);
+}
+
+.ficha-clave__ubicacion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-superficie);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-1);
+}
+
+.ficha-clave__ubicacion > .icono {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--color-primario);
+}
+
+.ficha-clave__ubicacion--reporte > .icono {
+  color: var(--mapa-reporte);
+}
+
+.ficha-clave__ubicacion .boton {
+  flex: none;
+}
+
+.ficha-clave__lugar {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.ficha-clave__lugar p {
+  margin: 0;
+}
+
+.ficha-clave__zona {
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-marino);
+  overflow-wrap: anywhere;
+}
+
+.ficha-clave__ubicacion--reporte .ficha-clave__zona {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ficha-clave__coord {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.ficha-clave__lugar .chip {
+  margin-top: var(--espacio-1);
+}
+
+.ficha-clave__sin-ubicacion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  color: var(--color-advertencia);
+}
+
+/* Detalle del registro: la ubicación y la clasificación completas, plegadas. */
+.panel-caso__seccion > .panel-caso__detalle {
+  padding: 0;
+}
+
+.panel-caso__detalle > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: 2.75rem;
+  list-style: none;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semi);
+  color: var(--color-marino);
+  cursor: pointer;
+}
+
+.panel-caso__detalle > summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-caso__detalle > summary:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.panel-caso__detalle > summary small {
+  margin-left: auto;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-normal);
+  color: var(--color-texto-secundario);
+}
+
+.panel-caso__detalle > summary .icono {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--duracion-rapida) var(--curva-estandar);
+}
+
+.panel-caso__detalle[open] > summary .icono {
+  transform: rotate(180deg);
+}
+
+.panel-caso__detalle > .seccion-caso {
+  margin: 0;
+  padding: var(--espacio-3) 0 0;
+  border: 0;
+  border-top: var(--grosor-borde) solid var(--color-borde);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panel-caso__detalle > .seccion-caso + .seccion-caso {
+  margin-top: var(--espacio-3);
+}
+
+/* Pie: el sereno sugerido a un toque. */
+.pagina--en-panel .asignar__sugerido {
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  column-gap: var(--espacio-3);
+  row-gap: 2px;
+  align-items: center;
+}
+
+.pagina--en-panel .asignar__avatar {
+  display: grid;
+  place-items: center;
+  grid-row: 1 / span 3;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: var(--color-sobre-primario);
+  background: var(--color-marino);
+}
+
+.pagina--en-panel .asignar__rotulo {
+  display: block;
+  grid-column: 2;
+  margin: 0;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario);
+}
+
+.pagina--en-panel .asignar__sugerido .asignar__nombre,
+.pagina--en-panel .asignar__sugerido .asignar__datos {
+  grid-column: 2;
+}
+
+.pagina--en-panel .asignar__sugerido .acciones {
+  grid-column: 1 / -1;
+  margin-top: var(--espacio-2);
+}
+
+.pagina--en-panel .asignar__sugerido .boton--principal,
+.panel-caso__pie .siguiente--corta .acciones .boton--principal {
+  min-height: 3rem;
+  font-size: var(--texto-md);
+  box-shadow: 0 2px 4px rgb(11 31 68 / 0.25);
+}
+
+/* Más acciones: «Otras acciones» y descartar, abiertas desde el pie. */
+.panel-caso__mas {
+  display: grid;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-top: var(--grosor-borde) solid var(--color-borde);
+  background: var(--color-fondo);
+}
+
+.panel-caso__mas[hidden] {
+  display: none;
+}
+
+.panel-caso__mas > details,
+.panel-caso__mas > .superficie {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panel-caso__mas-fila {
+  position: sticky; /* con un formulario largo en el pie, el botón no se pierde al final del desplazamiento */
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--espacio-2) var(--espacio-4) var(--espacio-3);
+  background: var(--color-superficie);
+}
+
+.panel-caso__mas-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: 2.25rem;
+  padding: 0 var(--espacio-3);
+  border: var(--grosor-borde) solid var(--color-borde-control);
+  border-radius: var(--radio-control);
+  font: var(--peso-semi) var(--texto-sm)/1 var(--fuente);
+  color: var(--color-marino);
+  background: var(--color-superficie);
+  cursor: pointer;
+}
+
+.panel-caso__mas-boton:hover {
+  background: var(--color-neutro-fondo);
+}
+
+.panel-caso__mas-boton:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.panel-caso__mas-boton .icono {
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--duracion-rapida) var(--curva-estandar);
+}
+
+.panel-caso__mas-boton[aria-expanded="true"] .icono {
+  transform: rotate(180deg);
+}

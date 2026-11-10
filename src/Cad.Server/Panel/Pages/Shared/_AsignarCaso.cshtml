@@ -21,6 +21,8 @@ else
                     <input type="hidden" name="Asignacion.Volver" value="@Model.Volver" />
                 }
                 <input type="hidden" name="Asignacion.SerenoId" value="@sugerido.Id" />
+                <span class="asignar__avatar" aria-hidden="true">@string.Concat(sugerido.Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])))</span>
+                <p class="asignar__rotulo">Sereno sugerido</p>
                 <p class="asignar__nombre">@sugerido.Nombre</p>
                 <p class="asignar__datos">
                     <span class="chip chip--progreso"><partial name="_Icono" model="@("ubicacion")" />Más cercano @Model.Lugar · <span class="asignar__distancia">@sugerido.Distancia</span></span>

@@ -106,7 +106,12 @@
     try {
       const respuesta = await fetch(location.pathname, { headers: { "X-Requested-With": "fetch" }, credentials: "same-origin" });
       if (!respuesta.ok || respuesta.redirected) return;
-      const nuevos = new DOMParser().parseFromString(await respuesta.text(), "text/html").querySelectorAll("[data-asignacion-vivo]");
+      const documentoNuevo = new DOMParser().parseFromString(await respuesta.text(), "text/html");
+      // La distancia al sereno más cercano de la ficha clave sigue a los serenos aunque el operador esté eligiendo uno.
+      const lugarActual = document.querySelector(".ficha-clave__lugar");
+      const lugarNuevo = documentoNuevo.querySelector(".ficha-clave__lugar");
+      if (lugarActual && lugarNuevo && lugarActual.innerHTML !== lugarNuevo.innerHTML) lugarActual.innerHTML = lugarNuevo.innerHTML;
+      const nuevos = documentoNuevo.querySelectorAll("[data-asignacion-vivo]");
       if (enUso()) return;
       bloques.forEach((bloque, i) => {
         if (!nuevos[i] || bloque.innerHTML === nuevos[i].innerHTML) return;
@@ -141,7 +146,7 @@
     // Lo que no tiene controles ni mapa se actualiza en su sitio.
     // Cada página dice qué partes de su expediente se refrescan (data-regiones en la barra); lo demás es común.
     const propias = (barra.dataset.regiones ?? "[aria-labelledby='titulo-clasificacion'],[data-tiempos]").split(",");
-    for (const selector of [".consola__barra .consola__titular", ".consola__pasos", ...propias]) {
+    for (const selector of [".consola__barra .consola__titular", ".consola__pasos", "[data-ficha-clave]", ...propias]) {
       const actuales = document.querySelectorAll(selector);
       const nuevos = documento.querySelectorAll(selector);
       actuales.forEach((actual, i) => {
@@ -149,6 +154,14 @@
         if (window.cadMovimiento?.actualizarRegion) window.cadMovimiento.actualizarRegion(actual, nuevos[i].innerHTML, { animar: true });
         else actual.innerHTML = nuevos[i].innerHTML;
       });
+    }
+    // La ficha clave del panel trae también el resumen de «Detalle del registro» (quién clasificó y cuándo): se pone al día con ella.
+    const fichaNueva = documento.querySelector("[data-ficha-clave]");
+    if (fichaNueva) {
+      const resumen = fichaNueva.dataset.detalleResumen ?? "";
+      document.querySelector("[data-ficha-clave]")?.setAttribute("data-detalle-resumen", resumen);
+      const pequeno = document.querySelector(".panel-caso__detalle > summary small");
+      if (pequeno) pequeno.textContent = resumen;
     }
     const estado = documento.querySelector(".consola__barra [data-estado]")?.textContent.trim();
     const aviso = document.querySelector("[data-caso-cambio]");
