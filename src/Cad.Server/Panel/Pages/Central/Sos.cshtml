@@ -40,6 +40,16 @@
     var clasificarComoOtra = siguiente != Accion.Clasificar && sos.Clasificacion is null && siguiente is not (Accion.VerCancelacion or Accion.VerDescarte);
     var asignarComoOtra = siguiente is Accion.Contactar or Accion.Clasificar;
     var hayOtras = intentoComoOtra || clasificarComoOtra || asignarComoOtra;
+    // Panel del caso (10/11/2026): «lo esencial» (prioridad, tipo, heridos y dónde está) que el panel pone primero en «Caso».
+    string? nivelPrioridad = null, textoPrioridad = null;
+    if (sos.Clasificacion?.TextoPrioridad is { } textoCompleto)
+    {
+        var partes = textoCompleto.Split(':', 2);
+        nivelPrioridad = partes[0].Trim();
+        textoPrioridad = partes.Length > 1 ? partes[1].Trim() : null;
+        if (textoPrioridad is { Length: > 0 }) textoPrioridad = char.ToUpperInvariant(textoPrioridad[0]) + textoPrioridad[1..];
+    }
+    var distanciaSereno = sos.Asignacion is null ? Model.VistaAsignacion.Sugerido?.Distancia : null;
     var abrirOtras = (intentoComoOtra && Model.Errores.Count > 0) || (clasificarComoOtra && Model.ErrorCategoria is not null);
 }
 @section Estilos {
@@ -149,7 +159,7 @@
             <p class="texto-secundario" data-caso-urgente>Creado por un operador desde un aviso del acompañamiento (DP19). La ubicación es la última conocida de la sesión, no una posición actual.</p>
         }
 
-        <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente">
+        <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente" data-accion-corta="@(siguiente == Accion.Asignar ? "true" : null)">
             @switch (siguiente)
             {
                 case Accion.Contactar:
@@ -433,6 +443,50 @@
     </div>
 
     <aside class="detalle-caso__contexto consola__expediente" aria-label="Expediente del caso">
+        <section class="ficha-clave" data-ficha-clave aria-label="Lo esencial del caso"
+                 data-detalle-resumen="@(sos.Clasificacion is { } cl ? $"Clasificó {cl.Operador} · {TimeZoneInfo.ConvertTime(cl.ClasificadoEn, Model.ZonaHoraria).ToString("HH:mm", inv)}" : "Datos del dispositivo")">
+            @if (nivelPrioridad is not null)
+            {
+                <div class="ficha-clave__prioridad" data-nivel="@nivelPrioridad">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        @if (nivelPrioridad == "Alta") { <path d="m6 12 6-6 6 6M6 19l6-6 6 6" /> }
+                        else if (nivelPrioridad == "Media") { <path d="m6 15 6-6 6 6" /> }
+                        else { <path d="M6 12h12" /> }
+                    </svg>
+                    <div>
+                        <p class="ficha-clave__rotulo">Prioridad @nivelPrioridad.ToLowerInvariant()</p>
+                        @if (textoPrioridad is not null) { <p class="ficha-clave__texto">@textoPrioridad</p> }
+                    </div>
+                </div>
+            }
+            <dl class="ficha-clave__datos">
+                <div><dt>Tipo</dt><dd class="@(sos.Clasificacion is null ? "texto-secundario" : null)">@(sos.Clasificacion?.Categoria ?? Cad.Server.Modulos.Consultas.SosPendiente.TipoPorDeterminar)</dd></div>
+                @if (sos.Clasificacion?.TextoHeridos is { } heridosFicha)
+                {
+                    <div><dt>Personas heridas</dt><dd>@heridosFicha</dd></div>
+                }
+            </dl>
+            @if (sos.UbicacionDisponible)
+            {
+                <div class="ficha-clave__ubicacion">
+                    <partial name="_Icono" model="@("ubicacion")" />
+                    <div class="ficha-clave__lugar">
+                        <p class="ficha-clave__rotulo">Ubicación del dispositivo</p>
+                        <p class="ficha-clave__zona">@Model.NombreZona</p>
+                        <p class="ficha-clave__coord">@sos.Latitud?.ToString("0.00000", inv), @sos.Longitud?.ToString("0.00000", inv) · ± @sos.PrecisionMetros?.ToString("0", inv) m</p>
+                        @if (distanciaSereno is { Length: > 0 })
+                        {
+                            <span class="chip chip--progreso" data-distancia-sereno>Sereno más cercano a @distanciaSereno</span>
+                        }
+                    </div>
+                    <button type="button" class="boton boton--secundario boton--compacto" data-ver-mapa data-lat="@sos.Latitud?.ToString(inv)" data-lon="@sos.Longitud?.ToString(inv)">Ver en el mapa</button>
+                </div>
+            }
+            else
+            {
+                <p class="ficha-clave__sin-ubicacion"><partial name="_Icono" model="@("advertencia")" />Ubicación no disponible</p>
+            }
+        </section>
         <section class="superficie seccion-caso" aria-labelledby="titulo-ubicacion">
             <h2 id="titulo-ubicacion" class="seccion-caso__titulo">Ubicación del dispositivo</h2>
             @if (sos.UbicacionDisponible)

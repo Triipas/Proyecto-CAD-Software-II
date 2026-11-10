@@ -37,11 +37,38 @@
   // acciones secundarias (otras acciones, descartar).
   const deTrabajo = de(trabajo, ":scope > :not(.siguiente):not(.consola__cambio)").filter((el) => !historial.includes(el));
   const esHecho = (el) => el.matches(".hecho, [data-sugerencia], [data-atencion], [aria-labelledby='titulo-asignacion']");
-  const caso = [
-    ...deTrabajo.filter(esHecho),
-    ...de(expediente, ":scope > *").filter((el) => !historial.includes(el)),
-    ...deTrabajo.filter((el) => !esHecho(el)),
-  ];
+  // Rediseño del 10/11/2026: «lo esencial» (ficha clave: prioridad, tipo y dónde está) va primero; la ubicación y la clasificación
+  // completas se pliegan en «Detalle del registro»; «Otras acciones» y descartar pasan al pie, tras «Más acciones».
+  const ficha = expediente?.querySelector(":scope > [data-ficha-clave]");
+  const enDetalle = de(expediente, ":scope > [aria-labelledby='titulo-ubicacion'], :scope > [aria-labelledby='titulo-clasificacion'], :scope > [aria-labelledby='titulo-lugar'], :scope > [aria-labelledby='titulo-categoria']")
+    .filter((el) => !historial.includes(el));
+  const masAcciones = ficha ? deTrabajo.filter((el) => el.matches(".otras-acciones, .descarte")) : [];
+  let detalle = null;
+  if (ficha && enDetalle.length > 0) {
+    detalle = document.createElement("details");
+    detalle.className = "panel-caso__detalle";
+    const resumenDetalle = document.createElement("summary");
+    resumenDetalle.innerHTML = '<span class="panel-caso__detalle-titulo">Detalle del registro</span><small></small><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>';
+    resumenDetalle.querySelector("small").textContent = ficha.dataset.detalleResumen ?? "";
+    detalle.append(resumenDetalle, ...enDetalle);
+    if (detalle.querySelector(".campo__error, .aviso--error")) detalle.open = true;
+  }
+  // En un reporte, lo que contó el ciudadano va antes que el lugar; en un SOS, primero lo esencial.
+  const fichaDespues = ficha?.hasAttribute("data-despues-del-hecho") ?? false;
+  const caso = ficha
+    ? [
+        ...(fichaDespues ? [] : [ficha]),
+        ...deTrabajo.filter(esHecho),
+        ...(fichaDespues ? [ficha] : []),
+        ...(detalle ? [detalle] : []),
+        ...de(expediente, ":scope > *").filter((el) => el !== ficha && !historial.includes(el) && !enDetalle.includes(el)),
+        ...deTrabajo.filter((el) => !esHecho(el) && !masAcciones.includes(el)),
+      ]
+    : [
+        ...deTrabajo.filter(esHecho),
+        ...de(expediente, ":scope > *").filter((el) => !historial.includes(el)),
+        ...deTrabajo.filter((el) => !esHecho(el)),
+      ];
 
   const pestanas = [
     { clave: "caso", nombre: "Caso", piezas: caso },
@@ -107,7 +134,44 @@
   });
 
   // Cabecera: el paso a paso va bajo el titular; el cuerpo, en pestañas; la acción del paso, fija al pie.
-  if (progreso && barra) barra.append(progreso);
+  if (progreso && barra) {
+    barra.append(progreso);
+    // El paso a paso, en una barra de segmentos con el paso y el que sigue (10/11/2026). La lista de pasos queda para el lector de
+    // pantalla; la barra es solo visual.
+    const pasos = [...progreso.querySelectorAll(".progreso__paso")];
+    if (pasos.length > 1) {
+      const textoDe = (paso) => (paso.querySelector(":scope > span:not(.progreso__marca)")?.textContent ?? "").replace(/\s*\(omitido\)\s*$/, "").trim();
+      const indiceActual = pasos.findIndex((paso) => paso.classList.contains("progreso__paso--actual"));
+      const hechos = pasos.filter((paso) => paso.classList.contains("progreso__paso--hecho") || paso.classList.contains("progreso__paso--omitido")).length;
+      const llegado = indiceActual >= 0 ? indiceActual : hechos - 1;
+      const paso = document.createElement("div");
+      paso.className = "panel-caso__paso";
+      paso.setAttribute("aria-hidden", "true");
+      const segmentos = document.createElement("div");
+      segmentos.className = "panel-caso__segmentos";
+      for (const [i] of pasos.entries()) {
+        const segmento = document.createElement("i");
+        if (i < llegado) segmento.className = "panel-caso__segmento--hecho";
+        else if (i === llegado) segmento.className = indiceActual >= 0 ? "panel-caso__segmento--actual" : "panel-caso__segmento--hecho";
+        segmentos.append(segmento);
+      }
+      const texto = document.createElement("p");
+      texto.className = "panel-caso__paso-texto";
+      const izquierda = document.createElement("span");
+      const nombre = document.createElement("b");
+      nombre.textContent = textoDe(pasos[Math.max(0, llegado)]);
+      izquierda.append(nombre, indiceActual >= 0 ? ` · paso ${indiceActual + 1} de ${pasos.length}` : " · completado");
+      texto.append(izquierda);
+      if (indiceActual >= 0 && indiceActual < pasos.length - 1) {
+        const derecha = document.createElement("span");
+        derecha.textContent = `Sigue: ${textoDe(pasos[indiceActual + 1])}`;
+        texto.append(derecha);
+      }
+      paso.append(segmentos, texto);
+      progreso.before(paso);
+      progreso.classList.add("panel-caso__progreso-lista");
+    }
+  }
   const pie = document.createElement("div");
   pie.className = "panel-caso__pie";
   if (siguiente) pie.append(siguiente);
@@ -131,11 +195,14 @@
     contenido.id = "accion-del-paso";
     contenido.append(...[...siguiente.childNodes].filter((n) => n !== cabecera));
     siguiente.append(contenido);
+    // Una acción corta (asignar al sereno sugerido, iniciar la revisión) va siempre a la vista: no hay nada que plegar.
+    const corta = siguiente.dataset.accionCorta === "true";
+    siguiente.classList.toggle("siguiente--corta", corta);
     const plegar = document.createElement("button");
     plegar.type = "button";
     plegar.className = "panel-caso__plegar";
     plegar.setAttribute("aria-controls", contenido.id);
-    cabecera.append(plegar);
+    if (!corta) cabecera.append(plegar);
     const CLAVE = "cad-panel-accion";
     function plegarAccion(plegada, { recordar = true } = {}) {
       contenido.hidden = plegada;
@@ -151,8 +218,44 @@
     let recordada = null;
     try { recordada = sessionStorage.getItem(CLAVE); } catch { /* sin almacenamiento */ }
     const hayError = contenido.querySelector(".campo__error, .aviso--error, [aria-invalid='true']");
-    plegarAccion(recordada === "plegada" && !hayError, { recordar: false });
+    plegarAccion(!corta && recordada === "plegada" && !hayError, { recordar: false });
   }
+
+  // ---------- «Más acciones» (10/11/2026) ----------
+  // «Otras acciones» y descartar salen del cuerpo y se abren desde el pie, bajo la acción del paso. Se mueven, no se copian.
+  let hojaMas = null;
+  const abrirMas = (abrir) => {
+    if (!hojaMas) return;
+    hojaMas.hidden = !abrir;
+    botonMas.setAttribute("aria-expanded", String(abrir));
+    botonMas.querySelector("span").textContent = abrir ? "Menos acciones" : "Más acciones";
+    if (abrir) hojaMas.scrollIntoView({ block: "nearest" });
+  };
+  let botonMas = null;
+  if (masAcciones.length > 0) {
+    hojaMas = document.createElement("div");
+    hojaMas.className = "panel-caso__mas";
+    hojaMas.id = "panel-mas-acciones";
+    hojaMas.append(...masAcciones);
+    botonMas = document.createElement("button");
+    botonMas.type = "button";
+    botonMas.className = "panel-caso__mas-boton";
+    botonMas.setAttribute("aria-controls", hojaMas.id);
+    botonMas.innerHTML = '<span>Más acciones</span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 15 6-6 6 6"/></svg>';
+    botonMas.addEventListener("click", () => abrirMas(hojaMas.hidden));
+    const fila = document.createElement("div");
+    fila.className = "panel-caso__mas-fila";
+    fila.append(botonMas);
+    pie.append(hojaMas, fila);
+    abrirMas(Boolean(hojaMas.querySelector(".campo__error, .aviso--error, details[open]")));
+  }
+
+  // «Ver en el mapa»: la central lleva su mapa grande hasta el caso.
+  document.addEventListener("click", (evento) => {
+    const boton = evento.target.closest("[data-ver-mapa]");
+    if (!boton || window.parent === window) return;
+    window.parent.postMessage({ tipo: "cad-panel-ver-mapa", lat: Number(boton.dataset.lat), lon: Number(boton.dataset.lon) }, location.origin);
+  });
 
   // Un aviso de éxito queda en una línea y se retira solo: lo que pasó ya se ve en el paso a paso y en el pie.
   const exito = document.querySelector(".pagina--en-panel > .aviso--exito");
@@ -168,6 +271,11 @@
     const destino = boton && document.getElementById(boton.dataset.irA);
     const indice = destino ? paneles.findIndex((p) => p.contains(destino)) : -1;
     if (indice >= 0) activar(indice);
+    else if (destino && hojaMas?.contains(destino)) {
+      abrirMas(true);
+      destino.closest("details")?.setAttribute("open", "");
+      destino.scrollIntoView({ block: "nearest" });
+    }
   }, true);
 
   // Esc dentro del panel también lo cierra (el teclado no sale del marco), salvo con un formulario a medias: lo escrito no se

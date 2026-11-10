@@ -977,3 +977,11 @@
   font-weight: var(--peso-medio);
   color: var(--color-informacion);
 }
+
+/* Piezas que solo existen en el panel del caso de la central (10/11/2026): la ficha clave y el avatar del sereno sugerido. La página
+   completa no las muestra (panel-caso.css las enciende dentro del panel). */
+.ficha-clave,
+.asignar__avatar,
+.asignar__rotulo {
+  display: none;
+}

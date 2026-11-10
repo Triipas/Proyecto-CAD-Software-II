@@ -1838,6 +1838,16 @@
     if (evento.origin !== location.origin || evento.source !== marcoCaso.contentWindow) return;
     // Esc dentro del panel (panel-caso.js lo reenvía si no hay nada a medias).
     if (evento.data?.tipo === "cad-panel-cerrar") { cerrarPanel(); return; }
+    // «Ver en el mapa» del panel del caso: el mapa grande vuela al punto, dejando libre la franja de los paneles.
+    if (evento.data?.tipo === "cad-panel-ver-mapa") {
+      const { lat, lon } = evento.data;
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        const destino = centroLibre(L.latLng(lat, lon), ZOOM_CERCANO);
+        if (reducido.matches) mapa.setView(destino, ZOOM_CERCANO, { animate: false });
+        else mapa.flyTo(destino, ZOOM_CERCANO, { duration: DURACION_VUELO, easeLinearity: 0.2 });
+      }
+      return;
+    }
     if (evento.data?.tipo !== "cad-panel-caso") return;
     const { id, estado, mensaje, titulo } = evento.data;
     tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";

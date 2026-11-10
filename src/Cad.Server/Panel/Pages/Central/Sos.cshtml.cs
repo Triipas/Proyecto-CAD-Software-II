@@ -57,6 +57,10 @@ public class SosModel(ConsultarDetalleSos consultar, RegistrarIntentoContacto re
     // ADR-08, fase D: celular verificado y datos opcionales del ciudadano.
     public FichaCiudadano? Ficha { get; private set; }
 
+    // Panel del caso (10/11/2026): la zona del plano en que está el dispositivo, con el mismo nombre que el mapa de concentración.
+    public string? NombreZona => Sos.Latitud is { } la && Sos.Longitud is { } lo
+        ? new Cad.Server.Panel.Pages.Analitica.Zonas(configuracion).Nombre(la, lo) : null;
+
     // HU28: tiempo de respuesta del SOS.
     public TiemposCaso? Tiempos { get; private set; }
 
