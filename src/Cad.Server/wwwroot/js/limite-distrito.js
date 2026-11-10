@@ -14,11 +14,6 @@
     // Los minimapas de detalle miden una calle; el contorno solo tiene sentido en los mapas de ámbito.
     if (!contenedor.matches("#mapa, #mapa-concentracion, #mapa-proyeccion, #mapa-zonas, [data-mapa]")) return;
 
-    const etiqueta = document.createElement("span");
-    etiqueta.className = "mapa__ambito";
-    etiqueta.textContent = "Ámbito actual · José Luis Bustamante y Rivero";
-    contenedor.appendChild(etiqueta);
-
     const halo = mapa.createPane("limiteHalo");
     halo.style.zIndex = 450;
     halo.style.pointerEvents = "none";
