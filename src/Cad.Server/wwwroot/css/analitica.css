@@ -39,11 +39,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  padding: var(--espacio-6) var(--espacio-3) var(--espacio-4);
+  padding: var(--espacio-4) var(--espacio-3) var(--espacio-4);
   overflow-y: auto;
 }
 
 .preguntas__titulo {
+  margin: 0;
   padding: 0 var(--espacio-3);
   font-size: var(--texto-xl);
   font-weight: var(--peso-fuerte);
@@ -51,8 +52,9 @@
   letter-spacing: var(--tracking-titulo);
 }
 
-.preguntas__ayuda {
-  padding: 0.125rem var(--espacio-3) var(--espacio-4);
+.preguntas__descripcion {
+  margin: 0;
+  padding: 0 var(--espacio-3) var(--espacio-3);
   font-size: var(--texto-xs);
   color: var(--color-texto-secundario);
 }

@@ -50,7 +50,7 @@
     @* La columna de preguntas: cada una con su dato del periodo y su estado (icono y texto, nunca solo color). *@
     <nav class="preguntas" aria-label="Preguntas de la analítica">
         <h1 class="preguntas__titulo">Analítica</h1>
-        <p class="preguntas__ayuda">Elige una pregunta: la respuesta va primero, la evidencia debajo.</p>
+        <p class="preguntas__descripcion">Indicadores del distrito y del servicio.</p>
         <ul class="preguntas__lista">
             @foreach (var p in Preguntas.Todas)
             {
@@ -171,6 +171,7 @@
     @if (conMapa)
     {
         <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
+        <script src="~/js/limite-distrito.js" asp-append-version="true"></script>
     }
     @if (enVivo)
     {
