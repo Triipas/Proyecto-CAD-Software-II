@@ -77,7 +77,8 @@ public class PanelCasoTests(FabricaCad fabrica)
 
         var html = await EnMarcoAsync(operador, "/panel/casos");
 
-        Assert.Contains("<header class=\"barra\"", html);
+        Assert.Contains("<header class=\"barra", html); // la barra del panel (con su hoja, si la página la tiene)
+        Assert.Contains("data-barra", html);
         Assert.Contains("data-en-panel=\"false\"", html);
     }
 

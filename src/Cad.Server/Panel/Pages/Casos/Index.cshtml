@@ -21,6 +21,21 @@
     <link rel="stylesheet" href="~/css/detalle-caso.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/casos.css" asp-append-version="true" />
 }
+@* 06/11/2026: las vistas con su cifra cuelgan de la lengüeta «Casos» (hoja de la barra superior) en vez de abrir la tarjeta de filtros. *@
+@section HojaBarra {
+    <nav class="vistas" aria-label="Vistas de la lista">
+        @foreach (var vista in Model.Pestanas)
+        {
+            <a class="vistas__opcion" href="@vista.Enlace" aria-current="@(vista.Activa ? "page" : null)" data-vista="@(vista.Codigo.Length == 0 ? "todos" : vista.Codigo)">
+                @vista.Texto
+                @if (vista.Casos is { } n)
+                {
+                    <span class="vistas__cifra num">@n.ToString("N0", es)</span>
+                }
+            </a>
+        }
+    </nav>
+}
 <div class="pagina__encabezado">
     <div>
         <h1 class="titulo">Casos</h1>
@@ -35,19 +50,6 @@
     <h2 id="titulo-filtros" class="visualmente-oculto">Filtros</h2>
     @if (!string.IsNullOrEmpty(Model.Origen)) { <input type="hidden" name="origen" value="@Model.Origen" /> }
     @if (!string.IsNullOrEmpty(Model.Grupo)) { <input type="hidden" name="grupo" value="@Model.Grupo" /> }
-
-    <nav class="vistas" aria-label="Vistas de la lista">
-        @foreach (var vista in Model.Pestanas)
-        {
-            <a class="vistas__opcion" href="@vista.Enlace" aria-current="@(vista.Activa ? "page" : null)" data-vista="@(vista.Codigo.Length == 0 ? "todos" : vista.Codigo)">
-                @vista.Texto
-                @if (vista.Casos is { } n)
-                {
-                    <span class="vistas__cifra num">@n.ToString("N0", es)</span>
-                }
-            </a>
-        }
-    </nav>
 
     <div class="casos__rapidos">
         <nav class="selector" aria-label="Origen">

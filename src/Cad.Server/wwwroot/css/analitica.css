@@ -11,7 +11,7 @@
 .analitica {
   display: grid;
   grid-template-columns: 18.25rem minmax(0, 1fr);
-  min-height: calc(100vh - 3.75rem);
+  min-height: calc(100vh - var(--alto-barra));
   font-variant-numeric: tabular-nums;
   /* El blanco de la columna de preguntas llega hasta el final aunque la página sea más alta que la pantalla. */
   background: linear-gradient(90deg, var(--color-superficie) 18.25rem, var(--color-borde) 18.25rem 18.3125rem, transparent 18.3125rem);
@@ -35,7 +35,7 @@
   position: sticky;
   top: 0;
   align-self: start;
-  height: calc(100vh - 3.75rem);
+  height: calc(100vh - var(--alto-barra));
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
@@ -1881,7 +1881,7 @@ a.fila-a__cifra {
   .analitica[data-analitica="cobertura"],
   .analitica[data-analitica="repite"] {
     height: auto;
-    min-height: calc(100vh - 3.75rem);
+    min-height: calc(100vh - var(--alto-barra));
   }
 
   .cobertura-a__lado > .tarjeta-a--llena { overflow: visible; }

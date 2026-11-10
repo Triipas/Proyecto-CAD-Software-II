@@ -41,14 +41,12 @@
   padding: 0;
 }
 
+/* 06/11/2026: las vistas cuelgan de la lengüeta «Casos» (la hoja de la barra superior, panel.css): su alto es el de la hoja menos su hilo
+   inferior, y la raya de la vista elegida queda pegada a ese hilo. */
 .vistas {
   display: flex;
+  align-items: stretch;
   gap: var(--espacio-1);
-  padding: 0 var(--espacio-3);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  border-bottom: var(--grosor-borde) solid var(--color-borde);
 }
 
 .vistas__opcion {
@@ -56,8 +54,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--espacio-2);
-  min-height: 3rem;
-  margin-bottom: -1px;
+  min-height: calc(var(--alto-hoja) - var(--grosor-borde));
   padding: 0 var(--espacio-3);
   border-bottom: 3px solid transparent;
   font-size: var(--texto-sm);

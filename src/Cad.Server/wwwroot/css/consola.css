@@ -409,7 +409,7 @@
   /* Fija bajo la barra superior y la barra del caso: el ciudadano y el paso actual nunca quedan tapados. Si no cabe todo en
      la altura de la ventana, se desplaza solo esta columna (lo último, el resumen, queda abajo); la ficha va siempre primero. */
   .consola__lateral {
-    --arriba-lateral: calc(60px + var(--alto-barra-caso) + var(--espacio-5));
+    --arriba-lateral: calc(var(--alto-barra) + var(--alto-barra-caso) + var(--espacio-5));
     position: sticky;
     top: var(--arriba-lateral);
     max-height: calc(100vh - var(--arriba-lateral) - var(--espacio-4));
@@ -655,7 +655,7 @@
 @media (min-width: 64rem) {
   .consola__barra {
     position: sticky;
-    top: 60px;
+    top: var(--alto-barra);
     z-index: 1050;
     box-shadow: 0 6px 16px -12px rgb(11 31 68 / 0.22);
   }
@@ -736,7 +736,7 @@
     grid-area: lateral;
     align-self: start;
     position: sticky;
-    top: calc(60px + var(--alto-barra-caso) + var(--espacio-5));
+    top: calc(var(--alto-barra) + var(--alto-barra-caso) + var(--espacio-5));
   }
 
   .consola__trabajo { grid-area: trabajo; }

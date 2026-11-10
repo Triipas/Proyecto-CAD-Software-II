@@ -3,12 +3,10 @@
   // Tras un envío rechazado, el foco va al primer aviso o error marcado con data-enfocar.
   document.querySelector("[data-enfocar]")?.focus();
 
-  // Barra superior: en pantallas estrechas las secciones se abren desde el botón de menú.
-  const menu = document.querySelector("[data-menu]");
-  menu?.addEventListener("click", () => {
-    const abierta = menu.closest("[data-barra]").classList.toggle("barra--abierta");
-    menu.setAttribute("aria-expanded", String(abierta));
-  });
+  // Barra superior: en pantallas estrechas las lengüetas se desplazan en horizontal; la de la sección actual se trae a la vista.
+  const lenguetas = document.querySelector(".barra__navegacion");
+  const actual = lenguetas?.querySelector('[aria-current="page"]');
+  if (lenguetas && actual) lenguetas.scrollLeft = Math.max(0, actual.offsetLeft - (lenguetas.clientWidth - actual.offsetWidth) / 2);
 
   // Mostrar u ocultar la contraseña: el botón solo aparece cuando hay JavaScript.
   for (const boton of document.querySelectorAll("[data-alternar-clave]")) {
