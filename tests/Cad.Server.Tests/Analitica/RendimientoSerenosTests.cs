@@ -189,6 +189,11 @@ public class RendimientoSerenosTests(FabricaCad fabrica)
         Assert.Contains($"data-sereno=\"{e.Lento}\" data-senales=\"3\"", html);
         Assert.Contains($"data-sereno=\"{e.Rapida}\" data-senales=\"0\"", html);
         Assert.Contains("▲ Llega más lento que el equipo", html);
+        // Las franjas del equipo, las fichas de los que tienen señales y los demás aparte.
+        Assert.Equal(4, html.Split("class=\"franja-b\"").Length - 1);
+        Assert.Contains("Para mirar primero", html);
+        Assert.Equal(2, html.Split("class=\"ficha-b\"").Length - 1);
+        Assert.Contains("Sin señales", html);
         Assert.Contains("Cómo se mide cada cifra", html);
         Assert.Contains("aria-current=\"page\" data-pregunta=\"serenos\"", html);
         Assert.Contains("▲ 2 serenos con señales", html);
@@ -206,6 +211,8 @@ public class RendimientoSerenosTests(FabricaCad fabrica)
 
         Assert.Contains("Luis Lento Ficticio llega en una mediana de <em>15 min</em> (el equipo, 10 min) y su atención se califica con <em>2 de 5</em>.", detalle);
         Assert.Contains("data-senal=\"rango\"", detalle);
+        Assert.Contains("Frente al equipo", detalle);
+        Assert.Equal(5, detalle.Split("class=\"frente-b__fila\"").Length - 1);
         Assert.Contains("data-escala=\"frecuencia\"", detalle);
         Assert.Contains("Todos los serenos", detalle);
         // Con la lista calculada, otra pregunta muestra el dato de esta en su columna, sin ningún nombre.

@@ -13,6 +13,10 @@
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/analitica.css" asp-append-version="true" />
+    @if (Model.Actual.Clave == "serenos")
+    {
+        <link rel="stylesheet" href="~/css/analitica-serenos.css" asp-append-version="true" />
+    }
     @if (Model.Actual.Clave == "reasigna")
     {
         <link rel="stylesheet" href="~/css/analitica-reasigna.css" asp-append-version="true" />
