@@ -144,11 +144,33 @@
   new ResizeObserver(() => mapa.invalidateSize()).observe(contenedor);
 
   // ---------- Ranking: cada zona lleva el mapa hasta ella ----------
-  // Dos anillos del color del mapa se abren una vez sobre la zona (el mismo gesto que el vuelo al caso de la central).
+  // Dos anillos del color del mapa se abren una vez sobre la zona (el mismo gesto que el vuelo al caso de la central) y un marco
+  // discontinuo la deja resaltada hasta que se elige otra o se pulsa «Quitar» (o Escape). La zona elegida se abre con su desglose.
   let sonar = null;
+  let marco = null;
+  const botones = () => document.querySelectorAll("[data-vuelo]");
+  const quitarZona = () => {
+    for (const b of botones()) b.removeAttribute("aria-current");
+    marco?.remove();
+    marco = null;
+    sonar?.remove();
+    sonar = null;
+    encuadrar();
+  };
   document.querySelector("[data-ranking-historico]")?.addEventListener("click", (e) => {
+    if (e.target.closest("[data-quitar-zona]")) {
+      quitarZona();
+      return;
+    }
     const boton = e.target.closest("[data-vuelo]");
     if (!boton) return;
+    for (const b of botones()) b.removeAttribute("aria-current");
+    boton.setAttribute("aria-current", "true");
+    marco?.remove();
+    const { sur, oeste, norte, este } = boton.dataset;
+    marco = L.rectangle([[Number(sur), Number(oeste)], [Number(norte), Number(este)]], {
+      color: "#E8F8FF", weight: 2.5, dashArray: "6 5", fill: false, interactive: false,
+    }).addTo(mapa);
     const punto = [Number(boton.dataset.lat), Number(boton.dataset.lon)];
     const caja = L.latLngBounds(punto, punto).pad(0.0015 / 0.01);
     if (window.cadMovimiento?.reducido()) mapa.fitBounds(caja, { ...relleno(), maxZoom: 16, animate: false });
@@ -160,8 +182,9 @@
       icon: L.divIcon({ className: "", html: '<span class="sonar-foco"><i></i><i></i></span>', iconSize: [120, 120], iconAnchor: [60, 60] }),
     }).addTo(mapa);
     setTimeout(() => { sonar?.remove(); sonar = null; }, 1800);
-    for (const b of document.querySelectorAll("[data-vuelo]")) b.removeAttribute("aria-current");
-    boton.setAttribute("aria-current", "true");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.querySelector('[data-vuelo][aria-current="true"]')) quitarZona();
   });
 
   // ---------- Capas ----------

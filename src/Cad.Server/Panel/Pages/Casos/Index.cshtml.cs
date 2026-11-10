@@ -23,6 +23,8 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     [BindProperty(SupportsGet = true)] public string? Sereno { get; set; }
     // Rediseño del 05/11/2026: la vista («En curso», «Finalizados», «Sin efecto») agrupa varios estados.
     [BindProperty(SupportsGet = true)] public string? Grupo { get; set; }
+    // Una zona del mapa de concentración, como «sur,oeste» (la esquina de la celda de unos 550 m).
+    [BindProperty(SupportsGet = true)] public string? Zona { get; set; }
     [BindProperty(SupportsGet = true)] public int Pagina { get; set; } = 1;
 
     public PaginaCasos? Resultado { get; private set; }
@@ -30,7 +32,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     public IReadOnlyList<SerenoParaFiltro> Serenos { get; private set; } = [];
     public Dictionary<string, string> Errores { get; } = [];
 
-    public bool HayFiltros => new[] { Desde, Hasta, Origen, Tipo, Estado, Sereno, Grupo }.Any(v => !string.IsNullOrEmpty(v));
+    public bool HayFiltros => new[] { Desde, Hasta, Origen, Tipo, Estado, Sereno, Grupo, Zona }.Any(v => !string.IsNullOrEmpty(v));
 
     // Las vistas de la lista: cada una agrupa estados. «En curso» es lo que la central sigue atendiendo; «Finalizados», lo que terminó con
     // una atención o una derivación; «Sin efecto», lo que se descartó o se canceló.
@@ -127,7 +129,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     {
         var parametros = new Dictionary<string, string?>
         {
-            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno, ["grupo"] = Grupo,
+            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno, ["grupo"] = Grupo, ["zona"] = Zona,
         };
         foreach (var (clave, valor) in cambios)
             parametros[clave] = valor;
@@ -176,7 +178,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     {
         var parametros = new Dictionary<string, string?>
         {
-            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno, ["grupo"] = Grupo,
+            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno, ["grupo"] = Grupo, ["zona"] = Zona,
             ["pagina"] = pagina.ToString(CultureInfo.InvariantCulture),
         };
         return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("/panel/casos",
@@ -199,6 +201,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
                     : Categorias.FirstOrDefault(c => c.Id.ToString() == v)?.Nombre),
                 ("estado", "Estado", Estado, v => Enum.TryParse<EstadoCaso>(v, out var e) ? TextoEstadoFiltro(e) : null),
                 ("sereno", "Sereno", Sereno, v => Serenos.FirstOrDefault(s => s.Id.ToString() == v)?.Nombre),
+                ("zona", "Zona", Zona, v => CeldaDe(v) is { } c ? new Analitica.Zonas(configuracion).Nombre(c.Sur, c.Oeste) : null),
             };
             return valores
                 .Where(f => !string.IsNullOrEmpty(f.Valor) && f.Texto(f.Valor!) is not null)
@@ -215,7 +218,7 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
     {
         var parametros = new Dictionary<string, string?>
         {
-            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno, ["grupo"] = Grupo,
+            ["desde"] = Desde, ["hasta"] = Hasta, ["origen"] = Origen, ["tipo"] = Tipo, ["estado"] = Estado, ["sereno"] = Sereno, ["grupo"] = Grupo, ["zona"] = Zona,
         };
         parametros.Remove(clave);
         return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("/panel/casos",
@@ -267,6 +270,9 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
                 Errores["sereno"] = "Elige un sereno de la lista.";
         }
 
+        // Una zona que no se entiende se ignora (no hay campo donde mostrar un error: llega por un enlace del mapa).
+        (double Sur, double Oeste)? zona = CeldaDe(Zona ?? "");
+
         IReadOnlyList<EstadoCaso>? estados = null;
         if (!string.IsNullOrEmpty(Grupo))
         {
@@ -279,7 +285,18 @@ public class IndexModel(ConsultarCasos consultar, ConsultarCategorias consultarC
         return new FiltroCasos(
             desde is { } inicio ? Inicio(inicio) : null,
             hasta is { } fin ? Inicio(fin.AddDays(1)) : null,
-            origen, categoria, sinTipo, estado, estados, sereno);
+            origen, categoria, sinTipo, estado, estados, sereno, zona);
+    }
+
+    // «sur,oeste» en grados con punto decimal, dentro de rangos de latitud y longitud; si no, no es una zona.
+    private static (double Sur, double Oeste)? CeldaDe(string texto)
+    {
+        var partes = texto.Split(',');
+        return partes.Length == 2
+            && double.TryParse(partes[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var sur)
+            && double.TryParse(partes[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var oeste)
+            && sur is >= -90 and <= 90 && oeste is >= -180 and <= 180
+            ? (sur, oeste) : null;
     }
 
     private DateOnly? Fecha(string? texto, string campo)

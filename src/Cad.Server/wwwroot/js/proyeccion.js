@@ -201,26 +201,44 @@
   }
 
   // ---------- Lista de zonas ----------
+  // La misma fila que dibuja el servidor (_Proyeccion.cshtml): nivel, casos esperados, sereno cercano y una barra contra los umbrales.
   function filaLista(z, i) {
     const nivel = nivelDe(z);
     const sin = sinCobertura(z);
     const sereno = z.metros == null
       ? '<span class="texto-secundario">No hay serenos operativos con ubicación</span>'
       : `<span>${escapar(z.sereno)}, a ${km(z.metros)}</span>`;
+    const ancho = Math.round(intensidad(z) * 1000) / 10;
     return `<li class="ranking__item${sin ? " ranking__item--sin-cobertura" : ""}" data-clave="${escapar(z.clave)}" data-zona="${escapar(z.clave)}" data-nivel="${nivel}">`
       + `<button type="button" class="ranking__boton" data-ver-zona="${escapar(z.clave)}" aria-pressed="false">`
       + `<span class="ranking__orden num" aria-hidden="true">${i + 1}</span>`
       + `<span class="ranking__nombre">${escapar(z.zona)}</span>`
-      + `<span class="ranking__cifra num"><strong>${cifra.format(mostrado(z))}</strong> esperados</span>`
       + `<span class="nivel-foco nivel-foco--${nivel.toLowerCase()}">${nivel}</span>`
-      + (porQue(z) ? `<span class="ranking__porque">${escapar(porQue(z))}</span>` : "")
+      + `<span class="ranking__cifra num"><strong>${cifra.format(mostrado(z))}</strong><span class="visualmente-oculto"> esperados</span></span>`
       + `<span class="ranking__sereno">${sin ? `<strong class="proyeccion__sin-cobertura" data-sin-cobertura>${ADVERTENCIA}Sin cobertura cercana</strong>` : ""}${sereno}</span>`
+      + `<span class="ranking__barra ranking__barra--nivel" aria-hidden="true"><i style="width:${ancho}%"></i></span>`
+      + (porQue(z) ? `<span class="ranking__porque">${escapar(porQue(z))}</span>` : "")
       + "</button></li>";
+  }
+
+  // El resumen por niveles (Alto, Medio, Bajo y sin sereno) cuenta las zonas que muestra la lista en el bloque elegido.
+  const resumenNiveles = document.querySelector("[data-resumen-niveles]");
+  function actualizarResumen(visibles) {
+    if (!resumenNiveles) return;
+    const n = { Alto: 0, Medio: 0, Bajo: 0, sin: 0 };
+    for (const z of visibles) {
+      n[nivelDe(z)]++;
+      if (sinCobertura(z)) n.sin++;
+    }
+    for (const el of resumenNiveles.querySelectorAll("[data-nivel-n]")) el.textContent = n[el.dataset.nivelN];
+    resumenNiveles.querySelector(".niveles-resumen__celda--sin")?.classList.toggle("niveles-resumen__celda--aviso", n.sin > 0);
   }
 
   function dibujarLista() {
     if (!lista) return;
-    const html = vista().slice(0, 10).map(filaLista).join("");
+    const visibles = vista().slice(0, 10);
+    const html = visibles.map(filaLista).join("");
+    actualizarResumen(visibles);
     if (window.cadMovimiento) window.cadMovimiento.actualizarRegion(lista, html, { animar: true, despues: marcarElegida });
     else {
       lista.innerHTML = html;
