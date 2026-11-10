@@ -105,6 +105,13 @@ public class ReasignacionesTests(FabricaCad fabrica)
         Assert.Equal((6, 3, 1), (r.SerenosConAsignacion, r.SerenosConRetiros, r.MaximoRetirosDeUnSereno));
         // El primer sereno tuvo el caso 10, 20 y 10 min: la mediana son 10.
         Assert.Equal((3, 10.0), (r.Esperas, r.EsperaP50Minutos));
+        // Los tramos de 27 días son semanas (4: tres de 7 días y una de 6); las tres reasignaciones caen en la primera.
+        Assert.Equal(4, r.Tramos!.Count);
+        Assert.Equal(3, r.Tramos[0].Total);
+        Assert.Equal(2, r.Tramos[0].PorMotivo[MotivosReasignacion.SerenoNoResponde]);
+        Assert.All(r.Tramos.Skip(1), t => Assert.Equal(0, t.Total));
+        // El reparto entre serenos, sin nombres: tres serenos con un caso reasignado cada uno.
+        Assert.Equal([1, 1, 1], r.RetirosPorSerenoOrdenados);
     }
 
     [Fact]
@@ -142,8 +149,12 @@ public class ReasignacionesTests(FabricaCad fabrica)
 
         Assert.Contains("Se reasignó el <em>50 %</em> de los casos asignados (2 de 4), por encima de la referencia de 10 %.", html);
         Assert.Contains("data-senal=\"reasignados\" data-bien=\"false\"", html);
-        Assert.Contains("Motivos de reasignación", html);
+        // Cada motivo con su tarjeta de qué revisar, y las columnas del periodo.
+        Assert.Contains("Qué hay que revisar", html);
         Assert.Contains("El sereno no responde", html);
+        Assert.Contains("Revisar si le llega el aviso", html);
+        Assert.Contains("data-motivo=\"OtroMasCercano\"", html);
+        Assert.Contains("Semana a semana", html);
         Assert.Contains("Retirados por desactivar la cuenta", html);
         // La columna de preguntas la incluye, con su dato del periodo, y el nombre de ningún sereno aparece.
         Assert.Contains("aria-current=\"page\" data-pregunta=\"reasigna\"", html);
