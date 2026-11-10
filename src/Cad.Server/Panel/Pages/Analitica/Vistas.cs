@@ -60,8 +60,8 @@ public static class Preguntas
         new("sistema", "Salud del sistema", "<rect x=\"4\" y=\"5\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M9 20h6M12 16v4\"/>"),
     ];
 
-    // Sin vista en la dirección: «Tiempos de respuesta», la vista central de un servicio de respuesta.
-    public static Definicion? Buscar(string? clave) => Todas.FirstOrDefault(p => p.Clave == (string.IsNullOrEmpty(clave) ? "tiempo" : clave));
+    // Sin vista en la dirección: «Comparación por bloques», la primera lectura del distrito completo.
+    public static Definicion? Buscar(string? clave) => Todas.FirstOrDefault(p => p.Clave == (string.IsNullOrEmpty(clave) ? "bloques" : clave));
 
     public static HtmlString Icono(Definicion d) =>
         new($"<svg class=\"icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\">{d.Icono}</svg>");

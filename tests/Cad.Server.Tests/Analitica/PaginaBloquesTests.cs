@@ -92,4 +92,16 @@ public partial class PaginaBloquesTests(FabricaCad fabrica)
         Assert.Contains("href=\"/panel/analitica/tiempo\"", html); // «Tiempos de respuesta» abre con sus 7 días
         Assert.DoesNotContain("tiempo?periodo=365", html);
     }
+
+    [Fact]
+    public async Task AnaliticaSinPregunta_AbreLaComparacionPorBloques()
+    {
+        var (navegador, _) = await OperadorAsync();
+
+        var html = await navegador.GetStringAsync("/panel/analitica");
+
+        Assert.Contains("data-analitica=\"bloques\"", html);
+        Assert.Contains("aria-current=\"page\" data-pregunta=\"bloques\"", html);
+        Assert.Contains("aria-current=\"true\">12 meses</a>", html);
+    }
 }

@@ -26,6 +26,11 @@ public class BarraDosNivelesTests(FabricaCad fabrica)
         Assert.Contains("class=\"barra__fila\"", html);
         Assert.Contains("class=\"barra__navegacion\"", html);
         Assert.Matches("(?s)aria-current=\"page\"><svg.*?</svg>\\s*Central</a>", html); // con el icono de su sección
+        var navegacion = html[html.IndexOf("class=\"barra__navegacion\"", StringComparison.Ordinal)..];
+        var orden = new[] { "Analítica</a>", "Central</a>", "Mapa de concentración</a>", "Acompañamientos</a>", "Casos</a>" };
+        var posiciones = orden.Select(x => navegacion.IndexOf(x, StringComparison.Ordinal)).ToArray();
+        Assert.All(posiciones, posicion => Assert.True(posicion >= 0));
+        Assert.True(posiciones.SequenceEqual(posiciones.Order()));
         Assert.DoesNotContain("barra__hoja", html);
         Assert.DoesNotContain("barra--con-hoja", html);
         Assert.DoesNotContain("data-menu", html);
