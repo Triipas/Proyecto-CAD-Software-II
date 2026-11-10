@@ -382,6 +382,8 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         Assert.Contains($"data-caso=\"{reporte}\"", html);
         Assert.DoesNotContain($"data-caso=\"{lejos}\"", html);
         Assert.Contains("Quitar el filtro Zona", html);
+        // El formulario de filtros conserva la zona al buscar de nuevo.
+        Assert.Matches(@"<input type=""hidden"" name=""zona"" value=""-?\d+(\.\d+)?,-?\d+(\.\d+)?"" />", html);
     }
 
     [Fact]
