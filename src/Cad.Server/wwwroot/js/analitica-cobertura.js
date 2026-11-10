@@ -20,6 +20,9 @@
     const panel = mapa.createPane("tablero");
     panel.style.zIndex = 450;
     panel.appendChild(capa);
+    // El fondo era decorativo (aria-hidden); ahora tiene las zonas y los botones de zoom: solo las calles quedan fuera del lector.
+    fondo.removeAttribute("aria-hidden");
+    mapa.getPane("tilePane").setAttribute("aria-hidden", "true");
     tablero.classList.add("tablero-b--mapa");
     function colocar() {
       const a = mapa.latLngToLayerPoint(noroeste), b = mapa.latLngToLayerPoint(sureste);

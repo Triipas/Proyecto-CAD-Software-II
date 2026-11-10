@@ -42,7 +42,8 @@
     if (origen === null) origen = ahora;
     const t = avance + (ahora - origen) / MS_POR_MINUTO;
     pintar(Math.min(total, t));
-    if (t >= total) { terminada = true; cuadro = 0; return; }
+    // En la meta, la ficha vuelve al 100 % de la hoja de estilos: sigue en el final aunque la pista cambie de ancho después.
+    if (t >= total) { terminada = true; cuadro = 0; ficha.style.left = ""; return; }
     cuadro = requestAnimationFrame(paso);
   }
 
