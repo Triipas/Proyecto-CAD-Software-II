@@ -82,6 +82,7 @@ public class PatronesTests(FabricaCad fabrica)
         Assert.All(zonas.Take(2), z => Assert.True(z.Alerta));
         var robos = Assert.Single(zonas, z => z.Categoria == "Robo o hurto");
         Assert.Equal((5, 1.0, 4.0, true), (robos.SemanaActual, robos.PromedioAnterior, robos.Desviacion, robos.Alerta));
+        Assert.Equal([1, 1, 1, 1, 5], robos.Semanas); // las 4 semanas anteriores, una a una, y la actual al final
         var b = Assert.Single(zonas, z => z.Categoria is null && z.SemanaActual == 3);
         Assert.Equal(2, b.PromedioAnterior);
         Assert.False(b.Alerta); // sube, pero dentro de lo normal
