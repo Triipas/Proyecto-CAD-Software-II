@@ -7,6 +7,8 @@
     var tablero = TableroZonas.Armar(c.ZonasBloques ?? []);
     var radio = Formato.Decimal(c.RadioMetros, 0);
     string F(double x) => x.ToString("0.##", CultureInfo.InvariantCulture);
+    // Las coordenadas del encuadre, sin redondear: 0,005° ya es una fila entera de zonas y el mapa quedaría corrido.
+    string G(double x) => x.ToString("R", CultureInfo.InvariantCulture);
     string Pct(double x) => Formato.Porcentaje(x, 0);
     string Casos(int n) => n >= minimo ? Formato.Plural(n, "incidencia", "incidencias") : $"menos de {minimo} incidencias";
 
@@ -74,7 +76,7 @@ else
             <div class="cobertura-b__cuerpo">
                 <div class="cobertura-b__plano">
                     <div class="tablero-b" data-tablero style="aspect-ratio:@tablero.ProporcionCss;--columnas:@tablero.Columnas;--filas:@tablero.Filas"
-                         data-teselas="@m.UrlTeselas" data-sur="@F(tablero.Sur)" data-oeste="@F(tablero.Oeste)" data-norte="@F(tablero.Norte)" data-este="@F(tablero.Este)">
+                         data-teselas="@m.UrlTeselas" data-sur="@G(tablero.Sur)" data-oeste="@G(tablero.Oeste)" data-norte="@G(tablero.Norte)" data-este="@G(tablero.Este)">
                         <div class="tablero-b__mapa" data-mapa aria-hidden="true"></div>
                         <span class="tablero-b__velo" aria-hidden="true"></span>
                         <div class="tablero-b__celdas" role="group" aria-label="Tablero de @tablero.Celdas.Count zonas: @tablero.Celdas.Count(x => x.Baja) pasan más de la mitad del tiempo sin un sereno cerca">
