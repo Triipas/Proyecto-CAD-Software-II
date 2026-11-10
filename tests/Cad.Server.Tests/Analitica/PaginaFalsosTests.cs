@@ -39,13 +39,17 @@ public class PaginaFalsosTests(FabricaCad fabrica)
 
         var html = WebUtility.HtmlDecode(await navegador.GetStringAsync("/panel/analitica/falsos?periodo=rango&desde=2019-03-01&hasta=2019-03-28"));
 
-        Assert.Contains("1 de cada 4 reportes decididos era falso", html);
+        Assert.Contains("Uno de cada 4</em> reportes decididos era falso", html);
         Assert.Contains("cuando la central lo descartó como «falso o malintencionado»", html);
+        Assert.Contains("4 íconos y uno resaltado", html); // tantos íconos como dice la frase
+        Assert.Equal(4, html.Split("class=\"iconos-b__icono").Length - 1);
+        Assert.Equal(1, html.Split("iconos-b__icono--falso").Length - 1);
         Assert.Contains("data-categoria=\"Robo o hurto\"", html);
         Assert.Contains("1 de 4", html); // los falsos de la categoría, con su base
         Assert.Contains("Todas las categorías: 25 %", html);
-        Assert.Contains("La central los descartó", html);
-        Assert.Contains("fila100__nombre\">Falsos<", html);
+        Assert.Contains("data-parte=\"Falsos\"", html);
+        Assert.Contains("data-parte=\"Admitidos\"", html);
+        Assert.DoesNotContain("data-pestanas", html); // sin SOS en el periodo no hay pestaña «SOS»
         Assert.Contains("data-fotos=\"Sin fotos\"", html);
     }
 }
