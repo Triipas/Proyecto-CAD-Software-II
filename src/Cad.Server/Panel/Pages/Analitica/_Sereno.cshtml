@@ -37,20 +37,27 @@ else
 
     // «Frente al equipo»: cada cifra del sereno sobre la franja que va del sereno con menos al sereno con más (solo los que tienen
     // casos suficientes), con la raya del equipo. En ocre y con ▲, la cifra que da una señal.
-    var comparables = e.Serenos.Where(x => x.Llegadas.Count >= minimo).ToList();
     double? MedianaDe(Func<RendimientoSereno, double?> valor) => Estadistica.Percentil(e.Serenos.Select(valor).OfType<double>().ToList(), 0.5);
-    (double, double)? RangoDe(Func<RendimientoSereno, double?> valor) => comparables.Select(valor).OfType<double>().ToList() is { Count: > 1 } vs ? (vs.Min(), vs.Max()) : null;
+    // Cada cifra con su propia muestra: la llegada pide llegadas suficientes; la calificación, evaluaciones; los inicios lejos, inicios
+    // con punto; las reasignaciones, casos asignados (lo mismo que exige Rendimiento.Senales). Una sola evaluación no mueve la franja.
+    (double, double)? RangoDe(Func<RendimientoSereno, double?> valor, Func<RendimientoSereno, int> muestra) =>
+        e.Serenos.Where(x => muestra(x) >= minimo).Select(valor).OfType<double>().ToList() is { Count: > 1 } vs ? (vs.Min(), vs.Max()) : null;
+    var rangoLlegada = RangoDe(x => x.LlegadaP50, x => x.Llegadas.Count);
+    var rangoNota = RangoDe(x => x.Calificacion, x => x.Evaluaciones);
+    var rangoOcupado = RangoDe(x => x.PorcentajeOcupado, x => x.Llegadas.Count);
+    var rangoLejos = RangoDe(x => x.PorcentajeFueraDeRango, x => x.IniciosConPunto);
+    var rangoRetiros = RangoDe(x => x.PorcentajeRetirados, x => x.CasosAsignados);
     var frente = new List<(string Nombre, double? Valor, double? Equipo, (double, double)? Rango, double Desde, double Hasta, bool Senal, string Texto, string Comparado)>
     {
-        ("Llegada", s.LlegadaP50, e.LlegadaP50, RangoDe(x => x.LlegadaP50), 0, Math.Max(10, new[] { s.LlegadaP50 ?? 0, e.LlegadaP50 ?? 0, RangoDe(x => x.LlegadaP50)?.Item2 ?? 0 }.Max() * 1.15),
+        ("Llegada", s.LlegadaP50, e.LlegadaP50, rangoLlegada, 0, Math.Max(10, new[] { s.LlegadaP50 ?? 0, e.LlegadaP50 ?? 0, rangoLlegada?.Item2 ?? 0 }.Max() * 1.15),
             senales.Any(x => x.Clave == "llegada"), s.LlegadaP50 is { } l ? Formato.Minutos(l) : "—", $"equipo {Formato.Minutos(e.LlegadaP50)}{(antes?.LlegadaP50 is { } la ? $" · antes {Formato.Minutos(la)}" : "")}"),
-        ("Calificación", s.Calificacion, e.Calificacion, RangoDe(x => x.Calificacion), 1, 5,
+        ("Calificación", s.Calificacion, e.Calificacion, rangoNota, 1, 5,
             senales.Any(x => x.Clave == "calificacion"), s.Calificacion is { } c ? $"{Formato.Decimal(c)} ★" : "—", $"equipo {(e.Calificacion is { } ec ? Formato.Decimal(ec) : "—")} · {Formato.Plural(s.Evaluaciones, "evaluación", "evaluaciones")}"),
-        ("Tiempo con un caso", s.PorcentajeOcupado, e.PorcentajeOcupado, RangoDe(x => x.PorcentajeOcupado), 0, Math.Max(20, new[] { s.PorcentajeOcupado ?? 0, e.PorcentajeOcupado ?? 0, RangoDe(x => x.PorcentajeOcupado)?.Item2 ?? 0 }.Max() * 1.15),
+        ("Tiempo con un caso", s.PorcentajeOcupado, e.PorcentajeOcupado, rangoOcupado, 0, Math.Max(20, new[] { s.PorcentajeOcupado ?? 0, e.PorcentajeOcupado ?? 0, rangoOcupado?.Item2 ?? 0 }.Max() * 1.15),
             false, s.PorcentajeOcupado is { } po ? Formato.Porcentaje(po, 0) : "—", $"equipo {(e.PorcentajeOcupado is { } eo ? Formato.Porcentaje(eo, 0) : "—")} · {Formato.HorasDeTrabajo(s.HorasOperativas)} en turno"),
-        ("Inicios lejos del caso", s.PorcentajeFueraDeRango, e.PorcentajeFueraDeRango, RangoDe(x => x.PorcentajeFueraDeRango), 0, Math.Max(20, new[] { s.PorcentajeFueraDeRango ?? 0, e.PorcentajeFueraDeRango ?? 0, RangoDe(x => x.PorcentajeFueraDeRango)?.Item2 ?? 0 }.Max() * 1.15),
+        ("Inicios lejos del caso", s.PorcentajeFueraDeRango, e.PorcentajeFueraDeRango, rangoLejos, 0, Math.Max(20, new[] { s.PorcentajeFueraDeRango ?? 0, e.PorcentajeFueraDeRango ?? 0, rangoLejos?.Item2 ?? 0 }.Max() * 1.15),
             senales.Any(x => x.Clave == "rango"), s.PorcentajeFueraDeRango is { } fr ? Formato.Porcentaje(fr, 0) : "—", $"equipo {(e.PorcentajeFueraDeRango is { } ef ? Formato.Porcentaje(ef, 0) : "—")}{(s.IniciosConPunto > 0 ? $" · {s.IniciosFueraDeRango} de {s.IniciosConPunto}" : "")}"),
-        ("Casos reasignados", s.PorcentajeRetirados, MedianaDe(x => x.PorcentajeRetirados), RangoDe(x => x.PorcentajeRetirados), 0, Math.Max(20, new[] { s.PorcentajeRetirados ?? 0, RangoDe(x => x.PorcentajeRetirados)?.Item2 ?? 0 }.Max() * 1.15),
+        ("Casos reasignados", s.PorcentajeRetirados, MedianaDe(x => x.PorcentajeRetirados), rangoRetiros, 0, Math.Max(20, new[] { s.PorcentajeRetirados ?? 0, rangoRetiros?.Item2 ?? 0 }.Max() * 1.15),
             senales.Any(x => x.Clave == "retiros"), s.PorcentajeRetirados is { } pr ? Formato.Porcentaje(pr, 0) : "—", $"mediana del equipo {(MedianaDe(x => x.PorcentajeRetirados) is { } mr ? Formato.Porcentaje(mr, 0) : "—")} · {s.Retirados} de {s.CasosAsignados}"),
     };
     string X(double valor, double desde, double hasta) => Pct(Math.Clamp((valor - desde) / (hasta - desde), 0, 1) * 100);
@@ -94,7 +101,7 @@ else
                     <span class="frente-b__valor@(fila.Senal ? " frente-b__valor--alerta" : "")">@(fila.Senal ? "▲ " : "")@fila.Texto<small>@fila.Comparado</small></span>
                 </div>
             }
-            <p class="frente-b__ley"><i class="frente-b__muestra-yo"></i>@Rendimiento.Iniciales(s.Nombre) · <i class="frente-b__muestra-equipo"></i>equipo · <i class="frente-b__muestra-entre"></i>del sereno con menos al sereno con más (con @minimo o más casos)</p>
+            <p class="frente-b__ley"><i class="frente-b__muestra-yo"></i>@Rendimiento.Iniciales(s.Nombre) · <i class="frente-b__muestra-equipo"></i>equipo · <i class="frente-b__muestra-entre"></i>del sereno con menos al sereno con más (solo los que tienen @minimo o más datos de esa cifra: llegadas, evaluaciones, inicios con punto o casos asignados)</p>
         </div>
     </section>
 
