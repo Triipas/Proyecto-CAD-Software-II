@@ -51,8 +51,9 @@ public sealed class ConsultarPuntosCriticos(CadDbContext db, TimeProvider reloj,
 // anteriores, por zona y categoría (y por zona con todas las categorías: Categoria nula). Es alerta si la semana tiene al menos
 // MinimoCasosPorZona casos y el aumento se sale de lo normal: (actual − promedio) / √promedio ≥ UmbralAlza, como en un conteo de
 // Poisson (con un promedio menor que 1 se usa 1, para no alarmar por uno o dos casos en una zona tranquila).
+// Semanas (16/11/2026, «El mapa de los puntos»): los casos de cada una de las 4 semanas anteriores y, al final, la actual.
 public sealed record ZonaEnAlza(double Sur, double Oeste, double Norte, double Este, string? Categoria, int SemanaActual,
-    double PromedioAnterior, double Desviacion, bool Alerta);
+    double PromedioAnterior, double Desviacion, bool Alerta, IReadOnlyList<int>? Semanas = null);
 
 public sealed class ConsultarZonasEnAlza(CadDbContext db, IOptions<OpcionesAnalitica> opciones)
 {
@@ -74,9 +75,12 @@ public sealed class ConsultarZonasEnAlza(CadDbContext db, IOptions<OpcionesAnali
             var actual = grupo.Count(c => c.RegistradoEn >= inicioSemana);
             var promedio = grupo.Count(c => c.RegistradoEn < inicioSemana) / (double)SemanasBase;
             var desviacion = (actual - promedio) / Math.Sqrt(Math.Max(promedio, 1));
+            var semanas = Enumerable.Range(0, SemanasBase + 1)
+                .Select(i => grupo.Count(c => c.RegistradoEn >= inicioBase.AddDays(7 * i) && c.RegistradoEn < inicioBase.AddDays(7 * (i + 1))))
+                .ToList();
             return new ZonaEnAlza(zona.Sur, zona.Oeste, zona.Norte, zona.Este,
                 categoria is { } id ? categorias.GetValueOrDefault(id, Categorias.SinClasificar) : null,
-                actual, promedio, desviacion, actual >= o.MinimoCasosPorZona && desviacion >= o.UmbralAlza);
+                actual, promedio, desviacion, actual >= o.MinimoCasosPorZona && desviacion >= o.UmbralAlza, semanas);
         }
 
         var porZona = casos.GroupBy(c => c.Zona!).Select(g => Comparar(g.Key, null, g.ToList()));
