@@ -45,11 +45,18 @@
 
 .preguntas__titulo {
   margin: 0;
-  padding: 0 var(--espacio-3) var(--espacio-3);
+  padding: 0 var(--espacio-3);
   font-size: var(--texto-xl);
   font-weight: var(--peso-fuerte);
   color: var(--color-marino);
   letter-spacing: var(--tracking-titulo);
+}
+
+.preguntas__descripcion {
+  margin: 0;
+  padding: 0 var(--espacio-3) var(--espacio-3);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
 }
 
 .preguntas__lista {
