@@ -13,6 +13,10 @@
         <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/analitica.css" asp-append-version="true" />
+    @if (Model.Actual.Clave == "repite")
+    {
+        <link rel="stylesheet" href="~/css/analitica-repite.css" asp-append-version="true" />
+    }
     @if (Model.Actual.Clave == "serenos")
     {
         <link rel="stylesheet" href="~/css/analitica-serenos.css" asp-append-version="true" />
@@ -170,6 +174,10 @@
         <script src="~/js/analitica-bloques.js" asp-append-version="true"></script>
     }
     <script src="~/js/analitica.js" asp-append-version="true"></script>
+    @if (Model.Actual.Clave == "repite")
+    {
+        <script src="~/js/analitica-repite.js" asp-append-version="true"></script>
+    }
     @if (Model.Actual.Clave == "reasigna")
     {
         <script src="~/js/analitica-reasigna.js" asp-append-version="true"></script>
