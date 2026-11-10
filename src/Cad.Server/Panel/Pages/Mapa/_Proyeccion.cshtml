@@ -40,19 +40,21 @@ else
         <partial name="_VistaMapa" model="Model" />
     </header>
 
-    <div class="focos__cuerpo" tabindex="0" role="region" aria-label="Ventana, parte y zonas proyectadas">
-        <form method="get" action="/panel/mapa-concentracion" class="focos__seleccion" aria-labelledby="titulo-ventana" data-seleccion-proyeccion>
-            <h2 id="titulo-ventana" class="visualmente-oculto">Ventana de la proyección</h2>
-            <input type="hidden" name="Vista" value="proyeccion" />
-            <div class="segmentos" role="group" aria-label="Ventana">
-                @foreach (var (codigo, texto, _) in Cad.Server.Panel.Pages.Mapa.ConcentracionModel.Ventanas)
-                {
-                    <button type="submit" name="Ventana" value="@codigo" class="segmentos__opcion" aria-pressed="@(Model.Ventana == codigo ? "true" : "false")">@texto</button>
-                }
-            </div>
-            <p class="campo__ayuda">Desde las @local(p.Desde).ToString("HH:mm", inv) del @local(p.Desde).ToString("dd/MM", inv) hasta las @local(p.Hasta).ToString("HH:mm", inv) del @local(p.Hasta).ToString("dd/MM", inv).</p>
-        </form>
+    @* Rediseño del 10/11/2026: la ventana en una banda propia con su horario; el parte, plegado bajo su primera frase; el resumen por niveles
+       y las zonas con una barra contra los umbrales. *@
+    <form method="get" action="/panel/mapa-concentracion" class="focos__seleccion focos__seleccion--ventana" aria-labelledby="titulo-ventana" data-seleccion-proyeccion>
+        <h2 id="titulo-ventana" class="visualmente-oculto">Ventana de la proyección</h2>
+        <input type="hidden" name="Vista" value="proyeccion" />
+        <div class="segmentos" role="group" aria-label="Ventana">
+            @foreach (var (codigo, texto, _) in Cad.Server.Panel.Pages.Mapa.ConcentracionModel.Ventanas)
+            {
+                <button type="submit" name="Ventana" value="@codigo" class="segmentos__opcion" aria-pressed="@(Model.Ventana == codigo ? "true" : "false")">@texto</button>
+            }
+        </div>
+        <p class="campo__ayuda">Desde las @local(p.Desde).ToString("HH:mm", inv) del @local(p.Desde).ToString("dd/MM", inv) hasta las @local(p.Hasta).ToString("HH:mm", inv) del @local(p.Hasta).ToString("dd/MM", inv).</p>
+    </form>
 
+    <div class="focos__cuerpo" tabindex="0" role="region" aria-label="Parte y zonas proyectadas">
         @if (!p.Suficiente)
         {
             <div class="aviso aviso--advertencia" role="status" data-sin-datos-proyeccion>
@@ -62,26 +64,46 @@ else
         }
         else
         {
-            @if (Model.Parte is { } parte)
-            {
-                <details class="parte-patrullaje" open data-parte data-parte-origen="@(parte.Modelo is null ? "plantilla" : "modelo")">
-                    <summary class="parte-patrullaje__titulo"><partial name="_Icono" model="@("informacion")" />Parte sugerido</summary>
-                    <p data-parte-resumen>@parte.Resumen</p>
-                    @if (parte.Acciones.Count > 0)
-                    {
-                        <ul class="parte-patrullaje__acciones">
-                            @foreach (var a in parte.Acciones)
-                            {
-                                <li>@a.Texto</li>
-                            }
-                        </ul>
-                    }
-                    <p class="campo__ayuda">@(parte.Modelo is null ? "Parte plantilla con las cifras calculadas (sin modelo de lenguaje)." : $"Redactado por {parte.Modelo} con las cifras calculadas y comprobado: no trae cifras, zonas ni serenos fuera de la proyección.") Es una ayuda de lectura: reposicionar serenos lo decide la central.</p>
-                </details>
-            }
+            var cobertura = (p.Bloques ?? []).Sum(b => b.Fraccion);
+            if (cobertura <= 0) cobertura = 1;
+            var escala = 2 * Math.Max(0.01, p.UmbralAlto);
+            var marcaMedio = Math.Min(100, p.UmbralMedio / escala * 100).ToString("0.#", inv);
+            var marcaAlto = Math.Min(100, p.UmbralAlto / escala * 100).ToString("0.#", inv);
+            var nAlto = principales.Count(z => z.Nivel == NivelFoco.Alto);
+            var nMedio = principales.Count(z => z.Nivel == NivelFoco.Medio);
+            var nBajo = principales.Count(z => z.Nivel == NivelFoco.Bajo);
+            var nSin = principales.Count(z => z.SinCobertura);
+
+            <section class="focos__seccion" aria-label="Resumen de niveles y parte">
+                <dl class="niveles-resumen" data-resumen-niveles>
+                    <div class="niveles-resumen__celda niveles-resumen__celda--alto"><dt>Alto</dt><dd class="num" data-nivel-n="Alto">@nAlto</dd></div>
+                    <div class="niveles-resumen__celda niveles-resumen__celda--medio"><dt>Medio</dt><dd class="num" data-nivel-n="Medio">@nMedio</dd></div>
+                    <div class="niveles-resumen__celda niveles-resumen__celda--bajo"><dt>Bajo</dt><dd class="num" data-nivel-n="Bajo">@nBajo</dd></div>
+                    <div class="niveles-resumen__celda niveles-resumen__celda--sin@(nSin > 0 ? " niveles-resumen__celda--aviso" : "")"><dt>Sin sereno</dt><dd class="num" data-nivel-n="sin">@nSin</dd></div>
+                </dl>
+                @if (Model.Parte is { } parte)
+                {
+                    <p class="parte__resumen" data-parte-resumen>@parte.Resumen</p>
+                    <details class="parte-patrullaje" data-parte data-parte-origen="@(parte.Modelo is null ? "plantilla" : "modelo")">
+                        <summary class="parte-patrullaje__titulo"><partial name="_Icono" model="@("informacion")" />Parte sugerido@(parte.Acciones.Count > 0 ? $" · {parte.Acciones.Count} {(parte.Acciones.Count == 1 ? "acción" : "acciones")}" : "")<partial name="_Icono" model="@("flecha-abajo")" /></summary>
+                        @if (parte.Acciones.Count > 0)
+                        {
+                            <ul class="parte-patrullaje__acciones">
+                                @foreach (var a in parte.Acciones)
+                                {
+                                    <li>@a.Texto</li>
+                                }
+                            </ul>
+                        }
+                        <p class="campo__ayuda">@(parte.Modelo is null ? "Parte plantilla con las cifras calculadas (sin modelo de lenguaje)." : $"Redactado por {parte.Modelo} con las cifras calculadas y comprobado: no trae cifras, zonas ni serenos fuera de la proyección.") Es una ayuda de lectura: reposicionar serenos lo decide la central.</p>
+                    </details>
+                }
+            </section>
 
             <section class="focos__seccion" aria-labelledby="titulo-proyeccion">
-                <h2 id="titulo-proyeccion" class="focos__subtitulo">Zonas con más casos esperados en @p.TextoVentana</h2>
+                <div class="focos__titular">
+                    <h2 id="titulo-proyeccion" class="focos__subtitulo">Zonas con más casos esperados en @p.TextoVentana</h2>
+                </div>
                 <p class="campo__ayuda" data-vista-bloque aria-live="polite">Toda la ventana; el nivel es el promedio por bloque de 4 horas. Elige un bloque en la línea de tiempo para verlo solo.</p>
                 @if (p.Tranquila)
                 {
@@ -99,16 +121,17 @@ else
                         }
                     </div>
                 }
-                <ol class="ranking ranking--proyeccion" id="zonas-proyectadas" data-zonas-proyectadas>
+                <p class="ranking__marcas" aria-hidden="true">Marcas de la barra: Medio @Umbral(p.UmbralMedio) · Alto @Umbral(p.UmbralAlto) por bloque</p>
+                <ol class="ranking ranking--proyeccion" id="zonas-proyectadas" data-zonas-proyectadas style="--marca-medio:@(marcaMedio)%;--marca-alto:@(marcaAlto)%">
                     @foreach (var (z, i) in principales.Select((z, i) => (z, i)))
                     {
+                        var ancho = Math.Min(1.0, z.Esperados / cobertura / escala) * 100;
                         <li class="ranking__item@(z.SinCobertura ? " ranking__item--sin-cobertura" : "")" data-clave="@z.Clave" data-zona="@z.Clave" data-nivel="@z.Nivel">
                             <button type="button" class="ranking__boton" data-ver-zona="@z.Clave" aria-pressed="false">
                                 <span class="ranking__orden num" aria-hidden="true">@(i + 1)</span>
                                 <span class="ranking__nombre">@z.Zona</span>
-                                <span class="ranking__cifra num"><strong>@Cifra(z.Esperados)</strong> esperados</span>
                                 <span class="nivel-foco nivel-foco--@z.Nivel.ToString().ToLowerInvariant()">@Nivel(z.Nivel)</span>
-                                <span class="ranking__porque">@z.Explicacion</span>
+                                <span class="ranking__cifra num"><strong>@Cifra(z.Esperados)</strong><span class="visualmente-oculto"> esperados</span></span>
                                 <span class="ranking__sereno">
                                     @if (z.SinCobertura)
                                     {
@@ -123,13 +146,18 @@ else
                                         <span class="texto-secundario">No hay serenos operativos con ubicación</span>
                                     }
                                 </span>
+                                <span class="ranking__barra ranking__barra--nivel" aria-hidden="true"><i style="width:@ancho.ToString("0.#", inv)%"></i></span>
+                                <span class="ranking__porque">@z.Explicacion</span>
                             </button>
                         </li>
                     }
                 </ol>
             </section>
 
-            <p class="campo__ayuda" data-metodo-proyeccion>Casos esperados por zona de unos 550 m: @p.Metodo, con los SOS y reportes con ubicación de las últimas 26 semanas (sin cancelados ni descartados). Modelo entrenado con datos simulados. El nivel es absoluto, por bloque de 4 horas: Alto desde @Umbral(p.UmbralAlto) casos esperados; Medio, desde @Umbral(p.UmbralMedio).</p>
+            <details class="metodo">
+                <summary class="metodo__titulo">Cómo se calcula<partial name="_Icono" model="@("flecha-abajo")" /></summary>
+                <p class="campo__ayuda" data-metodo-proyeccion>Casos esperados por zona de unos 550 m: @p.Metodo, con los SOS y reportes con ubicación de las últimas 26 semanas (sin cancelados ni descartados). Modelo entrenado con datos simulados. El nivel es absoluto, por bloque de 4 horas: Alto desde @Umbral(p.UmbralAlto) casos esperados; Medio, desde @Umbral(p.UmbralMedio).</p>
+            </details>
         }
     </div>
 </aside>

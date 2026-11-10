@@ -20,7 +20,10 @@ public sealed record FiltroCasos(
     // Rediseño del 05/11/2026: una vista agrupa varios estados (en curso, finalizados, sin efecto). Se combina con Estado (ambos se cumplen).
     IReadOnlyList<EstadoCaso>? Estados = null,
     // Un caso «tiene» al sereno si estuvo asignado a él, también si la asignación ya terminó (casos cerrados).
-    Guid? SerenoId = null);
+    Guid? SerenoId = null,
+    // Desde el mapa de concentración (10/11/2026): la zona de unos 550 m (su esquina sur-oeste) de la que salen los casos. SOS: la
+    // ubicación del dispositivo; reporte: el punto del hecho, como en el mapa.
+    (double Sur, double Oeste)? Zona = null);
 
 public sealed record CasoEncontrado(
     Guid Id,
@@ -77,6 +80,16 @@ public sealed class ConsultarCasos(CadDbContext db)
             casos = casos.Where(c => estados.Contains(c.Estado));
         if (filtro.SerenoId is { } sereno)
             casos = casos.Where(c => db.Asignaciones.Any(a => a.CasoId == c.Id && a.SerenoId == sereno));
+        if (filtro.Zona is { } zona)
+        {
+            var (sur, oeste) = zona;
+            var norte = sur + ConsultarConcentracion.TamanoCelda;
+            var este = oeste + ConsultarConcentracion.TamanoCelda;
+            casos = casos.Where(c =>
+                (c.Origen == OrigenCaso.Sos && c.Latitud >= sur && c.Latitud < norte && c.Longitud >= oeste && c.Longitud < este)
+                || (c.Origen == OrigenCaso.Reporte && db.DetallesReporte.Any(d => d.CasoId == c.Id
+                    && d.LatitudHecho >= sur && d.LatitudHecho < norte && d.LongitudHecho >= oeste && d.LongitudHecho < este)));
+        }
         return casos;
     }
 

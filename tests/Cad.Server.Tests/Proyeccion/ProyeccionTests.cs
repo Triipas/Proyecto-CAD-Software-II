@@ -114,6 +114,11 @@ public sealed class ProyeccionTests(FabricaCad fabrica) : IAsyncLifetime
         Assert.Contains("Proyección calculada sobre datos simulados", html);                                        // CA08
         Assert.Contains($"data-zona=\"{primera.Clave}\" data-nivel=\"Alto\"", html);
         Assert.Contains("nivel-foco--alto\">Alto</span>", html);                                                     // el nivel en texto
+        // Rediseño del 10/11/2026: resumen por niveles, parte plegado y barra de cada zona contra los umbrales.
+        Assert.Contains("data-resumen-niveles", html);
+        Assert.Contains("ranking__barra ranking__barra--nivel", html);
+        Assert.Matches(@"<details class=""parte-patrullaje""\s+data-parte\s", html); // plegado: sin «open»
+        Assert.Contains("class=\"metodo\"", html);
         Assert.Contains("data-parte-origen=\"plantilla\"", html);                                                    // CA10: sin IA, plantilla
         Assert.DoesNotContain(foco[0].ToString(), html);                                                             // CA03
         Assert.DoesNotContain(LatFoco.ToString(System.Globalization.CultureInfo.InvariantCulture), html);

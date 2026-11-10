@@ -77,13 +77,57 @@ public class ConcentracionModel(ConsultarConcentracion consultar, IConfiguration
     public string CalorJson => JsonSerializer.Serialize((Mapa?.Calor ?? []).Select(p => new { lat = p.Latitud, lon = p.Longitud, casos = p.Casos }));
 
     // Las zonas con más casos, con el mismo nombre que usa Analítica («Zona K10»): el ranking del panel y su equivalente para el lector de
-    // pantalla. Cada una lleva su centro para que el mapa vuele hasta ella.
-    public sealed record ZonaDestacada(string Zona, string Origen, int Casos, double Latitud, double Longitud);
+    // pantalla. Una zona suma sus SOS y sus reportes (la barra muestra la composición) y lleva su centro para que el mapa vuele hasta ella
+    // y su esquina para resaltarla y abrir sus casos.
+    public sealed record ZonaDestacada(string Zona, int Sos, int Reportes, int Casos, double Latitud, double Longitud, double Sur, double Oeste, double Norte, double Este);
 
-    public IReadOnlyList<ZonaDestacada> ZonasDestacadas =>
-        (Mapa?.Celdas ?? []).OrderByDescending(c => c.Casos).Take(10)
-            .Select(c => new ZonaDestacada(Zonas.Nombre(c.Sur, c.Oeste), c.Origen == OrigenCaso.Sos ? "SOS" : "Reportes", c.Casos,
-                (c.Sur + c.Norte) / 2, (c.Oeste + c.Este) / 2)).ToList();
+    private IReadOnlyList<ZonaDestacada>? _zonasDestacadas;
+
+    public IReadOnlyList<ZonaDestacada> ZonasDestacadas => _zonasDestacadas ??=
+        (Mapa?.Celdas ?? []).GroupBy(c => (c.Sur, c.Oeste))
+            .Select(g =>
+            {
+                var c = g.First();
+                var sos = g.Where(x => x.Origen == OrigenCaso.Sos).Sum(x => x.Casos);
+                var reportes = g.Where(x => x.Origen == OrigenCaso.Reporte).Sum(x => x.Casos);
+                return new ZonaDestacada(Zonas.Nombre(c.Sur, c.Oeste), sos, reportes, sos + reportes, (c.Sur + c.Norte) / 2, (c.Oeste + c.Este) / 2,
+                    c.Sur, c.Oeste, c.Norte, c.Este);
+            })
+            .OrderByDescending(z => z.Casos).ThenBy(z => z.Zona).Take(10).ToList();
+
+    // Cuánto pesa una zona en el total con ubicación de la selección, en porcentaje entero.
+    public string PorcentajeDe(ZonaDestacada zona)
+    {
+        var total = (Mapa?.Sos ?? 0) + (Mapa?.Reportes ?? 0);
+        return total == 0 ? "0 %" : $"{Math.Round(100.0 * zona.Casos / total):0} %";
+    }
+
+    // Las dos líneas que resumen la selección cuando el formulario está plegado: «Últimos 30 días» y «11 oct – 10 nov · SOS y reportes».
+    public string TituloSeleccion => PeriodosRapidos.FirstOrDefault(p => p.Activo) is { } activo ? $"Últimos {activo.Texto}" : "Periodo elegido";
+
+    public string DetalleSeleccion
+    {
+        get
+        {
+            var cultura = CultureInfo.GetCultureInfo("es-PE");
+            var rango = DateOnly.TryParseExact(Desde, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)
+                        && DateOnly.TryParseExact(Hasta, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var h)
+                ? (d.Year == h.Year ? $"{d.ToString("d MMM", cultura)} – {h.ToString("d MMM yyyy", cultura)}" : $"{d.ToString("d MMM yyyy", cultura)} – {h.ToString("d MMM yyyy", cultura)}")
+                : "Fechas por corregir";
+            return $"{rango} · {TextoOrigen}";
+        }
+    }
+
+    // El formulario se despliega solo cuando hay algo que corregir o aún no hay mapa.
+    public bool SeleccionAbierta => Errores.Count > 0 || Mapa is null;
+
+    // Los casos de una zona, con el mismo periodo y origen del mapa (la lista de Casos filtra por la celda de unos 550 m).
+    public string EnlaceCasosZona(ZonaDestacada zona)
+    {
+        var inv = CultureInfo.InvariantCulture;
+        var origen = Origen is "Sos" or "Reporte" ? $"&origen={Origen}" : "";
+        return $"/panel/casos?desde={Desde}&hasta={Hasta}{origen}&zona={zona.Sur.ToString("0.######", inv)},{zona.Oeste.ToString("0.######", inv)}";
+    }
 
     // Atajos de periodo: los últimos 7, 30 o 90 días, con el origen elegido. El activo es el que coincide con la selección.
     public sealed record PeriodoRapido(string Texto, string Enlace, bool Activo);
