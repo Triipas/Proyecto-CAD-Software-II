@@ -17,6 +17,10 @@
     {
         <link rel="stylesheet" href="~/css/analitica-sistema.css" asp-append-version="true" />
     }
+    @if (Model.Actual.Clave == "repite")
+    {
+        <link rel="stylesheet" href="~/css/analitica-repite.css" asp-append-version="true" />
+    }
     @if (Model.Actual.Clave == "serenos")
     {
         <link rel="stylesheet" href="~/css/analitica-serenos.css" asp-append-version="true" />
@@ -177,6 +181,10 @@
     @if (Model.Actual.Clave == "sistema")
     {
         <script src="~/js/analitica-sistema.js" asp-append-version="true"></script>
+    }
+    @if (Model.Actual.Clave == "repite")
+    {
+        <script src="~/js/analitica-repite.js" asp-append-version="true"></script>
     }
     @if (Model.Actual.Clave == "reasigna")
     {

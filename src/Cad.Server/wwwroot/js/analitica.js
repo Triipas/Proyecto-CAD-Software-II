@@ -331,15 +331,25 @@
           }).addTo(mapa);
         limites.push([a.sur, a.oeste], [a.norte, a.este]);
       }
-      // Puntos críticos: el número es el de la lista de la derecha; el tamaño crece con los casos.
-      for (const p of leer("[data-puntos]")) {
-        const lado = Math.round(28 + Math.min(14, p.casos * 2));
+      // Puntos críticos: el número es el de la lista de la derecha; el tamaño crece con los casos. Solo los 12 con más casos llevan
+      // número y su círculo de 100 m: con decenas de puntos juntos los números se taparían. Los demás, un punto chico (y su globo).
+      const CON_NUMERO = 12;
+      for (const p of [...leer("[data-puntos]")].reverse()) { // los primeros, encima
+        const principal = p.numero <= CON_NUMERO;
+        const lado = principal ? Math.round(28 + Math.min(14, p.casos * 2)) : 12;
         const texto = `Punto ${p.numero}: ${p.casos} casos${p.categoria ? ` · sobre todo ${p.categoria.toLowerCase()}` : ""}`;
-        L.circle([p.lat, p.lon], { radius: 100, color: rampa[5], weight: 1, fillColor: rampa[4], fillOpacity: 0.18, interactive: false }).addTo(mapa);
+        if (principal)
+          L.circle([p.lat, p.lon], { radius: 100, color: rampa[5], weight: 1, fillColor: rampa[4], fillOpacity: 0.18, interactive: false }).addTo(mapa);
+        // El número enlaza el punto con su fila de la lista (analitica-repite.js); el que tuvo un caso en las últimas 24 h, late.
         L.marker([p.lat, p.lon], {
-          icon: L.divIcon({ className: "punto-a", html: String(p.numero), iconSize: [lado, lado] }),
+          icon: L.divIcon({
+            className: `punto-a${principal ? "" : " punto-a--menor"}${p.reciente && principal ? " punto-a--reciente" : ""}`,
+            html: principal ? `<span data-punto-mapa="${p.numero}">${p.numero}</span>` : "",
+            iconSize: [lado, lado],
+          }),
           title: texto,
           alt: texto,
+          zIndexOffset: principal ? 1000 - p.numero : 0,
         }).addTo(mapa);
         limites.push([p.lat, p.lon]);
       }
