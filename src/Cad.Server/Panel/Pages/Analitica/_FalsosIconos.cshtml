@@ -13,7 +13,11 @@
 <div class="iconos-b">
     @if (cada is { } n && n <= UnoDeCada.MaximoIconos)
     {
-        <div class="iconos-b__rejilla@(n > 30 ? " iconos-b__rejilla--densa" : "")" role="img" aria-label="@n íconos y uno resaltado: uno de cada @n @baseTexto fue falso" style="--n:@n">
+        // La rejilla se acomoda a cuántos íconos son: más columnas cuantos más, y cada ícono tan grande como deje el ancho (con un
+        // tope que baja cuando son muchos), para que la columna no quede medio vacía con 4 ni desborde con 100.
+        var columnas = Math.Clamp((int)Math.Round(Math.Sqrt(n * 1.6)), 4, 12);
+        var tope = n <= 12 ? 5 : n <= 40 ? 4.25 : 3.5;
+        <div class="iconos-b__rejilla" role="img" aria-label="@n íconos y uno resaltado: uno de cada @n @baseTexto fue falso" style="--n:@n;--columnas:@columnas;--tope:@(tope.ToString(System.Globalization.CultureInfo.InvariantCulture))rem">
             @for (var i = 0; i < n; i++)
             {
                 var falso = i == n - 1;

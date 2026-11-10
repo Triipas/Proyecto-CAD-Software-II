@@ -82,7 +82,7 @@
   color: inherit;
   font: inherit;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
   transition: background-color var(--duracion-rapida) var(--curva-estandar), border-color var(--duracion-rapida) var(--curva-estandar);
   animation: repite-sube 450ms var(--curva-salida) backwards;
   animation-delay: calc(500ms + var(--i) * 60ms);
@@ -92,6 +92,7 @@
 .punto-b:focus-visible,
 .punto-b.foco { background: rgb(213 224 240 / 0.07); border-color: rgb(213 224 240 / 0.16); }
 .punto-b:focus-visible { outline: 2px solid var(--color-acento); outline-offset: 1px; }
+.punto-b.elegida { border-color: rgb(69 227 164 / 0.55); background: rgb(69 227 164 / 0.08); }
 
 @keyframes repite-sube { from { opacity: 0; transform: translateY(8px); } }
 

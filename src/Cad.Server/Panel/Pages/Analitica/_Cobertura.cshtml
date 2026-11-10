@@ -79,30 +79,33 @@ else
                          data-teselas="@m.UrlTeselas" data-sur="@G(tablero.Sur)" data-oeste="@G(tablero.Oeste)" data-norte="@G(tablero.Norte)" data-este="@G(tablero.Este)">
                         <div class="tablero-b__mapa" data-mapa aria-hidden="true"></div>
                         <span class="tablero-b__velo" aria-hidden="true"></span>
-                        <div class="tablero-b__celdas" role="group" aria-label="Tablero de @tablero.Celdas.Count zonas: @tablero.Celdas.Count(x => x.Baja) pasan más de la mitad del tiempo sin un sereno cerca">
-                            @foreach (var x in tablero.Celdas)
+                        @* La capa de zonas y serenos: sin JavaScript cubre el tablero; con el mapa, va dentro de él y se mueve con él. *@
+                        <div class="tablero-b__capa" data-capa>
+                            <div class="tablero-b__celdas" role="group" aria-label="Tablero de @tablero.Celdas.Count zonas: @tablero.Celdas.Count(x => x.Baja) pasan más de la mitad del tiempo sin un sereno cerca">
+                                @foreach (var x in tablero.Celdas)
+                                {
+                                    var pct = x.Datos.PorcentajeCubierto;
+                                    var color = TableroZonas.Colores[x.Bloque.Clave];
+                                    var fondo = x.Baja ? "rgb(245 181 68 / 0.88)" : $"rgb(69 227 164 / {F(0.14 + Math.Clamp((pct - 50) / 50, 0, 1) * 0.52)})";
+                                    var bordes = new List<string>();
+                                    if (x.Norte) bordes.Add($"0 -2px 0 0 {color}");
+                                    if (x.Sur) bordes.Add($"0 2px 0 0 {color}");
+                                    if (x.Oeste) bordes.Add($"-2px 0 0 0 {color}");
+                                    if (x.Este) bordes.Add($"2px 0 0 0 {color}");
+                                    var descripcion = $"Zona {x.Nombre}, bloque {x.Bloque.Nombre}: {Pct(pct)} del tiempo cubierta{(x.Baja ? " (menos de la mitad)" : "")}, {Casos(x.Datos.Casos)}";
+                                    <button type="button" class="celda-b@(x.Baja ? " celda-b--baja" : "")" data-bloque="@x.Bloque.Clave" aria-label="@descripcion"
+                                            style="grid-column:@(x.Columna + 1);grid-row:@(x.Fila + 1);background:@fondo;box-shadow:@(bordes.Count == 0 ? "none" : string.Join(", ", bordes));--d:@F(x.Distancia);--b:@tablero.Bloques.ToList().FindIndex(b => b.Bloque == x.Bloque)"
+                                            data-nombre="@x.Nombre" data-bloque-nombre="@x.Bloque.Nombre" data-cubierta="@Pct(pct) del tiempo cubierta" data-casos="@Casos(x.Datos.Casos)" data-horas="@Formato.Horas(x.Datos.HorasSinCobertura) sin un sereno cerca">
+                                        <span aria-hidden="true">@(x.Baja ? "▲" : "")@x.Nombre</span>
+                                        @if (x.Base) { <i class="celda-b__base" aria-hidden="true"></i> }
+                                    </button>
+                                }
+                            </div>
+                            @foreach (var s in serenos)
                             {
-                                var pct = x.Datos.PorcentajeCubierto;
-                                var color = TableroZonas.Colores[x.Bloque.Clave];
-                                var fondo = x.Baja ? "rgb(245 181 68 / 0.88)" : $"rgb(69 227 164 / {F(0.14 + Math.Clamp((pct - 50) / 50, 0, 1) * 0.52)})";
-                                var bordes = new List<string>();
-                                if (x.Norte) bordes.Add($"0 -2px 0 0 {color}");
-                                if (x.Sur) bordes.Add($"0 2px 0 0 {color}");
-                                if (x.Oeste) bordes.Add($"-2px 0 0 0 {color}");
-                                if (x.Este) bordes.Add($"2px 0 0 0 {color}");
-                                var descripcion = $"Zona {x.Nombre}, bloque {x.Bloque.Nombre}: {Pct(pct)} del tiempo cubierta{(x.Baja ? " (menos de la mitad)" : "")}, {Casos(x.Datos.Casos)}";
-                                <button type="button" class="celda-b@(x.Baja ? " celda-b--baja" : "")" data-bloque="@x.Bloque.Clave" aria-label="@descripcion"
-                                        style="grid-column:@(x.Columna + 1);grid-row:@(x.Fila + 1);background:@fondo;box-shadow:@(bordes.Count == 0 ? "none" : string.Join(", ", bordes));--d:@F(x.Distancia);--b:@tablero.Bloques.ToList().FindIndex(b => b.Bloque == x.Bloque)"
-                                        data-nombre="@x.Nombre" data-bloque-nombre="@x.Bloque.Nombre" data-cubierta="@Pct(pct) del tiempo cubierta" data-casos="@Casos(x.Datos.Casos)" data-horas="@Formato.Horas(x.Datos.HorasSinCobertura) sin un sereno cerca">
-                                    <span aria-hidden="true">@(x.Baja ? "▲" : "")@x.Nombre</span>
-                                    @if (x.Base) { <i class="celda-b__base" aria-hidden="true"></i> }
-                                </button>
+                                <span class="tablero-b__sereno@(s.Libre ? "" : " tablero-b__sereno--ocupado")" style="left:@F(s.X)%;top:@F(s.Y)%" aria-hidden="true"></span>
                             }
                         </div>
-                        @foreach (var s in serenos)
-                        {
-                            <span class="tablero-b__sereno@(s.Libre ? "" : " tablero-b__sereno--ocupado")" style="left:@F(s.X)%;top:@F(s.Y)%" aria-hidden="true"></span>
-                        }
                         <div class="tablero-b__globo" data-globo hidden aria-hidden="true"></div>
                     </div>
                     <div class="cobertura-b__rampa" aria-hidden="true"><span>Menos cubierta</span><i></i><span>Más cubierta</span></div>

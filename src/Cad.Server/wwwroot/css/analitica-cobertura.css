@@ -76,6 +76,14 @@
 .tablero-b__mapa .leaflet-tile-pane { filter: saturate(0.55) brightness(0.92); }
 .tablero-b__velo { position: absolute; inset: 0; z-index: 1; background: rgb(10 26 58 / 0.30); pointer-events: none; }
 
+/* La capa de zonas y serenos. Sin JavaScript cubre el tablero; con el mapa, analitica-cobertura.js la muda a un panel de Leaflet
+   y le pone posición y tamaño en píxeles (las letras siguen el tamaño de las celdas al acercar o alejar). */
+.tablero-b__capa { position: absolute; inset: 0; z-index: 2; container-type: size; }
+.tablero-b--mapa .tablero-b__capa { inset: auto; left: 0; top: 0; }
+.tablero-b--mapa .tablero-b__velo { display: none; }
+.tablero-b--mapa .tablero-b__mapa .leaflet-tile-pane { filter: saturate(0.5) brightness(0.72); }
+.tablero-b--mapa .tablero-b__mapa { cursor: grab; }
+
 .tablero-b__celdas {
   position: absolute;
   inset: 0;
@@ -94,7 +102,7 @@
   display: grid;
   place-items: center;
   font: inherit;
-  font-size: clamp(0.5625rem, 1.4vw, 0.6875rem);
+  font-size: clamp(0.4rem, 2.1cqw, 0.85rem);
   font-weight: var(--peso-fuerte);
   color: #FFFFFF;
   text-shadow: 0 1px 2px rgb(0 0 0 / 0.7);

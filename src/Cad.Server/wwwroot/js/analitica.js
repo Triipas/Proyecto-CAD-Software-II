@@ -234,8 +234,10 @@
 
   function dibujarMapa(contenedor) {
     L.Control.Attribution.prototype.options.prefix = false;
-    // El mapa que ocupa la pantalla (cobertura, lo que se repite) se acerca con la rueda; el de una tarjeta deja pasar la rueda al scroll.
-    const mapa = L.map(contenedor, { zoomControl: false, scrollWheelZoom: !!contenedor.closest(".mapa-protagonista") });
+    // Todos los mapas de la analítica se acercan y alejan con la rueda (y con los botones). El mapa queda en el contenedor para que
+    // la pregunta pueda moverlo (en «Incidencias recurrentes», al elegir un punto de la lista).
+    const mapa = L.map(contenedor, { zoomControl: false, scrollWheelZoom: true, wheelPxPerZoomLevel: 90 });
+    contenedor.mapa = mapa;
     L.tileLayer(contenedor.dataset.teselas, {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">colaboradores de OpenStreetMap</a>',
