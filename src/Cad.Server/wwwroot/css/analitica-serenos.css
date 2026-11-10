@@ -1,0 +1,276 @@
+/* «Rendimiento de los serenos» como «las fichas del equipo» (16/11/2026) — se carga solo en esa pregunta, después de analitica.css.
+   La lista: el tablero nocturno con una franja por cifra (cada sereno un punto, la raya blanca el equipo, en ocre los que tienen esa
+   señal), las fichas de los que conviene mirar primero, los nombres de los demás y la tabla completa plegada. El detalle: la
+   cabecera nocturna con «Frente al equipo», cada cifra del sereno sobre la franja del equipo. El ocre marca una señal, siempre con ▲
+   y su texto; el rojo queda para el SOS. */
+
+.tarjeta-a.respuesta:is(.equipo-b, .sereno-b) {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background:
+    radial-gradient(45% 70% at 15% 90%, rgb(0 128 90 / 0.20), transparent 70%),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+}
+
+.tarjeta-a.respuesta.equipo-b > .respuesta__cabecera:first-child,
+.tarjeta-a.respuesta.sereno-b > .sereno-a__cabecera:first-child {
+  margin-bottom: 0;
+  background: radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.30) 0%, transparent 62%);
+}
+
+.tarjeta-a.respuesta.equipo-b > .respuesta__cabecera:first-child .respuesta__titular em { color: var(--color-advertencia-sobre-marino); }
+.equipo-b .respuesta__visual { margin-top: 0; }
+
+/* ── Las franjas del equipo ── */
+.franjas-b {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--espacio-4);
+  padding-top: var(--espacio-4);
+}
+
+.franja-b {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-4);
+  border-radius: var(--radio-superficie);
+  border: 1px solid rgb(213 224 240 / 0.12);
+  background: rgb(6 17 39 / 0.45);
+  animation: serenos-sube 500ms var(--curva-salida) backwards;
+  animation-delay: calc(150ms + var(--i) * 80ms);
+}
+
+.franja-b__nombre { font-size: var(--texto-xs); font-weight: var(--peso-fuerte); color: var(--color-texto-sobre-marino-secundario); }
+.franja-b__valor { font-size: var(--texto-2xl); line-height: 1.1; color: #FFFFFF; letter-spacing: -0.02em; }
+.franja-b__nota { font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+.franja-b__pista { position: relative; display: block; height: 1.75rem; margin-top: var(--espacio-3); }
+.franja-b__linea { position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgb(213 224 240 / 0.22); }
+
+.franja-b__pista i {
+  position: absolute;
+  top: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: rgb(69 227 164 / 0.75);
+  box-shadow: 0 0 0 1.5px var(--marino-900);
+  animation: serenos-aparece 400ms ease backwards;
+  animation-delay: calc(400ms + var(--j) * 14ms);
+}
+
+.franja-b__pista i.franja-b__senal { z-index: 1; background: var(--color-advertencia-sobre-marino); }
+.franja-b__pista i.franja-b__pocos { background: transparent; box-shadow: inset 0 0 0 2px rgb(69 227 164 / 0.7); }
+.franja-b__pista i.franja-b__senal.franja-b__pocos { box-shadow: inset 0 0 0 2px var(--color-advertencia-sobre-marino); }
+
+.franja-b__equipo {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #FFFFFF;
+}
+
+.equipo-b__pie { margin: var(--espacio-3) 0 0; font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+@keyframes serenos-sube { from { opacity: 0; transform: translateY(8px); } }
+@keyframes serenos-aparece { from { opacity: 0; transform: scale(0.4); } }
+@keyframes serenos-abre { from { transform: scaleX(0); } }
+
+/* ── Para mirar primero: las fichas ── */
+.seccion-b { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--espacio-1) var(--espacio-3); }
+.seccion-b h3 { margin: 0; font-size: var(--texto-lg); color: var(--marino-900); }
+
+.fichas-b { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: var(--espacio-3); }
+
+.ficha-b {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--espacio-2) var(--espacio-3);
+  padding: var(--espacio-4);
+  border-radius: var(--radio-superficie);
+  border: 1px solid var(--color-advertencia-borde);
+  background: var(--color-superficie, #FFFFFF);
+  box-shadow: inset 4px 0 0 var(--color-advertencia), var(--sombra-1, 0 1px 2px rgb(10 26 58 / 0.06));
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--duracion-rapida) var(--curva-estandar), box-shadow var(--duracion-rapida) var(--curva-estandar);
+  animation: serenos-sube 500ms var(--curva-salida) backwards;
+  animation-delay: calc(500ms + var(--i) * 60ms);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ficha-b:hover { transform: translateY(-2px); box-shadow: inset 4px 0 0 var(--color-advertencia), 0 10px 24px -12px rgb(10 26 58 / 0.35); }
+}
+
+.ficha-b:focus-visible { outline: 2px solid var(--esmeralda-700); outline-offset: 2px; }
+
+.ficha-b__inicial,
+.resto-b i {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--marino-900);
+  color: #FFFFFF;
+  font-style: normal;
+  font-weight: var(--peso-fuerte);
+}
+
+.ficha-b__inicial { width: 2.5rem; height: 2.5rem; font-size: var(--texto-sm); }
+.ficha-b__nombre { align-self: center; font-weight: var(--peso-fuerte); color: var(--marino-900); line-height: 1.3; }
+.ficha-b__nombre small { display: block; font-size: var(--texto-xs); font-weight: 400; color: var(--color-texto-secundario); }
+
+.ficha-b__cifra {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 4.5rem;
+  gap: var(--espacio-2);
+  align-items: center;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.ficha-b__cifra b { text-align: right; font-size: var(--texto-sm); color: var(--color-texto); white-space: nowrap; }
+.ficha-b__cifra b.ficha-b__alerta { color: var(--color-advertencia); }
+
+.bala-b { position: relative; display: block; height: 8px; border-radius: 4px; background: #E7EBF1; }
+
+.bala-b i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: #1DAE7A;
+  transform-origin: 0 50%;
+  animation: serenos-abre 700ms var(--curva-salida) backwards;
+  animation-delay: calc(700ms + var(--i) * 60ms);
+}
+
+.bala-b i.bala-b--alerta { background: var(--color-advertencia); }
+.bala-b__equipo { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--marino-900); }
+
+.ficha-b__senales { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ficha-b__senales span {
+  padding: 2px 8px;
+  border-radius: var(--radio-pildora);
+  background: var(--color-advertencia-fondo);
+  border: 1px solid var(--color-advertencia-borde);
+  color: #6B4A00;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+}
+
+/* ── Sin señales: los nombres ── */
+.resto-b { display: flex; flex-wrap: wrap; gap: var(--espacio-2); }
+
+.resto-b a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 2.25rem;
+  padding: 3px var(--espacio-3) 3px 3px;
+  border-radius: var(--radio-pildora);
+  border: 1px solid var(--color-borde, #D2DAE5);
+  background: var(--color-superficie, #FFFFFF);
+  color: var(--color-texto);
+  font-size: var(--texto-sm);
+  text-decoration: none;
+}
+
+.resto-b a:hover { border-color: var(--esmeralda-700); }
+.resto-b a:focus-visible { outline: 2px solid var(--esmeralda-700); outline-offset: 2px; }
+.resto-b i { width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; background: var(--esmeralda-800); }
+
+/* ── La tabla completa, plegada ── */
+.tabla-b > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--espacio-1) var(--espacio-3); cursor: pointer; list-style: none; }
+.tabla-b > summary::-webkit-details-marker { display: none; }
+.tabla-b > summary h3 { margin: 0; font-size: var(--texto-md); }
+.tabla-b > summary h3::before { content: "▸ "; color: var(--esmeralda-700); }
+.tabla-b[open] > summary h3::before { content: "▾ "; }
+.tabla-b[open] > summary { margin-bottom: var(--espacio-3); }
+
+/* ── El detalle: «Frente al equipo» ── */
+.sereno-b .sereno-a__senales { margin-top: var(--espacio-4); }
+.sereno-b .estado-a--bien { color: var(--color-acento); }
+.sereno-b .senales-sereno-a { display: flex; flex-wrap: wrap; gap: var(--espacio-2); margin-left: 0; padding: 0; list-style: none; }
+
+.sereno-b .senales-sereno-a li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.875rem;
+  padding: 0 var(--espacio-3);
+  border-radius: var(--radio-pildora);
+  border: 1px solid rgb(245 181 68 / 0.45);
+  background: rgb(245 181 68 / 0.14);
+  color: var(--color-advertencia-sobre-marino);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+}
+
+.frente-b { margin-top: var(--espacio-4); padding-top: var(--espacio-4); border-top: 1px solid rgb(213 224 240 / 0.12); }
+.tarjeta-a.respuesta.sereno-b .frente-b__titulo { margin: 0 0 var(--espacio-2); font-size: var(--texto-md); color: #FFFFFF; }
+
+.frente-b__fila {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr) 13rem;
+  gap: var(--espacio-4);
+  align-items: center;
+  padding: var(--espacio-2) 0;
+  border-bottom: 1px solid rgb(213 224 240 / 0.08);
+  font-size: var(--texto-sm);
+}
+
+.frente-b__pista { position: relative; display: block; height: 1.5rem; }
+.frente-b__base { position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgb(213 224 240 / 0.2); }
+.frente-b__entre { position: absolute; top: calc(50% - 5px); height: 10px; border-radius: 5px; background: rgb(69 227 164 / 0.18); }
+.frente-b__equipo { position: absolute; top: 2px; bottom: 2px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: #FFFFFF; }
+
+.frente-b__yo {
+  position: absolute;
+  z-index: 1;
+  top: calc(50% - 8px);
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--color-acento);
+  box-shadow: 0 0 0 3px var(--marino-900);
+  animation: serenos-desliza 900ms var(--curva-salida) backwards;
+  animation-delay: calc(400ms + var(--i) * 90ms);
+}
+
+.frente-b__yo--alerta { background: var(--color-advertencia-sobre-marino); }
+@keyframes serenos-desliza { from { left: 0; } }
+
+.frente-b__valor { text-align: right; font-weight: var(--peso-fuerte); color: #FFFFFF; }
+.frente-b__valor small { display: block; font-size: var(--texto-xs); font-weight: 400; color: var(--color-texto-sobre-marino-secundario); }
+.frente-b__valor--alerta { color: var(--color-advertencia-sobre-marino); }
+
+.frente-b__ley { margin: var(--espacio-3) 0 0; font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+.frente-b__ley i { display: inline-block; vertical-align: -2px; margin: 0 6px 0 0; }
+.frente-b__muestra-yo { width: 11px; height: 11px; border-radius: 50%; background: var(--color-acento); }
+.frente-b__muestra-equipo { width: 3px; height: 13px; background: #FFFFFF; }
+.frente-b__muestra-entre { width: 18px; height: 8px; border-radius: 4px; background: rgb(69 227 164 / 0.3); }
+
+@media (max-width: 64rem) {
+  .franjas-b { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .frente-b__fila { grid-template-columns: 9rem minmax(0, 1fr) 10rem; }
+}
+
+@media (max-width: 40rem) {
+  .franjas-b { grid-template-columns: minmax(0, 1fr); }
+  .frente-b__fila { grid-template-columns: minmax(0, 1fr) auto; }
+  .frente-b__pista { grid-column: 1 / -1; grid-row: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.equipo-b, .sereno-b, .fichas-b) * ,
+  .fichas-b .ficha-b { animation: none !important; transition: none !important; }
+}

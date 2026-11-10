@@ -35,7 +35,27 @@ else
     var resultados = s.Resultados.Select((r, i) => (r.Texto, r.Veces, clases[i % clases.Length])).Where(r => r.Veces > 0).ToList();
     var maxNota = Math.Max(1, s.Notas.Max());
 
-    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-sereno" data-respuesta="sereno" data-senales="@senales.Count">
+    // «Frente al equipo»: cada cifra del sereno sobre la franja que va del sereno con menos al sereno con más (solo los que tienen
+    // casos suficientes), con la raya del equipo. En ocre y con ▲, la cifra que da una señal.
+    var comparables = e.Serenos.Where(x => x.Llegadas.Count >= minimo).ToList();
+    double? MedianaDe(Func<RendimientoSereno, double?> valor) => Estadistica.Percentil(e.Serenos.Select(valor).OfType<double>().ToList(), 0.5);
+    (double, double)? RangoDe(Func<RendimientoSereno, double?> valor) => comparables.Select(valor).OfType<double>().ToList() is { Count: > 1 } vs ? (vs.Min(), vs.Max()) : null;
+    var frente = new List<(string Nombre, double? Valor, double? Equipo, (double, double)? Rango, double Desde, double Hasta, bool Senal, string Texto, string Comparado)>
+    {
+        ("Llegada", s.LlegadaP50, e.LlegadaP50, RangoDe(x => x.LlegadaP50), 0, Math.Max(10, new[] { s.LlegadaP50 ?? 0, e.LlegadaP50 ?? 0, RangoDe(x => x.LlegadaP50)?.Item2 ?? 0 }.Max() * 1.15),
+            senales.Any(x => x.Clave == "llegada"), s.LlegadaP50 is { } l ? Formato.Minutos(l) : "—", $"equipo {Formato.Minutos(e.LlegadaP50)}{(antes?.LlegadaP50 is { } la ? $" · antes {Formato.Minutos(la)}" : "")}"),
+        ("Calificación", s.Calificacion, e.Calificacion, RangoDe(x => x.Calificacion), 1, 5,
+            senales.Any(x => x.Clave == "calificacion"), s.Calificacion is { } c ? $"{Formato.Decimal(c)} ★" : "—", $"equipo {(e.Calificacion is { } ec ? Formato.Decimal(ec) : "—")} · {Formato.Plural(s.Evaluaciones, "evaluación", "evaluaciones")}"),
+        ("Tiempo con un caso", s.PorcentajeOcupado, e.PorcentajeOcupado, RangoDe(x => x.PorcentajeOcupado), 0, Math.Max(20, new[] { s.PorcentajeOcupado ?? 0, e.PorcentajeOcupado ?? 0, RangoDe(x => x.PorcentajeOcupado)?.Item2 ?? 0 }.Max() * 1.15),
+            false, s.PorcentajeOcupado is { } po ? Formato.Porcentaje(po, 0) : "—", $"equipo {(e.PorcentajeOcupado is { } eo ? Formato.Porcentaje(eo, 0) : "—")} · {Formato.HorasDeTrabajo(s.HorasOperativas)} en turno"),
+        ("Inicios lejos del caso", s.PorcentajeFueraDeRango, e.PorcentajeFueraDeRango, RangoDe(x => x.PorcentajeFueraDeRango), 0, Math.Max(20, new[] { s.PorcentajeFueraDeRango ?? 0, e.PorcentajeFueraDeRango ?? 0, RangoDe(x => x.PorcentajeFueraDeRango)?.Item2 ?? 0 }.Max() * 1.15),
+            senales.Any(x => x.Clave == "rango"), s.PorcentajeFueraDeRango is { } fr ? Formato.Porcentaje(fr, 0) : "—", $"equipo {(e.PorcentajeFueraDeRango is { } ef ? Formato.Porcentaje(ef, 0) : "—")}{(s.IniciosConPunto > 0 ? $" · {s.IniciosFueraDeRango} de {s.IniciosConPunto}" : "")}"),
+        ("Casos reasignados", s.PorcentajeRetirados, MedianaDe(x => x.PorcentajeRetirados), RangoDe(x => x.PorcentajeRetirados), 0, Math.Max(20, new[] { s.PorcentajeRetirados ?? 0, RangoDe(x => x.PorcentajeRetirados)?.Item2 ?? 0 }.Max() * 1.15),
+            senales.Any(x => x.Clave == "retiros"), s.PorcentajeRetirados is { } pr ? Formato.Porcentaje(pr, 0) : "—", $"mediana del equipo {(MedianaDe(x => x.PorcentajeRetirados) is { } mr ? Formato.Porcentaje(mr, 0) : "—")} · {s.Retirados} de {s.CasosAsignados}"),
+    };
+    string X(double valor, double desde, double hasta) => Pct(Math.Clamp((valor - desde) / (hasta - desde), 0, 1) * 100);
+
+    <section class="tarjeta-a respuesta sereno-b" aria-labelledby="respuesta-sereno" data-respuesta="sereno" data-senales="@senales.Count">
         <div class="sereno-a__cabecera">
             <span class="sereno-a__inicial" aria-hidden="true">@Rendimiento.Iniciales(s.Nombre)</span>
             <div class="respuesta__cabecera">
@@ -47,7 +67,7 @@ else
                 {
                     <h2 class="respuesta__titular" id="respuesta-sereno">@s.Nombre <em>no inició ninguna atención</em> en @m.TextoPeriodo@(s.HorasOperativas > 0 ? $"; estuvo {Formato.HorasDeTrabajo(s.HorasOperativas)} en turno" : "").</h2>
                 }
-                <p class="respuesta__lectura">Comparado con el equipo en @m.TextoPeriodo@(s.Activo ? "" : " · su cuenta está desactivada").@(s.Llegadas.Count is > 0 and var llegadas && llegadas < minimo ? $" Con {Formato.Plural(llegadas, "caso atendido", "casos atendidos")} (mín. {minimo}) las cifras son solo orientativas: no se marca ninguna señal." : "")</p>
+                <p class="respuesta__lectura">Comparado con el equipo en @m.TextoPeriodo · @s.CasosAtendidos casos atendidos de @s.CasosAsignados asignados · @s.CasosCerrados cerrados@(s.Activo ? "" : " · su cuenta está desactivada").@(s.Llegadas.Count is > 0 and var llegadas && llegadas < minimo ? $" Con {Formato.Plural(llegadas, "caso atendido", "casos atendidos")} (mín. {minimo}) las cifras son solo orientativas: no se marca ninguna señal." : "")</p>
             </div>
         </div>
         @if (senales.Count == 0)
@@ -58,13 +78,24 @@ else
         {
             <ul class="senales-sereno-a sereno-a__senales">@foreach (var x in senales) {<li data-senal="@x.Clave">▲ @x.Texto</li>}</ul>
         }
-        <dl class="equipo-a" data-cifras-sereno>
-            <div><dt>Horas en turno</dt><dd>@Formato.HorasDeTrabajo(s.HorasOperativas)</dd><span class="tarjeta-a__nota">@(antes is null ? "sin turnos antes" : $"antes: {Formato.HorasDeTrabajo(antes.HorasOperativas)}")</span></div>
-            <div><dt>Tiempo con caso</dt><dd>@(s.PorcentajeOcupado is { } p ? Formato.Porcentaje(p, 0) : "—")</dd><span class="tarjeta-a__nota">equipo: @(e.PorcentajeOcupado is { } pe ? Formato.Porcentaje(pe, 0) : "—")</span></div>
-            <div><dt>Casos atendidos</dt><dd>@s.CasosAtendidos</dd><span class="tarjeta-a__nota">de @s.CasosAsignados asignados · @s.CasosCerrados cerrados</span></div>
-            <div><dt>Llegada</dt><dd>@Formato.Minutos(s.LlegadaP50)</dd><span class="tarjeta-a__nota">@(antes?.LlegadaP50 is { } la ? $"antes: {Formato.Minutos(la)}" : $"equipo: {Formato.Minutos(e.LlegadaP50)}")</span></div>
-            <div><dt>Calificación</dt><dd>@(s.Calificacion is { } c ? Formato.Decimal(c) : "—")<small> de 5</small></dd><span class="tarjeta-a__nota">@Formato.Plural(s.Evaluaciones, "evaluación", "evaluaciones")@(antes?.Calificacion is { } ca ? $" · antes: {Formato.Decimal(ca)}" : "")</span></div>
-        </dl>
+        <div class="frente-b" data-cifras-sereno>
+            <h3 class="frente-b__titulo">Frente al equipo</h3>
+            @for (var i = 0; i < frente.Count; i++)
+            {
+                var fila = frente[i];
+                <div class="frente-b__fila" style="--i:@i">
+                    <span class="frente-b__nombre">@fila.Nombre</span>
+                    <span class="frente-b__pista" role="img" aria-label="@fila.Nombre: @fila.Texto; @fila.Comparado">
+                        <span class="frente-b__base"></span>
+                        @if (fila.Rango is { } rango) { <span class="frente-b__entre" style="left:@X(rango.Item1, fila.Desde, fila.Hasta)%;width:@Pct(Math.Max(0.5, (Math.Clamp((rango.Item2 - fila.Desde) / (fila.Hasta - fila.Desde), 0, 1) - Math.Clamp((rango.Item1 - fila.Desde) / (fila.Hasta - fila.Desde), 0, 1)) * 100))%"></span> }
+                        @if (fila.Equipo is { } eq) { <span class="frente-b__equipo" style="left:@X(eq, fila.Desde, fila.Hasta)%"></span> }
+                        @if (fila.Valor is { } yo) { <span class="frente-b__yo@(fila.Senal ? " frente-b__yo--alerta" : "")" style="left:@X(yo, fila.Desde, fila.Hasta)%"></span> }
+                    </span>
+                    <span class="frente-b__valor@(fila.Senal ? " frente-b__valor--alerta" : "")">@(fila.Senal ? "▲ " : "")@fila.Texto<small>@fila.Comparado</small></span>
+                </div>
+            }
+            <p class="frente-b__ley"><i class="frente-b__muestra-yo"></i>@Rendimiento.Iniciales(s.Nombre) · <i class="frente-b__muestra-equipo"></i>equipo · <i class="frente-b__muestra-entre"></i>del sereno con menos al sereno con más (con @minimo o más casos)</p>
+        </div>
     </section>
 
     <section class="tarjeta-a" aria-labelledby="titulo-llegada">
