@@ -1,0 +1,201 @@
+/* «Valoración ciudadana» como «las estrellas y la espera» (16/11/2026) — se carga solo en esa pregunta, después de analitica.css.
+   El tablero nocturno: la nota grande con sus estrellas, que se llenan hasta el promedio; la escalera de evaluaciones por nota (las
+   bajas en tierra) y, a la derecha, la línea de qué parte califica mal según lo que esperó, con sus puntos en ocre desde el 40 %.
+   Debajo, los motivos en una nube (más grande, más veces), el uso recurrente de la app y los canales de los reportes.
+   Las notas bajas van en tierra y nunca en rojo: el rojo es del SOS. */
+
+.tarjeta-a.respuesta.valora-b {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background:
+    radial-gradient(40% 70% at 18% 60%, rgb(0 128 90 / 0.22), transparent 70%),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+}
+
+.tarjeta-a.respuesta.valora-b > .respuesta__cabecera:first-child {
+  background: radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.30) 0%, transparent 62%);
+}
+
+.tarjeta-a.respuesta.valora-b > .respuesta__cabecera:first-child:not(:last-child) { margin-bottom: 0; }
+.tarjeta-a.respuesta.valora-b > .respuesta__cabecera:first-child .respuesta__titular strong { color: var(--color-advertencia-sobre-marino); }
+.valora-b .respuesta__visual { margin-top: 0; }
+
+.valora-b__tablero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--espacio-8);
+  align-items: start;
+  padding-top: var(--espacio-4);
+}
+
+/* ── La nota y la escalera ── */
+.nota-b { display: flex; align-items: center; gap: var(--espacio-4); }
+.nota-b__cifra { font-size: 4rem; line-height: 1; color: #FFFFFF; letter-spacing: -0.03em; }
+.nota-b small { display: block; margin-top: var(--espacio-1); font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+.estrellas-b { position: relative; display: inline-block; font-size: 2.1rem; letter-spacing: 4px; line-height: 1; }
+.estrellas-b__base { color: rgb(213 224 240 / 0.18); }
+
+.estrellas-b__llena {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--color-acento);
+  animation: valora-llena 1.4s var(--curva-salida) 0.3s backwards;
+}
+
+@keyframes valora-llena { from { width: 0; } }
+
+.escalera-b { display: grid; gap: 6px; margin-top: var(--espacio-5); }
+
+.escalera-b__peldano {
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr) 3rem;
+  gap: var(--espacio-3);
+  align-items: center;
+  font-size: var(--texto-sm);
+}
+
+.escalera-b__estrellas { color: var(--color-texto-sobre-marino); letter-spacing: 1px; }
+.escalera-b__pista { display: block; height: 14px; border-radius: 7px; background: rgb(213 224 240 / 0.08); overflow: hidden; }
+
+.escalera-b__pista i {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+  background: var(--color-acento);
+  transform-origin: 0 50%;
+  animation: valora-abre 800ms var(--curva-salida) backwards;
+  animation-delay: calc(400ms + var(--i) * 90ms);
+}
+
+.escalera-b__pista i.escalera-b--baja { background: #C08A6C; }
+.escalera-b__peldano b { text-align: right; color: #FFFFFF; }
+
+@keyframes valora-abre { from { transform: scaleX(0); } }
+
+.valora-b__evaluan { margin: var(--espacio-4) 0 0; font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+.valora-b__evaluan b { color: #FFFFFF; }
+
+/* ── La línea de la espera ── */
+.tarjeta-a.respuesta.valora-b .valora-b__subtitulo { margin: 0; font-size: var(--texto-md); color: #FFFFFF; }
+.valora-b__nota { margin: var(--espacio-1) 0 0; font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+.linea-b { position: relative; height: 14rem; margin: var(--espacio-8) 0 3.5rem 2.25rem; }
+.linea-b__ejes { position: absolute; inset: 0; border-left: 1px solid rgb(213 224 240 / 0.25); border-bottom: 1px solid rgb(213 224 240 / 0.25); }
+.linea-b__y { position: absolute; left: -2.25rem; width: 1.9rem; transform: translateY(-50%); text-align: right; font-size: 0.6875rem; color: var(--color-texto-sobre-marino-secundario); }
+.linea-b svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.linea-b__area { fill: rgb(245 181 68 / 0.10); }
+
+.linea-b__trazo {
+  fill: none;
+  stroke: var(--color-advertencia-sobre-marino);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  animation: valora-traza 1.4s var(--curva-salida) 0.5s backwards;
+}
+
+@keyframes valora-traza { from { stroke-dashoffset: 1; } }
+
+.linea-b__punto {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: var(--color-acento);
+  box-shadow: 0 0 0 3px var(--marino-900);
+  animation: valora-aparece 400ms ease backwards;
+  animation-delay: calc(700ms + var(--i) * 220ms);
+}
+
+.linea-b__punto.linea-b--alta { background: var(--color-advertencia-sobre-marino); }
+.linea-b__punto.linea-b--pocos { background: var(--marino-900); box-shadow: 0 0 0 3px var(--marino-900), inset 0 0 0 2px var(--color-acento); }
+.linea-b__punto.linea-b--pocos.linea-b--alta { box-shadow: 0 0 0 3px var(--marino-900), inset 0 0 0 2px var(--color-advertencia-sobre-marino); }
+
+.linea-b__valor {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+  white-space: nowrap;
+  animation: valora-aparece 400ms ease backwards;
+  animation-delay: calc(700ms + var(--i) * 220ms);
+}
+
+.linea-b__valor.linea-b--alta { color: var(--color-advertencia-sobre-marino); }
+
+.linea-b__tramo {
+  position: absolute;
+  bottom: -3rem;
+  width: 6rem;
+  margin-left: -3rem;
+  text-align: center;
+  font-size: var(--texto-xs);
+  line-height: 1.3;
+  color: var(--color-texto-sobre-marino);
+}
+
+.linea-b__tramo small { display: block; color: var(--color-texto-sobre-marino-secundario); }
+
+@keyframes valora-aparece { from { opacity: 0; } }
+
+.valora-b__conclusion {
+  margin: var(--espacio-2) 0 var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-control);
+  background: rgb(245 181 68 / 0.10);
+  border: 1px solid rgb(245 181 68 / 0.4);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-sobre-marino);
+}
+
+.valora-b__conclusion b { color: var(--color-advertencia-sobre-marino); }
+
+/* ── Debajo: la nube de motivos y los canales ── */
+.nube-b { display: flex; flex-wrap: wrap; gap: var(--espacio-2); align-items: center; margin: var(--espacio-3) 0 0; padding: 0; list-style: none; }
+
+.nube-b li {
+  padding: 4px 12px;
+  border-radius: var(--radio-pildora);
+  font-weight: var(--peso-fuerte);
+  line-height: 1.25;
+  animation: valora-aparece 500ms ease backwards;
+  animation-delay: calc(500ms + var(--i) * 70ms);
+}
+
+.nube-b li b { margin-left: 4px; }
+.nube-b--baja { background: #F8F0EB; border: 1px solid #E6CDBE; color: #6E3E24; }
+.nube-b--alta { background: var(--esmeralda-100); border: 1px solid #A6E6C8; color: var(--esmeralda-800); }
+
+.canales-b { display: flex; gap: 2px; height: 1.125rem; margin-top: var(--espacio-3); border-radius: 9px; overflow: hidden; }
+
+.canales-b i {
+  min-width: 3px;
+  transform-origin: 0 50%;
+  animation: valora-abre 800ms var(--curva-salida) backwards;
+  animation-delay: calc(400ms + var(--i) * 80ms);
+}
+
+.canales-b__lista { display: grid; gap: 6px; margin: var(--espacio-3) 0 var(--espacio-2); padding: 0; list-style: none; font-size: var(--texto-sm); color: var(--color-texto-secundario); }
+.canales-b__lista li { display: grid; grid-template-columns: 11px minmax(0, 1fr) auto 3rem; gap: var(--espacio-2); align-items: center; }
+.canales-b__lista i { width: 11px; height: 11px; border-radius: 3px; }
+.canales-b__lista b { color: var(--color-texto); }
+.canales-b__lista small { text-align: right; font-size: var(--texto-xs); }
+
+@media (max-width: 64rem) {
+  .valora-b__tablero { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 40rem) {
+  .linea-b__tramo { width: 4.5rem; margin-left: -2.25rem; font-size: 0.6875rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valora-b *,
+  .rejilla-a :is(.nube-b li, .canales-b i) { animation: none !important; }
+}
