@@ -123,6 +123,9 @@ public class CoberturaYRecursosTests(FabricaCad fabrica)
         Assert.Equal((50.0, 3), (Math.Round(a.PorcentajeCubierto, 6), a.Casos));
         Assert.Equal(0.5, a.HorasSinCobertura, 6);
         Assert.Equal((1, 1), (resultado.ZonasAgrupadas, resultado.CasosAgrupados)); // la zona C tiene un solo caso
+        // Las 53 zonas de los bloques se miden siempre, con o sin casos (aquí, lejos del sereno: nunca cubiertas).
+        Assert.Equal(BloquesDistrito.TotalZonas, resultado.ZonasBloques!.Count);
+        Assert.All(resultado.ZonasBloques, z => Assert.Equal(0, z.PorcentajeCubierto));
     }
 
     [Fact]

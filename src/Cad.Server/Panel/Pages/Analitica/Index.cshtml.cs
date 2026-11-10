@@ -335,9 +335,11 @@ public class IndexModel(IServiceProvider servicios, CacheAnalitica cache, IOptio
             return indice.PorcentajeReportesFalsos is { } p ? new Resumen($"Reportes falsos · {Formato.Porcentaje(p)}") : new Resumen("Sin reportes decididos");
         });
         Resumenes["cobertura"] = cache.SiExiste<Cobertura>(Clave("cobertura", RangoResumen)) is { } cobertura
-            ? cobertura.Zonas.Count(z => z.PorcentajeCubierto < 50) is var sinCubrir and > 0
-                ? new Resumen($"▲ {sinCubrir} {(sinCubrir == 1 ? "zona" : "zonas")} sin cubrir", "aviso")
-                : cobertura.Zonas.Count == 0 ? new Resumen("Sin zonas con 3+ casos") : new Resumen("✓ Zonas cubiertas", "bien")
+            // Las mismas zonas del titular: las de los bloques (el tablero), todas, tengan o no casos.
+            ? cobertura.Zonas.Count == 0 && cobertura.ZonasAgrupadas == 0 ? new Resumen("Sin incidencias con ubicación")
+                : (cobertura.ZonasBloques ?? cobertura.Zonas).Count(z => z.PorcentajeCubierto < TableroZonas.Mitad) is var sinCubrir and > 0
+                    ? new Resumen($"▲ {sinCubrir} {(sinCubrir == 1 ? "zona" : "zonas")} sin cubrir", "aviso")
+                    : new Resumen("✓ Zonas cubiertas", "bien")
             : new Resumen("Zonas, turnos y serenos");
         await Intentar("reasigna", async () =>
         {
