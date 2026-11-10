@@ -1,0 +1,155 @@
+/* «Reasignaciones» como «qué hay que arreglar» (16/11/2026) — se carga solo en esa pregunta, después de analitica.css.
+   El tablero nocturno dice el motivo que más se repite y lo reparte en dos piezas: a la izquierda, las reasignaciones de cada tramo
+   apiladas por motivo; a la derecha, una tarjeta por motivo con quién tiene que revisarlo, qué revisar y cómo va frente al periodo
+   anterior. Pasar por una tarjeta resalta su motivo en las columnas (analitica-reasigna.js). Debajo, tres tarjetas claras. */
+
+.tarjeta-a.respuesta.arreglar-b {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background: linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+}
+
+.tarjeta-a.respuesta.arreglar-b > .respuesta__cabecera:first-child {
+  margin-bottom: 0;
+  background: radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.30) 0%, transparent 62%);
+}
+
+.tarjeta-a.respuesta.arreglar-b > .respuesta__cabecera:first-child .respuesta__titular em { color: var(--color-advertencia-sobre-marino); }
+.arreglar-b .respuesta__visual { margin-top: 0; padding-bottom: var(--espacio-2); }
+
+.arreglar-b__tablero {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.8fr) minmax(0, 1.6fr);
+  gap: var(--espacio-8);
+  align-items: stretch;
+  padding-top: var(--espacio-4);
+}
+
+.tarjeta-a.respuesta.arreglar-b .arreglar-b__subtitulo {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--espacio-1);
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+}
+
+.arreglar-b__nota { margin: 0 0 var(--espacio-3); font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+/* ── Las columnas apiladas ── */
+.arreglar-b__semanas { display: flex; flex-direction: column; min-width: 0; }
+
+.columnas-b {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: clamp(4px, 1.4vw, 14px);
+  align-items: end;
+  min-height: 13rem;
+  padding: 0 4px;
+  border-bottom: 1px solid rgb(213 224 240 / 0.25);
+}
+
+.columnas-b__col { display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; min-width: 0; }
+.columnas-b__total { margin-bottom: 6px; text-align: center; font-size: var(--texto-xs); color: #FFFFFF; }
+.columnas-b__pila { display: flex; flex-direction: column-reverse; gap: 2px; min-height: 2px; }
+
+.columnas-b__pila i {
+  display: block;
+  min-height: 3px;
+  border-radius: 3px;
+  transform-origin: 50% 100%;
+  transition: opacity var(--duracion-base) var(--curva-estandar);
+  animation: arreglar-crece 500ms var(--curva-salida) backwards;
+  animation-delay: calc(200ms + var(--i) * 70ms);
+}
+
+.arreglar-b[data-foco] .columnas-b__pila i { opacity: 0.2; }
+.arreglar-b[data-foco] .columnas-b__pila i.foco { opacity: 1; }
+
+@keyframes arreglar-crece { from { opacity: 0; transform: scaleY(0); } }
+
+.columnas-b__eje {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: clamp(4px, 1.4vw, 14px);
+  padding: 6px 4px 0;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+  text-align: center;
+}
+
+.columnas-b__eje span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Las tarjetas de qué revisar ── */
+.arreglar-b__acciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--espacio-3); align-content: start; }
+
+.accion-b {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--espacio-1) var(--espacio-3);
+  align-items: start;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-superficie);
+  border: 1px solid rgb(213 224 240 / 0.12);
+  background: rgb(6 17 39 / 0.45);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  transition: border-color var(--duracion-rapida) var(--curva-estandar), background-color var(--duracion-rapida) var(--curva-estandar);
+  animation: arreglar-sube 500ms var(--curva-salida) backwards;
+  animation-delay: calc(700ms + var(--i) * 90ms);
+}
+
+.accion-b:hover,
+.accion-b:focus-visible,
+.accion-b.foco { border-color: rgb(255 255 255 / 0.45); background: rgb(6 17 39 / 0.7); }
+.accion-b:focus-visible { outline: 2px solid var(--color-acento); outline-offset: 2px; }
+.accion-b--principal { border-color: rgb(245 181 68 / 0.5); background: rgb(245 181 68 / 0.08); }
+
+@keyframes arreglar-sube { from { opacity: 0; transform: translateY(8px); } }
+
+.accion-b__sello { grid-row: 1 / 4; width: 10px; height: 100%; min-height: 4rem; border-radius: 4px; background: var(--color); }
+.accion-b__quien { font-size: var(--texto-xs); font-weight: var(--peso-fuerte); letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-texto-sobre-marino-secundario); }
+.accion-b__motivo { font-size: var(--texto-sm); font-weight: var(--peso-fuerte); color: #FFFFFF; }
+.accion-b__cifra { grid-row: 1 / 3; grid-column: 3; text-align: right; font-size: var(--texto-xl); font-weight: var(--peso-fuerte); line-height: 1; color: #FFFFFF; letter-spacing: -0.02em; }
+.accion-b__cifra small { display: block; margin-top: 4px; font-size: var(--texto-xs); letter-spacing: 0; color: var(--color-texto-sobre-marino-secundario); }
+.accion-b__que { grid-column: 2 / 4; font-size: var(--texto-xs); line-height: 1.45; color: var(--color-texto-sobre-marino); }
+.accion-b__tendencia { font-weight: var(--peso-fuerte); white-space: nowrap; }
+.accion-b__tendencia--sube { color: var(--color-advertencia-sobre-marino); }
+.accion-b__tendencia--baja { color: var(--color-acento); }
+
+/* ── Las tarjetas de abajo ── */
+.cifra-b { margin: var(--espacio-2) 0 0; font-size: var(--texto-3xl); font-weight: var(--peso-fuerte); line-height: 1.1; letter-spacing: -0.02em; color: var(--esmeralda-800); }
+.cifra-b small { display: block; margin-top: var(--espacio-1); font-size: var(--texto-sm); font-weight: 400; letter-spacing: 0; color: var(--color-texto-secundario); }
+.arreglar-b__nota--pie { margin: var(--espacio-2) 0 0; }
+.cifra-b--alerta { color: var(--color-advertencia); }
+.senales-b { margin-top: var(--espacio-3); }
+.senales-b .senal-a { display: block; padding: 0; border: 0; }
+
+.pareto-b { display: flex; gap: 3px; align-items: flex-end; height: 4.5rem; margin-top: var(--espacio-3); }
+
+.pareto-b i {
+  flex: 1;
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #A6E6C8;
+  transform-origin: 50% 100%;
+  animation: arreglar-crece 500ms var(--curva-salida) backwards;
+  animation-delay: calc(500ms + var(--i) * 25ms);
+}
+
+.pareto-b i.pareto-b--cabeza { background: var(--esmeralda-800); }
+
+@media (max-width: 64rem) {
+  .arreglar-b__tablero { grid-template-columns: minmax(0, 1fr); gap: var(--espacio-6); }
+}
+
+@media (max-width: 40rem) {
+  .arreglar-b__acciones { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arreglar-b *,
+  .pareto-b i { animation: none !important; }
+}

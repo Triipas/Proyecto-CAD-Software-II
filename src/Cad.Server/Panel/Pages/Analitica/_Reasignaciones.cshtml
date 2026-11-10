@@ -7,22 +7,25 @@
     var referencia = m.Opciones.ReferenciaReasignadosPorcentaje;
     var porcentaje = r.PorcentajeReasignados;
     var sobre = porcentaje is { } p && p > referencia;
+    string F(double x) => x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
     // La regla del porcentaje, la misma de las señales del sistema: la franja aceptable es hasta la referencia (provisional).
     var senal = porcentaje is { } pc
         ? new Sistema.Senal("Casos asignados que se reasignaron", $"referencia provisional: {Formato.Porcentaje(referencia, 0)} o menos", pc, referencia, Math.Max(30, Math.Ceiling(pc / 10) * 10), false)
         : null;
-    string[] clases = ["barra100__a", "barra100__b", "barra100__c", "barra100__d", "barra100__e"];
-    var filas = r.Motivos.Select((x, i) => (x.Texto, x.Veces, x.Codigo == ConsultarReasignaciones.SinMotivo ? "barra100__sin-registrar" : clases[i % clases.Length])).ToList();
-    // Qué sugiere el motivo que más se repite (solo con reasignaciones suficientes para que sea un patrón y no una casualidad).
-    var principal = r.Reasignaciones >= minimo ? r.Motivos.Where(x => x.Veces > 0).OrderByDescending(x => x.Veces).First() : null;
-    var lectura = principal?.Codigo switch
-    {
-        Cad.Contratos.Casos.MotivosReasignacion.SerenoNoResponde => "El motivo principal es que el sereno no responde: conviene revisar si recibe el aviso y cómo confirma el despacho.",
-        Cad.Contratos.Casos.MotivosReasignacion.FallaDelEquipo => "El motivo principal es una falla del equipo o falta de señal: el problema es de la app o de la cobertura, no de la asignación.",
-        Cad.Contratos.Casos.MotivosReasignacion.OtroMasCercano => "El motivo principal es que había otro sereno más cerca: revisa si la sugerencia del más cercano se está usando al asignar.",
-        Cad.Contratos.Casos.MotivosReasignacion.SerenoOcupado => "El motivo principal es que el sereno estaba ocupado en otro hecho: puede faltar disponibilidad en ese momento.",
-        _ => null,
-    };
+    // Los motivos con reasignaciones, de más a menos: cada uno es una tarjeta de «qué revisar» y un color en las columnas.
+    var motivos = r.Motivos.Where(x => x.Veces > 0).OrderByDescending(x => x.Veces).ToList();
+    // Solo con reasignaciones suficientes el motivo que más se repite es un patrón y no una casualidad: entonces va en el titular.
+    var principal = r.Reasignaciones >= minimo ? motivos.FirstOrDefault() : null;
+    var tramos = r.Tramos ?? [];
+    var techo = Math.Max(1, tramos.Select(t => t.Total).DefaultIfEmpty(0).Max());
+    var paso = tramos.Count >= 2 ? tramos[1].Desde - tramos[0].Desde : TimeSpan.FromDays(7);
+    var tituloTramos = paso.TotalHours <= 4 ? "Cada 4 horas" : paso.TotalDays <= 1 ? "Día a día" : paso.TotalDays <= 7 ? "Semana a semana" : paso.TotalDays <= 14 ? "Cada dos semanas" : "Cada 30 días";
+    // Un tramo dicho en días u horas, para avisar cuando la última columna cubre menos que las demás.
+    string Duracion(TimeSpan d) => d.TotalDays >= 1 ? Formato.Plural((int)Math.Round(d.TotalDays), "día", "días") : Formato.Plural(Math.Max(1, (int)Math.Round(d.TotalHours)), "hora", "horas");
+    var retiros = r.RetirosPorSerenoOrdenados ?? [];
+    var cabeza = Math.Max(1, (int)Math.Ceiling(retiros.Count * 0.2)); // el 20 % de los serenos con más casos reasignados
+    var enCabeza = retiros.Take(cabeza).Sum();
+    string Tendencia(int ahora, int? previo) => previo is not { } pr ? "" : ahora == pr ? "Igual que antes." : ahora > pr ? $"▲ {ahora - pr} más que antes." : $"▼ {pr - ahora} menos que antes.";
 }
 @if (r.CasosAsignados == 0)
 {
@@ -32,82 +35,127 @@
 }
 else
 {
-    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-reasigna" data-respuesta="reasigna" data-sobre="@sobre.ToString().ToLowerInvariant()">
+    <section class="tarjeta-a respuesta arreglar-b" aria-labelledby="respuesta-reasigna" data-respuesta="reasigna" data-sobre="@sobre.ToString().ToLowerInvariant()" data-arreglar>
         <div class="respuesta__cabecera">
             @if (r.CasosReasignados == 0)
             {
                 <h2 class="respuesta__titular" id="respuesta-reasigna"><em>Ningún caso</em> de los @Formato.Plural(r.CasosAsignados, "asignado", "asignados") en @m.TextoPeriodo se reasignó.</h2>
+                <p class="respuesta__lectura">Una reasignación es cuando la central retira un caso a un sereno que aún no llegó (asignado o en camino) y lo asigna a otro: cada una suma tiempo de espera para el ciudadano. Datos de @m.TextoPeriodo.</p>
+            }
+            else if (principal is not null)
+            {
+                var (antesCifra, cifra, despues) = Arreglar.Parte(principal.Veces, r.Reasignaciones);
+                <h2 class="respuesta__titular" id="respuesta-reasigna">@antesCifra<em>@cifra</em>@despues @Arreglar.De(principal.Codigo).Titular.</h2>
+                <p class="respuesta__lectura">Se reasignó el <b>@Formato.Porcentaje(porcentaje!.Value)</b> de los casos asignados (@r.CasosReasignados de @r.CasosAsignados)@(sobre ? $", por encima de la referencia de {Formato.Porcentaje(referencia, 0)}" : $", dentro de la referencia de {Formato.Porcentaje(referencia, 0)}"). Lo que importa es por qué: cada motivo apunta a algo distinto que se puede arreglar. Cada reasignación es un caso que la central le retiró a un sereno que aún no llegaba para darlo a otro.</p>
             }
             else
             {
                 <h2 class="respuesta__titular" id="respuesta-reasigna">Se reasignó el <em>@Formato.Porcentaje(porcentaje!.Value)</em> de los casos asignados (@r.CasosReasignados de @r.CasosAsignados)@(sobre ? $", por encima de la referencia de {Formato.Porcentaje(referencia, 0)}." : ".")</h2>
+                <p class="respuesta__lectura">Una reasignación es cuando la central retira un caso a un sereno que aún no llegó (asignado o en camino) y lo asigna a otro. Con tan pocas reasignaciones (mín. @minimo) no hay un patrón que leer en los motivos: se muestran tal cual.</p>
             }
-            <p class="respuesta__lectura">Una reasignación es cuando la central retira un caso a un sereno que aún no llegó (asignado o en camino) y lo asigna a otro: cada una suma tiempo de espera para el ciudadano. Cada caso cuenta una vez, aunque se reasigne varias veces. Datos de @m.TextoPeriodo.</p>
         </div>
-        @if (senal is not null)
+        @if (r.Reasignaciones > 0)
         {
             <div class="respuesta__visual">
-                <ul class="senales-a">
-                    <li class="senal-a @(senal.Bien ? "" : "senal-a--alerta")" data-senal="reasignados" data-bien="@senal.Bien.ToString().ToLowerInvariant()">
-                        <span class="senal-a__estado" aria-hidden="true">@(senal.Bien ? "✓" : "▲")</span>
-                        <span><span class="senal-a__nombre">@senal.Nombre</span><br /><span class="tarjeta-a__nota">@senal.Ayuda@(antes.PorcentajeReasignados is { } previo ? $" · antes: {Formato.Porcentaje(previo, 0)}" : "")</span></span>
-                        @Sistema.Regla(senal)
-                        <b class="senal-a__valor">@senal.Texto<span class="visualmente-oculto">@(senal.Bien ? ", dentro de lo aceptable" : ", fuera de lo aceptable")</span></b>
-                    </li>
-                </ul>
-                <ul class="leyenda-a leyenda-a--compacta">
-                    <li><i class="leyenda-a__lleno" style="background:var(--color-exito)"></i>Valor del periodo, dentro de lo aceptable</li>
-                    <li><i class="leyenda-a__atascado leyenda-a__atascado--lleno"></i>▲ Fuera de lo aceptable</li>
-                    <li><i class="leyenda-a__banda"></i>Franja aceptable (provisional; la línea punteada es el límite)</li>
-                </ul>
+                <div class="arreglar-b__tablero">
+                    <div class="arreglar-b__semanas">
+                        <h3 class="arreglar-b__subtitulo">@tituloTramos</h3>
+                        <p class="arreglar-b__nota">Reasignaciones de cada tramo, por motivo. Pasa el cursor por un motivo para verlo aquí.</p>
+                        <div class="columnas-b" style="--n:@Math.Max(1, tramos.Count)" role="img" aria-label="Reasignaciones por tramo: @string.Join(", ", tramos.Select(t => $"{t.Etiqueta}, {t.Total}"))">
+                            @for (var i = 0; i < tramos.Count; i++)
+                            {
+                                var t = tramos[i];
+                                <div class="columnas-b__col">
+                                    <b class="columnas-b__total">@t.Total</b>
+                                    <div class="columnas-b__pila" style="height:@F(t.Total * 100.0 / techo)%">
+                                        @for (var j = 0; j < motivos.Count; j++)
+                                        {
+                                            var veces = t.PorMotivo.GetValueOrDefault(motivos[j].Codigo);
+                                            if (veces > 0)
+                                            {
+                                                <i data-motivo="@motivos[j].Codigo" style="flex:@veces 1 0;background:@Arreglar.De(motivos[j].Codigo).Color;--i:@(i * 2 + j)"></i>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="columnas-b__eje" style="--n:@Math.Max(1, tramos.Count)" aria-hidden="true">@foreach (var t in tramos) { <span>@t.Etiqueta</span> }</div>
+                        @if (tramos.Count >= 2 && tramos[^1].Hasta - tramos[^1].Desde is var ultimo && ultimo < paso - TimeSpan.FromMinutes(1))
+                        {
+                            <p class="arreglar-b__nota arreglar-b__nota--pie">La última columna cubre @Duracion(ultimo), no @Duracion(paso)@(tramos[^1].Hasta < m.Rango.Hasta ? " (va en curso)" : ""): puede ser más baja por eso.</p>
+                        }
+                    </div>
+                    <div class="arreglar-b__acciones">
+                        <h3 class="arreglar-b__subtitulo">Qué hay que revisar, de lo más a lo menos frecuente</h3>
+                        @for (var i = 0; i < motivos.Count; i++)
+                        {
+                            var x = motivos[i];
+                            var d = Arreglar.De(x.Codigo);
+                            int? previo = antes.Reasignaciones == 0 ? null : antes.Motivos.FirstOrDefault(a => a.Codigo == x.Codigo)?.Veces ?? 0;
+                            var tendencia = Tendencia(x.Veces, previo);
+                            <button type="button" class="accion-b@(i == 0 && principal is not null ? " accion-b--principal" : "")" data-motivo="@x.Codigo" style="--color:@d.Color;--i:@i">
+                                <span class="accion-b__sello" aria-hidden="true"></span>
+                                <span class="accion-b__quien">@d.Quien</span>
+                                <span class="accion-b__cifra">@x.Veces<small>@Formato.Porcentaje(x.Veces * 100.0 / r.Reasignaciones, 0)</small></span>
+                                <span class="accion-b__motivo">@x.Texto</span>
+                                <span class="accion-b__que">@d.Revisar@if (tendencia.Length > 0) { <text> </text><span class="accion-b__tendencia@(x.Veces > previo ? " accion-b__tendencia--sube" : " accion-b__tendencia--baja")">@tendencia</span> }</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+                <table class="visualmente-oculto">
+                    <caption>Reasignaciones por tramo y motivo</caption>
+                    <thead><tr><th>Tramo</th>@foreach (var x in motivos) { <th>@x.Texto</th> }<th>Total</th></tr></thead>
+                    <tbody>@foreach (var t in tramos) { <tr><td>@t.Etiqueta</td>@foreach (var x in motivos) { <td>@t.PorMotivo.GetValueOrDefault(x.Codigo)</td> }<td>@t.Total</td></tr> }</tbody>
+                </table>
             </div>
         }
     </section>
 
     <div class="rejilla-a rejilla-a--tres">
-        <section class="tarjeta-a" aria-labelledby="titulo-motivos">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-motivos">Motivos de reasignación</h3><span class="tarjeta-a__nota">@Formato.Plural(r.Reasignaciones, "reasignación", "reasignaciones")</span></div>
-            @if (r.Reasignaciones == 0)
+        <section class="tarjeta-a" aria-labelledby="titulo-reasignados">
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-reasignados">Casos reasignados</h3><span class="tarjeta-a__nota">cada caso una vez</span></div>
+            @if (senal is not null)
             {
-                <p class="tarjeta-a__vacia">No hubo reasignaciones en el periodo.</p>
-            }
-            else
-            {
-                <partial name="_Filas100" model="@(new List<(string, IReadOnlyList<(string, int, string)>)> { ("", filas) } as IReadOnlyList<(string, IReadOnlyList<(string, int, string)>)>, r.Reasignaciones)" />
-                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">El motivo lo elige la central al reasignar.@(lectura is null ? "" : " " + lectura)@(r.Reasignaciones < minimo ? $" Con tan pocas reasignaciones (mín. {minimo}) no hay un patrón que leer." : "")</p>
+                <p class="cifra-b@(senal.Bien ? "" : " cifra-b--alerta")">@(senal.Bien ? "" : "▲ ")@Formato.Porcentaje(porcentaje!.Value) <small>@r.CasosReasignados de @r.CasosAsignados@(antes.PorcentajeReasignados is { } previo ? $" · antes {Formato.Porcentaje(previo)}" : "")</small></p>
+                <ul class="senales-a senales-b">
+                    <li class="senal-a @(senal.Bien ? "" : "senal-a--alerta")" data-senal="reasignados" data-bien="@senal.Bien.ToString().ToLowerInvariant()">
+                        @Sistema.Regla(senal)
+                    </li>
+                </ul>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">@(senal.Bien ? "✓ Dentro" : "▲ Por encima") de la referencia provisional (@Formato.Porcentaje(referencia, 0) o menos; la línea punteada es el límite). Un caso reasignado varias veces cuenta una vez: @Formato.Plural(r.CasosReasignadosVariasVeces, "caso se reasignó", "casos se reasignaron") más de una.</p>
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-espera">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-espera">Tiempo hasta la reasignación</h3><span class="tarjeta-a__nota">con el primer sereno</span></div>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-espera">Espera antes del cambio</h3><span class="tarjeta-a__nota">con el primer sereno</span></div>
             @if (r.Esperas == 0)
             {
                 <p class="tarjeta-a__vacia">Sin reasignaciones en el periodo: no hay tiempo que medir.</p>
             }
             else
             {
-                <dl class="cifras-a" data-espera>
-                    <div><dt>La mitad, en este tiempo o menos</dt><dd>@Formato.Minutos(r.EsperaP50Minutos)</dd></div>
-                    @if (r.Esperas >= minimo)
-                    {
-                        <div><dt>El 10 % más largo, en más de</dt><dd>@Formato.Minutos(r.EsperaP90Minutos)</dd></div>
-                    }
-                </dl>
-                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Tiempo desde que se le asignó el caso al primer sereno hasta que la central lo reasignó: es lo que el ciudadano esperó antes de que el caso cambiara de manos.@(r.Esperas < minimo ? $" Con tan pocas reasignaciones (mín. {minimo}) solo se muestra la mediana." : "")</p>
+                <p class="cifra-b" data-espera>@Formato.Minutos(r.EsperaP50Minutos) <small>la mitad@(r.Esperas >= minimo ? $" · el 10 % más largo, más de {Formato.Minutos(r.EsperaP90Minutos)}" : "")</small></p>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Desde que se asignó el caso al primer sereno hasta que la central lo reasignó: es lo que el ciudadano esperó antes de que el caso cambiara de manos.@(r.Esperas < minimo ? $" Con tan pocas reasignaciones (mín. {minimo}) solo se muestra la mediana." : "")</p>
             }
         </section>
         <section class="tarjeta-a" aria-labelledby="titulo-serenos-reasigna">
-            <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos-reasigna">Concentración por sereno</h3><span class="tarjeta-a__nota">sin nombres</span></div>
-            <dl class="cifras-a" data-concentracion>
-                <div><dt>Serenos con casos asignados</dt><dd>@r.SerenosConAsignacion</dd></div>
-                <div><dt>Serenos con algún caso reasignado</dt><dd>@r.SerenosConRetiros</dd></div>
-                @if (r.Reasignaciones > 0)
-                {
-                    <div><dt>Máximo de casos reasignados de un solo sereno</dt><dd>@r.MaximoRetirosDeUnSereno de @r.Reasignaciones</dd></div>
-                }
-                <div><dt>Casos reasignados más de una vez</dt><dd>@r.CasosReasignadosVariasVeces</dd></div>
-                <div><dt>Retirados por desactivar la cuenta</dt><dd>@r.RetirosPorDesactivacion</dd></div>
-            </dl>
-            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Si casi todas las reasignaciones corresponden a uno o dos serenos, conviene revisar su equipo, su señal o su turno; si se reparten entre varios, conviene revisar el proceso. Quiénes son se ve en el historial de cada caso. Retirar por desactivar la cuenta no es una decisión de la central y no cuenta como reasignación.</p>
+            <div class="tarjeta-a__cabecera"><h3 id="titulo-serenos-reasigna">Reparto entre serenos</h3><span class="tarjeta-a__nota">sin nombres</span></div>
+            @if (retiros.Count == 0)
+            {
+                <p class="tarjeta-a__vacia">Ningún sereno perdió un caso por reasignación en el periodo.</p>
+            }
+            else
+            {
+                <div class="pareto-b" role="img" aria-label="@retiros.Count serenos con casos reasignados; los @cabeza con más suman @enCabeza de @r.Reasignaciones">
+                    @for (var i = 0; i < retiros.Count; i++)
+                    {
+                        <i class="@(i < cabeza ? "pareto-b--cabeza" : "")" style="height:@F(retiros[i] * 100.0 / retiros[0])%;--i:@Math.Min(i, 40)"></i>
+                    }
+                </div>
+                <p class="tarjeta-a__nota tarjeta-a__nota--bloque" data-concentracion>@r.SerenosConRetiros de @r.SerenosConAsignacion serenos con casos asignados tuvieron alguna; @(cabeza == 1 ? "el que más tuvo suma" : $"los {cabeza} con más suman") <b>@enCabeza de @r.Reasignaciones</b>. Si casi todas son de uno o dos serenos, conviene revisar su equipo, su señal o su turno; si se reparten, el proceso. Quiénes son se ve en el historial de cada caso.</p>
+            }
+            <p class="tarjeta-a__nota tarjeta-a__nota--bloque">Retirados por desactivar la cuenta: @r.RetirosPorDesactivacion. No es una decisión de la central y no cuenta como reasignación.</p>
         </section>
     </div>
 }
