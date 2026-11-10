@@ -9,11 +9,35 @@
         .OrderByDescending(f => f.Senales.Count).ThenByDescending(f => f.S.CasosAtendidos).ThenBy(f => f.S.Nombre)
         .ToList();
     var mirar = filas.Where(f => f.Senales.Count > 0).ToList();
+    var resto = filas.Where(f => f.Senales.Count == 0).ToList();
     var resumen = Rendimiento.Resumen(mirar.SelectMany(f => f.Senales));
-    // Una sola escala para la columna de llegada: la del sereno más lento (y la del equipo), con un poco de aire.
-    var escala = Math.Max(10, filas.Select(f => f.S.LlegadaP50 ?? 0).Append(e.LlegadaP50 ?? 0).Max() * 1.1);
-    string Pct(double x) => (Math.Clamp(x, 0, escala) / escala * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
     var conCasos = e.Serenos.Count(s => s.CasosAtendidos > 0);
+    string N(double x) => x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+    // Las escalas, compartidas por las franjas del equipo y las barras de cada ficha.
+    var escalaLlegada = Math.Max(10, filas.Select(f => f.S.LlegadaP50 ?? 0).Append(e.LlegadaP50 ?? 0).Max() * 1.1);
+    var escalaOcupado = Math.Max(20, filas.Select(f => f.S.PorcentajeOcupado ?? 0).Append(e.PorcentajeOcupado ?? 0).Max() * 1.1);
+    var escalaCasos = Math.Max(10, filas.Select(f => (double)f.S.CasosAtendidos).DefaultIfEmpty(0).Max() * 1.1);
+    var notaMinima = Math.Min(3, Math.Floor((filas.Select(f => f.S.Calificacion ?? 5).DefaultIfEmpty(5).Min() - 0.2) * 2) / 2);
+    double Medio(IEnumerable<double> valores) => Estadistica.Percentil(valores.ToList(), 0.5) ?? 0;
+
+    // Una franja por cifra: cada sereno es un punto (en ocre si tiene esa señal; hueco si tiene pocos casos) y la raya, el equipo.
+    var franjas = new List<(string Nombre, string Valor, string Nota, double Desde, double Hasta, double? Equipo, IReadOnlyList<(double Valor, bool Senal, bool Pocos)> Puntos, string Descripcion)>
+    {
+        ("Llegada del equipo", Formato.Minutos(e.LlegadaP50), "mediana, de la asignación al inicio", 0, escalaLlegada, e.LlegadaP50,
+            filas.Where(f => f.S.LlegadaP50 is not null).Select(f => (f.S.LlegadaP50!.Value, f.Senales.Any(x => x.Clave == "llegada"), f.S.Llegadas.Count < minimo)).ToList(),
+            $"Llegada mediana de cada sereno; el equipo, {Formato.Minutos(e.LlegadaP50)}"),
+        ("Calificación del equipo", e.Calificacion is { } notaEquipo ? $"{Formato.Decimal(notaEquipo)} de 5" : "—", Formato.Plural(e.Evaluaciones, "evaluación", "evaluaciones"), notaMinima, 5, e.Calificacion,
+            filas.Where(f => f.S.Calificacion is not null).Select(f => (f.S.Calificacion!.Value, f.Senales.Any(x => x.Clave == "calificacion"), f.S.Evaluaciones < minimo)).ToList(),
+            $"Calificación de cada sereno; el equipo, {(e.Calificacion is { } c2 ? Formato.Decimal(c2) : "sin evaluaciones")}"),
+        ("Tiempo con un caso", e.PorcentajeOcupado is { } ocupadoEquipo ? Formato.Porcentaje(ocupadoEquipo, 0) : "—", "de las horas en turno", 0, escalaOcupado, e.PorcentajeOcupado,
+            filas.Where(f => f.S.PorcentajeOcupado is not null).Select(f => (f.S.PorcentajeOcupado!.Value, false, false)).ToList(),
+            $"Parte del turno con un caso de cada sereno; el equipo, {(e.PorcentajeOcupado is { } p2 ? Formato.Porcentaje(p2, 0) : "sin turnos")}"),
+        ("Casos atendidos", e.Serenos.Sum(s => s.CasosAtendidos).ToString(), $"de {e.Serenos.Sum(s => s.CasosAsignados)} asignados", 0, escalaCasos, Medio(filas.Select(f => (double)f.S.CasosAtendidos)),
+            filas.Select(f => ((double)f.S.CasosAtendidos, false, false)).ToList(),
+            "Casos atendidos por cada sereno; la raya es la mediana"),
+    };
+    string X(double valor, double desde, double hasta) => N(Math.Clamp((valor - desde) / (hasta - desde), 0, 1) * 100);
 }
 @if (e.Serenos.Count == 0)
 {
@@ -23,30 +47,87 @@
 }
 else
 {
-    <section class="tarjeta-a respuesta" aria-labelledby="respuesta-serenos" data-respuesta="serenos" data-mirar="@mirar.Count">
+    <section class="tarjeta-a respuesta equipo-b" aria-labelledby="respuesta-serenos" data-respuesta="serenos" data-mirar="@mirar.Count">
         <div class="respuesta__cabecera">
             @if (mirar.Count == 0)
             {
-                <h2 class="respuesta__titular" id="respuesta-serenos">@(e.Serenos.Count == 1 ? "El único sereno" : $"Los {e.Serenos.Count} serenos") de @m.TextoPeriodo @(e.Serenos.Count == 1 ? "rinde" : "rinden") <em>dentro de lo normal del equipo</em>.</h2>
+                <h2 class="respuesta__titular" id="respuesta-serenos">@(e.Serenos.Count == 1 ? "El único sereno" : $"Los {e.Serenos.Count} serenos") @(e.Serenos.Count == 1 ? "rinde" : "rinden") <em>dentro de lo normal del equipo</em>.</h2>
             }
             else
             {
                 <h2 class="respuesta__titular" id="respuesta-serenos"><em>@(e.Serenos.Count == 1 ? "El único sereno" : $"{mirar.Count} de {e.Serenos.Count} serenos")</em> @(mirar.Count == 1 ? "tiene" : "tienen") alguna señal frente al equipo.</h2>
             }
-            <p class="respuesta__lectura">@if (mirar.Count > 0) {<b data-resumen-senales>@(char.ToUpperInvariant(resumen[0]) + resumen[1..]).</b><text> </text>}El equipo tarda una mediana de <b>@Formato.Minutos(e.LlegadaP50)</b> en llegar desde que se le asigna un caso@(e.Calificacion is { } nota ? $" y el ciudadano califica su atención con {Formato.Decimal(nota)} de 5" : "")@(e.PorcentajeOcupado is { } ocupado ? $"; en turno, pasa el {Formato.Porcentaje(ocupado, 0)} del tiempo con un caso" : "").
-                Cada sereno se compara con el equipo en el mismo periodo, y solo cuando tiene casos suficientes (@minimo o más): con menos, un caso lento lo marcaría sin razón. Elige un sereno para ver sus zonas, sus tiempos y sus notas.</p>
+            <p class="respuesta__lectura">@if (mirar.Count > 0) {<b data-resumen-senales>@(char.ToUpperInvariant(resumen[0]) + resumen[1..]).</b><text> </text>}Cada punto de las franjas es un sereno; la raya blanca, el equipo; en ocre, los que tienen esa señal y huecos los que tienen menos de @minimo casos. Cada sereno se compara con el equipo en el mismo periodo y solo con casos suficientes: con menos, un caso lento lo marcaría sin razón.</p>
         </div>
-        <dl class="equipo-a" data-equipo>
-            <div><dt>Serenos en el periodo</dt><dd>@e.Serenos.Count</dd><span class="tarjeta-a__nota">@conCasos con casos atendidos</span></div>
-            <div><dt>Casos atendidos</dt><dd>@e.Serenos.Sum(s => s.CasosAtendidos)</dd><span class="tarjeta-a__nota">de @e.Serenos.Sum(s => s.CasosAsignados) asignados</span></div>
-            <div><dt>Llegada del equipo</dt><dd>@Formato.Minutos(e.LlegadaP50)</dd><span class="tarjeta-a__nota">mediana, de la asignación al inicio</span></div>
-            <div><dt>Calificación del equipo</dt><dd>@(e.Calificacion is { } c ? Formato.Decimal(c) : "—")<small> de 5</small></dd><span class="tarjeta-a__nota">@Formato.Plural(e.Evaluaciones, "evaluación", "evaluaciones")</span></div>
-            <div><dt>Tiempo con un caso</dt><dd>@(e.PorcentajeOcupado is { } p ? Formato.Porcentaje(p, 0) : "—")</dd><span class="tarjeta-a__nota">de las horas en turno</span></div>
-        </dl>
+        <div class="respuesta__visual">
+            <div class="franjas-b" data-equipo>
+                @for (var i = 0; i < franjas.Count; i++)
+                {
+                    var f = franjas[i];
+                    <div class="franja-b" style="--i:@i">
+                        <span class="franja-b__nombre">@f.Nombre</span>
+                        <b class="franja-b__valor">@f.Valor</b>
+                        <span class="franja-b__nota">@f.Nota</span>
+                        <span class="franja-b__pista" role="img" aria-label="@f.Descripcion">
+                            <span class="franja-b__linea"></span>
+                            @for (var j = 0; j < f.Puntos.Count; j++)
+                            {
+                                var pt = f.Puntos[j];
+                                <i class="@(pt.Senal ? "franja-b__senal" : "")@(pt.Pocos ? " franja-b__pocos" : "")" style="left:@X(pt.Valor, f.Desde, f.Hasta)%;--j:@Math.Min(j, 60)"></i>
+                            }
+                            @if (f.Equipo is { } eq) { <span class="franja-b__equipo" style="left:@X(eq, f.Desde, f.Hasta)%"></span> }
+                        </span>
+                    </div>
+                }
+            </div>
+            <p class="equipo-b__pie">@e.Serenos.Count serenos en el periodo · @conCasos con casos atendidos</p>
+        </div>
     </section>
 
-    <section class="tarjeta-a" aria-labelledby="titulo-tabla-serenos">
-        <div class="tarjeta-a__cabecera"><h3 id="titulo-tabla-serenos">Cada sereno frente al equipo</h3><span class="tarjeta-a__nota">@m.TextoPeriodo · primero los que tienen señales</span></div>
+    @if (mirar.Count > 0)
+    {
+        <div class="seccion-b"><h3>Para mirar primero</h3><span class="tarjeta-a__nota">@(mirar.Count == 1 ? "el sereno con alguna señal" : $"los {mirar.Count} con alguna señal") · elige una ficha para ver al sereno</span></div>
+        <div class="fichas-b">
+            @for (var i = 0; i < mirar.Count; i++)
+            {
+                var (s, senales) = mirar[i];
+                var lento = senales.Any(x => x.Clave == "llegada");
+                var notaBaja = senales.Any(x => x.Clave == "calificacion");
+                var zona = s.ZonaPrincipal is { Horas: > 0 } z ? m.Zonas.Nombre(z.Zona.Sur, z.Zona.Oeste) : null;
+                <a class="ficha-b" href="@m.EnlaceSereno(s.SerenoId)" style="--i:@i">
+                    <span class="ficha-b__inicial" aria-hidden="true">@Rendimiento.Iniciales(s.Nombre)</span>
+                    <span class="ficha-b__nombre">@s.Nombre<small>@Formato.Plural(s.CasosAtendidos, "caso", "casos") · @Formato.HorasDeTrabajo(s.HorasOperativas) en turno@(zona is null ? "" : $" · {zona}")@(s.Activo ? "" : " · cuenta desactivada")</small></span>
+                    <span class="ficha-b__cifra">Llegada
+                        <span class="bala-b" aria-hidden="true">@if (s.LlegadaP50 is { } l) {<i class="@(lento ? "bala-b--alerta" : "")" style="width:@X(l, 0, escalaLlegada)%"></i>}@if (e.LlegadaP50 is { } el) {<span class="bala-b__equipo" style="left:@X(el, 0, escalaLlegada)%"></span>}</span>
+                        <b class="@(lento ? "ficha-b__alerta" : "")">@(lento ? "▲ " : "")@(s.LlegadaP50 is { } ll ? Formato.Minutos(ll) : "—")</b>
+                    </span>
+                    <span class="ficha-b__cifra">Calificación
+                        <span class="bala-b" aria-hidden="true">@if (s.Calificacion is { } c) {<i class="@(notaBaja ? "bala-b--alerta" : "")" style="width:@X(c, 0, 5)%"></i>}@if (e.Calificacion is { } ec) {<span class="bala-b__equipo" style="left:@X(ec, 0, 5)%"></span>}</span>
+                        <b class="@(notaBaja ? "ficha-b__alerta" : "")">@(notaBaja ? "▲ " : "")@(s.Calificacion is { } cc ? $"{Formato.Decimal(cc)} ★" : "—")</b>
+                    </span>
+                    <span class="ficha-b__cifra">Con un caso
+                        <span class="bala-b" aria-hidden="true">@if (s.PorcentajeOcupado is { } po) {<i style="width:@X(po, 0, escalaOcupado)%"></i>}@if (e.PorcentajeOcupado is { } eo) {<span class="bala-b__equipo" style="left:@X(eo, 0, escalaOcupado)%"></span>}</span>
+                        <b>@(s.PorcentajeOcupado is { } pp ? Formato.Porcentaje(pp, 0) : "—")</b>
+                    </span>
+                    <span class="ficha-b__senales">@foreach (var x in senales) {<span data-senal="@x.Clave">▲ @x.Texto</span>}</span>
+                </a>
+            }
+        </div>
+    }
+
+    @if (resto.Count > 0)
+    {
+        <div class="seccion-b"><h3>Sin señales</h3><span class="tarjeta-a__nota">@(resto.Count == 1 ? "1 sereno" : $"{resto.Count} serenos") dentro de lo normal del equipo</span></div>
+        <div class="resto-b">
+            @foreach (var (s, _) in resto)
+            {
+                <a href="@m.EnlaceSereno(s.SerenoId)"><i aria-hidden="true">@Rendimiento.Iniciales(s.Nombre)</i>@s.Nombre</a>
+            }
+        </div>
+    }
+
+    <details class="tarjeta-a tabla-b">
+        <summary><h3 id="titulo-tabla-serenos">La tabla completa del equipo</h3><span class="tarjeta-a__nota">cada sereno con todas sus cifras</span></summary>
         <div class="tabla-a__desplazable">
             <table class="tabla-a tabla-a--serenos" data-tabla-serenos>
                 <caption class="visualmente-oculto">Rendimiento de cada sereno en @m.TextoPeriodo. La mediana de llegada del equipo es @Formato.Minutos(e.LlegadaP50).</caption>
@@ -54,9 +135,9 @@ else
                     <tr>
                         <th scope="col">Sereno</th>
                         <th scope="col" class="tabla-a__num">Casos atendidos</th>
-                        <th scope="col">Llegada <span class="tabla-a__ayuda">mediana · ┃ equipo</span></th>
+                        <th scope="col" class="tabla-a__num">Llegada</th>
                         <th scope="col" class="tabla-a__num">Calificación</th>
-                        <th scope="col">Tiempo con caso</th>
+                        <th scope="col" class="tabla-a__num">Tiempo con caso</th>
                         <th scope="col">Zona donde más patrulla</th>
                         <th scope="col">Señales</th>
                     </tr>
@@ -64,75 +145,22 @@ else
                 <tbody>
                     @foreach (var (s, senales) in filas)
                     {
-                        var lento = senales.Any(x => x.Clave == "llegada");
-                        var pocos = s.Llegadas.Count < minimo;
                         var zona = s.ZonaPrincipal is { Horas: > 0 } z ? z : null;
                         var horasZonas = s.Zonas.Sum(x => x.Horas);
                         <tr data-sereno="@s.SerenoId" data-senales="@senales.Count">
-                            <th scope="row">
-                                <a class="sereno-fila-a" href="@m.EnlaceSereno(s.SerenoId)">
-                                    <span class="sereno-fila-a__inicial" aria-hidden="true">@Rendimiento.Iniciales(s.Nombre)</span>
-                                    <span><span class="sereno-fila-a__nombre">@s.Nombre</span>@if (!s.Activo) {<span class="tarjeta-a__nota"> · cuenta desactivada</span>}<span class="sereno-fila-a__turno">@Formato.HorasDeTrabajo(s.HorasOperativas) en turno</span></span>
-                                </a>
-                            </th>
+                            <th scope="row"><a href="@m.EnlaceSereno(s.SerenoId)">@s.Nombre</a>@if (!s.Activo) {<span class="tarjeta-a__nota"> · cuenta desactivada</span>}</th>
                             <td class="tabla-a__num">@s.CasosAtendidos<span class="tarjeta-a__nota"> / @s.CasosAsignados</span></td>
-                            <td>
-                                @if (s.LlegadaP50 is { } llegada)
-                                {
-                                    <span class="comparar-a__celda"><span class="comparar-a" aria-hidden="true" title="@s.Nombre: @Formato.Minutos(llegada) · equipo: @Formato.Minutos(e.LlegadaP50)">
-                                        @if (e.LlegadaP50 is { } equipo) {<i class="comparar-a__equipo" style="left:@Pct(equipo)%"></i>}
-                                        <i class="comparar-a__valor@(lento ? " comparar-a__valor--alerta" : "")@(pocos ? " comparar-a__valor--pocos" : "")" style="left:@Pct(llegada)%"></i>
-                                    </span>
-                                    <span class="comparar-a__texto">@(lento ? "▲ " : "")@Formato.Minutos(llegada)@if (pocos) {<small> · @Formato.Plural(s.Llegadas.Count, "caso", "casos")</small>}</span></span>
-                                }
-                                else
-                                {
-                                    <span class="tarjeta-a__nota">Sin llegadas</span>
-                                }
-                            </td>
-                            <td class="tabla-a__num">
-                                @if (s.Calificacion is { } notaSereno)
-                                {
-                                    <span>@(senales.Any(x => x.Clave == "calificacion") ? "▲ " : "")@Formato.Decimal(notaSereno) ★</span><span class="tarjeta-a__nota"> (@s.Evaluaciones)</span>
-                                }
-                                else
-                                {
-                                    <span class="tarjeta-a__nota">—</span>
-                                }
-                            </td>
-                            <td>
-                                @if (s.PorcentajeOcupado is { } ocupadoSereno)
-                                {
-                                    <span class="medidor-a" aria-hidden="true"><i style="width:@(Math.Round(ocupadoSereno))%"></i></span>@Formato.Porcentaje(ocupadoSereno, 0)
-                                }
-                                else
-                                {
-                                    <span class="tarjeta-a__nota">Sin turnos</span>
-                                }
-                            </td>
+                            <td class="tabla-a__num">@(senales.Any(x => x.Clave == "llegada") ? "▲ " : "")@(s.LlegadaP50 is { } l ? Formato.Minutos(l) : "—")@if (s.Llegadas.Count is > 0 and var n && n < minimo) {<span class="tarjeta-a__nota"> · @Formato.Plural(n, "caso", "casos")</span>}</td>
+                            <td class="tabla-a__num">@(senales.Any(x => x.Clave == "calificacion") ? "▲ " : "")@(s.Calificacion is { } c ? $"{Formato.Decimal(c)} ★" : "—")@if (s.Evaluaciones > 0) {<span class="tarjeta-a__nota"> (@s.Evaluaciones)</span>}</td>
+                            <td class="tabla-a__num">@(s.PorcentajeOcupado is { } p ? Formato.Porcentaje(p, 0) : "—")</td>
                             <td>@if (zona is not null) {<span>@m.Zonas.Nombre(zona.Zona.Sur, zona.Zona.Oeste)</span><span class="tarjeta-a__nota"> · @Formato.Porcentaje(100 * zona.Horas / Math.Max(horasZonas, 1e-9), 0)</span>} else {<span class="tarjeta-a__nota">Sin posiciones</span>}</td>
-                            <td>
-                                @if (senales.Count == 0)
-                                {
-                                    <span class="estado-a estado-a--bien">✓ Sin señales</span>
-                                }
-                                else
-                                {
-                                    <ul class="senales-sereno-a">@foreach (var x in senales) {<li data-senal="@x.Clave">▲ @x.Texto</li>}</ul>
-                                }
-                            </td>
+                            <td>@if (senales.Count == 0) {<span class="estado-a estado-a--bien">✓ Sin señales</span>} else {<ul class="senales-sereno-a">@foreach (var x in senales) {<li data-senal="@x.Clave">▲ @x.Texto</li>}</ul>}</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-        <ul class="leyenda-a">
-            <li><i class="leyenda-a__lleno leyenda-a__lleno--azul"></i>Mediana de llegada del sereno</li>
-            <li><i class="leyenda-a__equipo"></i>Mediana del equipo (@Formato.Minutos(e.LlegadaP50))</li>
-            <li><i class="leyenda-a__atascado leyenda-a__atascado--lleno"></i>▲ Más lento que el equipo</li>
-            <li><i class="leyenda-a__hueco"></i>Menos de @minimo casos: solo orientativo</li>
-        </ul>
-    </section>
+    </details>
 
     <partial name="_ComoSeMide" model="m" />
 }

@@ -17,6 +17,10 @@
     {
         <link rel="stylesheet" href="~/css/analitica-repite.css" asp-append-version="true" />
     }
+    @if (Model.Actual.Clave == "serenos")
+    {
+        <link rel="stylesheet" href="~/css/analitica-serenos.css" asp-append-version="true" />
+    }
     @if (Model.Actual.Clave == "reasigna")
     {
         <link rel="stylesheet" href="~/css/analitica-reasigna.css" asp-append-version="true" />
