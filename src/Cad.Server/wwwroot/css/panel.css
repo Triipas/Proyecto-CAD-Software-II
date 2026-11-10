@@ -530,44 +530,70 @@ a.boton {
   text-decoration: none;
 }
 
-/* Barra superior (rediseño CAD v2): marca, secciones y sesión sobre marino. */
+/* Barra superior en dos niveles (06/11/2026, «carpeta»): una fila de estado (marca, indicadores en vivo y sesión) sobre marino y,
+   debajo, las secciones como lengüetas sobre marino hundido. La lengüeta activa es papel y se funde con lo que sigue: la bandeja, la
+   página o, cuando la sección tiene vistas, la hoja (esmeralda tenue) que cuelga de ella. Sin menú de hamburguesa: en pantallas
+   estrechas las lengüetas se desplazan en horizontal. */
 .barra {
+  --barra-papel: var(--color-superficie);
   position: sticky;
   top: 0;
   z-index: 1100; /* por encima de las capas de Leaflet (hasta 1000) */
-  min-height: var(--alto-barra);
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-4);
-  padding: 0 var(--espacio-4);
   color: var(--color-texto-sobre-marino);
   background: var(--color-marino);
+}
+
+/* Con hoja, la lengüeta activa y la hoja comparten el esmeralda tenue, y la barra entera mide más. */
+.barra--con-hoja {
+  --barra-papel: var(--esmeralda-100);
+}
+
+body:has(.barra--con-hoja) {
+  --alto-barra: 8rem; /* 128 px: fila de estado + lengüetas + hoja */
 }
 
 .barra :focus-visible {
   outline-color: var(--color-foco-sobre-marino);
 }
 
+/* ── Fila de estado ───────────────────────────────────── */
+.barra__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-4);
+  min-height: var(--alto-barra-fila);
+  padding: 0 var(--espacio-4);
+}
+
 .barra__marca {
   display: flex;
   align-items: center;
   gap: var(--espacio-3);
+  min-width: 0;
   color: #FFFFFF;
 }
 
 .barra__escudo {
-  width: 2.125rem;
-  height: 2.125rem;
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
   display: grid;
   place-items: center;
-  border-radius: var(--radio-control);
-  color: var(--color-acento);
-  background: var(--color-marino-elevado);
+  border-radius: 7px;
+  color: var(--color-marino);
+  background: var(--color-acento);
+}
+
+.barra__escudo .icono {
+  width: 1rem;
+  height: 1rem;
 }
 
 .barra__nombre {
-  display: grid;
-  line-height: 1.15;
+  display: flex;
+  align-items: baseline;
+  gap: var(--espacio-3);
+  min-width: 0;
   white-space: nowrap;
 }
 
@@ -576,61 +602,17 @@ a.boton {
 }
 
 .barra__nombre small {
-  font-size: 0.6875rem;
+  font-size: var(--texto-xs);
   color: var(--color-texto-sobre-marino-secundario);
 }
 
-.barra__secciones {
-  display: flex;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.barra__seccion {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 2.5rem;
-  padding: 0 0.625rem;
-  border-radius: var(--radio-control);
-  color: var(--color-texto-sobre-marino);
-  font-size: var(--texto-sm);
-  font-weight: var(--peso-medio);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color var(--duracion-rapida) ease;
-}
-
-.barra__seccion[aria-current="page"] {
-  color: #FFFFFF;
-  background: var(--color-marino-elevado);
-}
-
-.barra__seccion[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: -0.625rem;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--color-acento);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .barra__seccion:hover {
-    background: var(--color-marino-elevado);
-  }
-}
-
-/* Indicadores en vivo de la central (solo en /panel/central): cifra tabular blanca y etiqueta atenuada. */
+/* Indicadores en vivo de la central (solo en /panel/central): sin píldoras. La cifra va tabular; la de serenos, en menta; SOS se
+   rellena de rojo cuando hay pendientes. */
 .barra__indicadores {
   display: flex;
   align-items: center;
-  gap: var(--espacio-2);
-  margin: 0 var(--espacio-3) 0 auto;
+  gap: var(--espacio-4);
+  margin: 0 var(--espacio-2) 0 auto;
   padding: 0;
   list-style: none;
 }
@@ -643,12 +625,9 @@ a.boton {
   display: inline-flex;
   align-items: baseline;
   gap: var(--espacio-1);
-  padding: 0.25rem 0.625rem;
-  border-radius: 999px;
   font-size: var(--texto-xs);
   white-space: nowrap;
-  color: var(--color-texto-sobre-marino);
-  background: rgb(255 255 255 / 0.08);
+  color: var(--color-texto-sobre-marino-secundario);
 }
 
 .indicador b {
@@ -657,6 +636,10 @@ a.boton {
   font-weight: var(--peso-fuerte);
   font-variant-numeric: tabular-nums;
   color: #FFFFFF;
+}
+
+.indicador[data-indicador="serenos-libres"] b {
+  color: var(--color-acento);
 }
 
 .indicador a {
@@ -668,98 +651,16 @@ a.boton {
 }
 
 /* Hay SOS pendientes: el indicador toma el rojo del SOS (blanco encima 6.05:1). */
+.indicador--sos {
+  padding: 0.125rem 0.75rem;
+  border-radius: 999px;
+  color: var(--color-texto-sobre-marino);
+  background: rgb(255 255 255 / 0.08);
+}
+
 .indicador--sos.indicador--activo {
   color: #FFFFFF;
   background: var(--color-urgente);
-}
-
-/* Con las secciones a la vista (más de 1100 px), la barra no cabía entera hasta los 1720 px: «Salir» quedaba fuera de la
-   pantalla (48 px a 1366, 270 a 1440) y la página se desplazaba de lado (medido el 05/11/2026). Por debajo de 1720 px caben dos
-   indicadores y la sesión se queda con las iniciales (el nombre y el rol siguen para el lector de pantalla); por debajo de
-   1280 px, solo el de SOS. Con el menú plegado vuelve el de serenos disponibles. Los serenos ya se ven en su panel y los
-   acompañamientos tienen sección propia. */
-@media (max-width: 107.4375rem) and (min-width: 68.8125rem) {
-  .barra__indicadores .indicador:nth-child(n + 3) {
-    display: none;
-  }
-
-  .barra__indicadores + .barra__sesion .barra__persona {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 79.9375rem) and (min-width: 68.8125rem) {
-  .barra__indicadores .indicador:nth-child(n + 2) {
-    display: none;
-  }
-
-  .barra:has(.barra__indicadores) {
-    gap: var(--espacio-2);
-    padding: 0 var(--espacio-3);
-  }
-
-  .barra__indicadores + .barra__sesion {
-    gap: var(--espacio-2);
-    padding-left: var(--espacio-3);
-  }
-}
-
-@media (max-width: 68.75rem) {
-  .barra__indicadores .indicador:nth-child(4) {
-    display: none;
-  }
-
-  /* Con el menú plegado vuelven tres indicadores: la sesión también se queda con las iniciales. */
-  .barra__indicadores + .barra__sesion .barra__persona {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 47.5rem) {
-  .barra__indicadores .indicador:not(.indicador--sos) {
-    display: none;
-  }
-
-  /* El indicador de SOS cabe a 390 px a cambio de las iniciales: el nombre sigue en el menú de la sesión. */
-  .barra__indicadores + .barra__sesion .barra__avatar {
-    display: none;
-  }
-
-  /* 05/11/2026: «Salir» se salía 37 px de la pantalla a 390 px (la página entera se desplazaba de lado): con indicadores,
-     la barra junta sus piezas. */
-  .barra:has(.barra__indicadores) {
-    gap: var(--espacio-2);
-    padding: 0 var(--espacio-3);
-  }
-
-  .barra__indicadores + .barra__sesion {
-    gap: var(--espacio-2);
-    padding-left: var(--espacio-2);
-  }
-}
-
-/* Entre el menú plegado y el móvil (761–832 px) caben dos indicadores, no tres. */
-@media (max-width: 52rem) and (min-width: 47.5625rem) {
-  .barra__indicadores .indicador:nth-child(n + 3) {
-    display: none;
-  }
-}
-
-/* En los teléfonos más estrechos (360 px) la marca se queda con el escudo. */
-@media (max-width: 24rem) {
-  .barra:has(.barra__indicadores) .barra__nombre {
-    display: none;
-  }
 }
 
 .barra__sesion {
@@ -778,7 +679,7 @@ a.boton {
   height: 2.25rem;
   display: grid;
   place-items: center;
-  border: 1px solid var(--color-borde-sobre-marino);
+  border: 0;
   border-radius: var(--radio-control);
   color: var(--color-texto-sobre-marino);
   background: transparent;
@@ -823,15 +724,15 @@ a.boton {
 }
 
 .barra__avatar {
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: grid;
   place-items: center;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--texto-xs);
   font-weight: var(--peso-fuerte);
   color: #FFFFFF;
-  background: var(--color-marino-elevado);
+  background: var(--color-primario-hover);
 }
 
 .barra__persona {
@@ -848,50 +749,130 @@ a.boton {
   color: #FFFFFF;
 }
 
-.barra__menu {
+/* ── Lengüetas de las secciones ───────────────────────── */
+.barra__navegacion {
+  padding: 0 var(--espacio-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  background: var(--color-marino-hundido);
+}
+
+.barra__navegacion::-webkit-scrollbar {
   display: none;
-  width: 2.5rem;
-  height: 2.5rem;
-  place-items: center;
-  border: 0;
-  border-radius: var(--radio-control);
-  color: #FFFFFF;
-  background: transparent;
-  cursor: pointer;
 }
 
-@media (max-width: 68.75rem) {
-  .barra__menu {
-    display: grid;
-  }
+.barra__secciones {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: var(--alto-lenguetas);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
-  .barra__navegacion {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    display: none;
-    padding: var(--espacio-2) var(--espacio-4) var(--espacio-4);
-    border-top: 1px solid var(--color-borde-sobre-marino);
-    background: var(--color-marino);
-  }
+.barra__seccion {
+  display: flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 var(--espacio-4);
+  border-radius: 12px 12px 0 0;
+  color: var(--color-texto-sobre-marino);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--duracion-rapida) ease, color var(--duracion-rapida) ease;
+}
 
-  .barra--abierta .barra__navegacion {
-    display: block;
-  }
+.barra__seccion:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco-sobre-marino);
+  outline-offset: -4px;
+}
 
-  .barra__secciones {
-    flex-direction: column;
-  }
-
-  .barra__seccion[aria-current="page"]::after {
-    display: none;
+@media (hover: hover) and (pointer: fine) {
+  .barra__seccion:hover {
+    color: #FFFFFF;
+    background: rgb(255 255 255 / 0.10);
   }
 }
 
-@media (max-width: 40rem) {
-  .barra__nombre small,
+.barra__seccion[aria-current="page"] {
+  color: var(--color-marino);
+  font-weight: var(--peso-fuerte);
+  background: var(--barra-papel);
+}
+
+/* ── Hoja: las vistas de la sección, colgadas de su lengüeta ─ */
+.barra__hoja {
+  display: flex;
+  align-items: stretch;
+  min-height: var(--alto-hoja);
+  padding: 0 var(--espacio-4);
+  border-bottom: var(--grosor-borde) solid var(--color-borde);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  color: var(--color-texto);
+  background: var(--barra-papel);
+}
+
+.barra__hoja::-webkit-scrollbar {
+  display: none;
+}
+
+.barra__hoja :focus-visible {
+  outline-color: var(--color-foco);
+}
+
+/* Con la fila de estado más holgada, caben los tres indicadores a 1366 px; el resto se quita por orden de importancia. */
+@media (max-width: 80rem) {
   .barra__persona {
+    display: none;
+  }
+}
+
+@media (max-width: 64rem) {
+  .barra__indicadores .indicador:nth-child(3) {
+    display: none;
+  }
+}
+
+@media (max-width: 52rem) {
+  .barra__nombre small {
+    display: none;
+  }
+}
+
+@media (max-width: 47.5rem) {
+  .barra__indicadores .indicador:not(.indicador--sos) {
+    display: none;
+  }
+
+  .barra__fila {
+    gap: var(--espacio-2);
+    padding: 0 var(--espacio-3);
+  }
+
+  .barra__navegacion,
+  .barra__hoja {
+    padding: 0 var(--espacio-3);
+  }
+
+  .barra__avatar {
+    display: none;
+  }
+
+  .barra__sesion {
+    gap: var(--espacio-2);
+    padding-left: var(--espacio-2);
+  }
+}
+
+/* En los teléfonos más estrechos (360 px) la marca se queda con el escudo. */
+@media (max-width: 24rem) {
+  .barra__nombre {
     display: none;
   }
 }

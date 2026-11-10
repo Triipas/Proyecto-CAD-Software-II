@@ -30,21 +30,38 @@
     }
 </head>
 <body data-sonido="@TempData[Cad.Server.Panel.SonidoPanel.Clave]" data-en-panel="@(enPanel ? "true" : "false")">
-    @* Barra superior del rediseño CAD v2 (dirección «Mapa protagonista»): marca, secciones y sesión.
-       Por debajo de 1100 px las secciones pasan a un menú desplegable (data-menu, formulario.js). *@
+    @* Barra superior en dos niveles (06/11/2026, «carpeta»): la fila de estado (marca, indicadores en vivo y sesión) y, debajo, las
+       secciones como lengüetas; la activa se funde con lo que sigue. Una página con vistas propias las cuelga de su lengüeta con
+       la sección «HojaBarra». Sin menú de hamburguesa: en pantallas estrechas las lengüetas se desplazan en horizontal. *@
     @if (!enPanel)
     {
-    <header class="barra" data-barra>
-        @if (enlaces.Length > 0)
-        {
-            <button type="button" class="barra__menu" aria-expanded="false" aria-controls="secciones-panel" data-menu>
-                <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-                <span class="visualmente-oculto">Secciones del panel</span>
-            </button>
-        }
-        <div class="barra__marca">
-            <span class="barra__escudo"><partial name="_Icono" model="@("escudo")" /></span>
-            <span class="barra__nombre"><b>Central CAD</b><small>MVP académico · datos simulados</small></span>
+    var conHoja = IsSectionDefined("HojaBarra");
+    <header class="barra@(conHoja ? " barra--con-hoja" : "")" data-barra>
+        <div class="barra__fila">
+            <div class="barra__marca">
+                <span class="barra__escudo"><partial name="_Icono" model="@("escudo")" /></span>
+                <span class="barra__nombre"><b>Central CAD</b><small>MVP académico · datos simulados</small></span>
+            </div>
+            @await RenderSectionAsync("IndicadoresBarra", required: false)
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                var nombre = User.FindFirstValue(Autenticacion.ReclamoNombre) ?? "";
+                var iniciales = string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+                <form method="post" asp-page="/Salir" class="barra__sesion">
+                    @if (rol == Roles.Operador)
+                    {
+                        @* Avisos sonoros (24/10/2026): activados por defecto; este botón los silencia o los vuelve a activar (sonidos.js). *@
+                        <button type="button" class="barra__sonido" aria-pressed="true" title="Silenciar avisos sonoros" data-alternar-sonido>
+                            <span data-icono-sonido="activado"><partial name="_Icono" model="@("sonido")" /></span>
+                            <span data-icono-sonido="silenciado"><partial name="_Icono" model="@("silencio")" /></span>
+                            <span class="visualmente-oculto">Avisos sonoros</span>
+                        </button>
+                    }
+                    <span class="barra__avatar" aria-hidden="true">@iniciales</span>
+                    <span class="barra__persona"><b>@nombre</b><span>@rol</span></span>
+                    <button type="submit" class="boton boton--sobre-marino boton--compacto">Salir</button>
+                </form>
+            }
         </div>
         @if (enlaces.Length > 0)
         {
@@ -57,27 +74,17 @@
                 </ul>
             </nav>
         }
-        @await RenderSectionAsync("IndicadoresBarra", required: false)
-        @if (User.Identity?.IsAuthenticated == true)
+        @if (conHoja)
         {
-            var nombre = User.FindFirstValue(Autenticacion.ReclamoNombre) ?? "";
-            var iniciales = string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
-            <form method="post" asp-page="/Salir" class="barra__sesion">
-                @if (rol == Roles.Operador)
-                {
-                    @* Avisos sonoros (24/10/2026): activados por defecto; este botón los silencia o los vuelve a activar (sonidos.js). *@
-                    <button type="button" class="barra__sonido" aria-pressed="true" title="Silenciar avisos sonoros" data-alternar-sonido>
-                        <span data-icono-sonido="activado"><partial name="_Icono" model="@("sonido")" /></span>
-                        <span data-icono-sonido="silenciado"><partial name="_Icono" model="@("silencio")" /></span>
-                        <span class="visualmente-oculto">Avisos sonoros</span>
-                    </button>
-                }
-                <span class="barra__avatar" aria-hidden="true">@iniciales</span>
-                <span class="barra__persona"><b>@nombre</b><span>@rol</span></span>
-                <button type="submit" class="boton boton--sobre-marino boton--compacto">Salir</button>
-            </form>
+            <div class="barra__hoja">
+                @await RenderSectionAsync("HojaBarra")
+            </div>
         }
     </header>
+    }
+    else if (IsSectionDefined("HojaBarra"))
+    {
+        IgnoreSection("HojaBarra");
     }
     <main class="pagina @ViewData["ClasePagina"]@(enPanel ? " pagina--en-panel" : "")">
         @RenderBody()

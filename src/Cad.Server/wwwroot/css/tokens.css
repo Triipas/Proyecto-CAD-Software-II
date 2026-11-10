@@ -189,7 +189,10 @@
   --separacion-foco: 2px;
   --alto-control: 2.75rem;          /* 44 px: objetivo táctil cómodo */
   --alto-control-compacto: 2rem;    /* 32 px: controles densos de escritorio, con separación */
-  --alto-barra: 3.75rem;           /* 60 px: barra superior del panel */
+  --alto-barra-fila: 2.75rem;      /* 44 px: fila de estado de la barra (marca, indicadores y sesión) */
+  --alto-lenguetas: 2.5rem;        /* 40 px: lengüetas de las secciones */
+  --alto-hoja: 2.75rem;            /* 44 px: hoja con las vistas de la sección, cuando las tiene */
+  --alto-barra: 5.25rem;           /* 84 px: barra superior (fila de estado + lengüetas); con hoja, 128 px (panel.css) */
 
   /* ── Profundidad (sombras teñidas de marino, con desplazamiento y desenfoque) ── */
   --sombra-1: 0 1px 2px rgb(10 26 58 / 0.06), 0 1px 1px rgb(10 26 58 / 0.04);

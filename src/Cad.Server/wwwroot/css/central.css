@@ -2306,8 +2306,17 @@
   cursor: pointer;
 }
 
-.indicador:has(.indicador__boton[aria-expanded="true"]) {
-  box-shadow: 0 0 0 2px #FFFFFF;
+.indicador:has(.indicador__boton[aria-expanded="true"]) .indicador__boton {
+  text-decoration: underline;
+  text-decoration-color: var(--color-acento);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25rem;
+}
+
+.indicador__boton:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco-sobre-marino);
+  outline-offset: 2px;
+  border-radius: var(--radio-pequeno);
 }
 
 /* Pantallas estrechas: el mapa arriba, sus herramientas y paneles encima de él; la bandeja debajo. */
