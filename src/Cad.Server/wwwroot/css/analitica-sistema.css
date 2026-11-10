@@ -1,0 +1,184 @@
+/* «Salud del sistema» como «las constantes vitales» (16/11/2026) — se carga solo en esa pregunta, después de analitica.css.
+   El tablero nocturno, con cuadrícula de monitor: cuatro monitores con su cifra grande (llega a la central, lo abre un operador,
+   avisos al sereno y GPS impreciso), una línea de latido que corre en cada uno (decoración: verde y pausada si está bien, ámbar y más
+   rápida si está fuera) y la cadena del SOS en una franja. Debajo, las otras señales con su regla y el margen del GPS sobre el mapa,
+   con el radio real. Ámbar con ▲ fuera de lo aceptable; el rojo queda para el SOS. */
+
+.tarjeta-a.respuesta.salud-b {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background-color: var(--marino-950);
+  background-image:
+    linear-gradient(rgb(69 227 164 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(69 227 164 / 0.05) 1px, transparent 1px),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 50%, var(--marino-950) 100%);
+  background-size: 24px 24px, 24px 24px, auto;
+}
+
+.tarjeta-a.respuesta.salud-b > .respuesta__cabecera:first-child { margin-bottom: 0; background: transparent; }
+.tarjeta-a.respuesta.salud-b > .respuesta__cabecera:first-child::before { display: none; }
+.tarjeta-a.respuesta.salud-b > .respuesta__cabecera:first-child .respuesta__titular em { color: var(--color-advertencia-sobre-marino); }
+.tarjeta-a.respuesta.salud-b[data-alertas="0"] > .respuesta__cabecera:first-child .respuesta__titular em { color: var(--color-acento); }
+.salud-b .respuesta__visual { margin-top: 0; }
+
+/* ── Los monitores ── */
+.monitores-b { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--espacio-3); padding-top: var(--espacio-4); }
+
+.monitor-b {
+  --color: var(--color-acento);
+  --ritmo: 2.6s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  min-height: 14rem;
+  padding: var(--espacio-4) var(--espacio-4) 4.75rem;
+  border-radius: var(--radio-superficie);
+  border: 1px solid rgb(69 227 164 / 0.28);
+  background: rgb(6 17 39 / 0.72);
+  overflow: hidden;
+  animation: salud-sube 500ms var(--curva-salida) backwards;
+  animation-delay: calc(200ms + var(--i) * 120ms);
+}
+
+.monitor-b--alerta { --color: var(--color-advertencia-sobre-marino); --ritmo: 2s; border-color: rgb(245 181 68 / 0.55); }
+.monitor-b--sin { --color: #8A9DBB; border-color: rgb(213 224 240 / 0.18); }
+
+@keyframes salud-sube { from { opacity: 0; transform: translateY(10px); } }
+
+.monitor-b__cabeza {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.monitor-b__cabeza span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radio-pildora);
+  background: color-mix(in srgb, var(--color) 16%, transparent);
+  color: var(--color);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.monitor-b__cabeza span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: salud-luz 2s ease-in-out infinite; }
+@keyframes salud-luz { 50% { opacity: 0.3; } }
+
+.monitor-b__valor { margin-top: var(--espacio-2); font-size: 3.25rem; line-height: 1; color: #FFFFFF; letter-spacing: -0.03em; }
+.monitor-b--alerta .monitor-b__valor { color: var(--color-advertencia-sobre-marino); }
+.monitor-b__valor small { margin-left: 3px; font-size: var(--texto-lg); color: var(--color-texto-sobre-marino-secundario); }
+.monitor-b__que { font-size: var(--texto-sm); line-height: 1.35; color: var(--color-texto-sobre-marino); }
+.monitor-b__limite { font-size: var(--texto-xs); color: var(--color-texto-sobre-marino-secundario); }
+
+.monitor-b svg { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 4rem; }
+
+.monitor-b__latido {
+  fill: none;
+  stroke: var(--color);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  animation: salud-barre var(--ritmo) linear infinite;
+  animation-delay: calc(var(--i) * 0.45s);
+}
+
+@keyframes salud-barre { 0% { stroke-dashoffset: 1; } 70%, 100% { stroke-dashoffset: 0; } }
+
+.monitor-b__barrido {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 30px;
+  height: 4rem;
+  background: linear-gradient(90deg, transparent, rgb(6 17 39 / 0.95));
+  animation: salud-corre var(--ritmo) linear infinite;
+  animation-delay: calc(var(--i) * 0.45s);
+}
+
+@keyframes salud-corre { 0% { transform: translateX(-30px); } 70%, 100% { transform: translateX(calc(100cqw + 30px)); } }
+.monitor-b { container-type: inline-size; }
+
+/* ── La cadena del SOS ── */
+.cadena-b {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: var(--espacio-4) 0 0;
+  padding: var(--espacio-3) 0 0;
+  list-style: none;
+  border-top: 1px solid rgb(213 224 240 / 0.12);
+  font-size: var(--texto-xs);
+}
+
+.cadena-b__nodo { padding: 4px 10px; border-radius: var(--radio-pildora); background: rgb(213 224 240 / 0.08); border: 1px solid rgb(213 224 240 / 0.16); color: #FFFFFF; font-weight: var(--peso-fuerte); }
+.cadena-b__tramo { font-weight: var(--peso-fuerte); color: var(--color-texto-sobre-marino-secundario); }
+.cadena-b__tramo span:first-child::after { content: " →"; }
+.cadena-b__tramo--bien { color: var(--color-acento); }
+.cadena-b__tramo--alerta { color: var(--color-advertencia-sobre-marino); }
+
+/* ── Las otras señales ── */
+.otras-b { display: grid; margin: var(--espacio-2) 0 0; padding: 0; list-style: none; }
+
+.otras-b li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--espacio-2) var(--espacio-3);
+  align-items: center;
+  padding: var(--espacio-3) 0;
+  border-bottom: 1px solid var(--color-borde, #E7EBF1);
+}
+
+.otras-b__nombre { font-size: var(--texto-sm); font-weight: var(--peso-fuerte); color: var(--color-texto); }
+.otras-b__nombre small { display: block; font-size: var(--texto-xs); font-weight: 400; color: var(--color-texto-secundario); }
+.otras-b__valor { font-size: var(--texto-lg); color: var(--esmeralda-800); white-space: nowrap; }
+.otras-b--alerta .otras-b__valor { color: var(--color-advertencia); }
+
+.otras-b__regla { grid-column: 1 / -1; position: relative; display: block; height: 10px; border-radius: 5px; background: #EEF2F7; }
+.otras-b__banda { position: absolute; top: 0; bottom: 0; border-radius: 5px; background: #A6E6C8; }
+.otras-b__limite { position: absolute; top: -4px; bottom: -4px; border-left: 2px dashed #6F7F97; }
+
+.otras-b__punto {
+  position: absolute;
+  top: -3px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--esmeralda-700);
+  box-shadow: 0 0 0 2px #FFFFFF;
+  animation: salud-desliza 1s var(--curva-salida) 0.5s backwards;
+}
+
+.otras-b--alerta .otras-b__punto { background: var(--color-advertencia); }
+@keyframes salud-desliza { from { left: 0; } }
+
+/* ── El margen del GPS ── */
+.gps-b { height: 16rem; margin-top: var(--espacio-3); border-radius: var(--radio-control); overflow: hidden; background: var(--marino-900); }
+.gps-b .leaflet-tile-pane { filter: saturate(0.6) brightness(0.85); }
+.gps-b__muestra-p50 { width: 12px; height: 12px; border-radius: 50%; background: rgb(69 227 164 / 0.45); box-shadow: inset 0 0 0 2px #037F58; }
+.gps-b__muestra-p90 { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--color-advertencia); }
+
+@media (max-width: 64rem) {
+  .monitores-b { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 40rem) {
+  .monitores-b { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .salud-b *, .salud-b *::before, .otras-b__punto { animation: none !important; }
+  .monitor-b__latido { stroke-dasharray: none; }
+  .monitor-b__barrido { display: none; }
+}
