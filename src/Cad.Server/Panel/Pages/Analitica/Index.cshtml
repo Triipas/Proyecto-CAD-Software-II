@@ -17,6 +17,10 @@
     {
         <link rel="stylesheet" href="~/css/analitica-serenos.css" asp-append-version="true" />
     }
+    @if (Model.Actual.Clave == "cobertura")
+    {
+        <link rel="stylesheet" href="~/css/analitica-cobertura.css" asp-append-version="true" />
+    }
     @if (Model.Actual.Clave == "tiempo")
     {
         <link rel="stylesheet" href="~/css/analitica-tiempo.css" asp-append-version="true" />
@@ -162,6 +166,10 @@
         <script src="~/js/analitica-bloques.js" asp-append-version="true"></script>
     }
     <script src="~/js/analitica.js" asp-append-version="true"></script>
+    @if (Model.Actual.Clave == "cobertura")
+    {
+        <script src="~/js/analitica-cobertura.js" asp-append-version="true"></script>
+    }
     @if (Model.Actual.Clave == "tiempo")
     {
         <script src="~/js/analitica-tiempo.js" asp-append-version="true"></script>
