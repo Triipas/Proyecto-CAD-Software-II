@@ -31,7 +31,12 @@ public class PaginaCoberturaTests(FabricaCad fabrica)
 
         var html = WebUtility.HtmlDecode(await navegador.GetStringAsync("/panel/analitica/cobertura?periodo=rango&desde=2018-03-01&hasta=2018-03-07"));
 
-        Assert.Contains("data-escala=\"cobertura\"", html);
+        // El tablero: las 53 zonas de los bloques; sin serenos en el periodo, ninguna cubierta. La zona de los casos queda fuera.
+        Assert.Contains("data-tablero", html);
+        Assert.Matches("data-sur=\"-16\\.45\\d", html); // el encuadre del mapa con sus decimales (la fila de abajo termina en -16,455°)
+        Assert.Equal(53, html.Split("data-nombre=").Length - 1);
+        Assert.Contains("53 zonas</em> pasan más de la mitad del tiempo sin un sereno cerca", html);
+        Assert.Contains("Fuera de los bloques hubo 1 zona con 3 o más incidencias", html);
         Assert.Contains("Más cubierta", html);
         Assert.Contains("Menos de la mitad del tiempo cubierta", html);
         Assert.Contains("Turnos y demanda", html);

@@ -13,8 +13,10 @@ public sealed record ZonaCobertura(double Sur, double Oeste, double Norte, doubl
 
 // PorcentajeConAlguno: parte del tiempo en que al menos un sereno disponible tenía ubicación conocida, en cualquier lugar.
 // ZonasAgrupadas y CasosAgrupados: zonas con menos casos que el mínimo de privacidad, que no se muestran.
+// ZonasBloques (16/11/2026, el tablero de zonas): las 53 zonas de «Comparación por bloques», todas, tengan o no incidencias. La
+// cobertura de una zona no dice nada de nadie; sus casos sí: quien la dibuje muestra los casos solo desde el mínimo de privacidad.
 public sealed record Cobertura(IReadOnlyList<ZonaCobertura> Zonas, double PorcentajeConAlguno, int Muestras, double RadioMetros,
-    int ZonasAgrupadas, int CasosAgrupados);
+    int ZonasAgrupadas, int CasosAgrupados, IReadOnlyList<ZonaCobertura>? ZonasBloques = null);
 
 public sealed class ConsultarCobertura(CadDbContext db, TimeProvider reloj, IOptions<OpcionesAnalitica> opciones)
 {
@@ -39,7 +41,8 @@ public sealed class ConsultarCobertura(CadDbContext db, TimeProvider reloj, IOpt
 
         var paso = TimeSpan.FromMinutes(Math.Max(1, o.MuestreoMinutos));
         var antiguedad = TimeSpan.FromMinutes(o.AntiguedadPosicionMinutos);
-        var cubiertas = visibles.ToDictionary(z => z.Key, _ => 0);
+        var deBloques = BloquesDistrito.Todos.SelectMany(b => b.Zonas).ToList();
+        var cubiertas = visibles.Select(z => z.Key).Concat(deBloques).Distinct().ToDictionary(z => z, _ => 0);
         var muestras = 0;
         var conAlguno = 0;
         for (var momento = periodo.Desde; momento < fin; momento += paso)
@@ -59,14 +62,15 @@ public sealed class ConsultarCobertura(CadDbContext db, TimeProvider reloj, IOpt
         }
 
         var horasPorMuestra = paso.TotalHours;
+        ZonaCobertura Medida(Zona zona, int casos) => new(zona.Sur, zona.Oeste, zona.Norte, zona.Este, casos,
+            muestras == 0 ? 0 : 100.0 * cubiertas[zona] / muestras, (muestras - cubiertas[zona]) * horasPorMuestra);
         var zonas = visibles
-            .Select(z => new ZonaCobertura(z.Key.Sur, z.Key.Oeste, z.Key.Norte, z.Key.Este, z.Value,
-                muestras == 0 ? 0 : 100.0 * cubiertas[z.Key] / muestras,
-                (muestras - cubiertas[z.Key]) * horasPorMuestra))
+            .Select(z => Medida(z.Key, z.Value))
             .OrderBy(z => z.PorcentajeCubierto).ThenByDescending(z => z.Casos) // primero las menos cubiertas
             .ToList();
+        var bloques = deBloques.Select(z => Medida(z, casosPorZona.GetValueOrDefault(z))).ToList();
         return new Cobertura(zonas, muestras == 0 ? 0 : 100.0 * conAlguno / muestras, muestras, o.RadioCoberturaMetros,
-            agrupadas.Count, agrupadas.Sum(z => z.Value));
+            agrupadas.Count, agrupadas.Sum(z => z.Value), bloques);
     }
 
     // Una posición por sereno y minuto (la última de cada minuto): basta para muestrear cada pocos minutos y evita leer

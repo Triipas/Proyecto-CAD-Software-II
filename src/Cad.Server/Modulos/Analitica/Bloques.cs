@@ -33,6 +33,11 @@ public static class BloquesDistrito
 
     public static DefinicionBloque? De(Zona zona) => PorZona.GetValueOrDefault(zona);
 
+    // La referencia de plano de una zona con el centro fijo: columna (0 = «A», de oeste a este) y fila (de norte a sur), y su nombre.
+    public static (int Columna, int Fila) Posicion(Zona zona) => ((int)(zona.Columna - Centro.Columna + 10), (int)(Centro.Fila - zona.Fila + 10));
+
+    public static string Referencia(Zona zona) => Posicion(zona) is var (c, f) ? $"{(char)('A' + c)}{f}" : "";
+
     // «K15»: letra por columna (de oeste a este) y número por fila (de norte a sur), con el centro en «K10» (Zonas.Nombre al revés).
     private static List<Zona> Celdas(string nombres) =>
         nombres.Split(' ').Select(n => new Zona(Centro.Fila + 10 - int.Parse(n[1..]), Centro.Columna + (n[0] - 'A') - 10)).ToList();
