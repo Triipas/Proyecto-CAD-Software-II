@@ -2572,3 +2572,100 @@
   display: grid;
   gap: var(--espacio-2);
 }
+
+/* ── Controles del mapa con la gramática del panel (10/11/2026) ──────────
+   Los de Leaflet vienen en negro sobre blanco; aquí toman los bordes, el marino y el esmeralda del resto de la central. */
+.central .leaflet-bar {
+  overflow: hidden;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-control);
+  box-shadow: var(--sombra-2);
+}
+
+.central .leaflet-bar a {
+  width: 2.25rem;
+  height: 2.25rem;
+  line-height: 2.25rem;
+  color: var(--color-marino);
+  background: var(--color-superficie);
+  border-bottom-color: var(--color-borde);
+}
+
+.central .leaflet-bar a:hover {
+  color: var(--color-primario);
+  background: var(--color-tenue);
+}
+
+.central .leaflet-bar a.leaflet-disabled {
+  color: var(--color-texto-secundario);
+  background: var(--color-neutro-fondo);
+}
+
+.central .leaflet-bar a:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: -2px;
+}
+
+.central .leaflet-control-attribution {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  background: rgb(255 255 255 / 0.85);
+}
+
+.central .leaflet-control-attribution a {
+  color: var(--color-primario);
+}
+
+/* ── Etiquetas y chips con una sola medida (10/11/2026) ──────────────────
+   Tres familias que se leían como tres estilos: el tipo (SOS, Reporte: lleno, esquina de 6 px), el estado (chip con tono, píldora de
+   24 px) y los datos de la bandeja (píldora de 20 px). Misma altura dentro de cada familia, mismas esquinas y los tonos del sistema. */
+.central .etiqueta-urgente,
+.central .etiqueta-reporte,
+.central .etiqueta-acompanamiento {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: 1.5rem;
+  padding: 0 var(--espacio-2);
+  border-radius: var(--radio-pequeno);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+  line-height: 1.25rem;
+  letter-spacing: 0.02em;
+}
+
+.central .etiqueta-urgente .icono {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Datos de la bandeja: neutros con su borde; fotos en azul informativo; lo que sugiere el asistente, en el violeta del reporte. */
+.bandeja__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.25rem;
+  padding: 0 var(--espacio-2);
+  border: var(--grosor-borde) solid var(--color-neutro-borde);
+  font-weight: var(--peso-medio);
+  line-height: 1;
+  color: var(--color-neutro);
+  background: var(--color-neutro-fondo);
+}
+
+.bandeja__etiqueta--fotos {
+  color: var(--color-informacion);
+  background: var(--color-informacion-fondo);
+  border-color: var(--color-informacion-borde);
+}
+
+.bandeja__etiqueta--ia {
+  color: var(--color-reporte);
+  background: var(--color-reporte-fondo);
+  border-color: var(--color-reporte-borde);
+}
+
+.central .chip,
+.central .sos__estado {
+  min-height: 1.5rem;
+  box-sizing: border-box;
+}
