@@ -67,7 +67,8 @@ else
                             <span data-vista="sos" hidden="@(vistaInicial != "sos")">
                                 @if (noEmergencia == 0)
                                 {
-                                    <text>Todos los SOS de @m.TextoPeriodo </text><em>eran una emergencia</em><text>.</text>
+                                    @* Sin resultados de «no era una emergencia» no se puede afirmar que lo fueran: puede haber SOS sin resolver. *@
+                                    <text>Ningún SOS de @m.TextoPeriodo </text><em>quedó registrado como falso</em><text>, accidental ni falsa alarma.</text>
                                 }
                                 else if (cadaSos is { } n)
                                 {
