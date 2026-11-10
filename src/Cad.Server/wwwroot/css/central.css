@@ -2572,3 +2572,46 @@
   display: grid;
   gap: var(--espacio-2);
 }
+
+/* ── Controles del mapa con la gramática del panel (10/11/2026) ──────────
+   Los de Leaflet vienen en negro sobre blanco; aquí toman los bordes, el marino y el esmeralda del resto de la central. */
+.central .leaflet-bar {
+  overflow: hidden;
+  border: var(--grosor-borde) solid var(--color-borde);
+  border-radius: var(--radio-control);
+  box-shadow: var(--sombra-2);
+}
+
+.central .leaflet-bar a {
+  width: 2.25rem;
+  height: 2.25rem;
+  line-height: 2.25rem;
+  color: var(--color-marino);
+  background: var(--color-superficie);
+  border-bottom-color: var(--color-borde);
+}
+
+.central .leaflet-bar a:hover {
+  color: var(--color-primario);
+  background: var(--color-tenue);
+}
+
+.central .leaflet-bar a.leaflet-disabled {
+  color: var(--color-texto-secundario);
+  background: var(--color-neutro-fondo);
+}
+
+.central .leaflet-bar a:focus-visible {
+  outline: var(--grosor-foco) solid var(--color-foco);
+  outline-offset: -2px;
+}
+
+.central .leaflet-control-attribution {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  background: rgb(255 255 255 / 0.85);
+}
+
+.central .leaflet-control-attribution a {
+  color: var(--color-primario);
+}
