@@ -1,0 +1,368 @@
+/* «Reportes y SOS falsos» como «uno de cada» (16/11/2026) — se carga solo en esa pregunta, después de analitica.css.
+   Toda la respuesta es el tablero nocturno: el titular («Uno de cada 25»), tantos íconos como dice la frase con el falso en ocre, y
+   a la derecha el porcentaje de cada categoría (o de cada motivo, en la pestaña SOS) como un punto sobre su regla, con el periodo
+   anterior hueco detrás. Debajo, tres tarjetas claras: cómo terminaron los reportes, de cada 100 SOS y si las fotos ayudan.
+   El ocre marca lo falso y lo que pasa del 10 % (siempre con ▲ o con su nombre); el rojo queda para el SOS. */
+
+.tarjeta-a.respuesta.falsos-b {
+  border-color: var(--marino-900);
+  color: var(--color-texto-sobre-marino);
+  background:
+    radial-gradient(40% 70% at 18% 75%, rgb(0 128 90 / 0.22), transparent 70%),
+    linear-gradient(160deg, var(--marino-800) 0%, var(--marino-900) 48%, var(--marino-950) 100%);
+}
+
+.tarjeta-a.respuesta.falsos-b > .respuesta__cabecera:first-child {
+  margin-bottom: 0;
+  background: radial-gradient(70% 150% at 100% 0%, rgb(0 128 90 / 0.30) 0%, transparent 62%);
+}
+
+.tarjeta-a.respuesta.falsos-b > .respuesta__cabecera:first-child .respuesta__titular em {
+  color: var(--color-advertencia-sobre-marino);
+}
+
+.falsos-b .respuesta__visual { margin-top: 0; padding-bottom: var(--espacio-2); }
+.falsos-b [hidden] { display: none !important; }   /* las partes de la otra pestaña, aunque su clase les dé otro display */
+
+.falsos-b__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-4) var(--espacio-6);
+  align-items: flex-start;
+}
+
+.falsos-b__textos { flex: 1 1 26rem; min-width: 0; }
+.falsos-b__textos .respuesta__titular { max-width: 30ch; }
+
+/* ── Las pestañas: reportes o SOS ── */
+.falsos-b__pestanas {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radio-control);
+  background: rgb(6 17 39 / 0.5);
+  border: 1px solid rgb(213 224 240 / 0.14);
+}
+
+.falsos-b__pestanas[hidden] { display: none; }
+
+.falsos-b__pestanas button {
+  min-height: 2.25rem;
+  padding: 0 var(--espacio-4);
+  border: 0;
+  border-radius: calc(var(--radio-control) - 2px);
+  background: transparent;
+  color: var(--color-texto-sobre-marino);
+  font: inherit;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+  cursor: pointer;
+  transition: background-color var(--duracion-rapida) var(--curva-estandar), color var(--duracion-rapida) var(--curva-estandar);
+}
+
+.falsos-b__pestanas button[aria-pressed="true"] {
+  background: var(--marino-700);
+  color: #FFFFFF;
+  box-shadow: inset 0 -2px 0 var(--color-acento);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .falsos-b__pestanas button[aria-pressed="false"]:hover { background: rgb(213 224 240 / 0.08); }
+}
+
+.falsos-b__pestanas button:focus-visible { outline: 2px solid var(--color-acento); outline-offset: 2px; }
+
+/* ── El tablero: íconos a la izquierda, reglas a la derecha ── */
+.falsos-b__tablero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--espacio-4) var(--espacio-8);
+  align-items: center;
+  padding-top: var(--espacio-4);
+}
+
+.falsos-b__tablero[hidden] { display: none; }
+.falsos-b__tablero > :is(.falsos-b__leyenda, .aviso) { grid-column: 1 / -1; }
+
+.iconos-b__rejilla {
+  --lado: 2.375rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, var(--lado)));
+  gap: var(--espacio-2);
+}
+
+.iconos-b__rejilla--densa {
+  --lado: 1.75rem;
+  grid-template-columns: repeat(10, minmax(0, var(--lado)));
+  gap: 6px;
+}
+
+.iconos-b__icono {
+  display: grid;
+  place-items: center;
+  height: calc(var(--lado) * 1.2);
+  border-radius: 7px;
+  background: rgb(69 227 164 / 0.10);
+  color: var(--color-acento);
+  box-shadow: inset 0 0 0 1.5px rgb(69 227 164 / 0.35);
+  animation: falsos-cae 450ms var(--curva-salida) backwards;
+  animation-delay: calc(300ms + var(--i) * 22ms);
+}
+
+.iconos-b__icono svg { width: 55%; height: 55%; }
+
+.iconos-b__icono--falso {
+  background: var(--color-advertencia-sobre-marino);
+  color: var(--marino-900);
+  box-shadow: 0 0 0 4px rgb(245 181 68 / 0.25), 0 8px 20px -6px rgb(245 181 68 / 0.6);
+  animation: falsos-gira 800ms var(--curva-salida) backwards;
+  animation-delay: calc(550ms + var(--n) * 22ms);
+}
+
+@keyframes falsos-cae { from { opacity: 0; transform: translateY(-10px) scale(0.9); } }
+@keyframes falsos-gira {
+  0% { opacity: 0; transform: rotateY(90deg) scale(0.9); background: rgb(69 227 164 / 0.10); }
+  60% { opacity: 1; transform: rotateY(0) scale(1.12); }
+  100% { transform: none; }
+}
+
+.iconos-b__pie,
+.iconos-b__frase {
+  margin: var(--espacio-4) 0 0;
+  font-size: var(--texto-sm);
+  line-height: 1.45;
+  color: var(--color-texto-sobre-marino);
+}
+
+.iconos-b__frase { margin: 0; font-size: var(--texto-lg); }
+.iconos-b__pie b,
+.iconos-b__frase b { color: var(--color-advertencia-sobre-marino); }
+
+.tarjeta-a.respuesta.falsos-b .falsos-b__subtitulo {   /* gana a los h3 de las tarjetas claras (marino sobre marino) */
+  margin: 0;
+  font-size: var(--texto-md);
+  font-weight: var(--peso-fuerte);
+  color: #FFFFFF;
+}
+
+.falsos-b__nota {
+  margin: var(--espacio-1) 0 var(--espacio-2);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino-secundario);
+}
+
+.falso-b {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 7.5rem;
+  gap: var(--espacio-3);
+  align-items: center;
+  padding: var(--espacio-2) 0;
+  border-bottom: 1px solid rgb(213 224 240 / 0.10);
+  font-size: var(--texto-sm);
+}
+
+.falso-b__nombre { line-height: 1.3; }
+.falso-b__nombre small,
+.falso-b__valor small { color: var(--color-texto-sobre-marino-secundario); font-size: var(--texto-xs); font-weight: 400; }
+.falso-b__valor { text-align: right; line-height: 1.3; }
+.falso-b__valor small { display: block; white-space: nowrap; }
+.falso-b__valor b { display: block; color: #FFFFFF; }
+.falso-b--pocos .falso-b__nombre { color: var(--color-texto-sobre-marino-secundario); }
+
+/* La regla: referencia provisional (franja), todas las categorías (raya), antes (hueco), tallo y ahora. */
+.carril-b { position: relative; display: block; height: 1.375rem; }
+.carril-b__base { position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgb(213 224 240 / 0.18); }
+
+.carril-b__referencia {
+  position: absolute;
+  left: 0;
+  top: calc(50% - 4px);
+  height: 8px;
+  border-radius: 4px 0 0 4px;
+  background: rgb(69 227 164 / 0.18);
+  border-right: 2px dashed rgb(69 227 164 / 0.7);
+}
+
+.carril-b__todas {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid rgb(213 224 240 / 0.45);
+}
+
+.carril-b__tallo {
+  position: absolute;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: rgb(213 224 240 / 0.55);
+  animation: falsos-aparece 500ms ease backwards;
+  animation-delay: calc(1200ms + var(--i) * 90ms);
+}
+
+.carril-b__antes {
+  position: absolute;
+  top: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 2px solid #8A9DBB;
+  background: var(--marino-900);
+  animation: falsos-aparece 500ms ease backwards;
+  animation-delay: calc(1200ms + var(--i) * 90ms);
+}
+
+.carril-b__ahora {
+  position: absolute;
+  top: calc(50% - 8px);
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--color-acento);
+  box-shadow: 0 0 0 3px var(--marino-900);
+  animation: falsos-desliza 900ms var(--curva-salida) backwards;
+  animation-delay: calc(700ms + var(--i) * 90ms);
+}
+
+.carril-b__ahora--alta { background: var(--color-advertencia-sobre-marino); }
+
+@keyframes falsos-desliza { from { left: 0; } }
+@keyframes falsos-aparece { from { opacity: 0; } }
+
+.falsos-b__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-5);
+  margin: var(--espacio-2) 0 0;
+  padding: var(--espacio-3) 0 0;
+  list-style: none;
+  border-top: 1px solid rgb(213 224 240 / 0.12);
+  font-size: var(--texto-xs);
+  color: var(--color-texto-sobre-marino);
+}
+
+.falsos-b__leyenda i { display: inline-block; vertical-align: -2px; margin-right: 7px; }
+.falsos-b__muestra-ahora { width: 12px; height: 12px; border-radius: 50%; background: var(--color-acento); }
+.falsos-b__muestra-alta { width: 12px; height: 12px; border-radius: 50%; background: var(--color-advertencia-sobre-marino); }
+.falsos-b__muestra-antes { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; border: 2px solid #8A9DBB; }
+.falsos-b__muestra-todas { width: 2px; height: 14px; background: rgb(213 224 240 / 0.6); }
+.falsos-b__muestra-referencia { width: 16px; height: 8px; border-radius: 3px; background: rgb(69 227 164 / 0.3); }
+
+/* ── Cómo terminaron los reportes: la barra apilada y su lista ── */
+.apilada-b {
+  display: flex;
+  gap: 2px;
+  height: 1rem;
+  margin-top: var(--espacio-3);
+  border-radius: var(--radio-pildora, 999px);
+  overflow: hidden;
+}
+
+.apilada-b__parte {
+  min-width: 3px;
+  transform-origin: 0 50%;
+  animation: falsos-abre 800ms var(--curva-salida) backwards;
+  animation-delay: calc(500ms + var(--i) * 90ms);
+}
+
+@keyframes falsos-abre { from { transform: scaleX(0); } }
+
+.apilada-b__parte--admitidos { background: #1DAE7A; }
+.apilada-b__parte--derivados { background: #A6E6C8; }
+.apilada-b__parte--falsos { background: var(--color-advertencia); }
+.apilada-b__parte--descartes { background: #6F7F97; }
+.apilada-b__parte--sin-motivo { background: repeating-linear-gradient(45deg, #BCC7D6 0 3px, #E7EBF1 3px 6px); }
+.apilada-b__parte--abiertos { background: #D2DAE5; }
+.apilada-b__parte--retirados { background: #E7EBF1; box-shadow: inset 0 0 0 1px #BCC7D6; }
+
+.partes-b {
+  display: grid;
+  gap: 6px;
+  margin: var(--espacio-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.partes-b li { display: grid; grid-template-columns: 11px minmax(0, 1fr) auto; gap: var(--espacio-2); align-items: baseline; }
+.partes-b i { width: 11px; height: 11px; border-radius: 3px; align-self: center; }
+.partes-b small { display: block; font-size: var(--texto-xs); color: var(--color-texto-terciario, var(--color-texto-secundario)); }
+.partes-b b { color: var(--color-texto); }
+
+/* ── De cada 100 SOS ── */
+.gofre-b {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+  margin-top: var(--espacio-3);
+}
+
+.gofre-b i {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  animation: falsos-aparece 300ms ease backwards;
+  animation-delay: calc(400ms + var(--i) * 8ms);
+}
+
+.gofre-b--emergencia { background: #A6E6C8; }
+.gofre-b--falsos { background: var(--color-advertencia); }
+.gofre-b--accidental { background: #46536A; }
+.gofre-b--alarma { background: #BCC7D6; }
+.partes-b i.gofre-b--emergencia,
+.partes-b i.gofre-b--falsos,
+.partes-b i.gofre-b--accidental,
+.partes-b i.gofre-b--alarma { animation: none; }
+
+/* ── ¿Las fotos ayudan? ── */
+.fotos-b { display: grid; grid-template-columns: 1fr 1fr; gap: var(--espacio-3); margin-top: var(--espacio-3); }
+
+.fotos-b__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--espacio-3);
+  border-radius: var(--radio-control);
+  background: var(--color-fondo, #F5F7FA);
+  border: 1px solid var(--color-borde, #E7EBF1);
+}
+
+.fotos-b__grupo > b { font-size: var(--texto-sm); color: var(--marino-900); }
+
+.fotos-b__cuadros {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  margin: var(--espacio-2) 0;
+}
+
+.fotos-b__cuadros i {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: #A6E6C8;
+  animation: falsos-aparece 300ms ease backwards;
+  animation-delay: calc(600ms + var(--i) * 5ms);
+}
+
+.fotos-b__cuadros i.falso { background: var(--color-advertencia); }
+.fotos-b__cifras { font-size: var(--texto-xs); color: var(--color-texto-secundario); }
+.fotos-b__cifras strong { color: var(--color-advertencia); }
+.fotos-b__sin { margin-top: var(--espacio-2); font-size: var(--texto-xs); color: var(--color-texto-secundario); }
+
+/* ── Pantallas angostas ── */
+@media (max-width: 60rem) {
+  .falsos-b__tablero { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 40rem) {
+  .falso-b { grid-template-columns: minmax(0, 1fr) 5.5rem; }
+  .falso-b .carril-b { grid-column: 1 / -1; grid-row: 2; }
+  .iconos-b__rejilla--densa { --lado: 1.4rem; gap: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .falsos-b *,
+  .rejilla-a :is(.apilada-b__parte, .gofre-b i, .fotos-b__cuadros i) { animation: none !important; }
+}

@@ -1,0 +1,35 @@
+@model (int? Cada, int Falsos, int Total, string Base, string Unidad, string Icono)
+@{
+    // «Uno de cada N» dibujado: N íconos y el último, el falso, en ocre (entra girando cuando ya cayeron los demás). Con más de
+    // 100 íconos o sin falsos no hay dibujo que ayude: queda la frase con la cifra.
+    var (cada, falsos, total, baseTexto, unidad, icono) = Model;
+    var trazo = icono == "sirena"
+        ? "M7 18v-6a5 5 0 1 1 10 0v6M5 21h14M12 3v1M4.2 6.2l.7.7M19.8 6.2l-.7.7"
+        : "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5";
+    const string Alerta = "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z";
+    var porcentaje = total == 0 ? 0 : 100.0 * falsos / total;
+    var cifra = $"{falsos} de {total} ({Formato.Porcentaje(porcentaje, porcentaje < 10 ? 1 : 0)})";
+}
+<div class="iconos-b">
+    @if (cada is { } n && n <= UnoDeCada.MaximoIconos)
+    {
+        <div class="iconos-b__rejilla@(n > 30 ? " iconos-b__rejilla--densa" : "")" role="img" aria-label="@n íconos y uno resaltado: uno de cada @n @baseTexto fue falso" style="--n:@n">
+            @for (var i = 0; i < n; i++)
+            {
+                var falso = i == n - 1;
+                <span class="iconos-b__icono@(falso ? " iconos-b__icono--falso" : "")" style="--i:@Math.Min(i, 99)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="@(falso ? Alerta : trazo)" /></svg>
+                </span>
+            }
+        </div>
+        <p class="iconos-b__pie">De cada @n @baseTexto, uno fue falso: en total <b>@cifra</b></p>
+    }
+    else if (cada is not null)
+    {
+        <p class="iconos-b__frase"><b>Menos de 1 de cada @UnoDeCada.MaximoIconos</b> @baseTexto fue falso: @cifra.</p>
+    }
+    else
+    {
+        <p class="iconos-b__frase"><b>Ningún falso</b> entre @Formato.Plural(total, unidad, baseTexto).</p>
+    }
+</div>
