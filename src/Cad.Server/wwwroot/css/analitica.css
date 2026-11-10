@@ -786,19 +786,8 @@ a.fila-a__cifra {
 
 .cobertura-a .tabla-a td { white-space: nowrap; }
 
-/* Cobertura y lo que se repite ocupan toda la pantalla bajo la barra superior; en pantallas bajas se deja que la página se desplace. */
-.analitica[data-analitica="cobertura"],
-.analitica[data-analitica="repite"] {
-  height: max(calc(100dvh - 3.75rem), 42rem);
-  min-height: 0;
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.analitica[data-analitica="cobertura"] .analitica__trabajo,
-.analitica[data-analitica="repite"] .analitica__trabajo { min-height: 0; }
-
-.analitica[data-analitica="cobertura"] .cobertura-a,
-.analitica[data-analitica="repite"] .cobertura-a { min-height: 0; }
+/* (16/11/2026) Cobertura y lo que se repite ya no son un mapa a pantalla completa: su altura crece con el contenido, como las
+   demás preguntas, y el blanco de la columna de preguntas llega hasta el final de la página. */
 
 .mapa-protagonista {
   position: relative;
@@ -3514,7 +3503,7 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
   fill: rgb(69 227 164 / 0.22);
   opacity: 0;
   transform-box: view-box;
-  transform-origin: 50% 50%;
+  transform-origin: 0 0;           /* con view-box, el 0 0 es el centro del radar (viewBox de -320 a 320); el 50 % caía en una esquina */
   pointer-events: none;
 }
 
@@ -3864,7 +3853,7 @@ button.leyenda-noche-b[aria-pressed="false"] { color: var(--color-texto-sobre-ma
 @media (prefers-reduced-motion: no-preference) {
   .radar-a--entrando .radar-a__fondo {
     transform-box: view-box;
-    transform-origin: 50% 50%;
+    transform-origin: 0 0;         /* el centro del radar: ver .radar-a__barrido */
     animation: radar-abrir 700ms var(--curva-salida) backwards;
     animation-delay: calc(var(--retraso, 0ms) + 120ms);
   }

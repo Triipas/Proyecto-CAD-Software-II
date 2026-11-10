@@ -1,25 +1,46 @@
-// «Cobertura por zona» como tablero (16/11/2026): el mapa de fondo, los filtros por bloque y el globo de cada zona. Sin JavaScript
+// «Cobertura por zona» como tablero (16/11/2026): el mapa (que se mueve y se acerca con la rueda), los filtros por bloque y el globo de cada zona. Sin JavaScript
 // el tablero se ve igual sobre fondo marino (sin calles), los filtros quedan ocultos y la tabla para lector tiene cada zona.
 (() => {
   const seccion = document.querySelector("[data-cobertura]");
   const tablero = seccion?.querySelector("[data-tablero]");
   if (!tablero) return;
 
-  // ---------- El mapa de fondo: quieto y ajustado al encuadre de la cuadrícula ----------
-  // El contenedor ya tiene la proporción del encuadre en la proyección del mapa: con zoom fraccionario, el encuadre llena el
-  // contenedor y cada zona queda sobre su lugar.
+  // ---------- El mapa: se arrastra y se acerca, y las zonas van con él ----------
+  // Arranca ajustado al encuadre de la cuadrícula (el contenedor ya tiene su proporción en la proyección del mapa). La capa de zonas y
+  // serenos se muda a un panel propio del mapa: Leaflet la arrastra junto con las calles, y en cada zoom se recoloca sobre las
+  // esquinas reales del encuadre, así cada zona sigue sobre su lugar.
   const fondo = tablero.querySelector("[data-mapa]");
-  if (fondo && typeof L !== "undefined") {
+  const capa = tablero.querySelector("[data-capa]");
+  if (fondo && capa && typeof L !== "undefined") {
     const n = (clave) => parseFloat(tablero.dataset[clave]);
-    const encuadre = [[n("sur"), n("oeste")], [n("norte"), n("este")]];
-    const mapa = L.map(fondo, {
-      zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
-      boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0, inertia: false,
-    });
+    const noroeste = [n("norte"), n("oeste")], sureste = [n("sur"), n("este")];
+    const mapa = L.map(fondo, { zoomControl: false, attributionControl: false, zoomSnap: 0, zoomDelta: 0.5, wheelPxPerZoomLevel: 90, zoomAnimation: false });
     L.tileLayer(tablero.dataset.teselas, { maxZoom: 19 }).addTo(mapa);
-    const ajustar = () => { mapa.invalidateSize(false); mapa.fitBounds(encuadre, { padding: [0, 0], animate: false }); };
+    L.control.zoom({ position: "bottomright", zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(mapa);
+    const panel = mapa.createPane("tablero");
+    panel.style.zIndex = 450;
+    panel.appendChild(capa);
+    // El fondo era decorativo (aria-hidden); ahora tiene las zonas y los botones de zoom: solo las calles quedan fuera del lector.
+    fondo.removeAttribute("aria-hidden");
+    mapa.getPane("tilePane").setAttribute("aria-hidden", "true");
+    tablero.classList.add("tablero-b--mapa");
+    function colocar() {
+      const a = mapa.latLngToLayerPoint(noroeste), b = mapa.latLngToLayerPoint(sureste);
+      L.DomUtil.setPosition(capa, a);
+      capa.style.width = `${b.x - a.x}px`;
+      capa.style.height = `${b.y - a.y}px`;
+    }
+    mapa.on("zoomend viewreset", colocar);
+    let ajustado = false;
+    const ajustar = () => {
+      mapa.invalidateSize(false);
+      if (!ajustado) { mapa.fitBounds([noroeste, sureste], { padding: [0, 0], animate: false }); ajustado = true; }
+      colocar();
+    };
     ajustar();
     new ResizeObserver(ajustar).observe(tablero);
+    // El globo se calcula sobre el tablero: al mover el mapa se esconde para no quedar flotando lejos de su zona.
+    mapa.on("movestart zoomstart", () => { const g = tablero.querySelector("[data-globo]"); if (g) g.hidden = true; });
   }
 
   // ---------- El globo de cada zona ----------
