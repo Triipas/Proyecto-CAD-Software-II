@@ -9,9 +9,9 @@
     // Navegación orientativa por rol: los permisos los decide siempre el servidor (HU03).
     var enlaces = rol switch
     {
-        Roles.Operador => new[] { ("/panel/central", "Central"), ("/panel/casos", "Casos"), ("/panel/mapa-concentracion", "Mapa de concentración"), ("/panel/acompanamientos", "Acompañamientos"), ("/panel/analitica", "Analítica") },
-        Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales"), ("/panel/admin/ia", "Asistencia con IA") },
-        _ => Array.Empty<(string, string)>(),
+        Roles.Operador => new[] { ("/panel/central", "Central", "panel"), ("/panel/casos", "Casos", "lista"), ("/panel/mapa-concentracion", "Mapa de concentración", "capas"), ("/panel/acompanamientos", "Acompañamientos", "ruta"), ("/panel/analitica", "Analítica", "grafico") },
+        Roles.Administrador => new[] { ("/panel/admin/cuentas", "Cuentas institucionales", "usuarios"), ("/panel/admin/ia", "Asistencia con IA", "chispa") },
+        _ => Array.Empty<(string, string, string)>(),
     };
 }
 <!DOCTYPE html>
@@ -67,9 +67,9 @@
         {
             <nav class="barra__navegacion" id="secciones-panel" aria-label="Secciones del panel">
                 <ul class="barra__secciones">
-                    @foreach (var (href, texto) in enlaces)
+                    @foreach (var (href, texto, icono) in enlaces)
                     {
-                        <li><a class="barra__seccion" href="@href" aria-current="@(ruta.StartsWith(href) || (href == "/panel/central" && (ruta.StartsWith("/panel/reportes") || ruta.StartsWith("/panel/criterios-triaje"))) ? "page" : null)">@texto</a></li>
+                        <li><a class="barra__seccion" href="@href" aria-current="@(ruta.StartsWith(href) || (href == "/panel/central" && (ruta.StartsWith("/panel/reportes") || ruta.StartsWith("/panel/criterios-triaje"))) ? "page" : null)"><partial name="_Icono" model="@icono" />@texto</a></li>
                     }
                 </ul>
             </nav>

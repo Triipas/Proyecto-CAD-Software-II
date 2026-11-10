@@ -25,7 +25,7 @@ public class BarraDosNivelesTests(FabricaCad fabrica)
 
         Assert.Contains("class=\"barra__fila\"", html);
         Assert.Contains("class=\"barra__navegacion\"", html);
-        Assert.Contains("aria-current=\"page\">Central</a>", html);
+        Assert.Matches("(?s)aria-current=\"page\"><svg.*?</svg>\\s*Central</a>", html); // con el icono de su sección
         Assert.DoesNotContain("barra__hoja", html);
         Assert.DoesNotContain("barra--con-hoja", html);
         Assert.DoesNotContain("data-menu", html);
@@ -42,7 +42,7 @@ public class BarraDosNivelesTests(FabricaCad fabrica)
         Assert.Contains("barra barra--con-hoja", cabecera);
         Assert.Contains("class=\"barra__hoja\"", cabecera);
         Assert.Contains("aria-label=\"Vistas de la lista\"", cabecera);
-        Assert.Contains("aria-current=\"page\">Casos</a>", cabecera);
+        Assert.Matches("(?s)aria-current=\"page\"><svg.*?</svg>\\s*Casos</a>", cabecera);
         Assert.Equal(1, html.Split("aria-label=\"Vistas de la lista\"").Length - 1); // solo en la hoja
     }
 }
