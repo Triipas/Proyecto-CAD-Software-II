@@ -105,11 +105,13 @@ public sealed class ConsultarReasignaciones(CadDbContext db, TimeProvider reloj)
             : largo <= 10 ? (TimeSpan.FromDays(1), (d, _) => d.ToString("ddd d", cultura).Replace(".", ""))
             : largo <= 70 ? (TimeSpan.FromDays(7), (d, _) => d.ToString("d MMM", cultura).Replace(".", ""))
             : largo <= 140 ? (TimeSpan.FromDays(14), (d, _) => d.ToString("d MMM", cultura).Replace(".", ""))
-            : (TimeSpan.FromDays(30), (d, _) => d.ToString("MMM yyyy", cultura).Replace(".", ""));
+            // Tramos fijos de 30 días, no meses del calendario: se nombran por su primer día, nunca por un mes que no cubren entero.
+            : (TimeSpan.FromDays(30), (d, _) => d.ToString("d MMM yy", cultura).Replace(".", ""));
         var tramos = new List<(string, DateTimeOffset, DateTimeOffset)>();
         for (var desde = periodo.Desde; desde < fin; desde += forma.Paso)
         {
-            var hasta = desde + forma.Paso < periodo.Hasta ? desde + forma.Paso : periodo.Hasta;
+            // El tramo en curso termina ahora: no cuenta tiempo que aún no pasó (así se sabe que su columna está incompleta).
+            var hasta = desde + forma.Paso < fin ? desde + forma.Paso : fin;
             var local = TimeZoneInfo.ConvertTime(desde, periodo.Zona).DateTime;
             tramos.Add((forma.Etiqueta(local, TimeZoneInfo.ConvertTime(hasta, periodo.Zona).DateTime), desde, hasta));
         }

@@ -25,8 +25,20 @@ public class ArreglarTests
         var periodo = new PeriodoAnalitica(desde, desde.AddDays(30), Lima);
 
         Assert.Equal(5, ConsultarReasignaciones.Tramos(periodo, desde.AddDays(40)).Count);
-        Assert.Equal(2, ConsultarReasignaciones.Tramos(periodo, desde.AddDays(10)).Count); // a los 10 días van dos semanas empezadas
+        var enCurso = ConsultarReasignaciones.Tramos(periodo, desde.AddDays(10));
+        Assert.Equal(2, enCurso.Count); // a los 10 días van dos semanas empezadas
+        Assert.Equal(desde.AddDays(10), enCurso[^1].Hasta); // la que va en curso termina ahora, no al final de la semana
         Assert.Equal("1 oct", ConsultarReasignaciones.Tramos(periodo, desde.AddDays(40))[0].Etiqueta);
+    }
+
+    [Fact]
+    public void Tramos_DeTreintaDiasSeNombranPorSuPrimerDiaYNoPorUnMes()
+    {
+        var desde = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.FromHours(-5));
+        var tramos = ConsultarReasignaciones.Tramos(new(desde, desde.AddDays(180), Lima), desde.AddDays(200));
+
+        Assert.Equal(6, tramos.Count);
+        Assert.Equal(["1 ene 26", "31 ene 26"], tramos.Take(2).Select(t => t.Etiqueta));
     }
 
     [Fact]

@@ -19,7 +19,9 @@
     var tramos = r.Tramos ?? [];
     var techo = Math.Max(1, tramos.Select(t => t.Total).DefaultIfEmpty(0).Max());
     var paso = tramos.Count >= 2 ? tramos[1].Desde - tramos[0].Desde : TimeSpan.FromDays(7);
-    var tituloTramos = paso.TotalHours <= 4 ? "Cada 4 horas" : paso.TotalDays <= 1 ? "Día a día" : paso.TotalDays <= 7 ? "Semana a semana" : paso.TotalDays <= 14 ? "Cada dos semanas" : "Mes a mes";
+    var tituloTramos = paso.TotalHours <= 4 ? "Cada 4 horas" : paso.TotalDays <= 1 ? "Día a día" : paso.TotalDays <= 7 ? "Semana a semana" : paso.TotalDays <= 14 ? "Cada dos semanas" : "Cada 30 días";
+    // Un tramo dicho en días u horas, para avisar cuando la última columna cubre menos que las demás.
+    string Duracion(TimeSpan d) => d.TotalDays >= 1 ? Formato.Plural((int)Math.Round(d.TotalDays), "día", "días") : Formato.Plural(Math.Max(1, (int)Math.Round(d.TotalHours)), "hora", "horas");
     var retiros = r.RetirosPorSerenoOrdenados ?? [];
     var cabeza = Math.Max(1, (int)Math.Ceiling(retiros.Count * 0.2)); // el 20 % de los serenos con más casos reasignados
     var enCabeza = retiros.Take(cabeza).Sum();
@@ -79,9 +81,9 @@ else
                             }
                         </div>
                         <div class="columnas-b__eje" style="--n:@Math.Max(1, tramos.Count)" aria-hidden="true">@foreach (var t in tramos) { <span>@t.Etiqueta</span> }</div>
-                        @if (tramos.Count >= 2 && tramos[^1].Hasta - tramos[^1].Desde is var ultimo && ultimo < paso && ultimo.TotalDays >= 1)
+                        @if (tramos.Count >= 2 && tramos[^1].Hasta - tramos[^1].Desde is var ultimo && ultimo < paso - TimeSpan.FromMinutes(1))
                         {
-                            <p class="arreglar-b__nota arreglar-b__nota--pie">La última columna tiene @Formato.Plural((int)Math.Round(ultimo.TotalDays), "día", "días"), no @Formato.Plural((int)Math.Round(paso.TotalDays), "día", "días"): por eso es más baja.</p>
+                            <p class="arreglar-b__nota arreglar-b__nota--pie">La última columna cubre @Duracion(ultimo), no @Duracion(paso)@(tramos[^1].Hasta < m.Rango.Hasta ? " (va en curso)" : ""): puede ser más baja por eso.</p>
                         }
                     </div>
                     <div class="arreglar-b__acciones">
