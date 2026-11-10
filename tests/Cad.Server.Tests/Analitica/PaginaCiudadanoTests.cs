@@ -36,7 +36,7 @@ public class PaginaCiudadanoTests(FabricaCad fabrica)
         var html = WebUtility.HtmlDecode(await navegador.GetStringAsync("/panel/analitica/ciudadano?periodo=rango&desde=2015-03-01&hasta=2015-03-28"));
 
         Assert.Contains("Por dónde llegan los reportes", html);
-        Assert.Contains("fila100__nombre\">App CAD Móvil<", html);
+        Assert.Contains("data-canal=\"App CAD Móvil\"", html); // la barra de canales y su lista, con su nombre y su cifra
         Assert.Contains("Reportes enviados en la primera hora del hecho", html);
     }
 }
