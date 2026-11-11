@@ -329,4 +329,69 @@ public class MapaConcentracionTests(FabricaCad fabrica)
         Assert.Contains(error, html);
         Assert.DoesNotContain("id=\"mapa-concentracion\"", html);
     }
+
+    // Rediseño del 10/11/2026: el ranking suma SOS y reportes de cada zona (con su barra), la zona elegida ofrece sus casos y el formulario
+    // se resume plegado, con «Generar el mapa» en el pie del panel.
+    [Fact]
+    public async Task Panel_ElRankingMuestraLaComposicionDeCadaZona_ConSusCasosYElBotonEnElPie()
+    {
+        var zona = ZonaNueva();
+        var app = await CiudadanoAsync();
+        await SosAsync(app, zona);
+        await ReporteAsync(app, zona);
+
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion"));
+
+        Assert.Matches(@"\d+ SOS · \d+ reportes?", html);
+        Assert.Contains("ranking__barra-sos", html);
+        Assert.Contains("ranking__barra-reporte", html);
+        Assert.Matches(@"href=""/panel/casos\?desde=\d{4}-\d{2}-\d{2}&hasta=\d{4}-\d{2}-\d{2}&zona=-?\d+(\.\d+)?,-?\d+(\.\d+)?"" data-casos-zona", html);
+        Assert.Contains("data-quitar-zona", html);
+        Assert.DoesNotContain("Zona con más casos", html); // es la primera del ranking
+        Assert.Contains("<button type=\"submit\" form=\"seleccion-mapa\"", html);
+        // Con la selección en orden, el formulario llega plegado y resumido.
+        Assert.Matches(@"<details class=""seleccion""\s+data-seleccion-detalle", html);
+        Assert.Contains("Últimos 30 días", html);
+    }
+
+    [Fact]
+    public async Task Panel_ConUnaSeleccionInvalida_ElFormularioSeAbreSolo()
+    {
+        var html = System.Net.WebUtility.HtmlDecode(await (await OperadorAsync()).GetStringAsync("/panel/mapa-concentracion?Desde=2026-10-16&Hasta=2026-10-01"));
+
+        Assert.Matches(@"<details class=""seleccion""\s+open", html);
+        Assert.Contains("La fecha final es anterior a la inicial.", html);
+    }
+
+    // «Ver casos de la zona»: la lista de Casos filtra por la celda del mapa (SOS por el dispositivo, reporte por el punto del hecho).
+    [Fact]
+    public async Task Casos_FiltraPorUnaZonaDelMapa_ConSosYReportes()
+    {
+        var zona = ZonaNueva();
+        var app = await CiudadanoAsync();
+        var sos = await SosAsync(app, zona);
+        var reporte = await ReporteAsync(app, zona);
+        var lejos = await SosAsync(await CiudadanoAsync(), zona - 1);
+        var sur = Math.Floor(zona / ConsultarConcentracion.TamanoCelda) * ConsultarConcentracion.TamanoCelda;
+        var oeste = Math.Floor(Longitud / ConsultarConcentracion.TamanoCelda) * ConsultarConcentracion.TamanoCelda;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        var html = await (await OperadorAsync()).GetStringAsync($"/panel/casos?zona={sur.ToString("0.######", inv)},{oeste.ToString("0.######", inv)}");
+
+        Assert.Contains($"data-caso=\"{sos}\"", html);
+        Assert.Contains($"data-caso=\"{reporte}\"", html);
+        Assert.DoesNotContain($"data-caso=\"{lejos}\"", html);
+        Assert.Contains("Quitar el filtro Zona", html);
+        // El formulario de filtros conserva la zona al buscar de nuevo.
+        Assert.Matches(@"<input type=""hidden"" name=""zona"" value=""-?\d+(\.\d+)?,-?\d+(\.\d+)?"" />", html);
+    }
+
+    [Fact]
+    public async Task Casos_UnaZonaQueNoSeEntiende_SeIgnora()
+    {
+        var respuesta = await (await OperadorAsync()).GetAsync("/panel/casos?zona=abc");
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.DoesNotContain("Quitar el filtro Zona", await respuesta.Content.ReadAsStringAsync());
+    }
 }

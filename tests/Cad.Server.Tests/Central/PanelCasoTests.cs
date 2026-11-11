@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Cad.Contratos.Reportes;
+using Cad.Contratos.Sos;
 using Cad.Server.Modulos.Casos.Dominio;
 using Cad.Server.Modulos.Cuentas.Dominio;
 using Cad.Server.Tests.Infraestructura;
@@ -95,5 +96,44 @@ public class PanelCasoTests(FabricaCad fabrica)
         var formulario = System.Text.RegularExpressions.Regex.Match(html, $"<form[^>]*/panel/reportes/{id}\\?handler=IniciarRevision[^>]*>").Value;
         Assert.Contains("data-abrir-panel", formulario);
         Assert.DoesNotContain("target=", formulario); // sin JavaScript, «Revisar» va a la página del reporte
+    }
+
+    // Rediseño del 10/11/2026: «lo esencial» del caso (dónde está, con su zona) va primero en el panel; la página completa no lo muestra
+    // en pantalla (solo lo pide el panel). Iniciar la revisión es una acción corta: no se pliega.
+    [Fact]
+    public async Task ElReporteEnElPanel_TraeLaFichaClaveConSuZona_YLaAccionCortaNoSePliega()
+    {
+        var id = await ReporteAsync();
+        var operador = await OperadorAsync();
+
+        var html = await EnMarcoAsync(operador, $"/panel/reportes/{id}");
+
+        Assert.Contains("data-ficha-clave", html);
+        Assert.Contains("data-despues-del-hecho", html); // en un reporte, lo que contó el ciudadano va antes que el lugar
+        Assert.Matches(@"Zona [A-Z]-?\d+ · ", html);
+        Assert.Contains("data-ver-mapa", html);
+        Assert.Contains("Frente al mercado", html);
+        Assert.Contains("data-accion-corta=\"true\"", html);
+    }
+
+    [Fact]
+    public async Task ElSosEnElPanel_TraeLaFichaClaveConSuZona_YElBotonParaVerloEnElMapa()
+    {
+        var app = await fabrica.CrearClienteAppAsync(await fabrica.CrearAsync(Roles.Ciudadano));
+        var ahora = DateTimeOffset.UtcNow;
+        var respuesta = await app.PostAsJsonAsync("/api/sos", new SolicitudEmisionSos(Guid.NewGuid(), ahora, new UbicacionSos(-12.0631, -77.0365, 12, ahora.AddSeconds(1))));
+        var id = (await respuesta.Content.ReadFromJsonAsync<RespuestaSos>())!.Id;
+        var operador = await OperadorAsync();
+
+        var html = await EnMarcoAsync(operador, $"/panel/central/sos/{id}");
+        var completa = await operador.GetStringAsync($"/panel/central/sos/{id}");
+
+        Assert.Contains("data-ficha-clave", html);
+        Assert.Matches(@"ficha-clave__zona"">Zona [A-Z]-?\d+<", html);
+        Assert.Contains("data-ver-mapa", html);
+        Assert.Contains("Ubicación del dispositivo", html);
+        // La ficha es del panel: la página completa la trae en el marcado pero no se ve (detalle-caso.css la oculta fuera del panel).
+        Assert.Contains("/css/panel-caso.css", html);
+        Assert.DoesNotContain("/css/panel-caso.css", completa);
     }
 }

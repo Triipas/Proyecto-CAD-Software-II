@@ -37,79 +37,82 @@ else
             <partial name="_VistaMapa" model="Model" />
         </header>
 
-        <div class="focos__cuerpo" tabindex="0" role="region" aria-label="Selección y zonas con más casos">
-            @* HU29-CA01 — selección de periodo (fecha de registro, DP17) y origen. Formulario GET: la selección queda en la dirección. *@
-            <form method="get" action="/panel/mapa-concentracion" class="focos__seleccion" aria-labelledby="titulo-seleccion" data-seleccion novalidate>
-                <h2 id="titulo-seleccion" class="visualmente-oculto">Selección</h2>
-                <div class="atajos" role="group" aria-label="Periodos frecuentes">
-                    <span class="atajos__titulo" aria-hidden="true">Últimos</span>
-                    @foreach (var atajo in Model.PeriodosRapidos)
-                    {
-                        <a class="atajos__opcion" href="@atajo.Enlace" aria-current="@(atajo.Activo ? "true" : null)">@atajo.Texto</a>
-                    }
+        @* HU29-CA01 — selección de periodo (fecha de registro, DP17) y origen. Formulario GET: la selección queda en la dirección. Plegada, se
+           resume en dos líneas; se abre sola si hay algo que corregir. El botón «Generar el mapa» vive en el pie del panel (atributo form). *@
+        <form method="get" action="/panel/mapa-concentracion" id="seleccion-mapa" class="focos__seleccion" aria-labelledby="titulo-seleccion" data-seleccion novalidate>
+            <h2 id="titulo-seleccion" class="visualmente-oculto">Selección</h2>
+            <details class="seleccion" open="@Model.SeleccionAbierta" data-seleccion-detalle>
+                <summary class="seleccion__resumen">
+                    <span class="seleccion__texto"><strong>@Model.TituloSeleccion</strong><small>@Model.DetalleSeleccion</small></span>
+                    <span class="seleccion__cambiar">Cambiar<partial name="_Icono" model="@("flecha-abajo")" /></span>
+                </summary>
+                <div class="seleccion__cuerpo">
+                    <div class="atajos" role="group" aria-label="Periodos frecuentes">
+                        <span class="atajos__titulo" aria-hidden="true">Últimos</span>
+                        @foreach (var atajo in Model.PeriodosRapidos)
+                        {
+                            <a class="atajos__opcion" href="@atajo.Enlace" aria-current="@(atajo.Activo ? "true" : null)">@atajo.Texto</a>
+                        }
+                    </div>
+                    <div class="focos__fechas">
+                        @foreach (var (id, etiqueta, valor) in new[] { ("desde", "Desde", Model.Desde), ("hasta", "Hasta", Model.Hasta) })
+                        {
+                            var error = Model.ErrorDe(id);
+                            <div class="campo">
+                                <label class="campo__etiqueta" for="@id">@etiqueta</label>
+                                <input class="campo__control" type="date" id="@id" name="@(id == "desde" ? "Desde" : "Hasta")" value="@valor" required
+                                       aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? "periodo-ayuda" : $"{id}-error periodo-ayuda")" />
+                                @if (error is not null)
+                                {
+                                    <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
+                                }
+                            </div>
+                        }
+                    </div>
+                    @{ var errorOrigen = Model.ErrorDe("origen"); }
+                    <div class="campo">
+                        <label class="campo__etiqueta" for="origen">Origen</label>
+                        <select class="campo__control campo__control--seleccion" id="origen" name="Origen"
+                                aria-invalid="@(errorOrigen is null ? null : "true")" aria-describedby="@(errorOrigen is null ? null : "origen-error")">
+                            <option value="" selected="@string.IsNullOrEmpty(Model.Origen)">SOS y reportes</option>
+                            <option value="Sos" selected="@(Model.Origen == "Sos")">Solo SOS</option>
+                            <option value="Reporte" selected="@(Model.Origen == "Reporte")">Solo reportes</option>
+                        </select>
+                        @if (errorOrigen is not null)
+                        {
+                            <p id="origen-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorOrigen</span></p>
+                        }
+                    </div>
                 </div>
-                <div class="focos__fechas">
-                    @foreach (var (id, etiqueta, valor) in new[] { ("desde", "Desde", Model.Desde), ("hasta", "Hasta", Model.Hasta) })
-                    {
-                        var error = Model.ErrorDe(id);
-                        <div class="campo">
-                            <label class="campo__etiqueta" for="@id">@etiqueta</label>
-                            <input class="campo__control" type="date" id="@id" name="@(id == "desde" ? "Desde" : "Hasta")" value="@valor" required
-                                   aria-invalid="@(error is null ? null : "true")" aria-describedby="@(error is null ? "periodo-ayuda" : $"{id}-error periodo-ayuda")" />
-                            @if (error is not null)
-                            {
-                                <p id="@id-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@error</span></p>
-                            }
-                        </div>
-                    }
-                </div>
-                @{ var errorOrigen = Model.ErrorDe("origen"); }
-                <div class="focos__origen">
-                <div class="campo">
-                    <label class="campo__etiqueta" for="origen">Origen</label>
-                    <select class="campo__control campo__control--seleccion" id="origen" name="Origen"
-                            aria-invalid="@(errorOrigen is null ? null : "true")" aria-describedby="@(errorOrigen is null ? null : "origen-error")">
-                        <option value="" selected="@string.IsNullOrEmpty(Model.Origen)">SOS y reportes</option>
-                        <option value="Sos" selected="@(Model.Origen == "Sos")">Solo SOS</option>
-                        <option value="Reporte" selected="@(Model.Origen == "Reporte")">Solo reportes</option>
-                    </select>
-                    @if (errorOrigen is not null)
-                    {
-                        <p id="origen-error" class="campo__error"><partial name="_Icono" model="@("error")" /><span>@errorOrigen</span></p>
-                    }
-                </div>
-                <button type="submit" class="boton boton--principal focos__enviar"><partial name="_Icono" model="@("filtro")" />Generar el mapa</button>
-                </div>
-                <p id="periodo-ayuda" class="visualmente-oculto">Las fechas son las de registro del caso.</p>
-            </form>
+            </details>
+            <p id="periodo-ayuda" class="visualmente-oculto">Las fechas son las de registro del caso.</p>
+        </form>
 
+        <div class="focos__cuerpo" tabindex="0" role="region" aria-label="Cifras y zonas con más casos">
             @if (m is not null)
             {
                 <section class="focos__seccion" aria-labelledby="titulo-mapa-concentracion">
-                    <h2 id="titulo-mapa-concentracion" class="focos__subtitulo">Concentración de @Model.TextoOrigen<span class="focos__nota"> · por fecha de registro</span></h2>
-                    @* HU29-CA04: SOS y reportes diferenciados por color y por forma; las cifras resumen la selección. *@
+                    <h2 id="titulo-mapa-concentracion" class="focos__subtitulo focos__subtitulo--rotulo">Concentración de @Model.TextoOrigen<span class="focos__nota"> · por fecha de registro</span></h2>
+                    @* HU29-CA04: SOS y reportes diferenciados por color y por forma; las cifras resumen la selección. La zona con más casos es la
+                       primera del ranking. *@
                     <dl class="cifras" data-resumen>
                         @if (Model.Origen != "Reporte")
                         {
                             <div class="cifra cifra--sos" data-total-sos="@m.Sos">
                                 <dt><span class="cifra__muestra" aria-hidden="true"></span>SOS</dt>
-                                <dd><strong>@m.Sos</strong> @Casos(m.Sos)</dd>
+                                <dd><strong>@m.Sos</strong><span class="visualmente-oculto"> @Casos(m.Sos)</span></dd>
                             </div>
                         }
                         @if (Model.Origen != "Sos")
                         {
                             <div class="cifra cifra--reporte" data-total-reportes="@m.Reportes">
                                 <dt><span class="cifra__muestra" aria-hidden="true"></span>Reportes</dt>
-                                <dd><strong>@m.Reportes</strong> @Casos(m.Reportes)</dd>
+                                <dd><strong>@m.Reportes</strong><span class="visualmente-oculto"> @Casos(m.Reportes)</span></dd>
                             </div>
                         }
-                        <div class="cifra">
-                            <dt>Zona con más casos</dt>
-                            <dd><strong>@m.MaximoPorCelda</strong> @Casos(m.MaximoPorCelda)</dd>
-                        </div>
                         <div class="cifra cifra--secundaria" data-sin-ubicacion="@m.SinUbicacion">
-                            <dt>Sin ubicación válida</dt>
-                            <dd><strong>@m.SinUbicacion</strong> fuera del mapa</dd>
+                            <dt>Sin ubicación</dt>
+                            <dd><strong>@m.SinUbicacion</strong><span class="visualmente-oculto"> fuera del mapa</span></dd>
                         </div>
                     </dl>
                     @if (m.Celdas.Count == 0)
@@ -123,21 +126,46 @@ else
 
                 @if (m.Celdas.Count > 0)
                 {
+                    var mayor = Math.Max(1, Model.ZonasDestacadas.Max(z => z.Casos));
+                    var inv = System.Globalization.CultureInfo.InvariantCulture;
                     <section class="focos__seccion" aria-labelledby="titulo-zonas">
-                        <h2 id="titulo-zonas" class="focos__subtitulo">Zonas con más casos</h2>
-                        @* Las 10 zonas con más casos: el equivalente del mapa para el lector de pantalla y un atajo para volar a cada una. *@
-                        <ol class="ranking" id="zonas-destacadas" data-ranking-historico>
+                        <div class="focos__titular">
+                            <h2 id="titulo-zonas" class="focos__subtitulo">Zonas con más casos</h2>
+                            <span class="focos__leyenda" aria-hidden="true">
+                                @if (Model.Origen != "Reporte") { <span class="leyenda-barra leyenda-barra--sos">SOS</span> }
+                                @if (Model.Origen != "Sos") { <span class="leyenda-barra leyenda-barra--reporte">Reportes</span> }
+                            </span>
+                        </div>
+                        @* Las 10 zonas con más casos: el equivalente del mapa para el lector de pantalla y un atajo para volar a cada una. La barra
+                           compara cada zona con la mayor y separa SOS de reportes; la elegida se abre con su desglose. *@
+                        <ol class="ranking ranking--historico" id="zonas-destacadas" data-ranking-historico>
                             @foreach (var (zona, i) in Model.ZonasDestacadas.Select((z, i) => (z, i)))
                             {
-                                var sos = zona.Origen == "SOS";
+                                var texto = Model.Origen == "Reporte" ? $"{zona.Reportes} {(zona.Reportes == 1 ? "reporte" : "reportes")}"
+                                    : Model.Origen == "Sos" ? $"{zona.Sos} SOS"
+                                    : $"{zona.Sos} SOS · {zona.Reportes} {(zona.Reportes == 1 ? "reporte" : "reportes")}";
                                 <li class="ranking__item">
-                                    <button type="button" class="ranking__boton" data-vuelo data-lat="@zona.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                            data-lon="@zona.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                    <button type="button" class="ranking__boton" data-vuelo data-lat="@zona.Latitud.ToString(inv)" data-lon="@zona.Longitud.ToString(inv)"
+                                            data-sur="@zona.Sur.ToString(inv)" data-oeste="@zona.Oeste.ToString(inv)" data-norte="@zona.Norte.ToString(inv)" data-este="@zona.Este.ToString(inv)">
                                         <span class="ranking__orden num" aria-hidden="true">@(i + 1)</span>
                                         <span class="ranking__nombre">@zona.Zona</span>
-                                        <span class="ranking__cifra num"><strong>@zona.Casos</strong> @Casos(zona.Casos)</span>
-                                        <span class="ranking__origen ranking__origen--@(sos ? "sos" : "reporte")"><span class="ranking__marca" aria-hidden="true"></span>@zona.Origen</span>
+                                        <span class="ranking__cifra num"><strong>@zona.Casos</strong><span class="visualmente-oculto"> @Casos(zona.Casos)</span></span>
+                                        <span class="ranking__composicion">@texto</span>
+                                        <span class="ranking__barra" aria-hidden="true">
+                                            <i class="ranking__barra-sos" style="width:@((100.0 * zona.Sos / mayor).ToString("0.#", inv))%"></i><i class="ranking__barra-reporte" style="width:@((100.0 * zona.Reportes / mayor).ToString("0.#", inv))%"></i>
+                                        </span>
                                     </button>
+                                    <div class="ranking__detalle" data-detalle>
+                                        <dl class="ranking__desglose">
+                                            @if (Model.Origen != "Reporte") { <div><dt>SOS</dt><dd class="num">@zona.Sos</dd></div> }
+                                            @if (Model.Origen != "Sos") { <div><dt>Reportes</dt><dd class="num">@zona.Reportes</dd></div> }
+                                            <div><dt>Del total</dt><dd class="num">@Model.PorcentajeDe(zona)</dd></div>
+                                        </dl>
+                                        <div class="ranking__acciones">
+                                            <a class="boton boton--principal boton--compacto" href="@Model.EnlaceCasosZona(zona)" data-casos-zona>Ver casos de la zona</a>
+                                            <button type="button" class="boton boton--secundario boton--compacto" data-quitar-zona>Quitar</button>
+                                        </div>
+                                    </div>
                                 </li>
                             }
                         </ol>
@@ -152,6 +180,10 @@ else
                 </p>
             }
         </div>
+
+        <footer class="focos__pie">
+            <button type="submit" form="seleccion-mapa" class="boton boton--principal focos__enviar"><partial name="_Icono" model="@("filtro")" />Generar el mapa</button>
+        </footer>
     </aside>
 
     @if (m is not null)

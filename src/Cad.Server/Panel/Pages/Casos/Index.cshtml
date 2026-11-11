@@ -50,6 +50,7 @@
     <h2 id="titulo-filtros" class="visualmente-oculto">Filtros</h2>
     @if (!string.IsNullOrEmpty(Model.Origen)) { <input type="hidden" name="origen" value="@Model.Origen" /> }
     @if (!string.IsNullOrEmpty(Model.Grupo)) { <input type="hidden" name="grupo" value="@Model.Grupo" /> }
+    @if (!string.IsNullOrEmpty(Model.Zona)) { <input type="hidden" name="zona" value="@Model.Zona" /> }
 
     <div class="casos__rapidos">
         <nav class="selector" aria-label="Origen">

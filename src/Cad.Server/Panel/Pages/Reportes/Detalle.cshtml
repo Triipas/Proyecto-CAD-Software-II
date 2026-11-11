@@ -238,7 +238,7 @@
         {
             <div class="sugerencia__contenedor" data-sugerencia><partial name="_SugerenciaReporte" model="sugerencia" /></div>
         }
-        <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente">
+        <section class="superficie siguiente@(terminado ? " siguiente--terminado" : "")" aria-labelledby="titulo-siguiente" data-accion-corta="@(siguiente is Accion.IniciarRevision or Accion.Asignar ? "true" : null)">
             @switch (siguiente)
             {
                 case Accion.IniciarRevision:
@@ -519,6 +519,20 @@
     </div>
 
     <aside class="detalle-caso__contexto consola__expediente" aria-label="Expediente del reporte">
+        <section class="ficha-clave" data-ficha-clave data-despues-del-hecho aria-label="Lo esencial del reporte" data-detalle-resumen="Categoría y ubicación del hecho">
+            <div class="ficha-clave__ubicacion ficha-clave__ubicacion--reporte">
+                <partial name="_Icono" model="@("ubicacion")" />
+                <div class="ficha-clave__lugar">
+                    <p class="ficha-clave__rotulo">Ubicación del hecho</p>
+                    <p class="ficha-clave__zona" title="@r.ReferenciaHecho">@(r.ReferenciaHecho ?? (r.ConPunto ? "Sin referencia escrita" : "Sin ubicación"))</p>
+                    <p class="ficha-clave__coord">@(r.ConPunto ? $"{Model.NombreZona} · " : "")@fuente</p>
+                </div>
+                @if (r.ConPunto)
+                {
+                    <button type="button" class="boton boton--secundario boton--compacto" data-ver-mapa data-lat="@r.LatitudHecho?.ToString(inv)" data-lon="@r.LongitudHecho?.ToString(inv)">Ver en el mapa</button>
+                }
+            </div>
+        </section>
         <section class="superficie seccion-caso" aria-labelledby="titulo-lugar">
             <h2 id="titulo-lugar" class="seccion-caso__titulo">Ubicación del hecho</h2>
             @if (r.ConPunto)
