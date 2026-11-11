@@ -50,7 +50,7 @@ public sealed class SegundoPlanoAndroid : IServicioSegundoPlano
         abrir?.AddFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop);
         var pendiente = PendingIntent.GetActivity(contexto, 1, abrir, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var constructor = new NotificationCompat.Builder(contexto, CanalBienestar);
-        constructor.SetSmallIcon(Resource.Mipmap.appicon);
+        constructor.SetSmallIcon(Resource.Drawable.avisa_notificacion);
         constructor.SetContentTitle("La central pregunta cómo estás");
         constructor.SetContentText("Abre «Acompañamiento» y responde «Estoy bien» o «Necesito ayuda».");
         constructor.SetPriority(NotificationCompat.PriorityHigh);
@@ -103,7 +103,7 @@ public sealed class ServicioUbicacionAcompanamiento : Service
         abrir?.AddFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop);
         var pendiente = PendingIntent.GetActivity(this, 0, abrir, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var constructor = new NotificationCompat.Builder(this, Canal);
-        constructor.SetSmallIcon(Resource.Mipmap.appicon);
+        constructor.SetSmallIcon(Resource.Drawable.avisa_notificacion);
         constructor.SetContentTitle("Acompañamiento activo");
         constructor.SetContentText($"Compartes tu ubicación con la central hasta las {vence.ToString("HH:mm", CultureInfo.InvariantCulture)}. Toca para abrir.");
         constructor.SetOngoing(true);

@@ -1,4 +1,4 @@
-# Sistema Integrado CAD — MVP académico
+# Avisa — Seguridad ciudadana a un toque
 
 Prototipo académico (Ingeniería de Software II, USMP) de alertas SOS georreferenciadas y despacho para la seguridad ciudadana de una municipalidad tipo B. **No es un canal oficial de emergencias**: todos los datos son simulados.
 

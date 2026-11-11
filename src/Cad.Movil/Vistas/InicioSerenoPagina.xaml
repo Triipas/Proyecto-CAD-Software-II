@@ -242,6 +242,7 @@
                             </Grid>
                             <!-- Ruta calculada en la app; si no se pudo, el motivo y el respaldo de la app de mapas. -->
                             <Label Text="{Binding EstadoRuta}" Style="{StaticResource TextoSecundario}" FontSize="13" IsVisible="{Binding HayEstadoRuta}" />
+                            <v:Aviso Tipo="advertencia" Texto="{Binding AvisoMapa}" IsVisible="{Binding HayAvisoMapa}" />
                             <Button Text="Abrir en Google Maps" Style="{StaticResource BotonSecundario}" Command="{Binding ComoLlegar}" IsVisible="{Binding MostrarAbrirEnMaps}"
                                     SemanticProperties.Hint="Abre la app de mapas del teléfono con la ruta hasta el punto del caso" />
                             <v:Aviso Emergente="True" Tipo="advertencia" Texto="{Binding AvisoComoLlegar}" Mostrar="{Binding HayAvisoComoLlegar}" />

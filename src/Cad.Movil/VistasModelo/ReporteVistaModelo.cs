@@ -43,6 +43,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     private readonly IFotosReporte fotos;
     private string mensajeFotos = "";
     private bool preparandoFotos;
+    private bool mostrarAjustesFotos;
 
     public ReporteVistaModelo(IApiCad api, RegistradorReporte registrador, IServicioUbicacion ubicacion, IAlmacenSesion sesiones,
         INavegacion navegacion, TimeProvider reloj, TimeZoneInfo? zona = null, IDictado? dictado = null, IFotosReporte? fotos = null)
@@ -76,6 +77,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
             () => Editable && PuedeAgregarFotos && this.fotos.PuedeTomar);
         ElegirFotos = new ComandoAsincrono(() => AgregarFotosAsync(() => this.fotos.ElegirAsync(LimitesFotosReporte.Maximo - Fotos.Count)),
             () => Editable && PuedeAgregarFotos);
+        AbrirAjustesFotos = new ComandoAsincrono(() => { this.fotos.AbrirAjustes(); return Task.CompletedTask; }, () => !preparandoFotos);
         QuitarFoto = new ComandoAsincrono<FotoAdjunta>(f =>
         {
             if (!Editable) return Task.CompletedTask;
@@ -133,6 +135,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     public ComandoAsincrono UsarPosicionActual { get; }
     public ComandoAsincrono TomarFoto { get; }
     public ComandoAsincrono ElegirFotos { get; }
+    public ComandoAsincrono AbrirAjustesFotos { get; }
     public ComandoAsincrono<FotoAdjunta> QuitarFoto { get; }
     public ComandoAsincrono Enviar { get; }
     public ComandoAsincrono Reintentar { get; }
@@ -385,6 +388,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     public string ContadorFotos => $"{Fotos.Count} de {LimitesFotosReporte.Maximo}";
     public string MensajeFotos { get => mensajeFotos; private set { if (Asignar(ref mensajeFotos, value)) Notificar(nameof(HayMensajeFotos)); } }
     public bool HayMensajeFotos => MensajeFotos.Length > 0;
+    public bool MostrarAjustesFotos { get => mostrarAjustesFotos; private set => Asignar(ref mostrarAjustesFotos, value); }
     public string ErrorFotos => errores.Where(e => e.Key.StartsWith("fotos", StringComparison.Ordinal)).Select(e => e.Value).FirstOrDefault() ?? "";
     public bool HayErrorFotos => ErrorFotos.Length > 0;
 
@@ -392,6 +396,7 @@ public sealed class ReporteVistaModelo : VistaModeloBase
     {
         if (!Editable || !PuedeAgregarFotos || preparandoFotos) return;
         MensajeFotos = "";
+        MostrarAjustesFotos = false;
         PreparandoFotos = true;
         try
         {
@@ -408,7 +413,12 @@ public sealed class ReporteVistaModelo : VistaModeloBase
         }
         catch (PermissionException)
         {
-            MensajeFotos = "Sin permiso para usar la cámara. Puedes elegir una foto de la galería o enviar el reporte sin fotos.";
+            MostrarAjustesFotos = true;
+            MensajeFotos = "No se concedieron los permisos para tomar la foto. Abre los permisos de Avisa y permite la cámara; en Android 12 o anterior, también el almacenamiento si aparece. Luego vuelve y pulsa «Tomar una foto».";
+        }
+        catch (FeatureNotSupportedException)
+        {
+            MensajeFotos = "No hay una aplicación de cámara disponible. Puedes elegir una foto de la galería o enviar el reporte sin fotos.";
         }
         catch (Exception)
         {

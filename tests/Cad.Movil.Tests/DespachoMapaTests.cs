@@ -180,12 +180,65 @@ public class DespachoMapaTests
     {
         var rutas = new RutasFalsas { Respuesta = (_, _) => new ResultadoRuta.NoDisponible("No se pudieron descargar las calles de la zona.") };
         var vm = await SosConPosicionAsync(rutas);
-        await Esperar(() => vm.HayEstadoRuta && !vm.EstadoRuta.StartsWith("Calculando"), "el motivo llega");
+        await Esperar(() => vm.EstadoRuta == "No se pudieron descargar las calles de la zona.", "el motivo llega");
 
         Assert.Equal("No se pudieron descargar las calles de la zona.", vm.EstadoRuta);
         Assert.True(vm.MostrarAbrirEnMaps);
         Assert.Equal("400 m", vm.TextoDistancia); // en línea recta mientras no hay ruta
         Assert.Equal("en línea recta", vm.EtiquetaDistancia);
+    }
+
+    [Fact]
+    public async Task AsignadoSinPosicion_MuestraElCasoYExplicaLaEsperaConRespaldoEnMaps()
+    {
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(Sos(new UbicacionDespacho(-16.425, -71.515, 8, Inicio)));
+        var vm = VistaModelo();
+        await vm.AlAparecerAsync();
+
+        Assert.True(vm.HayDespacho);
+        Assert.False(vm.SinModoDespacho);
+        Assert.NotNull(vm.Destino);
+        Assert.False(vm.HayRuta);
+        Assert.Contains("Esperando la ubicación", vm.EstadoRuta);
+        Assert.True(vm.MostrarAbrirEnMaps);
+    }
+
+    [Fact]
+    public async Task ConsultaDeRespaldo_RecuperaUnaAsignacionSinAvisoDelCanal_YCalculaSuRuta()
+    {
+        api.EstadoServidor = new RespuestaEstadoOperativo(true, Inicio, 15);
+        ubicacion.Posicion = () => new UbicacionSos(-16.425, -71.515, 8, Inicio);
+        var rutas = new RutasFalsas();
+        var vm = VistaModelo(rutas);
+        await vm.AlAparecerAsync();
+        Assert.False(vm.HayDespacho);
+
+        var asignado = Sos(new UbicacionDespacho(-16.418, -71.520, 8, Inicio));
+        api.RespuestaDespacho = () => new ResultadoApi<DespachoSereno?>.Correcto(asignado);
+        await vm.RefrescarDespachoAsync();
+        await Esperar(() => vm.HayRuta, "ruta del caso recuperado sin aviso");
+
+        Assert.True(vm.HayDespacho);
+        Assert.False(vm.SinModoDespacho);
+        Assert.Equal(-16.418, vm.Destino!.Latitud);
+        Assert.Equal(new PuntoRuta(-16.418, -71.520), rutas.Pedidas.Last().Destino);
+    }
+
+    [Fact]
+    public async Task SiFallaElWebView_ElCasoYLaRutaPermanecen_YSeOfreceLaAppDeMapas()
+    {
+        var vm = await SosConPosicionAsync(new RutasFalsas());
+        await Esperar(() => vm.HayRuta, "ruta calculada");
+        vm.InformarErrorMapa(true);
+
+        Assert.True(vm.HayDespacho);
+        Assert.True(vm.HayRuta);
+        Assert.True(vm.HayAvisoMapa);
+        Assert.True(vm.MostrarAbrirEnMaps);
+
+        vm.InformarErrorMapa(false);
+        Assert.False(vm.HayAvisoMapa);
+        Assert.False(vm.MostrarAbrirEnMaps);
     }
 
     [Theory]

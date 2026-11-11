@@ -152,12 +152,14 @@ public interface IFotosReporte
     bool PuedeTomar { get; }
     Task<byte[]?> TomarAsync();
     Task<IReadOnlyList<byte[]>> ElegirAsync(int maximo);
+    void AbrirAjustes();
 }
 
 public sealed class FotoNoUsableException(string mensaje) : Exception(mensaje);
 
 public sealed class FotosNoDisponibles : IFotosReporte
 {
+    public void AbrirAjustes() { }
     public bool PuedeTomar => false;
     public Task<byte[]?> TomarAsync() => Task.FromResult<byte[]?>(null);
     public Task<IReadOnlyList<byte[]>> ElegirAsync(int maximo) => Task.FromResult<IReadOnlyList<byte[]>>([]);

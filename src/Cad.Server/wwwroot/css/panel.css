@@ -72,30 +72,15 @@ html {
 /* Marca */
 .marca {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--espacio-3);
 }
 
-.marca__escudo {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--radio-control);
-  color: #FFFFFF;
-  background: var(--color-marino);
-}
-
-.marca__escudo .icono {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.marca__nombre {
-  font-size: var(--texto-lg);
-  font-weight: var(--peso-fuerte);
-  line-height: var(--interlineado-titulo);
-  color: var(--color-marino);
+.marca__logotipo {
+  display: block;
+  width: min(15rem, 100%);
+  height: auto;
 }
 
 .marca__aviso {
@@ -376,19 +361,6 @@ html {
   justify-content: center;
 }
 
-.marca--sobre-marino .marca__escudo {
-  width: 2.75rem;
-  height: 2.75rem;
-  background: var(--color-primario);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18), 0 6px 16px -6px rgb(3 10 24 / 0.6);
-}
-
-.marca--sobre-marino .marca__nombre {
-  font-size: var(--texto-xl);
-  letter-spacing: var(--tracking-titulo);
-  color: #FFFFFF;
-}
-
 .marca__lema {
   font-size: var(--texto-sm);
   color: var(--color-texto-sobre-marino-secundario);
@@ -577,21 +549,12 @@ body:has(.barra--con-hoja) {
   color: #FFFFFF;
 }
 
-.barra__escudo {
+.barra__logotipo {
   flex: none;
-  width: 1.625rem;
-  height: 1.625rem;
-  display: grid;
-  place-items: center;
-  border-radius: 7px;
-  color: var(--color-marino);
-  background: var(--color-acento);
-  box-shadow: 0 2px 5px -1px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.55);
-}
-
-.barra__escudo .icono {
-  width: 1rem;
-  height: 1rem;
+  display: block;
+  width: 7rem;
+  height: 2.125rem;
+  object-fit: contain;
 }
 
 .barra__nombre {
@@ -875,6 +838,11 @@ body:has(.barra--con-hoja) {
 }
 
 @media (max-width: 47.5rem) {
+  /* La firma Avisa basta: el contexto «Central» ya está en la lengüeta activa. */
+  .barra__nombre {
+    display: none;
+  }
+
   .barra__indicadores .indicador:not(.indicador--sos) {
     display: none;
   }
@@ -896,13 +864,6 @@ body:has(.barra--con-hoja) {
   .barra__sesion {
     gap: var(--espacio-2);
     padding-left: var(--espacio-2);
-  }
-}
-
-/* En los teléfonos más estrechos (360 px) la marca se queda con el escudo. */
-@media (max-width: 24rem) {
-  .barra__nombre {
-    display: none;
   }
 }
 

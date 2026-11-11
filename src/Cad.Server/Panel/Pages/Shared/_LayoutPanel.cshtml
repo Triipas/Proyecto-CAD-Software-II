@@ -19,8 +19,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] · Central CAD</title>
-    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <title>@ViewData["Title"] · Avisa Central</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
     @await RenderSectionAsync("Estilos", required: false)
@@ -39,8 +39,8 @@
     <header class="barra@(conHoja ? " barra--con-hoja" : "")" data-barra>
         <div class="barra__fila">
             <div class="barra__marca">
-                <span class="barra__escudo"><partial name="_Icono" model="@("escudo")" /></span>
-                <span class="barra__nombre"><b>Central CAD</b><small>MVP académico · datos simulados</small></span>
+                <img class="barra__logotipo" src="~/img/marca/avisa-logo-oscuro.svg" asp-append-version="true" alt="Avisa" width="112" height="34" />
+                <span class="barra__nombre"><b>Central</b><small>MVP académico · datos simulados</small></span>
             </div>
             @await RenderSectionAsync("IndicadoresBarra", required: false)
             @if (User.Identity?.IsAuthenticated == true)

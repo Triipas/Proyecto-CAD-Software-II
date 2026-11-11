@@ -287,7 +287,7 @@ public sealed class CodigoVistaModelo : VistaModeloBase
 public sealed class CrearCuentaVistaModelo : FormularioDatosCiudadano
 {
     public const string TextoTerminos =
-        "CAD Móvil es un MVP académico con datos simulados; no es un canal oficial de emergencias. " +
+        "Avisa es un MVP académico con datos simulados; no es un canal oficial de emergencias. " +
         "Usamos tus datos (nombre, documento, fecha de nacimiento, celular, contacto de emergencia y dirección) y la ubicación que " +
         "compartes al pedir ayuda solo para atender tus casos: la central y el sereno asignado los ven mientras te atienden. " +
         "Tu número se envía a un proveedor de SMS solo para mandarte el código de verificación. No usamos tus datos para publicidad.";

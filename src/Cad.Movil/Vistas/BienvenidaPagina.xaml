@@ -11,11 +11,9 @@
     <ScrollView>
         <VerticalStackLayout Spacing="0">
             <Grid Style="{StaticResource EncabezadoMarino}" Padding="24,40,24,64" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
-                <Border WidthRequest="56" HeightRequest="56" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{StaticResource ColorMarinoElevado}" HorizontalOptions="Start">
-                    <v:Icono Nombre="escudo" Color="{StaticResource ColorAcento}" Tamano="30" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-                <Label Grid.Row="1" Text="CAD Móvil" Style="{StaticResource TituloSobreMarino}" FontSize="30" SemanticProperties.HeadingLevel="Level1" />
+                <Image Source="avisa_logo_blanco.png" WidthRequest="240" HeightRequest="72" Aspect="AspectFit" HorizontalOptions="Start"
+                       SemanticProperties.Description="Avisa" SemanticProperties.HeadingLevel="Level1" />
+                <Label Grid.Row="1" Text="Seguridad ciudadana a un toque." Style="{StaticResource TituloSobreMarino}" FontSize="18" />
                 <Label Grid.Row="2" Text="Pide ayuda urgente, reporta incidencias y activa un acompañamiento."
                        Style="{StaticResource TextoSobreMarino}" />
             </Grid>

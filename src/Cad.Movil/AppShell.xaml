@@ -11,7 +11,7 @@
        Shell.TabBarForegroundColor="#1D4ED8"
        Shell.TabBarTitleColor="#1D4ED8"
        Shell.TabBarUnselectedColor="#475A75"
-       Title="CAD Móvil">
+       Title="Avisa">
     <ShellContent Route="ingreso" ContentTemplate="{DataTemplate v:BienvenidaPagina}" />
     <TabBar Route="ciudadano">
         <Tab Title="Inicio" Icon="tab_inicio.png" Route="inicio">

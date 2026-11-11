@@ -11,10 +11,8 @@
     <ScrollView>
         <VerticalStackLayout Spacing="0">
             <Grid Style="{StaticResource EncabezadoMarino}" Padding="24,40,24,64" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
-                <Border WidthRequest="56" HeightRequest="56" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{StaticResource ColorMarinoElevado}" HorizontalOptions="Start">
-                    <v:Icono Nombre="escudo" Color="{StaticResource ColorAcento}" Tamano="30" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
+                <Image Source="avisa_logo_blanco.png" WidthRequest="200" HeightRequest="60" Aspect="AspectFit" HorizontalOptions="Start"
+                       SemanticProperties.Description="Avisa" />
                 <Label Grid.Row="1" Text="Serenazgo" Style="{StaticResource TituloSobreMarino}" FontSize="30" />
                 <Label Grid.Row="2" Text="Ingresa con la cuenta institucional que te dio el administrador para recibir despachos."
                        Style="{StaticResource TextoSobreMarino}" />

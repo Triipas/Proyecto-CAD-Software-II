@@ -31,11 +31,8 @@
         <VerticalStackLayout VerticalOptions="Start" Padding="12,12,12,8" Spacing="8" InputTransparent="True" CascadeInputTransparent="False">
                 <Border Style="{StaticResource Flotante}" StrokeShape="RoundRectangle 999" Padding="8,8,16,8" HorizontalOptions="Fill">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                        <Border WidthRequest="36" HeightRequest="36" StrokeThickness="0" StrokeShape="RoundRectangle 18"
-                                BackgroundColor="{StaticResource ColorMarino}" VerticalOptions="Center">
-                            <Label Text="{Binding Iniciales}" TextColor="White" FontFamily="PublicSansBold" FontSize="13"
-                                   HorizontalOptions="Center" VerticalOptions="Center" />
-                        </Border>
+                        <Image Source="avisa_simbolo.png" WidthRequest="36" HeightRequest="36" Aspect="AspectFit" VerticalOptions="Center"
+                               SemanticProperties.Description="Avisa" />
                         <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                             <Label Text="{Binding Saludo}" FontFamily="PublicSansBold" FontSize="16" TextColor="{StaticResource ColorMarino}"
                                    SemanticProperties.HeadingLevel="Level1" />

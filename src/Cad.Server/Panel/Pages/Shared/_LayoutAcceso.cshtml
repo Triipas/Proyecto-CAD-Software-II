@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0A1A3A" />
-    <title>@ViewData["Title"] · Central CAD</title>
-    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <title>@ViewData["Title"] · Avisa Central</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
 </head>
@@ -41,11 +41,8 @@
 
         <div class="acceso__contenido">
             <div class="marca marca--sobre-marino">
-                <span class="marca__escudo"><partial name="_Icono" model="@("escudo")" /></span>
-                <div>
-                    <p class="marca__nombre">Central CAD</p>
-                    <p class="marca__lema">Sistema Integrado CAD · Seguridad ciudadana</p>
-                </div>
+                <img class="marca__logotipo" src="~/img/marca/avisa-logo-oscuro.svg" asp-append-version="true" alt="Avisa Central" width="240" height="72" />
+                <p class="marca__lema">Seguridad ciudadana a un toque.</p>
             </div>
             @RenderBody()
         </div>
