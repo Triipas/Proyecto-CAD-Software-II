@@ -163,6 +163,39 @@ public class FotosReporteTests
     }
 
     [Fact]
+    public async Task PermisoDenegado_OfreceAjustes_YAlReintentarConPermisoAdjuntaLaFoto()
+    {
+        var vm = await FormularioAsync();
+        fotos.Error = new Microsoft.Maui.ApplicationModel.PermissionException("Permiso denegado");
+        await vm.TomarFoto.EjecutarAsync();
+
+        Assert.True(vm.MostrarAjustesFotos);
+        Assert.Empty(vm.Fotos);
+        Assert.True(vm.Editable);
+        await vm.AbrirAjustesFotos.EjecutarAsync();
+        Assert.Equal(1, fotos.AjustesAbiertos);
+
+        fotos.Error = null;
+        fotos.Tomadas.Enqueue(Foto(9));
+        await vm.TomarFoto.EjecutarAsync();
+        Assert.False(vm.MostrarAjustesFotos);
+        Assert.False(vm.HayMensajeFotos);
+        Assert.Equal(Foto(9), Assert.Single(vm.Fotos).Contenido);
+    }
+
+    [Fact]
+    public async Task SinAplicacionDeCamara_ExplicaLaAlternativaSinConfundirloConPermisos()
+    {
+        var vm = await FormularioAsync();
+        fotos.Error = new Microsoft.Maui.ApplicationModel.FeatureNotSupportedException();
+        await vm.TomarFoto.EjecutarAsync();
+
+        Assert.Contains("aplicación de cámara", vm.MensajeFotos);
+        Assert.False(vm.MostrarAjustesFotos);
+        Assert.True(vm.ElegirFotos.CanExecute(null));
+    }
+
+    [Fact]
     public async Task ElRechazoDelServidorPorUnaFoto_SeMuestraJuntoALasFotos()
     {
         api.RespuestasReporte.Enqueue(_ => Task.FromResult<ResultadoApi<RespuestaReporte>>(new ResultadoApi<RespuestaReporte>.Rechazado(400,
@@ -179,6 +212,8 @@ public class FotosReporteTests
 
     private sealed class FotosFalsas : IFotosReporte
     {
+        public int AjustesAbiertos { get; private set; }
+        public void AbrirAjustes() => AjustesAbiertos++;
         public bool PuedeTomar { get; set; } = true;
         public Queue<byte[]?> Tomadas { get; } = new();
         public Queue<IReadOnlyList<byte[]>> Elegidas { get; } = new();

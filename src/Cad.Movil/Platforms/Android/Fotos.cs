@@ -14,7 +14,7 @@ public sealed class FotosAndroid : IFotosReporte
 
     public async Task<byte[]?> TomarAsync()
     {
-        var foto = await MediaPicker.Default.CapturePhotoAsync();
+        var foto = await MainThread.InvokeOnMainThreadAsync(() => MediaPicker.Default.CapturePhotoAsync());
         return foto is null ? null : await PrepararAsync(foto);
     }
 
@@ -22,7 +22,8 @@ public sealed class FotosAndroid : IFotosReporte
     {
         if (maximo <= 0)
             return [];
-        var elegidas = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions { SelectionLimit = maximo, Title = "Fotos del reporte" });
+        var elegidas = await MainThread.InvokeOnMainThreadAsync(() =>
+            MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions { SelectionLimit = maximo, Title = "Fotos del reporte" }));
         var preparadas = new List<byte[]>();
         foreach (var foto in elegidas ?? [])
         {
@@ -31,6 +32,8 @@ public sealed class FotosAndroid : IFotosReporte
         }
         return preparadas;
     }
+
+    public void AbrirAjustes() => MainThread.BeginInvokeOnMainThread(AppInfo.Current.ShowSettingsUI);
 
     private static async Task<byte[]> PrepararAsync(FileResult foto)
     {

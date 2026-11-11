@@ -164,7 +164,7 @@ public static class CanalesEntrada
         new(Otro, "Otro canal"),
     ];
 
-    public static readonly IReadOnlyList<OpcionCatalogo> Todos = [new(App, "App CAD Móvil"), .. DeLaCentral];
+    public static readonly IReadOnlyList<OpcionCatalogo> Todos = [new(App, "App Avisa"), .. DeLaCentral];
 }
 
 // HU32 — por qué el ciudadano evalúa así (27/10/2026): opcional y de varias opciones. Con 4 o 5 la app ofrece lo que estuvo

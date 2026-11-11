@@ -15,6 +15,8 @@ public partial class InicioSerenoPagina : ContentPage
     private readonly InicioSerenoVistaModelo vistaModelo;
     private readonly IConfiguracionServidor servidor;
     private bool mapaCargado, mapaListo;
+    private IDispatcherTimer? consultaDespacho;
+    private bool consultandoDespacho;
     // Movimiento (fase 2): para animar solo los cambios (la llegada de un despacho, el paso a otra etapa), no el estado inicial.
     private bool habiaDespacho, habiaFormularioCierre;
     private string? etapaAnterior;
@@ -34,10 +36,18 @@ public partial class InicioSerenoPagina : ContentPage
             try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); } catch (Exception) { /* sin vibración en este equipo */ }
             SemanticScreenReader.Announce("Llegaste al lugar del caso. Ya puedes iniciar la atención.");
         };
-        Mapa.Navigated += async (_, _) =>
+        Mapa.Navigated += async (_, e) =>
         {
-            mapaListo = true;
+            mapaListo = e.Result == WebNavigationResult.Success;
+            vistaModelo.InformarErrorMapa(!mapaListo);
+            if (mapaListo) await DibujarAsync();
+            else mapaCargado = false;
+        };
+        Mapa.SizeChanged += async (_, _) =>
+        {
+            if (!mapaListo || Mapa.Width <= 0 || Mapa.Height <= 0) return;
             await DibujarAsync();
+            await EjecutarAsync("window.cad && window.cad.ajustar()");
         };
         SizeChanged += (_, _) => AjustarPanel();
     }
@@ -52,6 +62,29 @@ public partial class InicioSerenoPagina : ContentPage
             await CargarMapaAsync();
         }
         await vistaModelo.AlAparecerAsync();
+        consultaDespacho ??= CrearConsultaDespacho();
+        consultaDespacho.Start();
+    }
+
+    protected override void OnDisappearing()
+    {
+        consultaDespacho?.Stop();
+        base.OnDisappearing();
+    }
+
+    private IDispatcherTimer CrearConsultaDespacho()
+    {
+        var timer = Dispatcher.CreateTimer();
+        timer.Interval = TimeSpan.FromSeconds(15);
+        timer.Tick += async (_, _) =>
+        {
+            if (consultandoDespacho) return;
+            consultandoDespacho = true;
+            try { await vistaModelo.RefrescarDespachoAsync(); }
+            catch (Exception) { /* El último despacho permanece visible; se reintenta en la próxima consulta. */ }
+            finally { consultandoDespacho = false; }
+        };
+        return timer;
     }
 
     private async void AlCambiarVistaModelo(object? emisor, PropertyChangedEventArgs e)
@@ -193,7 +226,7 @@ public partial class InicioSerenoPagina : ContentPage
 
     private async Task DibujarAsync()
     {
-        if (!mapaListo) return; // el mapa se dibuja en cuanto termina de cargar
+        if (!mapaListo || !vistaModelo.HayDespacho || Mapa.Width <= 0 || Mapa.Height <= 0) return;
         var destino = vistaModelo.Destino;
         var propia = vistaModelo.PosicionPropia;
         var datos = JsonSerializer.Serialize(new
@@ -210,7 +243,19 @@ public partial class InicioSerenoPagina : ContentPage
         if (mapaListo) await EjecutarAsync("window.cad && window.cad.verAmbos()");
     }
 
-    private Task EjecutarAsync(string script) => MainThread.InvokeOnMainThreadAsync(() => Mapa.EvaluateJavaScriptAsync(script));
+    private async Task EjecutarAsync(string script)
+    {
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(() => Mapa.EvaluateJavaScriptAsync(script));
+            vistaModelo.InformarErrorMapa(false);
+        }
+        catch (Exception)
+        {
+            // Los eventos son async void: un fallo del WebView no debe cerrar la app al asignarse un caso.
+            vistaModelo.InformarErrorMapa(true);
+        }
+    }
 
     private static async Task<string> LeerAsync(string archivo)
     {

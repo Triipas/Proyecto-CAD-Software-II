@@ -1857,7 +1857,7 @@
     }
     if (evento.data?.tipo !== "cad-panel-caso") return;
     const { id, estado, mensaje, titulo } = evento.data;
-    tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Central CAD$/, "")} · ${estado}` : "Caso elegido";
+    tituloPanel.textContent = titulo ? `${titulo.replace(/\s*·\s*Avisa Central$/, "")} · ${estado}` : "Caso elegido";
     // Un caso que el panel acaba de registrar («Nuevo reporte»: antes no había caso en el panel) se lleva a la vista en el mapa.
     const recienRegistrado = Boolean(id) && !casoEnPanel;
     // Mientras llega un caso pedido, el aviso de otra página (el caso anterior que se recargó) no cambia lo que se quiere ver.

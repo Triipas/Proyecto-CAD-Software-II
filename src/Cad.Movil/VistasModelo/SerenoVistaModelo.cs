@@ -241,10 +241,26 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
     public string EtiquetaDistancia => ruta is ResultadoRuta.Encontrada e
         ? $"en línea recta · por calles {FormatoDistancia(e.Metros)} (~{MinutosEnVehiculo(e.Metros)} min)"
         : "en línea recta";
-    public string EstadoRuta => calculandoRuta ? "Calculando la ruta por las calles…" : ruta is ResultadoRuta.NoDisponible n ? n.Motivo : "";
+    public string EstadoRuta => HayDestino && PosicionPropia is null
+        ? "Esperando la ubicación de tu teléfono para calcular la ruta. El punto del caso ya está disponible en el mapa."
+        : calculandoRuta ? "Calculando la ruta por las calles…" : ruta is ResultadoRuta.NoDisponible n ? n.Motivo : "";
     public bool HayEstadoRuta => EstadoRuta.Length > 0;
     // Si la app no pudo calcular la ruta, queda el respaldo de la app de mapas del teléfono.
-    public bool MostrarAbrirEnMaps => HayDestino && ruta is ResultadoRuta.NoDisponible;
+    public bool MostrarAbrirEnMaps => HayDestino && (ruta is ResultadoRuta.NoDisponible || PosicionPropia is null || HayAvisoMapa);
+    private string avisoMapa = "";
+    public string AvisoMapa => avisoMapa;
+    public bool HayAvisoMapa => avisoMapa.Length > 0;
+
+    public void InformarErrorMapa(bool error)
+    {
+        avisoMapa = error ? "No se pudo mostrar el mapa del caso. Puedes abrir la ruta en Google Maps." : "";
+        Notificar(nameof(AvisoMapa));
+        Notificar(nameof(HayAvisoMapa));
+        Notificar(nameof(MostrarAbrirEnMaps));
+    }
+
+    // Respaldo del canal en tiempo real: una asignación también se recupera al consultar la API.
+    public Task RefrescarDespachoAsync() => despacho.ActualizarAsync();
 
     // Tiempo orientativo en vehículo por la ciudad (25 km/h de media, con semáforos y tráfico).
     public static int MinutosEnVehiculo(double metros) => Math.Max(1, (int)Math.Round(metros / (25_000 / 60.0)));
@@ -259,8 +275,8 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
             if (ruta is not null || calculandoRuta)
             {
                 (ruta, calculandoRuta) = (null, false);
-                NotificarRuta();
             }
+            NotificarRuta();
             return;
         }
         var origen = new PuntoRuta(propia.Latitud, propia.Longitud);
@@ -299,6 +315,7 @@ public sealed class InicioSerenoVistaModelo : VistaModeloBase
             return;
         await HiloPrincipal(() =>
         {
+            if (cancelacion.IsCancellationRequested) return; // pudo cambiar el caso esperando al hilo de UI
             (ruta, calculandoRuta) = (resultado, false);
             NotificarRuta();
         });

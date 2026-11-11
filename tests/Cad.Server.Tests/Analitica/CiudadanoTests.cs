@@ -129,6 +129,6 @@ public class CiudadanoTests(FabricaCad fabrica)
 
         Assert.Equal(new CohorteSemanal(new DateOnly(2020, 11, 2), 3, 2, 1), Assert.Single(r.Cohortes));
         Assert.Equal([new ActividadSemanal(new DateOnly(2020, 11, 2), 2, 2), new ActividadSemanal(new DateOnly(2020, 11, 9), 1, 0)], r.Actividad);
-        Assert.Equal(new ReportesPorCanal(CanalesEntrada.App, "App CAD Móvil", 1), Assert.Single(r.Canales));
+        Assert.Equal(new ReportesPorCanal(CanalesEntrada.App, "App Avisa", 1), Assert.Single(r.Canales));
     }
 }

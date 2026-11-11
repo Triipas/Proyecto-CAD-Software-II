@@ -126,7 +126,7 @@ public sealed class ServicioMensajesFirebase : FirebaseMessagingService
         abrir?.AddFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop);
         var pendiente = PendingIntent.GetActivity(this, 0, abrir, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         var constructor = new NotificationCompat.Builder(this, ServicioPushAndroid.Canal);
-        constructor.SetSmallIcon(Resource.Mipmap.appicon);
+        constructor.SetSmallIcon(Resource.Drawable.avisa_notificacion);
         constructor.SetContentTitle(aviso.Title);
         constructor.SetContentText(aviso.Body);
         constructor.SetPriority(NotificationCompat.PriorityHigh);

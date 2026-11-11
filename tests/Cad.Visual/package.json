@@ -4,6 +4,7 @@
   "description": "Revisión visual automatizada del panel web: regresión de capturas, accesibilidad (axe-core) y reglas del sistema de diseño CAD v2.",
   "type": "module",
   "scripts": {
+    "revisar:mapas-movil": "playwright test -c mapas-movil.config.js",
     "revisar": "playwright test",
     "aprobar": "playwright test --update-snapshots",
     "informe": "playwright show-report informe",

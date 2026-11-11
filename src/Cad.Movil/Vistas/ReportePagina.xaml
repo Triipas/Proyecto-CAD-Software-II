@@ -179,6 +179,8 @@
                                     SemanticProperties.Hint="Elige hasta tres fotos de la galería del teléfono" />
                             <ActivityIndicator IsRunning="{Binding PreparandoFotos}" IsVisible="{Binding PreparandoFotos}" HorizontalOptions="Center" />
                             <Label Text="{Binding MensajeFotos}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayMensajeFotos}" />
+                            <Button Text="Abrir permisos de Avisa" Style="{StaticResource BotonSecundario}" Command="{Binding AbrirAjustesFotos}"
+                                    IsVisible="{Binding MostrarAjustesFotos}" />
                             <Label Text="{Binding ErrorFotos}" Style="{StaticResource ErrorCampo}" IsVisible="{Binding HayErrorFotos}" />
                         </VerticalStackLayout>
                     </Border>
